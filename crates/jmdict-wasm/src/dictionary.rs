@@ -63,6 +63,51 @@ impl Dictionary {
         }
     }
 
+    /// Scan `text` for all positions matching words in `known` (a JS Array of strings).
+    /// Returns a JS array of `[charStart, matchLen]` pairs. Non-Japanese chars are skipped;
+    /// matched segments are advanced past to avoid double-counting.
+    pub fn find_in_text(&self, text: &str, known: js_sys::Array) -> JsValue {
+        let known_set: std::collections::HashSet<String> = known
+            .iter()
+            .filter_map(|v| v.as_string())
+            .collect();
+
+        if known_set.is_empty() {
+            return JsValue::from(js_sys::Array::new());
+        }
+
+        let char_vec: Vec<(usize, char)> = text.char_indices().collect();
+        let total = char_vec.len();
+        let mut results: Vec<[usize; 2]> = Vec::new();
+        let mut ci = 0usize;
+
+        while ci < total {
+            let (byte_off, ch) = char_vec[ci];
+            if !japanese_utils::is_japanese(ch) {
+                ci += 1;
+                continue;
+            }
+            match crate::lookup::lookup_longest_match(&text[byte_off..], 20) {
+                Some((entries, match_len)) => {
+                    let hw = entries[0]
+                        .kanji_forms.first().map(|k| k.text.as_str())
+                        .or_else(|| entries[0].reading_forms.first().map(|r| r.text.as_str()))
+                        .unwrap_or("");
+                    if !hw.is_empty() && known_set.contains(hw) {
+                        results.push([ci, match_len]);
+                        ci += match_len;
+                    } else {
+                        ci += 1;
+                    }
+                }
+                None => ci += 1,
+            }
+        }
+
+        serde_wasm_bindgen::to_value(&results)
+            .unwrap_or_else(|_| JsValue::from(js_sys::Array::new()))
+    }
+
     /// Prefix search: find entries whose headword starts with `text`.
     /// Useful for search UI autocomplete.
     pub fn lookup_prefix(&self, text: &str, max_results: u8) -> Result<JsValue, JsError> {

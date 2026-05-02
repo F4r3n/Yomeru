@@ -48,6 +48,8 @@ browser.runtime.onMessage.addListener(
         return handleLogLookup(
           msg.payload as { word: string; reading: string },
         );
+      case "GET_SRS_WORDS":
+        return handleGetSrsWords();
       default:
         return Promise.resolve({ error: "Unknown message type" });
     }
@@ -101,6 +103,11 @@ async function handleGetAllCards() {
 async function handleDeleteCard({ word }: { word: string }) {
   await deleteCard(word);
   return { success: true };
+}
+
+async function handleGetSrsWords(): Promise<{ words: string[] }> {
+  const cards = await getAllCards();
+  return { words: cards.map((c) => c.word) };
 }
 
 async function handleLogLookup({

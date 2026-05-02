@@ -1,6 +1,7 @@
 <script lang="ts">
     import { popupStore } from "./popup-store";
     import type { WordEntry } from "../shared/types.ts";
+    import { srsWordAdded } from "./srs-highlighter";
 
     // Tracks "+ Add to SRS" button state per word, reset on each new lookup.
     let buttonStates = $state<Record<string, "idle" | "added" | "existing">>(
@@ -57,6 +58,7 @@
             ...buttonStates,
             [word]: res.existing ? "existing" : "added",
         };
+        if (!res.existing) srsWordAdded(word);
     }
 </script>
 

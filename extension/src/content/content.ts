@@ -4,6 +4,7 @@ import { popupStore } from "./popup-store";
 import { getJapaneseAtPoint, isEditableAt } from "./detector";
 import { initHighlight, setHighlight, clearHighlight } from "./highlight";
 import { POPUP_CSS, PIN_DELAY_MS } from "./popup.css";
+import { initSrsHighlighter } from "./srs-highlighter";
 
 // ── Types from wasm-pack generated declarations ───────────────────────────────
 import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
@@ -36,6 +37,7 @@ async function initDictionary(): Promise<void> {
     const bytes = new Uint8Array(await resp.arrayBuffer());
 
     dictionary = new wasm.Dictionary(bytes);
+    initSrsHighlighter(dictionary);
   } catch (e) {
     console.error("[jp-reader] Dictionary init failed:", e);
   }
@@ -104,24 +106,18 @@ let lastLookedUp: string | null = null;
 let hideTimer: ReturnType<typeof setTimeout> | null = null;
 let hoverTimer: ReturnType<typeof setTimeout> | null = null;
 let pinTimer: ReturnType<typeof setTimeout> | null = null;
-let overPopup = false;
 
-// Stop hover-hide logic from firing while the mouse is inside the popup.
-shadowHost.addEventListener("mouseenter", () => {
-  overPopup = true;
-  clearTimeout(hideTimer!);
-  clearTimeout(hoverTimer!);
-});
-shadowHost.addEventListener("mouseleave", () => {
-  overPopup = false;
-  if (!popupStore.isPinned()) scheduleHide();
-});
-
+// composedPath includes shadowHost whenever the event originates inside the
+// shadow root (even with mode:"closed"), so this reliably detects hover over
+// the popup regardless of the shadow host's zero layout size.
 document.addEventListener(
   "mousemove",
   (e) => {
-    if (overPopup) return;
     clearTimeout(hoverTimer!);
+    if (e.composedPath().includes(shadowHost)) {
+      clearTimeout(hideTimer!);
+      return;
+    }
     hoverTimer = setTimeout(() => handleHover(e), 120);
   },
   { passive: true },

@@ -72,4 +72,5 @@ export type ExtMessage =
   | { type: "GET_DUE" }
   | { type: "GET_ALL_CARDS" }
   | { type: "DELETE_CARD"; payload: DeleteCardPayload }
-  | { type: "LOG_LOOKUP"; payload: LogLookupPayload };
+  | { type: "LOG_LOOKUP"; payload: LogLookupPayload }
+  | { type: "GET_SRS_WORDS" };
