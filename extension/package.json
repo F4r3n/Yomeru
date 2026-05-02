@@ -1,0 +1,19 @@
+{
+  "name": "japanese-reader-ext",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm run build:content && npm run build:app",
+    "build:content": "vite build --config vite.content.config.ts",
+    "build:app": "vite build",
+    "dev:content": "vite build --config vite.content.config.ts --watch",
+    "dev:app": "vite build --watch"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@types/firefox-webext-browser": "^120.0.0",
+    "svelte": "^5.0.0",
+    "typescript": "^5.8.0",
+    "vite": "^6.0.0"
+  }
+}

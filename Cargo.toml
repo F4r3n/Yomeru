@@ -1,0 +1,27 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/japanese-utils",
+    "crates/jmdict-types",
+    "crates/jmdict-build",
+    "crates/jmdict-wasm",
+    "crates/deinflect",
+    "crates/srs-core",
+    "crates/srs-wasm",
+    "xtask",
+]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+
+[profile.release.package.jmdict-build]
+opt-level = 3
+
+[profile.release.package.xtask]
+opt-level = 3
+
+[profile.bench]
+inherits = "release"
+opt-level = 3

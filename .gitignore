@@ -1,0 +1,8 @@
+target/
+extension/_generated/
+extension/data/jmdict.bin
+node_modules/
+Cargo.lock
+*.wasm
+pkg/
+JMdict_e

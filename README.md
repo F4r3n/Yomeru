@@ -1,0 +1,53 @@
+# Japanese Reader
+
+A Firefox extension for on-hover Japanese dictionary lookup with spaced repetition (SRS) vocabulary memory.
+
+Hover over any Japanese text on any page to see the reading, part of speech, and English definitions. The matched word is highlighted in yellow. Click **+ Add to SRS** to add it to your vocabulary deck.
+
+Built with maximum Rust — all dictionary and SRS logic runs as WebAssembly; JavaScript is only a thin WebExtensions API bridge.
+
+## Features
+
+- Hover any Japanese text → popup with reading, POS tags, and glosses
+- Longest-match algorithm: hovering over a conjugated form like 食べられなかった finds 食べる
+- Deinflection covers ichidan, godan (all 9 types), i-adjectives, する, 来る
+- Yellow highlight shows exactly which characters were matched
+- Select Japanese text → exact dictionary lookup
+- SRS deck powered by the SM-2 algorithm, cards stored in IndexedDB
+
+## Prerequisites
+
+- Firefox 112+
+- Rust toolchain with the `wasm32-unknown-unknown` target: `rustup target add wasm32-unknown-unknown`
+- [`wasm-pack`](https://rustwasm.github.io/wasm-pack/): `cargo install wasm-pack`
+
+## Build
+
+```bash
+# Full build: download JMdict (if missing) → build binary index → compile WASM
+cargo xtask build-all
+
+# Rebuild WASM only (fast iteration)
+cargo xtask build --profile dev
+
+# Rebuild dictionary index from an existing JMdict_e XML file
+cargo xtask build-dict --input JMdict_e
+
+# Download JMdict_e.gz from EDRDG and decompress (skipped if already present)
+cargo xtask download-dict
+
+# Run tests (host crates only; WASM crates require wasm-pack)
+cargo xtask test
+```
+
+## Load in Firefox
+
+1. Open `about:debugging#/runtime/this-firefox`
+2. Click **Load Temporary Add-on**
+3. Select `extension/manifest.json`
+
+## Dictionary
+
+The extension uses [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html) (Electronic Dictionary Research and Development Group). The dictionary is downloaded from EDRDG and compiled into a compact binary index (~30 MB) combining an FST for fast key lookup and postcard-encoded entry data.
+
+**Data flow:** `mousemove` (debounced 120 ms) → `extract_japanese_run(text, offset)` → `Dictionary.lookup_at(run)` (longest-match + deinflection via FST) → shadow DOM popup + CSS highlight → "+ Add to SRS" → background service worker → IndexedDB.

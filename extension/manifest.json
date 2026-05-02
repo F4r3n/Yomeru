@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "Japanese Reader",
+  "version": "0.1.0",
+  "description": "Hover to look up Japanese words with dictionary and SRS vocabulary memory.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "japanese-reader@local",
+      "strict_min_version": "112.0"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["*://*/*"],
+  "background": {
+    "scripts": ["background/background.js"],
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["content/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "_generated/jmdict-wasm/jmdict_wasm.js",
+        "_generated/jmdict-wasm/jmdict_wasm_bg.wasm",
+        "_generated/srs-wasm/srs_wasm.js",
+        "_generated/srs-wasm/srs_wasm_bg.wasm",
+        "data/jmdict.bin"
+      ],
+      "matches": ["*://*/*"]
+    }
+  ],
+  "action": {
+    "default_popup": "options/options.html",
+    "default_icon": {
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png"
+    }
+  },
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
+  }
+}
