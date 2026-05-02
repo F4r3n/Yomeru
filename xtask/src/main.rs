@@ -43,6 +43,8 @@ enum Cmd {
     },
     /// Build the extension TypeScript/Svelte sources via npm.
     BuildJs,
+    /// Package the extension into release/ and japanese-reader.zip.
+    Package,
     /// Run `cargo test` for host crates only (not WASM).
     Test,
 }
@@ -84,6 +86,10 @@ fn main() -> Result<()> {
 
         Cmd::BuildJs => {
             build_js(&root)?;
+        }
+
+        Cmd::Package => {
+            package(&root)?;
         }
 
         Cmd::Test => {
@@ -166,6 +172,119 @@ fn download_jmdict(dir: &Path) -> Result<PathBuf> {
     let _ = std::fs::remove_file(&gz_path);
 
     Ok(xml_path)
+}
+
+fn package(root: &Path) -> Result<()> {
+    use zip::write::SimpleFileOptions;
+    use zip::CompressionMethod;
+
+    let ext = root.join("extension");
+    let release = root.join("release");
+
+    if release.exists() {
+        std::fs::remove_dir_all(&release)?;
+    }
+    std::fs::create_dir_all(&release)?;
+
+    // Static files required by the manifest.
+    let static_files = [
+        "manifest.json",
+        "options.html",
+        "_generated/jmdict-wasm/jmdict_wasm.js",
+        "_generated/jmdict-wasm/jmdict_wasm_bg.wasm",
+        "_generated/srs-wasm/srs_wasm.js",
+        "_generated/srs-wasm/srs_wasm_bg.wasm",
+        "data/jmdict.bin",
+    ];
+
+    for rel in &static_files {
+        let src = ext.join(rel);
+        if !src.exists() {
+            bail!(
+                "Missing required file: {} — run build-all first",
+                src.display()
+            );
+        }
+        let dest = release.join(rel);
+        std::fs::create_dir_all(dest.parent().unwrap())?;
+        std::fs::copy(&src, &dest)?;
+        eprintln!("  {rel}");
+    }
+
+    // Icons are optional (may not exist during development).
+    let icons_src = ext.join("icons");
+    if icons_src.exists() {
+        copy_dir(&icons_src, &release.join("icons"))?;
+        eprintln!("  icons/");
+    }
+
+    // Copy the entire dist/ tree (content.js, background.js, options.js + any chunks).
+    let dist_src = ext.join("dist");
+    if !dist_src.exists() {
+        bail!("extension/dist/ not found — run build-js first");
+    }
+    copy_dir(&dist_src, &release.join("dist"))?;
+    eprintln!("  dist/  ({} files)", count_files(&release.join("dist")));
+
+    // Create the zip.
+    let zip_path = root.join("japanese-reader.zip");
+    let zip_file = std::fs::File::create(&zip_path)?;
+    let mut zip = zip::ZipWriter::new(zip_file);
+    let opts = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
+    zip_add_dir(&release, &release, &mut zip, opts)?;
+    zip.finish()?;
+
+    eprintln!("\nRelease directory : {}", release.display());
+    eprintln!("Release zip       : {}", zip_path.display());
+    Ok(())
+}
+
+fn copy_dir(src: &Path, dest: &Path) -> Result<()> {
+    std::fs::create_dir_all(dest)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let dest_path = dest.join(entry.file_name());
+        if ty.is_file() {
+            std::fs::copy(entry.path(), dest_path)?;
+        } else if ty.is_dir() {
+            copy_dir(&entry.path(), &dest_path)?;
+        }
+    }
+    Ok(())
+}
+
+fn count_files(dir: &Path) -> usize {
+    std::fs::read_dir(dir).map_or(0, |rd| {
+        rd.filter_map(|e| e.ok())
+            .filter(|e| e.file_type().map(|t| t.is_file()).unwrap_or(false))
+            .count()
+    })
+}
+
+fn zip_add_dir(
+    dir: &Path,
+    base: &Path,
+    zip: &mut zip::ZipWriter<std::fs::File>,
+    opts: zip::write::SimpleFileOptions,
+) -> Result<()> {
+    use std::io::Write;
+    for entry in std::fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        let rel = path
+            .strip_prefix(base)?
+            .to_str()
+            .unwrap()
+            .replace('\\', "/");
+        if path.is_file() {
+            zip.start_file(&rel, opts)?;
+            zip.write_all(&std::fs::read(&path)?)?;
+        } else if path.is_dir() {
+            zip_add_dir(&path, base, zip, opts)?;
+        }
+    }
+    Ok(())
 }
 
 fn find_npm() -> Result<PathBuf> {

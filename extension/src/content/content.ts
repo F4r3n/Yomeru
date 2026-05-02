@@ -1,9 +1,9 @@
 import { mount } from "svelte";
 import Popup from "./Popup.svelte";
-import { popupStore } from "./popup-store.ts";
-import { getJapaneseAtPoint, isEditableAt } from "./detector.ts";
-import { initHighlight, setHighlight, clearHighlight } from "./highlight.ts";
-import { POPUP_CSS } from "./popup.css.ts";
+import { popupStore } from "./popup-store";
+import { getJapaneseAtPoint, isEditableAt } from "./detector";
+import { initHighlight, setHighlight, clearHighlight } from "./highlight";
+import { POPUP_CSS } from "./popup.css";
 
 // ── Types from wasm-pack generated declarations ───────────────────────────────
 import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
@@ -17,9 +17,15 @@ let wasmExtractRun: typeof JmDictWasm.extract_japanese_run | null = null;
 
 async function initDictionary(): Promise<void> {
   try {
-    const wasmJsUrl  = browser.runtime.getURL("_generated/jmdict-wasm/jmdict_wasm.js");
-    const wasmBinUrl = browser.runtime.getURL("_generated/jmdict-wasm/jmdict_wasm_bg.wasm");
-    const wasm = await import(/* @vite-ignore */ wasmJsUrl) as typeof JmDictWasm;
+    const wasmJsUrl = browser.runtime.getURL(
+      "_generated/jmdict-wasm/jmdict_wasm.js",
+    );
+    const wasmBinUrl = browser.runtime.getURL(
+      "_generated/jmdict-wasm/jmdict_wasm_bg.wasm",
+    );
+    const wasm = (await import(
+      /* @vite-ignore */ wasmJsUrl
+    )) as typeof JmDictWasm;
     await wasm.default(wasmBinUrl);
 
     wasmExtractRun = wasm.extract_japanese_run;
@@ -87,7 +93,9 @@ function isJpChar(ch: string): boolean {
 }
 
 function extractRunAt(text: string, charOffset: number): string {
-  return wasmExtractRun ? wasmExtractRun(text, charOffset) : jsExtractRun(text, charOffset);
+  return wasmExtractRun
+    ? wasmExtractRun(text, charOffset)
+    : jsExtractRun(text, charOffset);
 }
 
 // ── Hover detection ───────────────────────────────────────────────────────────
@@ -96,43 +104,79 @@ let lastLookedUp: string | null = null;
 let hideTimer: ReturnType<typeof setTimeout> | null = null;
 let hoverTimer: ReturnType<typeof setTimeout> | null = null;
 
-document.addEventListener("mousemove", (e) => {
-  clearTimeout(hoverTimer!);
-  hoverTimer = setTimeout(() => handleHover(e), 120);
-}, { passive: true });
+document.addEventListener(
+  "mousemove",
+  (e) => {
+    clearTimeout(hoverTimer!);
+    hoverTimer = setTimeout(() => handleHover(e), 120);
+  },
+  { passive: true },
+);
 
 document.addEventListener("mouseleave", scheduleHide);
 
-document.addEventListener("mouseover", (e) => {
-  if (e.target instanceof Element && e.target.getRootNode() === shadowRoot) {
-    clearTimeout(hideTimer!);
-  }
-}, { passive: true });
+document.addEventListener(
+  "mouseover",
+  (e) => {
+    if (e.target instanceof Element && e.target.getRootNode() === shadowRoot) {
+      clearTimeout(hideTimer!);
+    }
+  },
+  { passive: true },
+);
 
 async function handleHover(e: MouseEvent): Promise<void> {
   if (!dictionary) return;
-  if (isEditableAt(e.clientX, e.clientY)) { scheduleHide(); return; }
+  if (isEditableAt(e.clientX, e.clientY)) {
+    scheduleHide();
+    return;
+  }
 
   const hit = getJapaneseAtPoint(e.clientX, e.clientY);
-  if (!hit) { scheduleHide(); return; }
+  if (!hit) {
+    scheduleHide();
+    return;
+  }
 
   const text = extractRunAt(hit.nodeText, hit.charOffset);
-  if (!text) { scheduleHide(); return; }
+  if (!text) {
+    scheduleHide();
+    return;
+  }
 
   clearTimeout(hideTimer!);
 
   try {
-    const result = dictionary.lookup_at(text) as { entries: JmDictWasm.WordEntry[]; match_len: number } | null;
-    if (!result?.entries?.length) { scheduleHide(); return; }
+    const result = dictionary.lookup_at(text) as {
+      entries: JmDictWasm.WordEntry[];
+      match_len: number;
+    } | null;
+    if (!result?.entries?.length) {
+      scheduleHide();
+      return;
+    }
 
-    const hw = result.entries[0].kanji_forms?.[0]?.text ?? result.entries[0].reading_forms?.[0]?.text ?? text;
+    const hw =
+      result.entries[0].kanji_forms?.[0]?.text ??
+      result.entries[0].reading_forms?.[0]?.text ??
+      text;
     if (hw === lastLookedUp) return;
 
     lastLookedUp = hw;
     setHighlight(hit.node, hit.charOffset, result.match_len ?? 0);
-    popupStore.show(result.entries as unknown as import("../shared/types.ts").WordEntry[], e.clientX, e.clientY);
+    popupStore.show(
+      result.entries as unknown as import("../shared/types.ts").WordEntry[],
+      e.clientX,
+      e.clientY,
+    );
 
-    browser.runtime.sendMessage({ type: "LOG_LOOKUP", payload: { word: hw, reading: result.entries[0].reading_forms?.[0]?.text ?? "" } });
+    browser.runtime.sendMessage({
+      type: "LOG_LOOKUP",
+      payload: {
+        word: hw,
+        reading: result.entries[0].reading_forms?.[0]?.text ?? "",
+      },
+    });
   } catch (err) {
     console.error("[jp-reader] Lookup error:", err);
   }
@@ -159,7 +203,11 @@ document.addEventListener("mouseup", async (e) => {
   try {
     const entries = dictionary.lookup(text) as JmDictWasm.WordEntry[];
     if (entries?.length) {
-      popupStore.show(entries as unknown as import("../shared/types.ts").WordEntry[], e.clientX, e.clientY);
+      popupStore.show(
+        entries as unknown as import("../shared/types.ts").WordEntry[],
+        e.clientX,
+        e.clientY,
+      );
       lastLookedUp = text;
     }
   } catch (err) {
@@ -168,7 +216,10 @@ document.addEventListener("mouseup", async (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") { popupStore.hide(); lastLookedUp = null; }
+  if (e.key === "Escape") {
+    popupStore.hide();
+    lastLookedUp = null;
+  }
 });
 
 // ── Boot ──────────────────────────────────────────────────────────────────────

@@ -18,5 +18,9 @@ export function isEditableAt(x: number, y: number): boolean {
   const el = document.elementFromPoint(x, y);
   if (!el) return false;
   const tag = el.tagName.toLowerCase();
-  return tag === "input" || tag === "textarea" || (el as HTMLElement).isContentEditable;
+  return (
+    tag === "input" ||
+    tag === "textarea" ||
+    (el as HTMLElement).isContentEditable
+  );
 }

@@ -7,14 +7,20 @@ export function initHighlight(): void {
   (document.head ?? document.documentElement).appendChild(s);
 }
 
-export function setHighlight(node: Text, charOffset: number, matchLen: number): void {
+export function setHighlight(
+  node: Text,
+  charOffset: number,
+  matchLen: number,
+): void {
   if (typeof CSS === "undefined" || !CSS.highlights || matchLen <= 0) return;
   try {
     const range = new Range();
     range.setStart(node, charOffset);
     range.setEnd(node, charOffset + matchLen);
     CSS.highlights.set(HIGHLIGHT_NAME, new Highlight(range));
-  } catch (_) { /* unsupported */ }
+  } catch (_) {
+    /* unsupported */
+  }
 }
 
 export function clearHighlight(): void {

@@ -1,6 +1,7 @@
 target/
 extension/_generated/
 extension/data/jmdict.bin
+extension/dist
 node_modules/
 Cargo.lock
 *.wasm

@@ -9,7 +9,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [svelte({ emitCss: false })],
   build: {
-    outDir: ".",
+    outDir: "dist",
     emptyOutDir: false,
     rollupOptions: {
       input: {
@@ -17,7 +17,7 @@ export default defineConfig({
         options: resolve(__dirname, "src/options/main.ts"),
       },
       output: {
-        entryFileNames: (chunk) => `${chunk.name}/${chunk.name}.js`,
+        entryFileNames: "[name].js",
         chunkFileNames: "_chunks/[name]-[hash].js",
         format: "es",
       },

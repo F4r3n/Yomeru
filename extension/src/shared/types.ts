@@ -49,15 +49,27 @@ export interface SrsCard {
 
 // ── Message bus ──────────────────────────────────────────────────────────────
 
-export interface AddWordPayload { word: string; reading: string; meaning_en: string; }
-export interface ReviewCardPayload { word: string; rating: number; }
-export interface DeleteCardPayload { word: string; }
-export interface LogLookupPayload { word: string; reading: string; }
+export interface AddWordPayload {
+  word: string;
+  reading: string;
+  meaning_en: string;
+}
+export interface ReviewCardPayload {
+  word: string;
+  rating: number;
+}
+export interface DeleteCardPayload {
+  word: string;
+}
+export interface LogLookupPayload {
+  word: string;
+  reading: string;
+}
 
 export type ExtMessage =
-  | { type: "ADD_WORD";    payload: AddWordPayload }
+  | { type: "ADD_WORD"; payload: AddWordPayload }
   | { type: "REVIEW_CARD"; payload: ReviewCardPayload }
   | { type: "GET_DUE" }
   | { type: "GET_ALL_CARDS" }
   | { type: "DELETE_CARD"; payload: DeleteCardPayload }
-  | { type: "LOG_LOOKUP";  payload: LogLookupPayload };
+  | { type: "LOG_LOOKUP"; payload: LogLookupPayload };

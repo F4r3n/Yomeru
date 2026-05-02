@@ -15,13 +15,13 @@
   "permissions": ["storage"],
   "host_permissions": ["*://*/*"],
   "background": {
-    "scripts": ["background/background.js"],
+    "scripts": ["dist/background.js"],
     "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["*://*/*"],
-      "js": ["content/content.js"],
+      "js": ["dist/content.js"],
       "run_at": "document_idle"
     }
   ],
@@ -38,7 +38,7 @@
     }
   ],
   "action": {
-    "default_popup": "options/options.html",
+    "default_popup": "options.html",
     "default_icon": {
       "48": "icons/icon-48.png",
       "96": "icons/icon-96.png"

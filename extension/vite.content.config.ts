@@ -11,7 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [svelte({ emitCss: false })],
   build: {
-    outDir: resolve(__dirname, "content"),
+    outDir: resolve(__dirname, "dist"),
     emptyOutDir: false,
     rollupOptions: {
       input: resolve(__dirname, "src/content/content.ts"),
