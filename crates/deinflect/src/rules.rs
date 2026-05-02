@@ -220,6 +220,9 @@ pub static RULES: &[Rule] = &[
     rule!("さ",             "い",    "nominalization"),
 
     // ── Suru verbs ────────────────────────────────────────────────────────
+    // Strip する from a suru-noun stem so chained deinflection reaches the noun.
+    // e.g. 流出した → 流出する (した→する) → 流出 (する→"")
+    rule!("する",           "",      "suru"),
     rule!("しない",         "する",  "negative"),
     rule!("しなかった",     "する",  "negative past"),
     rule!("せず",           "する",  "negative (literary)"),

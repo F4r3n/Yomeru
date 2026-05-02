@@ -1,3 +1,5 @@
+export const PIN_DELAY_MS = 3000;
+
 export const POPUP_CSS = `
 .jp-popup {
   position: fixed; max-width: 380px; min-width: 220px;
@@ -25,4 +27,22 @@ export const POPUP_CSS = `
 }
 .jp-add-btn:hover { background: #45475a; }
 .jp-add-btn:disabled { opacity: 0.5; cursor: default; }
+
+.jp-pin-ring {
+  position: absolute; top: 7px; right: 7px;
+  line-height: 0; pointer-events: none;
+}
+.jp-ring-track {
+  fill: none; stroke: #313244; stroke-width: 2;
+}
+.jp-ring-fill {
+  fill: none; stroke: #cba6f7; stroke-width: 2;
+  stroke-dasharray: 43.98; stroke-dashoffset: 43.98;
+  animation: jp-ring-fill ${PIN_DELAY_MS / 1000}s linear forwards;
+  transform-origin: 9px 9px; transform: rotate(-90deg);
+}
+@keyframes jp-ring-fill {
+  to { stroke-dashoffset: 0; }
+}
+.jp-pin-dot { fill: #cba6f7; }
 `;

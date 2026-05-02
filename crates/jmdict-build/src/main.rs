@@ -1,5 +1,5 @@
-mod parser;
 mod indexer;
+mod parser;
 mod serializer;
 
 use anyhow::Result;

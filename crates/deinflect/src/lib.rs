@@ -137,6 +137,19 @@ mod tests {
     }
 
     #[test]
+    fn suru_noun_past_chains_to_stem() {
+        // 流出した → 流出する (した→する) → 流出 (する→"")
+        let f = forms("流出した");
+        assert!(f.contains(&"流出する".to_owned()));
+        assert!(f.contains(&"流出".to_owned()));
+    }
+
+    #[test]
+    fn suru_noun_present_strips_to_stem() {
+        assert!(forms("流出する").contains(&"流出".to_owned()));
+    }
+
+    #[test]
     fn kuru_verb() {
         assert!(forms("来なかった").contains(&"来る".to_owned()));
     }

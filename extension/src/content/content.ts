@@ -3,7 +3,7 @@ import Popup from "./Popup.svelte";
 import { popupStore } from "./popup-store";
 import { getJapaneseAtPoint, isEditableAt } from "./detector";
 import { initHighlight, setHighlight, clearHighlight } from "./highlight";
-import { POPUP_CSS } from "./popup.css";
+import { POPUP_CSS, PIN_DELAY_MS } from "./popup.css";
 
 // ── Types from wasm-pack generated declarations ───────────────────────────────
 import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
@@ -103,27 +103,33 @@ function extractRunAt(text: string, charOffset: number): string {
 let lastLookedUp: string | null = null;
 let hideTimer: ReturnType<typeof setTimeout> | null = null;
 let hoverTimer: ReturnType<typeof setTimeout> | null = null;
+let pinTimer: ReturnType<typeof setTimeout> | null = null;
+let overPopup = false;
+
+// Stop hover-hide logic from firing while the mouse is inside the popup.
+shadowHost.addEventListener("mouseenter", () => {
+  overPopup = true;
+  clearTimeout(hideTimer!);
+  clearTimeout(hoverTimer!);
+});
+shadowHost.addEventListener("mouseleave", () => {
+  overPopup = false;
+  if (!popupStore.isPinned()) scheduleHide();
+});
 
 document.addEventListener(
   "mousemove",
   (e) => {
+    if (overPopup) return;
     clearTimeout(hoverTimer!);
     hoverTimer = setTimeout(() => handleHover(e), 120);
   },
   { passive: true },
 );
 
-document.addEventListener("mouseleave", scheduleHide);
-
-document.addEventListener(
-  "mouseover",
-  (e) => {
-    if (e.target instanceof Element && e.target.getRootNode() === shadowRoot) {
-      clearTimeout(hideTimer!);
-    }
-  },
-  { passive: true },
-);
+document.addEventListener("mouseleave", () => {
+  if (!popupStore.isPinned()) scheduleHide();
+});
 
 async function handleHover(e: MouseEvent): Promise<void> {
   if (!dictionary) return;
@@ -138,10 +144,37 @@ async function handleHover(e: MouseEvent): Promise<void> {
     return;
   }
 
-  const text = extractRunAt(hit.nodeText, hit.charOffset);
+  // caretPositionFromPoint places the caret *between* characters, so the
+  // offset often lands one past the intended character. Try offset-1 as well
+  // and keep whichever produces the longer match.
+  let charOffset = hit.charOffset;
+  let text = extractRunAt(hit.nodeText, charOffset);
+
+  if (!text && charOffset > 0) {
+    charOffset -= 1;
+    text = extractRunAt(hit.nodeText, charOffset);
+  }
   if (!text) {
     scheduleHide();
     return;
+  }
+
+  if (charOffset > 0) {
+    const textBack = extractRunAt(hit.nodeText, charOffset - 1);
+    if (textBack) {
+      const resultBack = dictionary.lookup_at(textBack) as {
+        entries: JmDictWasm.WordEntry[];
+        match_len: number;
+      } | null;
+      const resultFwd = dictionary.lookup_at(text) as {
+        entries: JmDictWasm.WordEntry[];
+        match_len: number;
+      } | null;
+      if ((resultBack?.match_len ?? 0) > (resultFwd?.match_len ?? 0)) {
+        charOffset -= 1;
+        text = textBack;
+      }
+    }
   }
 
   clearTimeout(hideTimer!);
@@ -163,12 +196,16 @@ async function handleHover(e: MouseEvent): Promise<void> {
     if (hw === lastLookedUp) return;
 
     lastLookedUp = hw;
-    setHighlight(hit.node, hit.charOffset, result.match_len ?? 0);
+    setHighlight(hit.node, charOffset, result.match_len ?? 0);
     popupStore.show(
       result.entries as unknown as import("../shared/types.ts").WordEntry[],
       e.clientX,
       e.clientY,
     );
+
+    // After 5 s of hovering the same word the popup becomes sticky.
+    clearTimeout(pinTimer!);
+    pinTimer = setTimeout(() => popupStore.pin(), PIN_DELAY_MS);
 
     browser.runtime.sendMessage({
       type: "LOG_LOOKUP",
@@ -183,11 +220,14 @@ async function handleHover(e: MouseEvent): Promise<void> {
 }
 
 function scheduleHide(): void {
+  clearTimeout(pinTimer!);
   clearTimeout(hideTimer!);
   hideTimer = setTimeout(() => {
-    popupStore.hide();
-    clearHighlight();
-    lastLookedUp = null;
+    popupStore.hide(); // no-op when pinned
+    if (!popupStore.isPinned()) {
+      clearHighlight();
+      lastLookedUp = null;
+    }
   }, 300);
 }
 
@@ -217,7 +257,9 @@ document.addEventListener("mouseup", async (e) => {
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
-    popupStore.hide();
+    clearTimeout(pinTimer!);
+    popupStore.forceHide();
+    clearHighlight();
     lastLookedUp = null;
   }
 });

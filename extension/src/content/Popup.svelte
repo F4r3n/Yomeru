@@ -62,6 +62,20 @@
 
 {#if $popupStore.visible && $popupStore.entries.length > 0}
     <div class="jp-popup" use:position={{ x: $popupStore.x, y: $popupStore.y }}>
+        {#key entriesKey}
+            <div class="jp-pin-ring" aria-hidden="true">
+                {#if $popupStore.pinned}
+                    <svg viewBox="0 0 18 18" width="14" height="14">
+                        <circle class="jp-pin-dot" cx="9" cy="9" r="5" />
+                    </svg>
+                {:else}
+                    <svg viewBox="0 0 18 18" width="14" height="14">
+                        <circle class="jp-ring-track" cx="9" cy="9" r="7" />
+                        <circle class="jp-ring-fill" cx="9" cy="9" r="7" />
+                    </svg>
+                {/if}
+            </div>
+        {/key}
         {#each $popupStore.entries.slice(0, 4) as entry, i (entry.sequence)}
             {#if i > 0}<hr class="jp-divider" />{/if}
             {@const hw = headword(entry)}

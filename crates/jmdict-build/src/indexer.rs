@@ -31,10 +31,16 @@ pub fn build_index(entries: &[WordEntry]) -> Result<DictionaryIndex> {
         let byte_offset = entry_offsets[idx];
 
         for k in &entry.kanji_forms {
-            key_to_indices.entry(k.text.clone()).or_default().push(byte_offset);
+            key_to_indices
+                .entry(k.text.clone())
+                .or_default()
+                .push(byte_offset);
         }
         for r in &entry.reading_forms {
-            key_to_indices.entry(r.text.clone()).or_default().push(byte_offset);
+            key_to_indices
+                .entry(r.text.clone())
+                .or_default()
+                .push(byte_offset);
         }
     }
 
