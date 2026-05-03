@@ -76,9 +76,9 @@ pub fn review_card(mut card: SrsCard, rating: ReviewRating, now_ms: f64) -> SrsC
         };
         card.repetitions += 1;
     } else {
-        // Failed recall: reset to beginning.
+        // Failed recall: reset to beginning, due immediately.
         card.repetitions = 0;
-        card.interval_days = 1.0;
+        card.interval_days = 0.0;
     }
 
     card.due_ms = now_ms + card.interval_days as f64 * MS_PER_DAY;
@@ -129,7 +129,8 @@ mod tests {
 
         let c = review_card(c, ReviewRating::Blackout, 7.0 * MS_PER_DAY);
         assert_eq!(c.repetitions, 0);
-        assert_eq!(c.interval_days, 1.0);
+        assert_eq!(c.interval_days, 0.0);
+        assert_eq!(c.due_ms, 7.0 * MS_PER_DAY); // due immediately
     }
 
     #[test]
@@ -139,5 +140,47 @@ mod tests {
         let c = review_card(c, ReviewRating::Blackout, MS_PER_DAY);
         let c = review_card(c, ReviewRating::Blackout, 2.0 * MS_PER_DAY);
         assert!(c.ease_factor >= MIN_EASE);
+    }
+
+    #[test]
+    fn from_u8_all_valid_ratings() {
+        assert_eq!(ReviewRating::from_u8(0), ReviewRating::Blackout);
+        assert_eq!(ReviewRating::from_u8(1), ReviewRating::Incorrect);
+        assert_eq!(ReviewRating::from_u8(2), ReviewRating::IncorrectEasy);
+        assert_eq!(ReviewRating::from_u8(3), ReviewRating::Hard);
+        assert_eq!(ReviewRating::from_u8(4), ReviewRating::Good);
+        assert_eq!(ReviewRating::from_u8(5), ReviewRating::Perfect);
+    }
+
+    #[test]
+    fn from_u8_out_of_range_defaults_to_good() {
+        assert_eq!(ReviewRating::from_u8(6), ReviewRating::Good);
+        assert_eq!(ReviewRating::from_u8(255), ReviewRating::Good);
+    }
+
+    #[test]
+    fn is_pass_boundary() {
+        assert!(!ReviewRating::Blackout.is_pass());
+        assert!(!ReviewRating::Incorrect.is_pass());
+        assert!(!ReviewRating::IncorrectEasy.is_pass());
+        assert!(ReviewRating::Hard.is_pass());
+        assert!(ReviewRating::Good.is_pass());
+        assert!(ReviewRating::Perfect.is_pass());
+    }
+
+    #[test]
+    fn last_reviewed_ms_updated() {
+        let c = base_card();
+        let c = review_card(c, ReviewRating::Good, 12345.0);
+        assert_eq!(c.last_reviewed_ms, Some(12345.0));
+    }
+
+    #[test]
+    fn hard_rating_advances_interval() {
+        let c = base_card();
+        let c = review_card(c, ReviewRating::Hard, 0.0);
+        assert_eq!(c.repetitions, 1);
+        assert_eq!(c.interval_days, 1.0);
+        assert!(c.ease_factor < INITIAL_EASE);
     }
 }

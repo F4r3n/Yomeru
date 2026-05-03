@@ -157,3 +157,117 @@ impl PartOfSpeech {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_entity_adjectives() {
+        assert_eq!(PartOfSpeech::from_entity("adj-i"), PartOfSpeech::Adjective);
+        assert_eq!(PartOfSpeech::from_entity("adj-na"), PartOfSpeech::AdjectiveNa);
+        assert_eq!(PartOfSpeech::from_entity("adj-no"), PartOfSpeech::AdjectiveNo);
+        assert_eq!(PartOfSpeech::from_entity("adj-pn"), PartOfSpeech::AdjectivePrenominal);
+        assert_eq!(PartOfSpeech::from_entity("adj-t"), PartOfSpeech::AdjectiveT);
+    }
+
+    #[test]
+    fn from_entity_adverbs_and_aux() {
+        assert_eq!(PartOfSpeech::from_entity("adv"), PartOfSpeech::Adverb);
+        assert_eq!(PartOfSpeech::from_entity("adv-to"), PartOfSpeech::AdverbTo);
+        assert_eq!(PartOfSpeech::from_entity("aux"), PartOfSpeech::Auxiliary);
+        assert_eq!(PartOfSpeech::from_entity("aux-adj"), PartOfSpeech::AuxiliaryAdjective);
+        assert_eq!(PartOfSpeech::from_entity("aux-v"), PartOfSpeech::AuxiliaryVerb);
+    }
+
+    #[test]
+    fn from_entity_nouns() {
+        assert_eq!(PartOfSpeech::from_entity("n"), PartOfSpeech::Noun);
+        assert_eq!(PartOfSpeech::from_entity("n-adv"), PartOfSpeech::NounAdverbial);
+        assert_eq!(PartOfSpeech::from_entity("n-pr"), PartOfSpeech::NounProper);
+        assert_eq!(PartOfSpeech::from_entity("n-suf"), PartOfSpeech::NounSuffix);
+        assert_eq!(PartOfSpeech::from_entity("n-pref"), PartOfSpeech::NounPrefix);
+        assert_eq!(PartOfSpeech::from_entity("n-t"), PartOfSpeech::NounTemporal);
+    }
+
+    #[test]
+    fn from_entity_ichidan_verbs() {
+        assert_eq!(PartOfSpeech::from_entity("v1"), PartOfSpeech::VerbIchidan);
+        assert_eq!(PartOfSpeech::from_entity("v1-s"), PartOfSpeech::VerbIchidanS);
+    }
+
+    #[test]
+    fn from_entity_godan_verbs() {
+        assert_eq!(PartOfSpeech::from_entity("v5b"), PartOfSpeech::VerbGodanBu);
+        assert_eq!(PartOfSpeech::from_entity("v5g"), PartOfSpeech::VerbGodanGu);
+        assert_eq!(PartOfSpeech::from_entity("v5k"), PartOfSpeech::VerbGodanKu);
+        assert_eq!(PartOfSpeech::from_entity("v5k-s"), PartOfSpeech::VerbGodanKuS);
+        assert_eq!(PartOfSpeech::from_entity("v5m"), PartOfSpeech::VerbGodanMu);
+        assert_eq!(PartOfSpeech::from_entity("v5n"), PartOfSpeech::VerbGodanNu);
+        assert_eq!(PartOfSpeech::from_entity("v5r"), PartOfSpeech::VerbGodanRu);
+        assert_eq!(PartOfSpeech::from_entity("v5r-i"), PartOfSpeech::VerbGodanRuIrr);
+        assert_eq!(PartOfSpeech::from_entity("v5s"), PartOfSpeech::VerbGodanSu);
+        assert_eq!(PartOfSpeech::from_entity("v5t"), PartOfSpeech::VerbGodanTsu);
+        assert_eq!(PartOfSpeech::from_entity("v5u"), PartOfSpeech::VerbGodanU);
+        assert_eq!(PartOfSpeech::from_entity("v5u-s"), PartOfSpeech::VerbGodanUS);
+        assert_eq!(PartOfSpeech::from_entity("v5uru"), PartOfSpeech::VerbGodanUru);
+    }
+
+    #[test]
+    fn from_entity_irregular_verbs() {
+        assert_eq!(PartOfSpeech::from_entity("vs-i"), PartOfSpeech::VerbSuru);
+        assert_eq!(PartOfSpeech::from_entity("vs-s"), PartOfSpeech::VerbSuruS);
+        assert_eq!(PartOfSpeech::from_entity("vs-c"), PartOfSpeech::VerbSuruC);
+        assert_eq!(PartOfSpeech::from_entity("vk"), PartOfSpeech::VerbKuru);
+        assert_eq!(PartOfSpeech::from_entity("vn"), PartOfSpeech::VerbNu);
+        assert_eq!(PartOfSpeech::from_entity("vr"), PartOfSpeech::VerbRu);
+        assert_eq!(PartOfSpeech::from_entity("v-unspec"), PartOfSpeech::VerbUnclassified);
+        assert_eq!(PartOfSpeech::from_entity("vt"), PartOfSpeech::VerbTransitive);
+        assert_eq!(PartOfSpeech::from_entity("vi"), PartOfSpeech::VerbIntransitive);
+    }
+
+    #[test]
+    fn from_entity_misc() {
+        assert_eq!(PartOfSpeech::from_entity("conj"), PartOfSpeech::Conjunction);
+        assert_eq!(PartOfSpeech::from_entity("int"), PartOfSpeech::Interjection);
+        assert_eq!(PartOfSpeech::from_entity("prt"), PartOfSpeech::Particle);
+        assert_eq!(PartOfSpeech::from_entity("pref"), PartOfSpeech::Prefix);
+        assert_eq!(PartOfSpeech::from_entity("suf"), PartOfSpeech::Suffix);
+        assert_eq!(PartOfSpeech::from_entity("num"), PartOfSpeech::Numeric);
+        assert_eq!(PartOfSpeech::from_entity("ctr"), PartOfSpeech::Counter);
+        assert_eq!(PartOfSpeech::from_entity("exp"), PartOfSpeech::Expression);
+        assert_eq!(PartOfSpeech::from_entity("cop"), PartOfSpeech::Copula);
+        assert_eq!(PartOfSpeech::from_entity("pn"), PartOfSpeech::Pronoun);
+    }
+
+    #[test]
+    fn from_entity_unknown_fallback() {
+        assert_eq!(PartOfSpeech::from_entity(""), PartOfSpeech::Unknown);
+        assert_eq!(PartOfSpeech::from_entity("xyz"), PartOfSpeech::Unknown);
+        assert_eq!(PartOfSpeech::from_entity("v5"), PartOfSpeech::Unknown);
+    }
+
+    #[test]
+    fn display_short_adjectives() {
+        assert_eq!(PartOfSpeech::Adjective.display_short(), "adj-i");
+        assert_eq!(PartOfSpeech::AdjectiveNa.display_short(), "adj-na");
+        assert_eq!(PartOfSpeech::AdjectiveNo.display_short(), "adj-no");
+    }
+
+    #[test]
+    fn display_short_verbs() {
+        assert_eq!(PartOfSpeech::VerbIchidan.display_short(), "v1");
+        assert_eq!(PartOfSpeech::VerbGodanBu.display_short(), "v5");
+        assert_eq!(PartOfSpeech::VerbGodanRu.display_short(), "v5");
+        assert_eq!(PartOfSpeech::VerbSuru.display_short(), "vs");
+        assert_eq!(PartOfSpeech::VerbSuruC.display_short(), "vs");
+        assert_eq!(PartOfSpeech::VerbKuru.display_short(), "vk");
+    }
+
+    #[test]
+    fn display_short_fallback() {
+        assert_eq!(PartOfSpeech::Unknown.display_short(), "?");
+        assert_eq!(PartOfSpeech::Copula.display_short(), "?");
+        assert_eq!(PartOfSpeech::VerbGodanRuIrr.display_short(), "?");
+    }
+}

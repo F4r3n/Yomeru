@@ -4,7 +4,7 @@ import { popupStore } from "./popup-store";
 import { getJapaneseAtPoint, isEditableAt } from "./detector";
 import { initHighlight, setHighlight, clearHighlight } from "./highlight";
 import { POPUP_CSS, PIN_DELAY_MS } from "./popup.css";
-import { initSrsHighlighter } from "./srs-highlighter";
+import { initSrsHighlighter, disableSrsHighlighter, enableSrsHighlighter } from "./srs-highlighter";
 
 // ── Types from wasm-pack generated declarations ───────────────────────────────
 import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
@@ -153,6 +153,27 @@ function codePointToUtf16(text: string, cp: number): number {
   return i;
 }
 
+// ── Enabled state ─────────────────────────────────────────────────────────────
+
+let enabled = true;
+
+browser.storage.local.get("enabled").then((res) => {
+  enabled = (res as { enabled?: boolean }).enabled ?? true;
+});
+
+browser.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local" || !("enabled" in changes)) return;
+  enabled = changes.enabled.newValue ?? true;
+  if (!enabled) {
+    popupStore.forceHide();
+    clearHighlight();
+    lastLookedUp = null;
+    disableSrsHighlighter();
+  } else {
+    enableSrsHighlighter();
+  }
+});
+
 // ── Hover detection ───────────────────────────────────────────────────────────
 
 let lastLookedUp: string | null = null;
@@ -181,7 +202,7 @@ document.addEventListener(
       lastLookedUp = null;
       return;
     }
-    hoverTimer = setTimeout(() => handleHover(e), 120);
+    hoverTimer = setTimeout(() => handleHover(e), 60);
   },
   { passive: true },
 );
@@ -191,7 +212,7 @@ document.addEventListener("mouseleave", () => {
 });
 
 async function handleHover(e: MouseEvent): Promise<void> {
-  if (!dictionary) return;
+  if (!dictionary || !enabled) return;
   if (isEditableAt(e.clientX, e.clientY)) {
     scheduleHide();
     return;
@@ -218,20 +239,20 @@ async function handleHover(e: MouseEvent): Promise<void> {
     return;
   }
 
+  type LookupResult = { entries: JmDictWasm.WordEntry[]; match_len: number } | null;
+  let cachedResult: LookupResult = null;
+
   if (cpOffset > 0) {
     const textBack = extractRunAt(hit.nodeText, cpOffset - 1);
     if (textBack) {
-      const resultBack = dictionary.lookup_at(textBack) as {
-        entries: JmDictWasm.WordEntry[];
-        match_len: number;
-      } | null;
-      const resultFwd = dictionary.lookup_at(text) as {
-        entries: JmDictWasm.WordEntry[];
-        match_len: number;
-      } | null;
+      const resultBack = dictionary.lookup_at(textBack) as LookupResult;
+      const resultFwd = dictionary.lookup_at(text) as LookupResult;
       if ((resultBack?.match_len ?? 0) > (resultFwd?.match_len ?? 0)) {
         cpOffset -= 1;
         text = textBack;
+        cachedResult = resultBack;
+      } else {
+        cachedResult = resultFwd;
       }
     }
   }
@@ -239,10 +260,7 @@ async function handleHover(e: MouseEvent): Promise<void> {
   clearTimeout(hideTimer!);
 
   try {
-    const result = dictionary.lookup_at(text) as {
-      entries: JmDictWasm.WordEntry[];
-      match_len: number;
-    } | null;
+    const result = (cachedResult ?? dictionary.lookup_at(text)) as LookupResult;
     if (!result?.entries?.length) {
       scheduleHide();
       return;
@@ -252,13 +270,15 @@ async function handleHover(e: MouseEvent): Promise<void> {
       result.entries[0].kanji_forms?.[0]?.text ??
       result.entries[0].reading_forms?.[0]?.text ??
       text;
-    if (hw === lastLookedUp) return;
 
-    lastLookedUp = hw;
-    // Convert code-point offsets back to UTF-16 for the DOM Range API.
+    // Always refine the highlight to the exact dictionary match length,
+    // even when the word hasn't changed (phase 1 used the full run).
     const utf16Start = codePointToUtf16(hit.nodeText, cpOffset);
     const utf16End = codePointToUtf16(hit.nodeText, cpOffset + (result.match_len ?? 0));
     setHighlight(hit.node, utf16Start, utf16End - utf16Start);
+
+    if (hw === lastLookedUp) return;
+    lastLookedUp = hw;
 
     const kanjiEntries = kanjiDictionary
       ? ((kanjiDictionary.lookup_many(
@@ -304,7 +324,7 @@ function scheduleHide(): void {
 // ── Selection lookup ──────────────────────────────────────────────────────────
 
 document.addEventListener("mouseup", async (e) => {
-  if (!dictionary) return;
+  if (!dictionary || !enabled) return;
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) return;
   const text = sel.toString().trim();

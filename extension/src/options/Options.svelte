@@ -4,6 +4,18 @@
     type Tab = "review" | "words";
 
     let tab = $state<Tab>("review");
+    let enabled = $state(true);
+
+    $effect(() => {
+        browser.storage.local.get("enabled").then((res) => {
+            enabled = (res as { enabled?: boolean }).enabled ?? true;
+        });
+    });
+
+    async function toggleEnabled() {
+        enabled = !enabled;
+        await browser.storage.local.set({ enabled });
+    }
 
     // ── Review state ─────────────────────────────────────────────────────────────
     let dueCards = $state<SrsCard[]>([]);
@@ -113,7 +125,14 @@
 </script>
 
 <header>
-    <h1>Japanese Reader</h1>
+    <div class="header-top">
+        <h1>Japanese Reader</h1>
+        <button
+            class="toggle-btn"
+            class:enabled
+            onclick={toggleEnabled}
+        >{enabled ? "Stop" : "Start"}</button>
+    </div>
     <nav>
         <button
             class="tab"
@@ -269,11 +288,33 @@
         padding: 12px 16px 0;
         border-bottom: 1px solid var(--border);
     }
+    .header-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
     h1 {
         font-size: 16px;
         font-weight: 700;
         color: var(--blue);
-        margin-bottom: 10px;
+    }
+    .toggle-btn {
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 4px 14px;
+        background: var(--red);
+        color: var(--bg);
+        transition: opacity 0.15s;
+    }
+    .toggle-btn.enabled {
+        background: var(--green);
+    }
+    .toggle-btn:hover {
+        opacity: 0.85;
     }
     nav {
         display: flex;

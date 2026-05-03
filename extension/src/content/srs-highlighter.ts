@@ -97,3 +97,13 @@ export function srsWordAdded(word: string): void {
   srsWords.push(word);
   rebuildHighlights();
 }
+
+export function disableSrsHighlighter(): void {
+  if (typeof CSS !== "undefined" && CSS.highlights) {
+    CSS.highlights.delete(HL_NAME);
+  }
+}
+
+export function enableSrsHighlighter(): void {
+  rebuildHighlights();
+}
