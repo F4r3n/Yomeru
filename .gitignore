@@ -1,9 +1,12 @@
 target/
 extension/_generated/
-extension/data/jmdict.bin
 extension/dist
 node_modules/
 Cargo.lock
 *.wasm
 pkg/
 JMdict_e
+release
+japanese-reader.zip
+kanjidic2
+extension/data

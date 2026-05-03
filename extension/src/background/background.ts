@@ -60,19 +60,17 @@ async function handleAddWord({
   word,
   reading,
   meaning_en,
+  senses,
 }: {
   word: string;
   reading: string;
   meaning_en: string;
+  senses?: SrsCard["senses"];
 }) {
   await ensureSrs();
   if (await getCard(word)) return { success: true, existing: true };
-  const card = srs!.new_card(
-    word,
-    reading,
-    meaning_en ?? "",
-    Date.now(),
-  ) as SrsCard;
+  const base = srs!.new_card(word, reading, meaning_en ?? "", Date.now()) as SrsCard;
+  const card: SrsCard = { ...base, senses: senses ?? [] };
   await putCard(card);
   return { success: true, existing: false };
 }

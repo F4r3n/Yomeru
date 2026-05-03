@@ -3,6 +3,12 @@
     import type { WordEntry } from "../shared/types.ts";
     import { srsWordAdded } from "./srs-highlighter";
 
+    let activeTab = $state<"word" | "kanji">("word");
+
+    function jlptLabel(jlpt: number | null): string | null {
+        return jlpt != null ? `N${5 - jlpt}` : null;
+    }
+
     // Tracks "+ Add to SRS" button state per word, reset on each new lookup.
     let buttonStates = $state<Record<string, "idle" | "added" | "existing">>(
         {},
@@ -16,6 +22,7 @@
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         entriesKey;
         buttonStates = {};
+        activeTab = "word";
     });
 
     function headword(e: WordEntry): string {
@@ -49,10 +56,10 @@
         return { update: recompute };
     }
 
-    async function addToSrs(word: string, rdg: string, meaning: string) {
+    async function addToSrs(word: string, rdg: string, meaning: string, senses: import("../shared/types.ts").Sense[]) {
         const res = await browser.runtime.sendMessage({
             type: "ADD_WORD",
-            payload: { word, reading: rdg, meaning_en: meaning },
+            payload: { word, reading: rdg, meaning_en: meaning, senses },
         });
         buttonStates = {
             ...buttonStates,
@@ -78,48 +85,98 @@
                 {/if}
             </div>
         {/key}
-        {#each $popupStore.entries.slice(0, 4) as entry, i (entry.sequence)}
-            {#if i > 0}<hr class="jp-divider" />{/if}
-            {@const hw = headword(entry)}
-            {@const rdg = reading(entry)}
-            {@const gloss = firstGloss(entry)}
-            {@const btnState = buttonStates[hw] ?? "idle"}
-            <div class="jp-entry">
-                <div class="jp-header">
-                    <span class="jp-word">{hw}</span>
-                    {#if rdg && rdg !== hw}
-                        <span class="jp-reading">【{rdg}】</span>
-                    {/if}
-                    <span class="jp-pos-group">
-                        {#each entry.senses[0]?.pos ?? [] as pos}
-                            <span class="jp-pos">{pos}</span>
+        {#if $popupStore.kanjiEntries.length > 0}
+            <div class="jp-tabs">
+                <button
+                    class="jp-tab"
+                    class:jp-tab--active={activeTab === "word"}
+                    onclick={() => (activeTab = "word")}>Word</button
+                >
+                <button
+                    class="jp-tab"
+                    class:jp-tab--active={activeTab === "kanji"}
+                    onclick={() => (activeTab = "kanji")}>Kanji</button
+                >
+            </div>
+        {/if}
+
+        {#if activeTab === "word"}
+            {#each $popupStore.entries.slice(0, 4) as entry, i (entry.sequence)}
+                {#if i > 0}<hr class="jp-divider" />{/if}
+                {@const hw = headword(entry)}
+                {@const rdg = reading(entry)}
+                {@const gloss = firstGloss(entry)}
+                {@const btnState = buttonStates[hw] ?? "idle"}
+                <div class="jp-entry">
+                    <div class="jp-header">
+                        <span class="jp-word">{hw}</span>
+                        {#if rdg && rdg !== hw}
+                            <span class="jp-reading">【{rdg}】</span>
+                        {/if}
+                        <span class="jp-pos-group">
+                            {#each entry.senses[0]?.pos ?? [] as pos}
+                                <span class="jp-pos">{pos}</span>
+                            {/each}
+                        </span>
+                    </div>
+                    <div class="jp-senses">
+                        {#each entry.senses.slice(0, 3) as sense, si}
+                            {@const g = sense.glosses
+                                .filter((g) => g.lang === "eng")
+                                .map((g) => g.text)
+                                .join("; ")}
+                            {#if g}
+                                <div class="jp-gloss">
+                                    <span class="jp-num">{si + 1}.</span>{g}
+                                </div>
+                            {/if}
                         {/each}
-                    </span>
+                    </div>
+                    <button
+                        class="jp-add-btn"
+                        disabled={btnState !== "idle"}
+                        onclick={() =>
+                            btnState === "idle" && addToSrs(hw, rdg, gloss, entry.senses)}
+                    >
+                        {#if btnState === "idle"}+ Add to SRS
+                        {:else if btnState === "added"}Added!
+                        {:else}Already added{/if}
+                    </button>
                 </div>
-                <div class="jp-senses">
-                    {#each entry.senses.slice(0, 3) as sense, si}
-                        {@const g = sense.glosses
-                            .filter((g) => g.lang === "eng")
-                            .map((g) => g.text)
-                            .join("; ")}
-                        {#if g}
-                            <div class="jp-gloss">
-                                <span class="jp-num">{si + 1}.</span>{g}
+            {/each}
+        {:else}
+            <div class="jp-kanji-list">
+                {#each $popupStore.kanjiEntries as k (k.literal)}
+                    <div class="jp-kanji-entry">
+                        <div class="jp-kanji-header">
+                            <span class="jp-kanji-char">{k.literal}</span>
+                            <span class="jp-kanji-meta">
+                                {#if k.stroke_count}
+                                    <span class="jp-kanji-strokes"
+                                        >{k.stroke_count} strokes</span
+                                    >
+                                {/if}
+                                {#if jlptLabel(k.jlpt)}
+                                    <span class="jp-kanji-jlpt">{jlptLabel(k.jlpt)}</span>
+                                {/if}
+                            </span>
+                        </div>
+                        {#if k.on_readings.length > 0}
+                            <div class="jp-kanji-readings">
+                                <span class="jp-kanji-rdlabel">On:</span>{k.on_readings.join("、")}
                             </div>
                         {/if}
-                    {/each}
-                </div>
-                <button
-                    class="jp-add-btn"
-                    disabled={btnState !== "idle"}
-                    onclick={() =>
-                        btnState === "idle" && addToSrs(hw, rdg, gloss)}
-                >
-                    {#if btnState === "idle"}+ Add to SRS
-                    {:else if btnState === "added"}Added!
-                    {:else}Already added{/if}
-                </button>
+                        {#if k.kun_readings.length > 0}
+                            <div class="jp-kanji-readings">
+                                <span class="jp-kanji-rdlabel">Kun:</span>{k.kun_readings.join("、")}
+                            </div>
+                        {/if}
+                        {#if k.meanings.length > 0}
+                            <div class="jp-kanji-meanings">{k.meanings.join("; ")}</div>
+                        {/if}
+                    </div>
+                {/each}
             </div>
-        {/each}
+        {/if}
     </div>
 {/if}

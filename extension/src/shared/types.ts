@@ -40,6 +40,7 @@ export interface SrsCard {
   word: string;
   reading: string;
   meaning_en: string;
+  senses?: Sense[];
   due_ms: number;
   interval: number;
   ease: number;
@@ -53,6 +54,7 @@ export interface AddWordPayload {
   word: string;
   reading: string;
   meaning_en: string;
+  senses?: Sense[];
 }
 export interface ReviewCardPayload {
   word: string;
@@ -64,6 +66,17 @@ export interface DeleteCardPayload {
 export interface LogLookupPayload {
   word: string;
   reading: string;
+}
+
+export interface KanjiEntry {
+  literal: string;
+  stroke_count: number;
+  grade: number | null;
+  freq: number | null;
+  jlpt: number | null;
+  on_readings: string[];
+  kun_readings: string[];
+  meanings: string[];
 }
 
 export type ExtMessage =

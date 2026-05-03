@@ -57,10 +57,14 @@
 
     async function rate(rating: number) {
         if (!currentCard) return;
+        const card = currentCard;
         await browser.runtime.sendMessage({
             type: "REVIEW_CARD",
-            payload: { word: currentCard.word, rating },
+            payload: { word: card.word, rating },
         });
+        if (rating <= 2) {
+            dueCards = [...dueCards, card];
+        }
         currentIdx++;
         showBack = false;
         if (reviewDone) await computeNextDue();
@@ -135,14 +139,31 @@
         {:else}
             <div class="card">
                 <div class="card-front">
-                    <div class="card-word">{currentCard?.word}</div>
+                    <div class="card-word-wrap">
+                        <ruby class="card-word-furigana">
+                            {currentCard?.word}<rt>{currentCard?.reading}</rt>
+                        </ruby>
+                    </div>
                 </div>
                 {#if showBack}
                     <div class="card-back">
-                        <div class="card-reading">{currentCard?.reading}</div>
-                        <div class="card-meaning">
-                            {currentCard?.meaning_en}
-                        </div>
+                        {#if currentCard?.senses?.length}
+                            <div class="card-senses">
+                                {#each currentCard.senses.slice(0, 3) as sense, si}
+                                    {@const g = sense.glosses
+                                        .filter((g) => g.lang === "eng")
+                                        .map((g) => g.text)
+                                        .join("; ")}
+                                    {#if g}
+                                        <div class="card-gloss">
+                                            <span class="card-num">{si + 1}.</span>{g}
+                                        </div>
+                                    {/if}
+                                {/each}
+                            </div>
+                        {:else}
+                            <div class="card-meaning">{currentCard?.meaning_en}</div>
+                        {/if}
                     </div>
                 {/if}
                 <div class="card-actions">
@@ -302,10 +323,32 @@
         color: var(--blue);
         margin-bottom: 8px;
     }
-    .card-reading {
-        font-size: 18px;
+    .card-word-wrap {
+        margin-bottom: 12px;
+    }
+    .card-word-furigana {
+        font-size: 42px;
+        font-weight: 700;
+        color: var(--blue);
+        ruby-align: center;
+    }
+    .card-word-furigana rt {
+        font-size: 16px;
+        font-weight: 400;
         color: var(--green);
-        margin-bottom: 6px;
+    }
+    .card-senses {
+        text-align: left;
+        font-size: 14px;
+        color: var(--text);
+    }
+    .card-gloss {
+        margin-bottom: 4px;
+    }
+    .card-num {
+        color: var(--subtext);
+        margin-right: 4px;
+        font-size: 12px;
     }
     .card-meaning {
         font-size: 16px;

@@ -5,6 +5,9 @@ members = [
     "crates/jmdict-types",
     "crates/jmdict-build",
     "crates/jmdict-wasm",
+    "crates/kanjidic-types",
+    "crates/kanjidic-build",
+    "crates/kanjidic-wasm",
     "crates/deinflect",
     "crates/srs-core",
     "crates/srs-wasm",
@@ -17,6 +20,9 @@ lto = true
 codegen-units = 1
 
 [profile.release.package.jmdict-build]
+opt-level = 3
+
+[profile.release.package.kanjidic-build]
 opt-level = 3
 
 [profile.release.package.xtask]

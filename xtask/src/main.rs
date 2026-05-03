@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const JMDICT_URL: &str = "http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz";
+const KANJIDIC_URL: &str = "http://ftp.edrdg.org/pub/Nihongo/kanjidic2.xml.gz";
 
 #[derive(Parser)]
 #[command(name = "xtask")]
@@ -34,6 +35,18 @@ enum Cmd {
         #[arg(short, long)]
         output: Option<PathBuf>,
     },
+    /// Download kanjidic2.xml.gz from EDRDG and decompress it.
+    DownloadKanjidic {
+        #[arg(short, long)]
+        output_dir: Option<PathBuf>,
+    },
+    /// Build the KANJIDIC2 binary index from an XML source file.
+    BuildKanjidic {
+        #[arg(short, long)]
+        input: PathBuf,
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+    },
     /// Build everything: WASM modules + dict index.
     BuildAll {
         /// Path to JMdict_e (uncompressed XML).
@@ -57,6 +70,7 @@ fn main() -> Result<()> {
         Cmd::Build { profile } => {
             build_wasm(&root, "jmdict-wasm", &profile)?;
             build_wasm(&root, "srs-wasm", &profile)?;
+            build_wasm(&root, "kanjidic-wasm", &profile)?;
         }
 
         Cmd::DownloadDict { output_dir } => {
@@ -70,6 +84,17 @@ fn main() -> Result<()> {
             build_dict(&root, &input, &output)?;
         }
 
+        Cmd::DownloadKanjidic { output_dir } => {
+            let dir = output_dir.unwrap_or_else(|| root.clone());
+            let out = download_kanjidic(&dir)?;
+            eprintln!("KANJIDIC2 ready at {}", out.display());
+        }
+
+        Cmd::BuildKanjidic { input, output } => {
+            let output = output.unwrap_or_else(|| root.join("extension/data/kanjidic.bin"));
+            build_kanjidic(&root, &input, &output)?;
+        }
+
         Cmd::BuildAll { input } => {
             let xml_path = match input {
                 Some(p) => p,
@@ -79,8 +104,12 @@ fn main() -> Result<()> {
                 }
             };
             build_dict(&root, &xml_path, &root.join("extension/data/jmdict.bin"))?;
+            eprintln!("Downloading KANJIDIC2...");
+            let kanjidic_xml = download_kanjidic(&root)?;
+            build_kanjidic(&root, &kanjidic_xml, &root.join("extension/data/kanjidic.bin"))?;
             build_wasm(&root, "jmdict-wasm", "release")?;
             build_wasm(&root, "srs-wasm", "release")?;
+            build_wasm(&root, "kanjidic-wasm", "release")?;
             build_js(&root)?;
         }
 
@@ -101,6 +130,8 @@ fn main() -> Result<()> {
                     "jmdict-wasm",
                     "--exclude",
                     "srs-wasm",
+                    "--exclude",
+                    "kanjidic-wasm",
                 ])
                 .current_dir(&root))?;
         }
@@ -194,7 +225,10 @@ fn package(root: &Path) -> Result<()> {
         "_generated/jmdict-wasm/jmdict_wasm_bg.wasm",
         "_generated/srs-wasm/srs_wasm.js",
         "_generated/srs-wasm/srs_wasm_bg.wasm",
+        "_generated/kanjidic-wasm/kanjidic_wasm.js",
+        "_generated/kanjidic-wasm/kanjidic_wasm_bg.wasm",
         "data/jmdict.bin",
+        "data/kanjidic.bin",
     ];
 
     for rel in &static_files {
@@ -337,6 +371,84 @@ fn build_wasm(root: &Path, crate_name: &str, profile: &str) -> Result<()> {
         .current_dir(root))?;
 
     eprintln!("Built {crate_name} → {}", out_dir.display());
+    Ok(())
+}
+
+/// Downloads kanjidic2.xml.gz from EDRDG, decompresses it, returns the path to the XML file.
+fn download_kanjidic(dir: &Path) -> Result<PathBuf> {
+    use flate2::read::GzDecoder;
+    use std::io::{Read, Write};
+
+    std::fs::create_dir_all(dir)?;
+    let gz_path = dir.join("kanjidic2.xml.gz");
+    let xml_path = dir.join("kanjidic2");
+
+    if xml_path.exists() {
+        let size = std::fs::metadata(&xml_path)?.len();
+        if size > 100_000 {
+            eprintln!(
+                "{} already exists ({:.1} MB), skipping download.",
+                xml_path.display(),
+                size as f64 / 1_048_576.0
+            );
+            return Ok(xml_path);
+        }
+    }
+
+    eprintln!("Downloading {} ...", KANJIDIC_URL);
+    let response = ureq::get(KANJIDIC_URL)
+        .call()
+        .context("Failed to connect to ftp.edrdg.org")?;
+
+    let mut gz_bytes: Vec<u8> = Vec::new();
+    response
+        .into_reader()
+        .read_to_end(&mut gz_bytes)
+        .context("Failed to read response body")?;
+
+    eprintln!(
+        "Downloaded {:.1} MB compressed.",
+        gz_bytes.len() as f64 / 1_048_576.0
+    );
+
+    std::fs::write(&gz_path, &gz_bytes)?;
+
+    eprintln!("Decompressing...");
+    let mut decoder = GzDecoder::new(gz_bytes.as_slice());
+    let mut xml_bytes: Vec<u8> = Vec::new();
+    decoder
+        .read_to_end(&mut xml_bytes)
+        .context("Failed to decompress kanjidic2.xml.gz")?;
+
+    std::fs::File::create(&xml_path)
+        .and_then(|mut f| f.write_all(&xml_bytes))
+        .context("Failed to write kanjidic2")?;
+
+    eprintln!(
+        "Decompressed to {} ({:.1} MB).",
+        xml_path.display(),
+        xml_bytes.len() as f64 / 1_048_576.0
+    );
+
+    let _ = std::fs::remove_file(&gz_path);
+
+    Ok(xml_path)
+}
+
+fn build_kanjidic(root: &Path, input: &Path, output: &Path) -> Result<()> {
+    run(Command::new("cargo")
+        .args([
+            "run",
+            "--package",
+            "kanjidic-build",
+            "--release",
+            "--",
+            "--input",
+            input.to_str().unwrap(),
+            "--output",
+            output.to_str().unwrap(),
+        ])
+        .current_dir(root))?;
     Ok(())
 }
 

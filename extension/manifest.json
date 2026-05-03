@@ -32,7 +32,10 @@
         "_generated/jmdict-wasm/jmdict_wasm_bg.wasm",
         "_generated/srs-wasm/srs_wasm.js",
         "_generated/srs-wasm/srs_wasm_bg.wasm",
-        "data/jmdict.bin"
+        "_generated/kanjidic-wasm/kanjidic_wasm.js",
+        "_generated/kanjidic-wasm/kanjidic_wasm_bg.wasm",
+        "data/jmdict.bin",
+        "data/kanjidic.bin"
       ],
       "matches": ["*://*/*"]
     }

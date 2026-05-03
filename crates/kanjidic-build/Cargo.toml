@@ -1,0 +1,15 @@
+[package]
+name = "kanjidic-build"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "kanjidic-build"
+path = "src/main.rs"
+
+[dependencies]
+kanjidic-types = { path = "../kanjidic-types" }
+quick-xml      = { version = "0.37", features = ["encoding"] }
+postcard       = { version = "1", features = ["alloc"] }
+anyhow         = "1"
+clap           = { version = "4", features = ["derive"] }

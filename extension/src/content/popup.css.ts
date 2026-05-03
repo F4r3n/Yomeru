@@ -45,4 +45,23 @@ export const POPUP_CSS = `
   to { stroke-dashoffset: 0; }
 }
 .jp-pin-dot { fill: #cba6f7; }
+.jp-tabs { display:flex; border-bottom:1px solid #313244; margin-bottom:8px; }
+.jp-tab {
+  background:none; border:none; border-bottom:2px solid transparent;
+  color:#6c7086; padding:4px 12px; cursor:pointer; font-size:12px;
+  font-family:inherit; margin-bottom:-1px;
+}
+.jp-tab:hover { color:#cdd6f4; }
+.jp-tab--active { color:#cdd6f4; border-bottom-color:#cba6f7; }
+.jp-kanji-list { display:flex; flex-direction:column; gap:8px; }
+.jp-kanji-entry { padding:6px 0; border-top:1px solid #313244; }
+.jp-kanji-entry:first-child { border-top:none; padding-top:0; }
+.jp-kanji-header { display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
+.jp-kanji-char { font-size:32px; font-weight:600; color:#89dceb; line-height:1; }
+.jp-kanji-meta { display:flex; align-items:center; gap:6px; }
+.jp-kanji-strokes { font-size:11px; color:#6c7086; }
+.jp-kanji-jlpt { font-size:10px; background:#313244; color:#a6e3a1; border-radius:3px; padding:1px 5px; }
+.jp-kanji-readings { font-size:12px; color:#cdd6f4; margin:2px 0; }
+.jp-kanji-rdlabel { color:#6c7086; margin-right:4px; font-size:11px; }
+.jp-kanji-meanings { font-size:12px; color:#a6e3a1; margin-top:3px; }
 `;

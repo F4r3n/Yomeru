@@ -1,0 +1,17 @@
+[package]
+name = "kanjidic-wasm"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+kanjidic-types           = { path = "../kanjidic-types" }
+japanese-utils           = { path = "../japanese-utils" }
+wasm-bindgen             = "0.2"
+serde-wasm-bindgen       = "0.6"
+postcard                 = { version = "1", features = ["alloc"] }
+once_cell                = "1"
+console_error_panic_hook = "0.1"
+anyhow                   = "1"
