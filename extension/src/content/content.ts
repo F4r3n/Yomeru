@@ -4,7 +4,11 @@ import { popupStore } from "./popup-store";
 import { getJapaneseAtPoint, isEditableAt } from "./detector";
 import { initHighlight, setHighlight, clearHighlight } from "./highlight";
 import { POPUP_CSS, PIN_DELAY_MS } from "./popup.css";
-import { initSrsHighlighter, disableSrsHighlighter, enableSrsHighlighter } from "./srs-highlighter";
+import {
+  initSrsHighlighter,
+  disableSrsHighlighter,
+  enableSrsHighlighter,
+} from "./srs-highlighter";
 
 // ── Types from wasm-pack generated declarations ───────────────────────────────
 import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
@@ -21,6 +25,8 @@ let kanjiDictionary: KanjiDictionary | null = null;
 
 async function initDictionary(): Promise<void> {
   try {
+    const t0 = performance.now();
+
     const wasmJsUrl = browser.runtime.getURL(
       "_generated/jmdict-wasm/jmdict_wasm.js",
     );
@@ -31,15 +37,27 @@ async function initDictionary(): Promise<void> {
       /* @vite-ignore */ wasmJsUrl
     )) as typeof JmDictWasm;
     await wasm.default(wasmBinUrl);
+    const t1 = performance.now();
 
     wasmExtractRun = wasm.extract_japanese_run;
 
+    //Possible improvement allocate in the WASM memory and write into it
+    //Issue in WASM the memory is not released after
     const binUrl = browser.runtime.getURL("data/jmdict.bin");
     const resp = await fetch(binUrl);
     if (!resp.ok) throw new Error(`fetch jmdict.bin: ${resp.status}`);
+    const t2 = performance.now();
+
     const bytes = new Uint8Array(await resp.arrayBuffer());
+    const t3 = performance.now();
 
     dictionary = new wasm.Dictionary(bytes);
+    const t4 = performance.now();
+
+    console.log(
+      `[jp-reader] init: wasm=${(t1 - t0).toFixed(1)}ms fetch=${(t2 - t1).toFixed(1)}ms buffer=${(t3 - t2).toFixed(1)}ms parse=${(t4 - t3).toFixed(1)}ms total=${(t4 - t0).toFixed(1)}ms`,
+    );
+
     initSrsHighlighter(dictionary);
   } catch (e) {
     console.error("[jp-reader] Dictionary init failed:", e);
@@ -100,16 +118,6 @@ popupStore.subscribe((state) => {
 
 initHighlight();
 
-// ── JS fallback for extract_japanese_run (before WASM loads) ─────────────────
-
-function jsExtractRun(text: string, charOffset: number): string {
-  const chars = [...text];
-  if (charOffset >= chars.length || !isJpChar(chars[charOffset])) return "";
-  let end = charOffset + 1;
-  while (end < chars.length && isJpChar(chars[end])) end++;
-  return chars.slice(charOffset, end).join("");
-}
-
 function isJpChar(ch: string): boolean {
   const cp = ch.codePointAt(0) ?? 0;
   return (
@@ -119,12 +127,6 @@ function isJpChar(ch: string): boolean {
     (cp >= 0x30a0 && cp <= 0x30ff) ||
     cp === 0x30fc
   );
-}
-
-function extractRunAt(text: string, charOffset: number): string {
-  return wasmExtractRun
-    ? wasmExtractRun(text, charOffset)
-    : jsExtractRun(text, charOffset);
 }
 
 // DOM Range uses UTF-16 code unit offsets; Rust uses Unicode code point offsets.
@@ -228,22 +230,25 @@ async function handleHover(e: MouseEvent): Promise<void> {
   // extract_japanese_run expects a Unicode code point offset. Convert once
   // and keep cpOffset (code points) for all Rust calls throughout this function.
   let cpOffset = utf16ToCodePoint(hit.nodeText, hit.charOffset);
-  let text = extractRunAt(hit.nodeText, cpOffset);
+  let text = wasmExtractRun!(hit.nodeText, cpOffset);
 
   if (!text && cpOffset > 0) {
     cpOffset -= 1;
-    text = extractRunAt(hit.nodeText, cpOffset);
+    text = wasmExtractRun!(hit.nodeText, cpOffset);
   }
   if (!text) {
     scheduleHide();
     return;
   }
 
-  type LookupResult = { entries: JmDictWasm.WordEntry[]; match_len: number } | null;
+  type LookupResult = {
+    entries: JmDictWasm.WordEntry[];
+    match_len: number;
+  } | null;
   let cachedResult: LookupResult = null;
 
   if (cpOffset > 0) {
-    const textBack = extractRunAt(hit.nodeText, cpOffset - 1);
+    const textBack = wasmExtractRun!(hit.nodeText, cpOffset - 1);
     if (textBack) {
       const resultBack = dictionary.lookup_at(textBack) as LookupResult;
       const resultFwd = dictionary.lookup_at(text) as LookupResult;
@@ -274,7 +279,10 @@ async function handleHover(e: MouseEvent): Promise<void> {
     // Always refine the highlight to the exact dictionary match length,
     // even when the word hasn't changed (phase 1 used the full run).
     const utf16Start = codePointToUtf16(hit.nodeText, cpOffset);
-    const utf16End = codePointToUtf16(hit.nodeText, cpOffset + (result.match_len ?? 0));
+    const utf16End = codePointToUtf16(
+      hit.nodeText,
+      cpOffset + (result.match_len ?? 0),
+    );
     setHighlight(hit.node, utf16Start, utf16End - utf16Start);
 
     if (hw === lastLookedUp) return;

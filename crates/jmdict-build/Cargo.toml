@@ -7,6 +7,9 @@ edition = "2024"
 name = "jmdict-build"
 path = "src/main.rs"
 
+[features]
+full = ["jmdict-types/full"]
+
 [dependencies]
 jmdict-types = { path = "../jmdict-types" }
 quick-xml    = { version = "0.37", features = ["encoding"] }

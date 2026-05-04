@@ -34,7 +34,7 @@
     }
 
     function firstGloss(e: WordEntry): string {
-        return e.senses[0]?.glosses.find((g) => g.lang === "eng")?.text ?? "";
+        return e.senses[0]?.glosses[0]?.text ?? "";
     }
 
     // Svelte action: viewport-aware popup positioning.
@@ -121,10 +121,7 @@
                     </div>
                     <div class="jp-senses">
                         {#each entry.senses.slice(0, 3) as sense, si}
-                            {@const g = sense.glosses
-                                .filter((g) => g.lang === "eng")
-                                .map((g) => g.text)
-                                .join("; ")}
+                            {@const g = sense.glosses.map((g) => g.text).join("; ")}
                             {#if g}
                                 <div class="jp-gloss">
                                     <span class="jp-num">{si + 1}.</span>{g}

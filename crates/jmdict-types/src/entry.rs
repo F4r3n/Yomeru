@@ -46,18 +46,24 @@ impl WordEntry {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KanjiElement {
     pub text: String,
+    #[cfg(feature = "full")]
     pub info: Vec<String>,
+    #[cfg(feature = "full")]
     pub priorities: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReadingElement {
     pub text: String,
+    #[cfg(feature = "full")]
     /// If true, this reading only applies to certain kanji forms.
     pub no_kanji: bool,
+    #[cfg(feature = "full")]
     /// Kanji forms this reading applies to (empty = all).
     pub restricted_to: Vec<String>,
+    #[cfg(feature = "full")]
     pub info: Vec<String>,
+    #[cfg(feature = "full")]
     pub priorities: Vec<String>,
 }
 
@@ -65,18 +71,24 @@ pub struct ReadingElement {
 pub struct Sense {
     /// Part-of-speech tags (carry forward from previous sense if empty).
     pub pos: Vec<PartOfSpeech>,
-    /// Glosses (translations), typically in English.
+    /// English glosses (translations).
     pub glosses: Vec<Gloss>,
+    #[cfg(feature = "full")]
     /// Cross-references to other entries.
     pub xrefs: Vec<String>,
+    #[cfg(feature = "full")]
     /// Antonyms.
     pub antonyms: Vec<String>,
+    #[cfg(feature = "full")]
     /// Field of application (e.g. "math", "food").
     pub fields: Vec<String>,
+    #[cfg(feature = "full")]
     /// Miscellaneous info (e.g. "usually written in kana").
     pub misc: Vec<String>,
+    #[cfg(feature = "full")]
     /// Sense-level info notes.
     pub info: Vec<String>,
+    #[cfg(feature = "full")]
     /// Dialect tags.
     pub dialects: Vec<String>,
 }
@@ -84,8 +96,10 @@ pub struct Sense {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Gloss {
     pub text: String,
+    #[cfg(feature = "full")]
     /// Language code (default "eng").
     pub lang: String,
+    #[cfg(feature = "full")]
     /// Gloss type ("lit", "fig", "expl", etc.).
     pub gloss_type: Option<String>,
 }

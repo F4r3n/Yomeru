@@ -1,32 +1,18 @@
 export interface Gloss {
   text: string;
-  lang: string;
-  gloss_type: string | null;
 }
 
 export interface Sense {
   pos: string[];
   glosses: Gloss[];
-  xrefs: string[];
-  antonyms: string[];
-  fields: string[];
-  misc: string[];
-  info: string[];
-  dialects: string[];
 }
 
 export interface KanjiElement {
   text: string;
-  info: string[];
-  priorities: string[];
 }
 
 export interface ReadingElement {
   text: string;
-  no_kanji: boolean;
-  restricted_to: string[];
-  info: string[];
-  priorities: string[];
 }
 
 export interface WordEntry {
