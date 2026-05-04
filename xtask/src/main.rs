@@ -106,7 +106,11 @@ fn main() -> Result<()> {
             build_dict(&root, &xml_path, &root.join("extension/data/jmdict.bin"))?;
             eprintln!("Downloading KANJIDIC2...");
             let kanjidic_xml = download_kanjidic(&root)?;
-            build_kanjidic(&root, &kanjidic_xml, &root.join("extension/data/kanjidic.bin"))?;
+            build_kanjidic(
+                &root,
+                &kanjidic_xml,
+                &root.join("extension/data/kanjidic.bin"),
+            )?;
             build_wasm(&root, "jmdict-wasm", "release")?;
             build_wasm(&root, "srs-wasm", "release")?;
             build_wasm(&root, "kanjidic-wasm", "release")?;
@@ -261,7 +265,7 @@ fn package(root: &Path) -> Result<()> {
     eprintln!("  dist/  ({} files)", count_files(&release.join("dist")));
 
     // Create the zip.
-    let zip_path = root.join("japanese-reader.zip");
+    let zip_path = root.join("yomeru.zip");
     let zip_file = std::fs::File::create(&zip_path)?;
     let mut zip = zip::ZipWriter::new(zip_file);
     let opts = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);

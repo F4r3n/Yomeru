@@ -5,8 +5,12 @@
   "description": "Hover to look up Japanese words with dictionary and SRS vocabulary memory.",
   "browser_specific_settings": {
     "gecko": {
-      "id": "yomeru@local",
-      "strict_min_version": "112.0"
+      "id": "{7ed2e7e9-a883-42ef-b811-2f069d8b612c}",
+      "strict_min_version": "143.0",
+      "data_collection_permissions": {
+        "required": ["none"],
+        "optional": []
+      }
     }
   },
   "content_security_policy": {
@@ -42,13 +46,9 @@
   ],
   "action": {
     "default_popup": "options.html",
-    "default_icon": {
-      "48": "icons/icon-48.png",
-      "96": "icons/icon-96.png"
-    }
+    "default_icon": "icons/icon.svg"
   },
   "icons": {
-    "48": "icons/icon-48.png",
-    "96": "icons/icon-96.png"
+    "128": "icons/icon.svg"
   }
 }
