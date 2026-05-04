@@ -17,7 +17,7 @@ export default defineConfig({
       input: resolve(__dirname, "src/content/content.ts"),
       output: {
         format: "iife",
-        name: "_JpReader",
+        name: "_Yomeru",
         entryFileNames: "content.js",
       },
     },

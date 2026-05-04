@@ -126,7 +126,7 @@
 
 <header>
     <div class="header-top">
-        <h1>Japanese Reader</h1>
+        <h1>Yomeru</h1>
         <button
             class="toggle-btn"
             class:enabled
@@ -170,7 +170,6 @@
                             <div class="card-senses">
                                 {#each currentCard.senses.slice(0, 3) as sense, si}
                                     {@const g = sense.glosses
-                                        .filter((g) => g.lang === "eng")
                                         .map((g) => g.text)
                                         .join("; ")}
                                     {#if g}

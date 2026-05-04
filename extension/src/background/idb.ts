@@ -1,6 +1,6 @@
 import type { SrsCard } from "../shared/types.ts";
 
-const DB_NAME = "japanese-reader-db";
+const DB_NAME = "yomeru-db";
 const DB_VERSION = 1;
 
 let db: IDBDatabase | null = null;

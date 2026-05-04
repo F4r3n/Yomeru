@@ -55,12 +55,12 @@ async function initDictionary(): Promise<void> {
     const t4 = performance.now();
 
     console.log(
-      `[jp-reader] init: wasm=${(t1 - t0).toFixed(1)}ms fetch=${(t2 - t1).toFixed(1)}ms buffer=${(t3 - t2).toFixed(1)}ms parse=${(t4 - t3).toFixed(1)}ms total=${(t4 - t0).toFixed(1)}ms`,
+      `[yomeru] init: wasm=${(t1 - t0).toFixed(1)}ms fetch=${(t2 - t1).toFixed(1)}ms buffer=${(t3 - t2).toFixed(1)}ms parse=${(t4 - t3).toFixed(1)}ms total=${(t4 - t0).toFixed(1)}ms`,
     );
 
     initSrsHighlighter(dictionary);
   } catch (e) {
-    console.error("[jp-reader] Dictionary init failed:", e);
+    console.error("[yomeru] Dictionary init failed:", e);
   }
 }
 
@@ -84,14 +84,14 @@ async function initKanjiDictionary(): Promise<void> {
 
     kanjiDictionary = new wasm.KanjiDictionary(bytes);
   } catch (e) {
-    console.error("[jp-reader] KanjiDictionary init failed:", e);
+    console.error("[yomeru] KanjiDictionary init failed:", e);
   }
 }
 
 // ── Shadow DOM + Svelte popup ─────────────────────────────────────────────────
 
 const shadowHost = document.createElement("div");
-shadowHost.id = "jp-reader-host";
+shadowHost.id = "yomeru-host";
 Object.assign(shadowHost.style, {
   position: "fixed",
   zIndex: "2147483647",
@@ -313,7 +313,7 @@ async function handleHover(e: MouseEvent): Promise<void> {
       },
     });
   } catch (err) {
-    console.error("[jp-reader] Lookup error:", err);
+    console.error("[yomeru] Lookup error:", err);
   }
 }
 
@@ -355,7 +355,7 @@ document.addEventListener("mouseup", async (e) => {
       lastLookedUp = text;
     }
   } catch (err) {
-    console.error("[jp-reader] Selection lookup error:", err);
+    console.error("[yomeru] Selection lookup error:", err);
   }
 });
 

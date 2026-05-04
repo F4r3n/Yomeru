@@ -1,4 +1,4 @@
-const HIGHLIGHT_NAME = "jp-reader-match";
+const HIGHLIGHT_NAME = "yomeru-match";
 
 export function initHighlight(): void {
   if (typeof CSS === "undefined" || !CSS.highlights) return;

@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Japanese Reader",
+  "name": "Yomeru",
   "version": "0.1.0",
   "description": "Hover to look up Japanese words with dictionary and SRS vocabulary memory.",
   "browser_specific_settings": {
     "gecko": {
-      "id": "japanese-reader@local",
+      "id": "yomeru@local",
       "strict_min_version": "112.0"
     }
   },

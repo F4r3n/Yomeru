@@ -41,7 +41,7 @@ async function rebuildHighlights(): Promise<void> {
           if (!p) return NodeFilter.FILTER_REJECT;
           if (SKIP_TAGS.has(p.tagName)) return NodeFilter.FILTER_REJECT;
           if (p.isContentEditable) return NodeFilter.FILTER_REJECT;
-          if (p.closest("#jp-reader-host")) return NodeFilter.FILTER_REJECT;
+          if (p.closest("#yomeru-host")) return NodeFilter.FILTER_REJECT;
           return NodeFilter.FILTER_ACCEPT;
         },
       },
@@ -68,7 +68,7 @@ async function rebuildHighlights(): Promise<void> {
       CSS.highlights.delete(HL_NAME);
     }
   } catch (e) {
-    console.warn("[jp-reader] SRS highlight error:", e);
+    console.warn("[yomeru] SRS highlight error:", e);
   }
 }
 
