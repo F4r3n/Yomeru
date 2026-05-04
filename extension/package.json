@@ -7,13 +7,15 @@
     "build:content": "vite build --config vite.content.config.ts",
     "build:app": "vite build",
     "dev:content": "vite build --config vite.content.config.ts --watch",
-    "dev:app": "vite build --watch"
+    "dev:app": "vite build --watch",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@types/firefox-webext-browser": "^143.0.0",
     "svelte": "^5.55.0",
     "typescript": "^6.0.0",
-    "vite": "^8.0.0"
+    "vite": "^8.0.0",
+    "vitest": "^4.1.5"
   }
 }

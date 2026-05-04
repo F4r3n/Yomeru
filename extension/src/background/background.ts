@@ -8,6 +8,7 @@ import {
   addLookupHistory,
 } from "./idb";
 import type { SrsCard } from "../shared/types.ts";
+import { mergeReview } from "./review-utils.ts";
 
 type SrsEngine = InstanceType<typeof SrsWasm.SrsEngine>;
 
@@ -86,7 +87,7 @@ async function handleReviewCard({
   const card = await getCard(word);
   if (!card) return { error: "Card not found" };
   const updated = srs!.review_card(card, rating, Date.now()) as SrsCard;
-  await putCard(updated);
+  await putCard(mergeReview(card, updated));
   return { success: true, card: updated };
 }
 
