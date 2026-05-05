@@ -49,7 +49,7 @@ jobs:
           files: yomeru.zip
 
       - name: Publish to AMO
-        run: npx web-ext sign --channel=listed --source-dir=release/
+        run: npx web-ext sign --channel=unlisted --source-dir=release/ --amo-metadata=amo-metadata.json
         env:
           WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
           WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
