@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Yomeru",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Hover to look up Japanese words with dictionary and SRS vocabulary memory.",
   "browser_specific_settings": {
     "gecko": {
