@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build & publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Cache dictionary files
+        uses: actions/cache@v5
+        with:
+          path: |
+            JMdict_e
+            kanjidic2.xml
+          key: dict-v1
+
+      - name: Build
+        run: cargo xtask build-all
+
+      - name: Package
+        run: cargo xtask package
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: yomeru.zip
+
+      - name: Publish to AMO
+        run: npx web-ext sign --channel=listed --source-dir=release/
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
