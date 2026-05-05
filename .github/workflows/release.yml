@@ -53,3 +53,17 @@ jobs:
         env:
           WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
           WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+
+      - name: Upload signed XPI and updates.json to release
+        run: |
+          XPI=$(ls web-ext-artifacts/*.xpi | head -1)
+          XPI_NAME=$(basename "$XPI")
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          XPI_URL="https://github.com/F4r3n/Yomeru/releases/download/${{ github.ref_name }}/${XPI_NAME}"
+          jq -n --arg v "$VERSION" --arg url "$XPI_URL" \
+            '{"addons":{"{7ed2e7e9-a883-42ef-b811-2f069d8b612c}":{"updates":[{"version":$v,"update_link":$url}]}}}' \
+            > updates.json
+          gh release upload "${{ github.ref_name }}" "$XPI" updates.json --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

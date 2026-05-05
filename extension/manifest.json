@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Yomeru",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Hover to look up Japanese words with dictionary and SRS vocabulary memory.",
   "browser_specific_settings": {
     "gecko": {
       "id": "{7ed2e7e9-a883-42ef-b811-2f069d8b612c}",
       "strict_min_version": "143.0",
+      "update_url": "https://github.com/F4r3n/Yomeru/releases/latest/download/updates.json",
       "data_collection_permissions": {
         "required": ["none"],
         "optional": []
