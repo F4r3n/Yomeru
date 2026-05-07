@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Yomeru",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Hover to look up Japanese words with dictionary and SRS vocabulary memory.",
   "browser_specific_settings": {
     "gecko": {
@@ -9,7 +9,9 @@
       "strict_min_version": "143.0",
       "update_url": "https://github.com/F4r3n/Yomeru/releases/latest/download/updates.json",
       "data_collection_permissions": {
-        "required": ["none"],
+        "required": [
+          "none"
+        ],
         "optional": []
       }
     }
@@ -17,16 +19,26 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
   },
-  "permissions": ["storage"],
-  "host_permissions": ["*://*/*"],
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*/*"
+  ],
   "background": {
-    "scripts": ["dist/background.js"],
+    "scripts": [
+      "dist/background.js"
+    ],
     "type": "module"
   },
   "content_scripts": [
     {
-      "matches": ["*://*/*"],
-      "js": ["dist/content.js"],
+      "matches": [
+        "*://*/*"
+      ],
+      "js": [
+        "dist/content.js"
+      ],
       "run_at": "document_idle"
     }
   ],
@@ -42,7 +54,9 @@
         "data/jmdict.bin",
         "data/kanjidic.bin"
       ],
-      "matches": ["*://*/*"]
+      "matches": [
+        "*://*/*"
+      ]
     }
   ],
   "action": {
