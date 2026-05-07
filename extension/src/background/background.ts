@@ -1,18 +1,25 @@
 import type * as SrsWasm from "../../_generated/srs-wasm/srs_wasm.js";
+import type * as KanjiWasm from "../../_generated/kanjidic-wasm/kanjidic_wasm.js";
 import {
   putCard,
   getCard,
   getAllCards,
   getDueCards,
+  getStagingCards,
+  promoteCard,
+  promoteAll,
   deleteCard,
   addLookupHistory,
 } from "./idb";
-import type { SrsCard } from "../shared/types.ts";
-import { mergeReview } from "./review-utils.ts";
+import { getSettings, saveSettings } from "./settings";
+import type { SrsCard, SrsSettings } from "../shared/types.ts";
+import { mergeReview, applyIntervalScale, checkGraduation } from "./review-utils.ts";
 
 type SrsEngine = InstanceType<typeof SrsWasm.SrsEngine>;
+type KanjiDictionary = InstanceType<typeof KanjiWasm.KanjiDictionary>;
 
 let srs: SrsEngine | null = null;
+let kanji: KanjiDictionary | null = null;
 
 async function initSrs(): Promise<void> {
   const jsUrl = browser.runtime.getURL("_generated/srs-wasm/srs_wasm.js");
@@ -26,7 +33,22 @@ async function ensureSrs(): Promise<void> {
   if (!srs) await initSrs();
 }
 
+async function initKanji(): Promise<void> {
+  const jsUrl = browser.runtime.getURL("_generated/kanjidic-wasm/kanjidic_wasm.js");
+  const binUrl = browser.runtime.getURL("_generated/kanjidic-wasm/kanjidic_wasm_bg.wasm");
+  const mod = (await import(/* @vite-ignore */ jsUrl)) as typeof KanjiWasm;
+  await mod.default(binUrl);
+  const dataUrl = browser.runtime.getURL("data/kanjidic.bin");
+  const buf = await fetch(dataUrl).then((r) => r.arrayBuffer());
+  kanji = new mod.KanjiDictionary(new Uint8Array(buf));
+}
+
+async function ensureKanji(): Promise<void> {
+  if (!kanji) await initKanji();
+}
+
 initSrs();
+initKanji();
 
 browser.runtime.onMessage.addListener(
   (msg: { type: string; payload?: unknown }) => {
@@ -51,6 +73,18 @@ browser.runtime.onMessage.addListener(
         );
       case "GET_SRS_WORDS":
         return handleGetSrsWords();
+      case "GET_STAGING":
+        return handleGetStaging();
+      case "PROMOTE_CARD":
+        return handlePromoteCard(msg.payload as { word: string });
+      case "PROMOTE_ALL":
+        return handlePromoteAll();
+      case "GET_SETTINGS":
+        return handleGetSettings();
+      case "SAVE_SETTINGS":
+        return handleSaveSettings(msg.payload as SrsSettings);
+      case "GET_KANJI":
+        return handleGetKanji(msg.payload as { word: string });
       default:
         return Promise.resolve({ error: "Unknown message type" });
     }
@@ -70,8 +104,14 @@ async function handleAddWord({
 }) {
   await ensureSrs();
   if (await getCard(word)) return { success: true, existing: true };
+  const settings = await getSettings();
+  if (settings.maxStagingSize > 0) {
+    const stagingCount = (await getStagingCards()).length;
+    if (stagingCount >= settings.maxStagingSize)
+      return { success: false, reason: "staging_full" };
+  }
   const base = srs!.new_card(word, reading, meaning_en ?? "", Date.now()) as SrsCard;
-  const card: SrsCard = { ...base, senses: senses ?? [] };
+  const card: SrsCard = { ...base, senses: senses ?? [], status: "staging" };
   await putCard(card);
   return { success: true, existing: false };
 }
@@ -86,13 +126,45 @@ async function handleReviewCard({
   await ensureSrs();
   const card = await getCard(word);
   if (!card) return { error: "Card not found" };
-  const updated = srs!.review_card(card, rating, Date.now()) as SrsCard;
+  const settings = await getSettings();
+  const now_ms = Date.now();
+  let updated = srs!.review_card(card, rating, now_ms) as SrsCard;
+  updated = applyIntervalScale(updated, settings.intervalScale, now_ms);
+  if (checkGraduation(updated.repetitions, settings.graduationReps)) {
+    await deleteCard(word);
+    return { success: true, graduated: true };
+  }
   await putCard(mergeReview(card, updated));
-  return { success: true, card: updated };
+  return { success: true, graduated: false };
 }
 
 async function handleGetDue() {
-  return { cards: await getDueCards(Date.now()) };
+  const settings = await getSettings();
+  const due = await getDueCards(Date.now());
+  return { cards: due.slice(0, settings.maxSessionCards) };
+}
+
+async function handleGetStaging() {
+  return { cards: await getStagingCards() };
+}
+
+async function handlePromoteCard({ word }: { word: string }) {
+  await promoteCard(word);
+  return { success: true };
+}
+
+async function handlePromoteAll() {
+  await promoteAll();
+  return { success: true };
+}
+
+async function handleGetSettings() {
+  return getSettings();
+}
+
+async function handleSaveSettings(s: SrsSettings) {
+  await saveSettings(s);
+  return { success: true };
 }
 
 async function handleGetAllCards() {
@@ -118,4 +190,10 @@ async function handleLogLookup({
 }) {
   await addLookupHistory(word, reading);
   return { success: true };
+}
+
+async function handleGetKanji({ word }: { word: string }) {
+  await ensureKanji();
+  const entries = kanji!.lookup_many(word) as import("../shared/types.ts").KanjiEntry[];
+  return { entries: entries ?? [] };
 }

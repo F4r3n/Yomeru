@@ -28,11 +28,26 @@ export interface SrsCard {
   meaning_en: string;
   senses?: Sense[];
   due_ms: number;
-  interval: number;
-  ease: number;
-  reps: number;
+  interval_days: number;
+  ease_factor: number;
+  repetitions: number;
   added_ms: number;
+  status: "staging" | "active";
 }
+
+export interface SrsSettings {
+  maxStagingSize: number;   // 0 = unlimited
+  graduationReps: number;   // 0 = never graduate
+  intervalScale: number;    // 1.0 = no scaling
+  maxSessionCards: number;
+}
+
+export const DEFAULT_SETTINGS: SrsSettings = {
+  maxStagingSize: 30,
+  graduationReps: 0,
+  intervalScale: 1.0,
+  maxSessionCards: 20,
+};
 
 // ── Message bus ──────────────────────────────────────────────────────────────
 
@@ -72,4 +87,10 @@ export type ExtMessage =
   | { type: "GET_ALL_CARDS" }
   | { type: "DELETE_CARD"; payload: DeleteCardPayload }
   | { type: "LOG_LOOKUP"; payload: LogLookupPayload }
-  | { type: "GET_SRS_WORDS" };
+  | { type: "GET_SRS_WORDS" }
+  | { type: "GET_STAGING" }
+  | { type: "PROMOTE_CARD"; payload: { word: string } }
+  | { type: "PROMOTE_ALL" }
+  | { type: "GET_SETTINGS" }
+  | { type: "SAVE_SETTINGS"; payload: SrsSettings }
+  | { type: "GET_KANJI"; payload: { word: string } };

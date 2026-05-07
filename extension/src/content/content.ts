@@ -13,6 +13,7 @@ import {
 // ── Types from wasm-pack generated declarations ───────────────────────────────
 import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
 import type * as KanjidicWasm from "../../_generated/kanjidic-wasm/kanjidic_wasm.js";
+import type { WordEntry } from "../shared/types.ts";
 
 type Dictionary = InstanceType<typeof JmDictWasm.Dictionary>;
 type KanjiDictionary = InstanceType<typeof KanjidicWasm.KanjiDictionary>;
@@ -242,7 +243,7 @@ async function handleHover(e: MouseEvent): Promise<void> {
   }
 
   type LookupResult = {
-    entries: JmDictWasm.WordEntry[];
+    entries: WordEntry[];
     match_len: number;
   } | null;
   let cachedResult: LookupResult = null;
@@ -339,7 +340,7 @@ document.addEventListener("mouseup", async (e) => {
   if (!text || text.length > 50 || ![...text].some((c) => isJpChar(c))) return;
 
   try {
-    const entries = dictionary.lookup(text) as JmDictWasm.WordEntry[];
+    const entries = dictionary.lookup(text) as WordEntry[];
     if (entries?.length) {
       const kanjiEntries = kanjiDictionary
         ? ((kanjiDictionary.lookup_many(
