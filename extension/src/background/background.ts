@@ -1,5 +1,6 @@
 import type * as SrsWasm from "../../_generated/srs-wasm/srs_wasm.js";
 import type * as KanjiWasm from "../../_generated/kanjidic-wasm/kanjidic_wasm.js";
+import type * as ExamplesWasm from "../../_generated/examples-wasm/examples_wasm.js";
 import {
   putCard,
   getCard,
@@ -17,9 +18,12 @@ import { mergeReview, applyIntervalScale, checkGraduation } from "./review-utils
 
 type SrsEngine = InstanceType<typeof SrsWasm.SrsEngine>;
 type KanjiDictionary = InstanceType<typeof KanjiWasm.KanjiDictionary>;
+type ExamplesDict = InstanceType<typeof ExamplesWasm.ExamplesDict>;
 
 let srs: SrsEngine | null = null;
 let kanji: KanjiDictionary | null = null;
+let examplesDict: ExamplesDict | null = null;
+let examplesUnavailable = false;
 
 async function initSrs(): Promise<void> {
   const jsUrl = browser.runtime.getURL("_generated/srs-wasm/srs_wasm.js");
@@ -45,6 +49,25 @@ async function initKanji(): Promise<void> {
 
 async function ensureKanji(): Promise<void> {
   if (!kanji) await initKanji();
+}
+
+async function initExamples(): Promise<void> {
+  const jsUrl = browser.runtime.getURL("_generated/examples-wasm/examples_wasm.js");
+  const binUrl = browser.runtime.getURL("_generated/examples-wasm/examples_wasm_bg.wasm");
+  const mod = (await import(/* @vite-ignore */ jsUrl)) as typeof ExamplesWasm;
+  await mod.default(binUrl);
+  const dataUrl = browser.runtime.getURL("data/examples.bin");
+  const buf = await fetch(dataUrl).then((r) => r.arrayBuffer());
+  examplesDict = new mod.ExamplesDict(new Uint8Array(buf));
+}
+
+async function ensureExamples(): Promise<void> {
+  if (examplesDict || examplesUnavailable) return;
+  try {
+    await initExamples();
+  } catch {
+    examplesUnavailable = true;
+  }
 }
 
 initSrs();
@@ -85,6 +108,8 @@ browser.runtime.onMessage.addListener(
         return handleSaveSettings(msg.payload as SrsSettings);
       case "GET_KANJI":
         return handleGetKanji(msg.payload as { word: string });
+      case "GET_EXAMPLES":
+        return handleGetExamples(msg.payload as { word: string });
       default:
         return Promise.resolve({ error: "Unknown message type" });
     }
@@ -96,14 +121,25 @@ async function handleAddWord({
   reading,
   meaning_en,
   senses,
+  example_sentence,
 }: {
   word: string;
   reading: string;
   meaning_en: string;
   senses?: SrsCard["senses"];
+  example_sentence?: string;
 }) {
   await ensureSrs();
-  if (await getCard(word)) return { success: true, existing: true };
+  const existing = await getCard(word);
+  if (existing) {
+    if (example_sentence) {
+      const sentences = existing.example_sentences ?? [];
+      if (!sentences.includes(example_sentence)) {
+        await putCard({ ...existing, example_sentences: [...sentences, example_sentence] });
+      }
+    }
+    return { success: true, existing: true };
+  }
   const settings = await getSettings();
   if (settings.maxStagingSize > 0) {
     const stagingCount = (await getStagingCards()).length;
@@ -111,7 +147,12 @@ async function handleAddWord({
       return { success: false, reason: "staging_full" };
   }
   const base = srs!.new_card(word, reading, meaning_en ?? "", Date.now()) as SrsCard;
-  const card: SrsCard = { ...base, senses: senses ?? [], status: "staging" };
+  const card: SrsCard = {
+    ...base,
+    senses: senses ?? [],
+    example_sentences: example_sentence ? [example_sentence] : [],
+    status: "staging",
+  };
   await putCard(card);
   return { success: true, existing: false };
 }
@@ -195,5 +236,12 @@ async function handleLogLookup({
 async function handleGetKanji({ word }: { word: string }) {
   await ensureKanji();
   const entries = kanji!.lookup_many(word) as import("../shared/types.ts").KanjiEntry[];
+  return { entries: entries ?? [] };
+}
+
+async function handleGetExamples({ word }: { word: string }) {
+  await ensureExamples();
+  if (!examplesDict) return { entries: [] };
+  const entries = examplesDict.lookup(word, 5) as import("../shared/types.ts").ExampleEntry[];
   return { entries: entries ?? [] };
 }

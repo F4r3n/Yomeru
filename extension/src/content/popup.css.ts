@@ -65,4 +65,9 @@ export const POPUP_CSS = `
 .jp-kanji-readings { font-size:12px; color:#cdd6f4; margin:2px 0; }
 .jp-kanji-rdlabel { color:#6c7086; margin-right:4px; font-size:11px; }
 .jp-kanji-meanings { font-size:12px; color:#a6e3a1; margin-top:3px; }
+.jp-corpus { display:flex; flex-direction:column; gap:12px; padding:4px 0; }
+.jp-corpus-ex { display:flex; flex-direction:column; gap:3px; }
+.jp-corpus-jp { font-size:15px; color:#cdd6f4; line-height:1.6; }
+.jp-corpus-en { font-size:13px; color:#6c7086; line-height:1.5; }
+.jp-corpus-empty { font-size:13px; color:#6c7086; padding:8px 0; }
 `;

@@ -1,6 +1,7 @@
 target/
 extension/_generated/
 extension/dist
+extension/dev-profile/
 node_modules/
 Cargo.lock
 *.wasm

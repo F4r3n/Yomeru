@@ -27,6 +27,7 @@ export interface SrsCard {
   reading: string;
   meaning_en: string;
   senses?: Sense[];
+  example_sentences?: string[];
   due_ms: number;
   interval_days: number;
   ease_factor: number;
@@ -56,6 +57,7 @@ export interface AddWordPayload {
   reading: string;
   meaning_en: string;
   senses?: Sense[];
+  example_sentence?: string;
 }
 export interface ReviewCardPayload {
   word: string;
@@ -67,6 +69,11 @@ export interface DeleteCardPayload {
 export interface LogLookupPayload {
   word: string;
   reading: string;
+}
+
+export interface ExampleEntry {
+  japanese: string;
+  english: string;
 }
 
 export interface KanjiEntry {
@@ -93,4 +100,5 @@ export type ExtMessage =
   | { type: "PROMOTE_ALL" }
   | { type: "GET_SETTINGS" }
   | { type: "SAVE_SETTINGS"; payload: SrsSettings }
-  | { type: "GET_KANJI"; payload: { word: string } };
+  | { type: "GET_KANJI"; payload: { word: string } }
+  | { type: "GET_EXAMPLES"; payload: { word: string } };

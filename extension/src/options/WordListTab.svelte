@@ -68,7 +68,12 @@
             <tr>
                 <td class="td-word">{card.word}</td>
                 <td class="td-reading">{card.reading}</td>
-                <td class="td-meaning">{card.meaning_en}</td>
+                <td class="td-meaning">
+                    {card.meaning_en}
+                    {#if card.example_sentences?.length}
+                        <span class="example-count">{card.example_sentences.length}ex</span>
+                    {/if}
+                </td>
                 <td><span class="status-badge {card.status}">{card.status}</span></td>
                 <td class="td-due {dueClass(card.due_ms)}">{dueLabel(card.due_ms)}</td>
                 <td><button class="btn-delete" onclick={() => deleteCard(card.word)}>Delete</button></td>
@@ -126,6 +131,12 @@
     .td-word    { font-size: 18px; color: var(--blue);  }
     .td-reading { color: var(--green); }
     .td-meaning { color: var(--text); max-width: 180px; }
+
+    .example-count {
+        font-size: 10px;
+        color: var(--accent);
+        margin-left: 4px;
+    }
 
     .td-due.overdue { color: var(--red);     }
     .td-due.today   { color: var(--yellow);  }

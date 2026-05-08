@@ -1,21 +1,18 @@
 <script lang="ts">
     import { popupStore } from "./popup-store";
-    import type { WordEntry } from "../shared/types.ts";
+    import type { WordEntry, ExampleEntry, Sense } from "../shared/types.ts";
     import { srsWordAdded } from "./srs-highlighter";
+    import WordTab from "./WordTab.svelte";
+    import KanjiTab from "./KanjiTab.svelte";
+    import ExamplesTab from "./ExamplesTab.svelte";
 
-    let activeTab = $state<"word" | "kanji">("word");
-
-    function jlptLabel(jlpt: number | null): string | null {
-        return jlpt != null ? `N${5 - jlpt}` : null;
-    }
-
-    // Tracks "+ Add to SRS" button state per word, reset on each new lookup.
-    let buttonStates = $state<Record<string, "idle" | "added" | "existing">>(
-        {},
-    );
+    let activeTab = $state<"word" | "kanji" | "examples">("word");
+    let buttonStates = $state<Record<string, "idle" | "added" | "existing">>({});
+    let corpusExamples = $state<ExampleEntry[]>([]);
+    let examplesFetched = $state(false);
 
     let entriesKey = $derived(
-        $popupStore.entries.map((e) => e.sequence).join(","),
+        $popupStore.entries.map((e: WordEntry) => e.sequence).join(","),
     );
 
     $effect(() => {
@@ -23,21 +20,10 @@
         entriesKey;
         buttonStates = {};
         activeTab = "word";
+        corpusExamples = [];
+        examplesFetched = false;
     });
 
-    function headword(e: WordEntry): string {
-        return e.kanji_forms[0]?.text ?? e.reading_forms[0]?.text ?? "";
-    }
-
-    function reading(e: WordEntry): string {
-        return e.reading_forms[0]?.text ?? "";
-    }
-
-    function firstGloss(e: WordEntry): string {
-        return e.senses[0]?.glosses[0]?.text ?? "";
-    }
-
-    // Svelte action: viewport-aware popup positioning.
     function position(node: HTMLElement, params: { x: number; y: number }) {
         function recompute({ x, y }: { x: number; y: number }) {
             node.style.left = "0px";
@@ -56,7 +42,23 @@
         return { update: recompute };
     }
 
-    async function addToSrs(word: string, rdg: string, meaning: string, senses: import("../shared/types.ts").Sense[]) {
+    function openExamples() {
+        activeTab = "examples";
+        if (examplesFetched) return;
+        const hw =
+            $popupStore.entries[0]?.kanji_forms[0]?.text ??
+            $popupStore.entries[0]?.reading_forms[0]?.text ?? "";
+        if (!hw) return;
+        examplesFetched = true;
+        browser.runtime
+            .sendMessage({ type: "GET_EXAMPLES", payload: { word: hw } })
+            .then((res: { entries: ExampleEntry[] }) => {
+                corpusExamples = res?.entries ?? [];
+            })
+            .catch(() => {});
+    }
+
+    async function addToSrs(word: string, rdg: string, meaning: string, senses: Sense[]) {
         const res = await browser.runtime.sendMessage({
             type: "ADD_WORD",
             payload: { word, reading: rdg, meaning_en: meaning, senses },
@@ -85,95 +87,37 @@
                 {/if}
             </div>
         {/key}
-        {#if $popupStore.kanjiEntries.length > 0}
-            <div class="jp-tabs">
-                <button
-                    class="jp-tab"
-                    class:jp-tab--active={activeTab === "word"}
-                    onclick={() => (activeTab = "word")}>Word</button
-                >
+
+        <div class="jp-tabs">
+            <button
+                class="jp-tab"
+                class:jp-tab--active={activeTab === "word"}
+                onclick={() => (activeTab = "word")}>Word</button
+            >
+            {#if $popupStore.kanjiEntries.length > 0}
                 <button
                     class="jp-tab"
                     class:jp-tab--active={activeTab === "kanji"}
                     onclick={() => (activeTab = "kanji")}>Kanji</button
                 >
-            </div>
-        {/if}
+            {/if}
+            <button
+                class="jp-tab"
+                class:jp-tab--active={activeTab === "examples"}
+                onclick={openExamples}>Examples</button
+            >
+        </div>
 
         {#if activeTab === "word"}
-            {#each $popupStore.entries.slice(0, 4) as entry, i (entry.sequence)}
-                {#if i > 0}<hr class="jp-divider" />{/if}
-                {@const hw = headword(entry)}
-                {@const rdg = reading(entry)}
-                {@const gloss = firstGloss(entry)}
-                {@const btnState = buttonStates[hw] ?? "idle"}
-                <div class="jp-entry">
-                    <div class="jp-header">
-                        <span class="jp-word">{hw}</span>
-                        {#if rdg && rdg !== hw}
-                            <span class="jp-reading">【{rdg}】</span>
-                        {/if}
-                        <span class="jp-pos-group">
-                            {#each entry.senses[0]?.pos ?? [] as pos}
-                                <span class="jp-pos">{pos}</span>
-                            {/each}
-                        </span>
-                    </div>
-                    <div class="jp-senses">
-                        {#each entry.senses.slice(0, 3) as sense, si}
-                            {@const g = sense.glosses.map((g) => g.text).join("; ")}
-                            {#if g}
-                                <div class="jp-gloss">
-                                    <span class="jp-num">{si + 1}.</span>{g}
-                                </div>
-                            {/if}
-                        {/each}
-                    </div>
-                    <button
-                        class="jp-add-btn"
-                        disabled={btnState !== "idle"}
-                        onclick={() =>
-                            btnState === "idle" && addToSrs(hw, rdg, gloss, entry.senses)}
-                    >
-                        {#if btnState === "idle"}+ Add to SRS
-                        {:else if btnState === "added"}Added!
-                        {:else}Already added{/if}
-                    </button>
-                </div>
-            {/each}
+            <WordTab
+                entries={$popupStore.entries}
+                {buttonStates}
+                onadd={addToSrs}
+            />
+        {:else if activeTab === "kanji"}
+            <KanjiTab kanjiEntries={$popupStore.kanjiEntries} />
         {:else}
-            <div class="jp-kanji-list">
-                {#each $popupStore.kanjiEntries as k (k.literal)}
-                    <div class="jp-kanji-entry">
-                        <div class="jp-kanji-header">
-                            <span class="jp-kanji-char">{k.literal}</span>
-                            <span class="jp-kanji-meta">
-                                {#if k.stroke_count}
-                                    <span class="jp-kanji-strokes"
-                                        >{k.stroke_count} strokes</span
-                                    >
-                                {/if}
-                                {#if jlptLabel(k.jlpt)}
-                                    <span class="jp-kanji-jlpt">{jlptLabel(k.jlpt)}</span>
-                                {/if}
-                            </span>
-                        </div>
-                        {#if k.on_readings.length > 0}
-                            <div class="jp-kanji-readings">
-                                <span class="jp-kanji-rdlabel">On:</span>{k.on_readings.join("、")}
-                            </div>
-                        {/if}
-                        {#if k.kun_readings.length > 0}
-                            <div class="jp-kanji-readings">
-                                <span class="jp-kanji-rdlabel">Kun:</span>{k.kun_readings.join("、")}
-                            </div>
-                        {/if}
-                        {#if k.meanings.length > 0}
-                            <div class="jp-kanji-meanings">{k.meanings.join("; ")}</div>
-                        {/if}
-                    </div>
-                {/each}
-            </div>
+            <ExamplesTab examples={corpusExamples} fetched={examplesFetched} />
         {/if}
     </div>
 {/if}

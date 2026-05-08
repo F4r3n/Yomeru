@@ -3,8 +3,9 @@
     import NewWordsTab from "./NewWordsTab.svelte";
     import WordListTab from "./WordListTab.svelte";
     import SettingsTab from "./SettingsTab.svelte";
+    import AboutTab from "./AboutTab.svelte";
 
-    type Tab = "review" | "new" | "words" | "settings";
+    type Tab = "review" | "new" | "words" | "settings" | "about";
 
     let tab = $state<Tab>("review");
     let enabled = $state(true);
@@ -41,6 +42,7 @@
         <button class="tab" class:active={tab === "new"}    onclick={() => (tab = "new")}>New Words{stagingCount > 0 ? ` (${stagingCount})` : ""}</button>
         <button class="tab" class:active={tab === "words"}  onclick={() => (tab = "words")}>Word List</button>
         <button class="tab" class:active={tab === "settings"} onclick={() => (tab = "settings")}>Settings</button>
+        <button class="tab" class:active={tab === "about"}    onclick={() => (tab = "about")}>About</button>
     </nav>
 </header>
 
@@ -51,8 +53,10 @@
         <NewWordsTab onstagingchange={onStagingChange} />
     {:else if tab === "words"}
         <WordListTab />
-    {:else}
+    {:else if tab === "settings"}
         <SettingsTab />
+    {:else}
+        <AboutTab />
     {/if}
 </main>
 

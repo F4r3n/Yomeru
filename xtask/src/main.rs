@@ -5,6 +5,7 @@ use std::process::Command;
 
 const JMDICT_URL: &str = "http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz";
 const KANJIDIC_URL: &str = "http://ftp.edrdg.org/pub/Nihongo/kanjidic2.xml.gz";
+const EXAMPLES_URL: &str = "http://ftp.edrdg.org/pub/Nihongo/examples.utf.gz";
 
 #[derive(Parser)]
 #[command(name = "xtask")]
@@ -42,6 +43,18 @@ enum Cmd {
     },
     /// Build the KANJIDIC2 binary index from an XML source file.
     BuildKanjidic {
+        #[arg(short, long)]
+        input: PathBuf,
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+    },
+    /// Download examples.utf.gz from EDRDG and decompress it.
+    DownloadExamples {
+        #[arg(short, long)]
+        output_dir: Option<PathBuf>,
+    },
+    /// Build the examples binary index from examples.utf.
+    BuildExamples {
         #[arg(short, long)]
         input: PathBuf,
         #[arg(short, long)]
@@ -95,6 +108,17 @@ fn main() -> Result<()> {
             build_kanjidic(&root, &input, &output)?;
         }
 
+        Cmd::DownloadExamples { output_dir } => {
+            let dir = output_dir.unwrap_or_else(|| root.clone());
+            let out = download_examples(&dir)?;
+            eprintln!("examples.utf ready at {}", out.display());
+        }
+
+        Cmd::BuildExamples { input, output } => {
+            let output = output.unwrap_or_else(|| root.join("extension/data/examples.bin"));
+            build_examples(&root, &input, &output)?;
+        }
+
         Cmd::BuildAll { input } => {
             let xml_path = match input {
                 Some(p) => p,
@@ -111,9 +135,13 @@ fn main() -> Result<()> {
                 &kanjidic_xml,
                 &root.join("extension/data/kanjidic.bin"),
             )?;
+            eprintln!("Downloading example sentences...");
+            let examples_utf = download_examples(&root)?;
+            build_examples(&root, &examples_utf, &root.join("extension/data/examples.bin"))?;
             build_wasm(&root, "jmdict-wasm", "release")?;
             build_wasm(&root, "srs-wasm", "release")?;
             build_wasm(&root, "kanjidic-wasm", "release")?;
+            build_wasm(&root, "examples-wasm", "release")?;
             build_js(&root)?;
         }
 
@@ -136,6 +164,8 @@ fn main() -> Result<()> {
                     "srs-wasm",
                     "--exclude",
                     "kanjidic-wasm",
+                    "--exclude",
+                    "examples-wasm",
                 ])
                 .current_dir(&root))?;
         }
@@ -233,6 +263,9 @@ fn package(root: &Path) -> Result<()> {
         "_generated/kanjidic-wasm/kanjidic_wasm_bg.wasm",
         "data/jmdict.bin",
         "data/kanjidic.bin",
+        "_generated/examples-wasm/examples_wasm.js",
+        "_generated/examples-wasm/examples_wasm_bg.wasm",
+        "data/examples.bin",
     ];
 
     for rel in &static_files {
@@ -437,6 +470,82 @@ fn download_kanjidic(dir: &Path) -> Result<PathBuf> {
     let _ = std::fs::remove_file(&gz_path);
 
     Ok(xml_path)
+}
+
+fn download_examples(dir: &Path) -> Result<PathBuf> {
+    use flate2::read::GzDecoder;
+    use std::io::{Read, Write};
+
+    std::fs::create_dir_all(dir)?;
+    let gz_path = dir.join("examples.utf.gz");
+    let out_path = dir.join("examples.utf");
+
+    if out_path.exists() {
+        let size = std::fs::metadata(&out_path)?.len();
+        if size > 1_000_000 {
+            eprintln!(
+                "{} already exists ({:.1} MB), skipping download.",
+                out_path.display(),
+                size as f64 / 1_048_576.0
+            );
+            return Ok(out_path);
+        }
+    }
+
+    eprintln!("Downloading {} ...", EXAMPLES_URL);
+    let response = ureq::get(EXAMPLES_URL)
+        .call()
+        .context("Failed to connect to ftp.edrdg.org")?;
+
+    let mut gz_bytes: Vec<u8> = Vec::new();
+    response
+        .into_reader()
+        .read_to_end(&mut gz_bytes)
+        .context("Failed to read response body")?;
+
+    eprintln!(
+        "Downloaded {:.1} MB compressed.",
+        gz_bytes.len() as f64 / 1_048_576.0
+    );
+
+    std::fs::write(&gz_path, &gz_bytes)?;
+
+    eprintln!("Decompressing...");
+    let mut decoder = GzDecoder::new(gz_bytes.as_slice());
+    let mut bytes: Vec<u8> = Vec::new();
+    decoder
+        .read_to_end(&mut bytes)
+        .context("Failed to decompress examples.utf.gz")?;
+
+    std::fs::File::create(&out_path)
+        .and_then(|mut f| f.write_all(&bytes))
+        .context("Failed to write examples.utf")?;
+
+    eprintln!(
+        "Decompressed to {} ({:.1} MB).",
+        out_path.display(),
+        bytes.len() as f64 / 1_048_576.0
+    );
+
+    let _ = std::fs::remove_file(&gz_path);
+    Ok(out_path)
+}
+
+fn build_examples(root: &Path, input: &Path, output: &Path) -> Result<()> {
+    run(Command::new("cargo")
+        .args([
+            "run",
+            "--package",
+            "examples-build",
+            "--release",
+            "--",
+            "--input",
+            input.to_str().unwrap(),
+            "--output",
+            output.to_str().unwrap(),
+        ])
+        .current_dir(root))?;
+    Ok(())
 }
 
 fn build_kanjidic(root: &Path, input: &Path, output: &Path) -> Result<()> {

@@ -1,0 +1,14 @@
+[package]
+name = "examples-build"
+version = "0.3.0"
+edition = "2024"
+
+[[bin]]
+name = "examples-build"
+path = "src/main.rs"
+
+[dependencies]
+examples-types = { path = "../examples-types" }
+postcard       = { version = "1", features = ["alloc"] }
+anyhow         = "1"
+clap           = { version = "4", features = ["derive"] }

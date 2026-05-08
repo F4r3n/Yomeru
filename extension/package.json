@@ -8,6 +8,7 @@
     "build:app": "vite build",
     "dev:content": "vite build --config vite.content.config.ts --watch",
     "dev:app": "vite build --watch",
+    "dev:run": "web-ext run",
     "test": "vitest run"
   },
   "devDependencies": {

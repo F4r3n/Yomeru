@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { SrsCard, KanjiEntry } from "../shared/types.ts";
+    import type { SrsCard, KanjiEntry, ExampleEntry } from "../shared/types.ts";
 
     let dueCards = $state<SrsCard[]>([]);
     let currentIdx = $state(0);
@@ -8,6 +8,7 @@
     let stagingCount = $state(0);
     let graduatedMsg = $state("");
     let kanjiEntries = $state<KanjiEntry[]>([]);
+    let corpusExamples = $state<ExampleEntry[]>([]);
 
     let currentCard = $derived(dueCards[currentIdx] ?? null);
     let reviewDone = $derived(!currentCard);
@@ -36,12 +37,14 @@
     async function revealAnswer() {
         showBack = true;
         kanjiEntries = [];
+        corpusExamples = [];
         if (!currentCard) return;
-        const res = await browser.runtime.sendMessage({
-            type: "GET_KANJI",
-            payload: { word: currentCard.word },
-        });
-        kanjiEntries = (res as { entries: KanjiEntry[] }).entries ?? [];
+        const [kanjiRes, exRes] = await Promise.all([
+            browser.runtime.sendMessage({ type: "GET_KANJI", payload: { word: currentCard.word } }),
+            browser.runtime.sendMessage({ type: "GET_EXAMPLES", payload: { word: currentCard.word } }),
+        ]);
+        kanjiEntries = (kanjiRes as { entries: KanjiEntry[] }).entries ?? [];
+        corpusExamples = (exRes as { entries: ExampleEntry[] }).entries ?? [];
     }
 
     async function rate(rating: number) {
@@ -60,6 +63,7 @@
         currentIdx++;
         showBack = false;
         kanjiEntries = [];
+        corpusExamples = [];
         if (reviewDone) await computeNextDue();
     }
 
@@ -118,7 +122,19 @@
                 {/if}
             </div>
         {/if}
-        {#if kanjiEntries.length > 0}
+        {#if corpusExamples.length > 0}
+            <div class="examples">
+                {#each corpusExamples as ex}
+                    <div class="example-row">
+                        <div class="example-text">
+                            <div>{ex.japanese}</div>
+                            <div class="example-en">{ex.english}</div>
+                        </div>
+                    </div>
+                {/each}
+            </div>
+        {/if}
+    {#if kanjiEntries.length > 0}
             <div class="kanji-breakdown">
                 {#each kanjiEntries as k}
                     <div class="kanji-row">
@@ -287,4 +303,29 @@
     .kanji-on     { color: var(--yellow);  }
     .kanji-kun    { color: var(--green);   }
     .kanji-meaning { color: var(--subtext); }
+
+    .examples {
+        margin-top: 10px;
+        border-top: 1px solid var(--border);
+        padding-top: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        text-align: left;
+    }
+    .example-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--subtext);
+    }
+    .example-text {
+        flex: 1;
+    }
+    .example-en {
+        color: var(--subtext);
+        font-size: 11px;
+        margin-top: 2px;
+    }
 </style>
