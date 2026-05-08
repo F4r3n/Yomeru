@@ -350,7 +350,16 @@ document.addEventListener("mouseup", async (e) => {
   if (!text || text.length > 50 || ![...text].some((c) => isJpChar(c))) return;
 
   try {
-    const entries = dictionary.lookup(text) as WordEntry[];
+    const allEntries = dictionary.lookup(text) as WordEntry[];
+    // Keep only entries where the selected text is the primary kanji or reading form.
+    // This avoids showing unrelated entries that merely list the selected kanji as
+    // an obscure alternative spelling.
+    const primary = allEntries.filter(
+      (e) =>
+        e.kanji_forms[0]?.text === text ||
+        (e.kanji_forms.length === 0 && e.reading_forms[0]?.text === text),
+    );
+    const entries = primary.length > 0 ? primary : allEntries;
     if (entries?.length) {
       const kanjiEntries = kanjiDictionary
         ? ((kanjiDictionary.lookup_many(

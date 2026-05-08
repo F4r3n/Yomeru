@@ -47,13 +47,16 @@ export const POPUP_CSS = `
 }
 .jp-pin-dot { fill: #cba6f7; }
 .jp-tabs { display:flex; border-bottom:1px solid #313244; margin-bottom:8px; }
+.jp-tabs--bottom { border-bottom:none; border-top:1px solid #313244; margin-bottom:0; margin-top:8px; }
 .jp-tab {
   background:none; border:none; border-bottom:2px solid transparent;
   color:#6c7086; padding:4px 12px; cursor:pointer; font-size:12px;
   font-family:inherit; margin-bottom:-1px;
 }
+.jp-tabs--bottom .jp-tab { margin-bottom:0; margin-top:-1px; border-bottom:none; border-top:2px solid transparent; }
 .jp-tab:hover { color:#cdd6f4; }
 .jp-tab--active { color:#cdd6f4; border-bottom-color:#cba6f7; }
+.jp-tabs--bottom .jp-tab--active { border-bottom-color:transparent; border-top-color:#cba6f7; }
 .jp-kanji-list { display:flex; flex-direction:column; gap:8px; }
 .jp-kanji-entry { padding:6px 0; border-top:1px solid #313244; }
 .jp-kanji-entry:first-child { border-top:none; padding-top:0; }
@@ -68,6 +71,7 @@ export const POPUP_CSS = `
 .jp-corpus { display:flex; flex-direction:column; gap:12px; padding:4px 0; }
 .jp-corpus-ex { display:flex; flex-direction:column; gap:3px; }
 .jp-corpus-jp { font-size:15px; color:#cdd6f4; line-height:1.6; }
+.jp-corpus-mark { background:rgba(203,166,247,0.18); color:#cba6f7; border-radius:2px; padding:0 1px; }
 .jp-corpus-en { font-size:13px; color:#6c7086; line-height:1.5; }
 .jp-corpus-empty { font-size:13px; color:#6c7086; padding:8px 0; }
 `;
