@@ -9,6 +9,7 @@
     let graduatedMsg = $state("");
     let kanjiEntries = $state<KanjiEntry[]>([]);
     let corpusExamples = $state<ExampleEntry[]>([]);
+    let activeCardTab = $state<"word" | "kanji" | "examples">("word");
 
     let currentCard = $derived(dueCards[currentIdx] ?? null);
     let reviewDone = $derived(!currentCard);
@@ -36,6 +37,7 @@
 
     async function revealAnswer() {
         showBack = true;
+        activeCardTab = "word";
         kanjiEntries = [];
         corpusExamples = [];
         if (!currentCard) return;
@@ -62,6 +64,7 @@
         }
         currentIdx++;
         showBack = false;
+        activeCardTab = "word";
         kanjiEntries = [];
         corpusExamples = [];
         if (reviewDone) await computeNextDue();
@@ -105,52 +108,75 @@
             </div>
         </div>
         {#if showBack}
-            <div class="card-back">
-                {#if currentCard?.senses?.length}
-                    <div class="card-senses">
-                        {#each currentCard.senses.slice(0, 3) as sense, si}
-                            {@const g = sense.glosses.map((g) => g.text).join("; ")}
-                            {#if g}
-                                <div class="card-gloss">
-                                    <span class="card-num">{si + 1}.</span>{g}
-                                </div>
-                            {/if}
-                        {/each}
-                    </div>
-                {:else}
-                    <div class="card-meaning">{currentCard?.meaning_en}</div>
+            <div class="card-tabs">
+                <button
+                    class="card-tab"
+                    class:card-tab--active={activeCardTab === "word"}
+                    onclick={() => (activeCardTab = "word")}>Word</button
+                >
+                {#if kanjiEntries.length > 0}
+                    <button
+                        class="card-tab"
+                        class:card-tab--active={activeCardTab === "kanji"}
+                        onclick={() => (activeCardTab = "kanji")}>Kanji</button
+                    >
                 {/if}
+                <button
+                    class="card-tab"
+                    class:card-tab--active={activeCardTab === "examples"}
+                    onclick={() => (activeCardTab = "examples")}>Examples</button
+                >
             </div>
-        {/if}
-        {#if corpusExamples.length > 0}
-            <div class="examples">
-                {#each corpusExamples as ex}
-                    <div class="example-row">
-                        <div class="example-text">
-                            <div>{ex.japanese}</div>
-                            <div class="example-en">{ex.english}</div>
+
+            {#if activeCardTab === "word"}
+                <div class="card-back">
+                    {#if currentCard?.senses?.length}
+                        <div class="card-senses">
+                            {#each currentCard.senses.slice(0, 3) as sense, si}
+                                {@const g = sense.glosses.map((g) => g.text).join("; ")}
+                                {#if g}
+                                    <div class="card-gloss">
+                                        <span class="card-num">{si + 1}.</span>{g}
+                                    </div>
+                                {/if}
+                            {/each}
                         </div>
-                    </div>
-                {/each}
-            </div>
-        {/if}
-    {#if kanjiEntries.length > 0}
-            <div class="kanji-breakdown">
-                {#each kanjiEntries as k}
-                    <div class="kanji-row">
-                        <span class="kanji-char">{k.literal}</span>
-                        <div class="kanji-info">
-                            {#if k.on_readings.length}
-                                <span class="kanji-on">{k.on_readings.join("、")}</span>
-                            {/if}
-                            {#if k.kun_readings.length}
-                                <span class="kanji-kun">{k.kun_readings.join("、")}</span>
-                            {/if}
-                            <span class="kanji-meaning">{k.meanings.slice(0, 3).join(", ")}</span>
+                    {:else}
+                        <div class="card-meaning">{currentCard?.meaning_en}</div>
+                    {/if}
+                </div>
+            {:else if activeCardTab === "kanji"}
+                <div class="kanji-breakdown">
+                    {#each kanjiEntries as k}
+                        <div class="kanji-row">
+                            <span class="kanji-char">{k.literal}</span>
+                            <div class="kanji-info">
+                                {#if k.on_readings.length}
+                                    <span class="kanji-on">{k.on_readings.join("、")}</span>
+                                {/if}
+                                {#if k.kun_readings.length}
+                                    <span class="kanji-kun">{k.kun_readings.join("、")}</span>
+                                {/if}
+                                <span class="kanji-meaning">{k.meanings.slice(0, 3).join(", ")}</span>
+                            </div>
                         </div>
-                    </div>
-                {/each}
-            </div>
+                    {/each}
+                </div>
+            {:else}
+                <div class="examples">
+                    {#each corpusExamples as ex}
+                        <div class="example-row">
+                            <div class="example-text">
+                                <div>{ex.japanese}</div>
+                                <div class="example-en">{ex.english}</div>
+                            </div>
+                        </div>
+                    {/each}
+                    {#if corpusExamples.length === 0}
+                        <div class="examples-empty">No examples found.</div>
+                    {/if}
+                </div>
+            {/if}
         {/if}
         <div class="card-actions">
             {#if !showBack}
@@ -215,6 +241,27 @@
         font-weight: 400;
         color: var(--green);
     }
+    .card-tabs {
+        display: flex;
+        gap: 4px;
+        border-bottom: 1px solid var(--border);
+        margin: 16px 0 12px;
+    }
+    .card-tab {
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--subtext);
+        cursor: pointer;
+        font-size: 12px;
+        font-family: inherit;
+        padding: 4px 12px;
+        margin-bottom: -1px;
+        transition: color 0.15s;
+    }
+    .card-tab:hover { color: var(--text); }
+    .card-tab--active { color: var(--accent); border-bottom-color: var(--accent); }
+
     .card-senses {
         text-align: left;
         font-size: 14px;
@@ -274,10 +321,9 @@
     .r4 { background: var(--green);  color: var(--bg); }
     .r5 { background: var(--blue);   color: var(--bg); }
 
+    .examples-empty { font-size: 13px; color: var(--subtext); padding: 4px 0; text-align: left; }
+
     .kanji-breakdown {
-        margin-top: 16px;
-        border-top: 1px solid var(--border);
-        padding-top: 12px;
         display: flex;
         flex-direction: column;
         gap: 8px;
@@ -305,9 +351,6 @@
     .kanji-meaning { color: var(--subtext); }
 
     .examples {
-        margin-top: 10px;
-        border-top: 1px solid var(--border);
-        padding-top: 8px;
         display: flex;
         flex-direction: column;
         gap: 4px;
@@ -317,15 +360,18 @@
         display: flex;
         align-items: flex-start;
         gap: 6px;
-        font-size: 12px;
-        color: var(--subtext);
+        color: var(--text);
     }
     .example-text {
         flex: 1;
     }
+    .example-text > div:first-child {
+        font-size: 16px;
+        line-height: 1.6;
+    }
     .example-en {
         color: var(--subtext);
-        font-size: 11px;
-        margin-top: 2px;
+        font-size: 13px;
+        margin-top: 3px;
     }
 </style>
