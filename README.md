@@ -1,5 +1,7 @@
 # Japanese Reader
 
+<img src="extension/icons/icon.svg" width="64" height="64" alt="Yomeru icon">
+
 A Firefox extension for on-hover Japanese dictionary lookup with spaced repetition (SRS) vocabulary memory.
 
 Hover over any Japanese text on any page to see the reading, part of speech, and English definitions. The matched word is highlighted in yellow. Click **+ Add to SRS** to add it to your vocabulary deck.
@@ -16,7 +18,28 @@ Built with maximum Rust — all dictionary and SRS logic runs as WebAssembly; Ja
 - Select Japanese text → exact dictionary lookup
 - SRS deck powered by the SM-2 algorithm, cards stored in IndexedDB
 
-## Prerequisites
+## Screenshots
+
+<table>
+  <tr>
+    <td><img src="img/popup.png" alt="Word tab" width="240"/></td>
+    <td><img src="img/popup_kanji.png" alt="Kanji tab" width="240"/></td>
+    <td><img src="img/popup_example.png" alt="Examples tab" width="240"/></td>
+  </tr>
+  <tr>
+    <td align="center">Word</td>
+    <td align="center">Kanji</td>
+    <td align="center">Examples</td>
+  </tr>
+</table>
+
+![SRS word list](img/review_list.png)
+
+## Install
+
+Download the latest `.xpi` from the [Releases page](https://github.com/F4r3n/Yomeru/releases), then in Firefox open **about:addons** → gear icon → **Install Add-on From File** and select the downloaded file.
+
+## Prerequisites (building from source)
 
 - Firefox 112+
 - Rust toolchain with the `wasm32-unknown-unknown` target: `rustup target add wasm32-unknown-unknown`
