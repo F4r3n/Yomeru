@@ -162,6 +162,7 @@ let enabled = true;
 
 browser.storage.local.get("enabled").then((res) => {
   enabled = (res as { enabled?: boolean }).enabled ?? true;
+  if (enabled) ensureDictionaries();
 });
 
 browser.storage.onChanged.addListener((changes, area) => {
@@ -173,6 +174,7 @@ browser.storage.onChanged.addListener((changes, area) => {
     lastLookedUp = null;
     disableSrsHighlighter();
   } else {
+    ensureDictionaries();
     enableSrsHighlighter();
   }
 });
@@ -191,6 +193,7 @@ let wasOverPopup = false;
 document.addEventListener(
   "mousemove",
   (e) => {
+    if (!enabled) return;
     clearTimeout(hoverTimer!);
     if (e.composedPath().includes(shadowHost)) {
       clearTimeout(hideTimer!);
@@ -211,11 +214,11 @@ document.addEventListener(
 );
 
 document.addEventListener("mouseleave", () => {
-  if (!popupStore.isPinned()) scheduleHide();
+  scheduleHide();
 });
 
 async function handleHover(e: MouseEvent): Promise<void> {
-  if (!dictionary || !enabled) return;
+  if (!enabled || !dictionary) return;
   if (isEditableAt(e.clientX, e.clientY)) {
     scheduleHide();
     return;
@@ -284,6 +287,12 @@ async function handleHover(e: MouseEvent): Promise<void> {
       hit.nodeText,
       cpOffset + (result.match_len ?? 0),
     );
+
+    const wordRange = new Range();
+    wordRange.setStart(hit.node, utf16Start);
+    wordRange.setEnd(hit.node, utf16End);
+    const wordRect = wordRange.getBoundingClientRect();
+
     setHighlight(hit.node, utf16Start, utf16End - utf16Start);
 
     if (hw === lastLookedUp) return;
@@ -298,8 +307,10 @@ async function handleHover(e: MouseEvent): Promise<void> {
     popupStore.show(
       result.entries as unknown as import("../shared/types.ts").WordEntry[],
       kanjiEntries,
-      e.clientX,
-      e.clientY,
+      wordRect.width > 0 ? wordRect.left  : e.clientX,
+      wordRect.width > 0 ? wordRect.right : e.clientX,
+      wordRect.height > 0 ? wordRect.top    : e.clientY - 20,
+      wordRect.height > 0 ? wordRect.bottom : e.clientY,
     );
 
     // After 3s of hovering the same word the popup becomes sticky.
@@ -321,19 +332,18 @@ async function handleHover(e: MouseEvent): Promise<void> {
 function scheduleHide(): void {
   clearTimeout(pinTimer!);
   clearTimeout(hideTimer!);
+  // 150 ms grace period so the mouse can travel from the word to the popup.
   hideTimer = setTimeout(() => {
-    popupStore.hide(); // no-op when pinned
-    if (!popupStore.isPinned()) {
-      clearHighlight();
-      lastLookedUp = null;
-    }
-  }, 0);
+    popupStore.forceHide();
+    clearHighlight();
+    lastLookedUp = null;
+  }, 150);
 }
 
 // ── Selection lookup ──────────────────────────────────────────────────────────
 
 document.addEventListener("mouseup", async (e) => {
-  if (!dictionary || !enabled) return;
+  if (!enabled || !dictionary) return;
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) return;
   const text = sel.toString().trim();
@@ -347,11 +357,14 @@ document.addEventListener("mouseup", async (e) => {
             text,
           ) as import("../shared/types.ts").KanjiEntry[]) ?? [])
         : [];
+      const selRect = sel.rangeCount > 0 ? sel.getRangeAt(0).getBoundingClientRect() : null;
       popupStore.show(
         entries as unknown as import("../shared/types.ts").WordEntry[],
         kanjiEntries,
-        e.clientX,
-        e.clientY,
+        selRect?.width  ? selRect.left   : e.clientX,
+        selRect?.width  ? selRect.right  : e.clientX,
+        selRect?.height ? selRect.top    : e.clientY - 20,
+        selRect?.height ? selRect.bottom : e.clientY,
       );
       lastLookedUp = text;
     }
@@ -369,7 +382,15 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// ── Boot ──────────────────────────────────────────────────────────────────────
+// ── Lazy init (triggered on first hover / selection) ─────────────────────────
 
-initDictionary();
-initKanjiDictionary();
+let dictPromise: Promise<void> | null = null;
+let kanjiPromise: Promise<void> | null = null;
+
+function ensureDictionaries(): Promise<void> {
+  if (!dictPromise) {
+    kanjiPromise ??= initKanjiDictionary();
+    dictPromise = initDictionary();
+  }
+  return dictPromise;
+}

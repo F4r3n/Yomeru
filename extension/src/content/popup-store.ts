@@ -5,8 +5,10 @@ interface PopupState {
   visible: boolean;
   entries: WordEntry[];
   kanjiEntries: KanjiEntry[];
-  x: number;
-  y: number;
+  wx1: number;
+  wx2: number;
+  wy1: number;
+  wy2: number;
   pinned: boolean;
 }
 
@@ -17,16 +19,25 @@ function createPopupStore() {
     visible: false,
     entries: [],
     kanjiEntries: [],
-    x: 0,
-    y: 0,
+    wx1: 0,
+    wx2: 0,
+    wy1: 0,
+    wy2: 0,
     pinned: false,
   });
 
   return {
     subscribe,
-    show(entries: WordEntry[], kanjiEntries: KanjiEntry[], x: number, y: number) {
+    show(
+      entries: WordEntry[],
+      kanjiEntries: KanjiEntry[],
+      wx1: number,
+      wx2: number,
+      wy1: number,
+      wy2: number,
+    ) {
       _pinned = false;
-      set({ visible: true, entries, kanjiEntries, x, y, pinned: false });
+      set({ visible: true, entries, kanjiEntries, wx1, wx2, wy1, wy2, pinned: false });
     },
     pin() {
       _pinned = true;

@@ -73,6 +73,23 @@ async function ensureExamples(): Promise<void> {
 initSrs();
 initKanji();
 
+function syncIcon(enabled: boolean) {
+  browser.action.setIcon({
+    path: enabled ? "icons/icon.svg" : "icons/icon-disabled.svg",
+  });
+}
+
+browser.storage.local.get("enabled").then((res) => {
+  const enabled = (res as { enabled?: boolean }).enabled ?? true;
+  syncIcon(enabled);
+});
+
+browser.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && "enabled" in changes) {
+    syncIcon(changes.enabled.newValue ?? true);
+  }
+});
+
 browser.runtime.onMessage.addListener(
   (msg: { type: string; payload?: unknown }) => {
     switch (msg.type) {

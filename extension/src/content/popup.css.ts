@@ -1,8 +1,8 @@
-export const PIN_DELAY_MS = 3000;
+export const PIN_DELAY_MS = 300;
 
 export const POPUP_CSS = `
 .jp-popup {
-  position: fixed; max-width: 380px; min-width: 220px; max-height: 60vh;
+  position: fixed; max-width: 380px; min-width: 220px;
   overflow-y: auto;
   background: #1e1e2e; color: #cdd6f4;
   border: 1px solid #45475a; border-radius: 8px;

@@ -24,19 +24,27 @@
         examplesFetched = false;
     });
 
-    function position(node: HTMLElement, params: { x: number; y: number }) {
-        function recompute({ x, y }: { x: number; y: number }) {
+    function position(node: HTMLElement, params: { wx1: number; wx2: number; wy1: number; wy2: number }) {
+        function recompute({ wx1, wy1, wy2 }: { wx1: number; wx2: number; wy1: number; wy2: number }) {
+            // Reset to measure natural width before committing position.
             node.style.left = "0px";
             node.style.top = "0px";
-            const rect = node.getBoundingClientRect();
-            let left = x + 12;
-            let top = y + 20;
-            if (left + rect.width > window.innerWidth - 8)
-                left = x - rect.width - 12;
-            if (top + rect.height > window.innerHeight - 8)
-                top = y - rect.height - 8;
-            node.style.left = `${Math.max(8, left)}px`;
-            node.style.top = `${Math.max(8, top)}px`;
+            node.style.bottom = "auto";
+            const spaceBelow = window.innerHeight - 8 - wy2 - 4;
+            const spaceAbove = wy1 - 4 - 8;
+            const useBelow = spaceBelow >= spaceAbove;
+            node.style.maxHeight = `${Math.max(0, useBelow ? spaceBelow : spaceAbove)}px`;
+            // Read width only (stable, independent of content rerender timing).
+            const w = node.getBoundingClientRect().width;
+            node.style.left = `${Math.max(8, Math.min(wx1, window.innerWidth - w - 8))}px`;
+            // Use bottom-anchor when above so we never need to know popup height.
+            if (useBelow) {
+                node.style.top = `${wy2 + 4}px`;
+                node.style.bottom = "auto";
+            } else {
+                node.style.top = "auto";
+                node.style.bottom = `${window.innerHeight - wy1 + 4}px`;
+            }
         }
         recompute(params);
         return { update: recompute };
@@ -72,7 +80,7 @@
 </script>
 
 {#if $popupStore.visible && $popupStore.entries.length > 0}
-    <div class="jp-popup" use:position={{ x: $popupStore.x, y: $popupStore.y }}>
+    <div class="jp-popup" use:position={{ wx1: $popupStore.wx1, wx2: $popupStore.wx2, wy1: $popupStore.wy1, wy2: $popupStore.wy2 }}>
         {#key entriesKey}
             <div class="jp-pin-ring" aria-hidden="true">
                 {#if $popupStore.pinned}
