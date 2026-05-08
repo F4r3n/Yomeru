@@ -156,19 +156,6 @@ function codePointToUtf16(text: string, cp: number): number {
   return i;
 }
 
-// ── Sentence extraction ───────────────────────────────────────────────────────
-
-function extractSentence(text: string, cpOffset: number, matchLen: number): string {
-  const chars = [...text];
-  const enders = new Set(["。", "！", "？", "!", "?", "\n", "\r"]);
-  let lo = cpOffset - 1;
-  while (lo >= 0 && !enders.has(chars[lo])) lo--;
-  let hi = cpOffset + matchLen;
-  while (hi < chars.length && !enders.has(chars[hi])) hi++;
-  if (hi < chars.length) hi++;
-  return chars.slice(lo + 1, hi).join("").trim().slice(0, 150);
-}
-
 // ── Enabled state ─────────────────────────────────────────────────────────────
 
 let enabled = true;
@@ -308,14 +295,11 @@ async function handleHover(e: MouseEvent): Promise<void> {
         ) as import("../shared/types.ts").KanjiEntry[]) ?? [])
       : [];
 
-    const sentence = extractSentence(hit.nodeText, cpOffset, result.match_len ?? 0);
-
     popupStore.show(
       result.entries as unknown as import("../shared/types.ts").WordEntry[],
       kanjiEntries,
       e.clientX,
       e.clientY,
-      sentence,
     );
 
     // After 3s of hovering the same word the popup becomes sticky.
@@ -368,7 +352,6 @@ document.addEventListener("mouseup", async (e) => {
         kanjiEntries,
         e.clientX,
         e.clientY,
-        "",
       );
       lastLookedUp = text;
     }

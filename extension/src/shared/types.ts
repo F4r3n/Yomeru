@@ -27,7 +27,6 @@ export interface SrsCard {
   reading: string;
   meaning_en: string;
   senses?: Sense[];
-  example_sentences?: string[];
   due_ms: number;
   interval_days: number;
   ease_factor: number;
@@ -50,27 +49,6 @@ export const DEFAULT_SETTINGS: SrsSettings = {
   maxSessionCards: 20,
 };
 
-// ── Message bus ──────────────────────────────────────────────────────────────
-
-export interface AddWordPayload {
-  word: string;
-  reading: string;
-  meaning_en: string;
-  senses?: Sense[];
-  example_sentence?: string;
-}
-export interface ReviewCardPayload {
-  word: string;
-  rating: number;
-}
-export interface DeleteCardPayload {
-  word: string;
-}
-export interface LogLookupPayload {
-  word: string;
-  reading: string;
-}
-
 export interface ExampleEntry {
   japanese: string;
   english: string;
@@ -87,18 +65,3 @@ export interface KanjiEntry {
   meanings: string[];
 }
 
-export type ExtMessage =
-  | { type: "ADD_WORD"; payload: AddWordPayload }
-  | { type: "REVIEW_CARD"; payload: ReviewCardPayload }
-  | { type: "GET_DUE" }
-  | { type: "GET_ALL_CARDS" }
-  | { type: "DELETE_CARD"; payload: DeleteCardPayload }
-  | { type: "LOG_LOOKUP"; payload: LogLookupPayload }
-  | { type: "GET_SRS_WORDS" }
-  | { type: "GET_STAGING" }
-  | { type: "PROMOTE_CARD"; payload: { word: string } }
-  | { type: "PROMOTE_ALL" }
-  | { type: "GET_SETTINGS" }
-  | { type: "SAVE_SETTINGS"; payload: SrsSettings }
-  | { type: "GET_KANJI"; payload: { word: string } }
-  | { type: "GET_EXAMPLES"; payload: { word: string } };

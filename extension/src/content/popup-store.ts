@@ -8,7 +8,6 @@ interface PopupState {
   x: number;
   y: number;
   pinned: boolean;
-  sentence: string;
 }
 
 let _pinned = false;
@@ -21,14 +20,13 @@ function createPopupStore() {
     x: 0,
     y: 0,
     pinned: false,
-    sentence: "",
   });
 
   return {
     subscribe,
-    show(entries: WordEntry[], kanjiEntries: KanjiEntry[], x: number, y: number, sentence: string) {
+    show(entries: WordEntry[], kanjiEntries: KanjiEntry[], x: number, y: number) {
       _pinned = false;
-      set({ visible: true, entries, kanjiEntries, x, y, pinned: false, sentence });
+      set({ visible: true, entries, kanjiEntries, x, y, pinned: false });
     },
     pin() {
       _pinned = true;

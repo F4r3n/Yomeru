@@ -121,23 +121,15 @@ async function handleAddWord({
   reading,
   meaning_en,
   senses,
-  example_sentence,
 }: {
   word: string;
   reading: string;
   meaning_en: string;
   senses?: SrsCard["senses"];
-  example_sentence?: string;
 }) {
   await ensureSrs();
   const existing = await getCard(word);
   if (existing) {
-    if (example_sentence) {
-      const sentences = existing.example_sentences ?? [];
-      if (!sentences.includes(example_sentence)) {
-        await putCard({ ...existing, example_sentences: [...sentences, example_sentence] });
-      }
-    }
     return { success: true, existing: true };
   }
   const settings = await getSettings();
@@ -150,7 +142,6 @@ async function handleAddWord({
   const card: SrsCard = {
     ...base,
     senses: senses ?? [],
-    example_sentences: example_sentence ? [example_sentence] : [],
     status: "staging",
   };
   await putCard(card);
