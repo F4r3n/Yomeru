@@ -68,13 +68,13 @@
             $popupStore.entries[0]?.kanji_forms[0]?.text ??
             $popupStore.entries[0]?.reading_forms[0]?.text ?? "";
         if (!hw) return;
-        examplesFetched = true;
         browser.runtime
             .sendMessage({ type: "GET_EXAMPLES", payload: { word: hw } })
             .then((res: { entries: ExampleEntry[] }) => {
                 corpusExamples = res?.entries ?? [];
+                examplesFetched = true;
             })
-            .catch(() => {});
+            .catch(() => { examplesFetched = true; });
     }
 
     async function addToSrs(word: string, rdg: string, meaning: string, senses: Sense[]) {
