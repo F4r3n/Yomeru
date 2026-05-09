@@ -5,16 +5,19 @@
     let currentIdx = $state(0);
     let showBack = $state(false);
     let nextDueMsg = $state("");
+    let dueCount = $state(0);
     let stagingCount = $state(0);
     let graduatedMsg = $state("");
     let kanjiEntries = $state<KanjiEntry[]>([]);
     let corpusExamples = $state<ExampleEntry[]>([]);
     let activeCardTab = $state<"word" | "kanji" | "examples">("word");
+    let reviewStarted = $state(false);
+    let isRating = $state(false);
 
     let currentCard = $derived(dueCards[currentIdx] ?? null);
-    let reviewDone = $derived(!currentCard);
+    let reviewDone = $derived(reviewStarted && !currentCard);
     let statsText = $derived(
-        `${dueCards.length} card${dueCards.length !== 1 ? "s" : ""} due` +
+        `${dueCount} card${dueCount !== 1 ? "s" : ""} due` +
         (stagingCount > 0 ? ` · ${stagingCount} new` : ""),
     );
 
@@ -28,11 +31,17 @@
             browser.runtime.sendMessage({ type: "GET_STAGING" }),
         ]);
         dueCards = (dueRes as { cards: SrsCard[] }).cards ?? [];
+        dueCount = dueCards.length;
         stagingCount = (stagingRes as { cards: SrsCard[] }).cards?.length ?? 0;
         currentIdx = 0;
         showBack = false;
         kanjiEntries = [];
         nextDueMsg = "";
+        reviewStarted = false;
+    }
+
+    function startReview() {
+        reviewStarted = true;
     }
 
     async function revealAnswer() {
@@ -50,23 +59,26 @@
     }
 
     async function rate(rating: number) {
-        if (!currentCard) return;
+        if (!currentCard || isRating) return;
+        isRating = true;
         const card = currentCard;
-        const res = await browser.runtime.sendMessage({
-            type: "REVIEW_CARD",
-            payload: { word: card.word, rating },
-        }) as { success?: boolean; graduated?: boolean };
-        if (res.graduated) {
-            graduatedMsg = `「${card.word}」 graduated — removed from review queue.`;
-            setTimeout(() => { graduatedMsg = ""; }, 4000);
-        } else if (rating <= 2) {
-            dueCards = [...dueCards, card];
+        try {
+            const res = await browser.runtime.sendMessage({
+                type: "REVIEW_CARD",
+                payload: { word: card.word, rating },
+            }) as { success?: boolean; graduated?: boolean };
+            if (res.graduated) {
+                graduatedMsg = `「${card.word}」 graduated — removed from review queue.`;
+                setTimeout(() => { graduatedMsg = ""; }, 4000);
+            }
+        } finally {
+            currentIdx++;
+            showBack = false;
+            activeCardTab = "word";
+            kanjiEntries = [];
+            corpusExamples = [];
+            isRating = false;
         }
-        currentIdx++;
-        showBack = false;
-        activeCardTab = "word";
-        kanjiEntries = [];
-        corpusExamples = [];
         if (reviewDone) await computeNextDue();
     }
 
@@ -93,10 +105,21 @@
     <div class="toast-graduated">{graduatedMsg}</div>
 {/if}
 
-{#if reviewDone}
+{#if !reviewStarted}
+    <div class="review-idle">
+        {#if dueCount > 0}
+            <p>{dueCount} card{dueCount !== 1 ? "s" : ""} ready for review.</p>
+            <button class="btn-start" onclick={startReview}>Start Review</button>
+        {:else}
+            <p>No cards due right now.</p>
+            {#if nextDueMsg}<p class="next-due">{nextDueMsg}</p>{/if}
+        {/if}
+    </div>
+{:else if reviewDone}
     <div class="review-done">
-        <p>No cards due right now.</p>
+        <p>Review complete!</p>
         {#if nextDueMsg}<p class="next-due">{nextDueMsg}</p>{/if}
+        <button class="btn-start" onclick={loadReview}>Done</button>
     </div>
 {:else}
     <div class="card">
@@ -183,10 +206,10 @@
                 <button class="btn-show" onclick={revealAnswer}>Show answer</button>
             {:else}
                 <div class="rating-buttons">
-                    <button class="rating-btn r1" onclick={() => rate(1)}>Again</button>
-                    <button class="rating-btn r3" onclick={() => rate(3)}>Hard</button>
-                    <button class="rating-btn r4" onclick={() => rate(4)}>Good</button>
-                    <button class="rating-btn r5" onclick={() => rate(5)}>Easy</button>
+                    <button class="rating-btn r1" disabled={isRating} onclick={() => rate(1)}>Again</button>
+                    <button class="rating-btn r3" disabled={isRating} onclick={() => rate(3)}>Hard</button>
+                    <button class="rating-btn r4" disabled={isRating} onclick={() => rate(4)}>Good</button>
+                    <button class="rating-btn r5" disabled={isRating} onclick={() => rate(5)}>Easy</button>
                 </div>
             {/if}
         </div>
@@ -210,6 +233,7 @@
         margin-bottom: 10px;
     }
 
+    .review-idle,
     .review-done {
         text-align: center;
         padding: 32px;
@@ -219,6 +243,20 @@
         margin-top: 8px;
         color: var(--accent);
     }
+
+    .btn-start {
+        margin-top: 16px;
+        background: var(--accent);
+        border: none;
+        border-radius: 6px;
+        color: var(--bg);
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 8px 32px;
+        transition: opacity 0.15s;
+    }
+    .btn-start:hover { opacity: 0.85; }
 
     .card {
         background: var(--surface);
