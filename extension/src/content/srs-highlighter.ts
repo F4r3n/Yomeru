@@ -15,6 +15,7 @@ const SKIP_TAGS = new Set([
 let dict: Dictionary | null = null;
 let srsWords: string[] = [];
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let observer: MutationObserver | null = null;
 
 function injectStyle(): void {
   if (document.getElementById("jp-srs-style")) return;
@@ -86,10 +87,11 @@ export async function initSrsHighlighter(
     return;
   }
   rebuildHighlights();
-  new MutationObserver(() => {
+  observer = new MutationObserver(() => {
     if (debounceTimer !== null) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(rebuildHighlights, 500);
-  }).observe(document.body, { childList: true, subtree: true });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 export function srsWordAdded(word: string): void {
@@ -103,11 +105,19 @@ export function hasSrsWord(word: string): boolean {
 }
 
 export function disableSrsHighlighter(): void {
+  observer?.disconnect();
+  if (debounceTimer !== null) {
+    clearTimeout(debounceTimer);
+    debounceTimer = null;
+  }
   if (typeof CSS !== "undefined" && CSS.highlights) {
     CSS.highlights.delete(HL_NAME);
   }
 }
 
 export function enableSrsHighlighter(): void {
+  if (observer && document.body) {
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
   rebuildHighlights();
 }
