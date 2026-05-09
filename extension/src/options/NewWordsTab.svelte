@@ -7,6 +7,11 @@
 
     $effect(() => {
         loadStaging();
+        const handler = (changes: Record<string, browser.storage.StorageChange>, area: string) => {
+            if (area === "local" && "_yomeru_db_v" in changes) loadStaging();
+        };
+        browser.storage.onChanged.addListener(handler);
+        return () => browser.storage.onChanged.removeListener(handler);
     });
 
     async function loadStaging() {

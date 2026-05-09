@@ -158,6 +158,7 @@ async function handleAddWord({
     status: "staging",
   };
   await putCard(card);
+  await browser.storage.local.set({ _yomeru_db_v: Date.now() });
   return { success: true, existing: false };
 }
 

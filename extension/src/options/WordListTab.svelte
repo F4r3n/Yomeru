@@ -20,6 +20,11 @@
 
     $effect(() => {
         loadWords();
+        const handler = (changes: Record<string, browser.storage.StorageChange>, area: string) => {
+            if (area === "local" && "_yomeru_db_v" in changes) loadWords();
+        };
+        browser.storage.onChanged.addListener(handler);
+        return () => browser.storage.onChanged.removeListener(handler);
     });
 
     async function loadWords() {
