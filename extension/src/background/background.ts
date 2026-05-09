@@ -206,7 +206,7 @@ async function handlePromoteAll() {
 
 async function handlePromoteBatch() {
   const settings = await getSettings();
-  const staging = await getStagingCards();
+  const staging = (await getStagingCards()).sort((a, b) => a.added_ms - b.added_ms);
   const n = Math.min(staging.length, settings.maxSessionCards);
   for (let i = 0; i < n; i++) {
     await promoteCard(staging[i].word);
