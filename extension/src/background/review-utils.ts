@@ -2,7 +2,7 @@ import type { SrsCard } from "../shared/types.ts";
 
 /** Merges WASM-updated scheduling fields back onto the original card, preserving JS-only fields like senses. */
 export function mergeReview(original: SrsCard, reviewed: SrsCard): SrsCard {
-  return { ...reviewed, senses: original.senses, status: original.status };
+  return { ...reviewed, senses: original.senses, status: "active" };
 }
 
 /** Scales interval_days and recomputes due_ms. Returns the original card unchanged when scale === 1.0. */
