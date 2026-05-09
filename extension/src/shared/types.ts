@@ -36,14 +36,12 @@ export interface SrsCard {
 }
 
 export interface SrsSettings {
-  maxStagingSize: number;   // 0 = unlimited
   graduationReps: number;   // 0 = never graduate
   intervalScale: number;    // 1.0 = no scaling
   maxSessionCards: number;
 }
 
 export const DEFAULT_SETTINGS: SrsSettings = {
-  maxStagingSize: 30,
   graduationReps: 0,
   intervalScale: 1.0,
   maxSessionCards: 20,

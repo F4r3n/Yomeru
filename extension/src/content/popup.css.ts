@@ -3,7 +3,7 @@ export const PIN_DELAY_MS = 300;
 export const POPUP_CSS = `
 .jp-popup {
   position: fixed; max-width: 380px; min-width: 220px;
-  overflow-y: auto;
+  display: flex; flex-direction: column; overflow: hidden;
   background: #1e1e2e; color: #cdd6f4;
   border: 1px solid #45475a; border-radius: 8px;
   padding: 10px 14px;
@@ -12,6 +12,7 @@ export const POPUP_CSS = `
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   pointer-events: auto; z-index: 2147483647;
 }
+.jp-content { overflow-y: auto; flex: 1; min-height: 0; }
 .jp-header { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
 .jp-word   { font-size: 22px; font-weight: 600; color: #89dceb; }
 .jp-reading { color: #a6e3a1; font-size: 14px; }

@@ -1,4 +1,4 @@
-# Japanese Reader
+# Yomeru
 
 <img src="extension/icons/icon.svg" width="64" height="64" alt="Yomeru icon">
 

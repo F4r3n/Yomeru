@@ -12,20 +12,18 @@
     });
 
     async function save() {
-        await browser.runtime.sendMessage({ type: "SAVE_SETTINGS", payload: settings });
+        const payload: SrsSettings = {
+            graduationReps: Number(settings.graduationReps),
+            intervalScale: Number(settings.intervalScale),
+            maxSessionCards: Number(settings.maxSessionCards),
+        };
+        await browser.runtime.sendMessage({ type: "SAVE_SETTINGS", payload });
         saved = true;
         setTimeout(() => { saved = false; }, 2000);
     }
 </script>
 
 <div class="settings-form">
-    <div class="settings-row">
-        <label class="settings-label" for="maxStagingSize">Max staging list size</label>
-        <div class="settings-control">
-            <input id="maxStagingSize" type="number" min="0" bind:value={settings.maxStagingSize} />
-            <span class="settings-hint">0 = unlimited</span>
-        </div>
-    </div>
     <div class="settings-row">
         <label class="settings-label" for="graduationReps">Graduate after N successes</label>
         <div class="settings-control">

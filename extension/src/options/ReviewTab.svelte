@@ -26,18 +26,34 @@
     });
 
     async function loadReview() {
-        const [dueRes, stagingRes] = await Promise.all([
-            browser.runtime.sendMessage({ type: "GET_DUE" }),
-            browser.runtime.sendMessage({ type: "GET_STAGING" }),
-        ]);
-        dueCards = (dueRes as { cards: SrsCard[] }).cards ?? [];
+        try {
+            const [dueRes, stagingRes] = await Promise.all([
+                browser.runtime.sendMessage({ type: "GET_DUE" }),
+                browser.runtime.sendMessage({ type: "GET_STAGING" }),
+            ]);
+            dueCards = (dueRes as { cards: SrsCard[] }).cards ?? [];
+            dueCount = dueCards.length;
+            stagingCount = (stagingRes as { cards: SrsCard[] }).cards?.length ?? 0;
+            currentIdx = 0;
+            showBack = false;
+            kanjiEntries = [];
+            nextDueMsg = "";
+            reviewStarted = false;
+        } catch (e) {
+            console.error("[yomeru] loadReview failed:", e);
+        }
+    }
+
+    async function promoteAndReview() {
+        await browser.runtime.sendMessage({ type: "PROMOTE_ALL" });
+        const res = await browser.runtime.sendMessage({ type: "GET_DUE" });
+        dueCards = (res as { cards: SrsCard[] }).cards ?? [];
         dueCount = dueCards.length;
-        stagingCount = (stagingRes as { cards: SrsCard[] }).cards?.length ?? 0;
+        stagingCount = 0;
         currentIdx = 0;
         showBack = false;
         kanjiEntries = [];
-        nextDueMsg = "";
-        reviewStarted = false;
+        reviewStarted = true;
     }
 
     function startReview() {
@@ -110,6 +126,9 @@
         {#if dueCount > 0}
             <p>{dueCount} card{dueCount !== 1 ? "s" : ""} ready for review.</p>
             <button class="btn-start" onclick={startReview}>Start Review</button>
+        {:else if stagingCount > 0}
+            <p>{stagingCount} new word{stagingCount !== 1 ? "s" : ""} ready to learn.</p>
+            <button class="btn-start" onclick={promoteAndReview}>Add new words</button>
         {:else}
             <p>No cards due right now.</p>
             {#if nextDueMsg}<p class="next-due">{nextDueMsg}</p>{/if}

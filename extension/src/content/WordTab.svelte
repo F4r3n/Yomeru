@@ -52,13 +52,12 @@
         </div>
         <button
             class="jp-add-btn"
-            onclick={() =>
-                (btnState === "idle" || btnState === "existing") &&
-                onadd(hw, rdg, gloss, entry.senses)}
+            disabled={btnState !== "idle"}
+            onclick={() => onadd(hw, rdg, gloss, entry.senses)}
         >
             {#if btnState === "idle"}+ Add to SRS
             {:else if btnState === "added"}Added!
-            {:else}+ Add example{/if}
+            {:else}In SRS{/if}
         </button>
     </div>
 {/each}

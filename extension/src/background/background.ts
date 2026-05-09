@@ -149,12 +149,6 @@ async function handleAddWord({
   if (existing) {
     return { success: true, existing: true };
   }
-  const settings = await getSettings();
-  if (settings.maxStagingSize > 0) {
-    const stagingCount = (await getStagingCards()).length;
-    if (stagingCount >= settings.maxStagingSize)
-      return { success: false, reason: "staging_full" };
-  }
   const base = srs!.new_card(word, reading, meaning_en ?? "", Date.now()) as SrsCard;
   const card: SrsCard = {
     ...base,

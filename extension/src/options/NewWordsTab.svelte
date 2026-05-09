@@ -1,23 +1,17 @@
 <script lang="ts">
-    import type { SrsCard, SrsSettings } from "../shared/types.ts";
-    import { DEFAULT_SETTINGS } from "../shared/types.ts";
+    import type { SrsCard } from "../shared/types.ts";
 
     let { onstagingchange }: { onstagingchange: (n: number) => void } = $props();
 
     let stagingCards = $state<SrsCard[]>([]);
-    let settings = $state<SrsSettings>({ ...DEFAULT_SETTINGS });
 
     $effect(() => {
         loadStaging();
     });
 
     async function loadStaging() {
-        const [stagingRes, settingsRes] = await Promise.all([
-            browser.runtime.sendMessage({ type: "GET_STAGING" }),
-            browser.runtime.sendMessage({ type: "GET_SETTINGS" }),
-        ]);
-        stagingCards = (stagingRes as { cards: SrsCard[] }).cards ?? [];
-        settings = (settingsRes as SrsSettings) ?? { ...DEFAULT_SETTINGS };
+        const res = await browser.runtime.sendMessage({ type: "GET_STAGING" });
+        stagingCards = (res as { cards: SrsCard[] }).cards ?? [];
     }
 
     async function promoteCard(word: string) {
@@ -40,12 +34,6 @@
         return `${days}d ago`;
     }
 </script>
-
-{#if settings.maxStagingSize > 0 && stagingCards.length >= settings.maxStagingSize}
-    <div class="warning-staging-full">
-        Staging list is full ({settings.maxStagingSize} words). New words cannot be added until you promote some.
-    </div>
-{/if}
 
 <div class="word-list-header">
     <span class="word-count">{stagingCards.length} new word{stagingCards.length !== 1 ? "s" : ""}</span>
@@ -76,15 +64,6 @@
 {/if}
 
 <style>
-    .warning-staging-full {
-        background: var(--yellow);
-        color: var(--bg);
-        border-radius: 6px;
-        font-size: 12px;
-        padding: 6px 12px;
-        margin-bottom: 10px;
-    }
-
     .word-list-header {
         display: flex;
         align-items: center;

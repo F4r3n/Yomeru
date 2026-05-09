@@ -15,9 +15,11 @@
         browser.storage.local.get("enabled").then((res) => {
             enabled = (res as { enabled?: boolean }).enabled ?? true;
         });
-        browser.runtime.sendMessage({ type: "GET_STAGING" }).then((res) => {
-            stagingCount = (res as { cards: unknown[] }).cards?.length ?? 0;
-        });
+        browser.runtime.sendMessage({ type: "GET_STAGING" })
+            .then((res) => {
+                stagingCount = (res as { cards: unknown[] }).cards?.length ?? 0;
+            })
+            .catch(() => {});
     });
 
     async function toggleEnabled() {

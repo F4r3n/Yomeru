@@ -69,8 +69,8 @@
                 <td class="td-word">{card.word}</td>
                 <td class="td-reading">{card.reading}</td>
                 <td class="td-meaning">{card.meaning_en}</td>
-                <td><span class="status-badge {card.status}">{card.status}</span></td>
-                <td class="td-due {dueClass(card.due_ms)}">{dueLabel(card.due_ms)}</td>
+                <td><span class="status-badge {card.status}">{card.status === "staging" ? "new" : card.status}</span></td>
+                <td class="td-due {card.status === 'staging' ? '' : dueClass(card.due_ms)}">{card.status === "staging" ? "—" : dueLabel(card.due_ms)}</td>
                 <td><button class="btn-delete" onclick={() => deleteCard(card.word)}>Delete</button></td>
             </tr>
         {/each}

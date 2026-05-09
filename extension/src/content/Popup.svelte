@@ -1,7 +1,7 @@
 <script lang="ts">
     import { popupStore } from "./popup-store";
     import type { WordEntry, ExampleEntry, Sense } from "../shared/types.ts";
-    import { srsWordAdded } from "./srs-highlighter";
+    import { srsWordAdded, hasSrsWord } from "./srs-highlighter";
     import WordTab from "./WordTab.svelte";
     import KanjiTab from "./KanjiTab.svelte";
     import ExamplesTab from "./ExamplesTab.svelte";
@@ -24,7 +24,12 @@
     $effect(() => {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         entriesKey;
-        buttonStates = {};
+        const initial: Record<string, "idle" | "added" | "existing"> = {};
+        for (const e of $popupStore.entries) {
+            const hw = e.kanji_forms[0]?.text ?? e.reading_forms[0]?.text ?? "";
+            if (hw && hasSrsWord(hw)) initial[hw] = "existing";
+        }
+        buttonStates = initial;
         activeTab = "word";
         corpusExamples = [];
         examplesFetched = false;
@@ -124,17 +129,19 @@
             </div>
         {/if}
 
-        {#if activeTab === "word"}
-            <WordTab
-                entries={$popupStore.entries}
-                {buttonStates}
-                onadd={addToSrs}
-            />
-        {:else if activeTab === "kanji"}
-            <KanjiTab kanjiEntries={$popupStore.kanjiEntries} />
-        {:else}
-            <ExamplesTab examples={corpusExamples} fetched={examplesFetched} word={exampleWord} />
-        {/if}
+        <div class="jp-content">
+            {#if activeTab === "word"}
+                <WordTab
+                    entries={$popupStore.entries}
+                    {buttonStates}
+                    onadd={addToSrs}
+                />
+            {:else if activeTab === "kanji"}
+                <KanjiTab kanjiEntries={$popupStore.kanjiEntries} />
+            {:else}
+                <ExamplesTab examples={corpusExamples} fetched={examplesFetched} word={exampleWord} />
+            {/if}
+        </div>
 
         {#if !useBelow}
             <div class="jp-tabs jp-tabs--bottom">

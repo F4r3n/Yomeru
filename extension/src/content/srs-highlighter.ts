@@ -98,6 +98,10 @@ export function srsWordAdded(word: string): void {
   rebuildHighlights();
 }
 
+export function hasSrsWord(word: string): boolean {
+  return srsWords.includes(word);
+}
+
 export function disableSrsHighlighter(): void {
   if (typeof CSS !== "undefined" && CSS.highlights) {
     CSS.highlights.delete(HL_NAME);

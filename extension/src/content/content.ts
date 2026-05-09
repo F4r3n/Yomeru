@@ -91,6 +91,9 @@ async function initKanjiDictionary(): Promise<void> {
 
 // ── Shadow DOM + Svelte popup ─────────────────────────────────────────────────
 
+// Hold a persistent port to the background so it is never suspended while any tab is open.
+browser.runtime.connect({ name: "keepalive" });
+
 const shadowHost = document.createElement("div");
 shadowHost.id = "yomeru-host";
 Object.assign(shadowHost.style, {
