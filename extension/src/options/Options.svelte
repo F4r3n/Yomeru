@@ -50,7 +50,7 @@
 
 <main>
     {#if tab === "review"}
-        <ReviewTab />
+        <ReviewTab onstagingchange={onStagingChange} />
     {:else if tab === "new"}
         <NewWordsTab onstagingchange={onStagingChange} />
     {:else if tab === "words"}

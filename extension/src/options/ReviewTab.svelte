@@ -1,6 +1,8 @@
 <script lang="ts">
     import type { SrsCard, KanjiEntry, ExampleEntry } from "../shared/types.ts";
 
+    let { onstagingchange }: { onstagingchange?: (n: number) => void } = $props();
+
     let dueCards = $state<SrsCard[]>([]);
     let currentIdx = $state(0);
     let showBack = $state(false);
@@ -34,6 +36,7 @@
             dueCards = (dueRes as { cards: SrsCard[] }).cards ?? [];
             dueCount = dueCards.length;
             stagingCount = (stagingRes as { cards: SrsCard[] }).cards?.length ?? 0;
+            onstagingchange?.(stagingCount);
             currentIdx = 0;
             showBack = false;
             kanjiEntries = [];
@@ -50,6 +53,7 @@
         dueCards = cards;
         dueCount = dueCards.length;
         stagingCount = remaining;
+        onstagingchange?.(remaining);
         currentIdx = 0;
         showBack = false;
         kanjiEntries = [];
