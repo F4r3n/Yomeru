@@ -45,11 +45,11 @@
     }
 
     async function promoteAndReview() {
-        await browser.runtime.sendMessage({ type: "PROMOTE_ALL" });
-        const res = await browser.runtime.sendMessage({ type: "GET_DUE" });
-        dueCards = (res as { cards: SrsCard[] }).cards ?? [];
+        const res = await browser.runtime.sendMessage({ type: "PROMOTE_BATCH" });
+        const { cards, stagingCount: remaining } = res as { cards: SrsCard[]; stagingCount: number };
+        dueCards = cards;
         dueCount = dueCards.length;
-        stagingCount = 0;
+        stagingCount = remaining;
         currentIdx = 0;
         showBack = false;
         kanjiEntries = [];

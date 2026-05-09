@@ -119,6 +119,8 @@ browser.runtime.onMessage.addListener(
         return handlePromoteCard(msg.payload as { word: string });
       case "PROMOTE_ALL":
         return handlePromoteAll();
+      case "PROMOTE_BATCH":
+        return handlePromoteBatch();
       case "GET_SETTINGS":
         return handleGetSettings();
       case "SAVE_SETTINGS":
@@ -199,6 +201,20 @@ async function handlePromoteCard({ word }: { word: string }) {
 async function handlePromoteAll() {
   await promoteAll();
   return { success: true };
+}
+
+async function handlePromoteBatch() {
+  const settings = await getSettings();
+  const staging = await getStagingCards();
+  const n = Math.min(staging.length, settings.maxSessionCards);
+  for (let i = 0; i < n; i++) {
+    await promoteCard(staging[i].word);
+  }
+  const due = await getDueCards(Date.now());
+  return {
+    cards: due.slice(0, settings.maxSessionCards),
+    stagingCount: staging.length - n,
+  };
 }
 
 async function handleGetSettings() {
