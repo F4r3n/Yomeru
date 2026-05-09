@@ -1,0 +1,26 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="128" height="128" rx="28" fill="#1e1e2e"/>
+
+  <!-- Content: The Kanji 読 (grayed out) -->
+  <g fill="#45475a">
+    <!-- Left Radical (言 - Speech) -->
+    <path d="M28 32C28 30.8954 28.8954 30 30 30H42C43.1046 30 44 30.8954 44 32V34C44 35.1046 43.1046 36 42 36H30C28.8954 36 28 35.1046 28 34V32Z"/>
+    <path d="M26 44H46V49H26V44Z"/>
+    <path d="M26 55H46V60H26V55Z"/>
+    <path d="M26 66H46V71H26V66Z"/>
+    <path d="M26 78H46V92H26V78ZM31 83V87H41V83H31Z"/>
+
+    <!-- Right Radical (売 - Sell/Part of Read) -->
+    <path d="M78 28H82V36H78V28Z"/>
+    <path d="M62 38H98V43H62V38Z"/>
+    <path d="M72 48H88V65H72V48ZM77 53V60H83V53H77Z"/>
+    <path d="M58 72H102V77H58V72Z"/>
+    <!-- Legs -->
+    <path d="M74 80C74 80 73 95 60 98" stroke="#45475a" stroke-width="5" stroke-linecap="round"/>
+    <path d="M86 80C86 80 88 95 101 98" stroke="#45475a" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Accent Detail (grayed out) -->
+  <circle cx="102" cy="30" r="7" fill="#45475a"/>
+</svg>
