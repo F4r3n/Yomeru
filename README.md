@@ -2,6 +2,8 @@
 
 <img src="extension/icons/icon.svg" width="64" height="64" alt="Yomeru icon">
 
+> **Experimental project.** This extension is a work in progress and not production-ready. A significant portion of the code was written with AI assistance (Claude). Use at your own risk and expect rough edges.
+
 A Firefox extension for on-hover Japanese dictionary lookup with spaced repetition (SRS) vocabulary memory.
 
 Hover over any Japanese text on any page to see the reading, part of speech, and English definitions. The matched word is highlighted in yellow. Click **+ Add to SRS** to add it to your vocabulary deck.
