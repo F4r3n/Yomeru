@@ -62,6 +62,7 @@ async function initDictionary(): Promise<void> {
     initSrsHighlighter(dictionary);
   } catch (e) {
     console.error("[yomeru] Dictionary init failed:", e);
+    throw e;
   }
 }
 
@@ -402,7 +403,10 @@ let kanjiPromise: Promise<void> | null = null;
 function ensureDictionaries(): Promise<void> {
   if (!dictPromise) {
     kanjiPromise ??= initKanjiDictionary();
-    dictPromise = initDictionary();
+    dictPromise = initDictionary().catch((e) => {
+      dictPromise = null;
+      throw e;
+    });
   }
   return dictPromise;
 }
