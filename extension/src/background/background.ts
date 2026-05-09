@@ -95,7 +95,7 @@ browser.runtime.onMessage.addListener(
     switch (msg.type) {
       case "ADD_WORD":
         return handleAddWord(
-          msg.payload as { word: string; reading: string; meaning_en: string },
+          msg.payload as { word: string; reading: string; meaning_en: string; senses?: SrsCard["senses"] },
         );
       case "REVIEW_CARD":
         return handleReviewCard(
