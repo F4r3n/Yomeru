@@ -106,10 +106,12 @@
         const res = await browser.runtime.sendMessage({ type: "GET_ALL_CARDS" });
         const cards = (res as { cards: SrsCard[] }).cards ?? [];
         const now = Date.now();
-        const next = cards.reduce(
-            (m, c) => (c.due_ms > now && c.due_ms < m ? c.due_ms : m),
-            Infinity,
-        );
+        const next = cards
+            .filter((c) => c.status === "active")
+            .reduce(
+                (m, c) => (c.due_ms > now && c.due_ms < m ? c.due_ms : m),
+                Infinity,
+            );
         if (next < Infinity) {
             const mins = Math.round((next - now) / 60_000);
             nextDueMsg = mins < 60
