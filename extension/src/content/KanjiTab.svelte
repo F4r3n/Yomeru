@@ -4,7 +4,7 @@
     let { kanjiEntries }: { kanjiEntries: KanjiEntry[] } = $props();
 
     function jlptLabel(jlpt: number | null): string | null {
-        return jlpt != null ? `N${5 - jlpt}` : null;
+        return jlpt != null ? `N${jlpt}` : null;
     }
 </script>
 
