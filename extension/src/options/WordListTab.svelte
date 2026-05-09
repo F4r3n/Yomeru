@@ -15,7 +15,11 @@
                     c.meaning_en.toLowerCase().includes(q)
                 );
             })
-            .sort((a, b) => a.due_ms - b.due_ms),
+            .sort((a, b) => {
+                const da = a.status === "staging" ? Infinity : a.due_ms;
+                const db = b.status === "staging" ? Infinity : b.due_ms;
+                return da - db;
+            }),
     );
 
     $effect(() => {
