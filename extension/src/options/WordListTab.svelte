@@ -68,6 +68,7 @@
     />
 </div>
 
+<div class="word-table-scroll">
 <table class="word-table">
     <thead>
         <tr><th>Word</th><th>Reading</th><th>Meaning</th><th>Status</th><th>Due</th><th></th></tr>
@@ -85,6 +86,7 @@
         {/each}
     </tbody>
 </table>
+</div>
 
 <style>
     .word-list-header {
@@ -111,6 +113,10 @@
         border-color: var(--accent);
     }
 
+    .word-table-scroll {
+        max-height: 400px;
+        overflow-y: auto;
+    }
     .word-table {
         width: 100%;
         border-collapse: collapse;
