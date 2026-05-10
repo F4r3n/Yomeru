@@ -38,3 +38,12 @@
 {:else if fetched}
     <div class="jp-corpus-empty">No examples found.</div>
 {/if}
+
+<style>
+    .jp-corpus { display: flex; flex-direction: column; gap: 12px; padding: 4px 0; }
+    .jp-corpus-ex { display: flex; flex-direction: column; gap: 3px; }
+    .jp-corpus-jp { font-size: 15px; color: #cdd6f4; line-height: 1.6; }
+    .jp-corpus-mark { background: rgba(203,166,247,0.18); color: #cba6f7; border-radius: 2px; padding: 0 1px; }
+    .jp-corpus-en { font-size: 13px; color: #6c7086; line-height: 1.5; }
+    .jp-corpus-empty { font-size: 13px; color: #6c7086; padding: 8px 0; }
+</style>

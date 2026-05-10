@@ -85,7 +85,7 @@
         color: var(--text);
         font-family: "Noto Sans JP", "Segoe UI", sans-serif;
         font-size: 14px;
-        min-width: 440px;
+        width: 440px;
         min-height: 300px;
         padding: 0 0 16px;
     }

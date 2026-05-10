@@ -176,55 +176,69 @@
                 >
             </div>
 
-            {#if activeCardTab === "word"}
-                <div class="card-back">
-                    {#if currentCard?.senses?.length}
-                        <div class="card-senses">
-                            {#each currentCard.senses.slice(0, 3) as sense, si}
-                                {@const g = sense.glosses.map((g) => g.text).join("; ")}
-                                {#if g}
-                                    <div class="card-gloss">
-                                        <span class="card-num">{si + 1}.</span>{g}
+            <div class="card-tab-content">
+                {#if activeCardTab === "word"}
+                    <div class="card-back">
+                        {#if currentCard?.senses?.length}
+                            <div class="card-senses">
+                                {#each currentCard.senses.slice(0, 3) as sense, si}
+                                    {@const g = sense.glosses.map((g) => g.text).join("; ")}
+                                    {#if g}
+                                        {#if sense.pos?.length}
+                                            <div class="card-pos-row">
+                                                {#each sense.pos as pos}<span class="card-pos">{pos}</span>{/each}
+                                            </div>
+                                        {/if}
+                                        <div class="card-gloss">
+                                            <span class="card-num">{si + 1}.</span>{g}
+                                        </div>
+                                    {/if}
+                                {/each}
+                            </div>
+                        {:else}
+                            <div class="card-meaning">{currentCard?.meaning_en}</div>
+                        {/if}
+                    </div>
+                {:else if activeCardTab === "kanji"}
+                    <div class="kanji-breakdown">
+                        {#each kanjiEntries as k}
+                            <div class="kanji-row">
+                                <span class="kanji-char">{k.literal}</span>
+                                <div class="kanji-info">
+                                    {#if k.on_readings.length}
+                                        <span class="kanji-on">{k.on_readings.join("、")}</span>
+                                    {/if}
+                                    {#if k.kun_readings.length}
+                                        <span class="kanji-kun">{k.kun_readings.join("、")}</span>
+                                    {/if}
+                                    <span class="kanji-meaning">{k.meanings.slice(0, 3).join(", ")}</span>
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                {:else}
+                    {#if corpusExamples.length > 0}
+                        <div class="review-examples">
+                            {#each corpusExamples as ex}
+                                {@const word = currentCard?.word ?? ""}
+                                {@const idx = word ? ex.japanese.indexOf(word) : -1}
+                                <div class="review-ex">
+                                    <div class="review-ex-jp">
+                                        {#if idx !== -1}
+                                            {ex.japanese.slice(0, idx)}<mark class="review-ex-mark">{word}</mark>{ex.japanese.slice(idx + word.length)}
+                                        {:else}
+                                            {ex.japanese}
+                                        {/if}
                                     </div>
-                                {/if}
+                                    <div class="review-ex-en">{ex.english}</div>
+                                </div>
                             {/each}
                         </div>
-                    {:else}
-                        <div class="card-meaning">{currentCard?.meaning_en}</div>
+                    {:else if showBack}
+                        <div class="review-examples-empty">No examples found.</div>
                     {/if}
-                </div>
-            {:else if activeCardTab === "kanji"}
-                <div class="kanji-breakdown">
-                    {#each kanjiEntries as k}
-                        <div class="kanji-row">
-                            <span class="kanji-char">{k.literal}</span>
-                            <div class="kanji-info">
-                                {#if k.on_readings.length}
-                                    <span class="kanji-on">{k.on_readings.join("、")}</span>
-                                {/if}
-                                {#if k.kun_readings.length}
-                                    <span class="kanji-kun">{k.kun_readings.join("、")}</span>
-                                {/if}
-                                <span class="kanji-meaning">{k.meanings.slice(0, 3).join(", ")}</span>
-                            </div>
-                        </div>
-                    {/each}
-                </div>
-            {:else}
-                <div class="examples">
-                    {#each corpusExamples as ex}
-                        <div class="example-row">
-                            <div class="example-text">
-                                <div>{ex.japanese}</div>
-                                <div class="example-en">{ex.english}</div>
-                            </div>
-                        </div>
-                    {/each}
-                    {#if corpusExamples.length === 0}
-                        <div class="examples-empty">No examples found.</div>
-                    {/if}
-                </div>
-            {/if}
+                {/if}
+            </div>
         {/if}
         <div class="card-actions">
             {#if !showBack}
@@ -343,6 +357,45 @@
         color: var(--text);
         margin-bottom: 4px;
     }
+    .card-tab-content {
+        height: 160px;
+        overflow-y: auto;
+        scrollbar-gutter: stable;
+        text-align: left;
+    }
+    .review-examples {
+        padding: 2px 0;
+    }
+    .review-ex {
+        margin-bottom: 10px;
+    }
+    .review-ex:last-child {
+        margin-bottom: 0;
+    }
+    .review-ex-jp {
+        font-size: 15px;
+        color: var(--text);
+        line-height: 1.6;
+        overflow-wrap: break-word;
+        word-break: break-all;
+    }
+    .review-ex-mark {
+        background: rgba(203, 166, 247, 0.18);
+        color: var(--accent);
+        border-radius: 2px;
+        padding: 0 1px;
+    }
+    .review-ex-en {
+        font-size: 13px;
+        color: var(--subtext);
+        line-height: 1.5;
+        overflow-wrap: break-word;
+    }
+    .review-examples-empty {
+        font-size: 13px;
+        color: var(--subtext);
+        padding: 4px 0;
+    }
     .card-actions {
         margin-top: 20px;
     }
@@ -384,7 +437,21 @@
     .r4 { background: var(--green);  color: var(--bg); }
     .r5 { background: var(--blue);   color: var(--bg); }
 
-    .examples-empty { font-size: 13px; color: var(--subtext); padding: 4px 0; text-align: left; }
+    .card-pos-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 2px;
+        margin-top: 6px;
+    }
+    .card-pos-row:first-child { margin-top: 0; }
+    .card-pos {
+        font-size: 10px;
+        color: var(--subtext);
+        background: var(--surface2, var(--border));
+        border-radius: 3px;
+        padding: 1px 5px;
+    }
 
     .kanji-breakdown {
         display: flex;
@@ -413,28 +480,5 @@
     .kanji-kun    { color: var(--green);   }
     .kanji-meaning { color: var(--subtext); }
 
-    .examples {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        text-align: left;
-    }
-    .example-row {
-        display: flex;
-        align-items: flex-start;
-        gap: 6px;
-        color: var(--text);
-    }
-    .example-text {
-        flex: 1;
-    }
-    .example-text > div:first-child {
-        font-size: 16px;
-        line-height: 1.6;
-    }
-    .example-en {
-        color: var(--subtext);
-        font-size: 13px;
-        margin-top: 3px;
-    }
+
 </style>
