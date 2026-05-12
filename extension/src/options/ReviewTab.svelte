@@ -15,9 +15,16 @@
     let activeCardTab = $state<"word" | "kanji" | "examples">("word");
     let reviewStarted = $state(false);
     let isRating = $state(false);
+    let reviewError = $state("");
+
+    // Words reviewed in the current session — excluded from the next loadReview so
+    // they don't reappear immediately after Done (whether due to a save failure or
+    // because the pool had more cards than the session showed).
+    let sessionReviewed = new Set<string>();
 
     let currentCard = $derived(dueCards[currentIdx] ?? null);
     let reviewDone = $derived(reviewStarted && !currentCard);
+    let progressText = $derived(`${currentIdx + 1} / ${dueCards.length}`);
     let statsText = $derived(
         `${dueCount} card${dueCount !== 1 ? "s" : ""} due` +
         (stagingCount > 0 ? ` · ${stagingCount} new` : ""),
@@ -33,7 +40,10 @@
                 browser.runtime.sendMessage({ type: "GET_DUE" }),
                 browser.runtime.sendMessage({ type: "GET_STAGING" }),
             ]);
-            dueCards = (dueRes as { cards: SrsCard[] }).cards ?? [];
+            const excluded = sessionReviewed;
+            sessionReviewed = new Set();
+            const all = (dueRes as { cards: SrsCard[] }).cards ?? [];
+            dueCards = excluded.size > 0 ? all.filter(c => !excluded.has(c.word)) : all;
             dueCount = dueCards.length;
             stagingCount = (stagingRes as { cards: SrsCard[] }).cards?.length ?? 0;
             onstagingchange?.(stagingCount);
@@ -48,6 +58,7 @@
     }
 
     async function promoteAndReview() {
+        sessionReviewed = new Set();
         const res = await browser.runtime.sendMessage({ type: "PROMOTE_BATCH" });
         const { cards, stagingCount: remaining } = res as { cards: SrsCard[]; stagingCount: number };
         dueCards = cards;
@@ -61,6 +72,7 @@
     }
 
     function startReview() {
+        sessionReviewed = new Set();
         reviewStarted = true;
     }
 
@@ -86,11 +98,22 @@
             const res = await browser.runtime.sendMessage({
                 type: "REVIEW_CARD",
                 payload: { word: card.word, rating },
-            }) as { success?: boolean; graduated?: boolean };
-            if (res.graduated) {
-                graduatedMsg = `「${card.word}」 graduated — removed from review queue.`;
-                setTimeout(() => { graduatedMsg = ""; }, 4000);
+            }) as { success?: boolean; graduated?: boolean; error?: string };
+            if (res.error) {
+                console.error("[yomeru] REVIEW_CARD failed:", res.error, "word:", card.word);
+                reviewError = `Failed to save review for 「${card.word}」`;
+                setTimeout(() => { reviewError = ""; }, 5000);
+            } else {
+                sessionReviewed.add(card.word);
+                if (res.graduated) {
+                    graduatedMsg = `「${card.word}」 graduated — removed from review queue.`;
+                    setTimeout(() => { graduatedMsg = ""; }, 4000);
+                }
             }
+        } catch (e) {
+            console.error("[yomeru] REVIEW_CARD threw:", e, "word:", card.word);
+            reviewError = `Failed to save review for 「${card.word}」`;
+            setTimeout(() => { reviewError = ""; }, 5000);
         } finally {
             currentIdx++;
             showBack = false;
@@ -126,6 +149,9 @@
 {#if graduatedMsg}
     <div class="toast-graduated">{graduatedMsg}</div>
 {/if}
+{#if reviewError}
+    <div class="toast-error">{reviewError}</div>
+{/if}
 
 {#if !reviewStarted}
     <div class="review-idle">
@@ -148,6 +174,7 @@
     </div>
 {:else}
     <div class="card">
+        <div class="card-progress">{progressText}</div>
         <div class="card-front">
             <div class="card-word-wrap">
                 <ruby class="card-word-furigana">
@@ -272,6 +299,16 @@
         margin-bottom: 10px;
     }
 
+    .toast-error {
+        background: var(--red);
+        color: var(--bg);
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 12px;
+        margin-bottom: 10px;
+    }
+
     .review-idle,
     .review-done {
         text-align: center;
@@ -303,6 +340,11 @@
         border-radius: 10px;
         padding: 24px 20px 16px;
         text-align: center;
+    }
+    .card-progress {
+        font-size: 12px;
+        color: var(--subtext);
+        margin-bottom: 8px;
     }
     .card-word-wrap {
         margin-bottom: 12px;
