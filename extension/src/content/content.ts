@@ -317,7 +317,7 @@ async function handleHover(e: MouseEvent): Promise<void> {
       wordRect.height > 0 ? wordRect.bottom : e.clientY,
     );
 
-    // After 3s of hovering the same word the popup becomes sticky.
+    // 300 ms dwell on the same word before the popup pins.
     clearTimeout(pinTimer!);
     pinTimer = setTimeout(() => popupStore.pin(), PIN_DELAY_MS);
 
