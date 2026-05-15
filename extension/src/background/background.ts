@@ -70,8 +70,8 @@ async function ensureExamples(): Promise<void> {
   }
 }
 
-initSrs();
-initKanji();
+initSrs().catch((e) => console.error("[yomeru] initSrs failed:", e));
+initKanji().catch((e) => console.error("[yomeru] initKanji failed:", e));
 
 function bumpDbVersion(): Promise<void> {
   return browser.storage.local.set({ _yomeru_db_v: Date.now() });
