@@ -21,6 +21,11 @@ pub fn deinflect(text: &str) -> Vec<Deinflected> {
     let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
     let mut results: Vec<Deinflected> = Vec::new();
 
+    // The filter below compares the *input* length against each candidate's
+    // length — the original input never changes inside this function, so
+    // count it once instead of recounting per (rule × candidate).
+    let input_char_count = text.chars().count();
+
     queue.push_back((text.to_owned(), String::new(), 0));
 
     while let Some((candidate, reason, depth)) = queue.pop_front() {
@@ -41,7 +46,7 @@ pub fn deinflect(text: &str) -> Vec<Deinflected> {
             // (avoids garbage like "" or "い" matching half a word).
             let new_text = format!("{}{}", stem, rule.suffix_out);
             let char_count = new_text.chars().count();
-            if char_count < 1 || (text.chars().count() > 2 && char_count < 2) {
+            if char_count < 1 || (input_char_count > 2 && char_count < 2) {
                 continue;
             }
 
