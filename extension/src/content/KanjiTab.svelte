@@ -3,8 +3,11 @@
 
     let { kanjiEntries }: { kanjiEntries: KanjiEntry[] } = $props();
 
+    // KANJIDIC2 stores the *old* JLPT (pre-2010, 1=hardest..4=easiest).
+    // The modern test has 5 levels (N1..N5); there's no clean mapping from
+    // the old scale, so label it explicitly to avoid conflating the two.
     function jlptLabel(jlpt: number | null): string | null {
-        return jlpt != null ? `N${jlpt}` : null;
+        return jlpt != null ? `JLPT (old) N${jlpt}` : null;
     }
 </script>
 
