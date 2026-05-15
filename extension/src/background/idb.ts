@@ -63,8 +63,14 @@ async function tx<T>(
       new Promise((resolve, reject) => {
         const t = database.transaction(store, mode);
         const req = fn(t.objectStore(store));
-        req.onsuccess = () => resolve(req.result);
+        let result: T;
+        req.onsuccess = () => {
+          result = req.result;
+        };
         req.onerror = () => reject(req.error);
+        t.oncomplete = () => resolve(result);
+        t.onerror = () => reject(t.error);
+        t.onabort = () => reject(t.error);
       }),
   );
 }
