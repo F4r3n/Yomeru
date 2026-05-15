@@ -87,6 +87,7 @@ async function initKanjiDictionary(): Promise<void> {
     kanjiDictionary = new wasm.KanjiDictionary(bytes);
   } catch (e) {
     console.error("[yomeru] KanjiDictionary init failed:", e);
+    throw e;
   }
 }
 
@@ -402,7 +403,10 @@ let kanjiPromise: Promise<void> | null = null;
 
 function ensureDictionaries(): Promise<void> {
   if (!dictPromise) {
-    kanjiPromise ??= initKanjiDictionary();
+    kanjiPromise ??= initKanjiDictionary().catch((e) => {
+      kanjiPromise = null;
+      throw e;
+    });
     dictPromise = initDictionary().catch((e) => {
       dictPromise = null;
       throw e;
