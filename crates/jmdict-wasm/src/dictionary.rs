@@ -191,18 +191,34 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<DictionaryInner> {
 
     let mut pos = 5usize;
 
-    let fst_len = u32::from_le_bytes(bytes[pos..pos + 4].try_into()?) as usize;
+    let read_u32 = |bytes: &[u8], pos: usize| -> anyhow::Result<usize> {
+        if pos + 4 > bytes.len() {
+            bail!("dictionary binary truncated reading length at {pos}");
+        }
+        Ok(u32::from_le_bytes(bytes[pos..pos + 4].try_into()?) as usize)
+    };
+    let read_slice = |bytes: &[u8], pos: usize, len: usize, what: &str| -> anyhow::Result<()> {
+        if pos + len > bytes.len() {
+            bail!("dictionary binary truncated reading {what} ({len} bytes at {pos})");
+        }
+        Ok(())
+    };
+
+    let fst_len = read_u32(bytes, pos)?;
     pos += 4;
+    read_slice(bytes, pos, fst_len, "fst")?;
     let fst_bytes = bytes[pos..pos + fst_len].to_vec();
     pos += fst_len;
 
-    let lt_len = u32::from_le_bytes(bytes[pos..pos + 4].try_into()?) as usize;
+    let lt_len = read_u32(bytes, pos)?;
     pos += 4;
+    read_slice(bytes, pos, lt_len, "lookup table")?;
     let lookup_table: Vec<Vec<u32>> = from_bytes(&bytes[pos..pos + lt_len])?;
     pos += lt_len;
 
-    let entries_len = u32::from_le_bytes(bytes[pos..pos + 4].try_into()?) as usize;
+    let entries_len = read_u32(bytes, pos)?;
     pos += 4;
+    read_slice(bytes, pos, entries_len, "entries")?;
     let entries_bytes = bytes[pos..pos + entries_len].to_vec();
 
     let fst = Map::new(fst_bytes)?;

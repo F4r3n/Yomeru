@@ -84,13 +84,28 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<ExamplesDictInner> {
 
     let mut pos = 5usize;
 
-    let index_len = u32::from_le_bytes(bytes[pos..pos + 4].try_into()?) as usize;
+    let read_u32 = |bytes: &[u8], pos: usize| -> anyhow::Result<usize> {
+        if pos + 4 > bytes.len() {
+            bail!("examples binary truncated reading length at {pos}");
+        }
+        Ok(u32::from_le_bytes(bytes[pos..pos + 4].try_into()?) as usize)
+    };
+    let read_slice = |bytes: &[u8], pos: usize, len: usize, what: &str| -> anyhow::Result<()> {
+        if pos + len > bytes.len() {
+            bail!("examples binary truncated reading {what} ({len} bytes at {pos})");
+        }
+        Ok(())
+    };
+
+    let index_len = read_u32(bytes, pos)?;
     pos += 4;
+    read_slice(bytes, pos, index_len, "index")?;
     let index: Vec<(String, Vec<u32>)> = from_bytes(&bytes[pos..pos + index_len])?;
     pos += index_len;
 
-    let sentences_len = u32::from_le_bytes(bytes[pos..pos + 4].try_into()?) as usize;
+    let sentences_len = read_u32(bytes, pos)?;
     pos += 4;
+    read_slice(bytes, pos, sentences_len, "sentences")?;
     let sentences_bytes = bytes[pos..pos + sentences_len].to_vec();
 
     Ok(ExamplesDictInner {
