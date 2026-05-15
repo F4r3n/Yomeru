@@ -46,8 +46,19 @@ export async function openDb(): Promise<IDBDatabase> {
     };
 
     req.onsuccess = (e) => {
-      db = (e.target as IDBOpenDBRequest).result;
-      resolve(db);
+      const opened = (e.target as IDBOpenDBRequest).result;
+      // Another tab/worker upgrading the DB (or closing on quota pressure)
+      // would leave our cached `db` unusable; drop the cache so the next
+      // openDb() reopens cleanly instead of failing with InvalidStateError.
+      opened.onversionchange = () => {
+        opened.close();
+        if (db === opened) db = null;
+      };
+      opened.onclose = () => {
+        if (db === opened) db = null;
+      };
+      db = opened;
+      resolve(opened);
     };
     req.onerror = () => reject(req.error);
   });
