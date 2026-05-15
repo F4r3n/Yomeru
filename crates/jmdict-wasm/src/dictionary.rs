@@ -28,10 +28,14 @@ pub struct Dictionary {}
 #[wasm_bindgen]
 impl Dictionary {
     /// Load the binary dictionary produced by jmdict-build.
+    ///
+    /// The dictionary is stored in a process-global `OnceCell`. A second call
+    /// with different bytes will silently reuse the first set — the new bytes
+    /// are dropped. There's no `reload` API today; if one is ever needed,
+    /// migrate `DICT` to `arc-swap`/`Mutex<Option<…>>`.
     #[wasm_bindgen(constructor)]
     pub fn new(dict_bytes: &[u8]) -> Result<Dictionary, JsError> {
         if DICT.get().is_some() {
-            // Already loaded — reuse.
             return Ok(Dictionary {});
         }
 

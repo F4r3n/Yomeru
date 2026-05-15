@@ -20,6 +20,9 @@ pub struct ExamplesDict {}
 
 #[wasm_bindgen]
 impl ExamplesDict {
+    /// The examples blob is stored in a process-global `OnceCell`. A second
+    /// call with different bytes silently reuses the first set — see the
+    /// matching note on `jmdict-wasm::Dictionary::new`.
     #[wasm_bindgen(constructor)]
     pub fn new(bytes: &[u8]) -> Result<ExamplesDict, JsError> {
         if EXAMPLES.get().is_some() {
