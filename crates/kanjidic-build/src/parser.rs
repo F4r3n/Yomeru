@@ -98,7 +98,13 @@ pub fn parse_kanjidic(path: &Path) -> Result<Vec<KanjiEntry>> {
                     Ctx::StrokeCount => {
                         // Only take the first stroke_count (some entries have variants).
                         if b.stroke_count == 0 {
-                            b.stroke_count = text.parse().unwrap_or(0);
+                            b.stroke_count = text.parse().unwrap_or_else(|_| {
+                                eprintln!(
+                                    "kanjidic-build: invalid stroke_count {:?} for literal {:?}; defaulting to 0",
+                                    text, b.literal,
+                                );
+                                0
+                            });
                         }
                     }
                     Ctx::Freq => {
