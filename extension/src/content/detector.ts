@@ -1,7 +1,13 @@
 export interface HitResult {
   node: Text;
   nodeText: string;
-  charOffset: number;
+  /**
+   * Offset into `nodeText` in **UTF-16 code units** (as returned by
+   * `caretPositionFromPoint().offset` — the same unit DOM Range uses).
+   * Convert to a Unicode code-point offset before passing to Rust/WASM,
+   * which uses `char` (code-point) indexing.
+   */
+  utf16Offset: number;
 }
 
 export function getJapaneseAtPoint(x: number, y: number): HitResult | null {
@@ -36,7 +42,7 @@ export function getJapaneseAtPoint(x: number, y: number): HitResult | null {
       y >= rect.top - MARGIN &&
       y <= rect.bottom + MARGIN
     ) {
-      return { node, nodeText: node.textContent ?? "", charOffset: offset };
+      return { node, nodeText: node.textContent ?? "", utf16Offset: offset };
     }
   }
 

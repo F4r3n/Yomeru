@@ -38,7 +38,6 @@ describe("settings", () => {
       const s = await settings.getSettings();
 
       expect(s.maxSessionCards).toBe(5);
-      expect(s.maxStagingSize).toBe(DEFAULT_SETTINGS.maxStagingSize);
       expect(s.graduationReps).toBe(DEFAULT_SETTINGS.graduationReps);
       expect(s.intervalScale).toBe(DEFAULT_SETTINGS.intervalScale);
     });
@@ -49,14 +48,13 @@ describe("settings", () => {
       const s = await settings.getSettings();
 
       expect(s.maxSessionCards).toBe(10);
-      expect(s.maxStagingSize).toBe(DEFAULT_SETTINGS.maxStagingSize);
+      expect(s.graduationReps).toBe(DEFAULT_SETTINGS.graduationReps);
     });
   });
 
   describe("saveSettings", () => {
     it("persists settings that getSettings reads back", async () => {
       const custom: SrsSettings = {
-        maxStagingSize: 10,
         graduationReps: 5,
         intervalScale: 1.5,
         maxSessionCards: 15,

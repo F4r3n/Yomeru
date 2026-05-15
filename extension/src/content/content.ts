@@ -238,7 +238,7 @@ async function handleHover(e: MouseEvent): Promise<void> {
   // caretPositionFromPoint returns a UTF-16 code unit offset; Rust's
   // extract_japanese_run expects a Unicode code point offset. Convert once
   // and keep cpOffset (code points) for all Rust calls throughout this function.
-  let cpOffset = utf16ToCodePoint(hit.nodeText, hit.charOffset);
+  let cpOffset = utf16ToCodePoint(hit.nodeText, hit.utf16Offset);
   let text = wasmExtractRun!(hit.nodeText, cpOffset);
 
   if (!text && cpOffset > 0) {
