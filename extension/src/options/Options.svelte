@@ -11,15 +11,23 @@
     let enabled = $state(true);
     let stagingCount = $state(0);
 
+    async function loadStagingCount() {
+        try {
+            const res = await browser.runtime.sendMessage({ type: "GET_STAGING" });
+            stagingCount = (res as { cards: unknown[] }).cards?.length ?? 0;
+        } catch {}
+    }
+
     $effect(() => {
         browser.storage.local.get("enabled").then((res) => {
             enabled = (res as { enabled?: boolean }).enabled ?? true;
         });
-        browser.runtime.sendMessage({ type: "GET_STAGING" })
-            .then((res) => {
-                stagingCount = (res as { cards: unknown[] }).cards?.length ?? 0;
-            })
-            .catch(() => {});
+        loadStagingCount();
+        const handler = (changes: Record<string, browser.storage.StorageChange>, area: string) => {
+            if (area === "local" && "_yomeru_db_v" in changes) loadStagingCount();
+        };
+        browser.storage.onChanged.addListener(handler);
+        return () => browser.storage.onChanged.removeListener(handler);
     });
 
     async function toggleEnabled() {
