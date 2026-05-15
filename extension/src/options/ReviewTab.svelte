@@ -346,11 +346,16 @@
         border-radius: 10px;
         padding: 24px 20px 16px;
         text-align: center;
+        position: relative;
     }
     .card-progress {
-        font-size: 12px;
+        position: absolute;
+        top: 6px;
+        right: 10px;
+        font-size: 10px;
         color: var(--subtext);
-        margin-bottom: 8px;
+        opacity: 0.55;
+        pointer-events: none;
     }
     .card-word-wrap {
         margin-bottom: 12px;
