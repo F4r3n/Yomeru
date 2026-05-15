@@ -1,9 +1,11 @@
 <script lang="ts">
-    import type { SrsSettings } from "../shared/types.ts";
+    import type { SrsCard, SrsSettings } from "../shared/types.ts";
     import { DEFAULT_SETTINGS } from "../shared/types.ts";
 
     let settings = $state<SrsSettings>({ ...DEFAULT_SETTINGS });
     let saved = $state(false);
+    let backupStatus = $state("");
+    let backupError = $state(false);
 
     $effect(() => {
         browser.runtime.sendMessage({ type: "GET_SETTINGS" }).then((res) => {
@@ -20,6 +22,56 @@
         await browser.runtime.sendMessage({ type: "SAVE_SETTINGS", payload });
         saved = true;
         setTimeout(() => { saved = false; }, 2000);
+    }
+
+    function flashBackup(msg: string, error = false) {
+        backupStatus = msg;
+        backupError = error;
+        setTimeout(() => { backupStatus = ""; backupError = false; }, 6000);
+    }
+
+    async function exportCards() {
+        try {
+            const res = await browser.runtime.sendMessage({ type: "GET_ALL_CARDS" });
+            const cards = (res as { cards: SrsCard[] }).cards ?? [];
+            const payload = {
+                version: browser.runtime.getManifest().version,
+                exportedAt: Date.now(),
+                cards,
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `yomeru-cards-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            flashBackup(`Exported ${cards.length} card${cards.length !== 1 ? "s" : ""}.`);
+        } catch (e) {
+            flashBackup(`Export failed: ${e instanceof Error ? e.message : String(e)}`, true);
+        }
+    }
+
+    async function onImportFile(e: Event) {
+        const input = e.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (!file) return;
+        try {
+            const data = JSON.parse(await file.text());
+            const cards = data?.cards;
+            if (!Array.isArray(cards)) throw new Error("file is missing a 'cards' array");
+            const res = await browser.runtime.sendMessage({
+                type: "IMPORT_CARDS",
+                payload: { cards },
+            });
+            const r = res as { added: number; skipped: number; error?: string };
+            if (r.error) throw new Error(r.error);
+            flashBackup(`Imported ${r.added} card${r.added !== 1 ? "s" : ""}, skipped ${r.skipped} existing.`);
+        } catch (err) {
+            flashBackup(`Import failed: ${err instanceof Error ? err.message : String(err)}`, true);
+        } finally {
+            input.value = "";
+        }
     }
 </script>
 
@@ -47,6 +99,23 @@
     <div class="settings-actions">
         <button class="btn-save" onclick={save}>Save</button>
         {#if saved}<span class="settings-saved">Saved!</span>{/if}
+    </div>
+
+    <div class="settings-divider"></div>
+
+    <div class="settings-row">
+        <span class="settings-label">Backup &amp; Restore</span>
+        <span class="settings-hint">Export your cards as JSON, or import a previous export. Existing cards are kept on import.</span>
+        <div class="backup-actions">
+            <button class="btn-backup" onclick={exportCards}>Export JSON</button>
+            <label class="btn-backup">
+                Import JSON
+                <input type="file" accept="application/json,.json" onchange={onImportFile} />
+            </label>
+        </div>
+        {#if backupStatus}
+            <span class="backup-status" class:backup-status--error={backupError}>{backupStatus}</span>
+        {/if}
     </div>
 </div>
 
@@ -120,5 +189,40 @@
     .settings-saved {
         font-size: 12px;
         color: var(--green);
+    }
+    .settings-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 8px 0;
+    }
+    .backup-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 6px;
+    }
+    .btn-backup {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 13px;
+        padding: 6px 14px;
+        transition: border-color 0.15s, background 0.15s;
+        display: inline-block;
+    }
+    .btn-backup:hover {
+        border-color: var(--accent);
+    }
+    .btn-backup input[type="file"] {
+        display: none;
+    }
+    .backup-status {
+        font-size: 12px;
+        color: var(--green);
+        margin-top: 6px;
+    }
+    .backup-status--error {
+        color: var(--red);
     }
 </style>

@@ -13,6 +13,7 @@ import {
   addLookupHistory,
 } from "./idb";
 import { getSettings, saveSettings } from "./settings";
+import { importCards, syncCardsBackup, writeCardsBackup } from "./cards-backup";
 import type { SrsCard, SrsSettings } from "../shared/types.ts";
 import { mergeReview, applyIntervalScale, checkGraduation } from "./review-utils.ts";
 
@@ -73,9 +74,16 @@ async function ensureExamples(): Promise<void> {
 initSrs().catch((e) => console.error("[yomeru] initSrs failed:", e));
 initKanji().catch((e) => console.error("[yomeru] initKanji failed:", e));
 
-function bumpDbVersion(): Promise<void> {
-  return browser.storage.local.set({ _yomeru_db_v: Date.now() });
+async function bumpDbVersion(): Promise<void> {
+  await Promise.all([
+    browser.storage.local.set({ _yomeru_db_v: Date.now() }),
+    writeCardsBackup(),
+  ]);
 }
+
+const storageReady = syncCardsBackup().catch((e) => {
+  console.error("[yomeru] syncCardsBackup failed:", e);
+});
 
 function syncIcon(enabled: boolean) {
   browser.action.setIcon({
@@ -94,49 +102,59 @@ browser.storage.onChanged.addListener((changes, area) => {
   }
 });
 
+function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
+  switch (msg.type) {
+    case "ADD_WORD":
+      return handleAddWord(
+        msg.payload as { word: string; reading: string; meaning_en: string; senses?: SrsCard["senses"] },
+      );
+    case "REVIEW_CARD":
+      return handleReviewCard(
+        msg.payload as { word: string; rating: number },
+      );
+    case "GET_DUE":
+      return handleGetDue();
+    case "GET_ALL_CARDS":
+      return handleGetAllCards();
+    case "DELETE_CARD":
+      return handleDeleteCard(msg.payload as { word: string });
+    case "LOG_LOOKUP":
+      return handleLogLookup(
+        msg.payload as { word: string; reading: string },
+      );
+    case "GET_SRS_WORDS":
+      return handleGetSrsWords();
+    case "GET_STAGING":
+      return handleGetStaging();
+    case "PROMOTE_CARD":
+      return handlePromoteCard(msg.payload as { word: string });
+    case "PROMOTE_ALL":
+      return handlePromoteAll();
+    case "PROMOTE_BATCH":
+      return handlePromoteBatch();
+    case "GET_SETTINGS":
+      return handleGetSettings();
+    case "SAVE_SETTINGS":
+      return handleSaveSettings(msg.payload as SrsSettings);
+    case "GET_KANJI":
+      return handleGetKanji(msg.payload as { word: string });
+    case "GET_EXAMPLES":
+      return handleGetExamples(msg.payload as { word: string });
+    case "IMPORT_CARDS":
+      return handleImportCards(msg.payload as { cards: unknown });
+    default:
+      return Promise.resolve({ error: "Unknown message type" });
+  }
+}
+
+async function handleImportCards({ cards }: { cards: unknown }) {
+  const result = await importCards(cards);
+  if (result.added > 0) await bumpDbVersion();
+  return result;
+}
+
 browser.runtime.onMessage.addListener(
-  (msg: { type: string; payload?: unknown }) => {
-    switch (msg.type) {
-      case "ADD_WORD":
-        return handleAddWord(
-          msg.payload as { word: string; reading: string; meaning_en: string; senses?: SrsCard["senses"] },
-        );
-      case "REVIEW_CARD":
-        return handleReviewCard(
-          msg.payload as { word: string; rating: number },
-        );
-      case "GET_DUE":
-        return handleGetDue();
-      case "GET_ALL_CARDS":
-        return handleGetAllCards();
-      case "DELETE_CARD":
-        return handleDeleteCard(msg.payload as { word: string });
-      case "LOG_LOOKUP":
-        return handleLogLookup(
-          msg.payload as { word: string; reading: string },
-        );
-      case "GET_SRS_WORDS":
-        return handleGetSrsWords();
-      case "GET_STAGING":
-        return handleGetStaging();
-      case "PROMOTE_CARD":
-        return handlePromoteCard(msg.payload as { word: string });
-      case "PROMOTE_ALL":
-        return handlePromoteAll();
-      case "PROMOTE_BATCH":
-        return handlePromoteBatch();
-      case "GET_SETTINGS":
-        return handleGetSettings();
-      case "SAVE_SETTINGS":
-        return handleSaveSettings(msg.payload as SrsSettings);
-      case "GET_KANJI":
-        return handleGetKanji(msg.payload as { word: string });
-      case "GET_EXAMPLES":
-        return handleGetExamples(msg.payload as { word: string });
-      default:
-        return Promise.resolve({ error: "Unknown message type" });
-    }
-  },
+  (msg: { type: string; payload?: unknown }) => storageReady.then(() => dispatch(msg)),
 );
 
 async function handleAddWord({
