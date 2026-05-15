@@ -73,6 +73,10 @@ async function ensureExamples(): Promise<void> {
 initSrs();
 initKanji();
 
+function bumpDbVersion(): Promise<void> {
+  return browser.storage.local.set({ _yomeru_db_v: Date.now() });
+}
+
 function syncIcon(enabled: boolean) {
   browser.action.setIcon({
     path: enabled ? "icons/icon.svg" : "icons/icon-disabled.svg",
@@ -158,7 +162,7 @@ async function handleAddWord({
     status: "staging",
   };
   await putCard(card);
-  await browser.storage.local.set({ _yomeru_db_v: Date.now() });
+  await bumpDbVersion();
   return { success: true, existing: false };
 }
 
@@ -178,9 +182,11 @@ async function handleReviewCard({
   updated = applyIntervalScale(updated, settings.intervalScale, now_ms);
   if (checkGraduation(updated.repetitions, settings.graduationReps)) {
     await deleteCard(word);
+    await bumpDbVersion();
     return { success: true, graduated: true };
   }
   await putCard(mergeReview(card, updated));
+  await bumpDbVersion();
   return { success: true, graduated: false };
 }
 
@@ -196,11 +202,13 @@ async function handleGetStaging() {
 
 async function handlePromoteCard({ word }: { word: string }) {
   await promoteCard(word);
+  await bumpDbVersion();
   return { success: true };
 }
 
 async function handlePromoteAll() {
   await promoteAll();
+  await bumpDbVersion();
   return { success: true };
 }
 
@@ -211,6 +219,7 @@ async function handlePromoteBatch() {
   for (let i = 0; i < n; i++) {
     await promoteCard(staging[i].word);
   }
+  if (n > 0) await bumpDbVersion();
   const due = await getDueCards(Date.now());
   return {
     cards: due.slice(0, settings.maxSessionCards),
@@ -233,6 +242,7 @@ async function handleGetAllCards() {
 
 async function handleDeleteCard({ word }: { word: string }) {
   await deleteCard(word);
+  await bumpDbVersion();
   return { success: true };
 }
 
