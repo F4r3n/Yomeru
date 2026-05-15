@@ -24,11 +24,17 @@
 
     $effect(() => {
         loadWords();
+        let pending: ReturnType<typeof setTimeout> | null = null;
         const handler = (changes: Record<string, browser.storage.StorageChange>, area: string) => {
-            if (area === "local" && "_yomeru_db_v" in changes) loadWords();
+            if (area !== "local" || !("_yomeru_db_v" in changes)) return;
+            if (pending) clearTimeout(pending);
+            pending = setTimeout(() => { pending = null; loadWords(); }, 150);
         };
         browser.storage.onChanged.addListener(handler);
-        return () => browser.storage.onChanged.removeListener(handler);
+        return () => {
+            if (pending) clearTimeout(pending);
+            browser.storage.onChanged.removeListener(handler);
+        };
     });
 
     async function loadWords() {
