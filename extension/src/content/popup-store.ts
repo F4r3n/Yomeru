@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import type { KanjiEntry, WordEntry } from "../shared/types.ts";
 
 interface PopupState {
@@ -12,10 +12,8 @@ interface PopupState {
   pinned: boolean;
 }
 
-let _pinned = false;
-
 function createPopupStore() {
-  const { subscribe, set, update } = writable<PopupState>({
+  const store = writable<PopupState>({
     visible: false,
     entries: [],
     kanjiEntries: [],
@@ -25,6 +23,7 @@ function createPopupStore() {
     wy2: 0,
     pinned: false,
   });
+  const { subscribe, set, update } = store;
 
   return {
     subscribe,
@@ -36,23 +35,20 @@ function createPopupStore() {
       wy1: number,
       wy2: number,
     ) {
-      _pinned = false;
       set({ visible: true, entries, kanjiEntries, wx1, wx2, wy1, wy2, pinned: false });
     },
     pin() {
-      _pinned = true;
       update((s) => ({ ...s, pinned: true }));
     },
     hide() {
-      if (_pinned) return;
+      if (get(store).pinned) return;
       update((s) => ({ ...s, visible: false }));
     },
     forceHide() {
-      _pinned = false;
       update((s) => ({ ...s, visible: false, pinned: false }));
     },
     isPinned() {
-      return _pinned;
+      return get(store).pinned;
     },
   };
 }
