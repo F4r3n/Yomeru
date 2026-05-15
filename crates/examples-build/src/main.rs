@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, bail};
 use clap::Parser;
 use examples_types::ExampleEntry;
 use postcard::to_allocvec;
@@ -97,7 +97,11 @@ fn build(content: &str) -> Result<(Vec<(String, Vec<u32>)>, Vec<u8>, usize)> {
             continue;
         }
 
-        let offset = sentences_bytes.len() as u32;
+        let offset_usize = sentences_bytes.len();
+        if offset_usize > u32::MAX as usize {
+            bail!("examples sentences blob exceeds 4 GiB ({} bytes)", offset_usize);
+        }
+        let offset = offset_usize as u32;
         let entry = ExampleEntry { japanese, english };
         let serialized = to_allocvec(&entry)?;
         sentences_bytes.extend_from_slice(&(serialized.len() as u32).to_le_bytes());

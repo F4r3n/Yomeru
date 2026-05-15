@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, bail};
 use kanjidic_types::KanjiEntry;
 use std::io::Write;
 use std::path::Path;
@@ -26,8 +26,11 @@ pub fn write_index(entries: &[KanjiEntry], output: &Path) -> Result<()> {
     let mut index: Vec<(u32, u32)> = Vec::with_capacity(sorted.len());
 
     for entry in &sorted {
-        let offset = data_blob.len() as u32;
-        index.push((entry.literal as u32, offset));
+        let offset = data_blob.len();
+        if offset > u32::MAX as usize {
+            bail!("kanjidic data blob exceeds 4 GiB ({} bytes)", offset);
+        }
+        index.push((entry.literal as u32, offset as u32));
 
         let serialized = postcard::to_allocvec(entry)?;
         let len = serialized.len() as u32;

@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, bail};
 use fst::MapBuilder;
 use jmdict_types::WordEntry;
 use postcard::to_allocvec;
@@ -17,7 +17,11 @@ pub fn build_index(entries: &[WordEntry]) -> Result<DictionaryIndex> {
 
     for entry in entries {
         let serialized = to_allocvec(entry)?;
-        entry_offsets.push(entries_bytes.len() as u32);
+        let offset = entries_bytes.len();
+        if offset > u32::MAX as usize {
+            bail!("jmdict entries blob exceeds 4 GiB ({} bytes)", offset);
+        }
+        entry_offsets.push(offset as u32);
         let len = serialized.len() as u32;
         entries_bytes.extend_from_slice(&len.to_le_bytes());
         entries_bytes.extend_from_slice(&serialized);
