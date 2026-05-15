@@ -80,15 +80,12 @@ impl Dictionary {
             return JsValue::from(js_sys::Array::new());
         }
 
-        let char_vec: Vec<(usize, char)> = text.char_indices().collect();
-        let total = char_vec.len();
         let mut results: Vec<[usize; 2]> = Vec::new();
-        let mut ci = 0usize;
+        let mut iter = text.char_indices().enumerate().peekable();
 
-        while ci < total {
-            let (byte_off, ch) = char_vec[ci];
+        while let Some(&(ci, (byte_off, ch))) = iter.peek() {
             if !japanese_utils::is_japanese(ch) {
-                ci += 1;
+                iter.next();
                 continue;
             }
             match crate::lookup::lookup_longest_match(&text[byte_off..], 20) {
@@ -99,12 +96,18 @@ impl Dictionary {
                         .unwrap_or("");
                     if !hw.is_empty() && known_set.contains(hw) {
                         results.push([ci, match_len]);
-                        ci += match_len;
+                        for _ in 0..match_len {
+                            if iter.next().is_none() {
+                                break;
+                            }
+                        }
                     } else {
-                        ci += 1;
+                        iter.next();
                     }
                 }
-                None => ci += 1,
+                None => {
+                    iter.next();
+                }
             }
         }
 
