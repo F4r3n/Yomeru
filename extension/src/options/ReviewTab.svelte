@@ -12,6 +12,7 @@
     let graduatedMsg = $state("");
     let kanjiEntries = $state<KanjiEntry[]>([]);
     let corpusExamples = $state<ExampleEntry[]>([]);
+    let examplesLoading = $state(false);
     let activeCardTab = $state<"word" | "kanji" | "examples">("word");
     let reviewStarted = $state(false);
     let isRating = $state(false);
@@ -82,12 +83,17 @@
         kanjiEntries = [];
         corpusExamples = [];
         if (!currentCard) return;
-        const [kanjiRes, exRes] = await Promise.all([
-            browser.runtime.sendMessage({ type: "GET_KANJI", payload: { word: currentCard.word } }),
-            browser.runtime.sendMessage({ type: "GET_EXAMPLES", payload: { word: currentCard.word } }),
-        ]);
-        kanjiEntries = (kanjiRes as { entries: KanjiEntry[] }).entries ?? [];
-        corpusExamples = (exRes as { entries: ExampleEntry[] }).entries ?? [];
+        examplesLoading = true;
+        try {
+            const [kanjiRes, exRes] = await Promise.all([
+                browser.runtime.sendMessage({ type: "GET_KANJI", payload: { word: currentCard.word } }),
+                browser.runtime.sendMessage({ type: "GET_EXAMPLES", payload: { word: currentCard.word } }),
+            ]);
+            kanjiEntries = (kanjiRes as { entries: KanjiEntry[] }).entries ?? [];
+            corpusExamples = (exRes as { entries: ExampleEntry[] }).entries ?? [];
+        } finally {
+            examplesLoading = false;
+        }
     }
 
     async function rate(rating: number) {
@@ -261,7 +267,7 @@
                                 </div>
                             {/each}
                         </div>
-                    {:else if showBack}
+                    {:else if showBack && !examplesLoading}
                         <div class="review-examples-empty">No examples found.</div>
                     {/if}
                 {/if}
