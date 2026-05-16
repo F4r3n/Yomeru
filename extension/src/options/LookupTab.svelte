@@ -7,6 +7,9 @@
     import { isRomaji, romajiToHiragana } from "./romaji.ts";
     import { loadHistory, pushHistory, clearHistory } from "./lookup-history.ts";
 
+    const SEARCH_DEBOUNCE_MS = 200;
+    const HISTORY_DEBOUNCE_MS = 1500;
+
     let query = $state("");
     let lastTarget = $state("");
     let entries = $state<WordEntry[]>([]);
@@ -15,7 +18,8 @@
     let buttonStates = $state<Record<string, "idle" | "added" | "existing">>({});
     let history = $state<string[]>([]);
 
-    let pending: ReturnType<typeof setTimeout> | null = null;
+    let searchPending: ReturnType<typeof setTimeout> | null = null;
+    let historyPending: ReturnType<typeof setTimeout> | null = null;
 
     loadHistory().then((h) => { history = h; });
 
@@ -29,12 +33,14 @@
     $effect(() => watchCardsDb(loadSrsWords));
 
     function onInput() {
-        if (pending) clearTimeout(pending);
-        pending = setTimeout(runLookup, 200);
+        if (searchPending) clearTimeout(searchPending);
+        if (historyPending) clearTimeout(historyPending);
+        searchPending = setTimeout(runLookup, SEARCH_DEBOUNCE_MS);
+        historyPending = setTimeout(commitToHistory, HISTORY_DEBOUNCE_MS);
     }
 
     async function runLookup() {
-        pending = null;
+        searchPending = null;
         const q = query.trim();
         if (!q) {
             entries = [];
@@ -53,22 +59,19 @@
     }
 
     async function commitToHistory() {
-        if (pending) { clearTimeout(pending); pending = null; }
-        await runLookup();
+        historyPending = null;
+        if (searchPending) {
+            clearTimeout(searchPending);
+            await runLookup();
+        }
         if (entries.length > 0 && lastTarget) {
             history = await pushHistory(lastTarget);
         }
     }
 
-    function onKeyDown(e: KeyboardEvent) {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            commitToHistory();
-        }
-    }
-
     function searchFor(word: string) {
-        if (pending) { clearTimeout(pending); pending = null; }
+        if (searchPending) { clearTimeout(searchPending); searchPending = null; }
+        if (historyPending) { clearTimeout(historyPending); historyPending = null; }
         query = word;
         runLookup();
     }
@@ -95,20 +98,14 @@
 </svelte:head>
 
 <div class="lookup-wrap">
-    <div class="lookup-row">
-        <input
-            class="lookup-input"
-            type="search"
-            placeholder="Type a Japanese word…"
-            bind:value={query}
-            oninput={onInput}
-            onkeydown={onKeyDown}
-            autofocus
-        />
-        <button class="lookup-search-btn" onclick={commitToHistory} disabled={!query.trim()}>
-            Search
-        </button>
-    </div>
+    <input
+        class="lookup-input"
+        type="search"
+        placeholder="Type a Japanese word…"
+        bind:value={query}
+        oninput={onInput}
+        autofocus
+    />
 
     {#if isRomaji(query.trim()) && lastTarget && lastTarget !== query.trim()}
         <div class="lookup-converted">→ {lastTarget}</div>
@@ -155,36 +152,19 @@
         flex-direction: column;
         gap: 12px;
     }
-    .lookup-row {
-        display: flex;
-        gap: 8px;
-    }
     .lookup-input {
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: 6px;
         color: var(--text);
-        flex: 1;
         font-size: 16px;
         padding: 8px 12px;
         outline: none;
+        width: 100%;
+        box-sizing: border-box;
     }
     .lookup-input:focus {
         border-color: var(--accent);
-    }
-    .lookup-search-btn {
-        background: var(--accent);
-        border: none;
-        border-radius: 6px;
-        color: var(--bg);
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 600;
-        padding: 0 16px;
-    }
-    .lookup-search-btn:disabled {
-        cursor: not-allowed;
-        opacity: 0.5;
     }
     .lookup-empty {
         color: var(--subtext);
