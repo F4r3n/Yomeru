@@ -98,6 +98,7 @@
 </svelte:head>
 
 <div class="lookup-wrap">
+    <!-- svelte-ignore a11y_autofocus -->
     <input
         class="lookup-input"
         type="search"

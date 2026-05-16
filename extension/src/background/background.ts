@@ -4,6 +4,7 @@ import type * as ExamplesWasm from "../../_generated/examples-wasm/examples_wasm
 import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
 import {
   putCard,
+  putCards,
   getCard,
   getCardsByWord,
   getAllCards,
@@ -177,6 +178,15 @@ browser.runtime.onMessage.addListener(
   (msg: { type: string; payload?: unknown }) => storageReady.then(() => dispatch(msg)),
 );
 
+// The Rust SrsCard the WASM works with is the SM-2 + bookkeeping subset of
+// the JS SrsCard — no id/direction/status. We never trust the JS-typed shape
+// after a WASM round-trip; mergeReview is responsible for reattaching the
+// JS-only fields from the original card.
+type WasmCardShape = Pick<
+  SrsCard,
+  "word" | "due_ms" | "interval_days" | "ease_factor" | "repetitions" | "added_ms"
+>;
+
 async function handleAddWord({ word }: { word: string }) {
   await ensureSrs();
   const siblings = await getCardsByWord(word);
@@ -184,7 +194,7 @@ async function handleAddWord({ word }: { word: string }) {
     return { success: true, existing: true };
   }
   const now = Date.now();
-  const base = srs!.new_card(word, now) as Omit<SrsCard, "id" | "direction" | "status">;
+  const base = srs!.new_card(word, now) as WasmCardShape;
   const recognition: SrsCard = {
     ...base,
     id: cardId(word, "recognition"),
@@ -199,8 +209,7 @@ async function handleAddWord({ word }: { word: string }) {
     direction: "recall",
     status: "staging",
   };
-  await putCard(recognition);
-  await putCard(recall);
+  await putCards([recognition, recall]);
   await bumpDbVersion();
   return { success: true, existing: false };
 }
@@ -219,14 +228,14 @@ async function handleReviewCard({
   if (!card) return { error: "Card not found" };
   const settings = await getSettings();
   const now_ms = Date.now();
-  let updated = srs!.review_card(card, rating, now_ms) as SrsCard;
-  updated = applyIntervalScale(updated, settings.intervalScale, now_ms);
-  if (checkGraduation(updated.repetitions, settings.graduationReps)) {
+  const wasmOut = srs!.review_card(card, rating, now_ms) as WasmCardShape;
+  const scaled = applyIntervalScale(wasmOut, settings.intervalScale, now_ms);
+  if (checkGraduation(scaled.repetitions, settings.graduationReps)) {
     await deleteCardById(cardId(word, direction));
     await bumpDbVersion();
     return { success: true, graduated: true };
   }
-  await putCard(mergeReview(card, updated));
+  await putCard(mergeReview(card, scaled));
   await bumpDbVersion();
   return { success: true, graduated: false };
 }

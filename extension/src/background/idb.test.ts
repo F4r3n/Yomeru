@@ -202,6 +202,22 @@ describe("idb", () => {
     });
   });
 
+  describe("putCards", () => {
+    it("writes every card in one transaction", async () => {
+      await idb.putCards([
+        makeCard({ word: "猫", direction: "recognition" }),
+        makeCard({ word: "猫", direction: "recall" }),
+      ]);
+
+      expect(await idb.getCardsByWord("猫")).toHaveLength(2);
+    });
+
+    it("is a no-op for an empty array", async () => {
+      await expect(idb.putCards([])).resolves.toBeUndefined();
+      expect(await idb.getAllCards()).toEqual([]);
+    });
+  });
+
   describe("deleteCardById", () => {
     // Used when one direction graduates: the sibling must remain reviewable.
     it("removes one sibling without touching the other", async () => {

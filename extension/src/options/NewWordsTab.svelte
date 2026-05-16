@@ -5,40 +5,51 @@
 
     let { onstagingchange }: { onstagingchange: (n: number) => void } = $props();
 
-    let stagingCards = $state<SrsCard[]>([]);
+    let allCards = $state<SrsCard[]>([]);
     let entriesByWord = $state<Record<string, WordEntry | null>>({});
 
-    // Dedupe by word: both direction siblings share status, so one row per word.
+    // One row per word that still has a staging sibling. `activeSibling` is
+    // set when the *other* direction is already active — typically a v1 user
+    // post-migration, whose recall sibling was auto-promoted but whose
+    // recognition is still staging.
+    type Row = { card: SrsCard; activeSibling: SrsCard["direction"] | null };
     let stagingRows = $derived.by(() => {
-        const seen = new Set<string>();
-        const rows: SrsCard[] = [];
-        for (const c of stagingCards) {
-            if (seen.has(c.word)) continue;
-            seen.add(c.word);
-            rows.push(c);
+        const byWord = new Map<string, { staging: SrsCard | null; active: SrsCard | null }>();
+        for (const c of allCards) {
+            const e = byWord.get(c.word) ?? { staging: null, active: null };
+            if (c.status === "staging") e.staging = c;
+            else if (c.status === "active") e.active = c;
+            byWord.set(c.word, e);
+        }
+        const rows: Row[] = [];
+        for (const { staging, active } of byWord.values()) {
+            if (!staging) continue;
+            rows.push({ card: staging, activeSibling: active ? active.direction : null });
         }
         return rows;
     });
 
-    $effect(() => watchCardsDb(loadStaging));
+    $effect(() => watchCardsDb(loadCards));
 
-    async function loadStaging() {
-        const res = await browser.runtime.sendMessage({ type: "GET_STAGING" });
+    async function loadCards() {
+        const res = await browser.runtime.sendMessage({ type: "GET_ALL_CARDS" });
         const cards = (res as { cards: SrsCard[] }).cards ?? [];
-        stagingCards = cards;
-        const words = [...new Set(cards.map((c) => c.word))];
+        allCards = cards;
+        const words = [...new Set(cards.filter((c) => c.status === "staging").map((c) => c.word))];
         entriesByWord = await buildEntryMap(words);
     }
 
     async function promoteCard(word: string) {
         await browser.runtime.sendMessage({ type: "PROMOTE_CARD", payload: { word } });
-        stagingCards = stagingCards.filter((c) => c.word !== word);
+        allCards = allCards.map((c) =>
+            c.word === word && c.status === "staging" ? { ...c, status: "active" } : c,
+        );
         onstagingchange(stagingRows.length);
     }
 
     async function promoteAll() {
         await browser.runtime.sendMessage({ type: "PROMOTE_ALL" });
-        stagingCards = [];
+        allCards = allCards.map((c) => (c.status === "staging" ? { ...c, status: "active" } : c));
         onstagingchange(0);
     }
 
@@ -66,16 +77,23 @@
             <tr><th>Word</th><th>Reading</th><th>Meaning</th><th>Added</th><th></th></tr>
         </thead>
         <tbody>
-            {#each stagingRows as card (card.word)}
-                {@const entry = entriesByWord[card.word] ?? null}
+            {#each stagingRows as row (row.card.word)}
+                {@const entry = entriesByWord[row.card.word] ?? null}
                 <tr>
-                    <td class="td-word">{card.word}</td>
+                    <td class="td-word">
+                        {row.card.word}
+                        {#if row.activeSibling}
+                            <span class="active-sibling-tag" title="{row.activeSibling} card is already in review">
+                                ↻ {row.activeSibling} active
+                            </span>
+                        {/if}
+                    </td>
                     <td class="td-reading">{readingOf(entry)}</td>
                     <td class="td-meaning">
                         {#if entry}{meaningOf(entry)}{:else}<span class="td-missing">not in dictionary</span>{/if}
                     </td>
-                    <td>{addedLabel(card.added_ms)}</td>
-                    <td><button class="btn-promote" onclick={() => promoteCard(card.word)}>Add to review</button></td>
+                    <td>{addedLabel(row.card.added_ms)}</td>
+                    <td><button class="btn-promote" onclick={() => promoteCard(row.card.word)}>Add to review</button></td>
                 </tr>
             {/each}
         </tbody>
@@ -124,6 +142,18 @@
     .td-word    { font-size: 18px; color: var(--blue);  }
     .td-reading { color: var(--green); }
     .td-meaning { color: var(--text); max-width: 180px; }
+
+    .active-sibling-tag {
+        display: inline-block;
+        margin-left: 6px;
+        font-size: 10px;
+        color: var(--green);
+        background: var(--surface);
+        border: 1px solid var(--green);
+        border-radius: 10px;
+        padding: 0 6px;
+        vertical-align: middle;
+    }
 
     .btn-promote {
         background: none;

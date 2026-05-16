@@ -4,10 +4,16 @@
     import { watchCardsDb } from "./db-watch.ts";
     import { isRomaji, romajiToHiragana } from "./romaji.ts";
 
+    type DirState = { status: SrsCard["status"]; due_ms: number } | null;
     type WordRow = {
         word: string;
-        status: SrsCard["status"];
-        next_due_ms: number;
+        recognition: DirState;
+        recall: DirState;
+        // Earliest active due across both directions; Infinity if none active.
+        next_active_due_ms: number;
+        // Worst-case status across siblings: "staging" if any sibling is
+        // staging, else "active". Drives the row's sort bucket.
+        agg_status: SrsCard["status"];
         added_ms: number;
     };
 
@@ -15,24 +21,32 @@
     let entriesByWord = $state<Record<string, WordEntry | null>>({});
     let searchQuery = $state("");
 
-    // Aggregate both direction siblings into one row per word. Siblings share
-    // status (promoted together); "due" is the earlier of the two directions.
+    // Aggregate both direction siblings into one row per word.
+    // added_ms is taken from the first sibling encountered — by construction
+    // both siblings are inserted with the same value (ADD_WORD spreads one
+    // `base` into both, and the v3 migration copies recognition.added_ms to
+    // recall), so the choice is moot.
     let wordRows = $derived.by(() => {
         const byWord = new Map<string, WordRow>();
         for (const c of allCards) {
             const existing = byWord.get(c.word);
+            const dirState: DirState = { status: c.status, due_ms: c.due_ms };
             if (!existing) {
                 byWord.set(c.word, {
                     word: c.word,
-                    status: c.status,
-                    next_due_ms: c.due_ms,
+                    recognition: c.direction === "recognition" ? dirState : null,
+                    recall: c.direction === "recall" ? dirState : null,
+                    next_active_due_ms: c.status === "active" ? c.due_ms : Infinity,
+                    agg_status: c.status,
                     added_ms: c.added_ms,
                 });
             } else {
-                existing.next_due_ms = Math.min(existing.next_due_ms, c.due_ms);
-                if (existing.status === "staging" && c.status === "active") {
-                    existing.status = "active";
+                if (c.direction === "recognition") existing.recognition = dirState;
+                else existing.recall = dirState;
+                if (c.status === "active") {
+                    existing.next_active_due_ms = Math.min(existing.next_active_due_ms, c.due_ms);
                 }
+                if (c.status === "staging") existing.agg_status = "staging";
             }
         }
         return [...byWord.values()];
@@ -52,12 +66,16 @@
                     (kana !== "" && (r.word.includes(kana) || readingOf(e).includes(kana)))
                 );
             })
-            .sort((a, b) => {
-                const da = a.status === "staging" ? Infinity : a.next_due_ms;
-                const db = b.status === "staging" ? Infinity : b.next_due_ms;
-                return da - db;
-            }),
+            .sort((a, b) => a.next_active_due_ms - b.next_active_due_ms),
     );
+
+    function isMixed(row: WordRow): boolean {
+        return (
+            row.recognition !== null &&
+            row.recall !== null &&
+            row.recognition.status !== row.recall.status
+        );
+    }
 
     $effect(() => watchCardsDb(loadWords));
 
@@ -109,14 +127,30 @@
     <tbody>
         {#each filteredRows as row (row.word)}
             {@const entry = entriesByWord[row.word] ?? null}
+            {@const mixed = isMixed(row)}
             <tr>
                 <td class="td-word">{row.word}</td>
                 <td class="td-reading">{readingOf(entry)}</td>
                 <td class="td-meaning">
                     {#if entry}{meaningOf(entry)}{:else}<span class="td-missing">not in dictionary</span>{/if}
                 </td>
-                <td><span class="status-badge {row.status}">{row.status === "staging" ? "new" : row.status}</span></td>
-                <td class="td-due {row.status === 'staging' ? '' : dueClass(row.next_due_ms)}">{row.status === "staging" ? "—" : dueLabel(row.next_due_ms)}</td>
+                <td>
+                    {#if mixed}
+                        <span class="status-pair" title="Recognition and recall are in different states">
+                            {#if row.recognition}
+                                <span class="status-mini {row.recognition.status}" title="Recognition: {row.recognition.status}">R</span>
+                            {/if}
+                            {#if row.recall}
+                                <span class="status-mini {row.recall.status}" title="Recall: {row.recall.status}">L</span>
+                            {/if}
+                        </span>
+                    {:else}
+                        <span class="status-badge {row.agg_status}">{row.agg_status === "staging" ? "new" : row.agg_status}</span>
+                    {/if}
+                </td>
+                <td class="td-due {row.next_active_due_ms === Infinity ? '' : dueClass(row.next_active_due_ms)}">
+                    {row.next_active_due_ms === Infinity ? "—" : dueLabel(row.next_active_due_ms)}
+                </td>
                 <td><button class="btn-delete" onclick={() => deleteCard(row.word)}>Delete</button></td>
             </tr>
         {/each}
@@ -190,6 +224,23 @@
     }
     .status-badge.staging { background: var(--yellow); color: var(--bg); }
     .status-badge.active  { background: var(--green);  color: var(--bg); }
+
+    .status-pair {
+        display: inline-flex;
+        gap: 3px;
+    }
+    .status-mini {
+        font-size: 10px;
+        font-weight: 700;
+        width: 16px;
+        height: 16px;
+        line-height: 16px;
+        border-radius: 50%;
+        text-align: center;
+        color: var(--bg);
+    }
+    .status-mini.staging { background: var(--yellow); }
+    .status-mini.active  { background: var(--green);  }
 
     .btn-delete {
         background: none;

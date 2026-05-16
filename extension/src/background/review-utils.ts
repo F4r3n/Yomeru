@@ -1,11 +1,17 @@
 import type { SrsCard } from "../shared/types.ts";
 
+/** The SM-2 subset that lives on every card and that the WASM round-trips. */
+export type SrsSchedFields = Pick<
+  SrsCard,
+  "due_ms" | "interval_days" | "ease_factor" | "repetitions"
+>;
+
 /**
  * Merges WASM-updated SM-2 fields back into the original card, preserving the
  * composite id / direction / status metadata that the WASM doesn't know about.
  * Forces status to "active" — a reviewed card has graduated from staging.
  */
-export function mergeReview(original: SrsCard, reviewed: SrsCard): SrsCard {
+export function mergeReview(original: SrsCard, reviewed: SrsSchedFields): SrsCard {
   return {
     ...original,
     due_ms: reviewed.due_ms,
@@ -16,12 +22,12 @@ export function mergeReview(original: SrsCard, reviewed: SrsCard): SrsCard {
   };
 }
 
-/** Scales interval_days and recomputes due_ms. Returns the original card unchanged when scale === 1.0. */
-export function applyIntervalScale(
-  card: SrsCard,
+/** Scales interval_days and recomputes due_ms. Returns the input unchanged when scale === 1.0. */
+export function applyIntervalScale<T extends SrsSchedFields>(
+  card: T,
   scale: number,
   nowMs: number,
-): SrsCard {
+): T {
   if (scale === 1.0) return card;
   const scaledDays = card.interval_days * scale;
   return { ...card, interval_days: scaledDays, due_ms: nowMs + scaledDays * 86_400_000 };

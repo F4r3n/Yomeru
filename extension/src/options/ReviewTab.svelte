@@ -48,8 +48,17 @@
         const kept: SrsCard[] = [];
         const skipped: string[] = [];
         for (const c of cards) {
-            if (entries[c.word]) kept.push(c);
-            else skipped.push(c.word);
+            if (entries[c.word]) {
+                kept.push(c);
+            } else if (c.direction === "recall") {
+                // Recall front needs English glosses; without the dict entry
+                // the card is unreviewable, so drop it from the session.
+                skipped.push(`${c.word} (recall)`);
+            } else {
+                // Recognition can still review on the word alone — keep it,
+                // back content just won't have senses.
+                kept.push(c);
+            }
         }
         return { kept, skipped, entries };
     }
@@ -497,11 +506,6 @@
         color: var(--subtext);
         margin-right: 4px;
         font-size: 12px;
-    }
-    .card-meaning {
-        font-size: 16px;
-        color: var(--text);
-        margin-bottom: 4px;
     }
     .card-tab-content {
         height: 160px;

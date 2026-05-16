@@ -30,26 +30,10 @@ export async function openDb(): Promise<IDBDatabase> {
         history.createIndex("ts", "ts", { unique: false });
       }
 
-      if (e.oldVersion >= 1 && e.oldVersion < 2) {
-        const cards = upgradeTx.objectStore("cards");
-        if (!cards.indexNames.contains("status")) {
-          cards.createIndex("status", "status", { unique: false });
-        }
-        const cursorReq = cards.openCursor();
-        cursorReq.onsuccess = (ev) => {
-          const cursor = (ev.target as IDBRequest<IDBCursorWithValue>).result;
-          if (!cursor) return;
-          const card = cursor.value;
-          if (!card.status) {
-            card.status = "active";
-            cursor.update(card);
-          }
-          cursor.continue();
-        };
-      }
-
-      // v2 → v3: rebuild cards store with composite-id keyPath, spawn recall
-      // sibling for every existing card (active, due now).
+      // v1/v2 → v3: rebuild cards store with composite-id keyPath, spawn
+      // recall sibling for every existing card (active, due now). The v3
+      // rebuild also subsumes the legacy v1→v2 "fill missing status" step:
+      // we tolerate a missing `status` field here and default to active.
       if (e.oldVersion >= 1 && e.oldVersion < 3) {
         const oldStore = upgradeTx.objectStore("cards");
         const collected: Array<Record<string, unknown>> = [];
@@ -70,17 +54,20 @@ export async function openDb(): Promise<IDBDatabase> {
           newStore.createIndex("word", "word", { unique: false });
 
           const now = Date.now();
+          const num = (v: unknown, fallback: number) =>
+            typeof v === "number" && Number.isFinite(v) ? v : fallback;
           for (const old of collected) {
             const word = String(old.word);
             const recognition: SrsCard = {
               id: cardId(word, "recognition"),
               word,
               direction: "recognition",
-              due_ms: Number(old.due_ms) || now,
-              interval_days: Number(old.interval_days) || 0,
-              ease_factor: Number(old.ease_factor) || 2.5,
-              repetitions: Number(old.repetitions) || 0,
-              added_ms: Number(old.added_ms) || now,
+              due_ms: num(old.due_ms, now),
+              interval_days: num(old.interval_days, 0),
+              // ease_factor must be > 0; 0/missing → SM-2 default.
+              ease_factor: num(old.ease_factor, 2.5) || 2.5,
+              repetitions: num(old.repetitions, 0),
+              added_ms: num(old.added_ms, now),
               status: (old.status as SrsCard["status"]) ?? "active",
             };
             newStore.add(recognition);
@@ -141,6 +128,24 @@ async function tx<T>(
 
 export function putCard(card: SrsCard): Promise<IDBValidKey> {
   return tx("cards", "readwrite", (s) => s.put(card));
+}
+
+/**
+ * Writes multiple cards in a single transaction. Atomic: if any put fails the
+ * whole batch is rolled back, so we never end up with one sibling without the
+ * other.
+ */
+export async function putCards(cards: SrsCard[]): Promise<void> {
+  if (cards.length === 0) return;
+  const database = await openDb();
+  return new Promise((resolve, reject) => {
+    const t = database.transaction("cards", "readwrite");
+    const store = t.objectStore("cards");
+    for (const c of cards) store.put(c);
+    t.oncomplete = () => resolve();
+    t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error);
+  });
 }
 
 export async function getCard(

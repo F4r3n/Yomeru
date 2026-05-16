@@ -1,7 +1,9 @@
-<script lang="ts">
+<script module lang="ts">
     declare const __VERSION__: string;
     declare const __COMMIT__: string;
 </script>
+
+<script lang="ts"></script>
 
 <div class="about">
     <div class="about-name">Yomeru</div>
