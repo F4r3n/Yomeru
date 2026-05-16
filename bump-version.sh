@@ -47,4 +47,6 @@ done
 
 echo ""
 echo "Version bumped to $VERSION. Review the diff, then commit:"
-echo "  git add -p && git commit -m \"$VERSION\""
+echo "  jj diff --stat"
+echo "  jj commit -m \"$VERSION\""
+echo "  git tag \"v$VERSION\" \"\$(jj log -r '@-' --no-graph -T commit_id --no-pager)\""
