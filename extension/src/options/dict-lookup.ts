@@ -1,17 +1,23 @@
 import type { WordEntry } from "../shared/types.ts";
 
-const cache = new Map<string, WordEntry | null>();
+const cache = new Map<string, WordEntry[]>();
 
-/** Look up a word in the JMdict via the background. Cached per session. Returns null if not in the dictionary. */
-export async function lookupWord(word: string): Promise<WordEntry | null> {
+/** Look up all dictionary entries for a word (homophones return multiple). Cached per session. */
+export async function lookupAllEntries(word: string): Promise<WordEntry[]> {
   if (cache.has(word)) return cache.get(word)!;
   const res = await browser.runtime.sendMessage({
     type: "LOOKUP_WORD",
     payload: { word },
   }) as { entries: WordEntry[] };
-  const entry = res.entries?.[0] ?? null;
-  cache.set(word, entry);
-  return entry;
+  const entries = res.entries ?? [];
+  cache.set(word, entries);
+  return entries;
+}
+
+/** First dictionary entry for a word, or null. Convenience for card display where one canonical entry is enough. */
+export async function lookupWord(word: string): Promise<WordEntry | null> {
+  const entries = await lookupAllEntries(word);
+  return entries[0] ?? null;
 }
 
 /** Look up multiple words in parallel. Returned in input order. */

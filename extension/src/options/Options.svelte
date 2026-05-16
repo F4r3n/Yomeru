@@ -2,14 +2,28 @@
     import ReviewTab from "./ReviewTab.svelte";
     import NewWordsTab from "./NewWordsTab.svelte";
     import WordListTab from "./WordListTab.svelte";
+    import LookupTab from "./LookupTab.svelte";
     import SettingsTab from "./SettingsTab.svelte";
     import AboutTab from "./AboutTab.svelte";
 
-    type Tab = "review" | "new" | "words" | "settings" | "about";
+    type Tab = "review" | "new" | "words" | "lookup" | "settings" | "about";
 
     let tab = $state<Tab>("review");
     let enabled = $state(true);
     let stagingCount = $state(0);
+    let menuOpen = $state(false);
+
+    function selectTab(t: Tab) {
+        tab = t;
+        menuOpen = false;
+    }
+
+    function onDocClick(e: MouseEvent) {
+        if (!menuOpen) return;
+        const target = e.target as HTMLElement | null;
+        if (target && target.closest(".overflow-wrap")) return;
+        menuOpen = false;
+    }
 
     async function loadStagingCount() {
         try {
@@ -54,13 +68,29 @@
         </button>
     </div>
     <nav>
-        <button class="tab" class:active={tab === "review"} onclick={() => (tab = "review")}>Review</button>
-        <button class="tab" class:active={tab === "new"}    onclick={() => (tab = "new")}>New Words{stagingCount > 0 ? ` (${stagingCount})` : ""}</button>
-        <button class="tab" class:active={tab === "words"}  onclick={() => (tab = "words")}>Word List</button>
-        <button class="tab" class:active={tab === "settings"} onclick={() => (tab = "settings")}>Settings</button>
-        <button class="tab" class:active={tab === "about"}    onclick={() => (tab = "about")}>About</button>
+        <button class="tab" class:active={tab === "review"} onclick={() => selectTab("review")}>Review</button>
+        <button class="tab" class:active={tab === "new"}    onclick={() => selectTab("new")}>New Words{stagingCount > 0 ? ` (${stagingCount})` : ""}</button>
+        <button class="tab" class:active={tab === "words"}  onclick={() => selectTab("words")}>Word List</button>
+        <button class="tab" class:active={tab === "lookup"} onclick={() => selectTab("lookup")}>Lookup</button>
+        <div class="overflow-wrap">
+            <button
+                class="tab overflow"
+                class:active={tab === "settings" || tab === "about"}
+                aria-label="More"
+                aria-haspopup="true"
+                aria-expanded={menuOpen}
+                onclick={() => (menuOpen = !menuOpen)}>⋯</button>
+            {#if menuOpen}
+                <div class="overflow-menu" role="menu">
+                    <button class="overflow-item" class:active={tab === "settings"} role="menuitem" onclick={() => selectTab("settings")}>Settings</button>
+                    <button class="overflow-item" class:active={tab === "about"} role="menuitem" onclick={() => selectTab("about")}>About</button>
+                </div>
+            {/if}
+        </div>
     </nav>
 </header>
+
+<svelte:window onclick={onDocClick} />
 
 <main>
     {#if tab === "review"}
@@ -69,6 +99,8 @@
         <NewWordsTab onstagingchange={onStagingChange} />
     {:else if tab === "words"}
         <WordListTab />
+    {:else if tab === "lookup"}
+        <LookupTab />
     {:else if tab === "settings"}
         <SettingsTab />
     {:else}
@@ -140,6 +172,7 @@
     nav {
         display: flex;
         gap: 4px;
+        align-items: stretch;
     }
     .tab {
         background: none;
@@ -157,6 +190,45 @@
     }
     .tab:hover {
         color: var(--text);
+    }
+    .overflow-wrap {
+        position: relative;
+        margin-left: auto;
+    }
+    .tab.overflow {
+        font-size: 16px;
+        padding: 6px 10px;
+        line-height: 1;
+    }
+    .overflow-menu {
+        position: absolute;
+        top: calc(100% + 2px);
+        right: 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        display: flex;
+        flex-direction: column;
+        min-width: 120px;
+        z-index: 10;
+        overflow: hidden;
+    }
+    .overflow-item {
+        background: none;
+        border: none;
+        color: var(--subtext);
+        cursor: pointer;
+        font-size: 13px;
+        padding: 8px 14px;
+        text-align: left;
+    }
+    .overflow-item:hover {
+        background: var(--border);
+        color: var(--text);
+    }
+    .overflow-item.active {
+        color: var(--accent);
     }
     main {
         padding: 16px;
