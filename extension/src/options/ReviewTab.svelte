@@ -5,7 +5,7 @@
     let { onstagingchange }: { onstagingchange?: (n: number) => void } = $props();
 
     let dueCards = $state<SrsCard[]>([]);
-    let entriesByWord = $state<Record<string, WordEntry>>({});
+    let entriesByWord = $state<Record<string, WordEntry | null>>({});
     let skippedWords = $state<string[]>([]);
     let currentIdx = $state(0);
     let showBack = $state(false);
@@ -21,15 +21,23 @@
     let isRating = $state(false);
     let reviewError = $state("");
 
-    // Words reviewed in the current session — excluded from the next loadReview so
-    // they don't reappear immediately after Done (whether due to a save failure or
-    // because the pool had more cards than the session showed).
+    // Card ids reviewed in the current session — excluded from the next
+    // loadReview so they don't reappear immediately after Done.
     let sessionReviewed = new Set<string>();
 
     let currentCard = $derived(dueCards[currentIdx] ?? null);
     let currentEntry = $derived(currentCard ? entriesByWord[currentCard.word] ?? null : null);
     let reviewDone = $derived(reviewStarted && !currentCard);
     let progressText = $derived(`${currentIdx + 1} / ${dueCards.length}`);
+    let recallGlosses = $derived.by(() => {
+        if (!currentEntry) return [] as string[];
+        const out: string[] = [];
+        for (const s of currentEntry.senses.slice(0, 3)) {
+            const g = s.glosses.map((x) => x.text).join("; ");
+            if (g) out.push(g);
+        }
+        return out;
+    });
     let statsText = $derived(
         `${dueCount} card${dueCount !== 1 ? "s" : ""} due` +
         (stagingCount > 0 ? ` · ${stagingCount} new` : ""),
@@ -59,7 +67,7 @@
             const excluded = sessionReviewed;
             sessionReviewed = new Set();
             const all = (dueRes as { cards: SrsCard[] }).cards ?? [];
-            const filtered = excluded.size > 0 ? all.filter(c => !excluded.has(c.word)) : all;
+            const filtered = excluded.size > 0 ? all.filter(c => !excluded.has(c.id)) : all;
             const { kept, skipped, entries } = await attachEntries(filtered);
             entriesByWord = entries;
             skippedWords = skipped;
@@ -125,16 +133,16 @@
         try {
             const res = await browser.runtime.sendMessage({
                 type: "REVIEW_CARD",
-                payload: { word: card.word, rating },
+                payload: { word: card.word, direction: card.direction, rating },
             }) as { success?: boolean; graduated?: boolean; error?: string };
             if (res.error) {
                 console.error("[yomeru] REVIEW_CARD failed:", res.error, "word:", card.word);
                 reviewError = `Failed to save review for 「${card.word}」`;
                 setTimeout(() => { reviewError = ""; }, 5000);
             } else {
-                sessionReviewed.add(card.word);
+                sessionReviewed.add(card.id);
                 if (res.graduated) {
-                    graduatedMsg = `「${card.word}」 graduated — removed from review queue.`;
+                    graduatedMsg = `「${card.word}」 (${card.direction}) graduated — removed from review queue.`;
                     setTimeout(() => { graduatedMsg = ""; }, 4000);
                 }
             }
@@ -209,12 +217,29 @@
 {:else}
     <div class="card">
         <div class="card-progress">{progressText}</div>
+        <div class="card-direction-badge" class:badge-recall={currentCard?.direction === "recall"}>
+            {currentCard?.direction === "recall" ? "Recall" : "Recognition"}
+        </div>
         <div class="card-front">
-            <div class="card-word-wrap">
-                <ruby class="card-word-furigana">
-                    {currentCard?.word}<rt>{currentEntry?.reading_forms[0]?.text ?? ""}</rt>
-                </ruby>
-            </div>
+            {#if !showBack && currentCard?.direction === "recall"}
+                <div class="card-recall-glosses">
+                    {#if recallGlosses.length > 0}
+                        {#each recallGlosses as g, gi}
+                            <div class="card-recall-gloss">
+                                <span class="card-num">{gi + 1}.</span>{g}
+                            </div>
+                        {/each}
+                    {:else}
+                        <div class="card-recall-empty">No definition available.</div>
+                    {/if}
+                </div>
+            {:else}
+                <div class="card-word-wrap">
+                    <ruby class="card-word-furigana">
+                        {currentCard?.word}<rt>{currentEntry?.reading_forms[0]?.text ?? ""}</rt>
+                    </ruby>
+                </div>
+            {/if}
         </div>
         {#if showBack}
             <div class="card-tabs">
@@ -395,6 +420,35 @@
         color: var(--subtext);
         opacity: 0.55;
         pointer-events: none;
+    }
+    .card-direction-badge {
+        position: absolute;
+        top: 6px;
+        left: 10px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--green);
+        opacity: 0.7;
+    }
+    .card-direction-badge.badge-recall {
+        color: var(--accent);
+    }
+    .card-recall-glosses {
+        text-align: left;
+        font-size: 18px;
+        color: var(--text);
+        padding: 8px 4px;
+        margin-bottom: 12px;
+    }
+    .card-recall-gloss {
+        margin-bottom: 6px;
+        line-height: 1.4;
+    }
+    .card-recall-empty {
+        color: var(--subtext);
+        font-style: italic;
     }
     .card-word-wrap {
         margin-bottom: 12px;

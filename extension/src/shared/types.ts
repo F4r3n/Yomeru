@@ -22,14 +22,23 @@ export interface WordEntry {
   senses: Sense[];
 }
 
+export type CardDirection = "recognition" | "recall";
+
 export interface SrsCard {
+  /** Composite key: `${word}::${direction}`. */
+  id: string;
   word: string;
+  direction: CardDirection;
   due_ms: number;
   interval_days: number;
   ease_factor: number;
   repetitions: number;
   added_ms: number;
   status: "staging" | "active";
+}
+
+export function cardId(word: string, direction: CardDirection): string {
+  return `${word}::${direction}`;
 }
 
 export interface SrsSettings {

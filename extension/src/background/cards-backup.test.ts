@@ -1,13 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IDBFactory, IDBKeyRange as FakeIDBKeyRange } from "fake-indexeddb";
 import type { SrsCard } from "../shared/types.ts";
+import { cardId } from "../shared/types.ts";
 
 type IdbModule = typeof import("./idb.ts");
 type CardsBackupModule = typeof import("./cards-backup.ts");
 
 function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
+  const word = overrides.word ?? "食べる";
+  const direction = overrides.direction ?? "recognition";
   return {
-    word: "食べる",
+    id: cardId(word, direction),
+    word,
+    direction,
     due_ms: 0,
     interval_days: 1,
     ease_factor: 2.5,
@@ -180,7 +185,7 @@ describe("cards-backup", () => {
       const result = await backup.importCards([importedCat, makeCard({ word: "犬" })]);
 
       expect(result).toEqual({ added: 1, skipped: 1 });
-      const cat = await idb.getCard("猫");
+      const cat = await idb.getCard("猫", "recognition");
       expect(cat?.repetitions).toBe(9);
       expect(cat?.ease_factor).toBe(2.9);
       expect(cat?.due_ms).toBe(12345);
@@ -200,6 +205,87 @@ describe("cards-backup", () => {
 
     it("returns 0/0 for an empty array (no error)", async () => {
       expect(await backup.importCards([])).toEqual({ added: 0, skipped: 0 });
+    });
+
+    // The v2 JSON export shape: rows have `word` + SM-2 fields, no `id` or
+    // `direction`. Import must produce a recognition sibling preserving SM-2
+    // state AND a fresh recall sibling, matching the v2→v3 IDB migration.
+    it("expands a legacy (pre-v3) JSON row into recognition + recall siblings", async () => {
+      const legacy = {
+        word: "猫",
+        due_ms: 100,
+        interval_days: 4,
+        ease_factor: 2.7,
+        repetitions: 3,
+        added_ms: 50,
+        status: "active",
+      } as unknown as SrsCard;
+
+      const before = Date.now();
+      const result = await backup.importCards([legacy]);
+      const after = Date.now();
+
+      expect(result).toEqual({ added: 1, skipped: 0 });
+
+      const recognition = await idb.getCard("猫", "recognition");
+      expect(recognition?.repetitions).toBe(3);
+      expect(recognition?.ease_factor).toBeCloseTo(2.7, 5);
+      expect(recognition?.due_ms).toBe(100);
+
+      const recall = await idb.getCard("猫", "recall");
+      expect(recall?.repetitions).toBe(0);
+      expect(recall?.ease_factor).toBe(2.5);
+      expect(recall?.status).toBe("active");
+      expect(recall?.due_ms).toBeGreaterThanOrEqual(before);
+      expect(recall?.due_ms).toBeLessThanOrEqual(after);
+    });
+
+    it("does not clobber an existing recognition card when re-importing a legacy row", async () => {
+      // Pre-existing v3 recognition card the user has been reviewing.
+      await idb.putCard(makeCard({ word: "猫", direction: "recognition", repetitions: 9, ease_factor: 2.9 }));
+      const legacy = {
+        word: "猫",
+        due_ms: 0,
+        interval_days: 1,
+        ease_factor: 2.5,
+        repetitions: 0,
+        added_ms: 0,
+        status: "active",
+      } as unknown as SrsCard;
+
+      const result = await backup.importCards([legacy]);
+
+      // The recall sibling didn't exist yet, so it gets added — making this
+      // count as one added input row, not skipped.
+      expect(result).toEqual({ added: 1, skipped: 0 });
+      const cat = await idb.getCard("猫", "recognition");
+      expect(cat?.repetitions).toBe(9);
+      expect(cat?.ease_factor).toBe(2.9);
+      expect(await idb.getCard("猫", "recall")).not.toBeNull();
+    });
+  });
+
+  describe("syncCardsBackup with legacy backup", () => {
+    // Disaster-recovery path for users who reinstall after a long-dormant
+    // session: their storage.local backup may still be in the v2 shape.
+    it("restores a legacy storage.local backup as v3 sibling pairs", async () => {
+      const legacy = {
+        word: "猫",
+        due_ms: 100,
+        interval_days: 4,
+        ease_factor: 2.7,
+        repetitions: 3,
+        added_ms: 50,
+        status: "active",
+      } as unknown as SrsCard;
+      storage.set(backup.CARDS_BACKUP_KEY, [legacy]);
+
+      const result = await backup.syncCardsBackup();
+
+      expect(result.backedUp).toBe(0);
+      expect(result.restored).toBe(2);
+      expect((await idb.getCard("猫", "recognition"))?.repetitions).toBe(3);
+      expect((await idb.getCard("猫", "recall"))?.status).toBe("active");
     });
   });
 });

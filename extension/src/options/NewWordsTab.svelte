@@ -8,19 +8,32 @@
     let stagingCards = $state<SrsCard[]>([]);
     let entriesByWord = $state<Record<string, WordEntry | null>>({});
 
+    // Dedupe by word: both direction siblings share status, so one row per word.
+    let stagingRows = $derived.by(() => {
+        const seen = new Set<string>();
+        const rows: SrsCard[] = [];
+        for (const c of stagingCards) {
+            if (seen.has(c.word)) continue;
+            seen.add(c.word);
+            rows.push(c);
+        }
+        return rows;
+    });
+
     $effect(() => watchCardsDb(loadStaging));
 
     async function loadStaging() {
         const res = await browser.runtime.sendMessage({ type: "GET_STAGING" });
         const cards = (res as { cards: SrsCard[] }).cards ?? [];
         stagingCards = cards;
-        entriesByWord = await buildEntryMap(cards.map((c) => c.word));
+        const words = [...new Set(cards.map((c) => c.word))];
+        entriesByWord = await buildEntryMap(words);
     }
 
     async function promoteCard(word: string) {
         await browser.runtime.sendMessage({ type: "PROMOTE_CARD", payload: { word } });
         stagingCards = stagingCards.filter((c) => c.word !== word);
-        onstagingchange(stagingCards.length);
+        onstagingchange(stagingRows.length);
     }
 
     async function promoteAll() {
@@ -39,13 +52,13 @@
 </script>
 
 <div class="word-list-header">
-    <span class="word-count">{stagingCards.length} new word{stagingCards.length !== 1 ? "s" : ""}</span>
-    {#if stagingCards.length > 0}
+    <span class="word-count">{stagingRows.length} new word{stagingRows.length !== 1 ? "s" : ""}</span>
+    {#if stagingRows.length > 0}
         <button class="btn-promote-all" onclick={promoteAll}>Add all to review</button>
     {/if}
 </div>
 
-{#if stagingCards.length === 0}
+{#if stagingRows.length === 0}
     <div class="empty"><p>No new words yet.</p></div>
 {:else}
     <table class="word-table">
@@ -53,7 +66,7 @@
             <tr><th>Word</th><th>Reading</th><th>Meaning</th><th>Added</th><th></th></tr>
         </thead>
         <tbody>
-            {#each stagingCards as card (card.word)}
+            {#each stagingRows as card (card.word)}
                 {@const entry = entriesByWord[card.word] ?? null}
                 <tr>
                     <td class="td-word">{card.word}</td>

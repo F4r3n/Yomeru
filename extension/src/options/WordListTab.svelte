@@ -4,27 +4,57 @@
     import { watchCardsDb } from "./db-watch.ts";
     import { isRomaji, romajiToHiragana } from "./romaji.ts";
 
+    type WordRow = {
+        word: string;
+        status: SrsCard["status"];
+        next_due_ms: number;
+        added_ms: number;
+    };
+
     let allCards = $state<SrsCard[]>([]);
     let entriesByWord = $state<Record<string, WordEntry | null>>({});
     let searchQuery = $state("");
 
-    let filteredCards = $derived(
-        allCards
-            .filter((c) => {
+    // Aggregate both direction siblings into one row per word. Siblings share
+    // status (promoted together); "due" is the earlier of the two directions.
+    let wordRows = $derived.by(() => {
+        const byWord = new Map<string, WordRow>();
+        for (const c of allCards) {
+            const existing = byWord.get(c.word);
+            if (!existing) {
+                byWord.set(c.word, {
+                    word: c.word,
+                    status: c.status,
+                    next_due_ms: c.due_ms,
+                    added_ms: c.added_ms,
+                });
+            } else {
+                existing.next_due_ms = Math.min(existing.next_due_ms, c.due_ms);
+                if (existing.status === "staging" && c.status === "active") {
+                    existing.status = "active";
+                }
+            }
+        }
+        return [...byWord.values()];
+    });
+
+    let filteredRows = $derived(
+        wordRows
+            .filter((r) => {
                 if (!searchQuery) return true;
                 const q = searchQuery.toLowerCase();
                 const kana = isRomaji(searchQuery.trim()) ? romajiToHiragana(searchQuery.trim()) : "";
-                const e = entriesByWord[c.word] ?? null;
+                const e = entriesByWord[r.word] ?? null;
                 return (
-                    c.word.includes(q) ||
+                    r.word.includes(q) ||
                     readingOf(e).includes(q) ||
                     meaningOf(e).toLowerCase().includes(q) ||
-                    (kana !== "" && (c.word.includes(kana) || readingOf(e).includes(kana)))
+                    (kana !== "" && (r.word.includes(kana) || readingOf(e).includes(kana)))
                 );
             })
             .sort((a, b) => {
-                const da = a.status === "staging" ? Infinity : a.due_ms;
-                const db = b.status === "staging" ? Infinity : b.due_ms;
+                const da = a.status === "staging" ? Infinity : a.next_due_ms;
+                const db = b.status === "staging" ? Infinity : b.next_due_ms;
                 return da - db;
             }),
     );
@@ -35,7 +65,8 @@
         const res = await browser.runtime.sendMessage({ type: "GET_ALL_CARDS" });
         const cards = (res as { cards: SrsCard[] }).cards ?? [];
         allCards = cards;
-        entriesByWord = await buildEntryMap(cards.map((c) => c.word));
+        const words = [...new Set(cards.map((c) => c.word))];
+        entriesByWord = await buildEntryMap(words);
     }
 
     async function deleteCard(word: string) {
@@ -61,7 +92,7 @@
 </script>
 
 <div class="word-list-header">
-    <span class="word-count">{filteredCards.length} words</span>
+    <span class="word-count">{filteredRows.length} words</span>
     <input
         class="word-search"
         type="search"
@@ -76,17 +107,17 @@
         <tr><th>Word</th><th>Reading</th><th>Meaning</th><th>Status</th><th>Due</th><th></th></tr>
     </thead>
     <tbody>
-        {#each filteredCards as card (card.word)}
-            {@const entry = entriesByWord[card.word] ?? null}
+        {#each filteredRows as row (row.word)}
+            {@const entry = entriesByWord[row.word] ?? null}
             <tr>
-                <td class="td-word">{card.word}</td>
+                <td class="td-word">{row.word}</td>
                 <td class="td-reading">{readingOf(entry)}</td>
                 <td class="td-meaning">
                     {#if entry}{meaningOf(entry)}{:else}<span class="td-missing">not in dictionary</span>{/if}
                 </td>
-                <td><span class="status-badge {card.status}">{card.status === "staging" ? "new" : card.status}</span></td>
-                <td class="td-due {card.status === 'staging' ? '' : dueClass(card.due_ms)}">{card.status === "staging" ? "—" : dueLabel(card.due_ms)}</td>
-                <td><button class="btn-delete" onclick={() => deleteCard(card.word)}>Delete</button></td>
+                <td><span class="status-badge {row.status}">{row.status === "staging" ? "new" : row.status}</span></td>
+                <td class="td-due {row.status === 'staging' ? '' : dueClass(row.next_due_ms)}">{row.status === "staging" ? "—" : dueLabel(row.next_due_ms)}</td>
+                <td><button class="btn-delete" onclick={() => deleteCard(row.word)}>Delete</button></td>
             </tr>
         {/each}
     </tbody>

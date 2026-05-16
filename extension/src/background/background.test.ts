@@ -1,10 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { mergeReview, applyIntervalScale, checkGraduation } from "./review-utils.ts";
 import type { SrsCard } from "../shared/types.ts";
+import { cardId } from "../shared/types.ts";
 
 function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
+  const word = overrides.word ?? "食べる";
+  const direction = overrides.direction ?? "recognition";
   return {
-    word: "食べる",
+    id: cardId(word, direction),
+    word,
+    direction,
     due_ms: 0,
     interval_days: 1,
     ease_factor: 2.5,

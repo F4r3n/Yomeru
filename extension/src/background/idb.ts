@@ -1,7 +1,8 @@
-import type { SrsCard } from "../shared/types.ts";
+import type { CardDirection, SrsCard } from "../shared/types.ts";
+import { cardId } from "../shared/types.ts";
 
 const DB_NAME = "yomeru-db";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 let db: IDBDatabase | null = null;
 
@@ -15,10 +16,11 @@ export async function openDb(): Promise<IDBDatabase> {
       const upgradeTx = (e.target as IDBOpenDBRequest).transaction!;
 
       if (e.oldVersion < 1) {
-        const cards = database.createObjectStore("cards", { keyPath: "word" });
+        const cards = database.createObjectStore("cards", { keyPath: "id" });
         cards.createIndex("due_ms", "due_ms", { unique: false });
         cards.createIndex("added_ms", "added_ms", { unique: false });
         cards.createIndex("status", "status", { unique: false });
+        cards.createIndex("word", "word", { unique: false });
 
         const history = database.createObjectStore("lookup_history", {
           keyPath: "id",
@@ -30,7 +32,9 @@ export async function openDb(): Promise<IDBDatabase> {
 
       if (e.oldVersion >= 1 && e.oldVersion < 2) {
         const cards = upgradeTx.objectStore("cards");
-        cards.createIndex("status", "status", { unique: false });
+        if (!cards.indexNames.contains("status")) {
+          cards.createIndex("status", "status", { unique: false });
+        }
         const cursorReq = cards.openCursor();
         cursorReq.onsuccess = (ev) => {
           const cursor = (ev.target as IDBRequest<IDBCursorWithValue>).result;
@@ -43,13 +47,62 @@ export async function openDb(): Promise<IDBDatabase> {
           cursor.continue();
         };
       }
+
+      // v2 → v3: rebuild cards store with composite-id keyPath, spawn recall
+      // sibling for every existing card (active, due now).
+      if (e.oldVersion >= 1 && e.oldVersion < 3) {
+        const oldStore = upgradeTx.objectStore("cards");
+        const collected: Array<Record<string, unknown>> = [];
+        const cursorReq = oldStore.openCursor();
+        cursorReq.onsuccess = (ev) => {
+          const cursor = (ev.target as IDBRequest<IDBCursorWithValue>).result;
+          if (cursor) {
+            collected.push(cursor.value);
+            cursor.continue();
+            return;
+          }
+          // Cursor exhausted — recreate the store with the new schema.
+          database.deleteObjectStore("cards");
+          const newStore = database.createObjectStore("cards", { keyPath: "id" });
+          newStore.createIndex("due_ms", "due_ms", { unique: false });
+          newStore.createIndex("added_ms", "added_ms", { unique: false });
+          newStore.createIndex("status", "status", { unique: false });
+          newStore.createIndex("word", "word", { unique: false });
+
+          const now = Date.now();
+          for (const old of collected) {
+            const word = String(old.word);
+            const recognition: SrsCard = {
+              id: cardId(word, "recognition"),
+              word,
+              direction: "recognition",
+              due_ms: Number(old.due_ms) || now,
+              interval_days: Number(old.interval_days) || 0,
+              ease_factor: Number(old.ease_factor) || 2.5,
+              repetitions: Number(old.repetitions) || 0,
+              added_ms: Number(old.added_ms) || now,
+              status: (old.status as SrsCard["status"]) ?? "active",
+            };
+            newStore.add(recognition);
+            const recall: SrsCard = {
+              id: cardId(word, "recall"),
+              word,
+              direction: "recall",
+              due_ms: now,
+              interval_days: 0,
+              ease_factor: 2.5,
+              repetitions: 0,
+              added_ms: recognition.added_ms,
+              status: "active",
+            };
+            newStore.add(recall);
+          }
+        };
+      }
     };
 
     req.onsuccess = (e) => {
       const opened = (e.target as IDBOpenDBRequest).result;
-      // Another tab/worker upgrading the DB (or closing on quota pressure)
-      // would leave our cached `db` unusable; drop the cache so the next
-      // openDb() reopens cleanly instead of failing with InvalidStateError.
       opened.onversionchange = () => {
         opened.close();
         if (db === opened) db = null;
@@ -90,9 +143,27 @@ export function putCard(card: SrsCard): Promise<IDBValidKey> {
   return tx("cards", "readwrite", (s) => s.put(card));
 }
 
-export async function getCard(word: string): Promise<SrsCard | null> {
-  return tx<SrsCard | undefined>("cards", "readonly", (s) => s.get(word)).then(
-    (r) => r ?? null,
+export async function getCard(
+  word: string,
+  direction: CardDirection,
+): Promise<SrsCard | null> {
+  return tx<SrsCard | undefined>("cards", "readonly", (s) =>
+    s.get(cardId(word, direction)),
+  ).then((r) => r ?? null);
+}
+
+export async function getCardsByWord(word: string): Promise<SrsCard[]> {
+  return openDb().then(
+    (database) =>
+      new Promise((resolve, reject) => {
+        const req = database
+          .transaction("cards", "readonly")
+          .objectStore("cards")
+          .index("word")
+          .getAll(IDBKeyRange.only(word));
+        req.onsuccess = () => resolve(req.result as SrsCard[]);
+        req.onerror = () => reject(req.error);
+      }),
   );
 }
 
@@ -133,11 +204,14 @@ export async function getStagingCards(): Promise<SrsCard[]> {
   );
 }
 
+/** Promotes both direction siblings of a word from staging to active. */
 export async function promoteCard(word: string): Promise<void> {
-  const card = await getCard(word);
-  if (!card) return;
-  card.status = "active";
-  await putCard(card);
+  const siblings = await getCardsByWord(word);
+  for (const c of siblings) {
+    if (c.status === "staging") {
+      await putCard({ ...c, status: "active" });
+    }
+  }
 }
 
 export async function promoteAll(): Promise<void> {
@@ -151,17 +225,31 @@ export async function promoteAll(): Promise<void> {
     req.onsuccess = (e) => {
       const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
       if (!cursor) return;
-      const card = cursor.value;
-      card.status = "active";
-      cursor.update(card);
+      const card = cursor.value as SrsCard;
+      cursor.update({ ...card, status: "active" });
       cursor.continue();
     };
     req.onerror = () => reject(req.error);
   });
 }
 
-export function deleteCard(word: string): Promise<undefined> {
-  return tx("cards", "readwrite", (s) => s.delete(word));
+/** Deletes both direction siblings for a word. */
+export async function deleteCard(word: string): Promise<void> {
+  const database = await openDb();
+  return new Promise((resolve, reject) => {
+    const t = database.transaction("cards", "readwrite");
+    const store = t.objectStore("cards");
+    store.delete(cardId(word, "recognition"));
+    store.delete(cardId(word, "recall"));
+    t.oncomplete = () => resolve();
+    t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error);
+  });
+}
+
+/** Deletes a single sibling by composite id (used when one direction graduates). */
+export function deleteCardById(id: string): Promise<undefined> {
+  return tx("cards", "readwrite", (s) => s.delete(id));
 }
 
 export function addLookupHistory(

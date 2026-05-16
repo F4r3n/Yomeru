@@ -1,8 +1,19 @@
 import type { SrsCard } from "../shared/types.ts";
 
-/** Returns the WASM-updated scheduling fields, promoted to "active". */
-export function mergeReview(_original: SrsCard, reviewed: SrsCard): SrsCard {
-  return { ...reviewed, status: "active" };
+/**
+ * Merges WASM-updated SM-2 fields back into the original card, preserving the
+ * composite id / direction / status metadata that the WASM doesn't know about.
+ * Forces status to "active" — a reviewed card has graduated from staging.
+ */
+export function mergeReview(original: SrsCard, reviewed: SrsCard): SrsCard {
+  return {
+    ...original,
+    due_ms: reviewed.due_ms,
+    interval_days: reviewed.interval_days,
+    ease_factor: reviewed.ease_factor,
+    repetitions: reviewed.repetitions,
+    status: "active",
+  };
 }
 
 /** Scales interval_days and recomputes due_ms. Returns the original card unchanged when scale === 1.0. */

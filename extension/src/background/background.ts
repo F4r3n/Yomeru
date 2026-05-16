@@ -5,17 +5,20 @@ import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
 import {
   putCard,
   getCard,
+  getCardsByWord,
   getAllCards,
   getDueCards,
   getStagingCards,
   promoteCard,
   promoteAll,
   deleteCard,
+  deleteCardById,
   addLookupHistory,
 } from "./idb";
 import { getSettings, saveSettings } from "./settings";
 import { importCards, syncCardsBackup, writeCardsBackup } from "./cards-backup";
-import type { SrsCard, SrsSettings } from "../shared/types.ts";
+import type { CardDirection, SrsCard, SrsSettings } from "../shared/types.ts";
+import { cardId } from "../shared/types.ts";
 import { mergeReview, applyIntervalScale, checkGraduation } from "./review-utils.ts";
 
 type SrsEngine = InstanceType<typeof SrsWasm.SrsEngine>;
@@ -125,7 +128,7 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
       return handleAddWord(msg.payload as { word: string });
     case "REVIEW_CARD":
       return handleReviewCard(
-        msg.payload as { word: string; rating: number },
+        msg.payload as { word: string; direction: CardDirection; rating: number },
       );
     case "GET_DUE":
       return handleGetDue();
@@ -176,33 +179,50 @@ browser.runtime.onMessage.addListener(
 
 async function handleAddWord({ word }: { word: string }) {
   await ensureSrs();
-  const existing = await getCard(word);
-  if (existing) {
+  const siblings = await getCardsByWord(word);
+  if (siblings.length > 0) {
     return { success: true, existing: true };
   }
-  const base = srs!.new_card(word, Date.now()) as SrsCard;
-  const card: SrsCard = { ...base, status: "staging" };
-  await putCard(card);
+  const now = Date.now();
+  const base = srs!.new_card(word, now) as Omit<SrsCard, "id" | "direction" | "status">;
+  const recognition: SrsCard = {
+    ...base,
+    id: cardId(word, "recognition"),
+    word,
+    direction: "recognition",
+    status: "staging",
+  };
+  const recall: SrsCard = {
+    ...base,
+    id: cardId(word, "recall"),
+    word,
+    direction: "recall",
+    status: "staging",
+  };
+  await putCard(recognition);
+  await putCard(recall);
   await bumpDbVersion();
   return { success: true, existing: false };
 }
 
 async function handleReviewCard({
   word,
+  direction,
   rating,
 }: {
   word: string;
+  direction: CardDirection;
   rating: number;
 }) {
   await ensureSrs();
-  const card = await getCard(word);
+  const card = await getCard(word, direction);
   if (!card) return { error: "Card not found" };
   const settings = await getSettings();
   const now_ms = Date.now();
   let updated = srs!.review_card(card, rating, now_ms) as SrsCard;
   updated = applyIntervalScale(updated, settings.intervalScale, now_ms);
   if (checkGraduation(updated.repetitions, settings.graduationReps)) {
-    await deleteCard(word);
+    await deleteCardById(cardId(word, direction));
     await bumpDbVersion();
     return { success: true, graduated: true };
   }
@@ -236,15 +256,23 @@ async function handlePromoteAll() {
 async function handlePromoteBatch() {
   const settings = await getSettings();
   const staging = (await getStagingCards()).sort((a, b) => a.added_ms - b.added_ms);
-  const n = Math.min(staging.length, settings.maxSessionCards);
+  const stagingWords: string[] = [];
+  const seen = new Set<string>();
+  for (const c of staging) {
+    if (!seen.has(c.word)) {
+      seen.add(c.word);
+      stagingWords.push(c.word);
+    }
+  }
+  const n = Math.min(stagingWords.length, settings.maxSessionCards);
   for (let i = 0; i < n; i++) {
-    await promoteCard(staging[i].word);
+    await promoteCard(stagingWords[i]);
   }
   if (n > 0) await bumpDbVersion();
   const due = await getDueCards(Date.now());
   return {
     cards: due.slice(0, settings.maxSessionCards),
-    stagingCount: staging.length - n,
+    stagingCount: stagingWords.length - n,
   };
 }
 
@@ -269,7 +297,7 @@ async function handleDeleteCard({ word }: { word: string }) {
 
 async function handleGetSrsWords(): Promise<{ words: string[] }> {
   const cards = await getAllCards();
-  return { words: cards.map((c) => c.word) };
+  return { words: [...new Set(cards.map((c) => c.word))] };
 }
 
 async function handleLogLookup({
