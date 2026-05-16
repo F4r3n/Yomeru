@@ -1,7 +1,10 @@
 <script lang="ts">
-    import type { SrsCard } from "../shared/types.ts";
+    import type { SrsCard, WordEntry } from "../shared/types.ts";
+    import { buildEntryMap, readingOf, meaningOf } from "./dict-lookup.ts";
+    import { watchCardsDb } from "./db-watch.ts";
 
     let allCards = $state<SrsCard[]>([]);
+    let entriesByWord = $state<Record<string, WordEntry | null>>({});
     let searchQuery = $state("");
 
     let filteredCards = $derived(
@@ -9,10 +12,11 @@
             .filter((c) => {
                 if (!searchQuery) return true;
                 const q = searchQuery.toLowerCase();
+                const e = entriesByWord[c.word] ?? null;
                 return (
                     c.word.includes(q) ||
-                    c.reading.includes(q) ||
-                    c.meaning_en.toLowerCase().includes(q)
+                    readingOf(e).includes(q) ||
+                    meaningOf(e).toLowerCase().includes(q)
                 );
             })
             .sort((a, b) => {
@@ -22,24 +26,13 @@
             }),
     );
 
-    $effect(() => {
-        loadWords();
-        let pending: ReturnType<typeof setTimeout> | null = null;
-        const handler = (changes: Record<string, browser.storage.StorageChange>, area: string) => {
-            if (area !== "local" || !("_yomeru_db_v" in changes)) return;
-            if (pending) clearTimeout(pending);
-            pending = setTimeout(() => { pending = null; loadWords(); }, 150);
-        };
-        browser.storage.onChanged.addListener(handler);
-        return () => {
-            if (pending) clearTimeout(pending);
-            browser.storage.onChanged.removeListener(handler);
-        };
-    });
+    $effect(() => watchCardsDb(loadWords));
 
     async function loadWords() {
         const res = await browser.runtime.sendMessage({ type: "GET_ALL_CARDS" });
-        allCards = (res as { cards: SrsCard[] }).cards ?? [];
+        const cards = (res as { cards: SrsCard[] }).cards ?? [];
+        allCards = cards;
+        entriesByWord = await buildEntryMap(cards.map((c) => c.word));
     }
 
     async function deleteCard(word: string) {
@@ -81,10 +74,13 @@
     </thead>
     <tbody>
         {#each filteredCards as card (card.word)}
+            {@const entry = entriesByWord[card.word] ?? null}
             <tr>
                 <td class="td-word">{card.word}</td>
-                <td class="td-reading">{card.reading}</td>
-                <td class="td-meaning">{card.meaning_en}</td>
+                <td class="td-reading">{readingOf(entry)}</td>
+                <td class="td-meaning">
+                    {#if entry}{meaningOf(entry)}{:else}<span class="td-missing">not in dictionary</span>{/if}
+                </td>
                 <td><span class="status-badge {card.status}">{card.status === "staging" ? "new" : card.status}</span></td>
                 <td class="td-due {card.status === 'staging' ? '' : dueClass(card.due_ms)}">{card.status === "staging" ? "—" : dueLabel(card.due_ms)}</td>
                 <td><button class="btn-delete" onclick={() => deleteCard(card.word)}>Delete</button></td>
@@ -147,6 +143,7 @@
     .td-word    { font-size: 18px; color: var(--blue);  }
     .td-reading { color: var(--green); }
     .td-meaning { color: var(--text); max-width: 180px; }
+    .td-missing { color: var(--red); font-style: italic; }
 
     .td-due.overdue { color: var(--red);     }
     .td-due.today   { color: var(--yellow);  }

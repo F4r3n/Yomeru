@@ -7,8 +7,6 @@ type IdbModule = typeof import("./idb.ts");
 function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
   return {
     word: "食べる",
-    reading: "たべる",
-    meaning_en: "to eat",
     due_ms: 0,
     interval_days: 1,
     ease_factor: 2.5,

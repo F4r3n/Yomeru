@@ -1,28 +1,20 @@
 <script lang="ts">
-    import type { SrsCard } from "../shared/types.ts";
+    import type { SrsCard, WordEntry } from "../shared/types.ts";
+    import { buildEntryMap, readingOf, meaningOf } from "./dict-lookup.ts";
+    import { watchCardsDb } from "./db-watch.ts";
 
     let { onstagingchange }: { onstagingchange: (n: number) => void } = $props();
 
     let stagingCards = $state<SrsCard[]>([]);
+    let entriesByWord = $state<Record<string, WordEntry | null>>({});
 
-    $effect(() => {
-        loadStaging();
-        let pending: ReturnType<typeof setTimeout> | null = null;
-        const handler = (changes: Record<string, browser.storage.StorageChange>, area: string) => {
-            if (area !== "local" || !("_yomeru_db_v" in changes)) return;
-            if (pending) clearTimeout(pending);
-            pending = setTimeout(() => { pending = null; loadStaging(); }, 150);
-        };
-        browser.storage.onChanged.addListener(handler);
-        return () => {
-            if (pending) clearTimeout(pending);
-            browser.storage.onChanged.removeListener(handler);
-        };
-    });
+    $effect(() => watchCardsDb(loadStaging));
 
     async function loadStaging() {
         const res = await browser.runtime.sendMessage({ type: "GET_STAGING" });
-        stagingCards = (res as { cards: SrsCard[] }).cards ?? [];
+        const cards = (res as { cards: SrsCard[] }).cards ?? [];
+        stagingCards = cards;
+        entriesByWord = await buildEntryMap(cards.map((c) => c.word));
     }
 
     async function promoteCard(word: string) {
@@ -62,10 +54,13 @@
         </thead>
         <tbody>
             {#each stagingCards as card (card.word)}
+                {@const entry = entriesByWord[card.word] ?? null}
                 <tr>
                     <td class="td-word">{card.word}</td>
-                    <td class="td-reading">{card.reading}</td>
-                    <td class="td-meaning">{card.meaning_en}</td>
+                    <td class="td-reading">{readingOf(entry)}</td>
+                    <td class="td-meaning">
+                        {#if entry}{meaningOf(entry)}{:else}<span class="td-missing">not in dictionary</span>{/if}
+                    </td>
                     <td>{addedLabel(card.added_ms)}</td>
                     <td><button class="btn-promote" onclick={() => promoteCard(card.word)}>Add to review</button></td>
                 </tr>

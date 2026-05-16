@@ -5,8 +5,6 @@ import type { SrsCard } from "../shared/types.ts";
 function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
   return {
     word: "食べる",
-    reading: "たべる",
-    meaning_en: "to eat",
     due_ms: 0,
     interval_days: 1,
     ease_factor: 2.5,
@@ -18,16 +16,6 @@ function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
 }
 
 describe("mergeReview", () => {
-  it("preserves senses from the original card", () => {
-    const senses = [{ pos: ["v1"], glosses: [{ text: "to eat" }] }];
-    const original = makeCard({ senses });
-    const reviewed = makeCard({ due_ms: 86_400_000, interval_days: 2, senses: undefined });
-
-    const result = mergeReview(original, reviewed);
-
-    expect(result.senses).toBe(senses);
-  });
-
   it("carries over updated scheduling fields from the reviewed card", () => {
     const original = makeCard({ due_ms: 0, interval_days: 1, ease_factor: 2.5, repetitions: 0 });
     const reviewed = makeCard({ due_ms: 86_400_000, interval_days: 4, ease_factor: 2.6, repetitions: 1 });
@@ -40,17 +28,8 @@ describe("mergeReview", () => {
     expect(result.repetitions).toBe(1);
   });
 
-  it("preserves undefined senses when original card has none", () => {
-    const original = makeCard({ senses: undefined });
-    const reviewed = makeCard({ due_ms: 86_400_000 });
-
-    const result = mergeReview(original, reviewed);
-
-    expect(result.senses).toBeUndefined();
-  });
-
-  it("preserves status from the original card, not the reviewed card", () => {
-    const original = makeCard({ status: "active" });
+  it("forces status to active regardless of input", () => {
+    const original = makeCard({ status: "staging" });
     const reviewed = makeCard({ status: "staging" });
 
     const result = mergeReview(original, reviewed);

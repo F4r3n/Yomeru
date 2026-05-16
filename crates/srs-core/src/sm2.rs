@@ -44,11 +44,9 @@ const INITIAL_EASE: f32 = 2.5;
 const MS_PER_DAY: f64 = 86_400_000.0;
 
 /// Create a new card ready for its first review.
-pub fn new_card(word: &str, reading: &str, meaning_en: &str, now_ms: f64) -> SrsCard {
+pub fn new_card(word: &str, now_ms: f64) -> SrsCard {
     SrsCard {
         word: word.to_owned(),
-        reading: reading.to_owned(),
-        meaning_en: meaning_en.to_owned(),
         interval_days: 0.0,
         ease_factor: INITIAL_EASE,
         repetitions: 0,
@@ -92,7 +90,7 @@ mod tests {
     use super::*;
 
     fn base_card() -> SrsCard {
-        new_card("飲む", "のむ", "to drink", 0.0)
+        new_card("飲む", 0.0)
     }
 
     #[test]

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { WordEntry, Sense } from "../shared/types.ts";
+    import type { WordEntry } from "../shared/types.ts";
 
     let {
         entries,
@@ -8,7 +8,7 @@
     }: {
         entries: WordEntry[];
         buttonStates: Record<string, "idle" | "added" | "existing">;
-        onadd: (word: string, rdg: string, gloss: string, senses: Sense[]) => void;
+        onadd: (word: string) => void;
     } = $props();
 
     function headword(e: WordEntry): string {
@@ -17,16 +17,12 @@
     function reading(e: WordEntry): string {
         return e.reading_forms[0]?.text ?? "";
     }
-    function firstGloss(e: WordEntry): string {
-        return e.senses[0]?.glosses[0]?.text ?? "";
-    }
 </script>
 
 {#each entries.slice(0, 4) as entry, i (entry.sequence)}
     {#if i > 0}<hr class="jp-divider" />{/if}
     {@const hw = headword(entry)}
     {@const rdg = reading(entry)}
-    {@const gloss = firstGloss(entry)}
     {@const btnState = buttonStates[hw] ?? "idle"}
     <div class="jp-entry">
         <div class="jp-header">
@@ -53,7 +49,7 @@
         <button
             class="jp-add-btn"
             disabled={btnState !== "idle"}
-            onclick={() => onadd(hw, rdg, gloss, entry.senses)}
+            onclick={() => onadd(hw)}
         >
             {#if btnState === "idle"}+ Add to SRS
             {:else if btnState === "added"}Added!

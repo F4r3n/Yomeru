@@ -24,9 +24,6 @@ export interface WordEntry {
 
 export interface SrsCard {
   word: string;
-  reading: string;
-  meaning_en: string;
-  senses?: Sense[];
   due_ms: number;
   interval_days: number;
   ease_factor: number;

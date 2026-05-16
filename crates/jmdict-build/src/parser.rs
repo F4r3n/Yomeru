@@ -73,6 +73,7 @@ pub fn parse_jmdict(path: &Path) -> Result<Vec<WordEntry>> {
                         .last()
                         .map(|s: &Sense| s.pos.clone())
                         .unwrap_or_default();
+                    b.current_sense_has_explicit_pos = false;
                     b.senses.push(Sense {
                         pos: inherited_pos,
                         glosses: vec![],
@@ -231,18 +232,17 @@ pub fn parse_jmdict(path: &Path) -> Result<Vec<WordEntry>> {
                     }
 
                     Ctx::Pos => {
+                        let first_pos = !b.current_sense_has_explicit_pos;
                         if let Some(sense) = b.senses.last_mut() {
-                            // New POS found — clear the inherited POS on first explicit tag
-                            if sense.pos.iter().all(|p| *p == PartOfSpeech::Unknown) {
+                            if first_pos {
                                 sense.pos.clear();
                             }
                             let pos = PartOfSpeech::from_entity(text);
-                            if pos != PartOfSpeech::Unknown
-                                || !sense.pos.contains(&PartOfSpeech::Unknown)
-                            {
+                            if pos != PartOfSpeech::Unknown {
                                 sense.pos.push(pos);
                             }
                         }
+                        b.current_sense_has_explicit_pos = true;
                     }
                     Ctx::Gloss => {
                         if let Some(sense) = b.senses.last_mut() {
@@ -398,6 +398,7 @@ struct EntryBuilder {
     senses: Vec<Sense>,
     current_kanji: Option<KanjiElement>,
     current_reading: Option<ReadingElement>,
+    current_sense_has_explicit_pos: bool,
     pending_lang: String,
     #[cfg(feature = "full")]
     pending_gtype: Option<String>,

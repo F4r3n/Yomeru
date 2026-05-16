@@ -2,14 +2,11 @@ use serde::{Deserialize, Serialize};
 
 /// A single vocabulary card in the SRS system.
 /// All timestamps are Unix epoch milliseconds (f64 to match JS Date.now()).
+/// Display data (reading, meaning, senses) is derived from JMdict at render time.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SrsCard {
-    /// Japanese headword (kanji or kana).
+    /// Japanese headword (kanji or kana) — the dictionary key.
     pub word: String,
-    /// Primary reading in hiragana.
-    pub reading: String,
-    /// First English gloss, stored at add-time.
-    pub meaning_en: String,
     /// SM-2: current review interval in days.
     pub interval_days: f32,
     /// SM-2: ease factor (starts at 2.5, min 1.3).

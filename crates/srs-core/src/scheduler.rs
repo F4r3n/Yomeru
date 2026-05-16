@@ -16,7 +16,7 @@ mod tests {
     use crate::sm2::new_card;
 
     fn card_with_due(due_ms: f64) -> SrsCard {
-        let mut c = new_card("word", "reading", "meaning", 0.0);
+        let mut c = new_card("word", 0.0);
         c.due_ms = due_ms;
         c
     }

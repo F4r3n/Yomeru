@@ -1,9 +1,12 @@
 <script lang="ts">
-    import type { SrsCard, KanjiEntry, ExampleEntry } from "../shared/types.ts";
+    import type { SrsCard, KanjiEntry, ExampleEntry, WordEntry } from "../shared/types.ts";
+    import { buildEntryMap } from "./dict-lookup.ts";
 
     let { onstagingchange }: { onstagingchange?: (n: number) => void } = $props();
 
     let dueCards = $state<SrsCard[]>([]);
+    let entriesByWord = $state<Record<string, WordEntry>>({});
+    let skippedWords = $state<string[]>([]);
     let currentIdx = $state(0);
     let showBack = $state(false);
     let nextDueMsg = $state("");
@@ -24,12 +27,24 @@
     let sessionReviewed = new Set<string>();
 
     let currentCard = $derived(dueCards[currentIdx] ?? null);
+    let currentEntry = $derived(currentCard ? entriesByWord[currentCard.word] ?? null : null);
     let reviewDone = $derived(reviewStarted && !currentCard);
     let progressText = $derived(`${currentIdx + 1} / ${dueCards.length}`);
     let statsText = $derived(
         `${dueCount} card${dueCount !== 1 ? "s" : ""} due` +
         (stagingCount > 0 ? ` · ${stagingCount} new` : ""),
     );
+
+    async function attachEntries(cards: SrsCard[]): Promise<{ kept: SrsCard[]; skipped: string[]; entries: Record<string, WordEntry | null> }> {
+        const entries = await buildEntryMap(cards.map((c) => c.word));
+        const kept: SrsCard[] = [];
+        const skipped: string[] = [];
+        for (const c of cards) {
+            if (entries[c.word]) kept.push(c);
+            else skipped.push(c.word);
+        }
+        return { kept, skipped, entries };
+    }
 
     $effect(() => {
         loadReview();
@@ -44,7 +59,11 @@
             const excluded = sessionReviewed;
             sessionReviewed = new Set();
             const all = (dueRes as { cards: SrsCard[] }).cards ?? [];
-            dueCards = excluded.size > 0 ? all.filter(c => !excluded.has(c.word)) : all;
+            const filtered = excluded.size > 0 ? all.filter(c => !excluded.has(c.word)) : all;
+            const { kept, skipped, entries } = await attachEntries(filtered);
+            entriesByWord = entries;
+            skippedWords = skipped;
+            dueCards = kept;
             dueCount = dueCards.length;
             stagingCount = (stagingRes as { cards: SrsCard[] }).cards?.length ?? 0;
             onstagingchange?.(stagingCount);
@@ -62,7 +81,10 @@
         sessionReviewed = new Set();
         const res = await browser.runtime.sendMessage({ type: "PROMOTE_BATCH" });
         const { cards, stagingCount: remaining } = res as { cards: SrsCard[]; stagingCount: number };
-        dueCards = cards;
+        const { kept, skipped, entries } = await attachEntries(cards);
+        entriesByWord = entries;
+        skippedWords = skipped;
+        dueCards = kept;
         dueCount = dueCards.length;
         stagingCount = remaining;
         onstagingchange?.(remaining);
@@ -158,6 +180,12 @@
 {#if reviewError}
     <div class="toast-error">{reviewError}</div>
 {/if}
+{#if skippedWords.length > 0}
+    <div class="toast-warning">
+        Skipped {skippedWords.length} card{skippedWords.length !== 1 ? "s" : ""} — no longer in the dictionary:
+        <span class="skipped-list">{skippedWords.join("、")}</span>
+    </div>
+{/if}
 
 {#if !reviewStarted}
     <div class="review-idle">
@@ -184,7 +212,7 @@
         <div class="card-front">
             <div class="card-word-wrap">
                 <ruby class="card-word-furigana">
-                    {currentCard?.word}<rt>{currentCard?.reading}</rt>
+                    {currentCard?.word}<rt>{currentEntry?.reading_forms[0]?.text ?? ""}</rt>
                 </ruby>
             </div>
         </div>
@@ -212,9 +240,9 @@
             <div class="card-tab-content">
                 {#if activeCardTab === "word"}
                     <div class="card-back">
-                        {#if currentCard?.senses?.length}
+                        {#if currentEntry?.senses?.length}
                             <div class="card-senses">
-                                {#each currentCard.senses.slice(0, 3) as sense, si}
+                                {#each currentEntry.senses.slice(0, 3) as sense, si}
                                     {@const g = sense.glosses.map((g) => g.text).join("; ")}
                                     {#if g}
                                         {#if sense.pos?.length}
@@ -228,8 +256,6 @@
                                     {/if}
                                 {/each}
                             </div>
-                        {:else}
-                            <div class="card-meaning">{currentCard?.meaning_en}</div>
                         {/if}
                     </div>
                 {:else if activeCardTab === "kanji"}
@@ -313,6 +339,19 @@
         font-weight: 600;
         padding: 6px 12px;
         margin-bottom: 10px;
+    }
+
+    .toast-warning {
+        background: var(--yellow, #f9e2af);
+        color: var(--bg);
+        border-radius: 6px;
+        font-size: 12px;
+        padding: 6px 12px;
+        margin-bottom: 10px;
+    }
+    .toast-warning .skipped-list {
+        font-weight: 600;
+        margin-left: 4px;
     }
 
     .review-idle,

@@ -20,14 +20,8 @@ impl SrsEngine {
 
     /// Create a new SrsCard for a word being added.
     /// Returns the card as a JS object.
-    pub fn new_card(
-        &self,
-        word: &str,
-        reading: &str,
-        meaning_en: &str,
-        now_ms: f64,
-    ) -> Result<JsValue, JsError> {
-        let card = new_card(word, reading, meaning_en, now_ms);
+    pub fn new_card(&self, word: &str, now_ms: f64) -> Result<JsValue, JsError> {
+        let card = new_card(word, now_ms);
         serde_wasm_bindgen::to_value(&card).map_err(|e| JsError::new(&e.to_string()))
     }
 

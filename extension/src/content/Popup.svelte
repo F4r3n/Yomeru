@@ -1,6 +1,6 @@
 <script lang="ts">
     import { popupStore } from "./popup-store";
-    import type { WordEntry, ExampleEntry, Sense } from "../shared/types.ts";
+    import type { WordEntry, ExampleEntry } from "../shared/types.ts";
     import { srsWordAdded, hasSrsWord } from "./srs-highlighter";
     import WordTab from "./WordTab.svelte";
     import KanjiTab from "./KanjiTab.svelte";
@@ -77,10 +77,10 @@
             .catch(() => { examplesFetched = true; });
     }
 
-    async function addToSrs(word: string, rdg: string, meaning: string, senses: Sense[]) {
+    async function addToSrs(word: string) {
         const res = await browser.runtime.sendMessage({
             type: "ADD_WORD",
-            payload: { word, reading: rdg, meaning_en: meaning, senses },
+            payload: { word },
         });
         buttonStates = {
             ...buttonStates,
