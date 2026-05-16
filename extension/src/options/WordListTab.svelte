@@ -2,6 +2,7 @@
     import type { SrsCard, WordEntry } from "../shared/types.ts";
     import { buildEntryMap, readingOf, meaningOf } from "./dict-lookup.ts";
     import { watchCardsDb } from "./db-watch.ts";
+    import { isRomaji, romajiToHiragana } from "./romaji.ts";
 
     let allCards = $state<SrsCard[]>([]);
     let entriesByWord = $state<Record<string, WordEntry | null>>({});
@@ -12,11 +13,13 @@
             .filter((c) => {
                 if (!searchQuery) return true;
                 const q = searchQuery.toLowerCase();
+                const kana = isRomaji(searchQuery.trim()) ? romajiToHiragana(searchQuery.trim()) : "";
                 const e = entriesByWord[c.word] ?? null;
                 return (
                     c.word.includes(q) ||
                     readingOf(e).includes(q) ||
-                    meaningOf(e).toLowerCase().includes(q)
+                    meaningOf(e).toLowerCase().includes(q) ||
+                    (kana !== "" && (c.word.includes(kana) || readingOf(e).includes(kana)))
                 );
             })
             .sort((a, b) => {
