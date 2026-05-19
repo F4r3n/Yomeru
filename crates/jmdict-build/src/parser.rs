@@ -76,19 +76,7 @@ pub fn parse_jmdict(path: &Path) -> Result<Vec<WordEntry>> {
                     b.current_sense_has_explicit_pos = false;
                     b.senses.push(Sense {
                         pos: inherited_pos,
-                        glosses: vec![],
-                        #[cfg(feature = "full")]
-                        xrefs: vec![],
-                        #[cfg(feature = "full")]
-                        antonyms: vec![],
-                        #[cfg(feature = "full")]
-                        fields: vec![],
-                        #[cfg(feature = "full")]
-                        misc: vec![],
-                        #[cfg(feature = "full")]
-                        info: vec![],
-                        #[cfg(feature = "full")]
-                        dialects: vec![],
+                        ..Default::default()
                     });
                     ctx = Ctx::Sense;
                 }
@@ -171,13 +159,7 @@ pub fn parse_jmdict(path: &Path) -> Result<Vec<WordEntry>> {
                     Ctx::EntSeq => b.sequence = text.parse().unwrap_or(0),
 
                     Ctx::KeB => {
-                        b.current_kanji = Some(KanjiElement {
-                            text: text.to_string(),
-                            #[cfg(feature = "full")]
-                            info: vec![],
-                            #[cfg(feature = "full")]
-                            priorities: vec![],
-                        })
+                        b.current_kanji = Some(KanjiElement::from_text(text.to_string()));
                     }
                     #[cfg(feature = "full")]
                     Ctx::KeInf => {
@@ -200,17 +182,7 @@ pub fn parse_jmdict(path: &Path) -> Result<Vec<WordEntry>> {
                     }
 
                     Ctx::ReB => {
-                        b.current_reading = Some(ReadingElement {
-                            text: text.to_string(),
-                            #[cfg(feature = "full")]
-                            no_kanji: false,
-                            #[cfg(feature = "full")]
-                            restricted_to: vec![],
-                            #[cfg(feature = "full")]
-                            info: vec![],
-                            #[cfg(feature = "full")]
-                            priorities: vec![],
-                        })
+                        b.current_reading = Some(ReadingElement::from_reading(text.to_string()));
                     }
                     #[cfg(feature = "full")]
                     Ctx::ReRestr => {
@@ -246,14 +218,15 @@ pub fn parse_jmdict(path: &Path) -> Result<Vec<WordEntry>> {
                     }
                     Ctx::Gloss => {
                         if let Some(sense) = b.senses.last_mut() {
-                            if cfg!(feature = "full") || b.pending_lang == "eng" {
-                                sense.glosses.push(Gloss {
-                                    text: text.to_string(),
-                                    #[cfg(feature = "full")]
-                                    lang: b.pending_lang.clone(),
-                                    #[cfg(feature = "full")]
-                                    gloss_type: b.pending_gtype.clone(),
-                                });
+                            if b.pending_lang == "eng" {
+                                sense.glosses.push(Gloss::new(
+                                    text.to_string(),
+                                    b.pending_lang.clone(),
+                                    cfg_select! {
+                                    feature = "full" => b.pending_gtype,
+                                    _=> None
+                                    },
+                                ));
                             }
                         }
                     }

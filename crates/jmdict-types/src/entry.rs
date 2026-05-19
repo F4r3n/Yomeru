@@ -52,6 +52,18 @@ pub struct KanjiElement {
     pub priorities: Vec<String>,
 }
 
+impl KanjiElement {
+    pub fn from_text(content: String) -> Self {
+        Self {
+            text: content,
+            #[cfg(feature = "full")]
+            info: vec![],
+            #[cfg(feature = "full")]
+            priorities: vec![],
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReadingElement {
     pub text: String,
@@ -67,7 +79,23 @@ pub struct ReadingElement {
     pub priorities: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+impl ReadingElement {
+    pub fn from_reading(reading: String) -> Self {
+        Self {
+            text: reading,
+            #[cfg(feature = "full")]
+            no_kanji: false,
+            #[cfg(feature = "full")]
+            restricted_to: vec![],
+            #[cfg(feature = "full")]
+            info: vec![],
+            #[cfg(feature = "full")]
+            priorities: vec![],
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Sense {
     /// Part-of-speech tags (carry forward from previous sense if empty).
     pub pos: Vec<PartOfSpeech>,
@@ -96,10 +124,18 @@ pub struct Sense {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Gloss {
     pub text: String,
-    #[cfg(feature = "full")]
     /// Language code (default "eng").
     pub lang: String,
-    #[cfg(feature = "full")]
     /// Gloss type ("lit", "fig", "expl", etc.).
     pub gloss_type: Option<String>,
+}
+
+impl Gloss {
+    pub fn new(content: String, lang: String, gloss_type: Option<String>) -> Self {
+        Self {
+            text: content,
+            lang,
+            gloss_type,
+        }
+    }
 }
