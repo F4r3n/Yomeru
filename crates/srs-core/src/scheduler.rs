@@ -13,7 +13,7 @@ pub fn next_review_ms(cards: &[SrsCard]) -> Option<f64> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sm2::new_card;
+    use crate::fsrs::new_card;
 
     fn card_with_due(due_ms: f64) -> SrsCard {
         let mut c = new_card("word", 0.0);

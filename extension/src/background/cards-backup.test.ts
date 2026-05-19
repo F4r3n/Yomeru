@@ -14,9 +14,12 @@ function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
     word,
     direction,
     due_ms: 0,
-    interval_days: 1,
-    ease_factor: 2.5,
-    repetitions: 0,
+    stability: 0,
+    difficulty: 0,
+    reps: 0,
+    lapses: 0,
+    state: "new",
+    last_review_ms: null,
     added_ms: 0,
     status: "active",
     ...overrides,
@@ -46,7 +49,6 @@ describe("cards-backup", () => {
         },
       },
     });
-    // Silence the restore-warning in tests so output stays clean.
     vi.spyOn(console, "warn").mockImplementation(() => {});
     idb = await import("./idb.ts");
     backup = await import("./cards-backup.ts");
@@ -59,7 +61,7 @@ describe("cards-backup", () => {
     });
 
     it("snapshots every IDB card into storage.local", async () => {
-      await idb.putCard(makeCard({ word: "猫", repetitions: 3 }));
+      await idb.putCard(makeCard({ word: "猫", reps: 3 }));
       await idb.putCard(makeCard({ word: "犬", status: "staging" }));
 
       await backup.writeCardsBackup();
@@ -67,7 +69,7 @@ describe("cards-backup", () => {
       const stored = storage.get(backup.CARDS_BACKUP_KEY) as SrsCard[];
       expect(stored).toHaveLength(2);
       expect(stored.map((c) => c.word).sort()).toEqual(["犬", "猫"]);
-      expect(stored.find((c) => c.word === "猫")?.repetitions).toBe(3);
+      expect(stored.find((c) => c.word === "猫")?.reps).toBe(3);
       expect(stored.find((c) => c.word === "犬")?.status).toBe("staging");
     });
 
@@ -84,12 +86,9 @@ describe("cards-backup", () => {
   });
 
   describe("syncCardsBackup", () => {
-    // The disaster-recovery path: this is the regression that motivated the
-    // mirror — an extension reinstall wiped IDB silently. If this test ever
-    // fails, users will lose their decks again on the next install hiccup.
     it("restores cards from storage.local when IDB is empty and a backup exists", async () => {
       const cards = [
-        makeCard({ word: "猫", repetitions: 5, ease_factor: 2.7 }),
+        makeCard({ word: "猫", reps: 5, stability: 12, difficulty: 4.2, state: "review" }),
         makeCard({ word: "犬", status: "staging" }),
       ];
       storage.set(backup.CARDS_BACKUP_KEY, cards);
@@ -99,15 +98,14 @@ describe("cards-backup", () => {
       expect(result).toEqual({ restored: 2, backedUp: 0 });
       const restored = await idb.getAllCards();
       expect(restored).toHaveLength(2);
-      expect(restored.find((c) => c.word === "猫")?.repetitions).toBe(5);
-      expect(restored.find((c) => c.word === "猫")?.ease_factor).toBe(2.7);
+      expect(restored.find((c) => c.word === "猫")?.reps).toBe(5);
+      expect(restored.find((c) => c.word === "猫")?.stability).toBe(12);
       expect(restored.find((c) => c.word === "犬")?.status).toBe("staging");
     });
 
     it("refreshes the backup from IDB when IDB has cards (IDB always wins)", async () => {
-      // A stale/wrong backup must never overwrite a live IDB.
       storage.set(backup.CARDS_BACKUP_KEY, [makeCard({ word: "stale" })]);
-      await idb.putCard(makeCard({ word: "猫", repetitions: 9 }));
+      await idb.putCard(makeCard({ word: "猫", reps: 9 }));
 
       const result = await backup.syncCardsBackup();
 
@@ -115,8 +113,7 @@ describe("cards-backup", () => {
       const stored = storage.get(backup.CARDS_BACKUP_KEY) as SrsCard[];
       expect(stored).toHaveLength(1);
       expect(stored[0].word).toBe("猫");
-      expect(stored[0].repetitions).toBe(9);
-      // IDB itself untouched.
+      expect(stored[0].reps).toBe(9);
       const idbCards = await idb.getAllCards();
       expect(idbCards).toHaveLength(1);
       expect(idbCards[0].word).toBe("猫");
@@ -140,7 +137,6 @@ describe("cards-backup", () => {
     });
 
     it("does not crash when IDB is empty and no backup key has ever been written", async () => {
-      // Fresh install: storage.local has never seen our key.
       await expect(backup.syncCardsBackup()).resolves.toEqual({ restored: 0, backedUp: 0 });
     });
 
@@ -176,18 +172,16 @@ describe("cards-backup", () => {
     });
 
     // Critical: importing must never overwrite a card the user is reviewing.
-    // If this regresses, a user who imports a backup will lose review progress
-    // on cards they already had.
     it("preserves existing cards' review state when re-importing", async () => {
-      await idb.putCard(makeCard({ word: "猫", repetitions: 9, ease_factor: 2.9, due_ms: 12345 }));
-      const importedCat = makeCard({ word: "猫", repetitions: 0, ease_factor: 2.5, due_ms: 0 });
+      await idb.putCard(makeCard({ word: "猫", reps: 9, stability: 30, due_ms: 12345 }));
+      const importedCat = makeCard({ word: "猫", reps: 0, stability: 0, due_ms: 0 });
 
       const result = await backup.importCards([importedCat, makeCard({ word: "犬" })]);
 
       expect(result).toEqual({ added: 1, skipped: 1 });
       const cat = await idb.getCard("猫", "recognition");
-      expect(cat?.repetitions).toBe(9);
-      expect(cat?.ease_factor).toBe(2.9);
+      expect(cat?.reps).toBe(9);
+      expect(cat?.stability).toBe(30);
       expect(cat?.due_ms).toBe(12345);
     });
 
@@ -209,8 +203,8 @@ describe("cards-backup", () => {
 
     // The v2 JSON export shape: rows have `word` + SM-2 fields, no `id` or
     // `direction`. Import must produce a recognition sibling preserving SM-2
-    // state AND a fresh recall sibling, matching the v2→v3 IDB migration.
-    it("expands a legacy (pre-v3) JSON row into recognition + recall siblings", async () => {
+    // state mapped to FSRS, AND a fresh recall sibling.
+    it("expands a legacy (pre-v3) JSON row into FSRS-shaped recognition + recall siblings", async () => {
       const legacy = {
         word: "猫",
         due_ms: 100,
@@ -228,21 +222,46 @@ describe("cards-backup", () => {
       expect(result).toEqual({ added: 1, skipped: 0 });
 
       const recognition = await idb.getCard("猫", "recognition");
-      expect(recognition?.repetitions).toBe(3);
-      expect(recognition?.ease_factor).toBeCloseTo(2.7, 5);
+      expect(recognition?.reps).toBe(3);
+      expect(recognition?.stability).toBe(4);
+      expect(recognition?.state).toBe("review");
       expect(recognition?.due_ms).toBe(100);
 
       const recall = await idb.getCard("猫", "recall");
-      expect(recall?.repetitions).toBe(0);
-      expect(recall?.ease_factor).toBe(2.5);
+      expect(recall?.reps).toBe(0);
+      expect(recall?.stability).toBe(0);
+      expect(recall?.state).toBe("new");
       expect(recall?.status).toBe("active");
       expect(recall?.due_ms).toBeGreaterThanOrEqual(before);
       expect(recall?.due_ms).toBeLessThanOrEqual(after);
     });
 
+    it("expands a v3 JSON row (direction + SM-2 fields) into FSRS shape, keeping that one direction", async () => {
+      const v3Row = {
+        id: cardId("猫", "recognition"),
+        word: "猫",
+        direction: "recognition" as const,
+        due_ms: 100,
+        interval_days: 6,
+        ease_factor: 2.5,
+        repetitions: 2,
+        added_ms: 50,
+        status: "active" as const,
+      } as unknown as SrsCard;
+
+      const result = await backup.importCards([v3Row]);
+
+      expect(result).toEqual({ added: 1, skipped: 0 });
+      const recognition = await idb.getCard("猫", "recognition");
+      expect(recognition?.reps).toBe(2);
+      expect(recognition?.stability).toBe(6);
+      expect(recognition?.state).toBe("review");
+      // No recall sibling spawned for a v3 row — only the v2 legacy path spawns one.
+      expect(await idb.getCard("猫", "recall")).toBeNull();
+    });
+
     it("does not clobber an existing recognition card when re-importing a legacy row", async () => {
-      // Pre-existing v3 recognition card the user has been reviewing.
-      await idb.putCard(makeCard({ word: "猫", direction: "recognition", repetitions: 9, ease_factor: 2.9 }));
+      await idb.putCard(makeCard({ word: "猫", direction: "recognition", reps: 9, stability: 30 }));
       const legacy = {
         word: "猫",
         due_ms: 0,
@@ -255,20 +274,17 @@ describe("cards-backup", () => {
 
       const result = await backup.importCards([legacy]);
 
-      // The recall sibling didn't exist yet, so it gets added — making this
-      // count as one added input row, not skipped.
+      // The recall sibling didn't exist yet, so it gets added.
       expect(result).toEqual({ added: 1, skipped: 0 });
       const cat = await idb.getCard("猫", "recognition");
-      expect(cat?.repetitions).toBe(9);
-      expect(cat?.ease_factor).toBe(2.9);
+      expect(cat?.reps).toBe(9);
+      expect(cat?.stability).toBe(30);
       expect(await idb.getCard("猫", "recall")).not.toBeNull();
     });
   });
 
   describe("syncCardsBackup with legacy backup", () => {
-    // Disaster-recovery path for users who reinstall after a long-dormant
-    // session: their storage.local backup may still be in the v2 shape.
-    it("restores a legacy storage.local backup as v3 sibling pairs", async () => {
+    it("restores a legacy storage.local backup as FSRS-shaped sibling pairs", async () => {
       const legacy = {
         word: "猫",
         due_ms: 100,
@@ -284,7 +300,10 @@ describe("cards-backup", () => {
 
       expect(result.backedUp).toBe(0);
       expect(result.restored).toBe(2);
-      expect((await idb.getCard("猫", "recognition"))?.repetitions).toBe(3);
+      const recognition = await idb.getCard("猫", "recognition");
+      expect(recognition?.reps).toBe(3);
+      expect(recognition?.stability).toBe(4);
+      expect(recognition?.state).toBe("review");
       expect((await idb.getCard("猫", "recall"))?.status).toBe("active");
     });
   });

@@ -11,9 +11,12 @@ function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
     word,
     direction,
     due_ms: 0,
-    interval_days: 1,
-    ease_factor: 2.5,
-    repetitions: 0,
+    stability: 0,
+    difficulty: 0,
+    reps: 0,
+    lapses: 0,
+    state: "new",
+    last_review_ms: null,
     added_ms: 0,
     status: "active",
     ...overrides,
@@ -21,16 +24,26 @@ function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
 }
 
 describe("mergeReview", () => {
-  it("carries over updated scheduling fields from the reviewed card", () => {
-    const original = makeCard({ due_ms: 0, interval_days: 1, ease_factor: 2.5, repetitions: 0 });
-    const reviewed = makeCard({ due_ms: 86_400_000, interval_days: 4, ease_factor: 2.6, repetitions: 1 });
+  it("carries over updated FSRS scheduling fields from the reviewed card", () => {
+    const original = makeCard({ due_ms: 0, stability: 0, difficulty: 0, reps: 0, state: "new" });
+    const reviewed = makeCard({
+      due_ms: 86_400_000,
+      stability: 4.2,
+      difficulty: 5.5,
+      reps: 1,
+      lapses: 0,
+      state: "review",
+      last_review_ms: 0,
+    });
 
     const result = mergeReview(original, reviewed);
 
     expect(result.due_ms).toBe(86_400_000);
-    expect(result.interval_days).toBe(4);
-    expect(result.ease_factor).toBe(2.6);
-    expect(result.repetitions).toBe(1);
+    expect(result.stability).toBe(4.2);
+    expect(result.difficulty).toBe(5.5);
+    expect(result.reps).toBe(1);
+    expect(result.state).toBe("review");
+    expect(result.last_review_ms).toBe(0);
   });
 
   it("forces status to active regardless of input", () => {
@@ -44,51 +57,51 @@ describe("mergeReview", () => {
 });
 
 describe("applyIntervalScale", () => {
-  it("scales interval_days and recomputes due_ms", () => {
+  it("scales stability and recomputes due_ms from the remaining interval", () => {
     const nowMs = 1_000_000_000;
-    const card = makeCard({ interval_days: 4, due_ms: 0 });
+    const card = makeCard({ stability: 4, due_ms: nowMs + 4 * 86_400_000 });
 
     const result = applyIntervalScale(card, 1.5, nowMs);
 
-    expect(result.interval_days).toBe(6);
+    expect(result.stability).toBe(6);
     expect(result.due_ms).toBe(nowMs + 6 * 86_400_000);
   });
 
   it("returns the same card reference when scale is 1.0", () => {
-    const card = makeCard({ interval_days: 4, due_ms: 123 });
+    const card = makeCard({ stability: 4, due_ms: 123 });
 
     expect(applyIntervalScale(card, 1.0, 0)).toBe(card);
   });
 
   it("does not mutate the original card", () => {
-    const card = makeCard({ interval_days: 4 });
+    const card = makeCard({ stability: 4 });
 
     applyIntervalScale(card, 2.0, 0);
 
-    expect(card.interval_days).toBe(4);
+    expect(card.stability).toBe(4);
   });
 
   it("handles sub-1 scale (faster review)", () => {
     const nowMs = 0;
-    const card = makeCard({ interval_days: 10 });
+    const card = makeCard({ stability: 10, due_ms: 10 * 86_400_000 });
 
     const result = applyIntervalScale(card, 0.5, nowMs);
 
-    expect(result.interval_days).toBe(5);
+    expect(result.stability).toBe(5);
     expect(result.due_ms).toBe(5 * 86_400_000);
   });
 });
 
 describe("checkGraduation", () => {
-  it("returns true when repetitions meet the threshold", () => {
+  it("returns true when reps meet the threshold", () => {
     expect(checkGraduation(5, 5)).toBe(true);
   });
 
-  it("returns true when repetitions exceed the threshold", () => {
+  it("returns true when reps exceed the threshold", () => {
     expect(checkGraduation(7, 5)).toBe(true);
   });
 
-  it("returns false when repetitions are below the threshold", () => {
+  it("returns false when reps are below the threshold", () => {
     expect(checkGraduation(4, 5)).toBe(false);
   });
 

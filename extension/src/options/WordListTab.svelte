@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { SrsCard, WordEntry } from "../shared/types.ts";
+    import { MS_PER_DAY } from "../shared/types.ts";
     import { buildEntryMap, readingOf, meaningOf } from "./dict-lookup.ts";
     import { watchCardsDb } from "./db-watch.ts";
     import { isRomaji, romajiToHiragana } from "./romaji.ts";
@@ -98,13 +99,13 @@
         const mins = Math.round(diff / 60_000);
         if (mins < 60) return `${mins}m`;
         const h = Math.round(diff / 3_600_000);
-        return h < 24 ? `${h}h` : `${Math.round(diff / 86_400_000)}d`;
+        return h < 24 ? `${h}h` : `${Math.round(diff / MS_PER_DAY)}d`;
     }
 
     function dueClass(ms: number): string {
         const diff = ms - Date.now();
         if (diff <= 0) return "overdue";
-        if (diff < 86_400_000) return "today";
+        if (diff < MS_PER_DAY) return "today";
         return "future";
     }
 </script>

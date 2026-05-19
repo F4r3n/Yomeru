@@ -339,9 +339,9 @@
             {:else}
                 <div class="rating-buttons">
                     <button class="rating-btn r1" disabled={isRating} onclick={() => rate(1)}>Again</button>
-                    <button class="rating-btn r3" disabled={isRating} onclick={() => rate(3)}>Hard</button>
-                    <button class="rating-btn r4" disabled={isRating} onclick={() => rate(4)}>Good</button>
-                    <button class="rating-btn r5" disabled={isRating} onclick={() => rate(5)}>Easy</button>
+                    <button class="rating-btn r2" disabled={isRating} onclick={() => rate(2)}>Hard</button>
+                    <button class="rating-btn r3" disabled={isRating} onclick={() => rate(3)}>Good</button>
+                    <button class="rating-btn r4" disabled={isRating} onclick={() => rate(4)}>Easy</button>
                 </div>
             {/if}
         </div>
@@ -583,9 +583,9 @@
         opacity: 0.85;
     }
     .r1 { background: var(--red);    color: var(--bg); }
-    .r3 { background: var(--yellow); color: var(--bg); }
-    .r4 { background: var(--green);  color: var(--bg); }
-    .r5 { background: var(--blue);   color: var(--bg); }
+    .r2 { background: var(--yellow); color: var(--bg); }
+    .r3 { background: var(--green);  color: var(--bg); }
+    .r4 { background: var(--blue);   color: var(--bg); }
 
     .card-pos-row {
         display: flex;

@@ -5,3 +5,5 @@ edition = "2021"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
+rs-fsrs = { version = "1", features = ["serde"] }
+chrono = { version = "0.4", default-features = false, features = ["serde"] }

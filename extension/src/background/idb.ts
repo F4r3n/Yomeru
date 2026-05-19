@@ -1,10 +1,59 @@
-import type { CardDirection, SrsCard } from "../shared/types.ts";
+import type { CardDirection, CardState, SrsCard } from "../shared/types.ts";
 import { cardId } from "../shared/types.ts";
 
 const DB_NAME = "yomeru-db";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 let db: IDBDatabase | null = null;
+
+/**
+ * Maps a legacy SM-2-shaped card object to the FSRS scheduling fields.
+ * Exported so cards-backup can apply the same conversion on legacy JSON imports
+ * and on legacy storage.local backups.
+ */
+export function sm2ToFsrsFields(old: Record<string, unknown>): {
+  stability: number;
+  difficulty: number;
+  reps: number;
+  lapses: number;
+  state: CardState;
+  last_review_ms: number | null;
+} {
+  const num = (v: unknown, fallback: number) =>
+    typeof v === "number" && Number.isFinite(v) ? v : fallback;
+  const interval = num(old.interval_days, 0);
+  const ease = num(old.ease_factor, 2.5) || 2.5;
+  const reps = num(old.repetitions, 0);
+  // SM-2 ease (1.3..2.5+) → FSRS difficulty (1..10, higher = harder).
+  // ease=2.5 → ~1, ease=1.3 → 10, linear in between.
+  const difficulty = Math.max(1, Math.min(10, 10 - (ease - 1.3) / 0.12));
+  return {
+    stability: reps > 0 ? Math.max(0.1, interval) : 0,
+    difficulty: reps > 0 ? difficulty : 0,
+    reps,
+    lapses: 0,
+    state: reps > 0 ? "review" : "new",
+    last_review_ms: typeof old.last_reviewed_ms === "number" ? old.last_reviewed_ms : null,
+  };
+}
+
+/** A blank recall sibling, due immediately, in the "new" state. */
+export function freshRecallCard(word: string, nowMs: number, addedMs: number): SrsCard {
+  return {
+    id: cardId(word, "recall"),
+    word,
+    direction: "recall",
+    due_ms: nowMs,
+    stability: 0,
+    difficulty: 0,
+    reps: 0,
+    lapses: 0,
+    state: "new",
+    last_review_ms: null,
+    added_ms: addedMs,
+    status: "active",
+  };
+}
 
 export async function openDb(): Promise<IDBDatabase> {
   if (db) return db;
@@ -30,10 +79,9 @@ export async function openDb(): Promise<IDBDatabase> {
         history.createIndex("ts", "ts", { unique: false });
       }
 
-      // v1/v2 → v3: rebuild cards store with composite-id keyPath, spawn
-      // recall sibling for every existing card (active, due now). The v3
-      // rebuild also subsumes the legacy v1→v2 "fill missing status" step:
-      // we tolerate a missing `status` field here and default to active.
+      // v1/v2 → v4: rebuild cards store with composite-id keyPath, spawn
+      // recall sibling for every existing card, and write FSRS-shaped fields.
+      // This branch also subsumes the legacy "fill missing status" step.
       if (e.oldVersion >= 1 && e.oldVersion < 3) {
         const oldStore = upgradeTx.objectStore("cards");
         const collected: Array<Record<string, unknown>> = [];
@@ -45,7 +93,6 @@ export async function openDb(): Promise<IDBDatabase> {
             cursor.continue();
             return;
           }
-          // Cursor exhausted — recreate the store with the new schema.
           database.deleteObjectStore("cards");
           const newStore = database.createObjectStore("cards", { keyPath: "id" });
           newStore.createIndex("due_ms", "due_ms", { unique: false });
@@ -58,32 +105,44 @@ export async function openDb(): Promise<IDBDatabase> {
             typeof v === "number" && Number.isFinite(v) ? v : fallback;
           for (const old of collected) {
             const word = String(old.word);
+            const fsrs = sm2ToFsrsFields(old);
             const recognition: SrsCard = {
               id: cardId(word, "recognition"),
               word,
               direction: "recognition",
               due_ms: num(old.due_ms, now),
-              interval_days: num(old.interval_days, 0),
-              // ease_factor must be > 0; 0/missing → SM-2 default.
-              ease_factor: num(old.ease_factor, 2.5) || 2.5,
-              repetitions: num(old.repetitions, 0),
+              ...fsrs,
               added_ms: num(old.added_ms, now),
               status: (old.status as SrsCard["status"]) ?? "active",
             };
             newStore.add(recognition);
-            const recall: SrsCard = {
-              id: cardId(word, "recall"),
-              word,
-              direction: "recall",
-              due_ms: now,
-              interval_days: 0,
-              ease_factor: 2.5,
-              repetitions: 0,
-              added_ms: recognition.added_ms,
-              status: "active",
-            };
-            newStore.add(recall);
+            newStore.add(freshRecallCard(word, now, recognition.added_ms));
           }
+        };
+      }
+
+      // v3 → v4: store already has composite-id keyPath and sibling pairs, but
+      // cards carry SM-2 fields (interval_days, ease_factor, repetitions).
+      // Walk every card and rewrite to FSRS-shaped fields in place.
+      if (e.oldVersion >= 3 && e.oldVersion < 4) {
+        const store = upgradeTx.objectStore("cards");
+        const cursorReq = store.openCursor();
+        cursorReq.onsuccess = (ev) => {
+          const cursor = (ev.target as IDBRequest<IDBCursorWithValue>).result;
+          if (!cursor) return;
+          const old = cursor.value as Record<string, unknown>;
+          const fsrs = sm2ToFsrsFields(old);
+          const updated: SrsCard = {
+            id: old.id as string,
+            word: old.word as string,
+            direction: old.direction as CardDirection,
+            due_ms: typeof old.due_ms === "number" ? old.due_ms : Date.now(),
+            ...fsrs,
+            added_ms: typeof old.added_ms === "number" ? old.added_ms : Date.now(),
+            status: (old.status as SrsCard["status"]) ?? "active",
+          };
+          cursor.update(updated);
+          cursor.continue();
         };
       }
     };

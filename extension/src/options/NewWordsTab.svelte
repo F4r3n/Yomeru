@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { SrsCard, WordEntry } from "../shared/types.ts";
+    import { MS_PER_DAY } from "../shared/types.ts";
     import { buildEntryMap, readingOf, meaningOf } from "./dict-lookup.ts";
     import { watchCardsDb } from "./db-watch.ts";
 
@@ -55,7 +56,7 @@
 
     function addedLabel(ms: number): string {
         const diff = Date.now() - ms;
-        const days = Math.floor(diff / 86_400_000);
+        const days = Math.floor(diff / MS_PER_DAY);
         if (days === 0) return "today";
         if (days === 1) return "1d ago";
         return `${days}d ago`;

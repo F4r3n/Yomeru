@@ -22,7 +22,12 @@ export interface WordEntry {
   senses: Sense[];
 }
 
+export const MS_PER_DAY = 86_400_000;
+
 export type CardDirection = "recognition" | "recall";
+
+/** Mirrors srs-core's `CardState` enum (serde rename_all = "lowercase"). */
+export type CardState = "new" | "learning" | "review" | "relearning";
 
 export interface SrsCard {
   /** Composite key: `${word}::${direction}`. */
@@ -30,9 +35,16 @@ export interface SrsCard {
   word: string;
   direction: CardDirection;
   due_ms: number;
-  interval_days: number;
-  ease_factor: number;
-  repetitions: number;
+  /** FSRS memory stability (days) — interval is derived from this + retention target. */
+  stability: number;
+  /** FSRS difficulty (1..10). */
+  difficulty: number;
+  /** Total review count. */
+  reps: number;
+  /** Number of times the card has been forgotten (Again on a Review-state card). */
+  lapses: number;
+  state: CardState;
+  last_review_ms: number | null;
   added_ms: number;
   status: "staging" | "active";
 }

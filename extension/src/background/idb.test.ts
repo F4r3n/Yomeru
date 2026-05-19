@@ -13,9 +13,12 @@ function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
     word,
     direction,
     due_ms: 0,
-    interval_days: 1,
-    ease_factor: 2.5,
-    repetitions: 0,
+    stability: 0,
+    difficulty: 0,
+    reps: 0,
+    lapses: 0,
+    state: "new",
+    last_review_ms: null,
     added_ms: 0,
     status: "active",
     ...overrides,
@@ -150,11 +153,11 @@ describe("idb", () => {
 
   describe("getCard", () => {
     it("returns only the requested direction sibling", async () => {
-      await idb.putCard(makeCard({ word: "猫", direction: "recognition", repetitions: 3 }));
-      await idb.putCard(makeCard({ word: "猫", direction: "recall", repetitions: 7 }));
+      await idb.putCard(makeCard({ word: "猫", direction: "recognition", reps: 3 }));
+      await idb.putCard(makeCard({ word: "猫", direction: "recall", reps: 7 }));
 
-      expect((await idb.getCard("猫", "recognition"))?.repetitions).toBe(3);
-      expect((await idb.getCard("猫", "recall"))?.repetitions).toBe(7);
+      expect((await idb.getCard("猫", "recognition"))?.reps).toBe(3);
+      expect((await idb.getCard("猫", "recall"))?.reps).toBe(7);
     });
 
     it("returns null when the direction is missing even if the other exists", async () => {
@@ -231,10 +234,11 @@ describe("idb", () => {
     });
   });
 
-  describe("v2 → v3 migration", () => {
+  describe("v2 → v4 migration", () => {
     // High-risk: on upgrade we cursor-collect every card, delete the store,
-    // recreate with a new keyPath, then re-insert + spawn recall siblings.
-    // A regression here permanently corrupts existing users' decks.
+    // recreate with a new keyPath, then re-insert + spawn recall siblings,
+    // mapping SM-2 → FSRS fields. A regression here permanently corrupts
+    // existing users' decks.
     function openV2(): Promise<IDBDatabase> {
       return new Promise((resolve, reject) => {
         const req = indexedDB.open("yomeru-db", 2);
@@ -264,7 +268,7 @@ describe("idb", () => {
       });
     }
 
-    it("upgrades each legacy card into a recognition sibling and spawns a recall sibling", async () => {
+    it("upgrades each legacy card to FSRS-shaped recognition + recall siblings", async () => {
       const v2 = await openV2();
       await seedV2(v2, [
         {
@@ -288,7 +292,6 @@ describe("idb", () => {
       ]);
       v2.close();
 
-      // Triggers v2→v3 migration via the real openDb path.
       const before = Date.now();
       const all = await idb.getAllCards();
       const after = Date.now();
@@ -297,33 +300,113 @@ describe("idb", () => {
 
       const catRecognition = all.find((c) => c.word === "猫" && c.direction === "recognition")!;
       expect(catRecognition.id).toBe(cardId("猫", "recognition"));
-      expect(catRecognition.repetitions).toBe(3);
-      expect(catRecognition.interval_days).toBe(4);
-      expect(catRecognition.ease_factor).toBeCloseTo(2.6, 5);
+      expect(catRecognition.reps).toBe(3);
+      // SM-2 interval_days → FSRS stability
+      expect(catRecognition.stability).toBe(4);
+      expect(catRecognition.difficulty).toBeGreaterThan(0);
+      expect(catRecognition.state).toBe("review");
       expect(catRecognition.due_ms).toBe(100);
       expect(catRecognition.status).toBe("active");
 
       const catRecall = all.find((c) => c.word === "猫" && c.direction === "recall")!;
       expect(catRecall.id).toBe(cardId("猫", "recall"));
-      expect(catRecall.repetitions).toBe(0);
-      expect(catRecall.interval_days).toBe(0);
-      expect(catRecall.ease_factor).toBe(2.5);
+      expect(catRecall.reps).toBe(0);
+      expect(catRecall.stability).toBe(0);
+      expect(catRecall.state).toBe("new");
       expect(catRecall.status).toBe("active");
-      // The recall sibling becomes due immediately.
       expect(catRecall.due_ms).toBeGreaterThanOrEqual(before);
       expect(catRecall.due_ms).toBeLessThanOrEqual(after);
 
       // Staging on the original carries over.
       const dogRecognition = all.find((c) => c.word === "犬" && c.direction === "recognition")!;
       expect(dogRecognition.status).toBe("staging");
+      // Repetitions=0 → state stays "new", stability stays 0
+      expect(dogRecognition.state).toBe("new");
+      expect(dogRecognition.stability).toBe(0);
       // Recall sibling is always spawned as active regardless of original status.
       const dogRecall = all.find((c) => c.word === "犬" && c.direction === "recall")!;
       expect(dogRecall.status).toBe("active");
     });
 
     it("leaves a fresh install (oldVersion = 0) with an empty cards store", async () => {
-      // No pre-seeded v2 DB — just open via the v3 path directly.
       expect(await idb.getAllCards()).toEqual([]);
+    });
+  });
+
+  describe("v3 → v4 migration", () => {
+    // Users already on v3 have composite-id sibling pairs with SM-2 fields.
+    // The v3→v4 step walks each card and rewrites to FSRS-shaped fields in place.
+    function openV3(): Promise<IDBDatabase> {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open("yomeru-db", 3);
+        req.onupgradeneeded = (e) => {
+          const db = (e.target as IDBOpenDBRequest).result;
+          const cards = db.createObjectStore("cards", { keyPath: "id" });
+          cards.createIndex("due_ms", "due_ms", { unique: false });
+          cards.createIndex("added_ms", "added_ms", { unique: false });
+          cards.createIndex("status", "status", { unique: false });
+          cards.createIndex("word", "word", { unique: false });
+          db.createObjectStore("lookup_history", {
+            keyPath: "id",
+            autoIncrement: true,
+          });
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function seedV3(db: IDBDatabase, cards: Array<Record<string, unknown>>) {
+      await new Promise<void>((resolve, reject) => {
+        const t = db.transaction("cards", "readwrite");
+        const store = t.objectStore("cards");
+        for (const c of cards) store.add(c);
+        t.oncomplete = () => resolve();
+        t.onerror = () => reject(t.error);
+      });
+    }
+
+    it("rewrites SM-2 fields to FSRS fields on every existing card", async () => {
+      const v3 = await openV3();
+      await seedV3(v3, [
+        {
+          id: cardId("猫", "recognition"),
+          word: "猫",
+          direction: "recognition",
+          due_ms: 100,
+          interval_days: 6,
+          ease_factor: 2.5,
+          repetitions: 2,
+          added_ms: 50,
+          status: "active",
+        },
+        {
+          id: cardId("猫", "recall"),
+          word: "猫",
+          direction: "recall",
+          due_ms: 100,
+          interval_days: 0,
+          ease_factor: 2.5,
+          repetitions: 0,
+          added_ms: 50,
+          status: "active",
+        },
+      ]);
+      v3.close();
+
+      const all = await idb.getAllCards();
+      expect(all).toHaveLength(2);
+
+      const recognition = all.find((c) => c.direction === "recognition")!;
+      expect(recognition.stability).toBe(6);
+      expect(recognition.reps).toBe(2);
+      expect(recognition.state).toBe("review");
+      expect(recognition.due_ms).toBe(100);
+
+      const recall = all.find((c) => c.direction === "recall")!;
+      expect(recall.stability).toBe(0);
+      expect(recall.reps).toBe(0);
+      expect(recall.state).toBe("new");
     });
   });
 });

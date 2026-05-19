@@ -18,9 +18,21 @@ import {
 } from "./idb";
 import { getSettings, saveSettings } from "./settings";
 import { importCards, syncCardsBackup, writeCardsBackup } from "./cards-backup";
-import type { CardDirection, SrsCard, SrsSettings } from "../shared/types.ts";
+import type {
+  CardDirection,
+  ExampleEntry,
+  KanjiEntry,
+  SrsCard,
+  SrsSettings,
+  WordEntry,
+} from "../shared/types.ts";
 import { cardId } from "../shared/types.ts";
-import { mergeReview, applyIntervalScale, checkGraduation } from "./review-utils.ts";
+import {
+  mergeReview,
+  applyIntervalScale,
+  checkGraduation,
+  type SrsSchedFields,
+} from "./review-utils.ts";
 
 type SrsEngine = InstanceType<typeof SrsWasm.SrsEngine>;
 type KanjiDictionary = InstanceType<typeof KanjiWasm.KanjiDictionary>;
@@ -46,8 +58,12 @@ async function ensureSrs(): Promise<void> {
 }
 
 async function initKanji(): Promise<void> {
-  const jsUrl = browser.runtime.getURL("_generated/kanjidic-wasm/kanjidic_wasm.js");
-  const binUrl = browser.runtime.getURL("_generated/kanjidic-wasm/kanjidic_wasm_bg.wasm");
+  const jsUrl = browser.runtime.getURL(
+    "_generated/kanjidic-wasm/kanjidic_wasm.js",
+  );
+  const binUrl = browser.runtime.getURL(
+    "_generated/kanjidic-wasm/kanjidic_wasm_bg.wasm",
+  );
   const mod = (await import(/* @vite-ignore */ jsUrl)) as typeof KanjiWasm;
   await mod.default(binUrl);
   const dataUrl = browser.runtime.getURL("data/kanjidic.bin");
@@ -60,8 +76,12 @@ async function ensureKanji(): Promise<void> {
 }
 
 async function initExamples(): Promise<void> {
-  const jsUrl = browser.runtime.getURL("_generated/examples-wasm/examples_wasm.js");
-  const binUrl = browser.runtime.getURL("_generated/examples-wasm/examples_wasm_bg.wasm");
+  const jsUrl = browser.runtime.getURL(
+    "_generated/examples-wasm/examples_wasm.js",
+  );
+  const binUrl = browser.runtime.getURL(
+    "_generated/examples-wasm/examples_wasm_bg.wasm",
+  );
   const mod = (await import(/* @vite-ignore */ jsUrl)) as typeof ExamplesWasm;
   await mod.default(binUrl);
   const dataUrl = browser.runtime.getURL("data/examples.bin");
@@ -80,7 +100,9 @@ async function ensureExamples(): Promise<void> {
 
 async function initJmdict(): Promise<void> {
   const jsUrl = browser.runtime.getURL("_generated/jmdict-wasm/jmdict_wasm.js");
-  const binUrl = browser.runtime.getURL("_generated/jmdict-wasm/jmdict_wasm_bg.wasm");
+  const binUrl = browser.runtime.getURL(
+    "_generated/jmdict-wasm/jmdict_wasm_bg.wasm",
+  );
   const mod = (await import(/* @vite-ignore */ jsUrl)) as typeof JmDictWasm;
   await mod.default(binUrl);
   const dataUrl = browser.runtime.getURL("data/jmdict.bin");
@@ -129,7 +151,11 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
       return handleAddWord(msg.payload as { word: string });
     case "REVIEW_CARD":
       return handleReviewCard(
-        msg.payload as { word: string; direction: CardDirection; rating: number },
+        msg.payload as {
+          word: string;
+          direction: CardDirection;
+          rating: number;
+        },
       );
     case "GET_DUE":
       return handleGetDue();
@@ -138,9 +164,7 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
     case "DELETE_CARD":
       return handleDeleteCard(msg.payload as { word: string });
     case "LOG_LOOKUP":
-      return handleLogLookup(
-        msg.payload as { word: string; reading: string },
-      );
+      return handleLogLookup(msg.payload as { word: string; reading: string });
     case "GET_SRS_WORDS":
       return handleGetSrsWords();
     case "GET_STAGING":
@@ -175,17 +199,15 @@ async function handleImportCards({ cards }: { cards: unknown }) {
 }
 
 browser.runtime.onMessage.addListener(
-  (msg: { type: string; payload?: unknown }) => storageReady.then(() => dispatch(msg)),
+  (msg: { type: string; payload?: unknown }) =>
+    storageReady.then(() => dispatch(msg)),
 );
 
-// The Rust SrsCard the WASM works with is the SM-2 + bookkeeping subset of
-// the JS SrsCard — no id/direction/status. We never trust the JS-typed shape
-// after a WASM round-trip; mergeReview is responsible for reattaching the
-// JS-only fields from the original card.
-type WasmCardShape = Pick<
-  SrsCard,
-  "word" | "due_ms" | "interval_days" | "ease_factor" | "repetitions" | "added_ms"
->;
+// The Rust SrsCard the WASM works with is the FSRS scheduling subset plus
+// `word` + `added_ms` — no id/direction/status. We never trust the JS-typed
+// shape after a WASM round-trip; mergeReview reattaches the JS-only fields
+// from the original card.
+type WasmCardShape = SrsSchedFields & Pick<SrsCard, "word" | "added_ms">;
 
 async function handleAddWord({ word }: { word: string }) {
   await ensureSrs();
@@ -230,7 +252,7 @@ async function handleReviewCard({
   const now_ms = Date.now();
   const wasmOut = srs!.review_card(card, rating, now_ms) as WasmCardShape;
   const scaled = applyIntervalScale(wasmOut, settings.intervalScale, now_ms);
-  if (checkGraduation(scaled.repetitions, settings.graduationReps)) {
+  if (checkGraduation(scaled.reps, settings.graduationReps)) {
     await deleteCardById(cardId(word, direction));
     await bumpDbVersion();
     return { success: true, graduated: true };
@@ -264,7 +286,9 @@ async function handlePromoteAll() {
 
 async function handlePromoteBatch() {
   const settings = await getSettings();
-  const staging = (await getStagingCards()).sort((a, b) => a.added_ms - b.added_ms);
+  const staging = (await getStagingCards()).sort(
+    (a, b) => a.added_ms - b.added_ms,
+  );
   const stagingWords: string[] = [];
   const seen = new Set<string>();
   for (const c of staging) {
@@ -322,19 +346,19 @@ async function handleLogLookup({
 
 async function handleGetKanji({ word }: { word: string }) {
   await ensureKanji();
-  const entries = kanji!.lookup_many(word) as import("../shared/types.ts").KanjiEntry[];
+  const entries = kanji!.lookup_many(word) as KanjiEntry[];
   return { entries: entries ?? [] };
 }
 
 async function handleGetExamples({ word }: { word: string }) {
   await ensureExamples();
   if (!examplesDict) return { entries: [] };
-  const entries = examplesDict.lookup(word, 5) as import("../shared/types.ts").ExampleEntry[];
+  const entries = examplesDict.lookup(word, 5) as ExampleEntry[];
   return { entries: entries ?? [] };
 }
 
 async function handleLookupWord({ word }: { word: string }) {
   await ensureJmdict();
-  const entries = jmdict!.lookup(word) as import("../shared/types.ts").WordEntry[];
+  const entries = jmdict!.lookup(word) as WordEntry[];
   return { entries: entries ?? [] };
 }

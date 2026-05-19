@@ -1,37 +1,54 @@
-import type { SrsCard } from "../shared/types.ts";
+import type { CardDirection, SrsCard } from "../shared/types.ts";
 import { cardId } from "../shared/types.ts";
-import { getAllCards, getCard, putCard } from "./idb";
+import { freshRecallCard, getAllCards, getCard, putCard, sm2ToFsrsFields } from "./idb";
 
 export const CARDS_BACKUP_KEY = "_yomeru_cards_backup";
 
+function num(v: unknown, fallback: number): number {
+  return typeof v === "number" && Number.isFinite(v) ? v : fallback;
+}
+
+function buildFromLegacy(
+  raw: Record<string, unknown>,
+  word: string,
+  direction: CardDirection,
+  nowMs: number,
+): SrsCard {
+  return {
+    id: cardId(word, direction),
+    word,
+    direction,
+    due_ms: num(raw.due_ms, nowMs),
+    ...sm2ToFsrsFields(raw),
+    added_ms: num(raw.added_ms, nowMs),
+    status: (raw.status as SrsCard["status"]) ?? "active",
+  };
+}
+
 /**
- * Expands one input card into one or two v3 siblings.
+ * Normalize an input card to one or two v4 (FSRS-shaped) siblings.
  *
- * - v3 input (has `direction`): returned as-is, with `id` filled in if missing.
+ * - v4 input (already FSRS-shaped): returned as-is, with `id` filled in if missing.
+ * - v3 input (has `direction` but SM-2 fields): direction preserved, SM-2 → FSRS mapped.
  * - Legacy input (no `direction`): becomes a recognition sibling preserving the
- *   original SM-2 state plus a fresh recall sibling (active, due now). Matches
- *   the v2→v3 IDB migration so import and migrate produce the same end state.
+ *   original SM-2 state plus a fresh recall sibling. Matches the v2→v4 IDB
+ *   migration so import and migrate produce the same end state.
  */
 export function normalizeImportedCard(card: SrsCard, nowMs: number): SrsCard[] {
-  if (card.direction) {
+  const raw = card as unknown as Record<string, unknown>;
+  const isLegacyShape =
+    typeof raw.stability !== "number" ||
+    typeof raw.difficulty !== "number" ||
+    typeof raw.state !== "string";
+
+  if (card.direction && !isLegacyShape) {
     return [{ ...card, id: card.id ?? cardId(card.word, card.direction) }];
   }
-  const recognition: SrsCard = {
-    ...card,
-    id: cardId(card.word, "recognition"),
-    direction: "recognition",
-  };
-  const recall: SrsCard = {
-    ...card,
-    id: cardId(card.word, "recall"),
-    direction: "recall",
-    due_ms: nowMs,
-    interval_days: 0,
-    ease_factor: 2.5,
-    repetitions: 0,
-    status: "active",
-  };
-  return [recognition, recall];
+  if (card.direction) {
+    return [buildFromLegacy(raw, card.word, card.direction, nowMs)];
+  }
+  const recognition = buildFromLegacy(raw, card.word, "recognition", nowMs);
+  return [recognition, freshRecallCard(card.word, nowMs, recognition.added_ms)];
 }
 
 // Mirrors the IDB cards table to storage.local. Called on every mutation so a
