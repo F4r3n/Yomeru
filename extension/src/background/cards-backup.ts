@@ -55,8 +55,15 @@ export function normalizeImportedCard(card: SrsCard, nowMs: number): SrsCard[] {
 // Firefox-side IDB wipe (uninstall, reinstall via a different path, temp
 // add-on teardown) doesn't vaporize the user's SRS deck — storage.local
 // survives more reinstall scenarios than IDB.
+//
+// Safety: if IDB is empty we skip the write. An empty IDB is almost always a
+// transient state (failed migration, fresh load before syncCardsBackup has
+// restored) — overwriting a valid backup with [] in that window is how we lost
+// a user's deck. The trade-off is that genuine "delete all cards" never trims
+// the backup, which is the right side to err on.
 export async function writeCardsBackup(): Promise<void> {
   const cards = await getAllCards();
+  if (cards.length === 0) return;
   await browser.storage.local.set({ [CARDS_BACKUP_KEY]: cards });
 }
 
@@ -66,13 +73,17 @@ export async function writeCardsBackup(): Promise<void> {
 // authoritative against a live IDB.
 export async function syncCardsBackup(): Promise<{ restored: number; backedUp: number }> {
   const idbCards = await getAllCards();
+  console.log(`[yomeru] syncCardsBackup: ${idbCards.length} card(s) in IDB`);
   if (idbCards.length > 0) {
     await browser.storage.local.set({ [CARDS_BACKUP_KEY]: idbCards });
     return { restored: 0, backedUp: idbCards.length };
   }
   const stored = await browser.storage.local.get(CARDS_BACKUP_KEY);
   const backup = (stored as { [k: string]: SrsCard[] | undefined })[CARDS_BACKUP_KEY];
-  if (!backup || backup.length === 0) return { restored: 0, backedUp: 0 };
+  if (!backup || backup.length === 0) {
+    console.log("[yomeru] syncCardsBackup: no storage.local backup to restore");
+    return { restored: 0, backedUp: 0 };
+  }
   console.warn(
     `[yomeru] IDB empty, restoring ${backup.length} card(s) from storage.local backup`,
   );
@@ -84,6 +95,7 @@ export async function syncCardsBackup(): Promise<{ restored: number; backedUp: n
       restored++;
     }
   }
+  console.log(`[yomeru] syncCardsBackup: restored ${restored} sibling(s) from backup`);
   return { restored, backedUp: 0 };
 }
 

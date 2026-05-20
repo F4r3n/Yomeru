@@ -17,6 +17,7 @@ export default defineConfig({
   define: {
     __VERSION__: JSON.stringify(process.env.npm_package_version ?? "0.0.0"),
     __COMMIT__: JSON.stringify(commitHash),
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
   },
   build: {
     outDir: "dist",

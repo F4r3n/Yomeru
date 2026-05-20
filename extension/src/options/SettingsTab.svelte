@@ -6,6 +6,7 @@
     let saved = $state(false);
     let backupStatus = $state("");
     let backupError = $state(false);
+    let dragging = $state(false);
 
     $effect(() => {
         browser.runtime.sendMessage({ type: "GET_SETTINGS" }).then((res) => {
@@ -52,10 +53,7 @@
         }
     }
 
-    async function onImportFile(e: Event) {
-        const input = e.target as HTMLInputElement;
-        const file = input.files?.[0];
-        if (!file) return;
+    async function importFromFile(file: File) {
         try {
             const data = JSON.parse(await file.text());
             const cards = data?.cards;
@@ -69,9 +67,21 @@
             flashBackup(`Imported ${r.added} card${r.added !== 1 ? "s" : ""}, skipped ${r.skipped} existing.`);
         } catch (err) {
             flashBackup(`Import failed: ${err instanceof Error ? err.message : String(err)}`, true);
-        } finally {
-            input.value = "";
         }
+    }
+
+    function onDragOver(e: DragEvent) {
+        e.preventDefault();
+        dragging = true;
+    }
+    function onDragLeave() {
+        dragging = false;
+    }
+    function onDrop(e: DragEvent) {
+        e.preventDefault();
+        dragging = false;
+        const file = e.dataTransfer?.files?.[0];
+        if (file) importFromFile(file);
     }
 </script>
 
@@ -105,13 +115,21 @@
 
     <div class="settings-row">
         <span class="settings-label">Backup &amp; Restore</span>
-        <span class="settings-hint">Export your cards as JSON, or import a previous export. Existing cards are kept on import.</span>
+        <span class="settings-hint">Export your cards as JSON, then drop the file back here to restore. Existing cards are kept on import.</span>
         <div class="backup-actions">
             <button class="btn-backup" onclick={exportCards}>Export JSON</button>
-            <label class="btn-backup">
-                Import JSON
-                <input type="file" accept="application/json,.json" onchange={onImportFile} />
-            </label>
+        </div>
+        <div
+            class="drop-zone"
+            class:dragging
+            ondragover={onDragOver}
+            ondragleave={onDragLeave}
+            ondrop={onDrop}
+            role="region"
+            aria-label="Drop JSON file here to import"
+        >
+            <span class="drop-zone-icon">⬇</span>
+            <span class="drop-zone-label">Drop JSON file here to import</span>
         </div>
         {#if backupStatus}
             <span class="backup-status" class:backup-status--error={backupError}>{backupStatus}</span>
@@ -214,8 +232,31 @@
     .btn-backup:hover {
         border-color: var(--accent);
     }
-    .btn-backup input[type="file"] {
-        display: none;
+    .drop-zone {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 8px;
+        padding: 18px 12px;
+        border: 2px dashed var(--border);
+        border-radius: 8px;
+        color: var(--subtext);
+        text-align: center;
+        transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .drop-zone.dragging {
+        border-color: var(--accent);
+        background: rgba(203, 166, 247, 0.08);
+        color: var(--accent);
+    }
+    .drop-zone-icon {
+        font-size: 18px;
+        line-height: 1;
+    }
+    .drop-zone-label {
+        font-size: 12px;
     }
     .backup-status {
         font-size: 12px;

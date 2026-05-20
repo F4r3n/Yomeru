@@ -1,9 +1,13 @@
 <script module lang="ts">
     declare const __VERSION__: string;
     declare const __COMMIT__: string;
+    declare const __BUILD_DATE__: string;
 </script>
 
-<script lang="ts"></script>
+<script lang="ts">
+    // Render local date+time; the define injects an ISO-8601 UTC string.
+    const buildDate = new Date(__BUILD_DATE__).toLocaleString();
+</script>
 
 <div class="about">
     <div class="about-name">Yomeru</div>
@@ -14,6 +18,10 @@
     <div class="about-row">
         <span class="about-label">Commit</span>
         <span class="about-value about-commit">{__COMMIT__}</span>
+    </div>
+    <div class="about-row">
+        <span class="about-label">Built</span>
+        <span class="about-value">{buildDate}</span>
     </div>
 </div>
 

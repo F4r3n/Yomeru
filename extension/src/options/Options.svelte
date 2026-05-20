@@ -58,14 +58,28 @@
     function onStagingChange(n: number) {
         stagingCount = n;
     }
+
+    const isPopup = window.innerWidth <= 500;
+
+    if (!isPopup) document.body.classList.add("tab-mode");
+
+    function openInTab() {
+        browser.tabs.create({ url: browser.runtime.getURL("options.html") });
+        window.close();
+    }
 </script>
 
 <header>
     <div class="header-top">
         <h1>Yomeru</h1>
-        <button class="toggle-btn" class:enabled onclick={toggleEnabled}>
-            {enabled ? "Stop" : "Start"}
-        </button>
+        <div class="header-actions">
+            {#if isPopup}
+                <button class="icon-btn" onclick={openInTab} title="Open in new tab" aria-label="Open in new tab">⊞</button>
+            {/if}
+            <button class="toggle-btn" class:enabled onclick={toggleEnabled}>
+                {enabled ? "Stop" : "Start"}
+            </button>
+        </div>
     </div>
     <nav>
         <button class="tab" class:active={tab === "review"} onclick={() => selectTab("review")}>Review</button>
@@ -135,6 +149,12 @@
         min-height: 300px;
         padding: 0 0 16px;
     }
+    :global(body.tab-mode) {
+        width: 720px;
+        max-width: 100%;
+        margin: 0 auto;
+        min-height: 100vh;
+    }
 
     header {
         background: var(--surface);
@@ -146,6 +166,25 @@
         align-items: center;
         justify-content: space-between;
         margin-bottom: 10px;
+    }
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .icon-btn {
+        background: none;
+        border: none;
+        border-radius: 6px;
+        color: var(--subtext);
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        padding: 4px 6px;
+        transition: color 0.15s;
+    }
+    .icon-btn:hover {
+        color: var(--text);
     }
     h1 {
         font-size: 16px;

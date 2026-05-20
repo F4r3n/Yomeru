@@ -43,6 +43,14 @@
         (stagingCount > 0 ? ` · ${stagingCount} new` : ""),
     );
 
+    function shuffle<T>(arr: T[]): T[] {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
     async function attachEntries(cards: SrsCard[]): Promise<{ kept: SrsCard[]; skipped: string[]; entries: Record<string, WordEntry | null> }> {
         const entries = await buildEntryMap(cards.map((c) => c.word));
         const kept: SrsCard[] = [];
@@ -80,7 +88,7 @@
             const { kept, skipped, entries } = await attachEntries(filtered);
             entriesByWord = entries;
             skippedWords = skipped;
-            dueCards = kept;
+            dueCards = shuffle(kept);
             dueCount = dueCards.length;
             stagingCount = (stagingRes as { cards: SrsCard[] }).cards?.length ?? 0;
             onstagingchange?.(stagingCount);
@@ -101,7 +109,7 @@
         const { kept, skipped, entries } = await attachEntries(cards);
         entriesByWord = entries;
         skippedWords = skipped;
-        dueCards = kept;
+        dueCards = shuffle(kept);
         dueCount = dueCards.length;
         stagingCount = remaining;
         onstagingchange?.(remaining);

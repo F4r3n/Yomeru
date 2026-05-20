@@ -63,6 +63,14 @@ export async function openDb(): Promise<IDBDatabase> {
     req.onupgradeneeded = (e) => {
       const database = (e.target as IDBOpenDBRequest).result;
       const upgradeTx = (e.target as IDBOpenDBRequest).transaction!;
+      console.log(`[yomeru] idb upgrade ${e.oldVersion} → ${e.newVersion}`);
+
+      upgradeTx.onerror = () => {
+        console.error("[yomeru] idb upgrade tx error:", upgradeTx.error);
+      };
+      upgradeTx.onabort = () => {
+        console.error("[yomeru] idb upgrade tx aborted:", upgradeTx.error);
+      };
 
       if (e.oldVersion < 1) {
         const cards = database.createObjectStore("cards", { keyPath: "id" });
@@ -86,6 +94,9 @@ export async function openDb(): Promise<IDBDatabase> {
         const oldStore = upgradeTx.objectStore("cards");
         const collected: Array<Record<string, unknown>> = [];
         const cursorReq = oldStore.openCursor();
+        cursorReq.onerror = () => {
+          console.error("[yomeru] v1/v2→v4 cursor error:", cursorReq.error);
+        };
         cursorReq.onsuccess = (ev) => {
           const cursor = (ev.target as IDBRequest<IDBCursorWithValue>).result;
           if (cursor) {
@@ -93,6 +104,7 @@ export async function openDb(): Promise<IDBDatabase> {
             cursor.continue();
             return;
           }
+          console.log(`[yomeru] v1/v2→v4 collected ${collected.length} legacy cards`);
           database.deleteObjectStore("cards");
           const newStore = database.createObjectStore("cards", { keyPath: "id" });
           newStore.createIndex("due_ms", "due_ms", { unique: false });
@@ -126,10 +138,17 @@ export async function openDb(): Promise<IDBDatabase> {
       // Walk every card and rewrite to FSRS-shaped fields in place.
       if (e.oldVersion >= 3 && e.oldVersion < 4) {
         const store = upgradeTx.objectStore("cards");
+        let migrated = 0;
         const cursorReq = store.openCursor();
+        cursorReq.onerror = () => {
+          console.error("[yomeru] v3→v4 cursor error:", cursorReq.error);
+        };
         cursorReq.onsuccess = (ev) => {
           const cursor = (ev.target as IDBRequest<IDBCursorWithValue>).result;
-          if (!cursor) return;
+          if (!cursor) {
+            console.log(`[yomeru] v3→v4 rewrote ${migrated} cards`);
+            return;
+          }
           const old = cursor.value as Record<string, unknown>;
           const fsrs = sm2ToFsrsFields(old);
           const updated: SrsCard = {
@@ -141,7 +160,16 @@ export async function openDb(): Promise<IDBDatabase> {
             added_ms: typeof old.added_ms === "number" ? old.added_ms : Date.now(),
             status: (old.status as SrsCard["status"]) ?? "active",
           };
-          cursor.update(updated);
+          const upd = cursor.update(updated);
+          upd.onerror = () => {
+            console.error(
+              `[yomeru] v3→v4 cursor.update failed for id=${updated.id}:`,
+              upd.error,
+              "value:",
+              updated,
+            );
+          };
+          migrated++;
           cursor.continue();
         };
       }
@@ -149,6 +177,7 @@ export async function openDb(): Promise<IDBDatabase> {
 
     req.onsuccess = (e) => {
       const opened = (e.target as IDBOpenDBRequest).result;
+      console.log(`[yomeru] idb opened at version ${opened.version}`);
       opened.onversionchange = () => {
         opened.close();
         if (db === opened) db = null;
@@ -159,7 +188,13 @@ export async function openDb(): Promise<IDBDatabase> {
       db = opened;
       resolve(opened);
     };
-    req.onerror = () => reject(req.error);
+    req.onerror = () => {
+      console.error("[yomeru] idb open failed:", req.error);
+      reject(req.error);
+    };
+    req.onblocked = () => {
+      console.warn("[yomeru] idb open blocked — another connection holds an older version open");
+    };
   });
 }
 

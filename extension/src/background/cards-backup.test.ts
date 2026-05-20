@@ -55,9 +55,18 @@ describe("cards-backup", () => {
   });
 
   describe("writeCardsBackup", () => {
-    it("writes an empty array when IDB has no cards", async () => {
+    it("does not overwrite a backup when IDB is empty", async () => {
+      const existing = [makeCard({ word: "previously-backed-up" })];
+      storage.set(backup.CARDS_BACKUP_KEY, existing);
+
       await backup.writeCardsBackup();
-      expect(storage.get(backup.CARDS_BACKUP_KEY)).toEqual([]);
+
+      expect(storage.get(backup.CARDS_BACKUP_KEY)).toEqual(existing);
+    });
+
+    it("does not create a backup when IDB is empty and none exists", async () => {
+      await backup.writeCardsBackup();
+      expect(storage.has(backup.CARDS_BACKUP_KEY)).toBe(false);
     });
 
     it("snapshots every IDB card into storage.local", async () => {
