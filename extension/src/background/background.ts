@@ -187,6 +187,14 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
       return handleLookupWord(msg.payload as { word: string });
     case "IMPORT_CARDS":
       return handleImportCards(msg.payload as { cards: unknown });
+    case "REQUEST_OTP":
+      return handleRequestOtp(msg.payload as { serverUrl: string; email: string });
+    case "VERIFY_OTP":
+      return handleVerifyOtp(
+        msg.payload as { serverUrl: string; email: string; code: string },
+      );
+    case "SYNC_CARDS":
+      return handleSyncCards();
     default:
       return Promise.resolve({ error: "Unknown message type" });
   }
@@ -361,4 +369,74 @@ async function handleLookupWord({ word }: { word: string }) {
   await ensureJmdict();
   const entries = jmdict!.lookup(word) as WordEntry[];
   return { entries: entries ?? [] };
+}
+
+async function handleRequestOtp({
+  serverUrl,
+  email,
+}: {
+  serverUrl: string;
+  email: string;
+}) {
+  try {
+    const res = await fetch(`${serverUrl}/api/auth/request`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) return { error: `server ${res.status}` };
+    return { success: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+async function handleVerifyOtp({
+  serverUrl,
+  email,
+  code,
+}: {
+  serverUrl: string;
+  email: string;
+  code: string;
+}) {
+  try {
+    const res = await fetch(`${serverUrl}/api/auth/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code }),
+    });
+    if (!res.ok) return { error: `server ${res.status}: ${await res.text()}` };
+    const { token } = (await res.json()) as { token: string };
+    const settings = await getSettings();
+    await saveSettings({ ...settings, serverToken: token });
+    return { success: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+async function handleSyncCards() {
+  try {
+    const settings = await getSettings();
+    if (!settings.serverUrl || !settings.serverToken)
+      return { error: "not authenticated" };
+    const local = await getAllCards();
+    const res = await fetch(`${settings.serverUrl}/api/sync`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${settings.serverToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ cards: local }),
+    });
+    if (res.status === 401) return { error: "session expired — re-verify" };
+    if (!res.ok) return { error: `server ${res.status}` };
+    const { cards } = (await res.json()) as { cards: SrsCard[] };
+    await putCards(cards);
+    await writeCardsBackup();
+    return { synced: cards.length };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
 }

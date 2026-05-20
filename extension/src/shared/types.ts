@@ -57,12 +57,18 @@ export interface SrsSettings {
   graduationReps: number;   // 0 = never graduate
   intervalScale: number;    // 1.0 = no scaling
   maxSessionCards: number;
+  serverUrl: string;
+  serverEmail: string;
+  serverToken: string;      // session token after OTP verification (not shown to user)
 }
 
 export const DEFAULT_SETTINGS: SrsSettings = {
   graduationReps: 0,
   intervalScale: 1.0,
   maxSessionCards: 20,
+  serverUrl: "",
+  serverEmail: "",
+  serverToken: "",
 };
 
 export interface ExampleEntry {

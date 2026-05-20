@@ -7,6 +7,11 @@
     let backupStatus = $state("");
     let backupError = $state(false);
     let dragging = $state(false);
+    let otpSent = $state(false);
+    let otpCode = $state("");
+    let syncStatus = $state("");
+    let syncError = $state(false);
+    let syncBusy = $state(false);
 
     $effect(() => {
         browser.runtime.sendMessage({ type: "GET_SETTINGS" }).then((res) => {
@@ -19,10 +24,58 @@
             graduationReps: Number(settings.graduationReps),
             intervalScale: Number(settings.intervalScale),
             maxSessionCards: Number(settings.maxSessionCards),
+            serverUrl: settings.serverUrl.trim(),
+            serverEmail: settings.serverEmail.trim(),
+            serverToken: settings.serverToken,
         };
         await browser.runtime.sendMessage({ type: "SAVE_SETTINGS", payload });
         saved = true;
         setTimeout(() => { saved = false; }, 2000);
+    }
+
+    function flashSync(msg: string, error = false) {
+        syncStatus = msg;
+        syncError = error;
+        setTimeout(() => { syncStatus = ""; syncError = false; }, 6000);
+    }
+
+    async function requestOtp() {
+        syncBusy = true;
+        const res = await browser.runtime.sendMessage({
+            type: "REQUEST_OTP",
+            payload: { serverUrl: settings.serverUrl.trim(), email: settings.serverEmail.trim() },
+        });
+        syncBusy = false;
+        const r = res as { success?: boolean; error?: string };
+        if (r.error) { flashSync(r.error, true); return; }
+        otpSent = true;
+    }
+
+    async function verifyOtp() {
+        syncBusy = true;
+        const res = await browser.runtime.sendMessage({
+            type: "VERIFY_OTP",
+            payload: {
+                serverUrl: settings.serverUrl.trim(),
+                email: settings.serverEmail.trim(),
+                code: otpCode.trim(),
+            },
+        });
+        syncBusy = false;
+        const r = res as { success?: boolean; error?: string };
+        if (r.error) { flashSync(r.error, true); return; }
+        otpSent = false;
+        otpCode = "";
+        flashSync("Authenticated. You can now sync.");
+    }
+
+    async function syncNow() {
+        syncBusy = true;
+        const res = await browser.runtime.sendMessage({ type: "SYNC_CARDS" });
+        syncBusy = false;
+        const r = res as { synced?: number; error?: string };
+        if (r.error) { flashSync(r.error, true); return; }
+        flashSync(`Synced ${r.synced} card${r.synced !== 1 ? "s" : ""}.`);
     }
 
     function flashBackup(msg: string, error = false) {
@@ -133,6 +186,40 @@
         </div>
         {#if backupStatus}
             <span class="backup-status" class:backup-status--error={backupError}>{backupStatus}</span>
+        {/if}
+    </div>
+
+    <div class="settings-divider"></div>
+
+    <div class="settings-row">
+        <span class="settings-label">Sync Server</span>
+        <span class="settings-hint">Enter your server URL and email. A one-time code will be emailed to you.</span>
+        <div class="settings-control sync-inputs">
+            <input type="url" placeholder="http://localhost:8080" bind:value={settings.serverUrl} />
+            <input type="email" placeholder="your@email.com" bind:value={settings.serverEmail} />
+        </div>
+        {#if !otpSent}
+            <div class="backup-actions">
+                <button class="btn-backup" onclick={requestOtp} disabled={syncBusy}>
+                    {syncBusy ? "Sending…" : "Send code"}
+                </button>
+                <button class="btn-backup" onclick={syncNow}
+                    disabled={syncBusy || !settings.serverToken}>
+                    {syncBusy ? "Syncing…" : "Sync now"}
+                </button>
+            </div>
+        {:else}
+            <span class="settings-hint" style="margin-top:6px;">Check your email for a 6-digit code:</span>
+            <div class="settings-control" style="margin-top:4px;">
+                <input class="otp-input" type="text" inputmode="numeric" maxlength="6"
+                    placeholder="000000" bind:value={otpCode} />
+                <button class="btn-backup" onclick={verifyOtp} disabled={syncBusy}>
+                    {syncBusy ? "Verifying…" : "Verify"}
+                </button>
+            </div>
+        {/if}
+        {#if syncStatus}
+            <span class="backup-status" class:backup-status--error={syncError}>{syncStatus}</span>
         {/if}
     </div>
 </div>
@@ -265,5 +352,42 @@
     }
     .backup-status--error {
         color: var(--red);
+    }
+    .sync-inputs {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        margin-top: 6px;
+    }
+    .sync-inputs input,
+    .settings-control input[type="url"],
+    .settings-control input[type="email"] {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 13px;
+        padding: 4px 8px;
+        width: 240px;
+        outline: none;
+    }
+    .sync-inputs input:focus,
+    .settings-control input[type="url"]:focus,
+    .settings-control input[type="email"]:focus {
+        border-color: var(--accent);
+    }
+    .otp-input {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 16px;
+        letter-spacing: 6px;
+        outline: none;
+        padding: 4px 8px;
+        width: 100px;
+    }
+    .otp-input:focus {
+        border-color: var(--accent);
     }
 </style>

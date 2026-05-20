@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "server",
     "crates/japanese-utils",
     "crates/jmdict-types",
     "crates/jmdict-build",
