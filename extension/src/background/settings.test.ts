@@ -58,6 +58,9 @@ describe("settings", () => {
         graduationReps: 5,
         intervalScale: 1.5,
         maxSessionCards: 15,
+        serverUrl: "",
+        serverEmail: "",
+        serverToken: "",
       };
 
       await settings.saveSettings(custom);
