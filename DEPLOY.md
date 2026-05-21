@@ -12,7 +12,16 @@ throughout.
 
 ## 1. Build the dict bins (once, on a build host)
 
-The server needs three binary files at startup. Build them on any host
+The server needs three binary files at startup
+(`jmdict.bin` / `kanjidic.bin` / `examples.bin`).
+
+**Docker deploy** (compose, below): you can skip this section — the
+`yomeru-dicts` builder service in `server/docker-compose.yml`
+produces the bins inside the cluster and writes them to a named
+volume. The server image itself doesn't bake them in. Jump to
+section 2.
+
+**systemd deploy** (Option B in section 3): build them on any host
 with the Rust toolchain — the bins are deterministic and portable.
 
 ```bash
@@ -38,6 +47,17 @@ dx bundle --package yomeru-web --platform web --release
 Output: `target/dx/yomeru-web/release/web/public/` — pure static files.
 Copy that directory to the deploy host (e.g. `/srv/yomeru/web/`).
 
+Or, if you only have Docker on the build host, run the bundle inside
+a container and extract the artifacts (workspace root as context):
+
+```bash
+docker build -f app/web/Dockerfile --target export \
+    --output type=local,dest=./web-dist .
+```
+
+`./web-dist/` is the same tree as
+`target/dx/yomeru-web/release/web/public/`.
+
 The release `.wasm` is ~2 MB; first-load assets are well under 5 MB
 total. No dict bytes are bundled — every lookup is an HTTP call.
 
@@ -56,13 +76,29 @@ cp .env.example .env
 # plus YOMERU_SMTP_USER/PASS if your relay requires auth
 ```
 
-The compose file bind-mounts `../extension/data` into the container at
-`/data/dicts`. If you copied the bins elsewhere, edit the bind-mount
-path in `server/docker-compose.yml` accordingly.
+The compose file defines two services that share named volumes:
+
+- `yomeru-dicts` — one-shot builder. Runs `cargo xtask build-all`
+  inside its image, writes `jmdict.bin` / `kanjidic.bin` /
+  `examples.bin` to the `yomeru-dicts` named volume, then exits 0.
+  Skips itself on subsequent runs if the volume is already
+  populated.
+- `yomeru-server` — long-running. `depends_on` `yomeru-dicts` with
+  `service_completed_successfully`, so first-time `up` automatically
+  builds the dicts before the server starts. Mounts the
+  `yomeru-dicts` volume read-only at
+  `/usr/share/yomeru-server/dicts` (the image's default
+  `YOMERU_DATA_DIR`), and the independent `yomeru-data` volume at
+  `/data` for SQLite.
 
 ```bash
 docker compose up -d --build
 ```
+
+First run takes ~5–10 min while the dict builder downloads JMdict /
+KANJIDIC / examples and indexes them. Subsequent `up`s are
+instant — the builder sees the volume populated and exits straight
+away.
 
 The server is now listening on `127.0.0.1:8080` (publish only to
 localhost — nginx fronts it).
@@ -74,6 +110,17 @@ To bind only to localhost, edit the `ports:` line in
 ports:
   - "127.0.0.1:8080:8080"
 ```
+
+**Refreshing the dictionaries.** Because the bins live on their own
+volume rather than in the image, you can refresh them without
+rebuilding the server or touching SQLite:
+
+```bash
+docker compose run --rm -e FORCE=1 yomeru-dicts   # rebuild from scratch
+docker compose restart yomeru-server              # server caches dicts in memory
+```
+
+`yomeru-data` (SQLite) is untouched.
 
 ### Option B: systemd
 
@@ -242,10 +289,14 @@ type `飲む` (or `nomu` — romaji works). You should see entries.
 ## Updating
 
 ```bash
-# new server binary
-docker compose -f server/docker-compose.yml up -d --build
+# new server binary (Docker — only rebuilds the server stage, dict volume untouched)
+docker compose -f server/docker-compose.yml up -d --build yomeru-server
 # or, for systemd:
 cargo build --release -p server && sudo install -m 0755 target/release/yomeru-server /usr/local/bin/ && sudo systemctl restart yomeru-server
+
+# refreshed dict bins (Docker)
+docker compose -f server/docker-compose.yml run --rm -e FORCE=1 yomeru-dicts
+docker compose -f server/docker-compose.yml restart yomeru-server
 
 # new website bundle
 dx bundle --package yomeru-web --platform web --release

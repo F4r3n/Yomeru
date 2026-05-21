@@ -3,9 +3,24 @@ use clap::{Parser, Subcommand};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-const JMDICT_URL: &str = "http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz";
-const KANJIDIC_URL: &str = "http://ftp.edrdg.org/pub/Nihongo/kanjidic2.xml.gz";
-const EXAMPLES_URL: &str = "http://ftp.edrdg.org/pub/Nihongo/examples.utf.gz";
+// Upstream URLs + decompressed filenames live in one file so the
+// server Dockerfile can pre-fetch the inputs in its own cacheable
+// layer (it sources the same file as a shell env file).
+const DICT_SOURCES_ENV: &str = include_str!("../dict-sources.env");
+
+fn source(key: &str) -> &'static str {
+    DICT_SOURCES_ENV
+        .lines()
+        .filter_map(|line| {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                return None;
+            }
+            line.split_once('=').map(|(k, v)| (k.trim(), v.trim()))
+        })
+        .find_map(|(k, v)| (k == key).then_some(v))
+        .unwrap_or_else(|| panic!("dict-sources.env missing key `{key}`"))
+}
 
 #[derive(Parser)]
 #[command(name = "xtask")]
@@ -67,6 +82,14 @@ enum Cmd {
         #[arg(short, long)]
         input: Option<PathBuf>,
     },
+    /// Build only the three binary dict indexes (JMdict, KANJIDIC2,
+    /// examples). Downloads inputs if missing. Used by the
+    /// `yomeru-dicts` Docker builder service, which has neither
+    /// wasm-pack nor npm available.
+    BuildDicts {
+        #[arg(short, long)]
+        input: Option<PathBuf>,
+    },
     /// Build the extension TypeScript/Svelte sources via npm.
     BuildJs,
     /// Package the extension into release/ and japanese-reader.zip.
@@ -120,29 +143,16 @@ fn main() -> Result<()> {
         }
 
         Cmd::BuildAll { input } => {
-            let xml_path = match input {
-                Some(p) => p,
-                None => {
-                    eprintln!("No --input given, downloading JMdict automatically...");
-                    download_jmdict(&root)?
-                }
-            };
-            build_dict(&root, &xml_path, &root.join("extension/data/jmdict.bin"))?;
-            eprintln!("Downloading KANJIDIC2...");
-            let kanjidic_xml = download_kanjidic(&root)?;
-            build_kanjidic(
-                &root,
-                &kanjidic_xml,
-                &root.join("extension/data/kanjidic.bin"),
-            )?;
-            eprintln!("Downloading example sentences...");
-            let examples_utf = download_examples(&root)?;
-            build_examples(&root, &examples_utf, &root.join("extension/data/examples.bin"))?;
+            build_dicts(&root, input)?;
             build_wasm(&root, "jmdict-wasm", "release")?;
             build_wasm(&root, "srs-wasm", "release")?;
             build_wasm(&root, "kanjidic-wasm", "release")?;
             build_wasm(&root, "examples-wasm", "release")?;
             build_js(&root)?;
+        }
+
+        Cmd::BuildDicts { input } => {
+            build_dicts(&root, input)?;
         }
 
         Cmd::BuildJs => {
@@ -178,30 +188,37 @@ fn main() -> Result<()> {
 
 /// Downloads JMdict_e.gz from EDRDG, decompresses it, returns the path to the XML file.
 fn download_jmdict(dir: &Path) -> Result<PathBuf> {
+    download_source(dir, "JMDICT")
+}
+
+/// Fetch a gzipped upstream input named by the `<NAME>_URL` /
+/// `<NAME>_OUT` keys in `dict-sources.env`. Skips the network call
+/// if the decompressed file already exists at `<dir>/<OUT>`.
+fn download_source(dir: &Path, name: &str) -> Result<PathBuf> {
     use flate2::read::GzDecoder;
     use std::io::{Read, Write};
 
-    std::fs::create_dir_all(dir)?;
-    let gz_path = dir.join("JMdict_e.gz");
-    let xml_path = dir.join("JMdict_e");
+    let url = source(&format!("{name}_URL"));
+    let out_name = source(&format!("{name}_OUT"));
 
-    if xml_path.exists() {
-        let size = std::fs::metadata(&xml_path)?.len();
-        if size > 1_000_000 {
+    std::fs::create_dir_all(dir)?;
+    let out_path = dir.join(out_name);
+
+    if let Ok(meta) = std::fs::metadata(&out_path) {
+        if meta.len() > 100_000 {
             eprintln!(
                 "{} already exists ({:.1} MB), skipping download.",
-                xml_path.display(),
-                size as f64 / 1_048_576.0
+                out_path.display(),
+                meta.len() as f64 / 1_048_576.0
             );
-            return Ok(xml_path);
+            return Ok(out_path);
         }
     }
 
-    // Download
-    eprintln!("Downloading {} ...", JMDICT_URL);
-    let response = ureq::get(JMDICT_URL)
+    eprintln!("Downloading {} ...", url);
+    let response = ureq::get(url)
         .call()
-        .context("Failed to connect to ftp.edrdg.org")?;
+        .with_context(|| format!("Failed to GET {url}"))?;
 
     let mut gz_bytes: Vec<u8> = Vec::new();
     response
@@ -214,31 +231,23 @@ fn download_jmdict(dir: &Path) -> Result<PathBuf> {
         gz_bytes.len() as f64 / 1_048_576.0
     );
 
-    // Write gz to disk (optional, but lets the user inspect it).
-    std::fs::write(&gz_path, &gz_bytes)?;
-
-    // Decompress
-    eprintln!("Decompressing...");
     let mut decoder = GzDecoder::new(gz_bytes.as_slice());
-    let mut xml_bytes: Vec<u8> = Vec::new();
+    let mut decompressed: Vec<u8> = Vec::new();
     decoder
-        .read_to_end(&mut xml_bytes)
-        .context("Failed to decompress JMdict_e.gz")?;
+        .read_to_end(&mut decompressed)
+        .with_context(|| format!("Failed to decompress {name}"))?;
 
-    std::fs::File::create(&xml_path)
-        .and_then(|mut f| f.write_all(&xml_bytes))
-        .context("Failed to write JMdict_e")?;
+    std::fs::File::create(&out_path)
+        .and_then(|mut f| f.write_all(&decompressed))
+        .with_context(|| format!("Failed to write {}", out_path.display()))?;
 
     eprintln!(
         "Decompressed to {} ({:.1} MB).",
-        xml_path.display(),
-        xml_bytes.len() as f64 / 1_048_576.0
+        out_path.display(),
+        decompressed.len() as f64 / 1_048_576.0
     );
 
-    // Remove the .gz now that we have the XML.
-    let _ = std::fs::remove_file(&gz_path);
-
-    Ok(xml_path)
+    Ok(out_path)
 }
 
 fn package(root: &Path) -> Result<()> {
@@ -413,124 +422,32 @@ fn build_wasm(root: &Path, crate_name: &str, profile: &str) -> Result<()> {
     Ok(())
 }
 
-/// Downloads kanjidic2.xml.gz from EDRDG, decompresses it, returns the path to the XML file.
 fn download_kanjidic(dir: &Path) -> Result<PathBuf> {
-    use flate2::read::GzDecoder;
-    use std::io::{Read, Write};
+    download_source(dir, "KANJIDIC")
+}
 
-    std::fs::create_dir_all(dir)?;
-    let gz_path = dir.join("kanjidic2.xml.gz");
-    let xml_path = dir.join("kanjidic2");
-
-    if xml_path.exists() {
-        let size = std::fs::metadata(&xml_path)?.len();
-        if size > 100_000 {
-            eprintln!(
-                "{} already exists ({:.1} MB), skipping download.",
-                xml_path.display(),
-                size as f64 / 1_048_576.0
-            );
-            return Ok(xml_path);
+/// Build all three binary dict indexes into `extension/data/`.
+/// Downloads missing inputs first.
+fn build_dicts(root: &Path, input: Option<PathBuf>) -> Result<()> {
+    let xml_path = match input {
+        Some(p) => p,
+        None => {
+            eprintln!("No --input given, downloading JMdict automatically...");
+            download_jmdict(root)?
         }
-    }
-
-    eprintln!("Downloading {} ...", KANJIDIC_URL);
-    let response = ureq::get(KANJIDIC_URL)
-        .call()
-        .context("Failed to connect to ftp.edrdg.org")?;
-
-    let mut gz_bytes: Vec<u8> = Vec::new();
-    response
-        .into_reader()
-        .read_to_end(&mut gz_bytes)
-        .context("Failed to read response body")?;
-
-    eprintln!(
-        "Downloaded {:.1} MB compressed.",
-        gz_bytes.len() as f64 / 1_048_576.0
-    );
-
-    std::fs::write(&gz_path, &gz_bytes)?;
-
-    eprintln!("Decompressing...");
-    let mut decoder = GzDecoder::new(gz_bytes.as_slice());
-    let mut xml_bytes: Vec<u8> = Vec::new();
-    decoder
-        .read_to_end(&mut xml_bytes)
-        .context("Failed to decompress kanjidic2.xml.gz")?;
-
-    std::fs::File::create(&xml_path)
-        .and_then(|mut f| f.write_all(&xml_bytes))
-        .context("Failed to write kanjidic2")?;
-
-    eprintln!(
-        "Decompressed to {} ({:.1} MB).",
-        xml_path.display(),
-        xml_bytes.len() as f64 / 1_048_576.0
-    );
-
-    let _ = std::fs::remove_file(&gz_path);
-
-    Ok(xml_path)
+    };
+    build_dict(root, &xml_path, &root.join("extension/data/jmdict.bin"))?;
+    eprintln!("Downloading KANJIDIC2...");
+    let kanjidic_xml = download_kanjidic(root)?;
+    build_kanjidic(root, &kanjidic_xml, &root.join("extension/data/kanjidic.bin"))?;
+    eprintln!("Downloading example sentences...");
+    let examples_utf = download_examples(root)?;
+    build_examples(root, &examples_utf, &root.join("extension/data/examples.bin"))?;
+    Ok(())
 }
 
 fn download_examples(dir: &Path) -> Result<PathBuf> {
-    use flate2::read::GzDecoder;
-    use std::io::{Read, Write};
-
-    std::fs::create_dir_all(dir)?;
-    let gz_path = dir.join("examples.utf.gz");
-    let out_path = dir.join("examples.utf");
-
-    if out_path.exists() {
-        let size = std::fs::metadata(&out_path)?.len();
-        if size > 1_000_000 {
-            eprintln!(
-                "{} already exists ({:.1} MB), skipping download.",
-                out_path.display(),
-                size as f64 / 1_048_576.0
-            );
-            return Ok(out_path);
-        }
-    }
-
-    eprintln!("Downloading {} ...", EXAMPLES_URL);
-    let response = ureq::get(EXAMPLES_URL)
-        .call()
-        .context("Failed to connect to ftp.edrdg.org")?;
-
-    let mut gz_bytes: Vec<u8> = Vec::new();
-    response
-        .into_reader()
-        .read_to_end(&mut gz_bytes)
-        .context("Failed to read response body")?;
-
-    eprintln!(
-        "Downloaded {:.1} MB compressed.",
-        gz_bytes.len() as f64 / 1_048_576.0
-    );
-
-    std::fs::write(&gz_path, &gz_bytes)?;
-
-    eprintln!("Decompressing...");
-    let mut decoder = GzDecoder::new(gz_bytes.as_slice());
-    let mut bytes: Vec<u8> = Vec::new();
-    decoder
-        .read_to_end(&mut bytes)
-        .context("Failed to decompress examples.utf.gz")?;
-
-    std::fs::File::create(&out_path)
-        .and_then(|mut f| f.write_all(&bytes))
-        .context("Failed to write examples.utf")?;
-
-    eprintln!(
-        "Decompressed to {} ({:.1} MB).",
-        out_path.display(),
-        bytes.len() as f64 / 1_048_576.0
-    );
-
-    let _ = std::fs::remove_file(&gz_path);
-    Ok(out_path)
+    download_source(dir, "EXAMPLES")
 }
 
 fn build_examples(root: &Path, input: &Path, output: &Path) -> Result<()> {

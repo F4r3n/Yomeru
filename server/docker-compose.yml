@@ -2,9 +2,33 @@
 #   docker compose up -d --build
 #
 # Configuration lives in `.env` next to this file (see `.env.example`).
-# The build context is the workspace root so cargo can resolve the workspace.
+# The build context is the workspace root so cargo can resolve the
+# workspace.
+#
+# Two services share a `yomeru-dicts` volume:
+#   * yomeru-dicts — one-shot builder that populates the volume with
+#     the three .bin files (see xtask/Dockerfile). `docker compose up`
+#     runs it once via depends_on; refresh on demand with
+#         docker compose run --rm -e FORCE=1 yomeru-dicts
+#         docker compose restart yomeru-server
+#   * yomeru-server — long-running HTTP server, reads the volume
+#     read-only. SQLite + any other server-owned state lives in the
+#     independent `yomeru-data` volume, so dict refreshes never touch
+#     it.
 
 services:
+  yomeru-dicts:
+    build:
+      context: ..
+      dockerfile: xtask/Dockerfile
+    image: yomeru-dicts:latest
+    # One-shot: runs `xtask build-all`, writes /dicts, exits. Skip
+    # container_name so `docker compose run --rm yomeru-dicts` works
+    # cleanly for manual refreshes.
+    restart: "no"
+    volumes:
+      - yomeru-dicts:/dicts
+
   yomeru-server:
     build:
       context: ..
@@ -12,15 +36,17 @@ services:
     image: yomeru-server:latest
     container_name: yomeru-server
     restart: unless-stopped
+    depends_on:
+      yomeru-dicts:
+        condition: service_completed_successfully
     env_file:
       - .env
     ports:
       - "${YOMERU_PORT:-8080}:8080"
     volumes:
       - yomeru-data:/data
-      # Bind-mount the prebuilt dict bins read-only. Run `cargo xtask build-all`
-      # first to populate ../extension/data.
-      - ../extension/data:/data/dicts:ro
+      - yomeru-dicts:/usr/share/yomeru-server/dicts:ro
 
 volumes:
   yomeru-data:
+  yomeru-dicts:
