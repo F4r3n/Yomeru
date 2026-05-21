@@ -1,0 +1,28 @@
+# Build artifacts
+target/
+**/target/
+node_modules/
+extension/dist/
+extension/web-ext-artifacts/
+
+# Generated dictionary inputs (server doesn't need them)
+JMdict_e
+JMdict_e.gz
+kanjidic2
+kanjidic2.xml.gz
+examples.utf
+examples.utf.gz
+
+# Release artifacts
+release/
+*.zip
+
+# IDE / VCS
+.git/
+.gitignore
+.idea/
+.vscode/
+
+# Misc
+img/
+*.md

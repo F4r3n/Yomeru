@@ -1,6 +1,7 @@
 pub struct Config {
     pub port: u16,
     pub db_path: String,
+    pub data_dir: String,
     pub smtp_host: String,
     pub smtp_port: u16,
     pub smtp_from: String,
@@ -31,6 +32,8 @@ impl Config {
                 .unwrap_or(8080),
             db_path: resolve(&args, "--db", "YOMERU_DB_PATH")
                 .unwrap_or_else(|| "./yomeru.db".into()),
+            data_dir: resolve(&args, "--data-dir", "YOMERU_DATA_DIR")
+                .unwrap_or_else(|| "./data".into()),
             smtp_host: resolve(&args, "--smtp-host", "YOMERU_SMTP_HOST")
                 .expect("smtp host required (--smtp-host or YOMERU_SMTP_HOST)"),
             smtp_port: resolve(&args, "--smtp-port", "YOMERU_SMTP_PORT")

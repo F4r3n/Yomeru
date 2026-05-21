@@ -1,0 +1,11 @@
+[package]
+name = "yomeru-android"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+dioxus = { version = "0.7.9", features = ["mobile"] }
+yomeru-shared = { path = "../shared" }

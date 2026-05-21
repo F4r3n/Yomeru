@@ -172,7 +172,8 @@ pub(crate) fn fst_prefix_search(prefix: &str) -> Vec<(String, u64)> {
     results
 }
 
-#[cfg(any(test, feature = "test-utils"))]
+/// Initialize the global dictionary from raw bytes without going through
+/// wasm-bindgen — used by host tests, benches, and the Dioxus app.
 pub fn init_for_testing(bytes: &[u8]) -> anyhow::Result<()> {
     if DICT.get().is_some() {
         return Ok(());

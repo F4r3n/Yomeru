@@ -57,6 +57,31 @@ impl KanjiDictionary {
     }
 }
 
+/// Initialize the kanjidic from raw bytes without going through wasm-bindgen.
+pub fn init_from_bytes(bytes: &[u8]) -> anyhow::Result<()> {
+    if KDICT.get().is_some() {
+        return Ok(());
+    }
+    let inner = parse_binary(bytes)?;
+    KDICT
+        .set(inner)
+        .map_err(|_| anyhow::anyhow!("KDICT already set"))?;
+    Ok(())
+}
+
+/// Pure-Rust lookup of one kanji character.
+pub fn lookup_one(ch: char) -> Option<KanjiEntry> {
+    get_entry(ch as u32)
+}
+
+/// Pure-Rust: extract kanji chars from `word`, return entries for each.
+pub fn lookup_many(word: &str) -> Vec<KanjiEntry> {
+    word.chars()
+        .filter(|&c| is_kanji(c))
+        .filter_map(|c| get_entry(c as u32))
+        .collect()
+}
+
 fn get_entry(codepoint: u32) -> Option<KanjiEntry> {
     let dict = KDICT.get()?;
     let pos = dict

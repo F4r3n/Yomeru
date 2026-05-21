@@ -1,18 +1,14 @@
-mod dictionary;
-#[cfg(any(test, feature = "test-utils"))]
+pub mod dictionary;
 pub mod lookup;
-#[cfg(not(any(test, feature = "test-utils")))]
-mod lookup;
 #[cfg(test)]
 mod tests;
 
-#[cfg(any(test, feature = "test-utils"))]
 pub use dictionary::init_for_testing;
 
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(start)]
-pub fn init() {
+pub fn init_jmdict_wasm() {
     console_error_panic_hook::set_once();
     wasm_logger::init(wasm_logger::Config::default());
 }

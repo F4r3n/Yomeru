@@ -166,6 +166,8 @@ fn main() -> Result<()> {
                     "kanjidic-wasm",
                     "--exclude",
                     "examples-wasm",
+                    "--exclude",
+                    "yomeru-android",
                 ])
                 .current_dir(&root))?;
         }

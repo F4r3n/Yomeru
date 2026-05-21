@@ -5,6 +5,9 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
+use examples_types::ExampleEntry;
+use jmdict_types::WordEntry;
+use kanjidic_types::KanjiEntry;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
@@ -183,6 +186,131 @@ pub async fn sync_handler(
         .unwrap();
 
     Json(SyncResponse { cards: merged }).into_response()
+}
+
+// ---- Lookup endpoints (no auth, rate-limited by lookup_limiter) ----------
+
+#[derive(Deserialize)]
+pub struct LookupBody {
+    pub words: Vec<String>,
+}
+
+#[derive(Serialize)]
+pub struct LookupResponse {
+    pub results: Vec<Vec<WordEntry>>,
+}
+
+#[derive(Deserialize)]
+pub struct LookupPrefixBody {
+    pub text: String,
+    #[serde(default = "default_prefix_max")]
+    pub max: u8,
+}
+
+fn default_prefix_max() -> u8 {
+    30
+}
+
+#[derive(Serialize)]
+pub struct LookupPrefixResponse {
+    pub results: Vec<WordEntry>,
+}
+
+#[derive(Deserialize)]
+pub struct KanjiBody {
+    pub word: String,
+}
+
+#[derive(Serialize)]
+pub struct KanjiResponse {
+    pub entries: Vec<KanjiEntry>,
+}
+
+#[derive(Deserialize)]
+pub struct ExamplesBody {
+    pub word: String,
+    #[serde(default = "default_examples_max")]
+    pub max: u8,
+}
+
+fn default_examples_max() -> u8 {
+    5
+}
+
+#[derive(Serialize)]
+pub struct ExamplesResponse {
+    pub entries: Vec<ExampleEntry>,
+}
+
+pub async fn lookup_handler(
+    State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    Json(body): Json<LookupBody>,
+) -> impl IntoResponse {
+    if state.lookup_limiter.check_key(&addr.ip()).is_err() {
+        return StatusCode::TOO_MANY_REQUESTS.into_response();
+    }
+    let words = body.words;
+    let results = tokio::task::spawn_blocking(move || {
+        words
+            .iter()
+            .map(|w| jmdict_wasm::lookup::lookup(w).unwrap_or_default())
+            .collect::<Vec<_>>()
+    })
+    .await
+    .unwrap();
+    Json(LookupResponse { results }).into_response()
+}
+
+pub async fn lookup_prefix_handler(
+    State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    Json(body): Json<LookupPrefixBody>,
+) -> impl IntoResponse {
+    if state.lookup_limiter.check_key(&addr.ip()).is_err() {
+        return StatusCode::TOO_MANY_REQUESTS.into_response();
+    }
+    let text = body.text;
+    let max = body.max;
+    let results = tokio::task::spawn_blocking(move || {
+        jmdict_wasm::lookup::lookup_prefix(&text, max).unwrap_or_default()
+    })
+    .await
+    .unwrap();
+    Json(LookupPrefixResponse { results }).into_response()
+}
+
+pub async fn kanji_handler(
+    State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    Json(body): Json<KanjiBody>,
+) -> impl IntoResponse {
+    if state.lookup_limiter.check_key(&addr.ip()).is_err() {
+        return StatusCode::TOO_MANY_REQUESTS.into_response();
+    }
+    let word = body.word;
+    let entries =
+        tokio::task::spawn_blocking(move || kanjidic_wasm::lookup_many(&word))
+            .await
+            .unwrap();
+    Json(KanjiResponse { entries }).into_response()
+}
+
+pub async fn examples_handler(
+    State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    Json(body): Json<ExamplesBody>,
+) -> impl IntoResponse {
+    if state.lookup_limiter.check_key(&addr.ip()).is_err() {
+        return StatusCode::TOO_MANY_REQUESTS.into_response();
+    }
+    let word = body.word;
+    let max = body.max as usize;
+    let entries =
+        tokio::task::spawn_blocking(move || examples_wasm::lookup(&word, max))
+            .await
+            .unwrap();
+    Json(ExamplesResponse { entries }).into_response()
 }
 
 async fn send_otp_email(cfg: &Config, to: &str, code: &str) -> anyhow::Result<()> {

@@ -11,7 +11,7 @@ struct ExamplesDictInner {
 }
 
 #[wasm_bindgen(start)]
-pub fn init() {
+pub fn init_examples_wasm() {
     console_error_panic_hook::set_once();
 }
 
@@ -41,6 +41,23 @@ impl ExamplesDict {
         let entries = lookup_entries(headword, max as usize);
         serde_wasm_bindgen::to_value(&entries).map_err(|e| JsError::new(&e.to_string()))
     }
+}
+
+/// Initialize the examples blob from raw bytes without going through wasm-bindgen.
+pub fn init_from_bytes(bytes: &[u8]) -> anyhow::Result<()> {
+    if EXAMPLES.get().is_some() {
+        return Ok(());
+    }
+    let inner = parse_binary(bytes)?;
+    EXAMPLES
+        .set(inner)
+        .map_err(|_| anyhow::anyhow!("EXAMPLES already set"))?;
+    Ok(())
+}
+
+/// Pure-Rust: up to `max` example sentences for `headword`.
+pub fn lookup(headword: &str, max: usize) -> Vec<ExampleEntry> {
+    lookup_entries(headword, max)
 }
 
 fn lookup_entries(headword: &str, max: usize) -> Vec<ExampleEntry> {

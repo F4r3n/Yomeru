@@ -15,6 +15,28 @@ members = [
     "crates/deinflect",
     "crates/srs-core",
     "crates/srs-wasm",
+    "app/shared",
+    "app/web",
+    "app/android",
+    "xtask",
+]
+default-members = [
+    "server",
+    "crates/japanese-utils",
+    "crates/jmdict-types",
+    "crates/jmdict-build",
+    "crates/jmdict-wasm",
+    "crates/kanjidic-types",
+    "crates/kanjidic-build",
+    "crates/kanjidic-wasm",
+    "crates/examples-types",
+    "crates/examples-build",
+    "crates/examples-wasm",
+    "crates/deinflect",
+    "crates/srs-core",
+    "crates/srs-wasm",
+    "app/shared",
+    "app/web",
     "xtask",
 ]
 

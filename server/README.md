@@ -1,9 +1,11 @@
 # yomeru-server
 
-Small Axum + SQLite service that backs the Yomeru extension's optional cloud sync:
+Small Axum + SQLite service that backs the Yomeru extension and website:
 
 - Email + OTP login (`/api/auth/request`, `/api/auth/verify`)
 - Card sync (`/api/sync`) — merges incoming cards into a SQLite store, returning the merged set
+- Dict lookup (`/api/lookup`, `/api/lookup-prefix`, `/api/kanji`, `/api/examples`) — reads
+  JMdict / KANJIDIC / Tatoeba blobs into memory at startup; no auth required
 
 OTPs are sent over SMTP. Sessions are 30-day bearer tokens. Per-IP rate limiting is applied to every endpoint.
 
@@ -19,6 +21,7 @@ cp .env.example .env
 |--------------------|--------------------|----------------------------------------------------------|
 | `YOMERU_PORT`      | `8080`             | HTTP port the server listens on.                         |
 | `YOMERU_DB_PATH`   | `/data/yomeru.db`  | SQLite file path. `/data` is the mounted volume.         |
+| `YOMERU_DATA_DIR`  | `./data`           | Dir holding `jmdict.bin` / `kanjidic.bin` / `examples.bin`. **Required at startup.** Build with `cargo xtask build-all`. |
 | `YOMERU_SMTP_HOST` | —                  | **Required.** STARTTLS relay host.                       |
 | `YOMERU_SMTP_PORT` | `587`              |                                                          |
 | `YOMERU_SMTP_FROM` | —                  | **Required.** Address OTP emails are sent from.          |

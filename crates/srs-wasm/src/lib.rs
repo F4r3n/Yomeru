@@ -2,7 +2,7 @@ use srs_core::{filter_due, new_card, next_review_ms, review_card, ReviewRating, 
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(start)]
-pub fn init() {
+pub fn init_srs_wasm() {
     console_error_panic_hook::set_once();
     wasm_logger::init(wasm_logger::Config::default());
 }

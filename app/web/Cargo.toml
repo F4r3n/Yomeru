@@ -1,0 +1,8 @@
+[package]
+name = "yomeru-web"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+dioxus = { version = "0.7.9", features = ["web"] }
+yomeru-shared = { path = "../shared" }

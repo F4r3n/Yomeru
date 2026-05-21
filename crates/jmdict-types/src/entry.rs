@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::PartOfSpeech;
 
 /// A single JMdict dictionary entry.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WordEntry {
     /// Sequence number from JMdict (unique entry ID).
     pub sequence: u32,
@@ -43,7 +43,7 @@ impl WordEntry {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct KanjiElement {
     pub text: String,
     #[cfg(feature = "full")]
@@ -64,7 +64,7 @@ impl KanjiElement {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ReadingElement {
     pub text: String,
     #[cfg(feature = "full")]
@@ -95,7 +95,7 @@ impl ReadingElement {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct Sense {
     /// Part-of-speech tags (carry forward from previous sense if empty).
     pub pos: Vec<PartOfSpeech>,
@@ -121,7 +121,7 @@ pub struct Sense {
     pub dialects: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Gloss {
     pub text: String,
     /// Language code (default "eng").

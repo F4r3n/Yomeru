@@ -18,6 +18,9 @@ services:
       - "${YOMERU_PORT:-8080}:8080"
     volumes:
       - yomeru-data:/data
+      # Bind-mount the prebuilt dict bins read-only. Run `cargo xtask build-all`
+      # first to populate ../extension/data.
+      - ../extension/data:/data/dicts:ro
 
 volumes:
   yomeru-data:
