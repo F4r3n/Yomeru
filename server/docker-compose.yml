@@ -1,0 +1,23 @@
+# Run from the `server/` directory:
+#   docker compose up -d --build
+#
+# Configuration lives in `.env` next to this file (see `.env.example`).
+# The build context is the workspace root so cargo can resolve the workspace.
+
+services:
+  yomeru-server:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    image: yomeru-server:latest
+    container_name: yomeru-server
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${YOMERU_PORT:-8080}:8080"
+    volumes:
+      - yomeru-data:/data
+
+volumes:
+  yomeru-data:
