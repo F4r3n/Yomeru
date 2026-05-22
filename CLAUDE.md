@@ -26,8 +26,8 @@ cargo test -p deinflect
 # Run all benchmarks (deinflect + japanese-utils)
 cargo bench -p deinflect -p japanese-utils
 
-# Run jmdict-wasm benchmarks (requires test-utils feature)
-cargo bench -p jmdict-wasm --features test-utils
+# Run jmdict-core benchmarks (requires test-utils feature)
+cargo bench -p jmdict-core --features test-utils
 
 # Build extension TypeScript/Svelte (requires node + npm)
 cargo xtask build-js
@@ -43,9 +43,14 @@ cd extension && npm install && npm run build
 | `jmdict-types` | `WordEntry`, `Sense`, `PartOfSpeech` — shared serde types |
 | `jmdict-build` | Offline CLI: JMdict XML → binary index; lookup table stores **byte offsets**, not element indices |
 | `deinflect` | BFS suffix-replacement, depth ≤ 3; returns `Vec<Deinflected { text, reason }>` |
-| `jmdict-wasm` | `Dictionary::lookup_at` returns `{ entries, match_len }` (match_len = chars in surface form) |
+| `jmdict-core` | Pure-Rust JMdict runtime: `init`, `lookup`, `lookup_longest_match` (returns `(entries, match_len)` where `match_len` = chars in surface form), `lookup_prefix`, `find_in_text` |
+| `jmdict-wasm` | Thin `#[wasm_bindgen]` shim over `jmdict-core` (exposes the `Dictionary` JS class) |
+| `kanjidic-core` / `kanjidic-wasm` | Same core/shim split: core exposes `init_from_bytes`, `lookup_one`, `lookup_many`; wasm adds the JS class |
+| `examples-core` / `examples-wasm` | Same split for example sentences |
 | `srs-core` | Stateless SM-2: `new_card`, `review_card`, `filter_due` |
 | `srs-wasm` | WASM wrapper for srs-core |
+
+Native consumers (server, app, benches) depend on the `-core` crates. The `-wasm` crates exist only to expose those cores to JavaScript. Cargo crate names match the `extension/_generated/<crate>/<crate>_module.js` paths in the manifest — renaming a `-wasm` crate would also break extension JS imports.
 
 ## Binary dictionary format (`jmdict.bin`)
 

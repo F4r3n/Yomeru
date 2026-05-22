@@ -7,11 +7,8 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+kanjidic-core            = { path = "../kanjidic-core" }
 kanjidic-types           = { path = "../kanjidic-types" }
-japanese-utils           = { path = "../japanese-utils" }
 wasm-bindgen             = "0.2"
 serde-wasm-bindgen       = "0.6"
-postcard                 = { version = "1", features = ["alloc"] }
-once_cell                = "1"
 console_error_panic_hook = "0.1"
-anyhow                   = "1"

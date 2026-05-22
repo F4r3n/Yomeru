@@ -254,7 +254,7 @@ pub async fn lookup_handler(
     let results = tokio::task::spawn_blocking(move || {
         words
             .iter()
-            .map(|w| jmdict_wasm::lookup::lookup(w).unwrap_or_default())
+            .map(|w| jmdict_core::lookup(w))
             .collect::<Vec<_>>()
     })
     .await
@@ -273,7 +273,7 @@ pub async fn lookup_prefix_handler(
     let text = body.text;
     let max = body.max;
     let results = tokio::task::spawn_blocking(move || {
-        jmdict_wasm::lookup::lookup_prefix(&text, max).unwrap_or_default()
+        jmdict_core::lookup_prefix(&text, max)
     })
     .await
     .unwrap();
@@ -290,7 +290,7 @@ pub async fn kanji_handler(
     }
     let word = body.word;
     let entries =
-        tokio::task::spawn_blocking(move || kanjidic_wasm::lookup_many(&word))
+        tokio::task::spawn_blocking(move || kanjidic_core::lookup_many(&word))
             .await
             .unwrap();
     Json(KanjiResponse { entries }).into_response()
@@ -307,7 +307,7 @@ pub async fn examples_handler(
     let word = body.word;
     let max = body.max as usize;
     let entries =
-        tokio::task::spawn_blocking(move || examples_wasm::lookup(&word, max))
+        tokio::task::spawn_blocking(move || examples_core::lookup(&word, max))
             .await
             .unwrap();
     Json(ExamplesResponse { entries }).into_response()
@@ -331,8 +331,13 @@ async fn send_otp_email(cfg: &Config, to: &str, code: &str) -> anyhow::Result<()
             "Your Yomeru verification code: {code}\n\nValid for 10 minutes."
         ))?;
 
-    let mut builder = AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&cfg.smtp_host)?
-        .port(cfg.smtp_port);
+    // Port 465 = SMTPS (implicit TLS); 587 (and others) use STARTTLS.
+    let mut builder = if cfg.smtp_port == 465 {
+        AsyncSmtpTransport::<Tokio1Executor>::relay(&cfg.smtp_host)?
+    } else {
+        AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&cfg.smtp_host)?
+    }
+    .port(cfg.smtp_port);
 
     if let (Some(user), Some(pass)) = (&cfg.smtp_user, &cfg.smtp_pass) {
         builder = builder.credentials(Credentials::new(user.clone(), pass.clone()));
@@ -340,4 +345,70 @@ async fn send_otp_email(cfg: &Config, to: &str, code: &str) -> anyhow::Result<()
 
     builder.build().send(email).await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::path::PathBuf;
+
+    /// Parse a simple KEY=VALUE .env file (ignores blanks and `#` comments).
+    fn load_dotenv(path: &PathBuf) -> std::collections::HashMap<String, String> {
+        let mut map = std::collections::HashMap::new();
+        let Ok(text) = fs::read_to_string(path) else {
+            return map;
+        };
+        for line in text.lines() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+            if let Some((k, v)) = line.split_once('=') {
+                map.insert(k.trim().to_string(), v.trim().to_string());
+            }
+        }
+        map
+    }
+
+    /// Live SMTP test against the credentials in `server/.env`.
+    ///
+    /// Run with:
+    ///   cargo test -p server -- --ignored smtp_send_real_email --nocapture
+    ///
+    /// Recipient is read from `SMTP_TEST_TO` in `server/.env` (process env wins).
+    #[tokio::test]
+    #[ignore]
+    async fn smtp_send_real_email() {
+        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let env = load_dotenv(&manifest_dir.join(".env"));
+
+        let get = |k: &str| -> Option<String> {
+            std::env::var(k).ok().or_else(|| env.get(k).cloned()).filter(|s| !s.is_empty())
+        };
+
+        let cfg = Config {
+            port: 0,
+            db_path: String::new(),
+            data_dir: String::new(),
+            smtp_host: get("YOMERU_SMTP_HOST").expect("YOMERU_SMTP_HOST missing"),
+            smtp_port: get("YOMERU_SMTP_PORT")
+                .and_then(|s| s.parse().ok())
+                .expect("YOMERU_SMTP_PORT missing or invalid"),
+            smtp_from: get("YOMERU_SMTP_FROM").expect("YOMERU_SMTP_FROM missing"),
+            smtp_user: get("YOMERU_SMTP_USER"),
+            smtp_pass: get("YOMERU_SMTP_PASS"),
+        };
+
+        let to = get("SMTP_TEST_TO").expect("SMTP_TEST_TO missing in server/.env");
+
+        println!(
+            "sending test OTP to {to} via {}:{} as {}",
+            cfg.smtp_host, cfg.smtp_port, cfg.smtp_from
+        );
+
+        send_otp_email(&cfg, &to, "123456")
+            .await
+            .expect("send_otp_email failed");
+    }
 }

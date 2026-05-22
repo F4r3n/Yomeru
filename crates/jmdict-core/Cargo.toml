@@ -1,0 +1,28 @@
+[package]
+name = "jmdict-core"
+version = "0.7.0"
+edition = "2024"
+
+[features]
+# Re-export builders/parsers used by tests + benches. Kept off by default so
+# downstream native consumers don't pull in dev-only bits.
+test-utils = []
+
+[dependencies]
+jmdict-types   = { path = "../jmdict-types" }
+japanese-utils = { path = "../japanese-utils" }
+deinflect      = { path = "../deinflect" }
+postcard       = { version = "1", features = ["alloc"] }
+fst            = "0.4"
+once_cell      = "1"
+anyhow         = "1"
+
+[dev-dependencies]
+criterion    = { version = "0.5", features = ["html_reports"] }
+# Tests construct WordEntry literals that include the optional fields.
+jmdict-types = { path = "../jmdict-types", features = ["full"] }
+
+[[bench]]
+name = "lookup_bench"
+harness = false
+required-features = ["test-utils"]

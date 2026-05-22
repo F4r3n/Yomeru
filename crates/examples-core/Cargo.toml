@@ -1,0 +1,10 @@
+[package]
+name = "examples-core"
+version = "0.7.0"
+edition = "2024"
+
+[dependencies]
+examples-types = { path = "../examples-types" }
+postcard       = { version = "1", features = ["alloc"] }
+once_cell      = "1"
+anyhow         = "1"

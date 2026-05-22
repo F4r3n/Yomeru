@@ -17,15 +17,15 @@ pub fn init_all(data_dir: &str) -> Result<()> {
 
 fn init_jmdict(path: &Path) -> Result<()> {
     let bytes = std::fs::read(path).with_context(|| format!("read {}", path.display()))?;
-    jmdict_wasm::init_for_testing(&bytes).context("init jmdict")
+    jmdict_core::init(&bytes).context("init jmdict")
 }
 
 fn init_kanjidic(path: &Path) -> Result<()> {
     let bytes = std::fs::read(path).with_context(|| format!("read {}", path.display()))?;
-    kanjidic_wasm::init_from_bytes(&bytes).context("init kanjidic")
+    kanjidic_core::init_from_bytes(&bytes).context("init kanjidic")
 }
 
 fn init_examples(path: &Path) -> Result<()> {
     let bytes = std::fs::read(path).with_context(|| format!("read {}", path.display()))?;
-    examples_wasm::init_from_bytes(&bytes).context("init examples")
+    examples_core::init_from_bytes(&bytes).context("init examples")
 }

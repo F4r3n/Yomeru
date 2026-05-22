@@ -1,7 +1,7 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use fst::MapBuilder;
+use jmdict_core::lookup::{lookup, lookup_longest_match, lookup_prefix};
 use jmdict_types::{Gloss, KanjiElement, PartOfSpeech, ReadingElement, Sense, WordEntry};
-use jmdict_wasm::lookup::{lookup, lookup_longest_match, lookup_prefix};
 use postcard::to_allocvec;
 use std::collections::BTreeMap;
 use std::sync::Once;
@@ -11,7 +11,7 @@ static DICT_INIT: Once = Once::new();
 fn setup() {
     DICT_INIT.call_once(|| {
         let bytes = build_test_binary();
-        jmdict_wasm::init_for_testing(&bytes).expect("dict init failed");
+        jmdict_core::init_for_testing(&bytes).expect("dict init failed");
     });
 }
 

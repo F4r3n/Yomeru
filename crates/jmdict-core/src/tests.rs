@@ -152,7 +152,7 @@ fn build_test_binary() -> Vec<u8> {
 #[test]
 fn exact_lookup_by_kanji() {
     ensure_test_dict();
-    let entries = lookup("飲む").unwrap();
+    let entries = lookup("飲む");
     assert_eq!(entries.len(), 1);
     assert_eq!(entries[0].headword(), "飲む");
 }
@@ -160,7 +160,7 @@ fn exact_lookup_by_kanji() {
 #[test]
 fn exact_lookup_by_reading() {
     ensure_test_dict();
-    let entries = lookup("のむ").unwrap();
+    let entries = lookup("のむ");
     assert_eq!(entries.len(), 1);
     assert_eq!(entries[0].primary_reading(), "のむ");
 }
@@ -168,7 +168,7 @@ fn exact_lookup_by_reading() {
 #[test]
 fn exact_lookup_miss() {
     ensure_test_dict();
-    let entries = lookup("走る").unwrap();
+    let entries = lookup("走る");
     assert!(entries.is_empty());
 }
 
@@ -284,7 +284,7 @@ fn match_len_deinflected() {
 #[test]
 fn prefix_search_finds_entry() {
     ensure_test_dict();
-    let entries = lookup_prefix("飲", 10).unwrap();
+    let entries = lookup_prefix("飲", 10);
     assert!(entries.iter().any(|e| e.headword() == "飲む"));
 }
 
@@ -292,14 +292,14 @@ fn prefix_search_finds_entry() {
 fn prefix_search_exact_match_included() {
     ensure_test_dict();
     // Exact key "食べる" also shows up in a prefix search for itself
-    let entries = lookup_prefix("食べる", 10).unwrap();
+    let entries = lookup_prefix("食べる", 10);
     assert!(entries.iter().any(|e| e.headword() == "食べる"));
 }
 
 #[test]
 fn prefix_search_empty_on_no_match() {
     ensure_test_dict();
-    let entries = lookup_prefix("走", 10).unwrap();
+    let entries = lookup_prefix("走", 10);
     assert!(entries.is_empty());
 }
 
@@ -307,6 +307,6 @@ fn prefix_search_empty_on_no_match() {
 fn prefix_search_respects_max_results() {
     ensure_test_dict();
     // Asking for max 1 result should never return more
-    let entries = lookup_prefix("", 1).unwrap();
+    let entries = lookup_prefix("", 1);
     assert!(entries.len() <= 1);
 }
