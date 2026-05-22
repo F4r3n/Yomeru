@@ -3,7 +3,6 @@ extension/_generated/
 extension/dist
 extension/dev-profile/
 node_modules/
-Cargo.lock
 *.wasm
 pkg/
 JMdict_e
