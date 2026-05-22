@@ -1,0 +1,8 @@
+[application]
+name = "yomeru-web"
+
+# Local dev: proxy /api/* to a locally-running yomeru-server so the
+# Dioxus dev server can serve the SPA while the backend handles
+# lookup/sync. In prod, nginx fills this role (see DEPLOY.md).
+[[web.proxy]]
+backend = "http://127.0.0.1:4500/api/"

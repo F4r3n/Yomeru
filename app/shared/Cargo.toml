@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dioxus = { version = "0.7.9", features = ["router"] }
+dioxus = { version = "0.7.9", features = ["router", "web"] }
 manganis = "0.7.9"
 
 # Yomeru types — shared serde shapes for server JSON. Dict lookup itself
@@ -25,6 +25,7 @@ web-sys = { version = "0.3", features = [
     "Element",
     "HtmlElement",
     "HtmlAnchorElement",
+    "Location",
     "Url",
     "Blob",
     "BlobPropertyBag",

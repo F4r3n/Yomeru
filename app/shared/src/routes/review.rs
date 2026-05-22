@@ -203,135 +203,166 @@ pub fn ReviewTab() -> Element {
         return rsx! { div { class: "loading", "Loading dictionary…" } };
     }
 
-    let stats = if *staging_count.read() > 0 {
-        format!(
-            "{due_count} card{} due · {} new",
-            if due_count == 1 { "" } else { "s" },
-            *staging_count.read()
-        )
+    let new_count = *staging_count.read();
+    let due_ready_label = if due_count == 1 {
+        format!("{due_count} card ready")
     } else {
-        format!(
-            "{due_count} card{} due",
-            if due_count == 1 { "" } else { "s" }
-        )
+        format!("{due_count} cards ready")
+    };
+    let new_label = if new_count == 1 {
+        format!("{new_count} new word to learn")
+    } else {
+        format!("{new_count} new words to learn")
     };
 
     rsx! {
-        div { class: "muted", style: "font-size: 13px; margin-bottom: 12px;", "{stats}" }
-
-        if let Some(msg) = graduated_msg.read().clone() {
-            div { class: "card", style: "background: var(--green); color: var(--bg);", "{msg}" }
-        }
-        if !skipped.read().is_empty() {
-            div { class: "card", style: "background: var(--yellow); color: var(--bg);",
-                "Skipped {skipped.read().len()} card(s) — no longer in the dictionary: "
-                strong { "{skipped.read().join(\"、\")}" }
+        div {
+            div { class: "page-header",
+                div {
+                    h2 { "Review" }
+                    div { class: "subtitle", "Spaced-repetition review session." }
+                }
             }
-        }
 
-        if !*started.read() {
-            div { class: "empty",
+            div { class: "stat-grid",
+                div { class: "stat-card accent",
+                    div { class: "stat-value", "{due_count}" }
+                    div { class: "stat-label", "Due now" }
+                }
+                div { class: "stat-card warn",
+                    div { class: "stat-value", "{new_count}" }
+                    div { class: "stat-label", "Staged" }
+                }
+                div { class: "stat-card",
+                    div { class: "stat-value", "{i.min(due_count)}" }
+                    div { class: "stat-label", "Reviewed this session" }
+                }
+            }
+
+            if let Some(msg) = graduated_msg.read().clone() {
+                div { class: "card", style: "background: var(--green); color: var(--on-accent); border-color: var(--green);", "{msg}" }
+            }
+            if !skipped.read().is_empty() {
+                div { class: "card", style: "background: var(--yellow); color: var(--on-accent); border-color: var(--yellow);",
+                    "Skipped {skipped.read().len()} card(s) — no longer in the dictionary: "
+                    strong { "{skipped.read().join(\"、\")}" }
+                }
+            }
+
+            if !*started.read() {
                 if due_count > 0 {
-                    p { "{due_count} card(s) ready for review." }
-                    button { class: "primary", onclick: start_review, "Start Review" }
-                } else if *staging_count.read() > 0 {
-                    p { "{*staging_count.read()} new word(s) ready to learn." }
-                    button { class: "primary", onclick: promote_and_review, "Add new words" }
+                    div { class: "empty-state",
+                        div { class: "glyph", "▶" }
+                        div { class: "headline", "{due_ready_label}" }
+                        div { class: "helper", "Start your review session." }
+                        button { class: "primary", onclick: start_review, "Start Review" }
+                    }
+                } else if new_count > 0 {
+                    div { class: "empty-state",
+                        div { class: "glyph", "✦" }
+                        div { class: "headline", "{new_label}" }
+                        div { class: "helper", "Promote them into the SRS queue." }
+                        button { class: "primary", onclick: promote_and_review, "Add new words" }
+                    }
                 } else {
-                    p { "No cards due right now." }
-                    if let Some(m) = next_due.read().clone() {
-                        p { style: "color: var(--accent); margin-top: 8px;", "{m}" }
+                    div { class: "empty-state",
+                        div { class: "glyph", "✓" }
+                        div { class: "headline", "All caught up" }
+                        div { class: "helper",
+                            if let Some(m) = next_due.read().clone() { "{m}" } else { "No cards due right now." }
+                        }
                     }
                 }
-            }
-        } else if current.is_none() {
-            div { class: "empty",
-                p { "Review complete!" }
-                if let Some(m) = next_due.read().clone() {
-                    p { style: "color: var(--accent); margin-top: 8px;", "{m}" }
+            } else if current.is_none() {
+                div { class: "empty-state",
+                    div { class: "glyph", "✓" }
+                    div { class: "headline", "Review complete!" }
+                    div { class: "helper",
+                        if let Some(m) = next_due.read().clone() { "{m}" } else { "Great work." }
+                    }
+                    button { class: "primary", onclick: move |_| load_session(), "Done" }
                 }
-                button { class: "primary", onclick: move |_| load_session(), "Done" }
-            }
-        } else {
-            {
-                let c = current.unwrap();
-                let entry = current_entry;
-                let direction_label = match c.direction {
-                    CardDirection::Recognition => "Recognition",
-                    CardDirection::Recall => "Recall",
-                };
-                let reading = entry.as_ref().map(|e| primary_reading(e).to_string()).unwrap_or_default();
-                let recall_glosses: Vec<String> = entry
-                    .as_ref()
-                    .map(|e| {
-                        e.senses
-                            .iter()
-                            .take(3)
-                            .map(|s| {
-                                s.glosses
-                                    .iter()
-                                    .map(|g| g.text.clone())
-                                    .collect::<Vec<_>>()
-                                    .join("; ")
-                            })
-                            .filter(|g| !g.is_empty())
-                            .collect()
-                    })
-                    .unwrap_or_default();
-                let show_back_v = *show_back.read();
-                let is_recall = matches!(c.direction, CardDirection::Recall);
+            } else {
+                {
+                    let c = current.unwrap();
+                    let entry = current_entry;
+                    let direction_label = match c.direction {
+                        CardDirection::Recognition => "Recognition",
+                        CardDirection::Recall => "Recall",
+                    };
+                    let reading = entry.as_ref().map(|e| primary_reading(e).to_string()).unwrap_or_default();
+                    let recall_glosses: Vec<String> = entry
+                        .as_ref()
+                        .map(|e| {
+                            e.senses
+                                .iter()
+                                .take(3)
+                                .map(|s| {
+                                    s.glosses
+                                        .iter()
+                                        .map(|g| g.text.clone())
+                                        .collect::<Vec<_>>()
+                                        .join("; ")
+                                })
+                                .filter(|g| !g.is_empty())
+                                .collect()
+                        })
+                        .unwrap_or_default();
+                    let show_back_v = *show_back.read();
+                    let is_recall = matches!(c.direction, CardDirection::Recall);
 
-                rsx! {
-                    div { class: "card",
-                        div { class: "row", style: "justify-content: space-between;",
-                            span { class: "muted", "{i + 1} / {due_count}" }
-                            span { class: "badge", "{direction_label}" }
-                        }
+                    rsx! {
+                        div { class: "review-card",
+                            div { class: "row", style: "justify-content: space-between;",
+                                span { class: "muted", "Card {i + 1} of {due_count}" }
+                                span { class: "badge", "{direction_label}" }
+                            }
 
-                        div { style: "padding: 24px 8px; text-align: center;",
-                            if !show_back_v && is_recall {
-                                if recall_glosses.is_empty() {
-                                    div { class: "muted", "No definition available." }
-                                } else {
-                                    for (gi, g) in recall_glosses.iter().enumerate() {
-                                        div { style: "margin: 4px 0;",
-                                            span { class: "muted", "{gi + 1}. " }
-                                            "{g}"
+                            div { class: "face",
+                                if !show_back_v && is_recall {
+                                    div { class: "recall-glosses",
+                                        if recall_glosses.is_empty() {
+                                            div { class: "muted", "No definition available." }
+                                        } else {
+                                            for (gi, g) in recall_glosses.iter().enumerate() {
+                                                div { style: "margin: 4px 0;",
+                                                    span { class: "num", "{gi + 1}." }
+                                                    "{g}"
+                                                }
+                                            }
                                         }
                                     }
-                                }
-                            } else {
-                                div { style: "font-size: 28px;",
-                                    "{c.word}"
+                                } else {
+                                    div { class: "word", "{c.word}" }
                                     if !reading.is_empty() && reading != c.word {
-                                        span { class: "muted", style: "font-size: 14px; margin-left: 12px;", "{reading}" }
+                                        div { class: "reading", "{reading}" }
                                     }
                                 }
                             }
-                        }
 
-                        if show_back_v {
-                            BackContent {
-                                entry: entry.clone(),
-                                kanji: kanji.read().clone(),
-                                examples: examples.read().clone(),
-                                word: c.word.clone(),
-                                tab: *back_tab.read(),
-                                on_tab: EventHandler::new(move |t| back_tab.set(t)),
-                            }
-                        }
-
-                        div { style: "margin-top: 16px;",
-                            if !show_back_v {
-                                button { class: "primary", style: "width: 100%;",
-                                    onclick: reveal_answer, "Show answer"
+                            if show_back_v {
+                                BackContent {
+                                    entry: entry.clone(),
+                                    kanji: kanji.read().clone(),
+                                    examples: examples.read().clone(),
+                                    word: c.word.clone(),
+                                    tab: *back_tab.read(),
+                                    on_tab: EventHandler::new(move |t| back_tab.set(t)),
                                 }
-                            } else {
-                                div { class: "row", style: "gap: 8px;",
-                                    button { class: "danger",  style: "flex: 1;", onclick: move |_| (rate.clone())(1), "Again" }
-                                    button {                  style: "flex: 1;", onclick: move |_| (rate.clone())(2), "Hard" }
-                                    button { class: "success", style: "flex: 1;", onclick: move |_| (rate.clone())(3), "Good" }
-                                    button { class: "primary", style: "flex: 1;", onclick: move |_| (rate.clone())(4), "Easy" }
+                            }
+
+                            div { style: "margin-top: 16px;",
+                                if !show_back_v {
+                                    button { class: "primary", style: "width: 100%;",
+                                        onclick: reveal_answer, "Show answer"
+                                    }
+                                } else {
+                                    div { class: "rate-grid",
+                                        button { class: "danger",  onclick: move |_| (rate.clone())(1), "Again" }
+                                        button { class: "warning", onclick: move |_| (rate.clone())(2), "Hard" }
+                                        button { class: "success", onclick: move |_| (rate.clone())(3), "Good" }
+                                        button { class: "primary", onclick: move |_| (rate.clone())(4), "Easy" }
+                                    }
                                 }
                             }
                         }
@@ -353,7 +384,7 @@ fn BackContent(
 ) -> Element {
     let kanji_visible = !kanji.is_empty();
     rsx! {
-        div { class: "row", style: "border-bottom: 1px solid var(--border); margin: 8px 0;",
+        div { class: "subtabs",
             TabButton { active: tab == BackTab::Word,     onclick: move |_| on_tab.call(BackTab::Word),     label: "Word" }
             if kanji_visible {
                 TabButton { active: tab == BackTab::Kanji,    onclick: move |_| on_tab.call(BackTab::Kanji),    label: "Kanji" }
@@ -371,7 +402,7 @@ fn BackContent(
                                     rsx! { div {} }
                                 } else {
                                     rsx! {
-                                        div { style: "margin: 6px 0;",
+                                        div { style: "margin: 8px 0;",
                                             if !sense.pos.is_empty() {
                                                 div { class: "pos", "{pos_list(&sense.pos)}" }
                                             }
@@ -390,9 +421,9 @@ fn BackContent(
             BackTab::Kanji => rsx! {
                 div {
                     for k in kanji {
-                        div { class: "row", style: "padding: 6px 0; border-bottom: 1px solid var(--border);",
-                            span { style: "font-size: 28px; min-width: 48px;", "{k.literal}" }
-                            div { class: "col", style: "gap: 2px;",
+                        div { class: "kanji-row",
+                            span { class: "literal", "{k.literal}" }
+                            div { class: "meta",
                                 if !k.on_readings.is_empty() {
                                     span { class: "muted", "On: {k.on_readings.join(\"、\")}" }
                                 }
@@ -411,9 +442,9 @@ fn BackContent(
                         div { class: "empty", "No examples found." }
                     } else {
                         for ex in examples {
-                            div { style: "padding: 6px 0; border-bottom: 1px solid var(--border);",
-                                div { ExampleJp { sentence: ex.japanese.clone(), word: word.clone() } }
-                                div { class: "muted", "{ex.english}" }
+                            div { class: "example-row",
+                                div { class: "jp", ExampleJp { sentence: ex.japanese.clone(), word: word.clone() } }
+                                div { class: "en", "{ex.english}" }
                             }
                         }
                     }
@@ -430,7 +461,7 @@ fn ExampleJp(sentence: String, word: String) -> Element {
         let after = &sentence[idx + word.len()..];
         rsx! {
             "{before}"
-            mark { style: "background: var(--yellow); color: var(--bg); padding: 0 2px;", "{word}" }
+            mark { "{word}" }
             "{after}"
         }
     } else {
@@ -440,7 +471,7 @@ fn ExampleJp(sentence: String, word: String) -> Element {
 
 #[component]
 fn TabButton(active: bool, onclick: EventHandler<MouseEvent>, label: &'static str) -> Element {
-    let class = if active { "tab active" } else { "tab" };
+    let class = if active { "active" } else { "" };
     rsx! {
         button { class: "{class}", onclick: move |e| onclick.call(e), "{label}" }
     }

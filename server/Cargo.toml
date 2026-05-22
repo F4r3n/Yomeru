@@ -18,6 +18,7 @@ lettre = { version = "0.11", default-features = false, features = ["tokio1-rustl
 rand = "0.8"
 governor = { version = "0.6", features = ["dashmap"] }
 anyhow = "1"
+dotenvy = "0.15"
 
 # Dict crates — used for in-process JMdict/KANJIDIC/examples lookup.
 jmdict-types   = { path = "../crates/jmdict-types" }

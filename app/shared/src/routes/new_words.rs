@@ -50,37 +50,54 @@ pub fn NewWordsTab() -> Element {
         });
     };
 
+    let count = cards.read().len();
+
     rsx! {
-        div { class: "col",
+        div {
+            div { class: "page-header",
+                div {
+                    h2 { "New Words" }
+                    div { class: "subtitle", "Review staged words before they enter the SRS queue." }
+                }
+                if count > 0 {
+                    div { class: "actions",
+                        span { class: "pill", "{count} staged" }
+                        button { class: "primary", onclick: promote_all, "Promote all" }
+                    }
+                }
+            }
+
             if *loading.read() {
                 div { class: "loading", "Loading…" }
             } else if let Some(e) = err.read().clone() {
                 div { class: "card error", "Failed: {e}" }
             } else if cards.read().is_empty() {
-                div { class: "empty", "No staged words. Add some from the Lookup tab." }
-            } else {
-                div { class: "row", style: "justify-content: space-between;",
-                    span { class: "muted", "{cards.read().len()} staged" }
-                    button { class: "primary", onclick: promote_all, "Promote all" }
+                div { class: "empty-state",
+                    div { class: "glyph", "✦" }
+                    div { class: "headline", "No staged words" }
+                    div { class: "helper", "Add words from the Lookup tab to queue them here." }
                 }
-                for card in cards.read().iter().cloned() {
-                    {
-                        let word = card.word.clone();
-                        let word_a = word.clone();
-                        let word_b = word.clone();
-                        rsx! {
-                            div { class: "card row", style: "justify-content: space-between;",
-                                div { class: "headword", "{word}" }
-                                div { class: "row",
-                                    button {
-                                        class: "success",
-                                        onclick: move |_| (promote_one.clone())(word_a.clone()),
-                                        "Accept"
-                                    }
-                                    button {
-                                        class: "danger",
-                                        onclick: move |_| (reject_one.clone())(word_b.clone()),
-                                        "Reject"
+            } else {
+                div { class: "col",
+                    for card in cards.read().iter().cloned() {
+                        {
+                            let word = card.word.clone();
+                            let word_a = word.clone();
+                            let word_b = word.clone();
+                            rsx! {
+                                div { class: "card row", style: "justify-content: space-between; align-items: center;",
+                                    div { class: "headword", "{word}" }
+                                    div { class: "row",
+                                        button {
+                                            class: "success",
+                                            onclick: move |_| (promote_one.clone())(word_a.clone()),
+                                            "Accept"
+                                        }
+                                        button {
+                                            class: "danger",
+                                            onclick: move |_| (reject_one.clone())(word_b.clone()),
+                                            "Reject"
+                                        }
                                     }
                                 }
                             }

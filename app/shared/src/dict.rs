@@ -1,4 +1,4 @@
-//! Dict lookup over HTTP. All lookups go to the same-origin yomeru-server
+//! Dict lookup over HTTP. All lookups go to the yomeru-server
 //! (`/api/lookup`, `/api/lookup-prefix`, `/api/kanji`, `/api/examples`).
 //!
 //! No in-process dict state — the server holds the FST + entry blob.
@@ -9,7 +9,19 @@ use jmdict_types::WordEntry;
 use kanjidic_types::KanjiEntry;
 use serde::{Deserialize, Serialize};
 
+use crate::settings::default_server_url;
 use crate::types::CardDirection;
+
+/// Absolute API URL. Debug builds resolve to `http://127.0.0.1:4500/api/...`
+/// (direct cross-origin, no dx proxy needed); release builds resolve to the
+/// page origin so nginx routes /api/* via same-origin.
+fn api_url(path: &str) -> String {
+    let base = default_server_url();
+    if base.is_empty() {
+        return path.to_string();
+    }
+    format!("{}{}", base.trim_end_matches('/'), path)
+}
 
 #[derive(Serialize)]
 struct LookupBody<'a> {
@@ -62,7 +74,7 @@ pub async fn lookup(word: &str) -> Result<Vec<WordEntry>, String> {
 /// Batched exact lookup. One round-trip per call regardless of words.len().
 pub async fn lookup_many(words: &[String]) -> Result<Vec<Vec<WordEntry>>, String> {
     let body = LookupBody { words };
-    let res = Request::post("/api/lookup")
+    let res = Request::post(&api_url("/api/lookup"))
         .json(&body)
         .map_err(|e| e.to_string())?
         .send()
@@ -77,7 +89,7 @@ pub async fn lookup_many(words: &[String]) -> Result<Vec<Vec<WordEntry>>, String
 
 pub async fn lookup_prefix(text: &str, max: u8) -> Result<Vec<WordEntry>, String> {
     let body = LookupPrefixBody { text, max };
-    let res = Request::post("/api/lookup-prefix")
+    let res = Request::post(&api_url("/api/lookup-prefix"))
         .json(&body)
         .map_err(|e| e.to_string())?
         .send()
@@ -92,7 +104,7 @@ pub async fn lookup_prefix(text: &str, max: u8) -> Result<Vec<WordEntry>, String
 
 pub async fn kanji_for(word: &str) -> Result<Vec<KanjiEntry>, String> {
     let body = WordBody { word };
-    let res = Request::post("/api/kanji")
+    let res = Request::post(&api_url("/api/kanji"))
         .json(&body)
         .map_err(|e| e.to_string())?
         .send()
@@ -107,7 +119,7 @@ pub async fn kanji_for(word: &str) -> Result<Vec<KanjiEntry>, String> {
 
 pub async fn examples_for(word: &str, max: u8) -> Result<Vec<ExampleEntry>, String> {
     let body = WordMaxBody { word, max };
-    let res = Request::post("/api/examples")
+    let res = Request::post(&api_url("/api/examples"))
         .json(&body)
         .map_err(|e| e.to_string())?
         .send()

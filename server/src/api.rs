@@ -78,6 +78,20 @@ pub async fn auth_request_handler(
         return StatusCode::BAD_REQUEST.into_response();
     }
 
+    // Dev mode: skip OTP+SMTP entirely. Issue a session token now and
+    // hand it to the client so the UI can authenticate in one step.
+    if state.cfg.dev_mode {
+        println!("[yomeru-server] [dev] auto-issuing token for {email}");
+        let token = gen_token();
+        let expires_at = now_ms() + 30 * 24 * 3_600_000_i64;
+        let db = state.db.clone();
+        let token_clone = token.clone();
+        tokio::task::spawn_blocking(move || db::create_session(&db, &token_clone, &email, expires_at))
+            .await
+            .unwrap();
+        return Json(VerifyResponse { token }).into_response();
+    }
+
     let code = gen_code();
     let now = now_ms();
 
@@ -149,29 +163,32 @@ pub async fn sync_handler(
         return StatusCode::TOO_MANY_REQUESTS.into_response();
     }
 
-    let token = match extract_bearer(&headers) {
-        Some(t) => t.to_string(),
-        None => {
+    // Dev mode: accept sync without auth so local dev needs no OTP.
+    if !state.cfg.dev_mode {
+        let token = match extract_bearer(&headers) {
+            Some(t) => t.to_string(),
+            None => {
+                return (
+                    StatusCode::UNAUTHORIZED,
+                    Json(serde_json::json!({ "error": "missing token" })),
+                )
+                    .into_response()
+            }
+        };
+
+        let now = now_ms();
+        let db = state.db.clone();
+        let valid = tokio::task::spawn_blocking(move || db::validate_session(&db, &token, now))
+            .await
+            .unwrap();
+
+        if valid.is_none() {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(serde_json::json!({ "error": "missing token" })),
+                Json(serde_json::json!({ "error": "invalid or expired session" })),
             )
-                .into_response()
+                .into_response();
         }
-    };
-
-    let now = now_ms();
-    let db = state.db.clone();
-    let valid = tokio::task::spawn_blocking(move || db::validate_session(&db, &token, now))
-        .await
-        .unwrap();
-
-    if valid.is_none() {
-        return (
-            StatusCode::UNAUTHORIZED,
-            Json(serde_json::json!({ "error": "invalid or expired session" })),
-        )
-            .into_response();
     }
 
     let db = state.db.clone();

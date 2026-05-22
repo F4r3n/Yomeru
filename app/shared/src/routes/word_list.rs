@@ -38,55 +38,92 @@ pub fn WordListTab() -> Element {
 
     let now = now_ms();
     let rows = cards.read().clone();
+    let total = rows.len();
+    let filter_s = filter.read().to_lowercase();
+    let filtered: Vec<_> = rows
+        .into_iter()
+        .filter(|c| filter_s.is_empty() || c.word.to_lowercase().contains(&filter_s))
+        .collect();
+    let due_count = filtered.iter().filter(|c| c.due_ms <= now).count();
+    let visible = filtered.len();
 
     rsx! {
-        div { class: "col",
-            input {
-                r#type: "search",
-                placeholder: "Filter words…",
-                value: "{filter}",
-                oninput: move |e| filter.set(e.value()),
+        div {
+            div { class: "page-header",
+                div {
+                    h2 { "Word List" }
+                    div { class: "subtitle", "Active SRS cards across both review directions." }
+                }
+                div { class: "actions",
+                    span { class: "pill", "{total} active" }
+                }
             }
+
+            div { class: "toolbar",
+                input {
+                    r#type: "search",
+                    placeholder: "Filter by word…",
+                    value: "{filter}",
+                    oninput: move |e| filter.set(e.value()),
+                }
+                span { class: "count",
+                    if filter_s.is_empty() {
+                        "{due_count} due now"
+                    } else {
+                        "{visible} match · {due_count} due"
+                    }
+                }
+            }
+
             if *loading.read() {
                 div { class: "loading", "Loading…" }
-            } else if rows.is_empty() {
-                div { class: "empty", "No active cards yet." }
+            } else if total == 0 {
+                div { class: "empty-state",
+                    div { class: "glyph", "≡" }
+                    div { class: "headline", "No active cards yet" }
+                    div { class: "helper", "Promote staged words from the New Words tab to start reviewing." }
+                }
+            } else if filtered.is_empty() {
+                div { class: "empty-state",
+                    div { class: "glyph", "⌕" }
+                    div { class: "headline", "No matches" }
+                    div { class: "helper", "Nothing in your list contains 「{filter_s}」." }
+                }
             } else {
-                table {
-                    thead {
-                        tr {
-                            th { "Word" }
-                            th { "Direction" }
-                            th { "State" }
-                            th { "Due" }
-                            th { "" }
+                div { class: "card table-card",
+                    table {
+                        thead {
+                            tr {
+                                th { style: "padding-left: 16px;", "Word" }
+                                th { "Direction" }
+                                th { "State" }
+                                th { "Due" }
+                                th { style: "text-align: right; padding-right: 16px;", "" }
+                            }
                         }
-                    }
-                    tbody {
-                        for c in rows.into_iter().filter(|c| {
-                            let f = filter.read().to_lowercase();
-                            f.is_empty() || c.word.to_lowercase().contains(&f)
-                        }) {
-                            {
-                                let word = c.word.clone();
-                                let due_label = format_due(c.due_ms, now);
-                                let due_class = if c.due_ms <= now { "badge due" } else { "badge" };
-                                let direction = match c.direction {
-                                    CardDirection::Recognition => "Recognition",
-                                    CardDirection::Recall => "Recall",
-                                };
-                                let state = format!("{:?}", c.state).to_lowercase();
-                                rsx! {
-                                    tr {
-                                        td { "{c.word}" }
-                                        td { "{direction}" }
-                                        td { "{state}" }
-                                        td { span { class: "{due_class}", "{due_label}" } }
-                                        td {
-                                            button {
-                                                class: "danger",
-                                                onclick: move |_| (on_delete.clone())(word.clone()),
-                                                "Delete"
+                        tbody {
+                            for c in filtered {
+                                {
+                                    let word = c.word.clone();
+                                    let due_label = format_due(c.due_ms, now);
+                                    let due_class = if c.due_ms <= now { "badge due" } else { "badge" };
+                                    let direction = match c.direction {
+                                        CardDirection::Recognition => "Recognition",
+                                        CardDirection::Recall => "Recall",
+                                    };
+                                    let state = format!("{:?}", c.state).to_lowercase();
+                                    rsx! {
+                                        tr {
+                                            td { style: "padding-left: 16px; font-size: 15px;", "{c.word}" }
+                                            td { span { class: "badge", "{direction}" } }
+                                            td { class: "muted", "{state}" }
+                                            td { span { class: "{due_class}", "{due_label}" } }
+                                            td { style: "text-align: right; padding-right: 16px;",
+                                                button {
+                                                    class: "danger",
+                                                    onclick: move |_| (on_delete.clone())(word.clone()),
+                                                    "Delete"
+                                                }
                                             }
                                         }
                                     }

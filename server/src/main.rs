@@ -22,7 +22,18 @@ pub struct AppState {
 
 #[tokio::main]
 async fn main() {
+    // Best-effort .env load for local dev. Containers set env vars directly
+    // so the file isn't required; ignore "not found".
+    match dotenvy::dotenv() {
+        Ok(path) => println!("[yomeru-server] loaded env from {}", path.display()),
+        Err(e) if e.not_found() => {}
+        Err(e) => eprintln!("[yomeru-server] .env load warning: {e}"),
+    }
+
     let cfg = Arc::new(Config::from_args());
+    if cfg.dev_mode {
+        println!("[yomeru-server] ⚠ DEV MODE — SMTP skipped, /api/sync auth disabled");
+    }
 
     let db = db::init_db(&cfg.db_path);
 

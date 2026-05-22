@@ -38,7 +38,10 @@ fn join(base: &str, path: &str) -> String {
     format!("{trimmed}{path}")
 }
 
-pub async fn request_otp(server_url: &str, email: &str) -> Result<(), String> {
+/// In dev mode the server auto-issues a session and returns the token
+/// directly in the response body — callers should treat `Ok(Some(token))`
+/// as "already authenticated, skip the OTP step".
+pub async fn request_otp(server_url: &str, email: &str) -> Result<Option<String>, String> {
     let body = AuthRequestBody { email };
     let res = Request::post(&join(server_url, "/api/auth/request"))
         .json(&body)
@@ -49,7 +52,12 @@ pub async fn request_otp(server_url: &str, email: &str) -> Result<(), String> {
     if !res.ok() {
         return Err(format!("server {}", res.status()));
     }
-    Ok(())
+    // 204 No Content = normal OTP flow; 200 with {token} = dev-mode auto-auth.
+    if res.status() == 204 {
+        return Ok(None);
+    }
+    let parsed: VerifyResponse = res.json().await.map_err(|e| e.to_string())?;
+    Ok(Some(parsed.token))
 }
 
 pub async fn verify_otp(
