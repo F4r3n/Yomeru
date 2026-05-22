@@ -50,6 +50,10 @@ default-members = [
 opt-level = "s"
 lto = true
 codegen-units = 1
+# Strip DWARF debug info from release artifacts. wasm-opt (binaryen) chokes
+# on the DWARF emitted by recent rustc versions ("compile unit size was
+# incorrect"); stripping debuginfo sidesteps that and shrinks the wasm too.
+strip = "debuginfo"
 
 [profile.release.package.jmdict-build]
 opt-level = 3
