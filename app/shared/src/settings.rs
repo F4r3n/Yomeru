@@ -1,7 +1,19 @@
-use gloo_storage::{LocalStorage, Storage};
-use serde::{Deserialize, Serialize};
+//! SrsSettings struct + free-function shims that route through the
+//! [`crate::platform::SettingsStore`] in Dioxus context.
+//!
+//! The HTTP/localStorage implementation lives in `platform.rs`. Routes call
+//! `load()` / `save()` exactly as before; the bytes underneath are owned by
+//! whichever platform was installed via [`crate::launch_with`].
 
-const KEY: &str = "srs_settings";
+use dioxus::prelude::use_context;
+use gloo_storage::errors::StorageError;
+use serde::{Deserialize, Serialize};
+use wasm_bindgen_futures::spawn_local;
+
+use crate::platform::Platform;
+
+/// localStorage / browser.storage.local key under which settings serialize.
+pub const SETTINGS_KEY: &str = "srs_settings";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SrsSettings {
@@ -32,12 +44,26 @@ impl Default for SrsSettings {
     }
 }
 
+/// Synchronous read of the current settings off whichever store the
+/// platform installed.
 pub fn load() -> SrsSettings {
-    let mut s: SrsSettings = LocalStorage::get(KEY).unwrap_or_default();
-    if s.server_url.is_empty() {
-        s.server_url = default_server_url();
-    }
-    s
+    use_context::<Platform>().settings.load()
+}
+
+/// Saves settings. Returns a [`StorageError`] shape to keep the existing
+/// call-site signatures unchanged; the inner error message comes from
+/// whichever store the platform installed. The save is fire-and-forget on
+/// the underlying async store — callers that want backpressure should use
+/// the trait directly.
+pub fn save(s: &SrsSettings) -> Result<(), StorageError> {
+    let platform = use_context::<Platform>();
+    let s_owned = s.clone();
+    spawn_local(async move {
+        if let Err(e) = platform.settings.save(s_owned).await {
+            log::warn!("settings save failed: {e}");
+        }
+    });
+    Ok(())
 }
 
 /// Default sync server URL.
@@ -55,6 +81,30 @@ pub fn default_server_url() -> String {
         .unwrap_or_default()
 }
 
-pub fn save(s: &SrsSettings) -> Result<(), gloo_storage::errors::StorageError> {
-    LocalStorage::set(KEY, s)
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The extension's `extension/src/shared/types.ts` defines an
+    /// equivalent SrsSettings shape; both must round-trip the same JSON
+    /// because they share `browser.storage.local`. If someone renames a
+    /// field here without touching the TS counterpart, this test won't
+    /// catch it — but a `serde_json::Value` snapshot of the field set will
+    /// at least fail loudly if a *Rust*-side rename slips in.
+    #[test]
+    fn serializes_with_expected_field_names() {
+        let s = SrsSettings::default();
+        let v: serde_json::Value = serde_json::to_value(&s).unwrap();
+        let obj = v.as_object().unwrap();
+        for field in [
+            "graduationReps",
+            "intervalScale",
+            "maxSessionCards",
+            "serverUrl",
+            "serverEmail",
+            "serverToken",
+        ] {
+            assert!(obj.contains_key(field), "missing field {field}");
+        }
+    }
 }

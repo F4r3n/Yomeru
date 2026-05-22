@@ -1,66 +1,23 @@
-//! HTTP client for the yomeru-server endpoints. Mirrors the extension's
-//! `handleRequestOtp` / `handleVerifyOtp` / `handleSyncCards` in
-//! `src/background/background.ts`.
+//! Auth shims that delegate to the [`crate::platform::SettingsStore`] in
+//! Dioxus context. The HTTP implementation lives in `platform.rs`; the
+//! extension provides its own implementation that messages the background
+//! script.
+//!
+//! `sync_cards` is no longer surfaced as a free function — sync is owned
+//! by the SettingsStore (`schedule_sync` / `sync_now`).
 
-use gloo_net::http::Request;
-use serde::{Deserialize, Serialize};
+use dioxus::prelude::use_context;
 
-use crate::types::SrsCard;
-
-#[derive(Serialize)]
-struct AuthRequestBody<'a> {
-    email: &'a str,
-}
-
-#[derive(Serialize)]
-struct VerifyBody<'a> {
-    email: &'a str,
-    code: &'a str,
-}
-
-#[derive(Deserialize)]
-struct VerifyResponse {
-    token: String,
-}
-
-#[derive(Serialize)]
-struct SyncBody<'a> {
-    cards: &'a [SrsCard],
-    deletions: &'a [String],
-}
-
-#[derive(Deserialize)]
-pub struct SyncResponse {
-    pub cards: Vec<SrsCard>,
-    #[serde(default)]
-    pub deletions: Vec<String>,
-}
-
-fn join(base: &str, path: &str) -> String {
-    let trimmed = base.trim_end_matches('/');
-    format!("{trimmed}{path}")
-}
+use crate::platform::Platform;
 
 /// In dev mode the server auto-issues a session and returns the token
 /// directly in the response body — callers should treat `Ok(Some(token))`
 /// as "already authenticated, skip the OTP step".
 pub async fn request_otp(server_url: &str, email: &str) -> Result<Option<String>, String> {
-    let body = AuthRequestBody { email };
-    let res = Request::post(&join(server_url, "/api/auth/request"))
-        .json(&body)
-        .map_err(|e| e.to_string())?
-        .send()
+    use_context::<Platform>()
+        .settings
+        .request_otp(server_url, email)
         .await
-        .map_err(|e| e.to_string())?;
-    if !res.ok() {
-        return Err(format!("server {}", res.status()));
-    }
-    // 204 No Content = normal OTP flow; 200 with {token} = dev-mode auto-auth.
-    if res.status() == 204 {
-        return Ok(None);
-    }
-    let parsed: VerifyResponse = res.json().await.map_err(|e| e.to_string())?;
-    Ok(Some(parsed.token))
 }
 
 pub async fn verify_otp(
@@ -68,42 +25,8 @@ pub async fn verify_otp(
     email: &str,
     code: &str,
 ) -> Result<String, String> {
-    let body = VerifyBody { email, code };
-    let res = Request::post(&join(server_url, "/api/auth/verify"))
-        .json(&body)
-        .map_err(|e| e.to_string())?
-        .send()
+    use_context::<Platform>()
+        .settings
+        .verify_otp(server_url, email, code)
         .await
-        .map_err(|e| e.to_string())?;
-    if !res.ok() {
-        let status = res.status();
-        let text = res.text().await.unwrap_or_default();
-        return Err(format!("server {status}: {text}"));
-    }
-    let parsed: VerifyResponse = res.json().await.map_err(|e| e.to_string())?;
-    Ok(parsed.token)
-}
-
-pub async fn sync_cards(
-    server_url: &str,
-    token: &str,
-    cards: &[SrsCard],
-    deletions: &[String],
-) -> Result<SyncResponse, String> {
-    let body = SyncBody { cards, deletions };
-    let res = Request::post(&join(server_url, "/api/sync"))
-        .header("Authorization", &format!("Bearer {token}"))
-        .json(&body)
-        .map_err(|e| e.to_string())?
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-    if res.status() == 401 {
-        return Err("session expired — re-verify".into());
-    }
-    if !res.ok() {
-        return Err(format!("server {}", res.status()));
-    }
-    let parsed: SyncResponse = res.json().await.map_err(|e| e.to_string())?;
-    Ok(parsed)
 }

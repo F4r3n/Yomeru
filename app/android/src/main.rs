@@ -1,5 +1,5 @@
-use yomeru_shared::App;
+use yomeru_shared::{default_http_platform, launch_with};
 
 fn main() {
-    dioxus::launch(App);
+    launch_with(default_http_platform());
 }
