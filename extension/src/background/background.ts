@@ -15,6 +15,8 @@ import {
   deleteCard,
   deleteCardById,
   addLookupHistory,
+  getAllTombstones,
+  applySyncResponse,
 } from "./idb";
 import { getSettings, saveSettings } from "./settings";
 import { importCards, syncCardsBackup, writeCardsBackup } from "./cards-backup";
@@ -122,6 +124,88 @@ async function bumpDbVersion(): Promise<void> {
     browser.storage.local.set({ _yomeru_db_v: Date.now() }),
     writeCardsBackup(),
   ]);
+  scheduleSync();
+}
+
+// ── Auto-sync scheduler ───────────────────────────────────────────────
+//
+// Every card mutation flows through bumpDbVersion(), which calls
+// scheduleSync(). We debounce 2 s and then POST cards+tombstones to the
+// server. A separate IN_FLIGHT flag prevents overlapping requests; if a
+// new mutation arrives during a sync, we kick off another pass when it
+// finishes so no change is silently dropped.
+
+const SYNC_DEBOUNCE_MS = 2_000;
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let syncInFlight = false;
+let syncRetry = false;
+
+function scheduleSync(): void {
+  if (syncInFlight) {
+    syncRetry = true;
+    return;
+  }
+  // Don't even arm the timer when the user has nothing configured —
+  // saves a 2 s wait that ends in a no-op error log on every mutation.
+  // We snapshot the token check via fire-and-forget; if the user
+  // configures a server after this returns, the next mutation will
+  // schedule properly.
+  void getSettings().then((s) => {
+    if (!s.serverUrl || !s.serverToken) return;
+    if (syncInFlight) {
+      syncRetry = true;
+      return;
+    }
+    if (syncTimer) clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => {
+      syncTimer = null;
+      runSync().catch((e) => console.error("[yomeru] auto-sync failed:", e));
+    }, SYNC_DEBOUNCE_MS);
+  });
+}
+
+async function runSync(): Promise<void> {
+  if (syncInFlight) return;
+  syncInFlight = true;
+  try {
+    await doSync();
+  } finally {
+    syncInFlight = false;
+    if (syncRetry) {
+      syncRetry = false;
+      scheduleSync();
+    }
+  }
+}
+
+async function doSync(): Promise<{ synced: number } | { error: string }> {
+  const settings = await getSettings();
+  if (!settings.serverUrl || !settings.serverToken) {
+    return { error: "not authenticated" };
+  }
+  try {
+    const localCards = await getAllCards();
+    const localTombstones = await getAllTombstones();
+    const res = await fetch(`${settings.serverUrl}/api/sync`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${settings.serverToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ cards: localCards, deletions: localTombstones }),
+    });
+    if (res.status === 401) return { error: "session expired — re-verify" };
+    if (!res.ok) return { error: `server ${res.status}` };
+    const resp = (await res.json()) as {
+      cards: SrsCard[];
+      deletions?: string[];
+    };
+    await applySyncResponse(resp, localTombstones);
+    await writeCardsBackup();
+    return { synced: resp.cards.length };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
 }
 
 const storageReady = syncCardsBackup().catch((e) => {
@@ -416,27 +500,31 @@ async function handleVerifyOtp({
   }
 }
 
-async function handleSyncCards() {
+async function handleSyncCards(): Promise<
+  { synced: number } | { queued: true } | { error: string }
+> {
+  // Manual "Sync now" button: cancel any pending debounce and run
+  // immediately. Mutations during the request are handled by the same
+  // syncInFlight/syncRetry loop as scheduleSync.
+  if (syncTimer) {
+    clearTimeout(syncTimer);
+    syncTimer = null;
+  }
+  if (syncInFlight) {
+    // Don't start a concurrent request. Signal retry so the in-flight one
+    // re-runs after itself, and tell the UI we queued the request (not an
+    // error — the user's intent will be honored shortly).
+    syncRetry = true;
+    return { queued: true };
+  }
+  syncInFlight = true;
   try {
-    const settings = await getSettings();
-    if (!settings.serverUrl || !settings.serverToken)
-      return { error: "not authenticated" };
-    const local = await getAllCards();
-    const res = await fetch(`${settings.serverUrl}/api/sync`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${settings.serverToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ cards: local }),
-    });
-    if (res.status === 401) return { error: "session expired — re-verify" };
-    if (!res.ok) return { error: `server ${res.status}` };
-    const { cards } = (await res.json()) as { cards: SrsCard[] };
-    await putCards(cards);
-    await writeCardsBackup();
-    return { synced: cards.length };
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : String(e) };
+    return await doSync();
+  } finally {
+    syncInFlight = false;
+    if (syncRetry) {
+      syncRetry = false;
+      scheduleSync();
+    }
   }
 }

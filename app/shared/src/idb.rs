@@ -1,6 +1,6 @@
 //! IndexedDB wrapper for cards. Mirrors `extension/src/background/idb.ts` at
-//! schema v4 (composite-id cards, FSRS-shaped fields, recognition/recall
-//! siblings). The website starts at v4 — no legacy migrations needed.
+//! schema v5 (composite-id cards + tombstones store for sync). The website
+//! starts at v4 — the v5 upgrade just adds the `tombstones` store.
 
 use idb::{
     Database, DatabaseEvent, Factory, IndexParams, KeyPath, ObjectStoreParams, Query,
@@ -11,35 +11,41 @@ use wasm_bindgen::JsValue;
 use crate::types::{card_id, CardDirection, CardStatus, SrsCard};
 
 const DB_NAME: &str = "yomeru-db";
-const DB_VERSION: u32 = 4;
+const DB_VERSION: u32 = 5;
 const STORE: &str = "cards";
+const TOMB_STORE: &str = "tombstones";
 
 async fn open() -> Result<Database, idb::Error> {
     let factory = Factory::new()?;
     let mut req = factory.open(DB_NAME, Some(DB_VERSION))?;
     req.on_upgrade_needed(|event| {
         let db = event.database().expect("upgrade event has db");
-        if db.store_names().iter().any(|n| n == STORE) {
-            return;
-        }
-        let mut params = ObjectStoreParams::new();
-        params.key_path(Some(KeyPath::new_single("id")));
-        let store = db.create_object_store(STORE, params).expect("create store");
+        if !db.store_names().iter().any(|n| n == STORE) {
+            let mut params = ObjectStoreParams::new();
+            params.key_path(Some(KeyPath::new_single("id")));
+            let store = db.create_object_store(STORE, params).expect("create store");
 
-        let mut idx = IndexParams::new();
-        idx.unique(false);
-        store
-            .create_index("due_ms", KeyPath::new_single("due_ms"), Some(idx.clone()))
-            .ok();
-        store
-            .create_index("added_ms", KeyPath::new_single("added_ms"), Some(idx.clone()))
-            .ok();
-        store
-            .create_index("status", KeyPath::new_single("status"), Some(idx.clone()))
-            .ok();
-        store
-            .create_index("word", KeyPath::new_single("word"), Some(idx))
-            .ok();
+            let mut idx = IndexParams::new();
+            idx.unique(false);
+            store
+                .create_index("due_ms", KeyPath::new_single("due_ms"), Some(idx.clone()))
+                .ok();
+            store
+                .create_index("added_ms", KeyPath::new_single("added_ms"), Some(idx.clone()))
+                .ok();
+            store
+                .create_index("status", KeyPath::new_single("status"), Some(idx.clone()))
+                .ok();
+            store
+                .create_index("word", KeyPath::new_single("word"), Some(idx))
+                .ok();
+        }
+        if !db.store_names().iter().any(|n| n == TOMB_STORE) {
+            let mut params = ObjectStoreParams::new();
+            params.key_path(Some(KeyPath::new_single("id")));
+            db.create_object_store(TOMB_STORE, params)
+                .expect("create tombstones store");
+        }
     });
     req.await
 }
@@ -186,15 +192,41 @@ pub async fn promote_card(word: &str) -> Result<(), String> {
 }
 
 pub async fn delete_card(word: &str) -> Result<(), String> {
+    let ids = [
+        card_id(word, CardDirection::Recognition),
+        card_id(word, CardDirection::Recall),
+    ];
+    delete_ids_with_tombstones(&ids).await
+}
+
+pub async fn delete_card_by_id(id: &str) -> Result<(), String> {
+    delete_ids_with_tombstones(std::slice::from_ref(&id.to_string())).await
+}
+
+/// Atomically deletes the given card ids and writes tombstones for each, in
+/// a single transaction across both stores so a crash mid-delete can't lose
+/// the tombstone (which would cause the next sync to resurrect the card).
+async fn delete_ids_with_tombstones(ids: &[String]) -> Result<(), String> {
     let db = open().await.map_err(|e| e.to_string())?;
     let tx = db
-        .transaction(&[STORE], TransactionMode::ReadWrite)
+        .transaction(&[STORE, TOMB_STORE], TransactionMode::ReadWrite)
         .map_err(|e| e.to_string())?;
-    let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
-    for d in [CardDirection::Recognition, CardDirection::Recall] {
-        let key = JsValue::from_str(&card_id(word, d));
-        store
-            .delete(Query::Key(key))
+    let cards = tx.object_store(STORE).map_err(|e| e.to_string())?;
+    let tombs = tx.object_store(TOMB_STORE).map_err(|e| e.to_string())?;
+    let now = js_sys::Date::now();
+    for id in ids {
+        let tomb_val = serde_wasm_bindgen::to_value(&serde_json::json!({
+            "id": id,
+            "deleted_at": now,
+        }))
+        .map_err(|e| e.to_string())?;
+        tombs
+            .put(&tomb_val, None)
+            .map_err(|e| e.to_string())?
+            .await
+            .map_err(|e| e.to_string())?;
+        cards
+            .delete(Query::Key(JsValue::from_str(id)))
             .map_err(|e| e.to_string())?
             .await
             .map_err(|e| e.to_string())?;
@@ -206,18 +238,72 @@ pub async fn delete_card(word: &str) -> Result<(), String> {
     Ok(())
 }
 
-pub async fn delete_card_by_id(id: &str) -> Result<(), String> {
+pub async fn get_all_tombstones() -> Result<Vec<String>, String> {
+    let db = open().await.map_err(|e| e.to_string())?;
+    let tx = db
+        .transaction(&[TOMB_STORE], TransactionMode::ReadOnly)
+        .map_err(|e| e.to_string())?;
+    let store = tx.object_store(TOMB_STORE).map_err(|e| e.to_string())?;
+    let arr = store
+        .get_all(None, None)
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+    let ids = arr
+        .into_iter()
+        .filter_map(|v| serde_wasm_bindgen::from_value::<serde_json::Value>(v).ok())
+        .filter_map(|v| {
+            v.get("id")
+                .and_then(|x| x.as_str())
+                .map(|s| s.to_string())
+        })
+        .collect();
+    Ok(ids)
+}
+
+pub async fn clear_tombstones(ids: &[String]) -> Result<(), String> {
+    if ids.is_empty() {
+        return Ok(());
+    }
+    let db = open().await.map_err(|e| e.to_string())?;
+    let tx = db
+        .transaction(&[TOMB_STORE], TransactionMode::ReadWrite)
+        .map_err(|e| e.to_string())?;
+    let store = tx.object_store(TOMB_STORE).map_err(|e| e.to_string())?;
+    for id in ids {
+        store
+            .delete(Query::Key(JsValue::from_str(id)))
+            .map_err(|e| e.to_string())?
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+    tx.commit()
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Applies tombstones that came from the server. Deletes the matching card
+/// rows without writing local tombstones — the server is already
+/// authoritative for these ids. Use for remote-driven deletes; user-driven
+/// deletes go through [`delete_card`] / [`delete_card_by_id`].
+pub async fn apply_remote_deletions(ids: &[String]) -> Result<(), String> {
+    if ids.is_empty() {
+        return Ok(());
+    }
     let db = open().await.map_err(|e| e.to_string())?;
     let tx = db
         .transaction(&[STORE], TransactionMode::ReadWrite)
         .map_err(|e| e.to_string())?;
     let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
-    let key = JsValue::from_str(id);
-    store
-        .delete(Query::Key(key))
-        .map_err(|e| e.to_string())?
-        .await
-        .map_err(|e| e.to_string())?;
+    for id in ids {
+        store
+            .delete(Query::Key(JsValue::from_str(id)))
+            .map_err(|e| e.to_string())?
+            .await
+            .map_err(|e| e.to_string())?;
+    }
     tx.commit()
         .map_err(|e| e.to_string())?
         .await

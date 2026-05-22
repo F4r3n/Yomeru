@@ -26,11 +26,14 @@ struct VerifyResponse {
 #[derive(Serialize)]
 struct SyncBody<'a> {
     cards: &'a [SrsCard],
+    deletions: &'a [String],
 }
 
 #[derive(Deserialize)]
-struct SyncResponse {
-    cards: Vec<SrsCard>,
+pub struct SyncResponse {
+    pub cards: Vec<SrsCard>,
+    #[serde(default)]
+    pub deletions: Vec<String>,
 }
 
 fn join(base: &str, path: &str) -> String {
@@ -85,8 +88,9 @@ pub async fn sync_cards(
     server_url: &str,
     token: &str,
     cards: &[SrsCard],
-) -> Result<Vec<SrsCard>, String> {
-    let body = SyncBody { cards };
+    deletions: &[String],
+) -> Result<SyncResponse, String> {
+    let body = SyncBody { cards, deletions };
     let res = Request::post(&join(server_url, "/api/sync"))
         .header("Authorization", &format!("Bearer {token}"))
         .json(&body)
@@ -101,5 +105,5 @@ pub async fn sync_cards(
         return Err(format!("server {}", res.status()));
     }
     let parsed: SyncResponse = res.json().await.map_err(|e| e.to_string())?;
-    Ok(parsed.cards)
+    Ok(parsed)
 }

@@ -5,6 +5,7 @@ use wasm_bindgen::JsCast;
 use crate::api;
 use crate::idb::{get_all_cards, put_cards};
 use crate::settings::{load, save};
+use crate::sync::{schedule_sync, sync_now};
 use crate::types::SrsCard;
 
 #[component]
@@ -68,25 +69,11 @@ pub fn SettingsTab() -> Element {
         });
     };
 
-    let sync_now = move |_| {
+    let on_sync_now = move |_| {
         sync_busy.set(true);
-        let s = settings.read().clone();
         spawn(async move {
-            if s.server_url.is_empty() || s.server_token.is_empty() {
-                sync_status.set(Some(("not authenticated".into(), true)));
-                sync_busy.set(false);
-                return;
-            }
-            let local = get_all_cards().await.unwrap_or_default();
-            match api::sync_cards(&s.server_url, &s.server_token, &local).await {
-                Ok(remote) => {
-                    let n = remote.len();
-                    let _ = put_cards(&remote).await;
-                    sync_status.set(Some((
-                        format!("Synced {n} card{}.", if n == 1 { "" } else { "s" }),
-                        false,
-                    )));
-                }
+            match sync_now().await {
+                Ok(msg) => sync_status.set(Some((msg, false))),
                 Err(e) => sync_status.set(Some((e, true))),
             }
             sync_busy.set(false);
@@ -248,7 +235,7 @@ pub fn SettingsTab() -> Element {
                         }
                         button {
                             class: "primary",
-                            onclick: sync_now,
+                            onclick: on_sync_now,
                             disabled: *sync_busy.read() || !has_token,
                             if *sync_busy.read() { "Syncing…" } else { "Sync now" }
                         }
@@ -336,5 +323,8 @@ async fn import_cards_json(text: &str) -> Result<(usize, usize), String> {
         added += 1;
     }
     put_cards(&to_put).await.map_err(|e| e.to_string())?;
+    if added > 0 {
+        schedule_sync();
+    }
     Ok((added, skipped))
 }

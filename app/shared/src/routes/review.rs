@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 use jmdict_types::WordEntry;
+use log::warn;
 
 use crate::components::pos_list;
 use crate::dict::{self, examples_for, kanji_for, primary_reading};
@@ -8,6 +9,7 @@ use crate::idb::{
 };
 use crate::settings::load as load_settings;
 use crate::srs::{apply_review, now_ms, rating_from_u8, ReviewOutcome};
+use crate::sync::schedule_sync;
 use crate::types::{CardDirection, CardStatus, SrsCard};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -129,7 +131,13 @@ pub fn ReviewTab() -> Element {
     let promote_and_review = move |_| {
         spawn(async move {
             let settings = load_settings();
-            let staging = get_staging_cards().await.unwrap_or_default();
+            let staging = match get_staging_cards().await {
+                Ok(s) => s,
+                Err(e) => {
+                    warn!("get_staging_cards in promote_and_review failed: {e}");
+                    return;
+                }
+            };
             let mut seen = std::collections::HashSet::new();
             let words: Vec<_> = staging
                 .into_iter()
@@ -137,8 +145,16 @@ pub fn ReviewTab() -> Element {
                 .map(|c| c.word)
                 .collect();
             let n = (words.len()).min(settings.max_session_cards as usize);
+            let mut promoted = 0usize;
             for w in &words[..n] {
-                let _ = promote_card(w).await;
+                if let Err(e) = promote_card(w).await {
+                    warn!("promote_card({w}) in promote_and_review failed: {e}");
+                    continue;
+                }
+                promoted += 1;
+            }
+            if promoted > 0 {
+                schedule_sync();
             }
             started.set(true);
             load_session();
@@ -165,12 +181,21 @@ pub fn ReviewTab() -> Element {
         spawn(async move {
             let settings = load_settings();
             let outcome = apply_review(&card, rating_from_u8(r), now_ms(), &settings);
+            let card_id = card.id.clone();
             match outcome {
                 ReviewOutcome::Rescheduled(c) => {
-                    let _ = put_card(&c).await;
+                    if let Err(e) = put_card(&c).await {
+                        warn!("put_card({card_id}) after review failed: {e}");
+                    } else {
+                        schedule_sync();
+                    }
                 }
                 ReviewOutcome::Graduated => {
-                    let _ = delete_card_by_id(&card.id).await;
+                    if let Err(e) = delete_card_by_id(&card.id).await {
+                        warn!("delete_card_by_id({card_id}) on graduation failed: {e}");
+                    } else {
+                        schedule_sync();
+                    }
                     graduated_msg.set(Some(format!(
                         "「{}」 ({}) graduated — removed from review queue.",
                         card.word,
@@ -186,8 +211,10 @@ pub fn ReviewTab() -> Element {
             // If session ended, compute next-due across all active cards.
             let cards = due_cards.read();
             if *idx.read() >= cards.len() {
-                let all = get_all_cards().await.unwrap_or_default();
-                next_due.set(next_due_message(&all, now_ms()));
+                match get_all_cards().await {
+                    Ok(all) => next_due.set(next_due_message(&all, now_ms())),
+                    Err(e) => warn!("get_all_cards for next-due summary failed: {e}"),
+                }
             }
         });
     };

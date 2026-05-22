@@ -2,7 +2,8 @@ import type { CardDirection, CardState, SrsCard } from "../shared/types.ts";
 import { cardId } from "../shared/types.ts";
 
 const DB_NAME = "yomeru-db";
-const DB_VERSION = 4;
+const DB_VERSION = 5;
+const TOMB_STORE = "tombstones";
 
 let db: IDBDatabase | null = null;
 
@@ -131,6 +132,13 @@ export async function openDb(): Promise<IDBDatabase> {
             newStore.add(freshRecallCard(word, now, recognition.added_ms));
           }
         };
+      }
+
+      // v4 → v5: add a tombstone store for sync. Existing cards store is
+      // untouched; the new store keeps {id, deleted_at} entries so deletes
+      // can propagate to the server and other devices.
+      if (e.oldVersion < 5 && !database.objectStoreNames.contains(TOMB_STORE)) {
+        database.createObjectStore(TOMB_STORE, { keyPath: "id" });
       }
 
       // v3 → v4: store already has composite-id keyPath and sibling pairs, but
@@ -332,23 +340,138 @@ export async function promoteAll(): Promise<void> {
   });
 }
 
-/** Deletes both direction siblings for a word. */
+/** Deletes both direction siblings for a word and records tombstones. */
 export async function deleteCard(word: string): Promise<void> {
+  return deleteIdsWithTombstones([
+    cardId(word, "recognition"),
+    cardId(word, "recall"),
+  ]);
+}
+
+/** Deletes a single sibling by composite id (used when one direction graduates). */
+export function deleteCardById(id: string): Promise<void> {
+  return deleteIdsWithTombstones([id]);
+}
+
+/**
+ * Atomically removes the given ids from the cards store and writes
+ * tombstones for each. Keeping both writes in one transaction means a
+ * crash mid-delete can't end up with the card gone but the tombstone
+ * missing (which would silently undo the delete on the next sync).
+ */
+async function deleteIdsWithTombstones(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
   const database = await openDb();
   return new Promise((resolve, reject) => {
-    const t = database.transaction("cards", "readwrite");
-    const store = t.objectStore("cards");
-    store.delete(cardId(word, "recognition"));
-    store.delete(cardId(word, "recall"));
+    const t = database.transaction(["cards", TOMB_STORE], "readwrite");
+    const cards = t.objectStore("cards");
+    const tombs = t.objectStore(TOMB_STORE);
+    const now = Date.now();
+    for (const id of ids) {
+      tombs.put({ id, deleted_at: now });
+      cards.delete(id);
+    }
     t.oncomplete = () => resolve();
     t.onerror = () => reject(t.error);
     t.onabort = () => reject(t.error);
   });
 }
 
-/** Deletes a single sibling by composite id (used when one direction graduates). */
-export function deleteCardById(id: string): Promise<undefined> {
-  return tx("cards", "readwrite", (s) => s.delete(id));
+export async function getAllTombstones(): Promise<string[]> {
+  const database = await openDb();
+  return new Promise((resolve, reject) => {
+    const req = database
+      .transaction(TOMB_STORE, "readonly")
+      .objectStore(TOMB_STORE)
+      .getAll();
+    req.onsuccess = () =>
+      resolve(
+        (req.result as Array<{ id: string }>).map((r) => r.id).filter(Boolean),
+      );
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function clearTombstones(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const database = await openDb();
+  return new Promise((resolve, reject) => {
+    const t = database.transaction(TOMB_STORE, "readwrite");
+    const store = t.objectStore(TOMB_STORE);
+    for (const id of ids) store.delete(id);
+    t.oncomplete = () => resolve();
+    t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error);
+  });
+}
+
+/**
+ * Applies a sync response into IDB:
+ *   1. upserts the server's cards, skipping any whose local copy has a
+ *      newer `last_review_ms` (defends against clobbering a review the
+ *      user did while the sync was in flight),
+ *   2. drops cards the server reports as deleted *unless* we just sent a
+ *      tombstone for that id — if we did, the local cards store either
+ *      already lacks the id or holds an intentional re-add by the user,
+ *      and either way it would be wrong to delete it,
+ *   3. clears the tombstones we just forwarded (the server has them now).
+ *
+ * Pure data-shaping; no network. Exported so it's unit-testable against
+ * fake-indexeddb.
+ */
+export async function applySyncResponse(
+  resp: { cards: SrsCard[]; deletions?: string[] },
+  sentTombstones: string[],
+): Promise<void> {
+  if (resp.cards.length > 0) {
+    await putCardsSkipOlder(resp.cards);
+  }
+  if (resp.deletions && resp.deletions.length > 0) {
+    const sent = new Set(sentTombstones);
+    const foreign = resp.deletions.filter((id) => !sent.has(id));
+    if (foreign.length > 0) {
+      await applyRemoteDeletions(foreign);
+    }
+  }
+  if (sentTombstones.length > 0) {
+    await clearTombstones(sentTombstones);
+  }
+}
+
+/**
+ * Upserts `remote` cards into IDB, but skips any incoming card whose
+ * `last_review_ms` is older than what we already have locally — that means
+ * the user reviewed the card after the sync request went out, and the
+ * server's copy is stale. Mirrors the server-side last-write-wins check.
+ */
+async function putCardsSkipOlder(remote: SrsCard[]): Promise<void> {
+  if (remote.length === 0) return;
+  const local = await getAllCards();
+  const localTs = new Map<string, number>();
+  for (const c of local) localTs.set(c.id, c.last_review_ms ?? 0);
+  const toPut = remote.filter(
+    (c) => (c.last_review_ms ?? 0) >= (localTs.get(c.id) ?? 0),
+  );
+  if (toPut.length > 0) await putCards(toPut);
+}
+
+/**
+ * Deletes the given ids from the cards store without writing local
+ * tombstones. Use this for server-driven deletes (the server already has
+ * the tombstone — re-writing it locally would prevent the tombstone set
+ * from converging across syncs).
+ */
+export async function applyRemoteDeletions(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const database = await openDb();
+  return new Promise((resolve, reject) => {
+    const t = database.transaction("cards", "readwrite");
+    const store = t.objectStore("cards");
+    for (const id of ids) store.delete(id);
+    t.oncomplete = () => resolve();
+    t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error);
+  });
 }
 
 export function addLookupHistory(

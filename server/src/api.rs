@@ -34,11 +34,14 @@ pub struct VerifyResponse {
 #[derive(Deserialize)]
 pub struct SyncBody {
     pub cards: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub deletions: Vec<String>,
 }
 
 #[derive(Serialize)]
 pub struct SyncResponse {
     pub cards: Vec<serde_json::Value>,
+    pub deletions: Vec<String>,
 }
 
 fn now_ms() -> i64 {
@@ -191,6 +194,14 @@ pub async fn sync_handler(
         }
     }
 
+    let now = now_ms();
+
+    let db = state.db.clone();
+    let deletions = body.deletions.clone();
+    tokio::task::spawn_blocking(move || db::apply_deletions(&db, &deletions, now))
+        .await
+        .unwrap();
+
     let db = state.db.clone();
     let cards = body.cards.clone();
     tokio::task::spawn_blocking(move || db::upsert_cards(&db, &cards))
@@ -202,7 +213,16 @@ pub async fn sync_handler(
         .await
         .unwrap();
 
-    Json(SyncResponse { cards: merged }).into_response()
+    let db = state.db.clone();
+    let tombstones = tokio::task::spawn_blocking(move || db::get_all_deletions(&db))
+        .await
+        .unwrap();
+
+    Json(SyncResponse {
+        cards: merged,
+        deletions: tombstones,
+    })
+    .into_response()
 }
 
 // ---- Lookup endpoints (no auth, rate-limited by lookup_limiter) ----------
@@ -415,6 +435,7 @@ mod tests {
             smtp_from: get("YOMERU_SMTP_FROM").expect("YOMERU_SMTP_FROM missing"),
             smtp_user: get("YOMERU_SMTP_USER"),
             smtp_pass: get("YOMERU_SMTP_PASS"),
+            dev_mode: false,
         };
 
         let to = get("SMTP_TEST_TO").expect("SMTP_TEST_TO missing in server/.env");

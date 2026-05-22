@@ -7451,6 +7451,7 @@ dependencies = [
  "examples-types",
  "gloo-net",
  "gloo-storage",
+ "gloo-timers",
  "idb",
  "jmdict-types",
  "js-sys",

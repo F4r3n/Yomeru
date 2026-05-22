@@ -234,6 +234,220 @@ describe("idb", () => {
     });
   });
 
+  describe("tombstones", () => {
+    // Deletes need to leave a tombstone so the next sync can propagate the
+    // delete to the server / other devices. Without this, a deleted card
+    // would resurrect on the next sync because the server has no way to
+    // tell "missing from client" from "deleted by client".
+
+    it("deleteCard writes a tombstone for each sibling id", async () => {
+      await idb.putCard(makeCard({ word: "猫", direction: "recognition" }));
+      await idb.putCard(makeCard({ word: "猫", direction: "recall" }));
+
+      await idb.deleteCard("猫");
+
+      const tombs = await idb.getAllTombstones();
+      expect(tombs.sort()).toEqual(
+        [cardId("猫", "recognition"), cardId("猫", "recall")].sort(),
+      );
+    });
+
+    it("deleteCardById writes exactly one tombstone", async () => {
+      await idb.putCard(makeCard({ word: "猫", direction: "recognition" }));
+
+      await idb.deleteCardById(cardId("猫", "recognition"));
+
+      expect(await idb.getAllTombstones()).toEqual([
+        cardId("猫", "recognition"),
+      ]);
+    });
+
+    it("clearTombstones removes the given ids", async () => {
+      await idb.deleteCard("猫");
+      const before = await idb.getAllTombstones();
+      expect(before).toHaveLength(2);
+
+      await idb.clearTombstones(before);
+
+      expect(await idb.getAllTombstones()).toEqual([]);
+    });
+
+    it("clearTombstones is a no-op for an empty array", async () => {
+      await idb.deleteCard("猫");
+      await expect(idb.clearTombstones([])).resolves.toBeUndefined();
+      expect(await idb.getAllTombstones()).toHaveLength(2);
+    });
+
+    it("applyRemoteDeletions removes cards without writing tombstones", async () => {
+      // Server-driven deletes: we don't want a second round-trip to re-tell
+      // the server about ids it just told us about.
+      await idb.putCard(makeCard({ word: "猫", direction: "recognition" }));
+      await idb.putCard(makeCard({ word: "犬", direction: "recognition" }));
+
+      await idb.applyRemoteDeletions([cardId("猫", "recognition")]);
+
+      expect(await idb.getCard("猫", "recognition")).toBeNull();
+      expect(await idb.getCard("犬", "recognition")).not.toBeNull();
+      expect(await idb.getAllTombstones()).toEqual([]);
+    });
+
+    it("getAllTombstones returns an empty array on a fresh db", async () => {
+      expect(await idb.getAllTombstones()).toEqual([]);
+    });
+  });
+
+  describe("applySyncResponse", () => {
+    // This is the merge step every sync runs: take what the server returned
+    // and reconcile local IDB. Test the three effects independently so a
+    // regression in one doesn't get masked by the others.
+
+    it("upserts cards the server returned", async () => {
+      const fromServer = makeCard({
+        word: "本",
+        direction: "recognition",
+        stability: 4.2,
+      });
+
+      await idb.applySyncResponse({ cards: [fromServer], deletions: [] }, []);
+
+      const stored = await idb.getCard("本", "recognition");
+      expect(stored?.stability).toBe(4.2);
+    });
+
+    it("removes locally-stored cards listed in server deletions", async () => {
+      await idb.putCard(makeCard({ word: "猫", direction: "recognition" }));
+
+      await idb.applySyncResponse(
+        { cards: [], deletions: [cardId("猫", "recognition")] },
+        [],
+      );
+
+      expect(await idb.getCard("猫", "recognition")).toBeNull();
+    });
+
+    it("does not re-tombstone server-reported deletions (tombstone set converges)", async () => {
+      // If the server tells us "X is deleted", we shouldn't write a new
+      // local tombstone — we'd just send it back next sync forever.
+      await idb.applySyncResponse(
+        { cards: [], deletions: [cardId("猫", "recognition")] },
+        [],
+      );
+
+      expect(await idb.getAllTombstones()).toEqual([]);
+    });
+
+    it("clears tombstones we successfully forwarded", async () => {
+      await idb.putCard(makeCard({ word: "猫", direction: "recognition" }));
+      await idb.deleteCard("猫");
+      const sent = await idb.getAllTombstones();
+      expect(sent.length).toBeGreaterThan(0);
+
+      // Server acks: deletions list reflects everything it knows, including
+      // the ids we just sent.
+      await idb.applySyncResponse({ cards: [], deletions: sent }, sent);
+
+      expect(await idb.getAllTombstones()).toEqual([]);
+    });
+
+    it("is a no-op when the server returns no changes", async () => {
+      await idb.putCard(makeCard({ word: "猫", direction: "recognition" }));
+
+      await idb.applySyncResponse({ cards: [], deletions: [] }, []);
+
+      expect(await idb.getCard("猫", "recognition")).not.toBeNull();
+    });
+
+    it("tolerates a missing 'deletions' field for backwards-compat", async () => {
+      // Older servers may not send the field at all.
+      const card = makeCard({ word: "本" });
+      await idb.applySyncResponse({ cards: [card] }, []);
+      expect(await idb.getCard("本", "recognition")).not.toBeNull();
+    });
+
+    it("survives re-add during sync (Bug 1 regression)", async () => {
+      // Scenario:
+      //   1. user deletes 猫 → tombstone written, card removed
+      //   2. auto-sync fires, reads sentTombstones = [id]
+      //   3. while POST is in flight, user re-adds 猫 → card written back
+      //   4. server response arrives with deletions = [id]
+      // We must NOT delete the re-added card. The id was in sentTombstones,
+      // so apply_remote_deletions should skip it.
+      const id = cardId("猫", "recognition");
+      await idb.putCard(makeCard({ word: "猫", direction: "recognition" }));
+      // Simulate the re-add: tombstone gone (cleared after delete-and-readd
+      // would have happened in real flow), card present.
+      const sentTombstones = [id];
+
+      await idb.applySyncResponse(
+        { cards: [], deletions: [id] },
+        sentTombstones,
+      );
+
+      // Card must survive.
+      expect(await idb.getCard("猫", "recognition")).not.toBeNull();
+    });
+
+    it("still applies deletions that another device originated", async () => {
+      // Same shape as the race test, but this time we did NOT send a
+      // tombstone for the id → the server is telling us about a foreign
+      // delete, which we should apply.
+      const id = cardId("猫", "recognition");
+      await idb.putCard(makeCard({ word: "猫", direction: "recognition" }));
+
+      await idb.applySyncResponse({ cards: [], deletions: [id] }, []);
+
+      expect(await idb.getCard("猫", "recognition")).toBeNull();
+    });
+
+    it("does not clobber a card with a newer local last_review_ms", async () => {
+      // Scenario: sync goes out, user reviews 猫 during the round-trip
+      // (newer last_review_ms locally), server returns the old version.
+      // Server's older copy must NOT overwrite the freshly-reviewed local
+      // card.
+      await idb.putCard(
+        makeCard({
+          word: "猫",
+          direction: "recognition",
+          stability: 9.0,
+          last_review_ms: 2_000,
+        }),
+      );
+      const olderFromServer = makeCard({
+        word: "猫",
+        direction: "recognition",
+        stability: 1.0,
+        last_review_ms: 1_000,
+      });
+
+      await idb.applySyncResponse({ cards: [olderFromServer], deletions: [] }, []);
+
+      const local = await idb.getCard("猫", "recognition");
+      expect(local?.stability).toBe(9.0);
+    });
+
+    it("accepts a server card when its last_review_ms is newer", async () => {
+      await idb.putCard(
+        makeCard({
+          word: "猫",
+          direction: "recognition",
+          stability: 1.0,
+          last_review_ms: 1_000,
+        }),
+      );
+      const newerFromServer = makeCard({
+        word: "猫",
+        direction: "recognition",
+        stability: 9.0,
+        last_review_ms: 2_000,
+      });
+
+      await idb.applySyncResponse({ cards: [newerFromServer], deletions: [] }, []);
+
+      const local = await idb.getCard("猫", "recognition");
+      expect(local?.stability).toBe(9.0);
+    });
+  });
+
   describe("v2 → v4 migration", () => {
     // High-risk: on upgrade we cursor-collect every card, delete the store,
     // recreate with a new keyPath, then re-insert + spawn recall siblings,

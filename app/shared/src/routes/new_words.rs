@@ -1,6 +1,8 @@
 use dioxus::prelude::*;
+use log::warn;
 
 use crate::idb::{delete_card, get_staging_cards, promote_card};
+use crate::sync::schedule_sync;
 use crate::types::SrsCard;
 
 #[component]
@@ -28,23 +30,45 @@ pub fn NewWordsTab() -> Element {
 
     let promote_one = move |word: String| {
         spawn(async move {
-            let _ = promote_card(&word).await;
+            if let Err(e) = promote_card(&word).await {
+                warn!("promote_card({word}) failed: {e}");
+                return;
+            }
+            schedule_sync();
             reload();
         });
     };
 
     let reject_one = move |word: String| {
         spawn(async move {
-            let _ = delete_card(&word).await;
+            if let Err(e) = delete_card(&word).await {
+                warn!("delete_card({word}) failed: {e}");
+                return;
+            }
+            schedule_sync();
             reload();
         });
     };
 
     let promote_all = move |_| {
         spawn(async move {
-            let staging = get_staging_cards().await.unwrap_or_default();
+            let staging = match get_staging_cards().await {
+                Ok(s) => s,
+                Err(e) => {
+                    warn!("get_staging_cards for promote_all failed: {e}");
+                    return;
+                }
+            };
+            let mut promoted = 0usize;
             for w in unique_by_word(staging).into_iter().map(|c| c.word) {
-                let _ = promote_card(&w).await;
+                if let Err(e) = promote_card(&w).await {
+                    warn!("promote_card({w}) in promote_all failed: {e}");
+                    continue;
+                }
+                promoted += 1;
+            }
+            if promoted > 0 {
+                schedule_sync();
             }
             reload();
         });

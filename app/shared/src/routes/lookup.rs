@@ -3,12 +3,14 @@ use std::collections::HashSet;
 use dioxus::prelude::*;
 use gloo_storage::{LocalStorage, Storage};
 use jmdict_types::WordEntry;
+use log::warn;
 
 use crate::app::Route;
 use crate::components::EntryCard;
 use crate::dict::{self, examples_for, kanji_for, primary_headword};
 use crate::idb::{get_cards_by_word, put_cards};
 use crate::srs::now_ms;
+use crate::sync::schedule_sync;
 use crate::types::{CardDirection, SrsCard};
 
 const HISTORY_KEY: &str = "lookup_history";
@@ -128,16 +130,24 @@ fn lookup_romaji(c: &str) -> Option<&'static str> {
 }
 
 async fn add_word(word: String, mut added: Signal<HashSet<String>>) {
-    let existing = get_cards_by_word(&word).await.unwrap_or_default();
+    let existing = match get_cards_by_word(&word).await {
+        Ok(e) => e,
+        Err(e) => {
+            warn!("get_cards_by_word({word}) failed: {e}");
+            return;
+        }
+    };
     if existing.is_empty() {
         let now = now_ms();
         let cards = vec![
             SrsCard::new(&word, CardDirection::Recognition, now),
             SrsCard::new(&word, CardDirection::Recall, now),
         ];
-        if put_cards(&cards).await.is_err() {
+        if let Err(e) = put_cards(&cards).await {
+            warn!("put_cards({word}) on add failed: {e}");
             return;
         }
+        schedule_sync();
     }
     added.with_mut(|s| {
         s.insert(word);

@@ -1,7 +1,9 @@
 use dioxus::prelude::*;
+use log::warn;
 
 use crate::idb::{delete_card, get_all_cards};
 use crate::srs::now_ms;
+use crate::sync::schedule_sync;
 use crate::types::{CardDirection, CardStatus, SrsCard};
 
 #[component]
@@ -31,7 +33,11 @@ pub fn WordListTab() -> Element {
 
     let on_delete = move |word: String| {
         spawn(async move {
-            let _ = delete_card(&word).await;
+            if let Err(e) = delete_card(&word).await {
+                warn!("delete_card({word}) failed: {e}");
+                return;
+            }
+            schedule_sync();
             reload();
         });
     };

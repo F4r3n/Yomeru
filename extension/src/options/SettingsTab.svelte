@@ -73,8 +73,12 @@
         syncBusy = true;
         const res = await browser.runtime.sendMessage({ type: "SYNC_CARDS" });
         syncBusy = false;
-        const r = res as { synced?: number; error?: string };
+        const r = res as { synced?: number; queued?: boolean; error?: string };
         if (r.error) { flashSync(r.error, true); return; }
+        if (r.queued) {
+            flashSync("Sync already in progress — will repeat when it finishes.");
+            return;
+        }
         flashSync(`Synced ${r.synced} card${r.synced !== 1 ? "s" : ""}.`);
     }
 

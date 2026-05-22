@@ -36,6 +36,14 @@ async fn main() {
     }
 
     let db = db::init_db(&cfg.db_path);
+    {
+        let now_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis() as i64)
+            .unwrap_or(0);
+        // 90 days
+        db::prune_old_deletions(&db, now_ms - 90 * 86_400_000);
+    }
 
     if let Err(e) = dicts::init_all(&cfg.data_dir) {
         eprintln!("[yomeru-server] failed to load dict data from {}: {e:#}", cfg.data_dir);
