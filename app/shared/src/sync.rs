@@ -6,7 +6,7 @@
 //! These free functions keep existing call sites (every mutation site in
 //! `routes/*`) source-stable.
 
-use dioxus::prelude::use_context;
+use dioxus::prelude::consume_context;
 
 use crate::platform::Platform;
 
@@ -14,13 +14,13 @@ use crate::platform::Platform;
 /// server token. Safe to call after every IDB mutation — the debounce
 /// coalesces bursts.
 pub fn schedule_sync() {
-    use_context::<Platform>().settings.schedule_sync();
+    consume_context::<Platform>().settings.schedule_sync();
 }
 
 /// Forces an immediate sync, bypassing the debounce. Used by the
 /// "Sync now" button in Settings.
 pub async fn sync_now() -> Result<String, String> {
-    use_context::<Platform>().settings.sync_now().await
+    consume_context::<Platform>().settings.sync_now().await
 }
 
 #[cfg(test)]

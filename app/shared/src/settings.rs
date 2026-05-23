@@ -5,7 +5,7 @@
 //! `load()` / `save()` exactly as before; the bytes underneath are owned by
 //! whichever platform was installed via [`crate::launch_with`].
 
-use dioxus::prelude::use_context;
+use dioxus::prelude::consume_context;
 use gloo_storage::errors::StorageError;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen_futures::spawn_local;
@@ -47,7 +47,7 @@ impl Default for SrsSettings {
 /// Synchronous read of the current settings off whichever store the
 /// platform installed.
 pub fn load() -> SrsSettings {
-    use_context::<Platform>().settings.load()
+    consume_context::<Platform>().settings.load()
 }
 
 /// Saves settings. Returns a [`StorageError`] shape to keep the existing
@@ -56,7 +56,7 @@ pub fn load() -> SrsSettings {
 /// the underlying async store — callers that want backpressure should use
 /// the trait directly.
 pub fn save(s: &SrsSettings) -> Result<(), StorageError> {
-    let platform = use_context::<Platform>();
+    let platform = consume_context::<Platform>();
     let s_owned = s.clone();
     spawn_local(async move {
         if let Err(e) = platform.settings.save(s_owned).await {

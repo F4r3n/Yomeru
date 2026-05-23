@@ -6,7 +6,7 @@
 //! `sync_cards` is no longer surfaced as a free function — sync is owned
 //! by the SettingsStore (`schedule_sync` / `sync_now`).
 
-use dioxus::prelude::use_context;
+use dioxus::prelude::consume_context;
 
 use crate::platform::Platform;
 
@@ -14,7 +14,7 @@ use crate::platform::Platform;
 /// directly in the response body — callers should treat `Ok(Some(token))`
 /// as "already authenticated, skip the OTP step".
 pub async fn request_otp(server_url: &str, email: &str) -> Result<Option<String>, String> {
-    use_context::<Platform>()
+    consume_context::<Platform>()
         .settings
         .request_otp(server_url, email)
         .await
@@ -25,7 +25,7 @@ pub async fn verify_otp(
     email: &str,
     code: &str,
 ) -> Result<String, String> {
-    use_context::<Platform>()
+    consume_context::<Platform>()
         .settings
         .verify_otp(server_url, email, code)
         .await
