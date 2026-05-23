@@ -7443,6 +7443,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "yomeru-extension"
+version = "0.1.0"
+dependencies = [
+ "console_error_panic_hook",
+ "dioxus",
+ "examples-types",
+ "jmdict-types",
+ "js-sys",
+ "kanjidic-types",
+ "log",
+ "serde",
+ "serde-wasm-bindgen",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "yomeru-shared",
+]
+
+[[package]]
 name = "yomeru-shared"
 version = "0.1.0"
 dependencies = [

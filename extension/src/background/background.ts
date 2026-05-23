@@ -269,6 +269,12 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
       return handleGetExamples(msg.payload as { word: string });
     case "LOOKUP_WORD":
       return handleLookupWord(msg.payload as { word: string });
+    case "LOOKUP_MANY":
+      return handleLookupMany(msg.payload as { words: string[] });
+    case "LOOKUP_PREFIX":
+      return handleLookupPrefix(msg.payload as { text: string; max: number });
+    case "BUMP_DB_VERSION":
+      return bumpDbVersion().then(() => ({ ok: true }));
     case "IMPORT_CARDS":
       return handleImportCards(msg.payload as { cards: unknown });
     case "REQUEST_OTP":
@@ -455,6 +461,22 @@ async function handleLookupWord({ word }: { word: string }) {
   return { entries: entries ?? [] };
 }
 
+async function handleLookupMany({ words }: { words: string[] }) {
+  await ensureJmdict();
+  // The Rust shared crate's lookup_many returns Vec<Vec<WordEntry>> —
+  // one entry list per input word, aligned by index. Mirror that shape.
+  const results: WordEntry[][] = words.map(
+    (w) => (jmdict!.lookup(w) as WordEntry[]) ?? [],
+  );
+  return { results };
+}
+
+async function handleLookupPrefix({ text, max }: { text: string; max: number }) {
+  await ensureJmdict();
+  const results = (jmdict!.lookup_prefix(text, max) as WordEntry[]) ?? [];
+  return { results };
+}
+
 async function handleRequestOtp({
   serverUrl,
   email,
@@ -469,6 +491,14 @@ async function handleRequestOtp({
       body: JSON.stringify({ email }),
     });
     if (!res.ok) return { error: `server ${res.status}` };
+    // Dev mode: server skips OTP and returns a token directly (200 + JSON body).
+    // Normal mode: returns 204 No Content.
+    if (res.status === 200) {
+      const { token } = (await res.json()) as { token: string };
+      const settings = await getSettings();
+      await saveSettings({ ...settings, serverEmail: email, serverToken: token });
+      return { success: true, token };
+    }
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : String(e) };
@@ -494,7 +524,9 @@ async function handleVerifyOtp({
     const { token } = (await res.json()) as { token: string };
     const settings = await getSettings();
     await saveSettings({ ...settings, serverToken: token });
-    return { success: true };
+    // Return the token so popup callers can update their local state without
+    // waiting for the storage.onChanged event to propagate.
+    return { success: true, token };
   } catch (e) {
     return { error: e instanceof Error ? e.message : String(e) };
   }

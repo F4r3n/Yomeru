@@ -21,6 +21,7 @@ members = [
     "app/shared",
     "app/web",
     "app/android",
+    "app/extension",
     "xtask",
 ]
 default-members = [

@@ -107,6 +107,7 @@ fn main() -> Result<()> {
             build_wasm(&root, "jmdict-wasm", &profile)?;
             build_wasm(&root, "srs-wasm", &profile)?;
             build_wasm(&root, "kanjidic-wasm", &profile)?;
+            build_extension_wasm(&root, &profile)?;
         }
 
         Cmd::DownloadDict { output_dir } => {
@@ -148,6 +149,7 @@ fn main() -> Result<()> {
             build_wasm(&root, "srs-wasm", "release")?;
             build_wasm(&root, "kanjidic-wasm", "release")?;
             build_wasm(&root, "examples-wasm", "release")?;
+            build_extension_wasm(&root, "release")?;
             build_js(&root)?;
         }
 
@@ -178,6 +180,8 @@ fn main() -> Result<()> {
                     "examples-wasm",
                     "--exclude",
                     "yomeru-android",
+                    "--exclude",
+                    "yomeru-extension",
                 ])
                 .current_dir(&root))?;
         }
@@ -266,6 +270,8 @@ fn package(root: &Path) -> Result<()> {
     let static_files = [
         "manifest.json",
         "options.html",
+        "options-dx.html",
+        "options-dx-loader.js",
         "_generated/jmdict-wasm/jmdict_wasm.js",
         "_generated/jmdict-wasm/jmdict_wasm_bg.wasm",
         "_generated/srs-wasm/srs_wasm.js",
@@ -277,6 +283,8 @@ fn package(root: &Path) -> Result<()> {
         "_generated/examples-wasm/examples_wasm.js",
         "_generated/examples-wasm/examples_wasm_bg.wasm",
         "data/examples.bin",
+        "_generated/yomeru-extension/yomeru_extension.js",
+        "_generated/yomeru-extension/yomeru_extension_bg.wasm",
     ];
 
     for rel in &static_files {
@@ -393,6 +401,25 @@ fn build_js(root: &Path) -> Result<()> {
         .args(["run", "build"])
         .current_dir(&ext_dir))?;
     eprintln!("Built extension JS/Svelte → extension/{{content,background,options}}/");
+    Ok(())
+}
+
+fn build_extension_wasm(root: &Path, profile: &str) -> Result<()> {
+    let out_dir = root.join("extension/_generated/yomeru-extension");
+    let crate_dir = root.join("app/extension");
+    let profile_flag = if profile == "release" { "--release" } else { "--dev" };
+    run(Command::new("wasm-pack")
+        .args([
+            "build",
+            crate_dir.to_str().unwrap(),
+            "--target",
+            "web",
+            "--out-dir",
+            out_dir.to_str().unwrap(),
+            profile_flag,
+        ])
+        .current_dir(root))?;
+    eprintln!("Built yomeru-extension → {}", out_dir.display());
     Ok(())
 }
 

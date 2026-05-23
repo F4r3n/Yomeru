@@ -55,7 +55,9 @@
         "_generated/examples-wasm/examples_wasm_bg.wasm",
         "data/jmdict.bin",
         "data/kanjidic.bin",
-        "data/examples.bin"
+        "data/examples.bin",
+        "_generated/yomeru-extension/yomeru_extension.js",
+        "_generated/yomeru-extension/yomeru_extension_bg.wasm"
       ],
       "matches": [
         "*://*/*"
