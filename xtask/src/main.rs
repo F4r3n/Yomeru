@@ -270,7 +270,6 @@ fn package(root: &Path) -> Result<()> {
     let static_files = [
         "manifest.json",
         "options.html",
-        "options-dx.html",
         "options-dx-loader.js",
         "_generated/jmdict-wasm/jmdict_wasm.js",
         "_generated/jmdict-wasm/jmdict_wasm_bg.wasm",

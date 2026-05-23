@@ -1,5 +1,4 @@
 import { defineConfig } from "vite";
-import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { execSync } from "child_process";
@@ -11,9 +10,11 @@ const commitHash = (() => {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Builds background (ESM) and options page (ESM + CSS injected).
+// Builds the background service worker (ESM).
+// The options popup loads the pre-built Dioxus WASM bundle directly via
+// options-dx-loader.js — no Vite processing needed for the options entry.
 export default defineConfig({
-  plugins: [svelte({ emitCss: false })],
+  plugins: [],
   define: {
     __VERSION__: JSON.stringify(process.env.npm_package_version ?? "0.0.0"),
     __COMMIT__: JSON.stringify(commitHash),
@@ -25,7 +26,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         background: resolve(__dirname, "src/background/background.ts"),
-        options: resolve(__dirname, "src/options/main.ts"),
       },
       output: {
         entryFileNames: "[name].js",
