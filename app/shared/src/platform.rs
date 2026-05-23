@@ -8,8 +8,6 @@
 //! still see `dict::lookup(word)` etc.; only the implementations move.
 
 use std::cell::RefCell;
-use std::future::Future;
-use std::pin::Pin;
 use std::rc::Rc;
 
 use examples_types::ExampleEntry;
@@ -24,35 +22,18 @@ use wasm_bindgen_futures::spawn_local;
 
 use crate::settings::{default_server_url, SrsSettings, SETTINGS_KEY};
 use crate::types::SrsCard;
-
-pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + 'a>>;
+use async_trait::async_trait;
 
 /// Read-only dictionary surface. Web/android use [`DefaultPlatform`] which
 /// posts JSON to the yomeru-server; the extension implements this against
 /// `browser.runtime.sendMessage` so its in-WASM dicts service the request.
+#[async_trait(?Send)]
 pub trait DictClient {
-    fn lookup<'a>(
-        &'a self,
-        word: &'a str,
-    ) -> BoxFuture<'a, Result<Vec<WordEntry>, String>>;
-    fn lookup_many<'a>(
-        &'a self,
-        words: &'a [String],
-    ) -> BoxFuture<'a, Result<Vec<Vec<WordEntry>>, String>>;
-    fn lookup_prefix<'a>(
-        &'a self,
-        text: &'a str,
-        max: u8,
-    ) -> BoxFuture<'a, Result<Vec<WordEntry>, String>>;
-    fn kanji_for<'a>(
-        &'a self,
-        word: &'a str,
-    ) -> BoxFuture<'a, Result<Vec<KanjiEntry>, String>>;
-    fn examples_for<'a>(
-        &'a self,
-        word: &'a str,
-        max: u8,
-    ) -> BoxFuture<'a, Result<Vec<ExampleEntry>, String>>;
+    async fn lookup(&self, word: &str) -> Result<Vec<WordEntry>, String>;
+    async fn lookup_many(&self, words: &[String]) -> Result<Vec<Vec<WordEntry>>, String>;
+    async fn lookup_prefix(&self, text: &str, max: u8) -> Result<Vec<WordEntry>, String>;
+    async fn kanji_for(&self, word: &str) -> Result<Vec<KanjiEntry>, String>;
+    async fn examples_for(&self, word: &str, max: u8) -> Result<Vec<ExampleEntry>, String>;
 }
 
 /// Settings persistence + sync orchestration. `load()` is intentionally
@@ -60,36 +41,28 @@ pub trait DictClient {
 /// snippets) stay tight; implementations back it with a cached snapshot of
 /// the actual store. Async [`load_async`] is for one-shot hydration at
 /// startup.
+///
+
+#[async_trait(?Send)]
 pub trait SettingsStore {
     /// Synchronous read off the in-process cache.
     fn load(&self) -> SrsSettings;
     /// Async refresh from the underlying store. Web/android tail this on
     /// startup; the extension uses it to re-hydrate when the background
     /// pushes a `storage.onChanged` event.
-    fn load_async<'a>(&'a self) -> BoxFuture<'a, Result<SrsSettings, String>>;
-    fn save<'a>(
-        &'a self,
-        s: SrsSettings,
-    ) -> BoxFuture<'a, Result<(), String>>;
+    async fn load_async(&self) -> Result<SrsSettings, String>;
+    async fn save(&self, s: SrsSettings) -> Result<(), String>;
     /// Arm a debounced auto-sync. No-op in cores that have no server
     /// configured.
     fn schedule_sync(&self);
     /// Force an immediate sync, bypassing the debounce. Used by the "Sync
     /// now" button.
-    fn sync_now<'a>(&'a self) -> BoxFuture<'a, Result<String, String>>;
+    async fn sync_now(&self) -> Result<String, String>;
     /// One-shot auth: ask the server to email an OTP. `Ok(Some(token))`
     /// means dev mode — server skipped the email and handed back a token.
-    fn request_otp<'a>(
-        &'a self,
-        server_url: &'a str,
-        email: &'a str,
-    ) -> BoxFuture<'a, Result<Option<String>, String>>;
-    fn verify_otp<'a>(
-        &'a self,
-        server_url: &'a str,
-        email: &'a str,
-        code: &'a str,
-    ) -> BoxFuture<'a, Result<String, String>>;
+    async fn request_otp(&self, server_url: &str, email: &str) -> Result<Option<String>, String>;
+    async fn verify_otp(&self, server_url: &str, email: &str, code: &str)
+        -> Result<String, String>;
 }
 
 /// What `routes/*` read out of Dioxus context. Cheap to clone — both fields
@@ -174,61 +147,33 @@ async fn post_json<B: Serialize, R: for<'de> Deserialize<'de>>(
     res.json().await.map_err(|e| e.to_string())
 }
 
+#[async_trait(?Send)]
 impl DictClient for HttpDict {
-    fn lookup<'a>(
-        &'a self,
-        word: &'a str,
-    ) -> BoxFuture<'a, Result<Vec<WordEntry>, String>> {
-        Box::pin(async move {
-            let mut results = self.lookup_many(&[word.to_owned()]).await?;
-            Ok(results.pop().unwrap_or_default())
-        })
+    async fn lookup(&self, word: &str) -> Result<Vec<WordEntry>, String> {
+        let mut results = self.lookup_many(&[word.to_owned()]).await?;
+        Ok(results.pop().unwrap_or_default())
     }
 
-    fn lookup_many<'a>(
-        &'a self,
-        words: &'a [String],
-    ) -> BoxFuture<'a, Result<Vec<Vec<WordEntry>>, String>> {
-        Box::pin(async move {
-            let parsed: LookupResponse =
-                post_json("/api/lookup", &LookupBody { words }).await?;
-            Ok(parsed.results)
-        })
+    async fn lookup_many(&self, words: &[String]) -> Result<Vec<Vec<WordEntry>>, String> {
+        let parsed: LookupResponse = post_json("/api/lookup", &LookupBody { words }).await?;
+        Ok(parsed.results)
     }
 
-    fn lookup_prefix<'a>(
-        &'a self,
-        text: &'a str,
-        max: u8,
-    ) -> BoxFuture<'a, Result<Vec<WordEntry>, String>> {
-        Box::pin(async move {
-            let parsed: LookupPrefixResponse =
-                post_json("/api/lookup-prefix", &LookupPrefixBody { text, max }).await?;
-            Ok(parsed.results)
-        })
+    async fn lookup_prefix(&self, text: &str, max: u8) -> Result<Vec<WordEntry>, String> {
+        let parsed: LookupPrefixResponse =
+            post_json("/api/lookup-prefix", &LookupPrefixBody { text, max }).await?;
+        Ok(parsed.results)
     }
 
-    fn kanji_for<'a>(
-        &'a self,
-        word: &'a str,
-    ) -> BoxFuture<'a, Result<Vec<KanjiEntry>, String>> {
-        Box::pin(async move {
-            let parsed: KanjiResponse =
-                post_json("/api/kanji", &WordBody { word }).await?;
-            Ok(parsed.entries)
-        })
+    async fn kanji_for(&self, word: &str) -> Result<Vec<KanjiEntry>, String> {
+        let parsed: KanjiResponse = post_json("/api/kanji", &WordBody { word }).await?;
+        Ok(parsed.entries)
     }
 
-    fn examples_for<'a>(
-        &'a self,
-        word: &'a str,
-        max: u8,
-    ) -> BoxFuture<'a, Result<Vec<ExampleEntry>, String>> {
-        Box::pin(async move {
-            let parsed: ExamplesResponse =
-                post_json("/api/examples", &WordMaxBody { word, max }).await?;
-            Ok(parsed.entries)
-        })
+    async fn examples_for(&self, word: &str, max: u8) -> Result<Vec<ExampleEntry>, String> {
+        let parsed: ExamplesResponse =
+            post_json("/api/examples", &WordMaxBody { word, max }).await?;
+        Ok(parsed.entries)
     }
 }
 
@@ -292,9 +237,7 @@ fn join_url(base: &str, path: &str) -> String {
 }
 
 async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
-    use crate::idb::{
-        apply_remote_deletions, clear_tombstones, get_all_cards, get_all_tombstones,
-    };
+    use crate::idb::{apply_remote_deletions, clear_tombstones, get_all_cards, get_all_tombstones};
 
     let s: SrsSettings = LocalStorage::get(SETTINGS_KEY).unwrap_or_default();
     if s.server_url.is_empty() || s.server_token.is_empty() {
@@ -379,6 +322,7 @@ async fn put_cards_skip_older(remote: &[SrsCard]) -> Result<(), String> {
         .map_err(|e| format!("put cards: {e}"))
 }
 
+#[async_trait(?Send)]
 impl SettingsStore for LocalSettings {
     fn load(&self) -> SrsSettings {
         let mut s: SrsSettings = LocalStorage::get(SETTINGS_KEY).unwrap_or_default();
@@ -388,17 +332,12 @@ impl SettingsStore for LocalSettings {
         s
     }
 
-    fn load_async<'a>(&'a self) -> BoxFuture<'a, Result<SrsSettings, String>> {
-        Box::pin(async move { Ok(self.load()) })
+    async fn load_async(&self) -> Result<SrsSettings, String> {
+        Ok(self.load())
     }
 
-    fn save<'a>(
-        &'a self,
-        s: SrsSettings,
-    ) -> BoxFuture<'a, Result<(), String>> {
-        Box::pin(async move {
-            LocalStorage::set(SETTINGS_KEY, s).map_err(|e| e.to_string())
-        })
+    async fn save(&self, s: SrsSettings) -> Result<(), String> {
+        LocalStorage::set(SETTINGS_KEY, s).map_err(|e| e.to_string())
     }
 
     fn schedule_sync(&self) {
@@ -443,71 +382,59 @@ impl SettingsStore for LocalSettings {
         self.state.borrow_mut().pending = Some(t);
     }
 
-    fn sync_now<'a>(&'a self) -> BoxFuture<'a, Result<String, String>> {
-        Box::pin(async move {
-            // Cancel any pending debounce — we're about to do the work now.
-            if let Some(t) = self.state.borrow_mut().pending.take() {
-                t.cancel();
-            }
-            if self.state.borrow().in_flight {
-                self.state.borrow_mut().retry = true;
-                return Ok(
-                    "Sync already in progress — will repeat when it finishes.".into(),
-                );
-            }
-            self.state.borrow_mut().in_flight = true;
-            let result = do_sync(self.state.clone()).await;
-            self.state.borrow_mut().in_flight = false;
-            if std::mem::replace(&mut self.state.borrow_mut().retry, false) {
-                self.schedule_sync();
-            }
-            result
-        })
+    async fn sync_now(&self) -> Result<String, String> {
+        // Cancel any pending debounce — we're about to do the work now.
+        if let Some(t) = self.state.borrow_mut().pending.take() {
+            t.cancel();
+        }
+        if self.state.borrow().in_flight {
+            self.state.borrow_mut().retry = true;
+            return Ok("Sync already in progress — will repeat when it finishes.".into());
+        }
+        self.state.borrow_mut().in_flight = true;
+        let result = do_sync(self.state.clone()).await;
+        self.state.borrow_mut().in_flight = false;
+        if std::mem::replace(&mut self.state.borrow_mut().retry, false) {
+            self.schedule_sync();
+        }
+        result
     }
 
-    fn request_otp<'a>(
-        &'a self,
-        server_url: &'a str,
-        email: &'a str,
-    ) -> BoxFuture<'a, Result<Option<String>, String>> {
-        Box::pin(async move {
-            let res = Request::post(&join_url(server_url, "/api/auth/request"))
-                .json(&AuthRequestBody { email })
-                .map_err(|e| e.to_string())?
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            if !res.ok() {
-                return Err(format!("server {}", res.status()));
-            }
-            if res.status() == 204 {
-                return Ok(None);
-            }
-            let parsed: VerifyResponse = res.json().await.map_err(|e| e.to_string())?;
-            Ok(Some(parsed.token))
-        })
+    async fn request_otp(&self, server_url: &str, email: &str) -> Result<Option<String>, String> {
+        let res = Request::post(&join_url(server_url, "/api/auth/request"))
+            .json(&AuthRequestBody { email })
+            .map_err(|e| e.to_string())?
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+        if !res.ok() {
+            return Err(format!("server {}", res.status()));
+        }
+        if res.status() == 204 {
+            return Ok(None);
+        }
+        let parsed: VerifyResponse = res.json().await.map_err(|e| e.to_string())?;
+        Ok(Some(parsed.token))
     }
 
-    fn verify_otp<'a>(
-        &'a self,
-        server_url: &'a str,
-        email: &'a str,
-        code: &'a str,
-    ) -> BoxFuture<'a, Result<String, String>> {
-        Box::pin(async move {
-            let res = Request::post(&join_url(server_url, "/api/auth/verify"))
-                .json(&VerifyBody { email, code })
-                .map_err(|e| e.to_string())?
-                .send()
-                .await
-                .map_err(|e| e.to_string())?;
-            if !res.ok() {
-                let status = res.status();
-                let text = res.text().await.unwrap_or_default();
-                return Err(format!("server {status}: {text}"));
-            }
-            let parsed: VerifyResponse = res.json().await.map_err(|e| e.to_string())?;
-            Ok(parsed.token)
-        })
+    async fn verify_otp(
+        &self,
+        server_url: &str,
+        email: &str,
+        code: &str,
+    ) -> Result<String, String> {
+        let res = Request::post(&join_url(server_url, "/api/auth/verify"))
+            .json(&VerifyBody { email, code })
+            .map_err(|e| e.to_string())?
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+        if !res.ok() {
+            let status = res.status();
+            let text = res.text().await.unwrap_or_default();
+            return Err(format!("server {status}: {text}"));
+        }
+        let parsed: VerifyResponse = res.json().await.map_err(|e| e.to_string())?;
+        Ok(parsed.token)
     }
 }

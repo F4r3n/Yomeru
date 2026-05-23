@@ -1,5 +1,6 @@
+use anyhow::Context;
 use rusqlite::{params, Connection};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 pub type Db = Arc<Mutex<Connection>>;
 
@@ -8,8 +9,14 @@ const OTP_COOLDOWN_MS: i64 = 3_600_000;
 // 10-minute TTL for a generated OTP.
 const OTP_TTL_MS: i64 = 600_000;
 
-pub fn init_db(path: &str) -> Db {
-    let conn = Connection::open(path).expect("open sqlite db");
+/// `PoisonError` carries the guard and isn't `Send`, so it can't ride the
+/// blanket `From` into `anyhow::Error`. Lift it via a short message.
+fn lock(db: &Db) -> anyhow::Result<MutexGuard<'_, Connection>> {
+    db.lock().map_err(|e| anyhow::anyhow!("db mutex poisoned: {e}"))
+}
+
+pub fn init_db(path: &str) -> anyhow::Result<Db> {
+    let conn = Connection::open(path).with_context(|| format!("open sqlite db at {path}"))?;
     conn.execute_batch(
         "PRAGMA journal_mode=WAL;
          CREATE TABLE IF NOT EXISTS cards (
@@ -33,13 +40,13 @@ pub fn init_db(path: &str) -> Db {
              deleted_at  INTEGER NOT NULL
          );",
     )
-    .expect("init db schema");
-    Arc::new(Mutex::new(conn))
+    .context("init db schema")?;
+    Ok(Arc::new(Mutex::new(conn)))
 }
 
-/// Returns Err if the per-email 1-hour cooldown is still active.
-pub fn store_otp(db: &Db, email: &str, code: &str, now_ms: i64) -> Result<(), ()> {
-    let conn = db.lock().unwrap();
+/// `Ok(true)` = stored, `Ok(false)` = still in 1-hour cooldown, `Err` = db error.
+pub fn store_otp(db: &Db, email: &str, code: &str, now_ms: i64) -> anyhow::Result<bool> {
+    let conn = lock(db)?;
     let last: Option<i64> = conn
         .query_row(
             "SELECT last_requested FROM otps WHERE email = ?1",
@@ -49,7 +56,7 @@ pub fn store_otp(db: &Db, email: &str, code: &str, now_ms: i64) -> Result<(), ()
         .ok();
     if let Some(t) = last {
         if now_ms - t < OTP_COOLDOWN_MS {
-            return Err(());
+            return Ok(false);
         }
     }
     conn.execute(
@@ -57,13 +64,13 @@ pub fn store_otp(db: &Db, email: &str, code: &str, now_ms: i64) -> Result<(), ()
          VALUES (?1, ?2, ?3, ?4)",
         params![email, code, now_ms + OTP_TTL_MS, now_ms],
     )
-    .unwrap();
-    Ok(())
+    .context("insert otp")?;
+    Ok(true)
 }
 
 /// Validates code and expiry, deletes the OTP row on success.
-pub fn verify_otp(db: &Db, email: &str, code: &str, now_ms: i64) -> bool {
-    let conn = db.lock().unwrap();
+pub fn verify_otp(db: &Db, email: &str, code: &str, now_ms: i64) -> anyhow::Result<bool> {
+    let conn = lock(db)?;
     let row: Option<(String, i64)> = conn
         .query_row(
             "SELECT code, expires_at FROM otps WHERE email = ?1",
@@ -71,41 +78,56 @@ pub fn verify_otp(db: &Db, email: &str, code: &str, now_ms: i64) -> bool {
             |r| Ok((r.get(0)?, r.get(1)?)),
         )
         .ok();
-    match row {
+    Ok(match row {
         Some((stored, exp)) if stored == code && now_ms < exp => {
-            let _ = conn.execute("DELETE FROM otps WHERE email = ?1", params![email]);
+            conn.execute("DELETE FROM otps WHERE email = ?1", params![email])
+                .context("delete otp on verify")?;
             true
         }
         _ => false,
-    }
+    })
 }
 
-pub fn create_session(db: &Db, token: &str, email: &str, expires_at: i64) {
-    let conn = db.lock().unwrap();
+pub fn create_session(
+    db: &Db,
+    token: &str,
+    email: &str,
+    expires_at: i64,
+) -> anyhow::Result<()> {
+    let conn = lock(db)?;
     conn.execute(
         "INSERT OR REPLACE INTO sessions (token, email, expires_at) VALUES (?1, ?2, ?3)",
         params![token, email, expires_at],
     )
-    .unwrap();
+    .context("insert session")?;
+    Ok(())
 }
 
-/// Returns the email associated with a valid (non-expired) session token.
-pub fn validate_session(db: &Db, token: &str, now_ms: i64) -> Option<String> {
-    let conn = db.lock().unwrap();
-    conn.query_row(
+/// Returns the email associated with a valid (non-expired) session token, or
+/// `Ok(None)` if there is no matching live session.
+pub fn validate_session(
+    db: &Db,
+    token: &str,
+    now_ms: i64,
+) -> anyhow::Result<Option<String>> {
+    let conn = lock(db)?;
+    match conn.query_row(
         "SELECT email FROM sessions WHERE token = ?1 AND expires_at > ?2",
         params![token, now_ms],
-        |r| r.get(0),
-    )
-    .ok()
+        |r| r.get::<_, String>(0),
+    ) {
+        Ok(email) => Ok(Some(email)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(anyhow::Error::from(e).context("validate session")),
+    }
 }
 
 /// Upserts incoming cards: replaces a stored card only if the incoming one
 /// is newer (higher last_review_ms; NULL treated as 0). Any tombstone for the
 /// same id is cleared — a re-add wins over an old delete.
-pub fn upsert_cards(db: &Db, cards: &[serde_json::Value]) {
-    let mut conn = db.lock().unwrap();
-    let tx = conn.transaction().unwrap();
+pub fn upsert_cards(db: &Db, cards: &[serde_json::Value]) -> anyhow::Result<()> {
+    let mut conn = lock(db)?;
+    let tx = conn.transaction().context("begin upsert tx")?;
     for card in cards {
         let id = match card.get("id").and_then(|v| v.as_str()) {
             Some(s) if !s.is_empty() => s,
@@ -121,64 +143,72 @@ pub fn upsert_cards(db: &Db, cards: &[serde_json::Value]) {
              WHERE COALESCE(excluded.last_review_ms, 0) >= COALESCE(cards.last_review_ms, 0)",
             params![id, data, last_review_ms],
         )
-        .unwrap();
+        .context("upsert card")?;
         tx.execute("DELETE FROM deletions WHERE id = ?1", params![id])
-            .unwrap();
+            .context("clear matching tombstone")?;
     }
-    tx.commit().unwrap();
+    tx.commit().context("commit upsert tx")?;
+    Ok(())
 }
 
-pub fn get_all_cards(db: &Db) -> Vec<serde_json::Value> {
-    let conn = db.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT data FROM cards").unwrap();
-    stmt.query_map([], |r| r.get::<_, String>(0))
-        .unwrap()
+pub fn get_all_cards(db: &Db) -> anyhow::Result<Vec<serde_json::Value>> {
+    let conn = lock(db)?;
+    let mut stmt = conn.prepare("SELECT data FROM cards").context("prepare get_all_cards")?;
+    let rows = stmt
+        .query_map([], |r| r.get::<_, String>(0))
+        .context("query_map get_all_cards")?;
+    Ok(rows
         .filter_map(|r| r.ok())
         .filter_map(|s| serde_json::from_str(&s).ok())
-        .collect()
+        .collect())
 }
 
 /// Applies incoming tombstones: drops each id from `cards` and records the
 /// tombstone so other clients can replay the delete.
-pub fn apply_deletions(db: &Db, ids: &[String], now_ms: i64) {
+pub fn apply_deletions(db: &Db, ids: &[String], now_ms: i64) -> anyhow::Result<()> {
     if ids.is_empty() {
-        return;
+        return Ok(());
     }
-    let mut conn = db.lock().unwrap();
-    let tx = conn.transaction().unwrap();
+    let mut conn = lock(db)?;
+    let tx = conn.transaction().context("begin deletions tx")?;
     for id in ids {
         if id.is_empty() {
             continue;
         }
         tx.execute("DELETE FROM cards WHERE id = ?1", params![id])
-            .unwrap();
+            .context("delete card")?;
         tx.execute(
             "INSERT INTO deletions (id, deleted_at) VALUES (?1, ?2)
              ON CONFLICT(id) DO UPDATE SET deleted_at = excluded.deleted_at",
             params![id, now_ms],
         )
-        .unwrap();
+        .context("upsert tombstone")?;
     }
-    tx.commit().unwrap();
+    tx.commit().context("commit deletions tx")?;
+    Ok(())
 }
 
-pub fn get_all_deletions(db: &Db) -> Vec<String> {
-    let conn = db.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id FROM deletions").unwrap();
-    stmt.query_map([], |r| r.get::<_, String>(0))
-        .unwrap()
-        .filter_map(|r| r.ok())
-        .collect()
+pub fn get_all_deletions(db: &Db) -> anyhow::Result<Vec<String>> {
+    let conn = lock(db)?;
+    let mut stmt = conn
+        .prepare("SELECT id FROM deletions")
+        .context("prepare get_all_deletions")?;
+    let rows = stmt
+        .query_map([], |r| r.get::<_, String>(0))
+        .context("query_map get_all_deletions")?;
+    Ok(rows.filter_map(|r| r.ok()).collect())
 }
 
 /// Prunes tombstones older than `cutoff_ms`. Called at startup to keep the
 /// table bounded; 90 days is well over any reasonable offline window.
-pub fn prune_old_deletions(db: &Db, cutoff_ms: i64) {
-    let conn = db.lock().unwrap();
-    let _ = conn.execute(
+pub fn prune_old_deletions(db: &Db, cutoff_ms: i64) -> anyhow::Result<()> {
+    let conn = lock(db)?;
+    conn.execute(
         "DELETE FROM deletions WHERE deleted_at < ?1",
         params![cutoff_ms],
-    );
+    )
+    .context("prune deletions")?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -210,8 +240,8 @@ mod tests {
     #[test]
     fn upsert_inserts_new_cards() {
         let db = fresh_db();
-        upsert_cards(&db, &[card("a::recognition", Some(100))]);
-        let stored = get_all_cards(&db);
+        upsert_cards(&db, &[card("a::recognition", Some(100))]).unwrap();
+        let stored = get_all_cards(&db).unwrap();
         assert_eq!(stored.len(), 1);
         assert_eq!(stored[0]["id"], "a::recognition");
     }
@@ -219,21 +249,21 @@ mod tests {
     #[test]
     fn upsert_keeps_newer_last_review() {
         let db = fresh_db();
-        upsert_cards(&db, &[card("a::recognition", Some(100))]);
+        upsert_cards(&db, &[card("a::recognition", Some(100))]).unwrap();
         // Older incoming write should be ignored.
-        upsert_cards(&db, &[card("a::recognition", Some(50))]);
-        let stored = get_all_cards(&db);
+        upsert_cards(&db, &[card("a::recognition", Some(50))]).unwrap();
+        let stored = get_all_cards(&db).unwrap();
         assert_eq!(stored[0]["last_review_ms"], 100);
     }
 
     #[test]
     fn upsert_replaces_with_equal_or_newer_last_review() {
         let db = fresh_db();
-        upsert_cards(&db, &[card("a::recognition", Some(100))]);
+        upsert_cards(&db, &[card("a::recognition", Some(100))]).unwrap();
         let mut newer = card("a::recognition", Some(200));
         newer["word"] = json!("犬");
-        upsert_cards(&db, &[newer]);
-        let stored = get_all_cards(&db);
+        upsert_cards(&db, &[newer]).unwrap();
+        let stored = get_all_cards(&db).unwrap();
         assert_eq!(stored[0]["word"], "犬");
         assert_eq!(stored[0]["last_review_ms"], 200);
     }
@@ -241,10 +271,13 @@ mod tests {
     #[test]
     fn apply_deletions_removes_card_and_records_tombstone() {
         let db = fresh_db();
-        upsert_cards(&db, &[card("a::recognition", Some(100))]);
-        apply_deletions(&db, &["a::recognition".to_string()], 1_700_000_000_000);
-        assert!(get_all_cards(&db).is_empty());
-        assert_eq!(get_all_deletions(&db), vec!["a::recognition".to_string()]);
+        upsert_cards(&db, &[card("a::recognition", Some(100))]).unwrap();
+        apply_deletions(&db, &["a::recognition".to_string()], 1_700_000_000_000).unwrap();
+        assert!(get_all_cards(&db).unwrap().is_empty());
+        assert_eq!(
+            get_all_deletions(&db).unwrap(),
+            vec!["a::recognition".to_string()]
+        );
     }
 
     #[test]
@@ -253,34 +286,34 @@ mod tests {
         // back a card after deleting it would see the resurrection wiped
         // out on the next sync.
         let db = fresh_db();
-        apply_deletions(&db, &["a::recognition".to_string()], 1_000);
-        upsert_cards(&db, &[card("a::recognition", Some(2_000))]);
-        assert_eq!(get_all_cards(&db).len(), 1);
-        assert!(get_all_deletions(&db).is_empty());
+        apply_deletions(&db, &["a::recognition".to_string()], 1_000).unwrap();
+        upsert_cards(&db, &[card("a::recognition", Some(2_000))]).unwrap();
+        assert_eq!(get_all_cards(&db).unwrap().len(), 1);
+        assert!(get_all_deletions(&db).unwrap().is_empty());
     }
 
     #[test]
     fn apply_deletions_is_idempotent() {
         let db = fresh_db();
-        apply_deletions(&db, &["a::recognition".to_string()], 100);
-        apply_deletions(&db, &["a::recognition".to_string()], 200);
-        let tombs = get_all_deletions(&db);
+        apply_deletions(&db, &["a::recognition".to_string()], 100).unwrap();
+        apply_deletions(&db, &["a::recognition".to_string()], 200).unwrap();
+        let tombs = get_all_deletions(&db).unwrap();
         assert_eq!(tombs.len(), 1);
     }
 
     #[test]
     fn apply_deletions_skips_empty_ids() {
         let db = fresh_db();
-        apply_deletions(&db, &[String::new(), "a".into()], 100);
-        assert_eq!(get_all_deletions(&db), vec!["a".to_string()]);
+        apply_deletions(&db, &[String::new(), "a".into()], 100).unwrap();
+        assert_eq!(get_all_deletions(&db).unwrap(), vec!["a".to_string()]);
     }
 
     #[test]
     fn prune_drops_only_old_tombstones() {
         let db = fresh_db();
-        apply_deletions(&db, &["old".into()], 100);
-        apply_deletions(&db, &["recent".into()], 5_000);
-        prune_old_deletions(&db, 1_000);
-        assert_eq!(get_all_deletions(&db), vec!["recent".to_string()]);
+        apply_deletions(&db, &["old".into()], 100).unwrap();
+        apply_deletions(&db, &["recent".into()], 5_000).unwrap();
+        prune_old_deletions(&db, 1_000).unwrap();
+        assert_eq!(get_all_deletions(&db).unwrap(), vec!["recent".to_string()]);
     }
 }

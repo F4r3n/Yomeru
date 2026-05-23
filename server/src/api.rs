@@ -3,13 +3,14 @@ use std::net::SocketAddr;
 use axum::{
     extract::{ConnectInfo, Json, State},
     http::{HeaderMap, StatusCode},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
 };
 use examples_types::ExampleEntry;
 use jmdict_types::WordEntry;
 use kanjidic_types::KanjiEntry;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
+use tracing::{error, info};
 
 use crate::config::Config;
 use crate::db;
@@ -47,7 +48,7 @@ pub struct SyncResponse {
 fn now_ms() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
+        .unwrap_or_default()
         .as_millis() as i64
 }
 
@@ -67,32 +68,54 @@ fn extract_bearer(headers: &HeaderMap) -> Option<&str> {
         .and_then(|s| s.strip_prefix("Bearer "))
 }
 
+/// Runs `f` on a blocking thread and folds both panic (`JoinError`) and
+/// fallible result into a single 500 response. The label is logged so it's
+/// possible to tell which call failed without a stack trace.
+async fn run_blocking<F, T>(label: &'static str, f: F) -> Result<T, Response>
+where
+    F: FnOnce() -> anyhow::Result<T> + Send + 'static,
+    T: Send + 'static,
+{
+    match tokio::task::spawn_blocking(f).await {
+        Ok(Ok(v)) => Ok(v),
+        Ok(Err(e)) => {
+            error!(op = label, error = ?e, "db call failed");
+            Err(StatusCode::INTERNAL_SERVER_ERROR.into_response())
+        }
+        Err(e) => {
+            error!(op = label, error = ?e, "blocking task panicked");
+            Err(StatusCode::INTERNAL_SERVER_ERROR.into_response())
+        }
+    }
+}
+
 pub async fn auth_request_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Json(body): Json<AuthRequestBody>,
-) -> impl IntoResponse {
+) -> Result<Response, Response> {
     if state.limiter.check_key(&addr.ip()).is_err() {
-        return StatusCode::TOO_MANY_REQUESTS.into_response();
+        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
 
     let email = body.email.trim().to_lowercase();
     if email.is_empty() {
-        return StatusCode::BAD_REQUEST.into_response();
+        return Err(StatusCode::BAD_REQUEST.into_response());
     }
 
     // Dev mode: skip OTP+SMTP entirely. Issue a session token now and
     // hand it to the client so the UI can authenticate in one step.
     if state.cfg.dev_mode {
-        println!("[yomeru-server] [dev] auto-issuing token for {email}");
+        info!(%email, "dev mode: auto-issuing token");
         let token = gen_token();
         let expires_at = now_ms() + 30 * 24 * 3_600_000_i64;
         let db = state.db.clone();
         let token_clone = token.clone();
-        tokio::task::spawn_blocking(move || db::create_session(&db, &token_clone, &email, expires_at))
-            .await
-            .unwrap();
-        return Json(VerifyResponse { token }).into_response();
+        run_blocking("dev_mode_create_session", move || {
+            db::create_session(&db, &token_clone, &email, expires_at)
+        })
+        .await?;
+        return Ok(Json(VerifyResponse { token }).into_response());
     }
 
     let code = gen_code();
@@ -101,29 +124,31 @@ pub async fn auth_request_handler(
     let db = state.db.clone();
     let email_clone = email.clone();
     let code_clone = code.clone();
-    let stored = tokio::task::spawn_blocking(move || db::store_otp(&db, &email_clone, &code_clone, now))
-        .await
-        .unwrap();
+    let stored = run_blocking("store_otp", move || {
+        db::store_otp(&db, &email_clone, &code_clone, now)
+    })
+    .await?;
 
-    if stored.is_err() {
-        return StatusCode::TOO_MANY_REQUESTS.into_response();
+    if !stored {
+        // Per-email cooldown is still active.
+        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
 
     if let Err(e) = send_otp_email(&state.cfg, &email, &code).await {
-        eprintln!("[yomeru-server] email send failed: {e}");
-        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        error!(%email, error = ?e, "email send failed");
+        return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
     }
 
-    StatusCode::NO_CONTENT.into_response()
+    Ok(StatusCode::NO_CONTENT.into_response())
 }
 
 pub async fn auth_verify_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Json(body): Json<VerifyBody>,
-) -> impl IntoResponse {
+) -> Result<Response, Response> {
     if state.limiter.check_key(&addr.ip()).is_err() {
-        return StatusCode::TOO_MANY_REQUESTS.into_response();
+        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
 
     let email = body.email.trim().to_lowercase();
@@ -132,16 +157,17 @@ pub async fn auth_verify_handler(
 
     let db = state.db.clone();
     let email_clone = email.clone();
-    let valid = tokio::task::spawn_blocking(move || db::verify_otp(&db, &email_clone, &code, now))
-        .await
-        .unwrap();
+    let valid = run_blocking("verify_otp", move || {
+        db::verify_otp(&db, &email_clone, &code, now)
+    })
+    .await?;
 
     if !valid {
-        return (
+        return Err((
             StatusCode::UNAUTHORIZED,
             Json(serde_json::json!({ "error": "invalid or expired code" })),
         )
-            .into_response();
+            .into_response());
     }
 
     let token = gen_token();
@@ -149,11 +175,12 @@ pub async fn auth_verify_handler(
 
     let db = state.db.clone();
     let token_clone = token.clone();
-    tokio::task::spawn_blocking(move || db::create_session(&db, &token_clone, &email, expires_at))
-        .await
-        .unwrap();
+    run_blocking("create_session", move || {
+        db::create_session(&db, &token_clone, &email, expires_at)
+    })
+    .await?;
 
-    Json(VerifyResponse { token }).into_response()
+    Ok(Json(VerifyResponse { token }).into_response())
 }
 
 pub async fn sync_handler(
@@ -161,9 +188,9 @@ pub async fn sync_handler(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     Json(body): Json<SyncBody>,
-) -> impl IntoResponse {
+) -> Result<Response, Response> {
     if state.limiter.check_key(&addr.ip()).is_err() {
-        return StatusCode::TOO_MANY_REQUESTS.into_response();
+        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
 
     // Dev mode: accept sync without auth so local dev needs no OTP.
@@ -171,26 +198,27 @@ pub async fn sync_handler(
         let token = match extract_bearer(&headers) {
             Some(t) => t.to_string(),
             None => {
-                return (
+                return Err((
                     StatusCode::UNAUTHORIZED,
                     Json(serde_json::json!({ "error": "missing token" })),
                 )
-                    .into_response()
+                    .into_response());
             }
         };
 
         let now = now_ms();
         let db = state.db.clone();
-        let valid = tokio::task::spawn_blocking(move || db::validate_session(&db, &token, now))
-            .await
-            .unwrap();
+        let valid = run_blocking("validate_session", move || {
+            db::validate_session(&db, &token, now)
+        })
+        .await?;
 
         if valid.is_none() {
-            return (
+            return Err((
                 StatusCode::UNAUTHORIZED,
                 Json(serde_json::json!({ "error": "invalid or expired session" })),
             )
-                .into_response();
+                .into_response());
         }
     }
 
@@ -198,31 +226,26 @@ pub async fn sync_handler(
 
     let db = state.db.clone();
     let deletions = body.deletions.clone();
-    tokio::task::spawn_blocking(move || db::apply_deletions(&db, &deletions, now))
-        .await
-        .unwrap();
+    run_blocking("apply_deletions", move || {
+        db::apply_deletions(&db, &deletions, now)
+    })
+    .await?;
 
     let db = state.db.clone();
     let cards = body.cards.clone();
-    tokio::task::spawn_blocking(move || db::upsert_cards(&db, &cards))
-        .await
-        .unwrap();
+    run_blocking("upsert_cards", move || db::upsert_cards(&db, &cards)).await?;
 
     let db = state.db.clone();
-    let merged = tokio::task::spawn_blocking(move || db::get_all_cards(&db))
-        .await
-        .unwrap();
+    let merged = run_blocking("get_all_cards", move || db::get_all_cards(&db)).await?;
 
     let db = state.db.clone();
-    let tombstones = tokio::task::spawn_blocking(move || db::get_all_deletions(&db))
-        .await
-        .unwrap();
+    let tombstones = run_blocking("get_all_deletions", move || db::get_all_deletions(&db)).await?;
 
-    Json(SyncResponse {
+    Ok(Json(SyncResponse {
         cards: merged,
         deletions: tombstones,
     })
-    .into_response()
+    .into_response())
 }
 
 // ---- Lookup endpoints (no auth, rate-limited by lookup_limiter) ----------
@@ -283,81 +306,67 @@ pub async fn lookup_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Json(body): Json<LookupBody>,
-) -> impl IntoResponse {
+) -> Result<Response, Response> {
     if state.lookup_limiter.check_key(&addr.ip()).is_err() {
-        return StatusCode::TOO_MANY_REQUESTS.into_response();
+        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let words = body.words;
-    let results = tokio::task::spawn_blocking(move || {
-        words
-            .iter()
-            .map(|w| jmdict_core::lookup(w))
-            .collect::<Vec<_>>()
+    let results = run_blocking("lookup", move || {
+        Ok(words.iter().map(|w| jmdict_core::lookup(w)).collect())
     })
-    .await
-    .unwrap();
-    Json(LookupResponse { results }).into_response()
+    .await?;
+    Ok(Json(LookupResponse { results }).into_response())
 }
 
 pub async fn lookup_prefix_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Json(body): Json<LookupPrefixBody>,
-) -> impl IntoResponse {
+) -> Result<Response, Response> {
     if state.lookup_limiter.check_key(&addr.ip()).is_err() {
-        return StatusCode::TOO_MANY_REQUESTS.into_response();
+        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let text = body.text;
     let max = body.max;
-    let results = tokio::task::spawn_blocking(move || {
-        jmdict_core::lookup_prefix(&text, max)
-    })
-    .await
-    .unwrap();
-    Json(LookupPrefixResponse { results }).into_response()
+    let results =
+        run_blocking("lookup_prefix", move || Ok(jmdict_core::lookup_prefix(&text, max))).await?;
+    Ok(Json(LookupPrefixResponse { results }).into_response())
 }
 
 pub async fn kanji_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Json(body): Json<KanjiBody>,
-) -> impl IntoResponse {
+) -> Result<Response, Response> {
     if state.lookup_limiter.check_key(&addr.ip()).is_err() {
-        return StatusCode::TOO_MANY_REQUESTS.into_response();
+        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let word = body.word;
-    let entries =
-        tokio::task::spawn_blocking(move || kanjidic_core::lookup_many(&word))
-            .await
-            .unwrap();
-    Json(KanjiResponse { entries }).into_response()
+    let entries = run_blocking("kanji_lookup", move || Ok(kanjidic_core::lookup_many(&word))).await?;
+    Ok(Json(KanjiResponse { entries }).into_response())
 }
 
 pub async fn examples_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Json(body): Json<ExamplesBody>,
-) -> impl IntoResponse {
+) -> Result<Response, Response> {
     if state.lookup_limiter.check_key(&addr.ip()).is_err() {
-        return StatusCode::TOO_MANY_REQUESTS.into_response();
+        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let word = body.word;
     let max = body.max as usize;
-    let entries =
-        tokio::task::spawn_blocking(move || examples_core::lookup(&word, max))
-            .await
-            .unwrap();
-    Json(ExamplesResponse { entries }).into_response()
+    let entries = run_blocking("examples_lookup", move || Ok(examples_core::lookup(&word, max))).await?;
+    Ok(Json(ExamplesResponse { entries }).into_response())
 }
 
 async fn send_otp_email(cfg: &Config, to: &str, code: &str) -> anyhow::Result<()> {
     use lettre::{
-        transport::smtp::authentication::Credentials, AsyncSmtpTransport, AsyncTransport,
-        Message, Tokio1Executor,
+        transport::smtp::authentication::Credentials, AsyncSmtpTransport, AsyncTransport, Message,
+        Tokio1Executor,
     };
 
-    let from_mailbox: lettre::message::Mailbox =
-        format!("Yomeru <{}>", cfg.smtp_from).parse()?;
+    let from_mailbox: lettre::message::Mailbox = format!("Yomeru <{}>", cfg.smtp_from).parse()?;
     let to_mailbox: lettre::message::Mailbox = to.parse()?;
 
     let email = Message::builder()
@@ -421,7 +430,10 @@ mod tests {
         let env = load_dotenv(&manifest_dir.join(".env"));
 
         let get = |k: &str| -> Option<String> {
-            std::env::var(k).ok().or_else(|| env.get(k).cloned()).filter(|s| !s.is_empty())
+            std::env::var(k)
+                .ok()
+                .or_else(|| env.get(k).cloned())
+                .filter(|s| !s.is_empty())
         };
 
         let cfg = Config {

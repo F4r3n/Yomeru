@@ -114,12 +114,12 @@ pub fn NewWordsTab() -> Element {
                                     div { class: "row",
                                         button {
                                             class: "success",
-                                            onclick: move |_| (promote_one.clone())(word_a.clone()),
+                                            onclick: move |_| (promote_one)(word_a.clone()),
                                             "Accept"
                                         }
                                         button {
                                             class: "danger",
-                                            onclick: move |_| (reject_one.clone())(word_b.clone()),
+                                            onclick: move |_| (reject_one)(word_b.clone()),
                                             "Reject"
                                         }
                                     }

@@ -202,7 +202,6 @@ button, a, input, select, textarea { touch-action: manipulation; }
     .rate-grid { gap: 6px; }
     .rate-grid button { padding: 14px 4px; font-size: 13px; }
     .hero-search input[type="search"] {
-        font-size: 17px;
         padding: 12px 14px;
     }
     .empty-state { padding: 40px 12px; }
@@ -309,7 +308,6 @@ th { color: var(--subtext); font-weight: 500; }
 /* ── Page header ─────────────────────────────────────────────────── */
 .page-header {
     display: flex;
-    align-items: flex-end;
     justify-content: space-between;
     gap: 16px;
     margin-bottom: 22px;
@@ -407,7 +405,6 @@ th { color: var(--subtext); font-weight: 500; }
 
 /* ── Hero search ─────────────────────────────────────────────────── */
 .hero-search input[type="search"] {
-    font-size: 18px;
     padding: 14px 18px;
     border-radius: 12px;
 }

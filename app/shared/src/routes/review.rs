@@ -28,9 +28,7 @@ fn shuffle<T>(mut v: Vec<T>) -> Vec<T> {
     v
 }
 
-async fn attach_entries(
-    cards: Vec<SrsCard>,
-) -> (Vec<SrsCard>, Vec<WordEntry>, Vec<String>) {
+async fn attach_entries(cards: Vec<SrsCard>) -> (Vec<SrsCard>, Vec<WordEntry>, Vec<String>) {
     if cards.is_empty() {
         return (vec![], vec![], vec![]);
     }
@@ -39,7 +37,7 @@ async fn attach_entries(
     let mut kept = Vec::new();
     let mut entries = Vec::new();
     let mut skipped = Vec::new();
-    for (c, hits) in cards.into_iter().zip(all_hits.into_iter()) {
+    for (c, hits) in cards.into_iter().zip(all_hits) {
         let entry = hits.into_iter().next();
         if entry.is_none() && matches!(c.direction, CardDirection::Recall) {
             // Recall front needs glosses; without them the card is unreviewable.
@@ -97,14 +95,16 @@ pub fn ReviewTab() -> Element {
             let settings = load_settings();
             let now = now_ms();
             let due = get_due_cards(now).await.unwrap_or_default();
-            let limited: Vec<_> =
-                due.into_iter().take(settings.max_session_cards as usize).collect();
+            let limited: Vec<_> = due
+                .into_iter()
+                .take(settings.max_session_cards as usize)
+                .collect();
             let (kept, ents, skips) = attach_entries(limited).await;
             // Pair, shuffle as a single permutation, then split back so cards
             // and entries stay aligned.
             let mut paired: Vec<_> = kept.into_iter().zip(ents.into_iter()).collect();
             paired = shuffle(paired);
-            let (kept_final, ents_final): (Vec<_>, Vec<_>) = paired.into_iter().unzip();
+            let (kept_final, ents_final) = paired.into_iter().unzip();
             due_cards.set(kept_final);
             entries.set(ents_final);
             skipped.set(skips);
@@ -175,13 +175,15 @@ pub fn ReviewTab() -> Element {
     };
 
     let rate = move |r: u8| {
-        let cards = due_cards.read().clone();
+        let cards = due_cards.read();
         let i = *idx.read();
-        let Some(card) = cards.get(i).cloned() else { return };
+        let Some(card) = cards.get(i).cloned() else {
+            return;
+        };
         spawn(async move {
             let settings = load_settings();
             let outcome = apply_review(&card, rating_from_u8(r), now_ms(), &settings);
-            let card_id = card.id.clone();
+            let card_id = card.id;
             match outcome {
                 ReviewOutcome::Rescheduled(c) => {
                     if let Err(e) = put_card(&c).await {
@@ -191,7 +193,7 @@ pub fn ReviewTab() -> Element {
                     }
                 }
                 ReviewOutcome::Graduated => {
-                    if let Err(e) = delete_card_by_id(&card.id).await {
+                    if let Err(e) = delete_card_by_id(&card_id).await {
                         warn!("delete_card_by_id({card_id}) on graduation failed: {e}");
                     } else {
                         schedule_sync();

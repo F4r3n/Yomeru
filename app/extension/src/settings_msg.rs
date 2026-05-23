@@ -5,10 +5,10 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
-use yomeru_shared::platform::{BoxFuture, SettingsStore};
-use yomeru_shared::settings::SrsSettings;
-
 use crate::bridge;
+use async_trait::async_trait;
+use yomeru_shared::platform::SettingsStore;
+use yomeru_shared::settings::SrsSettings;
 
 thread_local! {
     static CACHE: RefCell<SrsSettings> = RefCell::new(SrsSettings::default());
@@ -50,8 +50,8 @@ async fn read_from_storage() -> Result<SrsSettings, String> {
     let js_val = JsFuture::from(bridge::storage_get("srs_settings"))
         .await
         .map_err(|e| format!("{e:?}"))?;
-    let inner = Reflect::get(&js_val, &JsValue::from_str("srs_settings"))
-        .map_err(|e| format!("{e:?}"))?;
+    let inner =
+        Reflect::get(&js_val, &JsValue::from_str("srs_settings")).map_err(|e| format!("{e:?}"))?;
     if inner.is_undefined() || inner.is_null() {
         return Ok(SrsSettings::default());
     }
@@ -93,29 +93,26 @@ struct OkResp {}
 
 pub struct ExtensionSettings;
 
+#[async_trait(?Send)]
 impl SettingsStore for ExtensionSettings {
     fn load(&self) -> SrsSettings {
         CACHE.with(|c| c.borrow().clone())
     }
 
-    fn load_async<'a>(&'a self) -> BoxFuture<'a, Result<SrsSettings, String>> {
-        Box::pin(async move {
-            let s = read_from_storage().await?;
-            CACHE.with(|c| *c.borrow_mut() = s.clone());
-            Ok(s)
-        })
+    async fn load_async(&self) -> Result<SrsSettings, String> {
+        let s = read_from_storage().await?;
+        CACHE.with(|c| *c.borrow_mut() = s.clone());
+        Ok(s)
     }
 
-    fn save<'a>(&'a self, s: SrsSettings) -> BoxFuture<'a, Result<(), String>> {
-        Box::pin(async move {
-            // Optimistically update the local cache before the round-trip.
-            CACHE.with(|c| *c.borrow_mut() = s.clone());
-            let resp: SuccessResp = crate::send_bg_message("SAVE_SETTINGS", &s).await?;
-            if let Some(e) = resp.error {
-                return Err(e);
-            }
-            Ok(())
-        })
+    async fn save(&self, s: SrsSettings) -> Result<(), String> {
+        // Optimistically update the local cache before the round-trip.
+        CACHE.with(|c| *c.borrow_mut() = s.clone());
+        let resp: SuccessResp = crate::send_bg_message("SAVE_SETTINGS", &s).await?;
+        if let Some(e) = resp.error {
+            return Err(e);
+        }
+        Ok(())
     }
 
     fn schedule_sync(&self) {
@@ -126,48 +123,44 @@ impl SettingsStore for ExtensionSettings {
         });
     }
 
-    fn sync_now<'a>(&'a self) -> BoxFuture<'a, Result<String, String>> {
-        Box::pin(async move {
-            let resp: SyncResp = crate::send_bg_message("SYNC_CARDS", ()).await?;
-            if let Some(e) = resp.error {
-                return Err(e);
-            }
-            if resp.queued {
-                return Ok("Sync already in progress — will repeat when it finishes.".into());
-            }
-            let n = resp.synced.unwrap_or(0);
-            Ok(format!("Synced {} card{}.", n, if n == 1 { "" } else { "s" }))
-        })
+    async fn sync_now(&self) -> Result<String, String> {
+        let resp: SyncResp = crate::send_bg_message("SYNC_CARDS", ()).await?;
+        if let Some(e) = resp.error {
+            return Err(e);
+        }
+        if resp.queued {
+            return Ok("Sync already in progress — will repeat when it finishes.".into());
+        }
+        let n = resp.synced.unwrap_or(0);
+        Ok(format!(
+            "Synced {} card{}.",
+            n,
+            if n == 1 { "" } else { "s" }
+        ))
     }
 
-    fn request_otp<'a>(
-        &'a self,
-        server_url: &'a str,
-        email: &'a str,
-    ) -> BoxFuture<'a, Result<Option<String>, String>> {
+    async fn request_otp(&self, server_url: &str, email: &str) -> Result<Option<String>, String> {
         #[derive(Serialize)]
         struct Payload<'a> {
             #[serde(rename = "serverUrl")]
             server_url: &'a str,
             email: &'a str,
         }
-        Box::pin(async move {
-            let resp: OtpRequestResp =
-                crate::send_bg_message("REQUEST_OTP", Payload { server_url, email }).await?;
-            if let Some(e) = resp.error {
-                return Err(e);
-            }
-            // None = OTP sent to email; Some(token) = dev-mode instant auth
-            Ok(resp.token)
-        })
+        let resp: OtpRequestResp =
+            crate::send_bg_message("REQUEST_OTP", Payload { server_url, email }).await?;
+        if let Some(e) = resp.error {
+            return Err(e);
+        }
+        // None = OTP sent to email; Some(token) = dev-mode instant auth
+        Ok(resp.token)
     }
 
-    fn verify_otp<'a>(
-        &'a self,
-        server_url: &'a str,
-        email: &'a str,
-        code: &'a str,
-    ) -> BoxFuture<'a, Result<String, String>> {
+    async fn verify_otp(
+        &self,
+        server_url: &str,
+        email: &str,
+        code: &str,
+    ) -> Result<String, String> {
         #[derive(Serialize)]
         struct Payload<'a> {
             #[serde(rename = "serverUrl")]
@@ -175,15 +168,19 @@ impl SettingsStore for ExtensionSettings {
             email: &'a str,
             code: &'a str,
         }
-        Box::pin(async move {
-            let resp: OtpVerifyResp =
-                crate::send_bg_message("VERIFY_OTP", Payload { server_url, email, code })
-                    .await?;
-            if let Some(e) = resp.error {
-                return Err(e);
-            }
-            resp.token
-                .ok_or_else(|| "verify_otp: background did not return a token".into())
-        })
+        let resp: OtpVerifyResp = crate::send_bg_message(
+            "VERIFY_OTP",
+            Payload {
+                server_url,
+                email,
+                code,
+            },
+        )
+        .await?;
+        if let Some(e) = resp.error {
+            return Err(e);
+        }
+        resp.token
+            .ok_or_else(|| "verify_otp: background did not return a token".into())
     }
 }
