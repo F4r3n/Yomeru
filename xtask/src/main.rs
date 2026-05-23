@@ -300,6 +300,25 @@ fn package(root: &Path) -> Result<()> {
         eprintln!("  {rel}");
     }
 
+    // The Dioxus app's wasm-bindgen JS statically imports inline snippets from
+    // a `snippets/` subdir (one per crate that uses `inline_js`/`eval`). Without
+    // them the ESM module fails to load and the options page hangs on "Loading…"
+    // — even though it works under `web-ext run`, where the snippets live in the
+    // source tree. Copy the whole tree.
+    let snippets_src = ext.join("_generated/yomeru-extension/snippets");
+    if snippets_src.exists() {
+        copy_dir(
+            &snippets_src,
+            &release.join("_generated/yomeru-extension/snippets"),
+        )?;
+        eprintln!("  _generated/yomeru-extension/snippets/");
+    } else {
+        bail!(
+            "Missing required dir: {} — run build-all first",
+            snippets_src.display()
+        );
+    }
+
     // Icons are optional (may not exist during development).
     let icons_src = ext.join("icons");
     if icons_src.exists() {
