@@ -13,9 +13,15 @@ export function add_storage_listener(cb) {
         if (area === "local") { cb(changes); }
     });
 }
+// The popup URL is moz-extension://<id>/options.html — its path "/options.html"
+// matches no Dioxus route. Push "/" so WebHistory initialises at the root.
+export function navigate_to_root() {
+    history.pushState(null, '', '/');
+}
 "#)]
 extern "C" {
     pub fn send_message(msg: JsValue) -> Promise;
     pub fn storage_get(key: &str) -> Promise;
     pub fn add_storage_listener(cb: &Function);
+    pub fn navigate_to_root();
 }

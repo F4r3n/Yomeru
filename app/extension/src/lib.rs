@@ -11,6 +11,9 @@ mod settings_msg;
 #[wasm_bindgen(start)]
 pub async fn main() {
     console_error_panic_hook::set_once();
+    // The popup URL path is "/options.html" which matches no Dioxus route.
+    // Rewrite to "/" so WebHistory starts at the Review route.
+    bridge::navigate_to_root();
     if let Err(e) = settings_msg::hydrate().await {
         log::warn!("settings hydration failed: {e}");
     }
