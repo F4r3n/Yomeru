@@ -1133,7 +1133,7 @@ checksum = "ac6b926516df9c60bfa16e107b21086399f8285a44ca9711344b9e553c5146e2"
 
 [[package]]
 name = "deinflect"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "criterion",
 ]
@@ -1985,7 +1985,7 @@ dependencies = [
 
 [[package]]
 name = "examples-build"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -2005,7 +2005,7 @@ dependencies = [
 
 [[package]]
 name = "examples-types"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "postcard",
  "serde",
@@ -2013,7 +2013,7 @@ dependencies = [
 
 [[package]]
 name = "examples-wasm"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "console_error_panic_hook",
  "examples-core",
@@ -3185,7 +3185,7 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 
 [[package]]
 name = "japanese-utils"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "criterion",
  "unicode-segmentation",
@@ -3217,7 +3217,7 @@ dependencies = [
 
 [[package]]
 name = "jmdict-build"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -3244,14 +3244,14 @@ dependencies = [
 
 [[package]]
 name = "jmdict-types"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "jmdict-wasm"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "console_error_panic_hook",
  "japanese-utils",
@@ -3363,7 +3363,7 @@ dependencies = [
 
 [[package]]
 name = "kanjidic-build"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -3385,14 +3385,14 @@ dependencies = [
 
 [[package]]
 name = "kanjidic-types"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "kanjidic-wasm"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "console_error_panic_hook",
  "kanjidic-core",
@@ -5726,7 +5726,7 @@ dependencies = [
 
 [[package]]
 name = "srs-core"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "chrono",
  "rs-fsrs",
@@ -5735,7 +5735,7 @@ dependencies = [
 
 [[package]]
 name = "srs-wasm"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "console_error_panic_hook",
  "js-sys",
@@ -7413,7 +7413,7 @@ checksum = "b9cc00251562a284751c9973bace760d86c0276c471b4be569fe6b068ee97a56"
 
 [[package]]
 name = "xtask"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "clap",
