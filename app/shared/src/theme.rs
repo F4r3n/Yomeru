@@ -512,14 +512,18 @@ tbody tr td:first-child { font-weight: 500; }
 .link:hover { text-decoration: underline; }
 
 .pill {
-    display: inline-block;
-    padding: 2px 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 3px 9px;
     border-radius: 999px;
     font-size: 11px;
     font-weight: 600;
     background: color-mix(in srgb, var(--accent) 18%, transparent);
     color: var(--accent);
     letter-spacing: 0.04em;
+    text-indent: 0.04em;
 }
 
 .divider {

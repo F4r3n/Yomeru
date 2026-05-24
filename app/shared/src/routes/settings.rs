@@ -102,7 +102,9 @@ pub fn SettingsTab() -> Element {
 
     let on_import = move |evt: Event<FormData>| {
         let files = evt.files();
-        let Some(file) = files.into_iter().next() else { return };
+        let Some(file) = files.into_iter().next() else {
+            return;
+        };
         spawn(async move {
             match file.read_string().await {
                 Ok(text) => match import_cards_json(&text).await {
@@ -120,6 +122,7 @@ pub fn SettingsTab() -> Element {
     let cur = settings.read().clone();
     let has_token = !cur.server_token.is_empty();
     let saved_flag = *saved.read();
+    let retention_pct = (cur.request_retention * 100.0).round() as i64;
 
     rsx! {
         div {
@@ -127,70 +130,6 @@ pub fn SettingsTab() -> Element {
                 div {
                     h2 { "Settings" }
                     div { class: "subtitle", "Tune the scheduler, back up cards, and configure sync." }
-                }
-            }
-
-            // Scheduler
-            div { class: "card",
-                div { class: "section-title", "Scheduler" }
-                h3 { style: "margin-bottom: 4px;", "Review tuning" }
-                p { class: "muted", style: "font-size: 13px; margin-bottom: 14px;",
-                    "FSRS knobs that affect how often cards reappear."
-                }
-
-                div { class: "form-row",
-                    label { "Graduate after N successes" }
-                    input {
-                        r#type: "number", min: "0",
-                        value: "{cur.graduation_reps}",
-                        oninput: move |e| settings.write().graduation_reps = e.value().parse().unwrap_or(0),
-                    }
-                    span { class: "hint", "0 = never graduate" }
-                }
-                div { class: "form-row",
-                    label { "Interval scale ×{cur.interval_scale:.2}" }
-                    input {
-                        r#type: "range", min: "0.25", max: "3", step: "0.25",
-                        value: "{cur.interval_scale}",
-                        oninput: move |e| settings.write().interval_scale = e.value().parse().unwrap_or(1.0),
-                    }
-                    span { class: "hint", "Lower = more frequent reviews." }
-                }
-                div { class: "form-row",
-                    label { "Max cards per session" }
-                    input {
-                        r#type: "number", min: "1", max: "200",
-                        value: "{cur.max_session_cards}",
-                        oninput: move |e| settings.write().max_session_cards = e.value().parse().unwrap_or(20),
-                    }
-                }
-                div { class: "row", style: "margin-top: 6px;",
-                    button { class: "primary", onclick: save_settings, "Save changes" }
-                    if saved_flag {
-                        span { class: "ok", "✓ Saved" }
-                    }
-                }
-            }
-
-            // Backup
-            div { class: "card",
-                div { class: "section-title", "Backup" }
-                h3 { style: "margin-bottom: 4px;", "Backup & restore" }
-                p { class: "muted", style: "font-size: 13px; margin-bottom: 14px;",
-                    "Export cards as JSON. Import merges; existing cards are kept."
-                }
-                div { class: "row", style: "gap: 12px; flex-wrap: wrap;",
-                    button { onclick: export_json, "↓ Export JSON" }
-                    input {
-                        r#type: "file", accept: "application/json,.json",
-                        onchange: on_import,
-                        style: "max-width: 320px;",
-                    }
-                }
-                if let Some((msg, err)) = backup_status.read().clone() {
-                    div { style: "margin-top: 10px;",
-                        span { class: if err { "error" } else { "ok" }, "{msg}" }
-                    }
                 }
             }
 
@@ -267,6 +206,81 @@ pub fn SettingsTab() -> Element {
                     }
                 }
             }
+
+            // Scheduler
+            div { class: "card",
+                div { class: "section-title", "Scheduler" }
+                h3 { style: "margin-bottom: 4px;", "Review tuning" }
+                p { class: "muted", style: "font-size: 13px; margin-bottom: 14px;",
+                    "FSRS knobs that affect how often cards reappear."
+                }
+
+                div { class: "form-row",
+                    label { "Graduate after N successes" }
+                    input {
+                        r#type: "number", min: "0",
+                        value: "{cur.graduation_reps}",
+                        oninput: move |e| settings.write().graduation_reps = e.value().parse().unwrap_or(0),
+                    }
+                    span { class: "hint", "0 = never graduate" }
+                }
+                div { class: "form-row",
+                    label { "Interval scale ×{cur.interval_scale:.2}" }
+                    input {
+                        r#type: "range", min: "0.25", max: "3", step: "0.25",
+                        value: "{cur.interval_scale}",
+                        oninput: move |e| settings.write().interval_scale = e.value().parse().unwrap_or(1.0),
+                    }
+                    span { class: "hint", "Lower = more frequent reviews." }
+                }
+                div { class: "form-row",
+                    label { "Target retention {retention_pct}%" }
+                    input {
+                        r#type: "range", min: "0.70", max: "0.97", step: "0.01",
+                        value: "{cur.request_retention}",
+                        oninput: move |e| settings.write().request_retention = e.value().parse().unwrap_or(0.9),
+                    }
+                    span { class: "hint", "Desired recall probability. Higher = reviews come sooner." }
+                }
+                div { class: "form-row",
+                    label { "Max cards per session" }
+                    input {
+                        r#type: "number", min: "1", max: "200",
+                        value: "{cur.max_session_cards}",
+                        oninput: move |e| settings.write().max_session_cards = e.value().parse().unwrap_or(20),
+                    }
+                }
+                div { class: "row", style: "margin-top: 6px;",
+                    button { class: "primary", onclick: save_settings, "Save changes" }
+                    if saved_flag {
+                        span { class: "ok", "✓ Saved" }
+                    }
+                }
+            }
+
+            // Backup
+            div { class: "card",
+                div { class: "section-title", "Backup" }
+                h3 { style: "margin-bottom: 4px;", "Backup & restore" }
+                p { class: "muted", style: "font-size: 13px; margin-bottom: 14px;",
+                    "Export cards as JSON. Import merges; existing cards are kept."
+                }
+                div { class: "row", style: "gap: 12px; flex-wrap: wrap;",
+                    button { onclick: export_json, "↓ Export JSON" }
+                    input {
+                        r#type: "file", accept: "application/json,.json",
+                        onchange: on_import,
+                        style: "max-width: 320px;",
+                    }
+                }
+                if let Some((msg, err)) = backup_status.read().clone() {
+                    div { style: "margin-top: 10px;",
+                        span { class: if err { "error" } else { "ok" }, "{msg}" }
+                    }
+                }
+            }
+
+
         }
     }
 }

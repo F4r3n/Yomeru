@@ -32,11 +32,18 @@ impl ReviewRating {
 }
 
 /// Default target retention. Matches Anki/FSRS reference default.
-const DEFAULT_REQUEST_RETENTION: f64 = 0.9;
+pub const DEFAULT_REQUEST_RETENTION: f64 = 0.9;
 
-fn make_fsrs() -> FSRS {
+/// Practical bounds for desired retention. Outside this band FSRS schedules
+/// either runaway-long (→1.0) or punishingly short (→0.0) intervals, so any
+/// caller-supplied value is clamped here before it reaches the scheduler.
+pub const MIN_REQUEST_RETENTION: f64 = 0.70;
+pub const MAX_REQUEST_RETENTION: f64 = 0.97;
+
+fn make_fsrs(request_retention: f64) -> FSRS {
     let mut params = Parameters::default();
-    params.request_retention = DEFAULT_REQUEST_RETENTION;
+    params.request_retention =
+        request_retention.clamp(MIN_REQUEST_RETENTION, MAX_REQUEST_RETENTION);
     params.enable_fuzz = true;
     // Seed is overwritten by Scheduler::init_seed from (now, reps, difficulty,
     // stability), so we leave Parameters::seed at its default and skip the
@@ -59,11 +66,23 @@ pub fn new_card(word: &str, now_ms: f64) -> SrsCard {
     }
 }
 
-/// Apply a review to a card. Returns the updated card with FSRS-scheduled `due_ms`.
+/// Apply a review to a card at the default 0.9 target retention. Returns the
+/// updated card with FSRS-scheduled `due_ms`.
 pub fn review_card(card: SrsCard, rating: ReviewRating, now_ms: f64) -> SrsCard {
+    review_card_with_retention(card, rating, now_ms, DEFAULT_REQUEST_RETENTION)
+}
+
+/// Apply a review at a caller-chosen target retention. `request_retention` is
+/// clamped to `[MIN_REQUEST_RETENTION, MAX_REQUEST_RETENTION]`.
+pub fn review_card_with_retention(
+    card: SrsCard,
+    rating: ReviewRating,
+    now_ms: f64,
+    request_retention: f64,
+) -> SrsCard {
     let word = card.word.clone();
     let added_ms = card.added_ms;
-    let fsrs = make_fsrs();
+    let fsrs = make_fsrs(request_retention);
     let fsrs_card: FsrsCard = card.to_fsrs();
     let info = fsrs.next(fsrs_card, ms_to_dt(now_ms), rating.to_fsrs());
     SrsCard::from_fsrs(word, added_ms, info.card)
@@ -151,5 +170,38 @@ mod tests {
     fn last_review_ms_set_after_review() {
         let c = review_card(base_card(), ReviewRating::Good, 12345.0);
         assert_eq!(c.last_review_ms, Some(12345.0));
+    }
+
+    #[test]
+    fn default_retention_matches_plain_review_card() {
+        // The fuzz seed is derived from (now, reps, difficulty, stability),
+        // identical for both calls, so the results must match exactly.
+        let a = review_card(base_card(), ReviewRating::Good, 0.0);
+        let b = review_card_with_retention(
+            base_card(),
+            ReviewRating::Good,
+            0.0,
+            DEFAULT_REQUEST_RETENTION,
+        );
+        assert_eq!(a.stability, b.stability);
+        assert_eq!(a.due_ms, b.due_ms);
+    }
+
+    #[test]
+    fn lower_retention_schedules_further_out() {
+        // Stability after the first Good review is independent of retention;
+        // the resulting interval is not — a lower target pushes due_ms later.
+        let strict = review_card_with_retention(base_card(), ReviewRating::Good, 0.0, 0.95);
+        let relaxed = review_card_with_retention(base_card(), ReviewRating::Good, 0.0, 0.80);
+        assert!(relaxed.due_ms >= strict.due_ms);
+    }
+
+    #[test]
+    fn retention_is_clamped_to_safe_range() {
+        // An absurd value must not panic and must behave like the clamp bound.
+        let absurd = review_card_with_retention(base_card(), ReviewRating::Good, 0.0, 0.01);
+        let at_min =
+            review_card_with_retention(base_card(), ReviewRating::Good, 0.0, MIN_REQUEST_RETENTION);
+        assert_eq!(absurd.due_ms, at_min.due_ms);
     }
 }

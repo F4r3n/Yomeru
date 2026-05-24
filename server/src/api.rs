@@ -37,12 +37,20 @@ pub struct SyncBody {
     pub cards: Vec<db::Card>,
     #[serde(default)]
     pub deletions: Vec<String>,
+    /// Client's current scheduler settings. Optional so older clients that
+    /// don't send settings keep working (cards-only sync).
+    #[serde(default)]
+    pub settings: Option<db::Settings>,
 }
 
 #[derive(Serialize)]
 pub struct SyncResponse {
     pub cards: Vec<db::Card>,
     pub deletions: Vec<String>,
+    /// The user's stored settings after the merge, or `None` if they've never
+    /// synced any. Omitted from the JSON when absent.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub settings: Option<db::Settings>,
 }
 
 fn now_ms() -> i64 {
@@ -224,6 +232,12 @@ pub async fn sync_handler(
         .await
         .map_err(|e| db_err("upsert_cards", e))?;
 
+    if let Some(ref s) = body.settings {
+        db::upsert_settings(&state.db, &email, s)
+            .await
+            .map_err(|e| db_err("upsert_settings", e))?;
+    }
+
     let merged = db::get_all_cards(&state.db, &email)
         .await
         .map_err(|e| db_err("get_all_cards", e))?;
@@ -232,9 +246,14 @@ pub async fn sync_handler(
         .await
         .map_err(|e| db_err("get_all_deletions", e))?;
 
+    let settings = db::get_settings(&state.db, &email)
+        .await
+        .map_err(|e| db_err("get_settings", e))?;
+
     Ok(Json(SyncResponse {
         cards: merged,
         deletions: tombstones,
+        settings,
     })
     .into_response())
 }

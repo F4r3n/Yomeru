@@ -23,12 +23,28 @@ pub struct SrsSettings {
     pub interval_scale: f64,
     #[serde(rename = "maxSessionCards")]
     pub max_session_cards: u32,
+    /// FSRS desired retention (probability of recall at review time). Synced.
+    /// Defaulted so settings stored before this field existed still load.
+    #[serde(rename = "requestRetention", default = "default_request_retention")]
+    pub request_retention: f64,
     #[serde(rename = "serverUrl")]
     pub server_url: String,
     #[serde(rename = "serverEmail")]
     pub server_email: String,
     #[serde(rename = "serverToken")]
     pub server_token: String,
+    /// Wall-clock ms of the last *scheduler* edit on this device. Drives the
+    /// last-write-wins merge of synced settings; never sent to the server as a
+    /// stored field on its own, only inside the sync payload. Local-only fields
+    /// (server_url/email/token) do not bump it.
+    #[serde(rename = "settingsUpdatedMs", default)]
+    pub settings_updated_ms: f64,
+}
+
+/// Serde default for [`SrsSettings::request_retention`]; single source of truth
+/// is the SRS core constant.
+fn default_request_retention() -> f64 {
+    srs_core::DEFAULT_REQUEST_RETENTION
 }
 
 impl Default for SrsSettings {
@@ -37,9 +53,11 @@ impl Default for SrsSettings {
             graduation_reps: 0,
             interval_scale: 1.0,
             max_session_cards: 20,
+            request_retention: default_request_retention(),
             server_url: String::new(),
             server_email: String::new(),
             server_token: String::new(),
+            settings_updated_ms: 0.0,
         }
     }
 }
@@ -100,9 +118,11 @@ mod tests {
             "graduationReps",
             "intervalScale",
             "maxSessionCards",
+            "requestRetention",
             "serverUrl",
             "serverEmail",
             "serverToken",
+            "settingsUpdatedMs",
         ] {
             assert!(obj.contains_key(field), "missing field {field}");
         }

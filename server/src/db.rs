@@ -29,6 +29,35 @@ pub struct Card {
     pub status: String,
 }
 
+/// A user's synced scheduler settings. One row per email. `updated_ms` is the
+/// last-write-wins merge key (wall-clock ms of the client edit that produced
+/// these values). Device-local fields (server URL/email/token) are never
+/// stored here — only the knobs that affect scheduling.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Settings {
+    pub graduation_reps: i64,
+    pub interval_scale: f64,
+    pub max_session_cards: i64,
+    /// FSRS desired retention. Defaulted so a client that predates this field
+    /// can still sync its other settings without failing the whole request.
+    #[serde(default = "default_request_retention")]
+    pub request_retention: f64,
+    pub updated_ms: f64,
+}
+
+fn default_request_retention() -> f64 {
+    0.9
+}
+
+const SETTINGS_DDL: &str = "CREATE TABLE IF NOT EXISTS settings (
+             email             TEXT PRIMARY KEY,
+             graduation_reps   INTEGER NOT NULL,
+             interval_scale    REAL NOT NULL,
+             max_session_cards INTEGER NOT NULL,
+             request_retention REAL NOT NULL,
+             updated_ms        REAL NOT NULL
+         )";
+
 /// New per-column `cards` schema. `last_review_ms` is the sync merge key and is
 /// nullable (never-reviewed cards have no value); everything else is required.
 const CARDS_DDL: &str = "CREATE TABLE IF NOT EXISTS cards (
@@ -73,6 +102,7 @@ async fn init_schema(pool: &SqlitePool) -> anyhow::Result<()> {
     migrate_cards_from_blob(pool).await?;
     let stmts = [
         CARDS_DDL,
+        SETTINGS_DDL,
         "CREATE TABLE IF NOT EXISTS otps (
              email           TEXT PRIMARY KEY,
              code            TEXT NOT NULL,
@@ -369,6 +399,56 @@ pub async fn get_all_deletions(db: &Db, email: &str) -> anyhow::Result<Vec<Strin
     Ok(ids)
 }
 
+/// Upserts a user's scheduler settings, last-write-wins: the incoming row
+/// replaces the stored one only if its `updated_ms` is greater than or equal
+/// to what's stored (ties favor the incoming write, matching the cards merge).
+pub async fn upsert_settings(db: &Db, email: &str, s: &Settings) -> anyhow::Result<()> {
+    sqlx::query(
+        "INSERT INTO settings
+             (email, graduation_reps, interval_scale, max_session_cards,
+              request_retention, updated_ms)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+         ON CONFLICT(email) DO UPDATE SET
+             graduation_reps = excluded.graduation_reps,
+             interval_scale = excluded.interval_scale,
+             max_session_cards = excluded.max_session_cards,
+             request_retention = excluded.request_retention,
+             updated_ms = excluded.updated_ms
+         WHERE excluded.updated_ms >= settings.updated_ms",
+    )
+    .bind(email)
+    .bind(s.graduation_reps)
+    .bind(s.interval_scale)
+    .bind(s.max_session_cards)
+    .bind(s.request_retention)
+    .bind(s.updated_ms)
+    .execute(db)
+    .await
+    .context("upsert settings")?;
+    Ok(())
+}
+
+/// Returns the user's stored settings, or `Ok(None)` if they've never synced
+/// any (so the client keeps its local defaults).
+pub async fn get_settings(db: &Db, email: &str) -> anyhow::Result<Option<Settings>> {
+    let row = sqlx::query(
+        "SELECT graduation_reps, interval_scale, max_session_cards,
+                request_retention, updated_ms
+         FROM settings WHERE email = ?1",
+    )
+    .bind(email)
+    .fetch_optional(db)
+    .await
+    .context("query get_settings")?;
+    Ok(row.map(|r| Settings {
+        graduation_reps: r.get("graduation_reps"),
+        interval_scale: r.get("interval_scale"),
+        max_session_cards: r.get("max_session_cards"),
+        request_retention: r.get("request_retention"),
+        updated_ms: r.get("updated_ms"),
+    }))
+}
+
 /// Prunes tombstones older than `cutoff_ms`. Called at startup to keep the
 /// table bounded; 90 days is well over any reasonable offline window.
 pub async fn prune_old_deletions(db: &Db, cutoff_ms: i64) -> anyhow::Result<()> {
@@ -652,6 +732,62 @@ mod tests {
         assert_eq!(
             stored[0].due_ms, 1_780_000_000_000.0,
             "reviewed schedule must survive a stale unreviewed push"
+        );
+    }
+
+    fn settings(updated_ms: f64, retention: f64) -> Settings {
+        Settings {
+            graduation_reps: 0,
+            interval_scale: 1.0,
+            max_session_cards: 20,
+            request_retention: retention,
+            updated_ms,
+        }
+    }
+
+    #[tokio::test]
+    async fn settings_insert_then_read_roundtrip() {
+        let db = fresh_db().await;
+        assert!(get_settings(&db, ALICE).await.unwrap().is_none());
+        upsert_settings(&db, ALICE, &settings(100.0, 0.85))
+            .await
+            .unwrap();
+        let got = get_settings(&db, ALICE).await.unwrap().unwrap();
+        assert_eq!(got.request_retention, 0.85);
+        assert_eq!(got.updated_ms, 100.0);
+    }
+
+    #[tokio::test]
+    async fn settings_keep_newer_updated_ms() {
+        let db = fresh_db().await;
+        upsert_settings(&db, ALICE, &settings(200.0, 0.90))
+            .await
+            .unwrap();
+        // Stale write must lose.
+        upsert_settings(&db, ALICE, &settings(100.0, 0.70))
+            .await
+            .unwrap();
+        let got = get_settings(&db, ALICE).await.unwrap().unwrap();
+        assert_eq!(got.updated_ms, 200.0);
+        assert_eq!(got.request_retention, 0.90);
+    }
+
+    #[tokio::test]
+    async fn settings_isolated_per_user() {
+        let db = fresh_db().await;
+        upsert_settings(&db, ALICE, &settings(100.0, 0.80))
+            .await
+            .unwrap();
+        upsert_settings(&db, BOB, &settings(100.0, 0.95))
+            .await
+            .unwrap();
+        assert_eq!(
+            get_settings(&db, ALICE).await.unwrap().unwrap().request_retention,
+            0.80
+        );
+        assert_eq!(
+            get_settings(&db, BOB).await.unwrap().unwrap().request_retention,
+            0.95
         );
     }
 

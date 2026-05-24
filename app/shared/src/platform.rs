@@ -218,10 +218,35 @@ struct VerifyResponse {
     token: String,
 }
 
+/// Synced scheduler settings, on the wire to/from the server. Field names are
+/// snake_case to match the server's `db::Settings`. Local-only connection
+/// fields (server_url/email/token) are deliberately absent.
+#[derive(Serialize, Deserialize, Clone)]
+struct SettingsPayload {
+    graduation_reps: u32,
+    interval_scale: f64,
+    max_session_cards: u32,
+    request_retention: f64,
+    updated_ms: f64,
+}
+
+impl SettingsPayload {
+    fn from_settings(s: &SrsSettings) -> Self {
+        Self {
+            graduation_reps: s.graduation_reps,
+            interval_scale: s.interval_scale,
+            max_session_cards: s.max_session_cards,
+            request_retention: s.request_retention,
+            updated_ms: s.settings_updated_ms,
+        }
+    }
+}
+
 #[derive(Serialize)]
 struct SyncBody<'a> {
     cards: &'a [SrsCard],
     deletions: &'a [String],
+    settings: SettingsPayload,
 }
 
 #[derive(Deserialize, Default)]
@@ -229,6 +254,8 @@ struct SyncResponse {
     cards: Vec<SrsCard>,
     #[serde(default)]
     deletions: Vec<String>,
+    #[serde(default)]
+    settings: Option<SettingsPayload>,
 }
 
 fn join_url(base: &str, path: &str) -> String {
@@ -255,6 +282,7 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
         .json(&SyncBody {
             cards: &local_cards,
             deletions: &local_tombstones,
+            settings: SettingsPayload::from_settings(&s),
         })
         .map_err(|e| e.to_string())?
         .send()
@@ -288,6 +316,22 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     clear_tombstones(&local_tombstones)
         .await
         .map_err(|e| format!("clear tombstones: {e}"))?;
+
+    // Adopt server-side settings if they're newer. Re-read from localStorage
+    // (not the start-of-sync snapshot) so a scheduler edit made while the sync
+    // was in flight isn't clobbered, and preserve the device-local connection
+    // fields the server never sees.
+    if let Some(remote) = resp.settings {
+        let mut merged: SrsSettings = LocalStorage::get(SETTINGS_KEY).unwrap_or_default();
+        if remote.updated_ms > merged.settings_updated_ms {
+            merged.graduation_reps = remote.graduation_reps;
+            merged.interval_scale = remote.interval_scale;
+            merged.max_session_cards = remote.max_session_cards;
+            merged.request_retention = remote.request_retention;
+            merged.settings_updated_ms = remote.updated_ms;
+            LocalStorage::set(SETTINGS_KEY, merged).map_err(|e| e.to_string())?;
+        }
+    }
 
     let _ = state; // borrowed by the runner above; nothing more to do here
     Ok(format!(
@@ -336,7 +380,18 @@ impl SettingsStore for LocalSettings {
         Ok(self.load())
     }
 
-    async fn save(&self, s: SrsSettings) -> Result<(), String> {
+    async fn save(&self, mut s: SrsSettings) -> Result<(), String> {
+        // Bump the LWW merge key only when a *synced* scheduler field actually
+        // changed. Saving the server URL/email/token (a different, device-local
+        // concern) must not let a stale scheduler config win a later sync.
+        let prev: SrsSettings = LocalStorage::get(SETTINGS_KEY).unwrap_or_default();
+        let scheduler_changed = prev.graduation_reps != s.graduation_reps
+            || prev.interval_scale != s.interval_scale
+            || prev.max_session_cards != s.max_session_cards
+            || prev.request_retention != s.request_retention;
+        if scheduler_changed {
+            s.settings_updated_ms = js_sys::Date::now();
+        }
         LocalStorage::set(SETTINGS_KEY, s).map_err(|e| e.to_string())
     }
 
