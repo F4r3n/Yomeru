@@ -34,14 +34,14 @@ pub struct VerifyResponse {
 
 #[derive(Deserialize)]
 pub struct SyncBody {
-    pub cards: Vec<serde_json::Value>,
+    pub cards: Vec<db::Card>,
     #[serde(default)]
     pub deletions: Vec<String>,
 }
 
 #[derive(Serialize)]
 pub struct SyncResponse {
-    pub cards: Vec<serde_json::Value>,
+    pub cards: Vec<db::Card>,
     pub deletions: Vec<String>,
 }
 

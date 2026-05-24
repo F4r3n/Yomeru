@@ -36,7 +36,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 FROM debian:bookworm-slim AS runtime
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates \
+ && apt-get install -y --no-install-recommends ca-certificates sqlite3 \
  && rm -rf /var/lib/apt/lists/* \
  && useradd --create-home --uid 10001 yomeru \
  && mkdir -p /data /usr/share/yomeru-server/dicts \
