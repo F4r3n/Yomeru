@@ -101,3 +101,123 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<KanjiDictInner> {
 
     Ok(KanjiDictInner { index, data })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use kanjidic_types::KanjiEntry;
+    use postcard::to_allocvec;
+
+    fn entry(literal: char, strokes: u8, on: &[&str], kun: &[&str], meanings: &[&str]) -> KanjiEntry {
+        KanjiEntry {
+            literal,
+            stroke_count: strokes,
+            grade: None,
+            freq: None,
+            jlpt: None,
+            on_readings: on.iter().map(|s| s.to_string()).collect(),
+            kun_readings: kun.iter().map(|s| s.to_string()).collect(),
+            meanings: meanings.iter().map(|s| s.to_string()).collect(),
+        }
+    }
+
+    /// Serialize a small in-memory KDIC binary matching the format documented
+    /// in `parse_binary`. The index is sorted by codepoint to match the real
+    /// builder's invariant (`get_entry` does a binary search).
+    fn build_binary(entries: &[KanjiEntry]) -> Vec<u8> {
+        let mut sorted: Vec<&KanjiEntry> = entries.iter().collect();
+        sorted.sort_by_key(|e| e.literal as u32);
+
+        let mut out = Vec::new();
+        out.extend_from_slice(b"KDIC");
+        out.push(1u8);
+        out.extend_from_slice(&(sorted.len() as u32).to_le_bytes());
+
+        let mut data = Vec::new();
+        let mut offsets = Vec::with_capacity(sorted.len());
+        for e in &sorted {
+            offsets.push(data.len() as u32);
+            let ser = to_allocvec(*e).unwrap();
+            data.extend_from_slice(&(ser.len() as u32).to_le_bytes());
+            data.extend_from_slice(&ser);
+        }
+        for (e, off) in sorted.iter().zip(offsets.iter()) {
+            out.extend_from_slice(&(e.literal as u32).to_le_bytes());
+            out.extend_from_slice(&off.to_le_bytes());
+        }
+        out.extend_from_slice(&(data.len() as u32).to_le_bytes());
+        out.extend_from_slice(&data);
+        out
+    }
+
+    #[test]
+    fn parse_binary_roundtrip() {
+        let e1 = entry('漢', 13, &["カン"], &[], &["Sino-", "China"]);
+        let e2 = entry('字', 6, &["ジ"], &["あざ"], &["character", "letter"]);
+        let bin = build_binary(&[e1.clone(), e2.clone()]);
+
+        let inner = parse_binary(&bin).expect("parse");
+        assert_eq!(inner.index.len(), 2);
+        // Sorted ascending by codepoint already (字 = 0x5B57 < 漢 = 0x6F22).
+        assert_eq!(inner.index[0].0, '字' as u32);
+        assert_eq!(inner.index[1].0, '漢' as u32);
+    }
+
+    #[test]
+    fn parse_binary_rejects_short_input() {
+        let err = parse_binary(&[0u8; 4]).err().expect("expected parse error").to_string();
+        assert!(err.contains("too short"), "got: {err}");
+    }
+
+    #[test]
+    fn parse_binary_rejects_bad_magic() {
+        let mut bin = build_binary(&[entry('a', 1, &[], &[], &[])]);
+        bin[0] = b'X';
+        let err = parse_binary(&bin).err().expect("expected parse error").to_string();
+        assert!(err.contains("magic"), "got: {err}");
+    }
+
+    #[test]
+    fn parse_binary_rejects_bad_version() {
+        let mut bin = build_binary(&[entry('a', 1, &[], &[], &[])]);
+        bin[4] = 99;
+        let err = parse_binary(&bin).err().expect("expected parse error").to_string();
+        assert!(err.contains("unsupported version"), "got: {err}");
+    }
+
+    #[test]
+    fn parse_binary_rejects_truncated_data() {
+        let bin = build_binary(&[entry('字', 6, &["ジ"], &[], &["character"])]);
+        // Cut off the last few bytes of the data blob.
+        let truncated = &bin[..bin.len() - 4];
+        let err = parse_binary(truncated).err().expect("expected parse error").to_string();
+        assert!(err.contains("truncated"), "got: {err}");
+    }
+
+    /// End-to-end: init once and exercise the public lookup fns against the
+    /// process-global cell. Other tests in this file work on `parse_binary`
+    /// directly so they don't fight over the OnceCell.
+    #[test]
+    fn init_and_lookup() {
+        let entries = [
+            entry('漢', 13, &["カン"], &[], &["Sino-"]),
+            entry('字', 6, &["ジ"], &[], &["character"]),
+        ];
+        let bin = build_binary(&entries);
+        init_from_bytes(&bin).expect("init");
+        assert!(is_loaded());
+
+        let kan = lookup_one('漢').expect("漢 present");
+        assert_eq!(kan.literal, '漢');
+        assert_eq!(kan.stroke_count, 13);
+        assert_eq!(kan.on_readings, vec!["カン".to_string()]);
+
+        // ASCII char is not kanji → not present, returns None.
+        assert!(lookup_one('a').is_none());
+
+        // Mix kanji + kana + ascii; only kanji entries that exist come back.
+        let many = lookup_many("漢a字ぁ");
+        let chars: Vec<char> = many.iter().map(|e| e.literal).collect();
+        assert_eq!(chars, vec!['漢', '字']);
+    }
+}

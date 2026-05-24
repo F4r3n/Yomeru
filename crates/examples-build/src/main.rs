@@ -130,6 +130,101 @@ fn is_valid_headword(s: &str) -> bool {
         })
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn is_valid_headword_recognises_japanese_chars() {
+        assert!(is_valid_headword("猫"));      // kanji
+        assert!(is_valid_headword("ねこ"));    // hiragana
+        assert!(is_valid_headword("ネコ"));    // katakana
+        assert!(is_valid_headword("食べる"));   // mixed kanji + hiragana
+    }
+
+    #[test]
+    fn is_valid_headword_rejects_empty_and_latin_only() {
+        assert!(!is_valid_headword(""));
+        assert!(!is_valid_headword("hello"));
+        assert!(!is_valid_headword("123"));
+    }
+
+    #[test]
+    fn build_parses_one_sentence_and_extracts_headwords() {
+        let input = "A: 猫が寝る。\tThe cat sleeps.#ID=1_1\n\
+                     B: 猫(ねこ)[01] が 寝る{寝る}\n";
+        let (index, _bytes, n) = build(input).unwrap();
+        assert_eq!(n, 1);
+
+        let words: Vec<&str> = index.iter().map(|(k, _)| k.as_str()).collect();
+        // Strict-Japanese filter keeps 猫 and 寝る; the bare particle が also
+        // passes (hiragana), so the BTreeMap returns them in sort order.
+        assert!(words.contains(&"猫"));
+        assert!(words.contains(&"寝る"));
+        // Every headword in a single sentence points to the same offset.
+        let first_off = index[0].1[0];
+        for (_, offs) in &index {
+            assert_eq!(offs.len(), 1);
+            assert_eq!(offs[0], first_off);
+        }
+    }
+
+    /// Repeated headwords inside the same B-line must only contribute one
+    /// offset (the `seen` HashSet dedups).
+    #[test]
+    fn build_dedups_within_sentence() {
+        let input = "A: 猫と猫。\tCat and cat.#ID=2_2\n\
+                     B: 猫(ねこ) と 猫(ねこ)\n";
+        let (index, _, _) = build(input).unwrap();
+        let entry = index.iter().find(|(k, _)| k == "猫").expect("猫 present");
+        assert_eq!(entry.1.len(), 1, "duplicate headword in B-line should be folded");
+    }
+
+    /// Per-headword offsets are capped at MAX_PER_HEADWORD (20) across the
+    /// whole corpus — without this, common particles would carry tens of
+    /// thousands of pointers and bloat the binary index.
+    #[test]
+    fn build_caps_offsets_per_headword() {
+        let n = MAX_PER_HEADWORD + 5;
+        let mut input = String::new();
+        for i in 0..n {
+            input.push_str(&format!("A: 猫{}。\tcat {i}#ID={i}_{i}\n", i));
+            input.push_str("B: 猫(ねこ)\n");
+        }
+        let (index, _, count) = build(&input).unwrap();
+        assert_eq!(count, n);
+        let entry = index.iter().find(|(k, _)| k == "猫").expect("猫 present");
+        assert_eq!(entry.1.len(), MAX_PER_HEADWORD);
+    }
+
+    /// Lines without `A:` / `B:` prefixes are skipped silently — the corpus
+    /// has stray comment lines that must not break the build.
+    #[test]
+    fn build_skips_malformed_pairs() {
+        let input = "# corpus header\n\
+                     A: 猫。\tcat#ID=1_1\n\
+                     B: 猫(ねこ)\n\
+                     not a real line\n\
+                     A: 犬。\tdog#ID=2_2\n\
+                     B: 犬(いぬ)\n";
+        let (index, _, count) = build(input).unwrap();
+        // The leading comment + B line make a malformed pair → skipped.
+        // We then advance past it and pick up the cat + dog pairs.
+        assert!(count >= 1, "expected at least one sentence parsed, got {count}");
+        let keys: Vec<&str> = index.iter().map(|(k, _)| k.as_str()).collect();
+        assert!(keys.contains(&"猫") || keys.contains(&"犬"));
+    }
+
+    /// Empty japanese or english half drops the sentence entirely.
+    #[test]
+    fn build_skips_sentences_with_empty_half() {
+        let input = "A: \tonly english#ID=1_1\nB: 猫(ねこ)\n";
+        let (index, _, count) = build(input).unwrap();
+        assert_eq!(count, 0);
+        assert!(index.is_empty());
+    }
+}
+
 fn write_bin(
     index: &[(String, Vec<u32>)],
     sentences_bytes: &[u8],

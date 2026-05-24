@@ -6,8 +6,11 @@ use std::path::Path;
 
 pub fn parse_kanjidic(path: &Path) -> Result<Vec<KanjiEntry>> {
     let raw = std::fs::read(path).with_context(|| format!("Failed to open {:?}", path))?;
+    parse_kanjidic_bytes(&raw)
+}
 
-    let mut reader = Reader::from_reader(raw.as_slice());
+pub fn parse_kanjidic_bytes(raw: &[u8]) -> Result<Vec<KanjiEntry>> {
+    let mut reader = Reader::from_reader(raw);
     reader.config_mut().trim_text(true);
 
     let mut entries = Vec::new();
@@ -160,5 +163,122 @@ impl CharBuilder {
             kun_readings: std::mem::take(&mut self.kun_readings),
             meanings: std::mem::take(&mut self.meanings),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const ICHI: &str = r#"<?xml version="1.0"?>
+<kanjidic2>
+<character>
+<literal>一</literal>
+<misc>
+<grade>1</grade>
+<stroke_count>1</stroke_count>
+<freq>2</freq>
+<jlpt>4</jlpt>
+</misc>
+<reading_meaning>
+<rmgroup>
+<reading r_type="ja_on">イチ</reading>
+<reading r_type="ja_on">イツ</reading>
+<reading r_type="ja_kun">ひと-</reading>
+<reading r_type="pinyin">yi1</reading>
+<reading r_type="korean_h">일</reading>
+<meaning>one</meaning>
+<meaning m_lang="fr">un</meaning>
+<meaning m_lang="es">uno</meaning>
+</rmgroup>
+</reading_meaning>
+</character>
+</kanjidic2>"#;
+
+    #[test]
+    fn parses_single_character_with_readings_and_meanings() {
+        let entries = parse_kanjidic_bytes(ICHI.as_bytes()).unwrap();
+        assert_eq!(entries.len(), 1);
+        let e = &entries[0];
+        assert_eq!(e.literal, '一');
+        assert_eq!(e.stroke_count, 1);
+        assert_eq!(e.grade, Some(1));
+        assert_eq!(e.freq, Some(2));
+        assert_eq!(e.jlpt, Some(4));
+        assert_eq!(e.on_readings, vec!["イチ".to_string(), "イツ".to_string()]);
+        assert_eq!(e.kun_readings, vec!["ひと-".to_string()]);
+        // Only English meanings (no m_lang attribute) are kept.
+        assert_eq!(e.meanings, vec!["one".to_string()]);
+    }
+
+    #[test]
+    fn skips_non_japanese_readings() {
+        // Verified above (pinyin / korean_h dropped), but make it an explicit
+        // regression on the r_type filter so a typo doesn't silently let
+        // foreign readings into the binary.
+        let entries = parse_kanjidic_bytes(ICHI.as_bytes()).unwrap();
+        for r in &entries[0].on_readings {
+            assert!(r.chars().all(|c| c as u32 >= 0x3041 && c as u32 <= 0x30FF));
+        }
+    }
+
+    #[test]
+    fn parses_multiple_characters() {
+        let xml = r#"<kanjidic2>
+<character><literal>人</literal>
+<misc><stroke_count>2</stroke_count></misc>
+<reading_meaning><rmgroup>
+<reading r_type="ja_on">ジン</reading>
+<meaning>person</meaning>
+</rmgroup></reading_meaning>
+</character>
+<character><literal>口</literal>
+<misc><stroke_count>3</stroke_count></misc>
+<reading_meaning><rmgroup>
+<reading r_type="ja_on">コウ</reading>
+<meaning>mouth</meaning>
+</rmgroup></reading_meaning>
+</character>
+</kanjidic2>"#;
+        let entries = parse_kanjidic_bytes(xml.as_bytes()).unwrap();
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].literal, '人');
+        assert_eq!(entries[0].stroke_count, 2);
+        assert_eq!(entries[1].literal, '口');
+        assert_eq!(entries[1].stroke_count, 3);
+    }
+
+    /// Some KANJIDIC entries have variant stroke counts (multiple
+    /// `<stroke_count>` elements); the parser must keep only the first.
+    #[test]
+    fn stroke_count_takes_first_variant() {
+        let xml = r#"<kanjidic2>
+<character><literal>X</literal>
+<misc>
+<stroke_count>5</stroke_count>
+<stroke_count>6</stroke_count>
+</misc>
+</character>
+</kanjidic2>"#;
+        let entries = parse_kanjidic_bytes(xml.as_bytes()).unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].stroke_count, 5);
+    }
+
+    /// Character entries with no `<literal>` body get dropped (build() returns
+    /// None when no literal char was accumulated).
+    #[test]
+    fn drops_character_without_literal() {
+        let xml = r#"<kanjidic2>
+<character>
+<misc><stroke_count>1</stroke_count></misc>
+</character>
+<character><literal>Y</literal>
+<misc><stroke_count>2</stroke_count></misc>
+</character>
+</kanjidic2>"#;
+        let entries = parse_kanjidic_bytes(xml.as_bytes()).unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].literal, 'Y');
     }
 }

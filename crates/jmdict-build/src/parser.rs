@@ -7,7 +7,11 @@ use std::path::Path;
 
 pub fn parse_jmdict(path: &Path) -> Result<Vec<WordEntry>> {
     let raw = std::fs::read(path).with_context(|| format!("Failed to open {:?}", path))?;
-    let preprocessed = strip_custom_entities(&raw);
+    parse_jmdict_bytes(&raw)
+}
+
+pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
+    let preprocessed = strip_custom_entities(raw);
 
     let mut reader = Reader::from_reader(Cursor::new(preprocessed));
     reader.config_mut().trim_text(true);
@@ -375,4 +379,147 @@ struct EntryBuilder {
     pending_lang: String,
     #[cfg(feature = "full")]
     pending_gtype: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SIMPLE_ENTRY: &str = r#"<?xml version="1.0"?>
+<JMdict>
+<entry>
+<ent_seq>1000001</ent_seq>
+<k_ele><keb>飲む</keb></k_ele>
+<k_ele><keb>呑む</keb></k_ele>
+<r_ele><reb>のむ</reb></r_ele>
+<sense>
+<pos>&v5m;</pos>
+<pos>&vt;</pos>
+<gloss>to drink</gloss>
+<gloss>to swallow</gloss>
+</sense>
+</entry>
+</JMdict>"#;
+
+    #[test]
+    fn parses_simple_entry_kanji_reading_senses() {
+        let entries = parse_jmdict_bytes(SIMPLE_ENTRY.as_bytes()).unwrap();
+        assert_eq!(entries.len(), 1);
+        let e = &entries[0];
+        assert_eq!(e.sequence, 1000001);
+        assert_eq!(e.kanji_forms.len(), 2);
+        assert_eq!(e.kanji_forms[0].text, "飲む");
+        assert_eq!(e.kanji_forms[1].text, "呑む");
+        assert_eq!(e.reading_forms.len(), 1);
+        assert_eq!(e.reading_forms[0].text, "のむ");
+        assert_eq!(e.senses.len(), 1);
+        assert_eq!(
+            e.senses[0].pos,
+            vec![PartOfSpeech::VerbGodanMu, PartOfSpeech::VerbTransitive]
+        );
+        let glosses: Vec<&str> = e.senses[0].glosses.iter().map(|g| g.text.as_str()).collect();
+        assert_eq!(glosses, vec!["to drink", "to swallow"]);
+        assert_eq!(e.senses[0].glosses[0].lang, "eng");
+    }
+
+    /// JMdict carries POS forward when subsequent `<sense>` elements omit it.
+    /// A sense with no explicit POS should inherit from the previous one;
+    /// a later sense with an explicit POS should *replace*, not append.
+    #[test]
+    fn pos_inherits_then_replaces() {
+        let xml = br#"<JMdict>
+<entry>
+<ent_seq>1</ent_seq>
+<r_ele><reb>x</reb></r_ele>
+<sense><pos>&n;</pos><gloss>thing</gloss></sense>
+<sense><gloss>another sense</gloss></sense>
+<sense><pos>&adv;</pos><gloss>thirdly</gloss></sense>
+</entry>
+</JMdict>"#;
+        let entries = parse_jmdict_bytes(xml).unwrap();
+        let s = &entries[0].senses;
+        assert_eq!(s.len(), 3);
+        assert_eq!(s[0].pos, vec![PartOfSpeech::Noun]);
+        assert_eq!(s[1].pos, vec![PartOfSpeech::Noun], "sense w/o POS inherits");
+        assert_eq!(
+            s[2].pos,
+            vec![PartOfSpeech::Adverb],
+            "explicit POS replaces inheritance"
+        );
+    }
+
+    /// Non-English glosses (xml:lang != "eng") should be filtered out.
+    #[test]
+    fn drops_non_english_glosses() {
+        let xml = br#"<JMdict>
+<entry>
+<ent_seq>1</ent_seq>
+<r_ele><reb>x</reb></r_ele>
+<sense>
+<pos>&n;</pos>
+<gloss xml:lang="eng">cat</gloss>
+<gloss xml:lang="fre">chat</gloss>
+<gloss xml:lang="ger">Katze</gloss>
+</sense>
+</entry>
+</JMdict>"#;
+        let entries = parse_jmdict_bytes(xml).unwrap();
+        let glosses: Vec<&str> = entries[0].senses[0]
+            .glosses
+            .iter()
+            .map(|g| g.text.as_str())
+            .collect();
+        assert_eq!(glosses, vec!["cat"]);
+    }
+
+    /// Entries with no senses must be dropped — the FST relies on entry presence
+    /// implying at least one gloss.
+    #[test]
+    fn skips_entries_with_no_senses() {
+        let xml = br#"<JMdict>
+<entry><ent_seq>1</ent_seq><r_ele><reb>x</reb></r_ele></entry>
+<entry>
+<ent_seq>2</ent_seq>
+<r_ele><reb>y</reb></r_ele>
+<sense><pos>&n;</pos><gloss>second</gloss></sense>
+</entry>
+</JMdict>"#;
+        let entries = parse_jmdict_bytes(xml).unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].sequence, 2);
+    }
+
+    #[test]
+    fn strip_custom_entities_replaces_unknown_keeps_standard_and_numeric() {
+        let input = b"&v5b; &amp; &#x6587; &unknown; bare & end";
+        let out = strip_custom_entities(input);
+        let s = std::str::from_utf8(&out).unwrap();
+        // Custom entities lose the `&` and `;` markers (so quick-xml sees them as text).
+        assert!(s.contains("v5b "));
+        assert!(s.contains("unknown "));
+        // Standard XML entities stay intact for quick-xml to resolve.
+        assert!(s.contains("&amp;"));
+        // Numeric character references stay intact.
+        assert!(s.contains("&#x6587;"));
+        // A lone `&` without a closing `;` is emitted verbatim.
+        assert!(s.contains("bare & end"));
+    }
+
+    #[test]
+    fn parses_multiple_entries() {
+        let xml = br#"<JMdict>
+<entry><ent_seq>1</ent_seq><r_ele><reb>a</reb></r_ele>
+<sense><pos>&n;</pos><gloss>one</gloss></sense></entry>
+<entry><ent_seq>2</ent_seq><r_ele><reb>b</reb></r_ele>
+<sense><pos>&n;</pos><gloss>two</gloss></sense></entry>
+<entry><ent_seq>3</ent_seq><r_ele><reb>c</reb></r_ele>
+<sense><pos>&n;</pos><gloss>three</gloss></sense></entry>
+</JMdict>"#;
+        let entries = parse_jmdict_bytes(xml).unwrap();
+        assert_eq!(entries.len(), 3);
+        assert_eq!(
+            entries.iter().map(|e| e.sequence).collect::<Vec<_>>(),
+            vec![1, 2, 3]
+        );
+    }
 }

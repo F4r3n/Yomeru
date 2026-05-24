@@ -223,7 +223,7 @@ pub fn ReviewTab() -> Element {
 
     let cards = due_cards.read();
     let i = *idx.read();
-    let current = cards.get(i).cloned();
+    let current = cards.get(i);
     let entries_r = entries.read();
     let current_entry = entries_r.get(i).cloned();
     let due_count = cards.len();
@@ -253,20 +253,23 @@ pub fn ReviewTab() -> Element {
                 }
             }
 
-            div { class: "stat-grid",
-                div { class: "stat-card accent",
-                    div { class: "stat-value", "{due_count}" }
-                    div { class: "stat-label", "Due now" }
-                }
-                div { class: "stat-card warn",
-                    div { class: "stat-value", "{new_count}" }
-                    div { class: "stat-label", "Staged" }
-                }
-                div { class: "stat-card",
-                    div { class: "stat-value", "{i.min(due_count)}" }
-                    div { class: "stat-label", "Reviewed this session" }
+            if !*started.read() {
+                div { class: "stat-grid",
+                    div { class: "stat-card accent",
+                        div { class: "stat-value", "{due_count}" }
+                        div { class: "stat-label", "Due now" }
+                    }
+                    div { class: "stat-card warn",
+                        div { class: "stat-value", "{new_count}" }
+                        div { class: "stat-label", "Staged" }
+                    }
+                    div { class: "stat-card",
+                        div { class: "stat-value", "{i.min(due_count)}" }
+                        div { class: "stat-label", "Reviewed this session" }
+                    }
                 }
             }
+
 
             if let Some(msg) = graduated_msg.read().clone() {
                 div { class: "card", style: "background: var(--green); color: var(--on-accent); border-color: var(--green);", "{msg}" }
@@ -302,18 +305,8 @@ pub fn ReviewTab() -> Element {
                         }
                     }
                 }
-            } else if current.is_none() {
-                div { class: "empty-state",
-                    div { class: "glyph", "✓" }
-                    div { class: "headline", "Review complete!" }
-                    div { class: "helper",
-                        if let Some(m) = next_due.read().clone() { "{m}" } else { "Great work." }
-                    }
-                    button { class: "primary", onclick: move |_| load_session(), "Done" }
-                }
-            } else {
+            } else if let Some(c) = current {
                 {
-                    let c = current.unwrap();
                     let entry = current_entry;
                     let direction_label = match c.direction {
                         CardDirection::Recognition => "Recognition",
@@ -387,15 +380,25 @@ pub fn ReviewTab() -> Element {
                                     }
                                 } else {
                                     div { class: "rate-grid",
-                                        button { class: "danger",  onclick: move |_| (rate.clone())(1), "Again" }
-                                        button { class: "warning", onclick: move |_| (rate.clone())(2), "Hard" }
-                                        button { class: "success", onclick: move |_| (rate.clone())(3), "Good" }
-                                        button { class: "primary", onclick: move |_| (rate.clone())(4), "Easy" }
+                                        button { class: "danger",  onclick: move |_| (rate)(1), "Again" }
+                                        button { class: "warning", onclick: move |_| (rate)(2), "Hard" }
+                                        button { class: "success", onclick: move |_| (rate)(3), "Good" }
+                                        button { class: "primary", onclick: move |_| (rate)(4), "Easy" }
                                     }
                                 }
                             }
                         }
                     }
+                }
+
+            } else {
+                div { class: "empty-state",
+                    div { class: "glyph", "✓" }
+                    div { class: "headline", "Review complete!" }
+                    div { class: "helper",
+                        if let Some(m) = next_due.read().clone() { "{m}" } else { "Great work." }
+                    }
+                    button { class: "primary", onclick: move |_| load_session(), "Done" }
                 }
             }
         }
