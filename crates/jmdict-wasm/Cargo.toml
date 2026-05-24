@@ -17,3 +17,6 @@ wasm-logger       = "0.2"
 log               = "0.4"
 serde             = { version = "1", features = ["derive"] }
 console_error_panic_hook = "0.1"
+
+[lints]
+workspace = true

@@ -1,10 +1,13 @@
 [package]
 name = "jmdict-types"
 version = "0.8.2"
-edition = "2021"
+edition = "2024"
 
 [features]
 full = []
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
+
+[lints]
+workspace = true

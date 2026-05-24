@@ -9,3 +9,6 @@ criterion = { version = "0.5", features = ["html_reports"] }
 [[bench]]
 name = "deinflect_bench"
 harness = false
+
+[lints]
+workspace = true

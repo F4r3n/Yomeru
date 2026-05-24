@@ -18,3 +18,7 @@ postcard     = { version = "1", features = ["alloc"] }
 fst          = "0.4"
 anyhow       = "1"
 clap         = { version = "4", features = ["derive"] }
+
+
+[lints]
+workspace = true

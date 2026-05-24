@@ -26,3 +26,6 @@ jmdict-types = { path = "../jmdict-types", features = ["full"] }
 name = "lookup_bench"
 harness = false
 required-features = ["test-utils"]
+
+[lints]
+workspace = true

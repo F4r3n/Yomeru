@@ -16,3 +16,7 @@ criterion = { version = "0.5", features = ["html_reports"] }
 [[bench]]
 name = "japanese_utils_bench"
 harness = false
+
+
+[lints]
+workspace = true

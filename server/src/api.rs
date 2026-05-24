@@ -12,9 +12,9 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
+use crate::AppState;
 use crate::config::Config;
 use crate::db;
-use crate::AppState;
 
 #[derive(Deserialize)]
 pub struct AuthRequestBody {
@@ -65,7 +65,7 @@ fn gen_code() -> String {
 }
 
 fn gen_token() -> String {
-    let bytes: Vec<u8> = (0..32).map(|_| rand::thread_rng().gen()).collect();
+    let bytes: Vec<u8> = (0..32).map(|_| rand::thread_rng().r#gen()).collect();
     bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
@@ -338,8 +338,10 @@ pub async fn lookup_prefix_handler(
     }
     let text = body.text;
     let max = body.max;
-    let results =
-        run_blocking("lookup_prefix", move || Ok(jmdict_core::lookup_prefix(&text, max))).await?;
+    let results = run_blocking("lookup_prefix", move || {
+        Ok(jmdict_core::lookup_prefix(&text, max))
+    })
+    .await?;
     Ok(Json(LookupPrefixResponse { results }).into_response())
 }
 
@@ -352,7 +354,10 @@ pub async fn kanji_handler(
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let word = body.word;
-    let entries = run_blocking("kanji_lookup", move || Ok(kanjidic_core::lookup_many(&word))).await?;
+    let entries = run_blocking("kanji_lookup", move || {
+        Ok(kanjidic_core::lookup_many(&word))
+    })
+    .await?;
     Ok(Json(KanjiResponse { entries }).into_response())
 }
 
@@ -366,14 +371,17 @@ pub async fn examples_handler(
     }
     let word = body.word;
     let max = body.max as usize;
-    let entries = run_blocking("examples_lookup", move || Ok(examples_core::lookup(&word, max))).await?;
+    let entries = run_blocking("examples_lookup", move || {
+        Ok(examples_core::lookup(&word, max))
+    })
+    .await?;
     Ok(Json(ExamplesResponse { entries }).into_response())
 }
 
 async fn send_otp_email(cfg: &Config, to: &str, code: &str) -> anyhow::Result<()> {
     use lettre::{
-        transport::smtp::authentication::Credentials, AsyncSmtpTransport, AsyncTransport, Message,
-        Tokio1Executor,
+        AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
+        transport::smtp::authentication::Credentials,
     };
 
     let from_mailbox: lettre::message::Mailbox = format!("Yomeru <{}>", cfg.smtp_from).parse()?;

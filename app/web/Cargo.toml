@@ -6,3 +6,14 @@ edition = "2021"
 [dependencies]
 dioxus = { version = "0.7.9", features = ["web"] }
 yomeru-shared = { path = "../shared" }
+
+[lints]
+workspace = true
+
+[profile.release]
+opt-level = "z"
+debug = false
+lto = true
+codegen-units = 1
+panic = "abort"
+incremental = false

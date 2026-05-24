@@ -13,3 +13,6 @@ quick-xml      = { version = "0.37", features = ["encoding"] }
 postcard       = { version = "1", features = ["alloc"] }
 anyhow         = "1"
 clap           = { version = "4", features = ["derive"] }
+
+[lints]
+workspace = true

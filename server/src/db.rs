@@ -782,11 +782,19 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(
-            get_settings(&db, ALICE).await.unwrap().unwrap().request_retention,
+            get_settings(&db, ALICE)
+                .await
+                .unwrap()
+                .unwrap()
+                .request_retention,
             0.80
         );
         assert_eq!(
-            get_settings(&db, BOB).await.unwrap().unwrap().request_retention,
+            get_settings(&db, BOB)
+                .await
+                .unwrap()
+                .unwrap()
+                .request_retention,
             0.95
         );
     }
@@ -814,13 +822,15 @@ mod tests {
             "due_ms":1780000000000.0,"stability":1.5,"difficulty":2.0,"reps":3,
             "lapses":1,"state":"review","last_review_ms":1779000000000.0,
             "added_ms":1778000000000.0,"status":"active"}"#;
-        sqlx::query("INSERT INTO cards (email, id, data, last_review_ms) VALUES (?1, ?2, ?3, NULL)")
-            .bind(ALICE)
-            .bind("猫::recognition")
-            .bind(blob)
-            .execute(&pool)
-            .await
-            .unwrap();
+        sqlx::query(
+            "INSERT INTO cards (email, id, data, last_review_ms) VALUES (?1, ?2, ?3, NULL)",
+        )
+        .bind(ALICE)
+        .bind("猫::recognition")
+        .bind(blob)
+        .execute(&pool)
+        .await
+        .unwrap();
 
         init_schema(&pool).await.unwrap(); // triggers the blob→columns migration
 
