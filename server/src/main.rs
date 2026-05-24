@@ -46,7 +46,7 @@ async fn main() -> anyhow::Result<()> {
         warn!("DEV MODE — SMTP skipped, /api/sync auth disabled");
     }
 
-    let db = db::init_db(&cfg.db_path).context("init db")?;
+    let db = db::init_db(&cfg.db_path).await.context("init db")?;
     {
         let now_ms = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -54,6 +54,7 @@ async fn main() -> anyhow::Result<()> {
             .unwrap_or(0);
         // 90 days
         db::prune_old_deletions(&db, now_ms - 90 * 86_400_000)
+            .await
             .context("prune old deletions at startup")?;
     }
 

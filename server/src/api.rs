@@ -70,7 +70,8 @@ fn extract_bearer(headers: &HeaderMap) -> Option<&str> {
 
 /// Runs `f` on a blocking thread and folds both panic (`JoinError`) and
 /// fallible result into a single 500 response. The label is logged so it's
-/// possible to tell which call failed without a stack trace.
+/// possible to tell which call failed without a stack trace. Used for the
+/// CPU-bound in-memory dict lookups; DB calls go through sqlx directly.
 async fn run_blocking<F, T>(label: &'static str, f: F) -> Result<T, Response>
 where
     F: FnOnce() -> anyhow::Result<T> + Send + 'static,
@@ -79,7 +80,7 @@ where
     match tokio::task::spawn_blocking(f).await {
         Ok(Ok(v)) => Ok(v),
         Ok(Err(e)) => {
-            error!(op = label, error = ?e, "db call failed");
+            error!(op = label, error = ?e, "blocking call failed");
             Err(StatusCode::INTERNAL_SERVER_ERROR.into_response())
         }
         Err(e) => {
@@ -87,6 +88,12 @@ where
             Err(StatusCode::INTERNAL_SERVER_ERROR.into_response())
         }
     }
+}
+
+/// Logs a DB error with its operation label and returns a 500 response.
+fn db_err(op: &'static str, e: anyhow::Error) -> Response {
+    error!(op, error = ?e, "db call failed");
+    StatusCode::INTERNAL_SERVER_ERROR.into_response()
 }
 
 pub async fn auth_request_handler(
@@ -109,25 +116,18 @@ pub async fn auth_request_handler(
         info!(%email, "dev mode: auto-issuing token");
         let token = gen_token();
         let expires_at = now_ms() + 30 * 24 * 3_600_000_i64;
-        let db = state.db.clone();
-        let token_clone = token.clone();
-        run_blocking("dev_mode_create_session", move || {
-            db::create_session(&db, &token_clone, &email, expires_at)
-        })
-        .await?;
+        db::create_session(&state.db, &token, &email, expires_at)
+            .await
+            .map_err(|e| db_err("dev_mode_create_session", e))?;
         return Ok(Json(VerifyResponse { token }).into_response());
     }
 
     let code = gen_code();
     let now = now_ms();
 
-    let db = state.db.clone();
-    let email_clone = email.clone();
-    let code_clone = code.clone();
-    let stored = run_blocking("store_otp", move || {
-        db::store_otp(&db, &email_clone, &code_clone, now)
-    })
-    .await?;
+    let stored = db::store_otp(&state.db, &email, &code, now)
+        .await
+        .map_err(|e| db_err("store_otp", e))?;
 
     if !stored {
         // Per-email cooldown is still active.
@@ -155,12 +155,9 @@ pub async fn auth_verify_handler(
     let code = body.code.trim().to_string();
     let now = now_ms();
 
-    let db = state.db.clone();
-    let email_clone = email.clone();
-    let valid = run_blocking("verify_otp", move || {
-        db::verify_otp(&db, &email_clone, &code, now)
-    })
-    .await?;
+    let valid = db::verify_otp(&state.db, &email, &code, now)
+        .await
+        .map_err(|e| db_err("verify_otp", e))?;
 
     if !valid {
         return Err((
@@ -173,12 +170,9 @@ pub async fn auth_verify_handler(
     let token = gen_token();
     let expires_at = now + 30 * 24 * 3_600_000_i64;
 
-    let db = state.db.clone();
-    let token_clone = token.clone();
-    run_blocking("create_session", move || {
-        db::create_session(&db, &token_clone, &email, expires_at)
-    })
-    .await?;
+    db::create_session(&state.db, &token, &email, expires_at)
+        .await
+        .map_err(|e| db_err("create_session", e))?;
 
     Ok(Json(VerifyResponse { token }).into_response())
 }
@@ -193,53 +187,50 @@ pub async fn sync_handler(
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
 
-    // Dev mode: accept sync without auth so local dev needs no OTP.
-    if !state.cfg.dev_mode {
-        let token = match extract_bearer(&headers) {
-            Some(t) => t.to_string(),
-            None => {
-                return Err((
-                    StatusCode::UNAUTHORIZED,
-                    Json(serde_json::json!({ "error": "missing token" })),
-                )
-                    .into_response());
-            }
-        };
+    // Auth is required even in dev mode — dev just skips OTP+SMTP so the
+    // token is auto-issued by /api/auth/request. Every sync still needs a
+    // valid session so we know whose cards to read/write.
+    let token = match extract_bearer(&headers) {
+        Some(t) => t.to_string(),
+        None => {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(serde_json::json!({ "error": "missing token" })),
+            )
+                .into_response());
+        }
+    };
 
-        let now = now_ms();
-        let db = state.db.clone();
-        let valid = run_blocking("validate_session", move || {
-            db::validate_session(&db, &token, now)
-        })
-        .await?;
-
-        if valid.is_none() {
+    let now = now_ms();
+    let email = match db::validate_session(&state.db, &token, now)
+        .await
+        .map_err(|e| db_err("validate_session", e))?
+    {
+        Some(e) => e,
+        None => {
             return Err((
                 StatusCode::UNAUTHORIZED,
                 Json(serde_json::json!({ "error": "invalid or expired session" })),
             )
                 .into_response());
         }
-    }
+    };
 
-    let now = now_ms();
+    db::apply_deletions(&state.db, &email, &body.deletions, now)
+        .await
+        .map_err(|e| db_err("apply_deletions", e))?;
 
-    let db = state.db.clone();
-    let deletions = body.deletions.clone();
-    run_blocking("apply_deletions", move || {
-        db::apply_deletions(&db, &deletions, now)
-    })
-    .await?;
+    db::upsert_cards(&state.db, &email, &body.cards)
+        .await
+        .map_err(|e| db_err("upsert_cards", e))?;
 
-    let db = state.db.clone();
-    let cards = body.cards.clone();
-    run_blocking("upsert_cards", move || db::upsert_cards(&db, &cards)).await?;
+    let merged = db::get_all_cards(&state.db, &email)
+        .await
+        .map_err(|e| db_err("get_all_cards", e))?;
 
-    let db = state.db.clone();
-    let merged = run_blocking("get_all_cards", move || db::get_all_cards(&db)).await?;
-
-    let db = state.db.clone();
-    let tombstones = run_blocking("get_all_deletions", move || db::get_all_deletions(&db)).await?;
+    let tombstones = db::get_all_deletions(&state.db, &email)
+        .await
+        .map_err(|e| db_err("get_all_deletions", e))?;
 
     Ok(Json(SyncResponse {
         cards: merged,
