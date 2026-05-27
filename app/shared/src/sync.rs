@@ -6,9 +6,43 @@
 //! These free functions keep existing call sites (every mutation site in
 //! `routes/*`) source-stable.
 
-use dioxus::prelude::consume_context;
+use dioxus::prelude::*;
 
 use crate::platform::Platform;
+
+/// Reactive "data changed" generation, provided once at the app root by
+/// [`crate::App`]. A successful sync bumps it; route load-effects read it
+/// (via [`sync_generation`]) so they re-run and pick up freshly pulled
+/// cards from IDB.
+#[derive(Clone, Copy)]
+pub struct SyncGen(pub Signal<u32>);
+
+/// Subscribe the current reactive scope to the sync generation and return
+/// its value. Called at the top of route load `use_effect`s so they re-run
+/// when a sync completes.
+pub fn sync_generation() -> u32 {
+    *consume_context::<SyncGen>().0.read()
+}
+
+/// Run `reload` on mount and again every time a sync lands. Each data tab
+/// passes its own loader — there's no single global store to refresh, since
+/// pages keep their card state in local signals. Pages that must preserve
+/// in-progress UI (e.g. an active review session) guard inside `reload`.
+pub fn use_reload_on_sync(mut reload: impl FnMut() + 'static) {
+    use_effect(move || {
+        let _ = sync_generation();
+        reload();
+    });
+}
+
+/// Bump the sync generation, re-running any subscribed route load-effect.
+/// Uses a non-subscribing read so a one-shot caller (e.g. the startup-sync
+/// task) doesn't accidentally subscribe itself and loop.
+pub fn bump_sync_generation() {
+    let mut gen = consume_context::<SyncGen>().0;
+    let next = *gen.peek() + 1;
+    gen.set(next);
+}
 
 /// Arms a debounced auto-sync. No-op if the user hasn't configured a
 /// server token. Safe to call after every IDB mutation — the debounce

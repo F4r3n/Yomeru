@@ -7,6 +7,7 @@ use dioxus::web::WebHistory;
 use gloo_storage::{LocalStorage, Storage};
 
 use crate::routes::{about, lookup, new_words, review, settings, word_list};
+use crate::sync::SyncGen;
 use crate::theme::GLOBAL_CSS;
 
 const THEME_KEY: &str = "yomeru.theme";
@@ -37,6 +38,23 @@ pub enum Route {
 
 #[component]
 pub fn App() -> Element {
+    // Reactive generation that route load-effects subscribe to. Bumped once
+    // the startup sync below lands so the mounted tab reloads from IDB.
+    use_context_provider(|| SyncGen(Signal::new(0)));
+
+    // Pull remote changes once when the app opens. Previously a sync only ran
+    // after a local mutation (debounced) or the manual "Sync now" button, so a
+    // freshly opened device showed stale data until the user synced by hand.
+    // `sync_now` is a no-op error ("not authenticated") when no server token
+    // is configured, so this is safe to fire unconditionally. No reactive
+    // reads in the future (bump uses `peek`), so this runs exactly once.
+    use_future(move || async move {
+        match crate::sync::sync_now().await {
+            Ok(_) => crate::sync::bump_sync_generation(),
+            Err(e) => log::debug!("[yomeru] startup sync skipped: {e}"),
+        }
+    });
+
     rsx! {
         document::Style { {GLOBAL_CSS} }
         // Disable Dioxus' default scroll-to-(0,0) on every navigation so

@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 use log::warn;
 
 use crate::idb::{delete_card, get_staging_cards, promote_card};
-use crate::sync::schedule_sync;
+use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::SrsCard;
 
 #[component]
@@ -26,7 +26,8 @@ pub fn NewWordsTab() -> Element {
         });
     };
 
-    use_effect(move || reload());
+    // Reload on mount and whenever a sync lands.
+    use_reload_on_sync(reload);
 
     let promote_one = move |word: String| {
         spawn(async move {

@@ -9,7 +9,7 @@ use crate::idb::{
 };
 use crate::settings::load as load_settings;
 use crate::srs::{apply_review, now_ms, rating_from_u8, ReviewOutcome};
-use crate::sync::schedule_sync;
+use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::{CardDirection, CardStatus, SrsCard};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -124,7 +124,13 @@ pub fn ReviewTab() -> Element {
         });
     };
 
-    use_effect(move || load_session());
+    // Reload on mount and whenever a sync lands, but don't yank a session the
+    // user has already started.
+    use_reload_on_sync(move || {
+        if !*started.peek() {
+            load_session();
+        }
+    });
 
     let start_review = move |_| started.set(true);
 

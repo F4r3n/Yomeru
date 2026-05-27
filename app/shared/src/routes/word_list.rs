@@ -3,7 +3,7 @@ use log::warn;
 
 use crate::idb::{delete_card, get_all_cards};
 use crate::srs::now_ms;
-use crate::sync::schedule_sync;
+use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::{CardDirection, CardStatus, SrsCard};
 
 #[component]
@@ -29,7 +29,8 @@ pub fn WordListTab() -> Element {
         });
     };
 
-    use_effect(move || reload());
+    // Reload on mount and whenever a sync lands.
+    use_reload_on_sync(reload);
 
     let on_delete = move |word: String| {
         spawn(async move {
