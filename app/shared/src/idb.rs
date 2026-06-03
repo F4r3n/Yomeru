@@ -8,7 +8,7 @@ use idb::{
 };
 use wasm_bindgen::JsValue;
 
-use crate::types::{card_id, CardDirection, CardStatus, SrsCard};
+use crate::types::{CardDirection, CardStatus, SrsCard, card_id};
 
 const DB_NAME: &str = "yomeru-db";
 const DB_VERSION: u32 = 5;
@@ -31,7 +31,11 @@ async fn open() -> Result<Database, idb::Error> {
                 .create_index("due_ms", KeyPath::new_single("due_ms"), Some(idx.clone()))
                 .ok();
             store
-                .create_index("added_ms", KeyPath::new_single("added_ms"), Some(idx.clone()))
+                .create_index(
+                    "added_ms",
+                    KeyPath::new_single("added_ms"),
+                    Some(idx.clone()),
+                )
                 .ok();
             store
                 .create_index("status", KeyPath::new_single("status"), Some(idx.clone()))
@@ -150,6 +154,23 @@ pub async fn get_cards_by_word(word: &str) -> Result<Vec<SrsCard>, String> {
     Ok(arr.into_iter().filter_map(|v| from_value(v).ok()).collect())
 }
 
+pub async fn has_card(word: &str) -> Result<bool, String> {
+    let db = open().await.map_err(|e| e.to_string())?;
+    let tx = db
+        .transaction(&[STORE], TransactionMode::ReadOnly)
+        .map_err(|e| e.to_string())?;
+    let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
+    let index = store.index("word").map_err(|e| e.to_string())?;
+    let key = JsValue::from_str(word);
+    let has_key = index
+        .get_key(Query::Key(key))
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(has_key.is_some())
+}
+
 pub async fn get_all_cards() -> Result<Vec<SrsCard>, String> {
     let db = open().await.map_err(|e| e.to_string())?;
     let tx = db
@@ -167,14 +188,22 @@ pub async fn get_all_cards() -> Result<Vec<SrsCard>, String> {
 pub async fn get_due_cards(now_ms: f64) -> Result<Vec<SrsCard>, String> {
     let mut all = get_all_cards().await?;
     all.retain(|c| matches!(c.status, CardStatus::Active) && c.due_ms <= now_ms);
-    all.sort_by(|a, b| a.due_ms.partial_cmp(&b.due_ms).unwrap_or(std::cmp::Ordering::Equal));
+    all.sort_by(|a, b| {
+        a.due_ms
+            .partial_cmp(&b.due_ms)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     Ok(all)
 }
 
 pub async fn get_staging_cards() -> Result<Vec<SrsCard>, String> {
     let mut all = get_all_cards().await?;
     all.retain(|c| matches!(c.status, CardStatus::Staging));
-    all.sort_by(|a, b| a.added_ms.partial_cmp(&b.added_ms).unwrap_or(std::cmp::Ordering::Equal));
+    all.sort_by(|a, b| {
+        a.added_ms
+            .partial_cmp(&b.added_ms)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
     Ok(all)
 }
 
@@ -252,11 +281,7 @@ pub async fn get_all_tombstones() -> Result<Vec<String>, String> {
     let ids = arr
         .into_iter()
         .filter_map(|v| serde_wasm_bindgen::from_value::<serde_json::Value>(v).ok())
-        .filter_map(|v| {
-            v.get("id")
-                .and_then(|x| x.as_str())
-                .map(|s| s.to_string())
-        })
+        .filter_map(|v| v.get("id").and_then(|x| x.as_str()).map(|s| s.to_string()))
         .collect();
     Ok(ids)
 }

@@ -8,7 +8,7 @@ use log::warn;
 use crate::app::Route;
 use crate::components::EntryCard;
 use crate::dict::{self, examples_for, kanji_for, primary_headword};
-use crate::idb::{get_cards_by_word, put_cards};
+use crate::idb::{get_cards_by_word, has_card, put_cards};
 use crate::srs::now_ms;
 use crate::sync::schedule_sync;
 use crate::types::{CardDirection, SrsCard};
@@ -57,16 +57,15 @@ fn romaji_to_hiragana(input: &str) -> String {
     while !remainder.is_empty() {
         // 1. Handle double consonants (Sokuon 'っ')
         let mut chars = remainder.chars();
-        if let (Some(c1), Some(c2)) = (chars.next(), chars.next()) {
-            if c1 != 'n'
-                && c1.is_ascii_alphabetic()
-                && !matches!(c1, 'a' | 'e' | 'i' | 'o' | 'u')
-                && c1 == c2
-            {
-                out.push('っ');
-                remainder = &remainder[c1.len_utf8()..];
-                continue;
-            }
+        if let (Some(c1), Some(c2)) = (chars.next(), chars.next())
+            && c1 != 'n'
+            && c1.is_ascii_alphabetic()
+            && !matches!(c1, 'a' | 'e' | 'i' | 'o' | 'u')
+            && c1 == c2
+        {
+            out.push('っ');
+            remainder = &remainder[c1.len_utf8()..];
+            continue;
         }
 
         // 2. Handle standalone 'n' (ん)
@@ -90,13 +89,13 @@ fn romaji_to_hiragana(input: &str) -> String {
                 .map_or(remainder.len(), |(idx, _)| idx);
             let chunk = &remainder[..byte_end];
 
-            if !chunk.is_empty() {
-                if let Some(rep) = lookup_romaji(chunk) {
-                    out.push_str(rep);
-                    remainder = &remainder[byte_end..];
-                    matched = true;
-                    break;
-                }
+            if !chunk.is_empty()
+                && let Some(rep) = lookup_romaji(chunk)
+            {
+                out.push_str(rep);
+                remainder = &remainder[byte_end..];
+                matched = true;
+                break;
             }
 
             // If we've reached the end of the string, no need to try smaller lengths
@@ -106,11 +105,9 @@ fn romaji_to_hiragana(input: &str) -> String {
         }
 
         // 4. Fallback for un-matched characters (punctuation, spaces, etc.)
-        if !matched {
-            if let Some(c) = remainder.chars().next() {
-                out.push(c);
-                remainder = &remainder[c.len_utf8()..];
-            }
+        if !matched && let Some(c) = remainder.chars().next() {
+            out.push(c);
+            remainder = &remainder[c.len_utf8()..];
         }
     }
 
@@ -289,7 +286,7 @@ fn LookupListPane() -> Element {
     let LookupShared { mut added } = use_context::<LookupShared>();
     let nav = use_navigator();
     let current = use_route::<Route>();
-    let selected_word: Option<String> = match current.clone() {
+    let selected_word: Option<String> = match current {
         Route::LookupDetail { word } => Some(word),
         _ => None,
     };
@@ -309,24 +306,39 @@ fn LookupListPane() -> Element {
     let mut extra_tab = use_signal(|| ExtraTab::Kanji);
     let mut last_fetched = use_signal(String::new);
 
-    // Re-fetch kanji/examples when the URL's word changes.
+    // Re-fetch kanji/examples when the URL's word changes. Also lazy-load the
+    // dictionary entry itself if no row in the list matches it (e.g. user
+    // landed on /lookup/<word> via direct URL), so the expanded card has a
+    // row to render under.
     if let Some(w) = selected_word.clone() {
         if *last_fetched.read() != w {
             last_fetched.set(w.clone());
             extra_tab.set(ExtraTab::Kanji);
             kanji_data.set(Vec::new());
             examples_data.set(Vec::new());
+            let need_entry = !entries.read().iter().any(|e| primary_headword(e) == w);
+            let w_for_aux = w.clone();
             spawn(async move {
-                kanji_data.set(kanji_for(&w).await.unwrap_or_default());
-                examples_data.set(examples_for(&w, 5).await.unwrap_or_default());
+                kanji_data.set(kanji_for(&w_for_aux).await.unwrap_or_default());
+                examples_data.set(examples_for(&w_for_aux, 5).await.unwrap_or_default());
             });
+            if need_entry {
+                spawn(async move {
+                    let results = dict::lookup(&w).await.unwrap_or_default();
+                    if !results.is_empty() {
+                        last_target.set(w);
+                        entries.set(results);
+                        searched.set(true);
+                    }
+                });
+            }
         }
     } else if !last_fetched.read().is_empty() {
         last_fetched.set(String::new());
     }
 
     let run_lookup = move |q: String| {
-        let q = q.trim().to_string();
+        let q = q.trim();
         // A new search → collapse whatever card is currently open.
         if on_detail_at_render {
             nav.replace(Route::Lookup {});
@@ -336,10 +348,10 @@ fn LookupListPane() -> Element {
             searched.set(false);
             return;
         }
-        let target = if is_romaji(&q) {
-            romaji_to_hiragana(&q)
+        let target = if is_romaji(q) {
+            romaji_to_hiragana(q)
         } else {
-            q.clone()
+            q.to_string()
         };
         last_target.set(target.clone());
         searching.set(true);
@@ -357,19 +369,18 @@ fn LookupListPane() -> Element {
                 history.set(next);
             }
             let mut already: HashSet<String> = HashSet::new();
+
+            //TODO: for each result we open IDB to see if the card exist.
+            // It's slow, need to do it on batch
             for e in &results {
-                let head = primary_headword(e).to_string();
-                if get_cards_by_word(&head)
-                    .await
-                    .map(|v| !v.is_empty())
-                    .unwrap_or(false)
-                {
-                    already.insert(head);
+                let head = primary_headword(e);
+                if has_card(head).await.unwrap_or(false) {
+                    already.insert(head.to_string());
                 }
             }
             added.set(already);
             let single_word = if results.len() == 1 {
-                Some(primary_headword(&results[0]).to_string())
+                results.first().map(|v| primary_headword(v).to_string())
             } else {
                 None
             };
@@ -383,8 +394,8 @@ fn LookupListPane() -> Element {
     };
 
     let on_input = {
-        let mut query = query.clone();
-        let mut run_lookup = run_lookup.clone();
+        let mut query = query;
+        let mut run_lookup = run_lookup;
         move |evt: Event<FormData>| {
             let v = evt.value();
             query.set(v.clone());
@@ -393,8 +404,8 @@ fn LookupListPane() -> Element {
     };
 
     let on_history = {
-        let mut query = query.clone();
-        let mut run_lookup = run_lookup.clone();
+        let mut query = query;
+        let mut run_lookup = run_lookup;
         move |term: String| {
             query.set(term.clone());
             run_lookup(term);
@@ -455,7 +466,7 @@ fn LookupListPane() -> Element {
             if *searching.read() {
                 div { class: "loading", "Searching…" }
             } else if !entries.read().is_empty() {
-                for entry in entries.read().iter().cloned() {
+                for entry in entries.read().iter() {
                     {
                         let head = primary_headword(&entry).to_string();
                         let is_added = added.read().contains(&head);
@@ -476,7 +487,7 @@ fn LookupListPane() -> Element {
                         };
                         rsx! {
                             EntryCard {
-                                entry,
+                                entry: entry.clone(),
                                 on_add: Some(EventHandler::new(on_add)),
                                 on_select,
                                 is_added,
