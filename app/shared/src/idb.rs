@@ -2,6 +2,7 @@
 //! schema v5 (composite-id cards + tombstones store for sync). The website
 //! starts at v4 — the v5 upgrade just adds the `tombstones` store.
 
+use log::error;
 use idb::{
     Database, DatabaseEvent, Factory, IndexParams, KeyPath, ObjectStoreParams, Query,
     TransactionMode,
@@ -19,11 +20,26 @@ async fn open() -> Result<Database, idb::Error> {
     let factory = Factory::new()?;
     let mut req = factory.open(DB_NAME, Some(DB_VERSION))?;
     req.on_upgrade_needed(|event| {
-        let db = event.database().expect("upgrade event has db");
+        // The callback is sync — we can't propagate Result. Log and bail on
+        // any setup failure; subsequent transactions on a half-set-up store
+        // will surface the failure to the caller as a normal idb error.
+        let db = match event.database() {
+            Ok(db) => db,
+            Err(e) => {
+                error!("idb upgrade: event.database() failed: {e:?}");
+                return;
+            }
+        };
         if !db.store_names().iter().any(|n| n == STORE) {
             let mut params = ObjectStoreParams::new();
             params.key_path(Some(KeyPath::new_single("id")));
-            let store = db.create_object_store(STORE, params).expect("create store");
+            let store = match db.create_object_store(STORE, params) {
+                Ok(s) => s,
+                Err(e) => {
+                    error!("idb upgrade: create_object_store({STORE}) failed: {e:?}");
+                    return;
+                }
+            };
 
             let mut idx = IndexParams::new();
             idx.unique(false);
@@ -47,8 +63,9 @@ async fn open() -> Result<Database, idb::Error> {
         if !db.store_names().iter().any(|n| n == TOMB_STORE) {
             let mut params = ObjectStoreParams::new();
             params.key_path(Some(KeyPath::new_single("id")));
-            db.create_object_store(TOMB_STORE, params)
-                .expect("create tombstones store");
+            if let Err(e) = db.create_object_store(TOMB_STORE, params) {
+                error!("idb upgrade: create_object_store({TOMB_STORE}) failed: {e:?}");
+            }
         }
     });
     req.await

@@ -41,6 +41,10 @@ pub fn launch_with(platform: Platform) {
 
 fn launched_app() -> Element {
     use_context_provider(|| {
+        // Structural invariant: `launch_with` is the only caller and it
+        // installs PENDING_PLATFORM before `dioxus::launch`. A None here
+        // would mean someone called `dioxus::launch(launched_app)` directly.
+        #[allow(clippy::expect_used)]
         PENDING_PLATFORM
             .with(|p| p.borrow_mut().take())
             .expect("launch_with must install a Platform before launching")

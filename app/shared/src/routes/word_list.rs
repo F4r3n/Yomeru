@@ -128,7 +128,7 @@ pub fn WordListTab() -> Element {
                                             td { style: "text-align: right; padding-right: 16px;",
                                                 button {
                                                     class: "danger",
-                                                    onclick: move |_| (on_delete.clone())(word.clone()),
+                                                    onclick: move |_| on_delete(word.clone()),
                                                     "Delete"
                                                 }
                                             }

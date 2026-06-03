@@ -73,10 +73,10 @@ fn load_theme() -> String {
 }
 
 fn apply_theme_to_dom(theme: &str) {
-    if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
-        if let Some(root) = doc.document_element() {
-            let _ = root.set_attribute("data-theme", theme);
-        }
+    if let Some(doc) = web_sys::window().and_then(|w| w.document())
+        && let Some(root) = doc.document_element()
+    {
+        let _ = root.set_attribute("data-theme", theme);
     }
 }
 

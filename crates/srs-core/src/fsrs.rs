@@ -41,13 +41,14 @@ pub const MIN_REQUEST_RETENTION: f64 = 0.70;
 pub const MAX_REQUEST_RETENTION: f64 = 0.97;
 
 fn make_fsrs(request_retention: f64) -> FSRS {
-    let mut params = Parameters::default();
-    params.request_retention =
-        request_retention.clamp(MIN_REQUEST_RETENTION, MAX_REQUEST_RETENTION);
-    params.enable_fuzz = true;
     // Seed is overwritten by Scheduler::init_seed from (now, reps, difficulty,
     // stability), so we leave Parameters::seed at its default and skip the
     // per-review allocation that setting it explicitly would cost.
+    let params = Parameters {
+        request_retention: request_retention.clamp(MIN_REQUEST_RETENTION, MAX_REQUEST_RETENTION),
+        enable_fuzz: true,
+        ..Parameters::default()
+    };
     FSRS::new(params)
 }
 

@@ -152,7 +152,7 @@ pub fn ReviewTab() -> Element {
                 .collect();
             let n = (words.len()).min(settings.max_session_cards as usize);
             let mut promoted = 0usize;
-            for w in &words[..n] {
+            for w in words.iter().take(n) {
                 if let Err(e) = promote_card(w).await {
                     warn!("promote_card({w}) in promote_and_review failed: {e}");
                     continue;
