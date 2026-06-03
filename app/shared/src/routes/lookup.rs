@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use dioxus::prelude::*;
 use gloo_storage::{LocalStorage, Storage};
+use gloo_timers::future::TimeoutFuture;
 use jmdict_types::WordEntry;
 use log::warn;
 
@@ -393,13 +394,22 @@ fn LookupListPane() -> Element {
         });
     };
 
+    // 100ms debounce on the search input. `use_resource` cancels the prior
+    // future (drops it at the sleep await) whenever `query` changes, so only
+    // the last keystroke's lookup actually fires.
+    let _debounced = use_resource(move || {
+        let q = query.read().clone();
+        let mut run_lookup = run_lookup;
+        async move {
+            TimeoutFuture::new(300).await;
+            run_lookup(q);
+        }
+    });
+
     let on_input = {
         let mut query = query;
-        let mut run_lookup = run_lookup;
         move |evt: Event<FormData>| {
-            let v = evt.value();
-            query.set(v.clone());
-            run_lookup(v);
+            query.set(evt.value());
         }
     };
 
@@ -413,7 +423,7 @@ fn LookupListPane() -> Element {
     };
 
     let on_clear_history = move |_| {
-        let _ = LocalStorage::delete(HISTORY_KEY);
+        LocalStorage::delete(HISTORY_KEY);
         history.set(Vec::new());
     };
 
@@ -468,7 +478,7 @@ fn LookupListPane() -> Element {
             } else if !entries.read().is_empty() {
                 for entry in entries.read().iter() {
                     {
-                        let head = primary_headword(&entry).to_string();
+                        let head = primary_headword(entry).to_string();
                         let is_added = added.read().contains(&head);
                         let expanded = selected_word.as_deref() == Some(&head);
                         let head_for_select = head.clone();
@@ -528,7 +538,10 @@ fn LookupListPane() -> Element {
                                 rsx! {
                                     button {
                                         class: "chip",
-                                        onclick: move |_| (on_history.clone())(t.clone()),
+                                        onclick: move |_| {
+                                            let mut h = on_history;
+                                            h(t.clone());
+                                        },
                                         "{term}"
                                     }
                                 }
