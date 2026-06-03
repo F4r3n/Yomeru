@@ -8,7 +8,7 @@ use gloo_storage::{LocalStorage, Storage};
 
 use crate::routes::{about, lookup, new_words, review, settings, word_list};
 use crate::sync::SyncGen;
-use crate::theme::GLOBAL_CSS;
+use crate::theme::global_css;
 
 const THEME_KEY: &str = "yomeru.theme";
 
@@ -56,7 +56,7 @@ pub fn App() -> Element {
     });
 
     rsx! {
-        document::Style { {GLOBAL_CSS} }
+        document::Style { {global_css()} }
         // Disable Dioxus' default scroll-to-(0,0) on every navigation so
         // expanding a result card in /lookup doesn't yank the page to the
         // top. Manual scroll restoration on browser back is sacrificed —

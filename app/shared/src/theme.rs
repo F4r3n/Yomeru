@@ -3,7 +3,57 @@
 //! < rails/header (base) < cards (surface0). Sidebar app-shell layout that
 //! collapses to a top tab bar below 800px.
 
-pub const GLOBAL_CSS: &str = r#"
+use dioxus::prelude::*;
+
+// Self-hosted Noto Sans JP (japanese subset, from fontsource) so CJK glyphs
+// render identically across OSes instead of falling through to whatever the
+// browser's default CJK fallback is. unicode-range in `global_css` confines
+// Noto to CJK; Latin text still resolves to Segoe UI / system-ui.
+const NOTO_400: Asset = asset!("/assets/fonts/NotoSansJP-400.woff2");
+const NOTO_500: Asset = asset!("/assets/fonts/NotoSansJP-500.woff2");
+const NOTO_700: Asset = asset!("/assets/fonts/NotoSansJP-700.woff2");
+
+const CJK_UNICODE_RANGE: &str = "U+3000-303F, U+3041-3096, U+309B-309F, U+30A0-30FF, \
+    U+31F0-31FF, U+3220-3247, U+3280-32CB, U+FF01-FF5E, U+FF61-FF9F, U+FFE0-FFEE, \
+    U+4E00-9FFF, U+3400-4DBF, U+F900-FAFF, U+FE30-FE4F";
+
+pub fn global_css() -> String {
+    let font_face = format!(
+        r#"
+@font-face {{
+    font-family: 'Noto Sans JP';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("{r}") format("woff2");
+    unicode-range: {range};
+}}
+@font-face {{
+    font-family: 'Noto Sans JP';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("{m}") format("woff2");
+    unicode-range: {range};
+}}
+@font-face {{
+    font-family: 'Noto Sans JP';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("{b}") format("woff2");
+    unicode-range: {range};
+}}
+"#,
+        r = NOTO_400,
+        m = NOTO_500,
+        b = NOTO_700,
+        range = CJK_UNICODE_RANGE,
+    );
+    format!("{font_face}{BASE_CSS}")
+}
+
+const BASE_CSS: &str = r#"
 :root {
     /* Catppuccin Mocha (dark) */
     --bg:       #181825; /* crust  — app background */
