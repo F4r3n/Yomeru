@@ -26,7 +26,10 @@ pub async fn lookup_many(words: &[String]) -> Result<Vec<Vec<WordEntry>>, String
 }
 
 pub async fn lookup_prefix(text: &str, max: u8) -> Result<Vec<WordEntry>, String> {
-    consume_context::<Platform>().dict.lookup_prefix(text, max).await
+    consume_context::<Platform>()
+        .dict
+        .lookup_prefix(text, max)
+        .await
 }
 
 pub async fn kanji_for(word: &str) -> Result<Vec<KanjiEntry>, String> {
@@ -34,7 +37,10 @@ pub async fn kanji_for(word: &str) -> Result<Vec<KanjiEntry>, String> {
 }
 
 pub async fn examples_for(word: &str, max: u8) -> Result<Vec<ExampleEntry>, String> {
-    consume_context::<Platform>().dict.examples_for(word, max).await
+    consume_context::<Platform>()
+        .dict
+        .examples_for(word, max)
+        .await
 }
 
 pub fn primary_headword(e: &WordEntry) -> &str {
@@ -42,14 +48,14 @@ pub fn primary_headword(e: &WordEntry) -> &str {
         .first()
         .map(|k| k.text.as_str())
         .or_else(|| e.reading_forms.first().map(|r| r.text.as_str()))
-        .unwrap_or("")
+        .unwrap_or_default()
 }
 
 pub fn primary_reading(e: &WordEntry) -> &str {
     e.reading_forms
         .first()
         .map(|r| r.text.as_str())
-        .unwrap_or("")
+        .unwrap_or_default()
 }
 
 pub fn direction_label(d: CardDirection) -> &'static str {

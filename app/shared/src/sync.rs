@@ -39,9 +39,9 @@ pub fn use_reload_on_sync(mut reload: impl FnMut() + 'static) {
 /// Uses a non-subscribing read so a one-shot caller (e.g. the startup-sync
 /// task) doesn't accidentally subscribe itself and loop.
 pub fn bump_sync_generation() {
-    let mut gen = consume_context::<SyncGen>().0;
-    let next = *gen.peek() + 1;
-    gen.set(next);
+    let mut sync_gen = consume_context::<SyncGen>().0;
+    let next = *sync_gen.peek() + 1;
+    sync_gen.set(next);
 }
 
 /// Arms a debounced auto-sync. No-op if the user hasn't configured a
