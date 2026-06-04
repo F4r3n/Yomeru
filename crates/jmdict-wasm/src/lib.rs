@@ -63,6 +63,21 @@ impl Dictionary {
             .unwrap_or_else(|_| JsValue::from(js_sys::Array::new()))
     }
 
+    /// Resolve JMdict `ent_seq` values to their entries. Takes a JS array of
+    /// numbers and returns `Vec<Option<WordEntry>>` aligned by index (`null`
+    /// for a sequence no longer in the dictionary). Used by SRS cards, which
+    /// key on `sequence` rather than a surface string.
+    pub fn lookup_by_sequence(&self, sequences: js_sys::Array) -> Result<JsValue, JsError> {
+        let results: Vec<Option<WordEntry>> = sequences
+            .iter()
+            .map(|v| {
+                v.as_f64()
+                    .and_then(|n| jmdict_core::lookup_by_sequence(n as u32))
+            })
+            .collect();
+        serde_wasm_bindgen::to_value(&results).map_err(|e| JsError::new(&e.to_string()))
+    }
+
     /// Prefix search: find entries whose headword starts with `text`.
     pub fn lookup_prefix(&self, text: &str, max_results: u8) -> Result<JsValue, JsError> {
         let entries = jmdict_core::lookup_prefix(text, max_results);

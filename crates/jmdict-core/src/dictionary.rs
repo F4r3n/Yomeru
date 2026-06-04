@@ -10,6 +10,8 @@ pub(crate) struct DictionaryInner {
     pub(crate) fst: Map<Vec<u8>>,
     pub(crate) lookup_table: Vec<Vec<u32>>,
     pub(crate) entries_bytes: Vec<u8>,
+    /// (ent_seq, byte_offset) sorted by ent_seq, for binary-search lookup.
+    pub(crate) seq_index: Vec<(u32, u32)>,
 }
 
 /// Load the binary dictionary produced by `jmdict-build` into the process-global
@@ -54,6 +56,16 @@ pub(crate) fn get_entry(idx: u32) -> Option<WordEntry> {
     from_bytes(&bytes[start..start + len]).ok()
 }
 
+/// Look up an entry by its JMdict ent_seq (sequence) number.
+pub fn lookup_by_sequence(seq: u32) -> Option<WordEntry> {
+    let dict = DICT.get()?;
+    let pos = dict
+        .seq_index
+        .binary_search_by_key(&seq, |(s, _)| *s)
+        .ok()?;
+    get_entry(dict.seq_index[pos].1)
+}
+
 pub(crate) fn fst_prefix_search(prefix: &str) -> Vec<(String, u64)> {
     let dict = match DICT.get() {
         Some(d) => d,
@@ -85,7 +97,7 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<DictionaryInner> {
     if &bytes[0..4] != b"JMDI" {
         bail!("Invalid magic bytes");
     }
-    if bytes[4] != 1 {
+    if bytes[4] != 3 {
         bail!("Unsupported dictionary version {}", bytes[4]);
     }
 
@@ -120,6 +132,12 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<DictionaryInner> {
     pos += 4;
     read_slice(bytes, pos, entries_len, "entries")?;
     let entries_bytes = bytes[pos..pos + entries_len].to_vec();
+    pos += entries_len;
+
+    let seq_len = read_u32(bytes, pos)?;
+    pos += 4;
+    read_slice(bytes, pos, seq_len, "seq index")?;
+    let seq_index: Vec<(u32, u32)> = from_bytes(&bytes[pos..pos + seq_len])?;
 
     let fst = Map::new(fst_bytes)?;
 
@@ -127,5 +145,6 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<DictionaryInner> {
         fst,
         lookup_table,
         entries_bytes,
+        seq_index,
     })
 }

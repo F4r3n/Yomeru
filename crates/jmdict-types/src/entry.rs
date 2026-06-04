@@ -46,9 +46,11 @@ impl WordEntry {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct KanjiElement {
     pub text: String,
-    #[cfg(feature = "full")]
+    /// `ke_inf` tags — e.g. "rK" (rarely used kanji form), "sK" (search-only),
+    /// "iK" (irregular), "oK" (out-dated).
     pub info: Vec<String>,
-    #[cfg(feature = "full")]
+    /// `ke_pri` frequency tags — e.g. "news1", "ichi1", "spec1", "gai1",
+    /// "nf01"–"nf48".
     pub priorities: Vec<String>,
 }
 
@@ -56,9 +58,7 @@ impl KanjiElement {
     pub fn from_text(content: String) -> Self {
         Self {
             text: content,
-            #[cfg(feature = "full")]
             info: vec![],
-            #[cfg(feature = "full")]
             priorities: vec![],
         }
     }
@@ -75,7 +75,7 @@ pub struct ReadingElement {
     pub restricted_to: Vec<String>,
     #[cfg(feature = "full")]
     pub info: Vec<String>,
-    #[cfg(feature = "full")]
+    /// `re_pri` frequency tags — same vocabulary as `KanjiElement.priorities`.
     pub priorities: Vec<String>,
 }
 
@@ -89,7 +89,6 @@ impl ReadingElement {
             restricted_to: vec![],
             #[cfg(feature = "full")]
             info: vec![],
-            #[cfg(feature = "full")]
             priorities: vec![],
         }
     }
@@ -110,8 +109,7 @@ pub struct Sense {
     #[cfg(feature = "full")]
     /// Field of application (e.g. "math", "food").
     pub fields: Vec<String>,
-    #[cfg(feature = "full")]
-    /// Miscellaneous info (e.g. "usually written in kana").
+    /// Miscellaneous tags — most usefully "uk" (usually written in kana).
     pub misc: Vec<String>,
     #[cfg(feature = "full")]
     /// Sense-level info notes.

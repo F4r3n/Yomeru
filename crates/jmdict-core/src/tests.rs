@@ -86,12 +86,16 @@ fn build_test_binary() -> Vec<u8> {
 
     let mut entries_bytes: Vec<u8> = Vec::new();
     let mut entry_offsets: Vec<u32> = Vec::with_capacity(entries.len());
+    let mut seq_pairs: Vec<(u32, u32)> = Vec::with_capacity(entries.len());
     for entry in &entries {
         let serialized = to_allocvec(entry).unwrap();
-        entry_offsets.push(entries_bytes.len() as u32);
+        let offset = entries_bytes.len() as u32;
+        entry_offsets.push(offset);
+        seq_pairs.push((entry.sequence, offset));
         entries_bytes.extend_from_slice(&(serialized.len() as u32).to_le_bytes());
         entries_bytes.extend_from_slice(&serialized);
     }
+    seq_pairs.sort_unstable_by_key(|(s, _)| *s);
 
     // Build key → group mapping (same logic as jmdict-build indexer)
     let mut key_to_indices: BTreeMap<String, Vec<u32>> = BTreeMap::new();
@@ -134,16 +138,19 @@ fn build_test_binary() -> Vec<u8> {
     }
     let fst_bytes = builder.into_inner().unwrap();
     let lt_bytes = to_allocvec(&lookup_table).unwrap();
+    let seq_bytes = to_allocvec(&seq_pairs).unwrap();
 
     let mut out = Vec::new();
     out.extend_from_slice(b"JMDI");
-    out.push(1u8);
+    out.push(3u8);
     out.extend_from_slice(&(fst_bytes.len() as u32).to_le_bytes());
     out.extend_from_slice(&fst_bytes);
     out.extend_from_slice(&(lt_bytes.len() as u32).to_le_bytes());
     out.extend_from_slice(&lt_bytes);
     out.extend_from_slice(&(entries_bytes.len() as u32).to_le_bytes());
     out.extend_from_slice(&entries_bytes);
+    out.extend_from_slice(&(seq_bytes.len() as u32).to_le_bytes());
+    out.extend_from_slice(&seq_bytes);
     out
 }
 

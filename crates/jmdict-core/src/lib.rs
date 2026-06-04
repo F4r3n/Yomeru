@@ -9,5 +9,5 @@ pub mod lookup;
 #[cfg(test)]
 mod tests;
 
-pub use dictionary::{init, init_for_testing};
+pub use dictionary::{init, init_for_testing, lookup_by_sequence};
 pub use lookup::{find_in_text, lookup, lookup_longest_match, lookup_prefix};

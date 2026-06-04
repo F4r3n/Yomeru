@@ -8,12 +8,16 @@ pub struct DictionaryIndex {
     pub fst_bytes: Vec<u8>,
     pub entries_bytes: Vec<u8>,
     pub lookup_table_bytes: Vec<u8>,
+    /// Sequence index: postcard-encoded `Vec<(u32, u32)>` of (ent_seq, byte_offset)
+    /// pairs, sorted by ent_seq for binary search at runtime.
+    pub seq_index_bytes: Vec<u8>,
 }
 
 pub fn build_index(entries: &[WordEntry]) -> Result<DictionaryIndex> {
     // Step 1: Serialize all entries and record their byte positions.
     let mut entries_bytes: Vec<u8> = Vec::new();
     let mut entry_offsets: Vec<u32> = Vec::with_capacity(entries.len());
+    let mut seq_pairs: Vec<(u32, u32)> = Vec::with_capacity(entries.len());
 
     for entry in entries {
         let serialized = to_allocvec(entry)?;
@@ -22,10 +26,12 @@ pub fn build_index(entries: &[WordEntry]) -> Result<DictionaryIndex> {
             bail!("jmdict entries blob exceeds 4 GiB ({} bytes)", offset);
         }
         entry_offsets.push(offset as u32);
+        seq_pairs.push((entry.sequence, offset as u32));
         let len = serialized.len() as u32;
         entries_bytes.extend_from_slice(&len.to_le_bytes());
         entries_bytes.extend_from_slice(&serialized);
     }
+    seq_pairs.sort_unstable_by_key(|(seq, _)| *seq);
 
     // Step 2: Build a BTreeMap of headword/reading → sorted list of entry indices.
     // BTreeMap because FST requires keys in sorted order.
@@ -77,12 +83,14 @@ pub fn build_index(entries: &[WordEntry]) -> Result<DictionaryIndex> {
     }
     let fst_bytes = fst_builder.into_inner()?;
 
-    // Step 5: Serialize lookup table.
+    // Step 5: Serialize lookup table and sequence index.
     let lookup_table_bytes = to_allocvec(&lookup_table)?;
+    let seq_index_bytes = to_allocvec(&seq_pairs)?;
 
     Ok(DictionaryIndex {
         fst_bytes,
         entries_bytes,
         lookup_table_bytes,
+        seq_index_bytes,
     })
 }

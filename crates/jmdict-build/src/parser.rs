@@ -129,9 +129,15 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                     }
                 }
                 b"k_ele" => {
+                    if let Some(k) = b.current_kanji.take() {
+                        b.kanji_forms.push(k);
+                    }
                     ctx = Ctx::Root;
                 }
                 b"r_ele" => {
+                    if let Some(r) = b.current_reading.take() {
+                        b.reading_forms.push(r);
+                    }
                     ctx = Ctx::Root;
                 }
                 b"sense" => {
@@ -165,26 +171,16 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                     Ctx::KeB => {
                         b.current_kanji = Some(KanjiElement::from_text(text.to_string()));
                     }
-                    #[cfg(feature = "full")]
                     Ctx::KeInf => {
                         if let Some(k) = &mut b.current_kanji {
                             k.info.push(text.to_string());
                         }
                     }
-                    #[cfg(feature = "full")]
                     Ctx::KePri => {
                         if let Some(k) = &mut b.current_kanji {
                             k.priorities.push(text.to_string());
                         }
                     }
-                    // When we exit k_ele we push — handled in End(k_ele) via flush
-                    Ctx::KanjiElement => {
-                        // finalize: push pending kanji
-                        if let Some(k) = b.current_kanji.take() {
-                            b.kanji_forms.push(k);
-                        }
-                    }
-
                     Ctx::ReB => {
                         b.current_reading = Some(ReadingElement::from_reading(text.to_string()));
                     }
@@ -200,7 +196,6 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                             r.info.push(text.to_string());
                         }
                     }
-                    #[cfg(feature = "full")]
                     Ctx::RePri => {
                         if let Some(r) = &mut b.current_reading {
                             r.priorities.push(text.to_string());
@@ -252,7 +247,6 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                             s.fields.push(text.to_string());
                         }
                     }
-                    #[cfg(feature = "full")]
                     Ctx::Misc => {
                         if let Some(s) = b.senses.last_mut() {
                             s.misc.push(text.to_string());
@@ -286,22 +280,6 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
 
             Event::Eof => break,
             _ => {}
-        }
-
-        // Flush k_ele / r_ele on their end tags
-        // (We can't do this inside the End arm without a borrow conflict,
-        //  so we check ctx transitions here.)
-        if ctx == Ctx::KanjiElement {
-            if let Some(k) = b.current_kanji.take() {
-                b.kanji_forms.push(k);
-            }
-            ctx = Ctx::Root;
-        }
-        if ctx == Ctx::ReadingElement {
-            if let Some(r) = b.current_reading.take() {
-                b.reading_forms.push(r);
-            }
-            ctx = Ctx::Root;
         }
 
         buf.clear();
