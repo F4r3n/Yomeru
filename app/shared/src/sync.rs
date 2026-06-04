@@ -75,17 +75,17 @@ mod tests {
 
     #[test]
     fn ids_we_sent_are_excluded_from_remote_deletions() {
-        let resp = ["猫::recognition", "犬::recognition"];
-        let sent = ["猫::recognition"];
+        let resp = ["1000001::recognition", "1000002::recognition"];
+        let sent = ["1000001::recognition"];
         assert_eq!(
             foreign_deletions(&resp, &sent),
-            vec!["犬::recognition".to_string()]
+            vec!["1000002::recognition".to_string()]
         );
     }
 
     #[test]
     fn empty_sent_means_all_remote_deletions_apply() {
-        let resp = ["猫::recognition", "犬::recognition"];
+        let resp = ["1000001::recognition", "1000002::recognition"];
         let sent: [&str; 0] = [];
         assert_eq!(foreign_deletions(&resp, &sent).len(), 2);
     }
@@ -93,7 +93,7 @@ mod tests {
     #[test]
     fn empty_resp_means_nothing_to_apply() {
         let resp: [&str; 0] = [];
-        let sent = ["猫::recognition"];
+        let sent = ["1000001::recognition"];
         assert!(foreign_deletions(&resp, &sent).is_empty());
     }
 }

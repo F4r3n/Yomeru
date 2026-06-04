@@ -4,12 +4,11 @@ use dioxus::prelude::*;
 use gloo_storage::{LocalStorage, Storage};
 use gloo_timers::future::TimeoutFuture;
 use jmdict_types::WordEntry;
-use log::warn;
 
 use crate::app::Route;
 use crate::components::EntryCard;
 use crate::dict::{self, examples_for, kanji_for, primary_headword};
-use crate::idb::{get_cards_by_word, has_card, put_cards};
+use crate::idb::{get_cards_by_sequence, has_card, put_cards};
 use crate::srs::now_ms;
 use crate::sync::schedule_sync;
 use crate::types::{CardDirection, SrsCard};
@@ -25,10 +24,11 @@ enum ExtraTab {
 
 /// Shared lookup state across the list and the (currently empty) child
 /// route components. Currently just `added` so `+ Add` from the expansion
-/// panel can flip the badge on the result card too.
+/// panel can flip the badge on the result card too. Tracks JMdict ent_seq
+/// values so kanji-vs-kana display swaps don't desync the badge.
 #[derive(Clone, Copy)]
 struct LookupShared {
-    added: Signal<HashSet<String>>,
+    added: Signal<HashSet<u32>>,
 }
 
 // ── helpers ──────────────────────────────────────────────────────────
@@ -226,28 +226,28 @@ fn lookup_romaji(c: &str) -> Option<&'static str> {
     })
 }
 
-async fn add_word(word: String, mut added: Signal<HashSet<String>>) {
-    let existing = match get_cards_by_word(&word).await {
+async fn add_entry(sequence: u32, mut added: Signal<HashSet<u32>>) {
+    let existing = match get_cards_by_sequence(sequence).await {
         Ok(e) => e,
         Err(e) => {
-            warn!("get_cards_by_word({word}) failed: {e}");
+            warn!("get_cards_by_sequence({sequence}) failed: {e}");
             return;
         }
     };
     if existing.is_empty() {
         let now = now_ms();
         let cards = vec![
-            SrsCard::new(&word, CardDirection::Recognition, now),
-            SrsCard::new(&word, CardDirection::Recall, now),
+            SrsCard::new(sequence, CardDirection::Recognition, now),
+            SrsCard::new(sequence, CardDirection::Recall, now),
         ];
         if let Err(e) = put_cards(&cards).await {
-            warn!("put_cards({word}) on add failed: {e}");
+            warn!("put_cards(seq={sequence}) on add failed: {e}");
             return;
         }
         schedule_sync();
     }
     added.with_mut(|s| {
-        s.insert(word);
+        s.insert(sequence);
     });
 }
 
@@ -259,7 +259,7 @@ async fn add_word(word: String, mut added: Signal<HashSet<String>>) {
 
 #[component]
 pub fn LookupLayout() -> Element {
-    let added = use_signal(HashSet::<String>::new);
+    let added = use_signal(HashSet::<u32>::new);
     use_context_provider(|| LookupShared { added });
     rsx! {
         LookupListPane {}
@@ -369,14 +369,13 @@ fn LookupListPane() -> Element {
                 let next = push_history(history.read().clone(), &target);
                 history.set(next);
             }
-            let mut already: HashSet<String> = HashSet::new();
+            let mut already: HashSet<u32> = HashSet::new();
 
             //TODO: for each result we open IDB to see if the card exist.
             // It's slow, need to do it on batch
             for e in &results {
-                let head = primary_headword(e);
-                if has_card(head).await.unwrap_or(false) {
-                    already.insert(head.to_string());
+                if has_card(e.sequence).await.unwrap_or(false) {
+                    already.insert(e.sequence);
                 }
             }
             added.set(already);
@@ -427,8 +426,8 @@ fn LookupListPane() -> Element {
         history.set(Vec::new());
     };
 
-    let on_add = move |word: String| {
-        spawn(async move { add_word(word, added).await });
+    let on_add = move |sequence: u32| {
+        spawn(async move { add_entry(sequence, added).await });
     };
 
     let q_trim = query.read().trim().to_string();
@@ -479,7 +478,7 @@ fn LookupListPane() -> Element {
                 for entry in entries.read().iter() {
                     {
                         let head = primary_headword(entry).to_string();
-                        let is_added = added.read().contains(&head);
+                        let is_added = added.read().contains(&entry.sequence);
                         let expanded = selected_word.as_deref() == Some(&head);
                         let head_for_select = head.clone();
                         let head_for_close = head.clone();

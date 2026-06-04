@@ -1,6 +1,11 @@
+use std::collections::{HashMap, HashSet};
+
 use dioxus::prelude::*;
+use jmdict_types::WordEntry;
 use log::warn;
 
+use crate::components::pos_list;
+use crate::dict::{frequency_label, lookup_by_sequence, preferred_headword, primary_reading};
 use crate::idb::{delete_card, get_staging_cards, promote_card};
 use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::SrsCard;
@@ -8,6 +13,8 @@ use crate::types::SrsCard;
 #[component]
 pub fn NewWordsTab() -> Element {
     let mut cards = use_signal(Vec::<SrsCard>::new);
+    let mut entries = use_signal(HashMap::<u32, WordEntry>::new);
+    let mut expanded = use_signal(HashSet::<u32>::new);
     let mut loading = use_signal(|| true);
     let mut err = use_signal(|| Option::<String>::None);
 
@@ -15,7 +22,17 @@ pub fn NewWordsTab() -> Element {
         spawn(async move {
             match get_staging_cards().await {
                 Ok(c) => {
-                    cards.set(unique_by_word(c));
+                    let deduped = unique_by_sequence(c);
+                    let seqs: Vec<u32> = deduped.iter().map(|c| c.sequence).collect();
+                    let looked_up = lookup_by_sequence(&seqs).await.unwrap_or_default();
+                    let mut map = HashMap::with_capacity(deduped.len());
+                    for (card, entry) in deduped.iter().zip(looked_up.iter()) {
+                        if let Some(e) = entry {
+                            map.insert(card.sequence, e.clone());
+                        }
+                    }
+                    entries.set(map);
+                    cards.set(deduped);
                     loading.set(false);
                 }
                 Err(e) => {
@@ -29,10 +46,10 @@ pub fn NewWordsTab() -> Element {
     // Reload on mount and whenever a sync lands.
     use_reload_on_sync(reload);
 
-    let promote_one = move |word: String| {
+    let promote_one = move |seq: u32| {
         spawn(async move {
-            if let Err(e) = promote_card(&word).await {
-                warn!("promote_card({word}) failed: {e}");
+            if let Err(e) = promote_card(seq).await {
+                warn!("promote_card(seq={seq}) failed: {e}");
                 return;
             }
             schedule_sync();
@@ -40,10 +57,10 @@ pub fn NewWordsTab() -> Element {
         });
     };
 
-    let reject_one = move |word: String| {
+    let reject_one = move |seq: u32| {
         spawn(async move {
-            if let Err(e) = delete_card(&word).await {
-                warn!("delete_card({word}) failed: {e}");
+            if let Err(e) = delete_card(seq).await {
+                warn!("delete_card(seq={seq}) failed: {e}");
                 return;
             }
             schedule_sync();
@@ -61,9 +78,9 @@ pub fn NewWordsTab() -> Element {
                 }
             };
             let mut promoted = 0usize;
-            for w in unique_by_word(staging).into_iter().map(|c| c.word) {
-                if let Err(e) = promote_card(&w).await {
-                    warn!("promote_card({w}) in promote_all failed: {e}");
+            for seq in unique_by_sequence(staging).into_iter().map(|c| c.sequence) {
+                if let Err(e) = promote_card(seq).await {
+                    warn!("promote_card(seq={seq}) in promote_all failed: {e}");
                     continue;
                 }
                 promoted += 1;
@@ -106,23 +123,54 @@ pub fn NewWordsTab() -> Element {
                 div { class: "col",
                     for card in cards.read().iter().cloned() {
                         {
-                            let word = card.word.clone();
-                            let word_a = word.clone();
-                            let word_b = word.clone();
+                            let seq = card.sequence;
+                            let entry = entries.read().get(&seq).cloned();
+                            let label = entry
+                                .as_ref()
+                                .map(|e| preferred_headword(e).to_string())
+                                .unwrap_or_else(|| format!("(seq {seq})"));
+                            let reading = entry
+                                .as_ref()
+                                .map(|e| primary_reading(e).to_string())
+                                .unwrap_or_default();
+                            let show_reading = !reading.is_empty() && reading != label;
+                            let freq = entry.as_ref().and_then(frequency_label);
+                            let has_detail = entry.is_some();
+                            let is_open = expanded.read().contains(&seq);
                             rsx! {
-                                div { class: "card row", style: "justify-content: space-between; align-items: center;",
-                                    div { class: "headword", "{word}" }
-                                    div { class: "row",
-                                        button {
-                                            class: "success",
-                                            onclick: move |_| (promote_one)(word_a.clone()),
-                                            "Accept"
+                                div { class: "card",
+                                    div { class: "row", style: "justify-content: space-between; align-items: center;",
+                                        div {
+                                            class: if has_detail { "row clickable" } else { "row" },
+                                            style: "align-items: baseline; gap: 8px;",
+                                            onclick: move |_| {
+                                                if has_detail {
+                                                    expanded.with_mut(|s| if !s.remove(&seq) { s.insert(seq); });
+                                                }
+                                            },
+                                            div { class: "headword", "{label}" }
+                                            if show_reading {
+                                                div { class: "reading", "{reading}" }
+                                            }
+                                            if let Some(f) = freq {
+                                                span { class: "freq-badge", "{f}" }
+                                            }
                                         }
-                                        button {
-                                            class: "danger",
-                                            onclick: move |_| (reject_one)(word_b.clone()),
-                                            "Reject"
+                                        div { class: "row",
+                                            button {
+                                                class: "success",
+                                                onclick: move |_| (promote_one)(seq),
+                                                "Accept"
+                                            }
+                                            button {
+                                                class: "danger",
+                                                onclick: move |_| (reject_one)(seq),
+                                                "Reject"
+                                            }
                                         }
+                                    }
+                                    if is_open && let Some(e) = entry {
+                                        EntryDetail { entry: e }
                                     }
                                 }
                             }
@@ -134,8 +182,42 @@ pub fn NewWordsTab() -> Element {
     }
 }
 
-fn unique_by_word(mut cards: Vec<SrsCard>) -> Vec<SrsCard> {
+/// The senses/glosses of a staged entry, revealed inline so the user can see
+/// what the word means before promoting it into the SRS queue.
+#[component]
+fn EntryDetail(entry: WordEntry) -> Element {
+    let sense_count = entry.senses.len();
+    rsx! {
+        div { class: "entry-detail",
+            for (si, sense) in entry.senses.iter().enumerate() {
+                {
+                    let needs_divider = si > 0;
+                    rsx! {
+                        if needs_divider {
+                            hr { class: "divider" }
+                        }
+                        div {
+                            if !sense.pos.is_empty() {
+                                div { class: "pos", "{pos_list(&sense.pos)}" }
+                            }
+                            for gloss in sense.glosses.iter() {
+                                div { class: "gloss",
+                                    if sense_count > 1 {
+                                        span { class: "muted", style: "margin-right: 4px;", "{si + 1}." }
+                                    }
+                                    "{gloss.text}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn unique_by_sequence(mut cards: Vec<SrsCard>) -> Vec<SrsCard> {
     let mut seen = std::collections::HashSet::new();
-    cards.retain(|c| seen.insert(c.word.clone()));
+    cards.retain(|c| seen.insert(c.sequence));
     cards
 }

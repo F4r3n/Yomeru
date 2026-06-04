@@ -330,6 +330,9 @@ input:focus, select:focus, textarea:focus {
 .ok    { color: var(--green); }
 
 .headword { font-size: 24px; font-weight: 600; color: var(--text); letter-spacing: 0.2px; }
+.kanji-sub { color: var(--subtext); font-size: 16px; font-weight: 500; }
+.freq-badge { font-size: 10px; color: var(--subtext); border: 1px solid var(--border);
+              border-radius: 999px; padding: 1px 7px; font-weight: 500; align-self: center; white-space: nowrap; }
 .reading  { color: var(--subtext); font-size: 14px; margin-top: 2px; }
 .pos      { color: var(--yellow);  font-size: 12px; margin-top: 6px; font-style: italic; }
 .gloss    { color: var(--text);    font-size: 13px; margin-top: 2px; }
@@ -474,6 +477,7 @@ th { color: var(--subtext); font-weight: 500; }
     margin: 12px 0 16px;
 }
 .review-card .face .word { font-size: 36px; font-weight: 600; letter-spacing: 1px; }
+.review-card .face .kanji-sub { color: var(--subtext); font-size: 22px; font-weight: 500; margin-top: 6px; letter-spacing: 1px; }
 .review-card .face .reading { color: var(--subtext); font-size: 16px; margin-top: 6px; }
 .review-card .face .recall-glosses { font-size: 16px; }
 .review-card .face .recall-glosses .num { color: var(--subtext); margin-right: 4px; }
@@ -608,5 +612,19 @@ tbody tr td:first-child { font-weight: 500; }
     border-bottom-right-radius: 0;
     border-color: var(--accent);
     margin-bottom: 0;
+}
+
+/* Detail revealed inside a staged "New Words" card (panel nested under the
+   word, not a sibling — so it needs a real top gap + divider, not the
+   negative margin the sibling .expansion-panel uses). */
+.entry-detail {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    animation: fade-in 0.16s ease-out;
+}
+@keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 "#;

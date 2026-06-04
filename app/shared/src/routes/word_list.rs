@@ -1,6 +1,8 @@
-use dioxus::prelude::*;
-use log::warn;
+use std::collections::HashMap;
 
+use dioxus::prelude::*;
+
+use crate::dict::{lookup_by_sequence, preferred_headword};
 use crate::idb::{delete_card, get_all_cards};
 use crate::srs::now_ms;
 use crate::sync::{schedule_sync, use_reload_on_sync};
@@ -9,22 +11,37 @@ use crate::types::{CardDirection, CardStatus, SrsCard};
 #[component]
 pub fn WordListTab() -> Element {
     let mut cards = use_signal(Vec::<SrsCard>::new);
+    // sequence -> displayed headword, looked up from JMdict at load time so
+    // filtering and rendering don't need an async dict hop per row.
+    let mut headwords = use_signal(HashMap::<u32, String>::new);
     let mut filter = use_signal(String::new);
     let mut loading = use_signal(|| true);
 
     let reload = move || {
         spawn(async move {
             let all = get_all_cards().await.unwrap_or_default();
-            let mut filtered: Vec<_> = all
+            let mut active: Vec<_> = all
                 .into_iter()
                 .filter(|c| matches!(c.status, CardStatus::Active))
                 .collect();
-            filtered.sort_by(|a, b| {
-                a.word
-                    .cmp(&b.word)
+            let mut seqs: Vec<u32> = active.iter().map(|c| c.sequence).collect();
+            seqs.sort_unstable();
+            seqs.dedup();
+            let entries = lookup_by_sequence(&seqs).await.unwrap_or_default();
+            let mut map: HashMap<u32, String> = HashMap::with_capacity(seqs.len());
+            for (seq, entry) in seqs.iter().zip(entries.iter()) {
+                if let Some(e) = entry {
+                    map.insert(*seq, preferred_headword(e).to_string());
+                }
+            }
+            active.sort_by(|a, b| {
+                let aw = map.get(&a.sequence).map(String::as_str).unwrap_or("");
+                let bw = map.get(&b.sequence).map(String::as_str).unwrap_or("");
+                aw.cmp(bw)
                     .then_with(|| a.direction.as_str().cmp(b.direction.as_str()))
             });
-            cards.set(filtered);
+            headwords.set(map);
+            cards.set(active);
             loading.set(false);
         });
     };
@@ -32,10 +49,10 @@ pub fn WordListTab() -> Element {
     // Reload on mount and whenever a sync lands.
     use_reload_on_sync(reload);
 
-    let on_delete = move |word: String| {
+    let on_delete = move |seq: u32| {
         spawn(async move {
-            if let Err(e) = delete_card(&word).await {
-                warn!("delete_card({word}) failed: {e}");
+            if let Err(e) = delete_card(seq).await {
+                warn!("delete_card(seq={seq}) failed: {e}");
                 return;
             }
             schedule_sync();
@@ -47,9 +64,18 @@ pub fn WordListTab() -> Element {
     let rows = cards.read().clone();
     let total = rows.len();
     let filter_s = filter.read().to_lowercase();
+    let heads = headwords.read().clone();
     let filtered: Vec<_> = rows
         .into_iter()
-        .filter(|c| filter_s.is_empty() || c.word.to_lowercase().contains(&filter_s))
+        .filter(|c| {
+            if filter_s.is_empty() {
+                return true;
+            }
+            heads
+                .get(&c.sequence)
+                .map(|w| w.to_lowercase().contains(&filter_s))
+                .unwrap_or(false)
+        })
         .collect();
     let due_count = filtered.iter().filter(|c| c.due_ms <= now).count();
     let visible = filtered.len();
@@ -111,7 +137,11 @@ pub fn WordListTab() -> Element {
                         tbody {
                             for c in filtered {
                                 {
-                                    let word = c.word.clone();
+                                    let seq = c.sequence;
+                                    let label = heads
+                                        .get(&seq)
+                                        .cloned()
+                                        .unwrap_or_else(|| format!("(seq {seq})"));
                                     let due_label = format_due(c.due_ms, now);
                                     let due_class = if c.due_ms <= now { "badge due" } else { "badge" };
                                     let direction = match c.direction {
@@ -121,14 +151,14 @@ pub fn WordListTab() -> Element {
                                     let state = format!("{:?}", c.state).to_lowercase();
                                     rsx! {
                                         tr {
-                                            td { style: "padding-left: 16px; font-size: 15px;", "{c.word}" }
+                                            td { style: "padding-left: 16px; font-size: 15px;", "{label}" }
                                             td { span { class: "badge", "{direction}" } }
                                             td { class: "muted", "{state}" }
                                             td { span { class: "{due_class}", "{due_label}" } }
                                             td { style: "text-align: right; padding-right: 16px;",
                                                 button {
                                                     class: "danger",
-                                                    onclick: move |_| on_delete(word.clone()),
+                                                    onclick: move |_| on_delete(seq),
                                                     "Delete"
                                                 }
                                             }

@@ -1,14 +1,15 @@
 use dioxus::prelude::*;
 use jmdict_types::WordEntry;
-use log::warn;
 
 use crate::components::pos_list;
-use crate::dict::{self, examples_for, kanji_for, primary_reading};
+use crate::dict::{
+    examples_for, kanji_for, lookup_by_sequence, preferred_headword, primary_reading,
+};
 use crate::idb::{
     delete_card_by_id, get_all_cards, get_due_cards, get_staging_cards, promote_card, put_card,
 };
 use crate::settings::load as load_settings;
-use crate::srs::{apply_review, now_ms, rating_from_u8, ReviewOutcome};
+use crate::srs::{ReviewOutcome, apply_review, now_ms, rating_from_u8};
 use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::{CardDirection, CardStatus, SrsCard};
 
@@ -32,20 +33,19 @@ async fn attach_entries(cards: Vec<SrsCard>) -> (Vec<SrsCard>, Vec<WordEntry>, V
     if cards.is_empty() {
         return (vec![], vec![], vec![]);
     }
-    let words: Vec<String> = cards.iter().map(|c| c.word.clone()).collect();
-    let all_hits = dict::lookup_many(&words).await.unwrap_or_default();
+    let seqs: Vec<u32> = cards.iter().map(|c| c.sequence).collect();
+    let hits = lookup_by_sequence(&seqs).await.unwrap_or_default();
     let mut kept = Vec::new();
     let mut entries = Vec::new();
     let mut skipped = Vec::new();
-    for (c, hits) in cards.into_iter().zip(all_hits) {
-        let entry = hits.into_iter().next();
+    for (c, entry) in cards.into_iter().zip(hits) {
         if entry.is_none() && matches!(c.direction, CardDirection::Recall) {
             // Recall front needs glosses; without them the card is unreviewable.
-            skipped.push(format!("{} (recall)", c.word));
+            skipped.push(format!("(seq {}) recall", c.sequence));
             continue;
         }
         entries.push(entry.unwrap_or_else(|| WordEntry {
-            sequence: 0,
+            sequence: c.sequence,
             kanji_forms: vec![],
             reading_forms: vec![],
             senses: vec![],
@@ -114,11 +114,11 @@ pub fn ReviewTab() -> Element {
             graduated_msg.set(None);
             next_due.set(None);
             let staging = get_staging_cards().await.unwrap_or_default();
-            // Unique by word.
+            // Unique by sequence — recognition and recall siblings count once.
             let mut seen = std::collections::HashSet::new();
             let n = staging
                 .into_iter()
-                .filter(|c| seen.insert(c.word.clone()))
+                .filter(|c| seen.insert(c.sequence))
                 .count();
             staging_count.set(n);
         });
@@ -145,16 +145,16 @@ pub fn ReviewTab() -> Element {
                 }
             };
             let mut seen = std::collections::HashSet::new();
-            let words: Vec<_> = staging
+            let seqs: Vec<u32> = staging
                 .into_iter()
-                .filter(|c| seen.insert(c.word.clone()))
-                .map(|c| c.word)
+                .filter(|c| seen.insert(c.sequence))
+                .map(|c| c.sequence)
                 .collect();
-            let n = (words.len()).min(settings.max_session_cards as usize);
+            let n = (seqs.len()).min(settings.max_session_cards as usize);
             let mut promoted = 0usize;
-            for w in words.iter().take(n) {
-                if let Err(e) = promote_card(w).await {
-                    warn!("promote_card({w}) in promote_and_review failed: {e}");
+            for seq in seqs.iter().take(n).copied() {
+                if let Err(e) = promote_card(seq).await {
+                    warn!("promote_card(seq={seq}) in promote_and_review failed: {e}");
                     continue;
                 }
                 promoted += 1;
@@ -170,12 +170,15 @@ pub fn ReviewTab() -> Element {
     let reveal_answer = move |_| {
         show_back.set(true);
         back_tab.set(BackTab::Word);
-        let cards = due_cards.read();
         let i = *idx.read();
-        if let Some(c) = cards.get(i).cloned() {
+        let head = entries
+            .read()
+            .get(i)
+            .map(|e| preferred_headword(e).to_string());
+        if let Some(head) = head {
             spawn(async move {
-                kanji.set(kanji_for(&c.word).await.unwrap_or_default());
-                examples.set(examples_for(&c.word, 5).await.unwrap_or_default());
+                kanji.set(kanji_for(&head).await.unwrap_or_default());
+                examples.set(examples_for(&head, 5).await.unwrap_or_default());
             });
         }
     };
@@ -186,10 +189,11 @@ pub fn ReviewTab() -> Element {
         let Some(card) = cards.get(i).cloned() else {
             return;
         };
+        let entry_for_label = entries.read().get(i).cloned();
         spawn(async move {
             let settings = load_settings();
             let outcome = apply_review(&card, rating_from_u8(r), now_ms(), &settings);
-            let card_id = card.id;
+            let card_id = card.id.clone();
             match outcome {
                 ReviewOutcome::Rescheduled(c) => {
                     if let Err(e) = put_card(&c).await {
@@ -204,9 +208,13 @@ pub fn ReviewTab() -> Element {
                     } else {
                         schedule_sync();
                     }
+                    let label = entry_for_label
+                        .as_ref()
+                        .map(|e| preferred_headword(e).to_string())
+                        .unwrap_or_else(|| format!("seq {}", card.sequence));
                     graduated_msg.set(Some(format!(
                         "「{}」 ({}) graduated — removed from review queue.",
-                        card.word,
+                        label,
                         match card.direction {
                             CardDirection::Recognition => "recognition",
                             CardDirection::Recall => "recall",
@@ -319,6 +327,20 @@ pub fn ReviewTab() -> Element {
                         CardDirection::Recall => "Recall",
                     };
                     let reading = entry.as_ref().map(|e| primary_reading(e).to_string()).unwrap_or_default();
+                    let front_word = entry
+                        .as_ref()
+                        .map(|e| preferred_headword(e).to_string())
+                        .unwrap_or_else(|| format!("(seq {})", c.sequence));
+                    // When the word is shown as its kana reading (kana-preferred),
+                    // surface the kanji writing underneath in smaller text.
+                    let sub_kanji = if front_word == reading {
+                        entry
+                            .as_ref()
+                            .and_then(|e| e.kanji_forms.first())
+                            .map(|k| k.text.clone())
+                    } else {
+                        None
+                    };
                     let recall_glosses: Vec<String> = entry
                         .as_ref()
                         .map(|e| {
@@ -361,8 +383,10 @@ pub fn ReviewTab() -> Element {
                                         }
                                     }
                                 } else {
-                                    div { class: "word", "{c.word}" }
-                                    if !reading.is_empty() && reading != c.word {
+                                    div { class: "word", "{front_word}" }
+                                    if let Some(k) = sub_kanji.clone() {
+                                        div { class: "kanji-sub", "{k}" }
+                                    } else if !reading.is_empty() && reading != front_word {
                                         div { class: "reading", "{reading}" }
                                     }
                                 }
@@ -373,7 +397,7 @@ pub fn ReviewTab() -> Element {
                                     entry: entry.clone(),
                                     kanji: kanji.read().clone(),
                                     examples: examples.read().clone(),
-                                    word: c.word.clone(),
+                                    word: front_word.clone(),
                                     tab: *back_tab.read(),
                                     on_tab: EventHandler::new(move |t| back_tab.set(t)),
                                 }

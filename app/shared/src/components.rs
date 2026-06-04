@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 use jmdict_types::{PartOfSpeech, WordEntry};
 
-use crate::dict::{primary_headword, primary_reading};
+use crate::dict::{frequency_label, preferred_headword, primary_reading};
 
 pub fn pos_label(p: &PartOfSpeech) -> String {
     // Debug repr is "Adjective" / "AdjectiveNa" etc — readable enough for now.
@@ -15,14 +15,23 @@ pub fn pos_list(ps: &[PartOfSpeech]) -> String {
 #[component]
 pub fn EntryCard(
     entry: WordEntry,
-    on_add: Option<EventHandler<String>>,
+    on_add: Option<EventHandler<u32>>,
     on_select: Option<EventHandler<()>>,
     #[props(default)] is_added: bool,
 ) -> Element {
-    let headword = primary_headword(&entry).to_string();
+    let title = preferred_headword(&entry).to_string();
     let reading = primary_reading(&entry).to_string();
-    let show_reading = !reading.is_empty() && reading != headword;
-    let on_add_for = headword.clone();
+    // When the title is the kana reading (kana-preferred entry), surface the
+    // kanji writing underneath in smaller text. Otherwise show the reading.
+    let kana_titled = title == reading;
+    let sub_kanji = if kana_titled {
+        entry.kanji_forms.first().map(|k| k.text.clone())
+    } else {
+        None
+    };
+    let show_reading = !kana_titled && !reading.is_empty() && reading != title;
+    let freq = frequency_label(&entry);
+    let on_add_for = entry.sequence;
     let sense_count = entry.senses.len();
     let clickable = on_select.is_some();
     let card_class = if clickable { "card clickable" } else { "card" };
@@ -37,7 +46,15 @@ pub fn EntryCard(
             },
             div { class: "row", style: "justify-content: space-between; align-items: baseline; margin-bottom: 10px;",
                 div {
-                    div { class: "headword", "{headword}" }
+                    div { class: "row", style: "align-items: baseline; gap: 8px;",
+                        div { class: "headword", "{title}" }
+                        if let Some(k) = sub_kanji {
+                            div { class: "kanji-sub", "{k}" }
+                        }
+                        if let Some(f) = freq {
+                            span { class: "freq-badge", "{f}" }
+                        }
+                    }
                     if show_reading {
                         div { class: "reading", "{reading}" }
                     }
@@ -55,7 +72,7 @@ pub fn EntryCard(
                             class: "primary",
                             onclick: move |e| {
                                 e.stop_propagation();
-                                handler.call(on_add_for.clone());
+                                handler.call(on_add_for);
                             },
                             "+ Add"
                         }

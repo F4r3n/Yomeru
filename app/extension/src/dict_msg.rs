@@ -30,6 +30,16 @@ struct LookupPrefixPayload<'a> {
     max: u8,
 }
 
+#[derive(Serialize)]
+struct LookupBySequencePayload<'a> {
+    sequences: &'a [u32],
+}
+
+#[derive(Deserialize)]
+struct LookupBySequenceResp {
+    results: Vec<Option<WordEntry>>,
+}
+
 #[derive(Deserialize)]
 struct WordEntriesResp {
     entries: Vec<WordEntry>,
@@ -66,6 +76,15 @@ impl DictClient for ExtensionDict {
     async fn lookup_many(&self, words: &[String]) -> Result<Vec<Vec<WordEntry>>, String> {
         let r: LookupManyResp =
             crate::send_bg_message("LOOKUP_MANY", LookupManyPayload { words }).await?;
+        Ok(r.results)
+    }
+
+    async fn lookup_by_sequence(&self, sequences: &[u32]) -> Result<Vec<Option<WordEntry>>, String> {
+        let r: LookupBySequenceResp = crate::send_bg_message(
+            "LOOKUP_BY_SEQUENCE",
+            LookupBySequencePayload { sequences },
+        )
+        .await?;
         Ok(r.results)
     }
 

@@ -31,6 +31,7 @@ use async_trait::async_trait;
 pub trait DictClient {
     async fn lookup(&self, word: &str) -> Result<Vec<WordEntry>, String>;
     async fn lookup_many(&self, words: &[String]) -> Result<Vec<Vec<WordEntry>>, String>;
+    async fn lookup_by_sequence(&self, sequences: &[u32]) -> Result<Vec<Option<WordEntry>>, String>;
     async fn lookup_prefix(&self, text: &str, max: u8) -> Result<Vec<WordEntry>, String>;
     async fn kanji_for(&self, word: &str) -> Result<Vec<KanjiEntry>, String>;
     async fn examples_for(&self, word: &str, max: u8) -> Result<Vec<ExampleEntry>, String>;
@@ -114,6 +115,14 @@ struct LookupPrefixResponse {
     results: Vec<WordEntry>,
 }
 #[derive(Serialize)]
+struct LookupBySequenceBody<'a> {
+    sequences: &'a [u32],
+}
+#[derive(Deserialize)]
+struct LookupBySequenceResponse {
+    results: Vec<Option<WordEntry>>,
+}
+#[derive(Serialize)]
 struct WordBody<'a> {
     word: &'a str,
 }
@@ -156,6 +165,12 @@ impl DictClient for HttpDict {
 
     async fn lookup_many(&self, words: &[String]) -> Result<Vec<Vec<WordEntry>>, String> {
         let parsed: LookupResponse = post_json("/api/lookup", &LookupBody { words }).await?;
+        Ok(parsed.results)
+    }
+
+    async fn lookup_by_sequence(&self, sequences: &[u32]) -> Result<Vec<Option<WordEntry>>, String> {
+        let parsed: LookupBySequenceResponse =
+            post_json("/api/lookup-by-sequence", &LookupBySequenceBody { sequences }).await?;
         Ok(parsed.results)
     }
 

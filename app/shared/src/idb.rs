@@ -1,6 +1,7 @@
 //! IndexedDB wrapper for cards. Mirrors `extension/src/background/idb.ts` at
-//! schema v5 (composite-id cards + tombstones store for sync). The website
-//! starts at v4 — the v5 upgrade just adds the `tombstones` store.
+//! schema v6 (cards keyed on JMdict ent_seq + tombstones store for sync).
+//! v6 replaces the old `word` secondary index with `sequence`; users carrying
+//! v5 data are expected to export and re-import.
 
 use log::error;
 use idb::{
@@ -12,7 +13,9 @@ use wasm_bindgen::JsValue;
 use crate::types::{CardDirection, CardStatus, SrsCard, card_id};
 
 const DB_NAME: &str = "yomeru-db";
-const DB_VERSION: u32 = 5;
+// v7 re-runs the v6 sequence-keyed reset to self-heal any DB left half-migrated
+// by an earlier build that created the store without the `sequence` index.
+const DB_VERSION: u32 = 7;
 const STORE: &str = "cards";
 const TOMB_STORE: &str = "tombstones";
 
@@ -23,6 +26,7 @@ async fn open() -> Result<Database, idb::Error> {
         // The callback is sync — we can't propagate Result. Log and bail on
         // any setup failure; subsequent transactions on a half-set-up store
         // will surface the failure to the caller as a normal idb error.
+        let old_version = event.old_version().unwrap_or(0);
         let db = match event.database() {
             Ok(db) => db,
             Err(e) => {
@@ -30,6 +34,25 @@ async fn open() -> Result<Database, idb::Error> {
                 return;
             }
         };
+        // v6/v7 clean break: cards used to carry a `word` secondary index and
+        // key on a surface string; they now key on JMdict `sequence`. Drop the
+        // pre-v7 stores so they're recreated below on the sequence-keyed
+        // schema. Mirrors extension/src/background/idb.ts. Scoped to
+        // old_version < 7 so a later bump can't wipe good data. This MUST match
+        // the TS side: whichever layer opens yomeru-db first runs the upgrade,
+        // and the other then relies on the `sequence` index existing.
+        if (1..7).contains(&old_version) {
+            if db.store_names().iter().any(|n| n == STORE) {
+                if let Err(e) = db.delete_object_store(STORE) {
+                    error!("idb upgrade: delete_object_store({STORE}) failed: {e:?}");
+                }
+            }
+            if db.store_names().iter().any(|n| n == TOMB_STORE) {
+                if let Err(e) = db.delete_object_store(TOMB_STORE) {
+                    error!("idb upgrade: delete_object_store({TOMB_STORE}) failed: {e:?}");
+                }
+            }
+        }
         if !db.store_names().iter().any(|n| n == STORE) {
             let mut params = ObjectStoreParams::new();
             params.key_path(Some(KeyPath::new_single("id")));
@@ -57,7 +80,7 @@ async fn open() -> Result<Database, idb::Error> {
                 .create_index("status", KeyPath::new_single("status"), Some(idx.clone()))
                 .ok();
             store
-                .create_index("word", KeyPath::new_single("word"), Some(idx))
+                .create_index("sequence", KeyPath::new_single("sequence"), Some(idx))
                 .ok();
         }
         if !db.store_names().iter().any(|n| n == TOMB_STORE) {
@@ -140,13 +163,13 @@ pub async fn put_cards(cards: &[SrsCard]) -> Result<(), String> {
     Ok(())
 }
 
-pub async fn get_card(word: &str, direction: CardDirection) -> Result<Option<SrsCard>, String> {
+pub async fn get_card(sequence: u32, direction: CardDirection) -> Result<Option<SrsCard>, String> {
     let db = open().await.map_err(|e| e.to_string())?;
     let tx = db
         .transaction(&[STORE], TransactionMode::ReadOnly)
         .map_err(|e| e.to_string())?;
     let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
-    let key = JsValue::from_str(&card_id(word, direction));
+    let key = JsValue::from_str(&card_id(sequence, direction));
     let v = store
         .get(Query::Key(key))
         .map_err(|e| e.to_string())?
@@ -155,14 +178,14 @@ pub async fn get_card(word: &str, direction: CardDirection) -> Result<Option<Srs
     Ok(v.and_then(|val| from_value(val).ok()))
 }
 
-pub async fn get_cards_by_word(word: &str) -> Result<Vec<SrsCard>, String> {
+pub async fn get_cards_by_sequence(sequence: u32) -> Result<Vec<SrsCard>, String> {
     let db = open().await.map_err(|e| e.to_string())?;
     let tx = db
         .transaction(&[STORE], TransactionMode::ReadOnly)
         .map_err(|e| e.to_string())?;
     let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
-    let index = store.index("word").map_err(|e| e.to_string())?;
-    let key = JsValue::from_str(word);
+    let index = store.index("sequence").map_err(|e| e.to_string())?;
+    let key = JsValue::from_f64(sequence as f64);
     let arr = index
         .get_all(Some(Query::Key(key)), None)
         .map_err(|e| e.to_string())?
@@ -171,14 +194,14 @@ pub async fn get_cards_by_word(word: &str) -> Result<Vec<SrsCard>, String> {
     Ok(arr.into_iter().filter_map(|v| from_value(v).ok()).collect())
 }
 
-pub async fn has_card(word: &str) -> Result<bool, String> {
+pub async fn has_card(sequence: u32) -> Result<bool, String> {
     let db = open().await.map_err(|e| e.to_string())?;
     let tx = db
         .transaction(&[STORE], TransactionMode::ReadOnly)
         .map_err(|e| e.to_string())?;
     let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
-    let index = store.index("word").map_err(|e| e.to_string())?;
-    let key = JsValue::from_str(word);
+    let index = store.index("sequence").map_err(|e| e.to_string())?;
+    let key = JsValue::from_f64(sequence as f64);
     let has_key = index
         .get_key(Query::Key(key))
         .map_err(|e| e.to_string())?
@@ -224,8 +247,8 @@ pub async fn get_staging_cards() -> Result<Vec<SrsCard>, String> {
     Ok(all)
 }
 
-pub async fn promote_card(word: &str) -> Result<(), String> {
-    let siblings = get_cards_by_word(word).await?;
+pub async fn promote_card(sequence: u32) -> Result<(), String> {
+    let siblings = get_cards_by_sequence(sequence).await?;
     let to_put: Vec<SrsCard> = siblings
         .into_iter()
         .filter(|c| matches!(c.status, CardStatus::Staging))
@@ -237,10 +260,10 @@ pub async fn promote_card(word: &str) -> Result<(), String> {
     put_cards(&to_put).await
 }
 
-pub async fn delete_card(word: &str) -> Result<(), String> {
+pub async fn delete_card(sequence: u32) -> Result<(), String> {
     let ids = [
-        card_id(word, CardDirection::Recognition),
-        card_id(word, CardDirection::Recall),
+        card_id(sequence, CardDirection::Recognition),
+        card_id(sequence, CardDirection::Recall),
     ];
     delete_ids_with_tombstones(&ids).await
 }
