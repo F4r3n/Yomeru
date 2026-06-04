@@ -39,12 +39,12 @@ impl From<CardState> for FsrsState {
 /// A single vocabulary card.
 ///
 /// Timestamps are Unix epoch milliseconds (f64, matches JS `Date.now()`).
-/// `word` / `added_ms` are bookkeeping kept across reviews; the rest is FSRS
-/// scheduling state. Display data (reading, glosses) is looked up from JMdict
-/// at render time and is not stored here.
+/// `sequence` is the JMdict `ent_seq` of the dictionary entry the card was
+/// added from — it's the only identity carried here. Display data (headword,
+/// reading, glosses) is looked up from JMdict at render time.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SrsCard {
-    pub word: String,
+    pub sequence: u32,
     pub added_ms: f64,
 
     pub due_ms: f64,
@@ -86,10 +86,10 @@ impl SrsCard {
     }
 
     /// Rebuild the persisted shape from an `rs_fsrs::Card`, preserving the bookkeeping
-    /// fields (`word`, `added_ms`) which FSRS doesn't know about.
-    pub(crate) fn from_fsrs(word: String, added_ms: f64, c: FsrsCard) -> Self {
+    /// fields (`sequence`, `added_ms`) which FSRS doesn't know about.
+    pub(crate) fn from_fsrs(sequence: u32, added_ms: f64, c: FsrsCard) -> Self {
         Self {
-            word,
+            sequence,
             added_ms,
             due_ms: dt_to_ms(c.due),
             stability: c.stability,

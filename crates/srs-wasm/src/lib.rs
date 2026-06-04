@@ -18,10 +18,11 @@ impl SrsEngine {
         SrsEngine {}
     }
 
-    /// Create a new SrsCard for a word being added.
+    /// Create a new SrsCard for an entry being added.
+    /// `sequence` is the JMdict ent_seq of the entry.
     /// Returns the card as a JS object.
-    pub fn new_card(&self, word: &str, now_ms: f64) -> Result<JsValue, JsError> {
-        let card = new_card(word, now_ms);
+    pub fn new_card(&self, sequence: u32, now_ms: f64) -> Result<JsValue, JsError> {
+        let card = new_card(sequence, now_ms);
         serde_wasm_bindgen::to_value(&card).map_err(|e| JsError::new(&e.to_string()))
     }
 

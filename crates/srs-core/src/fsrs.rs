@@ -53,9 +53,9 @@ fn make_fsrs(request_retention: f64) -> FSRS {
 }
 
 /// Create a brand-new card. State = New, stability/difficulty 0, due immediately.
-pub fn new_card(word: &str, now_ms: f64) -> SrsCard {
+pub fn new_card(sequence: u32, now_ms: f64) -> SrsCard {
     SrsCard {
-        word: word.to_owned(),
+        sequence,
         added_ms: now_ms,
         due_ms: now_ms,
         stability: 0.0,
@@ -81,12 +81,12 @@ pub fn review_card_with_retention(
     now_ms: f64,
     request_retention: f64,
 ) -> SrsCard {
-    let word = card.word.clone();
+    let sequence = card.sequence;
     let added_ms = card.added_ms;
     let fsrs = make_fsrs(request_retention);
     let fsrs_card: FsrsCard = card.to_fsrs();
     let info = fsrs.next(fsrs_card, ms_to_dt(now_ms), rating.to_fsrs());
-    SrsCard::from_fsrs(word, added_ms, info.card)
+    SrsCard::from_fsrs(sequence, added_ms, info.card)
 }
 
 #[cfg(test)]
@@ -97,7 +97,8 @@ mod tests {
     const DAY_MS: f64 = 86_400_000.0;
 
     fn base_card() -> SrsCard {
-        new_card("飲む", 0.0)
+        // Use any sequence; identity isn't exercised by these tests.
+        new_card(1_000_001, 0.0)
     }
 
     #[test]
