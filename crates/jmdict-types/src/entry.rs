@@ -1,9 +1,10 @@
+use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
 use serde::{Deserialize, Serialize};
 
 use crate::PartOfSpeech;
 
 /// A single JMdict dictionary entry.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Archive, RkyvSerialize, RkyvDeserialize)]
 pub struct WordEntry {
     /// Sequence number from JMdict (unique entry ID).
     pub sequence: u32,
@@ -43,7 +44,36 @@ impl WordEntry {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+impl ArchivedWordEntry {
+    /// Primary headword: first kanji form, or first reading if no kanji.
+    /// Mirror of [`WordEntry::headword`] over the zero-copy archived layout.
+    pub fn headword(&self) -> &str {
+        self.kanji_forms
+            .first()
+            .map(|k| k.text.as_str())
+            .or_else(|| self.reading_forms.first().map(|r| r.text.as_str()))
+            .unwrap_or("")
+    }
+
+    /// Primary reading (first reading form).
+    pub fn primary_reading(&self) -> &str {
+        self.reading_forms
+            .first()
+            .map(|r| r.text.as_str())
+            .unwrap_or("")
+    }
+
+    /// First English gloss from the first sense.
+    pub fn first_gloss(&self) -> &str {
+        self.senses
+            .first()
+            .and_then(|s| s.glosses.first())
+            .map(|g| g.text.as_str())
+            .unwrap_or("")
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Archive, RkyvSerialize, RkyvDeserialize)]
 pub struct KanjiElement {
     pub text: String,
     /// `ke_inf` tags — e.g. "rK" (rarely used kanji form), "sK" (search-only),
@@ -55,16 +85,16 @@ pub struct KanjiElement {
 }
 
 impl KanjiElement {
-    pub fn from_text(content: String) -> Self {
+    pub fn from_text(content: impl Into<String>) -> Self {
         Self {
-            text: content,
+            text: content.into(),
             info: vec![],
             priorities: vec![],
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Archive, RkyvSerialize, RkyvDeserialize)]
 pub struct ReadingElement {
     pub text: String,
     #[cfg(feature = "full")]
@@ -80,9 +110,9 @@ pub struct ReadingElement {
 }
 
 impl ReadingElement {
-    pub fn from_reading(reading: String) -> Self {
+    pub fn from_reading(reading: impl Into<String>) -> Self {
         Self {
-            text: reading,
+            text: reading.into(),
             #[cfg(feature = "full")]
             no_kanji: false,
             #[cfg(feature = "full")]
@@ -94,7 +124,7 @@ impl ReadingElement {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, Archive, RkyvSerialize, RkyvDeserialize)]
 pub struct Sense {
     /// Part-of-speech tags (carry forward from previous sense if empty).
     pub pos: Vec<PartOfSpeech>,
@@ -119,7 +149,7 @@ pub struct Sense {
     pub dialects: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Archive, RkyvSerialize, RkyvDeserialize)]
 pub struct Gloss {
     pub text: String,
     /// Language code (default "eng").
@@ -129,10 +159,14 @@ pub struct Gloss {
 }
 
 impl Gloss {
-    pub fn new(content: String, lang: String, gloss_type: Option<String>) -> Self {
+    pub fn new(
+        content: impl Into<String>,
+        lang: impl Into<String>,
+        gloss_type: Option<String>,
+    ) -> Self {
         Self {
-            text: content,
-            lang,
+            text: content.into(),
+            lang: lang.into(),
             gloss_type,
         }
     }

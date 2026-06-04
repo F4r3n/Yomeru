@@ -1,11 +1,14 @@
 use std::collections::HashSet;
 
-use jmdict_types::WordEntry;
+use jmdict_types::ArchivedWordEntry;
 
 use crate::dictionary::{fst_get, fst_prefix_search, get_entry, get_entry_group};
 
 /// Exact lookup by headword or reading.
-pub fn lookup(text: &str) -> Vec<WordEntry> {
+///
+/// Entries are returned as zero-copy references into the global dictionary
+/// buffer (`'static`, never mutated after init).
+pub fn lookup(text: &str) -> Vec<&'static ArchivedWordEntry> {
     let Some(group_idx) = fst_get(text) else {
         return vec![];
     };
@@ -19,7 +22,10 @@ pub fn lookup(text: &str) -> Vec<WordEntry> {
 /// longest-match against the dictionary. Returns entries for the first
 /// (longest / least-transformed) match found, plus the char count of the
 /// surface form that produced the match (used for highlighting).
-pub fn lookup_longest_match(text: &str, max_chars: usize) -> Option<(Vec<WordEntry>, usize)> {
+pub fn lookup_longest_match(
+    text: &str,
+    max_chars: usize,
+) -> Option<(Vec<&'static ArchivedWordEntry>, usize)> {
     let boundaries: Vec<usize> = text
         .char_indices()
         .map(|(i, _)| i)
@@ -57,11 +63,12 @@ pub fn lookup_longest_match(text: &str, max_chars: usize) -> Option<(Vec<WordEnt
     None
 }
 
-fn try_get_entries(candidate: &str) -> Option<Vec<WordEntry>> {
+fn try_get_entries(candidate: &str) -> Option<Vec<&'static ArchivedWordEntry>> {
     if let Some(group_idx) = fst_get(candidate)
         && let Some(indices) = get_entry_group(group_idx)
     {
-        let entries: Vec<WordEntry> = indices.iter().filter_map(|&i| get_entry(i)).collect();
+        let entries: Vec<&'static ArchivedWordEntry> =
+            indices.iter().filter_map(|&i| get_entry(i)).collect();
 
         if !entries.is_empty() {
             return Some(entries);
@@ -72,10 +79,10 @@ fn try_get_entries(candidate: &str) -> Option<Vec<WordEntry>> {
 
 /// Prefix search: find entries whose headword *starts with* `text`.
 /// Useful for autocomplete / options search UI.
-pub fn lookup_prefix(text: &str, max_results: u8) -> Vec<WordEntry> {
+pub fn lookup_prefix(text: &str, max_results: u8) -> Vec<&'static ArchivedWordEntry> {
     let max = max_results as usize;
     let mut seen = std::collections::BTreeSet::new();
-    let mut entries = Vec::new();
+    let mut entries: Vec<&'static ArchivedWordEntry> = Vec::new();
 
     // Exact match first, then FST prefix hits.
     let exact = fst_get(text)

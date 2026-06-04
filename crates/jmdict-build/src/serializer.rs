@@ -8,13 +8,13 @@ use std::path::Path;
 /// | Field                  | Size   | Notes                                |
 /// |------------------------|--------|--------------------------------------|
 /// | magic                  | 4      | b"JMDI"                              |
-/// | version                | 1      | currently 3                          |
+/// | version                | 1      | currently 4                          |
 /// | fst_len                | 4 LE   | byte length of FST data              |
 /// | fst_data               | fst_len|                                      |
 /// | lookup_table_len       | 4 LE   | byte length of postcard lookup_table |
 /// | lookup_table_data      | n      |                                      |
 /// | entries_len            | 4 LE   | byte length of entries blob          |
-/// | entries_data           | n      | length-prefixed postcard entries     |
+/// | entries_data           | n      | length-prefixed rkyv-archived entries|
 /// | seq_index_len          | 4 LE   | byte length of seq index (v3+)       |
 /// | seq_index_data         | n      | postcard Vec<(u32, u32)> sorted      |
 pub fn write_index(index: &DictionaryIndex, path: &Path) -> Result<()> {
@@ -28,7 +28,8 @@ pub fn write_index(index: &DictionaryIndex, path: &Path) -> Result<()> {
     // v2: WordEntry now always carries ke_pri / re_pri priorities,
     //     ke_inf info, and sense misc tags (previously feature-gated).
     // v3: appended sequence-index section for ent_seq -> byte_offset lookup.
-    f.write_all(&[3u8])?; // version
+    // v4: entries blob is rkyv-archived (zero-copy decode) instead of postcard.
+    f.write_all(&[4u8])?; // version
 
     let fst_len = index.fst_bytes.len() as u32;
     f.write_all(&fst_len.to_le_bytes())?;

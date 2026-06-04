@@ -8,6 +8,22 @@ full = []
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
+# Zero-copy archived layout for dictionary entries. The on-disk format is shared
+# between the 64-bit native builder/server and the 32-bit wasm extension, so we
+# pin the representation: `pointer_width_32` + `little_endian` make the relative
+# pointers and scalars identical across targets, and `unaligned` drops the
+# alignment requirement to 1 so each entry can be accessed at any byte offset in
+# the entries blob (no AlignedVec / padding needed).
+rkyv = { version = "0.8", default-features = false, features = [
+    "alloc",
+    "bytecheck",
+    "pointer_width_32",
+    "little_endian",
+    "unaligned",
+] }
+
+[dev-dependencies]
+serde_json = "1"
 
 [lints]
 workspace = true

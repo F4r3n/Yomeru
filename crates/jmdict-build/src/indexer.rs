@@ -20,7 +20,10 @@ pub fn build_index(entries: &[WordEntry]) -> Result<DictionaryIndex> {
     let mut seq_pairs: Vec<(u32, u32)> = Vec::with_capacity(entries.len());
 
     for entry in entries {
-        let serialized = to_allocvec(entry)?;
+        // rkyv archived layout: read back zero-copy at runtime. The `unaligned`
+        // repr (see jmdict-types/Cargo.toml) lets the entry sit at any byte
+        // offset in the blob, so the existing u32 length-prefix framing holds.
+        let serialized = rkyv::to_bytes::<rkyv::rancor::Error>(entry)?;
         let offset = entries_bytes.len();
         if offset > u32::MAX as usize {
             bail!("jmdict entries blob exceeds 4 GiB ({} bytes)", offset);
@@ -42,13 +45,13 @@ pub fn build_index(entries: &[WordEntry]) -> Result<DictionaryIndex> {
 
         for k in &entry.kanji_forms {
             key_to_indices
-                .entry(k.text.clone())
+                .entry(k.text.to_string())
                 .or_default()
                 .push(byte_offset);
         }
         for r in &entry.reading_forms {
             key_to_indices
-                .entry(r.text.clone())
+                .entry(r.text.to_string())
                 .or_default()
                 .push(byte_offset);
         }

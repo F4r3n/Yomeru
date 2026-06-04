@@ -30,13 +30,13 @@ fn make_entry(
             vec![]
         } else {
             vec![KanjiElement {
-                text: kanji.to_string(),
+                text: kanji.into(),
                 info: vec![],
                 priorities: vec![],
             }]
         },
         reading_forms: vec![ReadingElement {
-            text: reading.to_string(),
+            text: reading.into(),
             no_kanji: false,
             restricted_to: vec![],
             info: vec![],
@@ -45,8 +45,8 @@ fn make_entry(
         senses: vec![Sense {
             pos,
             glosses: vec![Gloss {
-                text: gloss.to_string(),
-                lang: "eng".to_string(),
+                text: gloss.into(),
+                lang: "eng".into(),
                 gloss_type: None,
             }],
             xrefs: vec![],
@@ -88,7 +88,7 @@ fn build_test_binary() -> Vec<u8> {
     let mut entry_offsets: Vec<u32> = Vec::with_capacity(entries.len());
     let mut seq_pairs: Vec<(u32, u32)> = Vec::with_capacity(entries.len());
     for entry in &entries {
-        let serialized = to_allocvec(entry).unwrap();
+        let serialized = rkyv::to_bytes::<rkyv::rancor::Error>(entry).unwrap();
         let offset = entries_bytes.len() as u32;
         entry_offsets.push(offset);
         seq_pairs.push((entry.sequence, offset));
@@ -103,13 +103,13 @@ fn build_test_binary() -> Vec<u8> {
         let byte_offset = entry_offsets[idx];
         for k in &entry.kanji_forms {
             key_to_indices
-                .entry(k.text.clone())
+                .entry(k.text.to_string())
                 .or_default()
                 .push(byte_offset);
         }
         for r in &entry.reading_forms {
             key_to_indices
-                .entry(r.text.clone())
+                .entry(r.text.to_string())
                 .or_default()
                 .push(byte_offset);
         }
@@ -142,7 +142,7 @@ fn build_test_binary() -> Vec<u8> {
 
     let mut out = Vec::new();
     out.extend_from_slice(b"JMDI");
-    out.push(3u8);
+    out.push(4u8);
     out.extend_from_slice(&(fst_bytes.len() as u32).to_le_bytes());
     out.extend_from_slice(&fst_bytes);
     out.extend_from_slice(&(lt_bytes.len() as u32).to_le_bytes());

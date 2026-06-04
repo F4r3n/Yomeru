@@ -1,0 +1,163 @@
+//! Hand-written `serde::Serialize` for the rkyv **archived** entry types.
+//!
+//! This is what lets the server / wasm boundary serialize lookup results
+//! *directly from the zero-copy archived buffer* to JSON / JsValue, without
+//! ever materializing an owned [`WordEntry`]. Each impl reproduces the **exact**
+//! JSON shape that `#[derive(Serialize)]` produces for the owned type, so
+//! clients see byte-identical output. The `tests::wire_compat` round-trip below
+//! (and in `jmdict-core`) guards that equivalence.
+//!
+//! Strings are emitted via `ArchivedString::as_str` (borrowed, no copy); nested
+//! archived structs serialize themselves, so `&[Archived…]` slices are
+//! `Serialize` automatically. Only `Vec<String>` and `Option<String>` need a
+//! thin adapter. The leaf [`PartOfSpeech`] enum is cheap to rkyv-deserialize
+//! (fieldless, no heap), so we round-trip it to the owned type and let serde's
+//! derive emit the kebab-case name — guaranteeing the rename matches.
+
+use rkyv::string::ArchivedString;
+use rkyv::vec::ArchivedVec;
+use serde::ser::{Serialize, SerializeSeq, SerializeStruct, Serializer};
+
+use crate::entry::{
+    ArchivedGloss, ArchivedKanjiElement, ArchivedReadingElement, ArchivedSense, ArchivedWordEntry,
+};
+use crate::pos::{ArchivedPartOfSpeech, PartOfSpeech};
+
+/// Serializes an archived `Vec<String>` as a JSON array of strings.
+struct StrSeq<'a>(&'a ArchivedVec<ArchivedString>);
+
+impl Serialize for StrSeq<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let mut seq = s.serialize_seq(Some(self.0.len()))?;
+        for item in self.0.iter() {
+            seq.serialize_element(item.as_str())?;
+        }
+        seq.end()
+    }
+}
+
+impl Serialize for ArchivedPartOfSpeech {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        // Fieldless enum → rkyv-deserialize is alloc-free; reuse the owned
+        // serde derive so the kebab-case rename can never drift.
+        let owned: PartOfSpeech = rkyv::deserialize::<PartOfSpeech, rkyv::rancor::Error>(self)
+            .map_err(serde::ser::Error::custom)?;
+        owned.serialize(s)
+    }
+}
+
+impl Serialize for ArchivedGloss {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let mut st = s.serialize_struct("Gloss", 3)?;
+        st.serialize_field("text", self.text.as_str())?;
+        st.serialize_field("lang", self.lang.as_str())?;
+        st.serialize_field("gloss_type", &self.gloss_type.as_ref().map(|g| g.as_str()))?;
+        st.end()
+    }
+}
+
+impl Serialize for ArchivedKanjiElement {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let mut st = s.serialize_struct("KanjiElement", 3)?;
+        st.serialize_field("text", self.text.as_str())?;
+        st.serialize_field("info", &StrSeq(&self.info))?;
+        st.serialize_field("priorities", &StrSeq(&self.priorities))?;
+        st.end()
+    }
+}
+
+impl Serialize for ArchivedReadingElement {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let n = if cfg!(feature = "full") { 5 } else { 2 };
+        let mut st = s.serialize_struct("ReadingElement", n)?;
+        st.serialize_field("text", self.text.as_str())?;
+        #[cfg(feature = "full")]
+        {
+            st.serialize_field("no_kanji", &self.no_kanji)?;
+            st.serialize_field("restricted_to", &StrSeq(&self.restricted_to))?;
+            st.serialize_field("info", &StrSeq(&self.info))?;
+        }
+        st.serialize_field("priorities", &StrSeq(&self.priorities))?;
+        st.end()
+    }
+}
+
+impl Serialize for ArchivedSense {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let n = if cfg!(feature = "full") { 8 } else { 3 };
+        let mut st = s.serialize_struct("Sense", n)?;
+        st.serialize_field("pos", self.pos.as_slice())?;
+        st.serialize_field("glosses", self.glosses.as_slice())?;
+        #[cfg(feature = "full")]
+        {
+            st.serialize_field("xrefs", &StrSeq(&self.xrefs))?;
+            st.serialize_field("antonyms", &StrSeq(&self.antonyms))?;
+            st.serialize_field("fields", &StrSeq(&self.fields))?;
+        }
+        st.serialize_field("misc", &StrSeq(&self.misc))?;
+        #[cfg(feature = "full")]
+        {
+            st.serialize_field("info", &StrSeq(&self.info))?;
+            st.serialize_field("dialects", &StrSeq(&self.dialects))?;
+        }
+        st.end()
+    }
+}
+
+impl Serialize for ArchivedWordEntry {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let mut st = s.serialize_struct("WordEntry", 4)?;
+        st.serialize_field("sequence", &self.sequence.to_native())?;
+        st.serialize_field("kanji_forms", self.kanji_forms.as_slice())?;
+        st.serialize_field("reading_forms", self.reading_forms.as_slice())?;
+        st.serialize_field("senses", self.senses.as_slice())?;
+        st.end()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::entry::{ArchivedWordEntry, Gloss, KanjiElement, ReadingElement, Sense, WordEntry};
+    use crate::pos::PartOfSpeech;
+
+    fn sample() -> WordEntry {
+        WordEntry {
+            sequence: 1234567,
+            kanji_forms: vec![KanjiElement {
+                text: "食べる".into(),
+                info: vec!["rK".into()],
+                priorities: vec!["news1".into(), "nf12".into()],
+            }],
+            reading_forms: vec![
+                ReadingElement::from_reading("たべる"),
+                ReadingElement::from_reading("くう"),
+            ],
+            senses: vec![
+                Sense {
+                    pos: vec![PartOfSpeech::VerbIchidan, PartOfSpeech::VerbTransitive],
+                    glosses: vec![
+                        Gloss::new("to eat", "eng", None),
+                        Gloss::new("to live on", "eng", Some("fig".into())),
+                    ],
+                    misc: vec!["uk".into()],
+                    ..Default::default()
+                },
+                Sense::default(),
+            ],
+        }
+    }
+
+    /// The hand-written archived `Serialize` must produce byte-identical JSON to
+    /// the owned serde derive — this is what guarantees clients are unaffected.
+    #[test]
+    fn wire_compat_archived_matches_owned() {
+        let owned = sample();
+        let bytes = rkyv::to_bytes::<rkyv::rancor::Error>(&owned).unwrap();
+        let archived =
+            rkyv::access::<ArchivedWordEntry, rkyv::rancor::Error>(&bytes).unwrap();
+
+        let owned_json = serde_json::to_value(&owned).unwrap();
+        let archived_json = serde_json::to_value(archived).unwrap();
+        assert_eq!(owned_json, archived_json);
+    }
+}

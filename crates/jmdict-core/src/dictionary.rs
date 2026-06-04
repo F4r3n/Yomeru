@@ -1,6 +1,6 @@
 use anyhow::{anyhow, bail};
 use fst::Map;
-use jmdict_types::WordEntry;
+use jmdict_types::ArchivedWordEntry;
 use once_cell::sync::OnceCell;
 use postcard::from_bytes;
 
@@ -41,29 +41,35 @@ pub(crate) fn get_entry_group(group_idx: u64) -> Option<Vec<u32>> {
         .and_then(|d| d.lookup_table.get(group_idx as usize).cloned())
 }
 
-pub(crate) fn get_entry(idx: u32) -> Option<WordEntry> {
+/// Zero-copy access to the entry at byte `idx` in the entries blob.
+///
+/// Returns a reference straight into the process-global buffer — no allocation,
+/// no decode. The `'static` lifetime is sound because `DICT` is a `OnceCell`
+/// that, once set, lives for the rest of the process and is never mutated.
+pub(crate) fn get_entry(idx: u32) -> Option<&'static ArchivedWordEntry> {
     let dict = DICT.get()?;
-    let bytes = &dict.entries_bytes;
+    let bytes: &'static [u8] = dict.entries_bytes.as_slice();
     let pos = idx as usize;
-    if pos + 4 > bytes.len() {
-        return None;
-    }
-    let len = u32::from_le_bytes(bytes[pos..pos + 4].try_into().ok()?) as usize;
-    let start = pos + 4;
-    if start + len > bytes.len() {
-        return None;
-    }
-    from_bytes(&bytes[start..start + len]).ok()
+    let len_end = pos.checked_add(4)?;
+    let len_bytes = bytes.get(pos..len_end)?;
+    let len = u32::from_le_bytes(len_bytes.try_into().ok()?) as usize;
+    let end = len_end.checked_add(len)?;
+    let entry_bytes = bytes.get(len_end..end)?;
+    // SAFETY: every entry in the blob was bytecheck-validated once at init
+    // (see `validate_entries`), and the buffer is immutable for 'static, so the
+    // archived layout is known-good and outlives this reference.
+    Some(unsafe { rkyv::access_unchecked::<ArchivedWordEntry>(entry_bytes) })
 }
 
 /// Look up an entry by its JMdict ent_seq (sequence) number.
-pub fn lookup_by_sequence(seq: u32) -> Option<WordEntry> {
+pub fn lookup_by_sequence(seq: u32) -> Option<&'static ArchivedWordEntry> {
     let dict = DICT.get()?;
     let pos = dict
         .seq_index
         .binary_search_by_key(&seq, |(s, _)| *s)
         .ok()?;
-    get_entry(dict.seq_index[pos].1)
+    let offset = dict.seq_index.get(pos)?.1;
+    get_entry(offset)
 }
 
 pub(crate) fn fst_prefix_search(prefix: &str) -> Vec<(String, u64)> {
@@ -97,7 +103,7 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<DictionaryInner> {
     if &bytes[0..4] != b"JMDI" {
         bail!("Invalid magic bytes");
     }
-    if bytes[4] != 3 {
+    if bytes[4] != 4 {
         bail!("Unsupported dictionary version {}", bytes[4]);
     }
 
@@ -139,6 +145,12 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<DictionaryInner> {
     read_slice(bytes, pos, seq_len, "seq index")?;
     let seq_index: Vec<(u32, u32)> = from_bytes(&bytes[pos..pos + seq_len])?;
 
+    // Validate every archived entry once, up front. This turns a corrupt blob —
+    // or a `jmdict-types/full` feature mismatch between builder and reader — into
+    // a loud init error instead of silent garbage, and lets `get_entry` use the
+    // unchecked (zero-cost) access on the hot path.
+    validate_entries(&entries_bytes)?;
+
     let fst = Map::new(fst_bytes)?;
 
     Ok(DictionaryInner {
@@ -147,4 +159,29 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<DictionaryInner> {
         entries_bytes,
         seq_index,
     })
+}
+
+/// Walk the length-prefixed entries blob and bytecheck-validate each archived
+/// `WordEntry`. Run once at init so the runtime hot path can skip validation.
+fn validate_entries(bytes: &[u8]) -> anyhow::Result<()> {
+    let mut pos = 0usize;
+    while pos < bytes.len() {
+        let len_end = pos
+            .checked_add(4)
+            .ok_or_else(|| anyhow!("entry length overflow at {pos}"))?;
+        let len_bytes = bytes
+            .get(pos..len_end)
+            .ok_or_else(|| anyhow!("truncated entry length at {pos}"))?;
+        let len = u32::from_le_bytes(len_bytes.try_into()?) as usize;
+        let end = len_end
+            .checked_add(len)
+            .ok_or_else(|| anyhow!("entry body overflow at {pos}"))?;
+        let entry = bytes
+            .get(len_end..end)
+            .ok_or_else(|| anyhow!("truncated entry body at {pos}"))?;
+        rkyv::access::<ArchivedWordEntry, rkyv::rancor::Error>(entry)
+            .map_err(|e| anyhow!("entry at offset {pos} failed rkyv validation: {e}"))?;
+        pos = end;
+    }
+    Ok(())
 }

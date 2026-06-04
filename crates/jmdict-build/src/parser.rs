@@ -169,36 +169,36 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                     Ctx::EntSeq => b.sequence = text.parse().unwrap_or(0),
 
                     Ctx::KeB => {
-                        b.current_kanji = Some(KanjiElement::from_text(text.to_string()));
+                        b.current_kanji = Some(KanjiElement::from_text(text));
                     }
                     Ctx::KeInf => {
                         if let Some(k) = &mut b.current_kanji {
-                            k.info.push(text.to_string());
+                            k.info.push(text.into());
                         }
                     }
                     Ctx::KePri => {
                         if let Some(k) = &mut b.current_kanji {
-                            k.priorities.push(text.to_string());
+                            k.priorities.push(text.into());
                         }
                     }
                     Ctx::ReB => {
-                        b.current_reading = Some(ReadingElement::from_reading(text.to_string()));
+                        b.current_reading = Some(ReadingElement::from_reading(text));
                     }
                     #[cfg(feature = "full")]
                     Ctx::ReRestr => {
                         if let Some(r) = &mut b.current_reading {
-                            r.restricted_to.push(text.to_string());
+                            r.restricted_to.push(text.into());
                         }
                     }
                     #[cfg(feature = "full")]
                     Ctx::ReInf => {
                         if let Some(r) = &mut b.current_reading {
-                            r.info.push(text.to_string());
+                            r.info.push(text.into());
                         }
                     }
                     Ctx::RePri => {
                         if let Some(r) = &mut b.current_reading {
-                            r.priorities.push(text.to_string());
+                            r.priorities.push(text.into());
                         }
                     }
 
@@ -219,10 +219,10 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                         if let Some(sense) = b.senses.last_mut() {
                             if b.pending_lang == "eng" {
                                 sense.glosses.push(Gloss::new(
-                                    text.to_string(),
+                                    text,
                                     b.pending_lang.clone(),
                                     cfg_select! {
-                                    feature = "full" => b.pending_gtype,
+                                    feature = "full" => b.pending_gtype.clone().map(Into::into),
                                     _=> None
                                     },
                                 ));
@@ -232,36 +232,36 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                     #[cfg(feature = "full")]
                     Ctx::Xref => {
                         if let Some(s) = b.senses.last_mut() {
-                            s.xrefs.push(text.to_string());
+                            s.xrefs.push(text.into());
                         }
                     }
                     #[cfg(feature = "full")]
                     Ctx::Ant => {
                         if let Some(s) = b.senses.last_mut() {
-                            s.antonyms.push(text.to_string());
+                            s.antonyms.push(text.into());
                         }
                     }
                     #[cfg(feature = "full")]
                     Ctx::Field => {
                         if let Some(s) = b.senses.last_mut() {
-                            s.fields.push(text.to_string());
+                            s.fields.push(text.into());
                         }
                     }
                     Ctx::Misc => {
                         if let Some(s) = b.senses.last_mut() {
-                            s.misc.push(text.to_string());
+                            s.misc.push(text.into());
                         }
                     }
                     #[cfg(feature = "full")]
                     Ctx::SInf => {
                         if let Some(s) = b.senses.last_mut() {
-                            s.info.push(text.to_string());
+                            s.info.push(text.into());
                         }
                     }
                     #[cfg(feature = "full")]
                     Ctx::Dial => {
                         if let Some(s) = b.senses.last_mut() {
-                            s.dialects.push(text.to_string());
+                            s.dialects.push(text.into());
                         }
                     }
                     _ => {}

@@ -1,8 +1,11 @@
+use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize};
 use serde::{Deserialize, Serialize};
 
 /// Part-of-speech tags as defined in JMdict.
 /// Entity names from the JMdict DTD are mapped to enum variants.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Archive, RkyvSerialize, RkyvDeserialize,
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum PartOfSpeech {
     // Adjectives

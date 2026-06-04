@@ -106,14 +106,15 @@ pub fn preferred_headword(e: &WordEntry) -> &str {
 /// 23,501–24,000. Tier-1 tags (`news1`, `ichi1`, `spec1`, `gai1`) are scored
 /// as 1; tier-2 (`news2`, `ichi2`, `spec2`, `gai2`) as 24 — i.e. roughly
 /// "outside the top 12k".
-pub fn priority_score(tags: &[String]) -> u32 {
+pub fn priority_score<S: AsRef<str>>(tags: &[S]) -> u32 {
     let mut best = u32::MAX;
     for t in tags {
+        let t = t.as_ref();
         if let Some(num) = t.strip_prefix("nf").and_then(|n| n.parse::<u32>().ok()) {
             best = best.min(num);
-        } else if matches!(t.as_str(), "news1" | "ichi1" | "spec1" | "gai1") {
+        } else if matches!(t, "news1" | "ichi1" | "spec1" | "gai1") {
             best = best.min(1);
-        } else if matches!(t.as_str(), "news2" | "ichi2" | "spec2" | "gai2") {
+        } else if matches!(t, "news2" | "ichi2" | "spec2" | "gai2") {
             best = best.min(24);
         }
     }

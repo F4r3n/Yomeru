@@ -1,7 +1,7 @@
 //! Thin `#[wasm_bindgen]` shim over `jmdict-core`. All real logic lives in
 //! `jmdict-core`; this crate exists only to expose it to JavaScript.
 
-use jmdict_types::WordEntry;
+use jmdict_types::ArchivedWordEntry;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
@@ -13,7 +13,9 @@ pub fn init_jmdict_wasm() {
 
 #[derive(Serialize)]
 struct LookupAtResult {
-    entries: Vec<WordEntry>,
+    // Zero-copy refs into the global dict buffer (`'static`); serialized straight
+    // to JsValue via the archived `Serialize` impl — no owned `WordEntry`.
+    entries: Vec<&'static ArchivedWordEntry>,
     match_len: usize,
 }
 
@@ -68,7 +70,7 @@ impl Dictionary {
     /// for a sequence no longer in the dictionary). Used by SRS cards, which
     /// key on `sequence` rather than a surface string.
     pub fn lookup_by_sequence(&self, sequences: js_sys::Array) -> Result<JsValue, JsError> {
-        let results: Vec<Option<WordEntry>> = sequences
+        let results: Vec<Option<&'static ArchivedWordEntry>> = sequences
             .iter()
             .map(|v| {
                 v.as_f64()

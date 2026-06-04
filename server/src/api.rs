@@ -6,7 +6,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use examples_types::ExampleEntry;
-use jmdict_types::WordEntry;
+use jmdict_types::ArchivedWordEntry;
 use kanjidic_types::KanjiEntry;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -267,7 +267,7 @@ pub struct LookupBody {
 
 #[derive(Serialize)]
 pub struct LookupResponse {
-    pub results: Vec<Vec<WordEntry>>,
+    pub results: Vec<Vec<&'static ArchivedWordEntry>>,
 }
 
 #[derive(Deserialize)]
@@ -277,7 +277,7 @@ pub struct LookupBySequenceBody {
 
 #[derive(Serialize)]
 pub struct LookupBySequenceResponse {
-    pub results: Vec<Option<WordEntry>>,
+    pub results: Vec<Option<&'static ArchivedWordEntry>>,
 }
 
 #[derive(Deserialize)]
@@ -293,7 +293,7 @@ fn default_prefix_max() -> u8 {
 
 #[derive(Serialize)]
 pub struct LookupPrefixResponse {
-    pub results: Vec<WordEntry>,
+    pub results: Vec<&'static ArchivedWordEntry>,
 }
 
 #[derive(Deserialize)]

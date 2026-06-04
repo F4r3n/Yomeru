@@ -15,6 +15,16 @@ jmdict-types = { path = "../jmdict-types" }
 quick-xml    = { version = "0.37", features = ["encoding"] }
 serde        = { version = "1", features = ["derive"] }
 postcard     = { version = "1", features = ["alloc"] }
+# Entries are serialized in rkyv's zero-copy archived layout; the FST, lookup
+# table, and seq index stay postcard. Pinned repr must match the readers
+# (jmdict-core / jmdict-wasm) — see jmdict-types/Cargo.toml.
+rkyv = { version = "0.8", default-features = false, features = [
+    "alloc",
+    "bytecheck",
+    "pointer_width_32",
+    "little_endian",
+    "unaligned",
+] }
 fst          = "0.4"
 anyhow       = "1"
 clap         = { version = "4", features = ["derive"] }
