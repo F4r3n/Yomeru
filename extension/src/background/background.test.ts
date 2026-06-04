@@ -4,11 +4,11 @@ import type { SrsCard } from "../shared/types.ts";
 import { cardId } from "../shared/types.ts";
 
 function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
-  const word = overrides.word ?? "食べる";
+  const sequence = overrides.sequence ?? 1_358_280;
   const direction = overrides.direction ?? "recognition";
   return {
-    id: cardId(word, direction),
-    word,
+    id: cardId(sequence, direction),
+    sequence,
     direction,
     due_ms: 0,
     stability: 0,

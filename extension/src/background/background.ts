@@ -6,7 +6,7 @@ import {
   putCard,
   putCards,
   getCard,
-  getCardsByWord,
+  getCardsBySequence,
   getAllCards,
   getDueCards,
   getStagingCards,
@@ -232,11 +232,11 @@ browser.storage.onChanged.addListener((changes, area) => {
 function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
   switch (msg.type) {
     case "ADD_WORD":
-      return handleAddWord(msg.payload as { word: string });
+      return handleAddWord(msg.payload as { sequence: number });
     case "REVIEW_CARD":
       return handleReviewCard(
         msg.payload as {
-          word: string;
+          sequence: number;
           direction: CardDirection;
           rating: number;
         },
@@ -246,7 +246,7 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
     case "GET_ALL_CARDS":
       return handleGetAllCards();
     case "DELETE_CARD":
-      return handleDeleteCard(msg.payload as { word: string });
+      return handleDeleteCard(msg.payload as { sequence: number });
     case "LOG_LOOKUP":
       return handleLogLookup(msg.payload as { word: string; reading: string });
     case "GET_SRS_WORDS":
@@ -254,7 +254,7 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
     case "GET_STAGING":
       return handleGetStaging();
     case "PROMOTE_CARD":
-      return handlePromoteCard(msg.payload as { word: string });
+      return handlePromoteCard(msg.payload as { sequence: number });
     case "PROMOTE_ALL":
       return handlePromoteAll();
     case "PROMOTE_BATCH":
@@ -271,6 +271,8 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
       return handleLookupWord(msg.payload as { word: string });
     case "LOOKUP_MANY":
       return handleLookupMany(msg.payload as { words: string[] });
+    case "LOOKUP_BY_SEQUENCE":
+      return handleLookupBySequence(msg.payload as { sequences: number[] });
     case "LOOKUP_PREFIX":
       return handleLookupPrefix(msg.payload as { text: string; max: number });
     case "BUMP_DB_VERSION":
@@ -302,30 +304,30 @@ browser.runtime.onMessage.addListener(
 );
 
 // The Rust SrsCard the WASM works with is the FSRS scheduling subset plus
-// `word` + `added_ms` — no id/direction/status. We never trust the JS-typed
-// shape after a WASM round-trip; mergeReview reattaches the JS-only fields
-// from the original card.
-type WasmCardShape = SrsSchedFields & Pick<SrsCard, "word" | "added_ms">;
+// `sequence` + `added_ms` — no id/direction/status. We never trust the
+// JS-typed shape after a WASM round-trip; mergeReview reattaches the JS-only
+// fields from the original card.
+type WasmCardShape = SrsSchedFields & Pick<SrsCard, "sequence" | "added_ms">;
 
-async function handleAddWord({ word }: { word: string }) {
+async function handleAddWord({ sequence }: { sequence: number }) {
   await ensureSrs();
-  const siblings = await getCardsByWord(word);
+  const siblings = await getCardsBySequence(sequence);
   if (siblings.length > 0) {
     return { success: true, existing: true };
   }
   const now = Date.now();
-  const base = srs!.new_card(word, now) as WasmCardShape;
+  const base = srs!.new_card(sequence, now) as WasmCardShape;
   const recognition: SrsCard = {
     ...base,
-    id: cardId(word, "recognition"),
-    word,
+    id: cardId(sequence, "recognition"),
+    sequence,
     direction: "recognition",
     status: "staging",
   };
   const recall: SrsCard = {
     ...base,
-    id: cardId(word, "recall"),
-    word,
+    id: cardId(sequence, "recall"),
+    sequence,
     direction: "recall",
     status: "staging",
   };
@@ -335,23 +337,23 @@ async function handleAddWord({ word }: { word: string }) {
 }
 
 async function handleReviewCard({
-  word,
+  sequence,
   direction,
   rating,
 }: {
-  word: string;
+  sequence: number;
   direction: CardDirection;
   rating: number;
 }) {
   await ensureSrs();
-  const card = await getCard(word, direction);
+  const card = await getCard(sequence, direction);
   if (!card) return { error: "Card not found" };
   const settings = await getSettings();
   const now_ms = Date.now();
   const wasmOut = srs!.review_card(card, rating, now_ms) as WasmCardShape;
   const scaled = applyIntervalScale(wasmOut, settings.intervalScale, now_ms);
   if (checkGraduation(scaled.reps, settings.graduationReps)) {
-    await deleteCardById(cardId(word, direction));
+    await deleteCardById(cardId(sequence, direction));
     await bumpDbVersion();
     return { success: true, graduated: true };
   }
@@ -370,8 +372,8 @@ async function handleGetStaging() {
   return { cards: await getStagingCards() };
 }
 
-async function handlePromoteCard({ word }: { word: string }) {
-  await promoteCard(word);
+async function handlePromoteCard({ sequence }: { sequence: number }) {
+  await promoteCard(sequence);
   await bumpDbVersion();
   return { success: true };
 }
@@ -387,23 +389,23 @@ async function handlePromoteBatch() {
   const staging = (await getStagingCards()).sort(
     (a, b) => a.added_ms - b.added_ms,
   );
-  const stagingWords: string[] = [];
-  const seen = new Set<string>();
+  const stagingSeqs: number[] = [];
+  const seen = new Set<number>();
   for (const c of staging) {
-    if (!seen.has(c.word)) {
-      seen.add(c.word);
-      stagingWords.push(c.word);
+    if (!seen.has(c.sequence)) {
+      seen.add(c.sequence);
+      stagingSeqs.push(c.sequence);
     }
   }
-  const n = Math.min(stagingWords.length, settings.maxSessionCards);
+  const n = Math.min(stagingSeqs.length, settings.maxSessionCards);
   for (let i = 0; i < n; i++) {
-    await promoteCard(stagingWords[i]);
+    await promoteCard(stagingSeqs[i]);
   }
   if (n > 0) await bumpDbVersion();
   const due = await getDueCards(Date.now());
   return {
     cards: due.slice(0, settings.maxSessionCards),
-    stagingCount: stagingWords.length - n,
+    stagingCount: stagingSeqs.length - n,
   };
 }
 
@@ -420,15 +422,27 @@ async function handleGetAllCards() {
   return { cards: await getAllCards() };
 }
 
-async function handleDeleteCard({ word }: { word: string }) {
-  await deleteCard(word);
+async function handleDeleteCard({ sequence }: { sequence: number }) {
+  await deleteCard(sequence);
   await bumpDbVersion();
   return { success: true };
 }
 
+// Highlighting matches surface strings against page text, but cards now key on
+// `sequence`. Resolve each active card's sequence to all of its kanji + reading
+// surface forms so the content-script highlighter can keep underlining them.
 async function handleGetSrsWords(): Promise<{ words: string[] }> {
+  await ensureJmdict();
   const cards = await getAllCards();
-  return { words: [...new Set(cards.map((c) => c.word))] };
+  const seqs = [...new Set(cards.map((c) => c.sequence))];
+  const entries = jmdict!.lookup_by_sequence(seqs) as (WordEntry | null)[];
+  const words = new Set<string>();
+  for (const e of entries) {
+    if (!e) continue;
+    for (const k of e.kanji_forms) words.add(k.text);
+    for (const r of e.reading_forms) words.add(r.text);
+  }
+  return { words: [...words] };
 }
 
 async function handleLogLookup({
@@ -468,6 +482,14 @@ async function handleLookupMany({ words }: { words: string[] }) {
   const results: WordEntry[][] = words.map(
     (w) => (jmdict!.lookup(w) as WordEntry[]) ?? [],
   );
+  return { results };
+}
+
+async function handleLookupBySequence({ sequences }: { sequences: number[] }) {
+  await ensureJmdict();
+  const results = (jmdict!.lookup_by_sequence(
+    sequences,
+  ) as (WordEntry | null)[]) ?? [];
   return { results };
 }
 

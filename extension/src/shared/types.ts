@@ -5,14 +5,22 @@ export interface Gloss {
 export interface Sense {
   pos: string[];
   glosses: Gloss[];
+  /** Misc tags — most usefully "uk" (usually written in kana). */
+  misc?: string[];
 }
 
 export interface KanjiElement {
   text: string;
+  /** `ke_inf` tags — e.g. "rK" (rare), "sK" (search-only). */
+  info?: string[];
+  /** `ke_pri` frequency tags — e.g. "news1", "nf01". */
+  priorities?: string[];
 }
 
 export interface ReadingElement {
   text: string;
+  /** `re_pri` frequency tags — same vocabulary as KanjiElement.priorities. */
+  priorities?: string[];
 }
 
 export interface WordEntry {
@@ -30,9 +38,10 @@ export type CardDirection = "recognition" | "recall";
 export type CardState = "new" | "learning" | "review" | "relearning";
 
 export interface SrsCard {
-  /** Composite key: `${word}::${direction}`. */
+  /** Composite key: `${sequence}::${direction}`. */
   id: string;
-  word: string;
+  /** JMdict ent_seq of the entry this card reviews. Stable across dict rebuilds. */
+  sequence: number;
   direction: CardDirection;
   due_ms: number;
   /** FSRS memory stability (days) — interval is derived from this + retention target. */
@@ -49,8 +58,8 @@ export interface SrsCard {
   status: "staging" | "active";
 }
 
-export function cardId(word: string, direction: CardDirection): string {
-  return `${word}::${direction}`;
+export function cardId(sequence: number, direction: CardDirection): string {
+  return `${sequence}::${direction}`;
 }
 
 export interface SrsSettings {

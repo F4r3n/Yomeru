@@ -14,6 +14,7 @@ import {
 import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
 import type * as KanjidicWasm from "../../_generated/kanjidic-wasm/kanjidic_wasm.js";
 import type { WordEntry } from "../shared/types.ts";
+import { preferredHeadword } from "../shared/dict.ts";
 
 type Dictionary = InstanceType<typeof JmDictWasm.Dictionary>;
 type KanjiDictionary = InstanceType<typeof KanjidicWasm.KanjiDictionary>;
@@ -280,10 +281,11 @@ async function handleHover(e: MouseEvent): Promise<void> {
       return;
     }
 
-    const hw =
-      result.entries[0].kanji_forms?.[0]?.text ??
-      result.entries[0].reading_forms?.[0]?.text ??
-      text;
+    const entry = result.entries[0];
+    // Display/log headword honours kana-preference (matches the popup card);
+    // the kanji tab still needs a kanji-bearing form to extract chars from.
+    const hw = preferredHeadword(entry) || text;
+    const kanjiSource = entry.kanji_forms?.[0]?.text ?? hw;
 
     // Always refine the highlight to the exact dictionary match length,
     // even when the word hasn't changed (phase 1 used the full run).
@@ -305,7 +307,7 @@ async function handleHover(e: MouseEvent): Promise<void> {
 
     const kanjiEntries = kanjiDictionary
       ? ((kanjiDictionary.lookup_many(
-          hw,
+          kanjiSource,
         ) as import("../shared/types.ts").KanjiEntry[]) ?? [])
       : [];
 
@@ -326,7 +328,7 @@ async function handleHover(e: MouseEvent): Promise<void> {
       type: "LOG_LOOKUP",
       payload: {
         word: hw,
-        reading: result.entries[0].reading_forms?.[0]?.text ?? "",
+        reading: entry.reading_forms?.[0]?.text ?? "",
       },
     });
   } catch (err) {

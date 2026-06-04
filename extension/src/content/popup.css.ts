@@ -16,6 +16,9 @@ export const POPUP_CSS = `
 .jp-header { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
 .jp-word   { font-size: 22px; font-weight: 600; color: #89dceb; }
 .jp-reading { color: #a6e3a1; font-size: 14px; }
+.jp-kanji-sub { color: #a6adc8; font-size: 15px; font-weight: 500; }
+.jp-freq { font-size: 10px; color: #a6adc8; border: 1px solid #45475a;
+           border-radius: 999px; padding: 1px 7px; align-self: center; white-space: nowrap; }
 .jp-pos-group { margin-left: auto; }
 .jp-pos { font-size: 10px; background: #313244; color: #cba6f7;
           border-radius: 3px; padding: 1px 5px; margin-left: 3px; }

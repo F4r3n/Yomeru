@@ -1,6 +1,6 @@
-import type { CardDirection, SrsCard } from "../shared/types.ts";
+import type { SrsCard } from "../shared/types.ts";
 import { cardId } from "../shared/types.ts";
-import { freshRecallCard, getAllCards, getCard, putCard, sm2ToFsrsFields } from "./idb";
+import { freshRecallCard, getAllCards, getCard, putCard } from "./idb";
 
 export const CARDS_BACKUP_KEY = "_yomeru_cards_backup";
 
@@ -8,47 +8,31 @@ function num(v: unknown, fallback: number): number {
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;
 }
 
-function buildFromLegacy(
-  raw: Record<string, unknown>,
-  word: string,
-  direction: CardDirection,
-  nowMs: number,
-): SrsCard {
-  return {
-    id: cardId(word, direction),
-    word,
-    direction,
-    due_ms: num(raw.due_ms, nowMs),
-    ...sm2ToFsrsFields(raw),
-    added_ms: num(raw.added_ms, nowMs),
-    status: (raw.status as SrsCard["status"]) ?? "active",
-  };
-}
-
 /**
- * Normalize an input card to one or two v4 (FSRS-shaped) siblings.
+ * Normalize an input card to one or two sequence-keyed (FSRS-shaped) siblings.
  *
- * - v4 input (already FSRS-shaped): returned as-is, with `id` filled in if missing.
- * - v3 input (has `direction` but SM-2 fields): direction preserved, SM-2 → FSRS mapped.
- * - Legacy input (no `direction`): becomes a recognition sibling preserving the
- *   original SM-2 state plus a fresh recall sibling. Matches the v2→v4 IDB
- *   migration so import and migrate produce the same end state.
+ * Cards key on JMdict `sequence`; a row without a numeric `sequence` is from
+ * the pre-`sequence` (word-keyed) era and cannot be mapped, so it's dropped —
+ * this is the clean break, consistent with users re-exporting in the new shape.
+ *
+ * - With a `direction`: returned as-is, with `id` filled in if missing.
+ * - Without a `direction`: becomes a recognition sibling preserving its
+ *   scheduling state plus a fresh recall sibling.
  */
 export function normalizeImportedCard(card: SrsCard, nowMs: number): SrsCard[] {
   const raw = card as unknown as Record<string, unknown>;
-  const isLegacyShape =
-    typeof raw.stability !== "number" ||
-    typeof raw.difficulty !== "number" ||
-    typeof raw.state !== "string";
+  if (typeof raw.sequence !== "number") return [];
 
-  if (card.direction && !isLegacyShape) {
-    return [{ ...card, id: card.id ?? cardId(card.word, card.direction) }];
-  }
   if (card.direction) {
-    return [buildFromLegacy(raw, card.word, card.direction, nowMs)];
+    return [{ ...card, id: card.id ?? cardId(card.sequence, card.direction) }];
   }
-  const recognition = buildFromLegacy(raw, card.word, "recognition", nowMs);
-  return [recognition, freshRecallCard(card.word, nowMs, recognition.added_ms)];
+  const recognition: SrsCard = {
+    ...card,
+    id: cardId(card.sequence, "recognition"),
+    direction: "recognition",
+    added_ms: num(raw.added_ms, nowMs),
+  };
+  return [recognition, freshRecallCard(card.sequence, nowMs, recognition.added_ms)];
 }
 
 // Mirrors the IDB cards table to storage.local. Called on every mutation so a
@@ -113,14 +97,14 @@ export async function importCards(
   let added = 0;
   let skipped = 0;
   for (const card of cards) {
-    if (!card || typeof (card as SrsCard).word !== "string") {
+    if (!card || typeof (card as SrsCard).sequence !== "number") {
       skipped++;
       continue;
     }
     const expanded = normalizeImportedCard(card as SrsCard, now);
     let importedAny = false;
     for (const sibling of expanded) {
-      if (await getCard(sibling.word, sibling.direction)) continue;
+      if (await getCard(sibling.sequence, sibling.direction)) continue;
       await putCard(sibling);
       importedAny = true;
     }

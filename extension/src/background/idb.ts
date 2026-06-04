@@ -1,48 +1,19 @@
-import type { CardDirection, CardState, SrsCard } from "../shared/types.ts";
+import type { CardDirection, SrsCard } from "../shared/types.ts";
 import { cardId } from "../shared/types.ts";
 
 const DB_NAME = "yomeru-db";
-const DB_VERSION = 5;
+// v7 re-runs the v6 sequence-keyed reset to self-heal any DB left half-migrated
+// by an earlier build that created the store without the `sequence` index.
+const DB_VERSION = 7;
 const TOMB_STORE = "tombstones";
 
 let db: IDBDatabase | null = null;
 
-/**
- * Maps a legacy SM-2-shaped card object to the FSRS scheduling fields.
- * Exported so cards-backup can apply the same conversion on legacy JSON imports
- * and on legacy storage.local backups.
- */
-export function sm2ToFsrsFields(old: Record<string, unknown>): {
-  stability: number;
-  difficulty: number;
-  reps: number;
-  lapses: number;
-  state: CardState;
-  last_review_ms: number | null;
-} {
-  const num = (v: unknown, fallback: number) =>
-    typeof v === "number" && Number.isFinite(v) ? v : fallback;
-  const interval = num(old.interval_days, 0);
-  const ease = num(old.ease_factor, 2.5) || 2.5;
-  const reps = num(old.repetitions, 0);
-  // SM-2 ease (1.3..2.5+) → FSRS difficulty (1..10, higher = harder).
-  // ease=2.5 → ~1, ease=1.3 → 10, linear in between.
-  const difficulty = Math.max(1, Math.min(10, 10 - (ease - 1.3) / 0.12));
-  return {
-    stability: reps > 0 ? Math.max(0.1, interval) : 0,
-    difficulty: reps > 0 ? difficulty : 0,
-    reps,
-    lapses: 0,
-    state: reps > 0 ? "review" : "new",
-    last_review_ms: typeof old.last_reviewed_ms === "number" ? old.last_reviewed_ms : null,
-  };
-}
-
 /** A blank recall sibling, due immediately, in the "new" state. */
-export function freshRecallCard(word: string, nowMs: number, addedMs: number): SrsCard {
+export function freshRecallCard(sequence: number, nowMs: number, addedMs: number): SrsCard {
   return {
-    id: cardId(word, "recall"),
-    word,
+    id: cardId(sequence, "recall"),
+    sequence,
     direction: "recall",
     due_ms: nowMs,
     stability: 0,
@@ -73,13 +44,18 @@ export async function openDb(): Promise<IDBDatabase> {
         console.error("[yomeru] idb upgrade tx aborted:", upgradeTx.error);
       };
 
-      if (e.oldVersion < 1) {
+      // Fresh DB: create the cards store keyed on the composite id, indexed
+      // by `sequence` (JMdict ent_seq) for sibling/by-entry lookups.
+      const createCardsStore = () => {
         const cards = database.createObjectStore("cards", { keyPath: "id" });
         cards.createIndex("due_ms", "due_ms", { unique: false });
         cards.createIndex("added_ms", "added_ms", { unique: false });
         cards.createIndex("status", "status", { unique: false });
-        cards.createIndex("word", "word", { unique: false });
+        cards.createIndex("sequence", "sequence", { unique: false });
+      };
 
+      if (e.oldVersion < 1) {
+        createCardsStore();
         const history = database.createObjectStore("lookup_history", {
           keyPath: "id",
           autoIncrement: true,
@@ -88,98 +64,26 @@ export async function openDb(): Promise<IDBDatabase> {
         history.createIndex("ts", "ts", { unique: false });
       }
 
-      // v1/v2 → v4: rebuild cards store with composite-id keyPath, spawn
-      // recall sibling for every existing card, and write FSRS-shaped fields.
-      // This branch also subsumes the legacy "fill missing status" step.
-      if (e.oldVersion >= 1 && e.oldVersion < 3) {
-        const oldStore = upgradeTx.objectStore("cards");
-        const collected: Array<Record<string, unknown>> = [];
-        const cursorReq = oldStore.openCursor();
-        cursorReq.onerror = () => {
-          console.error("[yomeru] v1/v2→v4 cursor error:", cursorReq.error);
-        };
-        cursorReq.onsuccess = (ev) => {
-          const cursor = (ev.target as IDBRequest<IDBCursorWithValue>).result;
-          if (cursor) {
-            collected.push(cursor.value);
-            cursor.continue();
-            return;
-          }
-          console.log(`[yomeru] v1/v2→v4 collected ${collected.length} legacy cards`);
+      // → v6/v7: cards used to key on a surface `word` string; they now key on
+      // JMdict `sequence`. There is deliberately no migration — the move is a
+      // clean break and users re-import via export/import. Drop the old cards
+      // store and recreate it empty on the `sequence` layout, and clear any
+      // word-keyed tombstones (their composite ids are meaningless now). The
+      // range also catches a half-migrated v6 (store created without the
+      // `sequence` index by an earlier build) and rebuilds it cleanly.
+      if (e.oldVersion >= 1 && e.oldVersion < 7) {
+        if (database.objectStoreNames.contains("cards")) {
           database.deleteObjectStore("cards");
-          const newStore = database.createObjectStore("cards", { keyPath: "id" });
-          newStore.createIndex("due_ms", "due_ms", { unique: false });
-          newStore.createIndex("added_ms", "added_ms", { unique: false });
-          newStore.createIndex("status", "status", { unique: false });
-          newStore.createIndex("word", "word", { unique: false });
-
-          const now = Date.now();
-          const num = (v: unknown, fallback: number) =>
-            typeof v === "number" && Number.isFinite(v) ? v : fallback;
-          for (const old of collected) {
-            const word = String(old.word);
-            const fsrs = sm2ToFsrsFields(old);
-            const recognition: SrsCard = {
-              id: cardId(word, "recognition"),
-              word,
-              direction: "recognition",
-              due_ms: num(old.due_ms, now),
-              ...fsrs,
-              added_ms: num(old.added_ms, now),
-              status: (old.status as SrsCard["status"]) ?? "active",
-            };
-            newStore.add(recognition);
-            newStore.add(freshRecallCard(word, now, recognition.added_ms));
-          }
-        };
+        }
+        createCardsStore();
+        if (database.objectStoreNames.contains(TOMB_STORE)) {
+          database.deleteObjectStore(TOMB_STORE);
+        }
       }
 
-      // v4 → v5: add a tombstone store for sync. Existing cards store is
-      // untouched; the new store keeps {id, deleted_at} entries so deletes
-      // can propagate to the server and other devices.
-      if (e.oldVersion < 5 && !database.objectStoreNames.contains(TOMB_STORE)) {
+      // Ensure the tombstone store exists (new DBs and the v6 reset above).
+      if (!database.objectStoreNames.contains(TOMB_STORE)) {
         database.createObjectStore(TOMB_STORE, { keyPath: "id" });
-      }
-
-      // v3 → v4: store already has composite-id keyPath and sibling pairs, but
-      // cards carry SM-2 fields (interval_days, ease_factor, repetitions).
-      // Walk every card and rewrite to FSRS-shaped fields in place.
-      if (e.oldVersion >= 3 && e.oldVersion < 4) {
-        const store = upgradeTx.objectStore("cards");
-        let migrated = 0;
-        const cursorReq = store.openCursor();
-        cursorReq.onerror = () => {
-          console.error("[yomeru] v3→v4 cursor error:", cursorReq.error);
-        };
-        cursorReq.onsuccess = (ev) => {
-          const cursor = (ev.target as IDBRequest<IDBCursorWithValue>).result;
-          if (!cursor) {
-            console.log(`[yomeru] v3→v4 rewrote ${migrated} cards`);
-            return;
-          }
-          const old = cursor.value as Record<string, unknown>;
-          const fsrs = sm2ToFsrsFields(old);
-          const updated: SrsCard = {
-            id: old.id as string,
-            word: old.word as string,
-            direction: old.direction as CardDirection,
-            due_ms: typeof old.due_ms === "number" ? old.due_ms : Date.now(),
-            ...fsrs,
-            added_ms: typeof old.added_ms === "number" ? old.added_ms : Date.now(),
-            status: (old.status as SrsCard["status"]) ?? "active",
-          };
-          const upd = cursor.update(updated);
-          upd.onerror = () => {
-            console.error(
-              `[yomeru] v3→v4 cursor.update failed for id=${updated.id}:`,
-              upd.error,
-              "value:",
-              updated,
-            );
-          };
-          migrated++;
-          cursor.continue();
-        };
       }
     };
 
@@ -251,23 +155,23 @@ export async function putCards(cards: SrsCard[]): Promise<void> {
 }
 
 export async function getCard(
-  word: string,
+  sequence: number,
   direction: CardDirection,
 ): Promise<SrsCard | null> {
   return tx<SrsCard | undefined>("cards", "readonly", (s) =>
-    s.get(cardId(word, direction)),
+    s.get(cardId(sequence, direction)),
   ).then((r) => r ?? null);
 }
 
-export async function getCardsByWord(word: string): Promise<SrsCard[]> {
+export async function getCardsBySequence(sequence: number): Promise<SrsCard[]> {
   return openDb().then(
     (database) =>
       new Promise((resolve, reject) => {
         const req = database
           .transaction("cards", "readonly")
           .objectStore("cards")
-          .index("word")
-          .getAll(IDBKeyRange.only(word));
+          .index("sequence")
+          .getAll(IDBKeyRange.only(sequence));
         req.onsuccess = () => resolve(req.result as SrsCard[]);
         req.onerror = () => reject(req.error);
       }),
@@ -311,9 +215,9 @@ export async function getStagingCards(): Promise<SrsCard[]> {
   );
 }
 
-/** Promotes both direction siblings of a word from staging to active. */
-export async function promoteCard(word: string): Promise<void> {
-  const siblings = await getCardsByWord(word);
+/** Promotes both direction siblings of an entry from staging to active. */
+export async function promoteCard(sequence: number): Promise<void> {
+  const siblings = await getCardsBySequence(sequence);
   for (const c of siblings) {
     if (c.status === "staging") {
       await putCard({ ...c, status: "active" });
@@ -340,11 +244,11 @@ export async function promoteAll(): Promise<void> {
   });
 }
 
-/** Deletes both direction siblings for a word and records tombstones. */
-export async function deleteCard(word: string): Promise<void> {
+/** Deletes both direction siblings for an entry and records tombstones. */
+export async function deleteCard(sequence: number): Promise<void> {
   return deleteIdsWithTombstones([
-    cardId(word, "recognition"),
-    cardId(word, "recall"),
+    cardId(sequence, "recognition"),
+    cardId(sequence, "recall"),
   ]);
 }
 

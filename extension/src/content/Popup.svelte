@@ -2,13 +2,14 @@
     import { popupStore } from "./popup-store";
     import type { WordEntry, ExampleEntry } from "../shared/types.ts";
     import { srsWordAdded, hasSrsWord } from "./srs-highlighter";
+    import { preferredHeadword } from "../shared/dict.ts";
     import WordTab from "./WordTab.svelte";
     import KanjiTab from "./KanjiTab.svelte";
     import ExamplesTab from "./ExamplesTab.svelte";
 
     let activeTab = $state<"word" | "kanji" | "examples">("word");
     let useBelow = $state(true);
-    let buttonStates = $state<Record<string, "idle" | "added" | "existing">>({});
+    let buttonStates = $state<Record<number, "idle" | "added" | "existing">>({});
     let corpusExamples = $state<ExampleEntry[]>([]);
     let examplesFetched = $state(false);
 
@@ -24,10 +25,10 @@
     $effect(() => {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         entriesKey;
-        const initial: Record<string, "idle" | "added" | "existing"> = {};
+        const initial: Record<number, "idle" | "added" | "existing"> = {};
         for (const e of $popupStore.entries) {
-            const hw = e.kanji_forms[0]?.text ?? e.reading_forms[0]?.text ?? "";
-            if (hw && hasSrsWord(hw)) initial[hw] = "existing";
+            const hw = preferredHeadword(e);
+            if (hw && hasSrsWord(hw)) initial[e.sequence] = "existing";
         }
         buttonStates = initial;
         activeTab = "word";
@@ -77,16 +78,21 @@
             .catch(() => { examplesFetched = true; });
     }
 
-    async function addToSrs(word: string) {
+    async function addToSrs(entry: WordEntry) {
         const res = await browser.runtime.sendMessage({
             type: "ADD_WORD",
-            payload: { word },
+            payload: { sequence: entry.sequence },
         });
         buttonStates = {
             ...buttonStates,
-            [word]: res.existing ? "existing" : "added",
+            [entry.sequence]: res.existing ? "existing" : "added",
         };
-        if (!res.existing) srsWordAdded(word);
+        if (!res.existing) {
+            // Underline every surface form of the entry right away — the
+            // highlighter matches surface strings, not sequences.
+            for (const k of entry.kanji_forms) srsWordAdded(k.text);
+            for (const r of entry.reading_forms) srsWordAdded(r.text);
+        }
     }
 </script>
 
