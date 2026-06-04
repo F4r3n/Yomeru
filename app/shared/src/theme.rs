@@ -416,6 +416,106 @@ th { color: var(--subtext); font-weight: 500; }
 .stat-card.warn   .stat-value { color: var(--yellow); }
 .stat-card.danger .stat-value { color: var(--red); }
 
+/* ── Forecast chart ──────────────────────────────────────────────── */
+.forecast {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+.forecast-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.forecast-head .section-title { margin-bottom: 0; }
+.forecast-tabs { display: flex; gap: 4px; }
+.forecast-tabs button {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 11px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--subtext);
+    cursor: pointer;
+}
+.forecast-tabs button:hover { color: var(--text); }
+.forecast-tabs button.active {
+    background: var(--accent);
+    color: var(--on-accent);
+    border-color: var(--accent);
+}
+.forecast-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 130px;
+}
+.forecast-bar-wrap {
+    position: relative;
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+}
+.forecast-bar {
+    width: 100%;
+    background: var(--accent);
+    border-radius: 3px 3px 0 0;
+    min-height: 2px;
+    transition: height 0.15s ease, background 0.15s ease;
+}
+.forecast-bar-wrap:hover .forecast-bar { background: var(--text); }
+.forecast-tip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: var(--card);
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.3;
+    white-space: nowrap;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+    z-index: 5;
+}
+.forecast-tip strong { font-weight: 700; }
+.forecast-tip .tip-span {
+    display: block;
+    font-size: 10px;
+    opacity: 0.7;
+}
+.forecast-tip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: var(--text);
+}
+.forecast-bar-wrap:hover .forecast-tip { opacity: 1; }
+.forecast-axis { display: flex; gap: 3px; margin-top: 6px; }
+.forecast-axis .tick {
+    flex: 1;
+    text-align: center;
+    font-size: 10px;
+    color: var(--subtext);
+    white-space: nowrap;
+    overflow: visible;
+}
+.forecast-total { margin-top: 12px; font-size: 13px; color: var(--subtext); }
+.forecast-total strong { color: var(--text); }
+
 .chip {
     display: inline-flex;
     align-items: center;

@@ -6,7 +6,7 @@ use dioxus::router::components::HistoryProvider;
 use dioxus::web::WebHistory;
 use gloo_storage::{LocalStorage, Storage};
 
-use crate::routes::{about, lookup, new_words, review, settings, word_list};
+use crate::routes::{about, lookup, new_words, review, settings, stats, word_list};
 use crate::sync::SyncGen;
 use crate::theme::global_css;
 
@@ -22,6 +22,8 @@ pub enum Route {
         New {},
         #[route("/words")]
         Words {},
+        #[route("/stats")]
+        Stats {},
         #[nest("/lookup")]
             #[layout(LookupLayout)]
                 #[route("/")]
@@ -120,6 +122,7 @@ fn Shell() -> Element {
                 NavTab { to: Route::Review {},   icon: "▶", label: "Review" }
                 NavTab { to: Route::New {},      icon: "✦", label: "New Words" }
                 NavTab { to: Route::Words {},    icon: "≡", label: "Word List" }
+                NavTab { to: Route::Stats {},    icon: "▦", label: "Stats" }
                 NavTab { to: Route::Lookup {},   icon: "⌕", label: "Lookup" }
                 NavTab { to: Route::Settings {}, icon: "⚙", label: "Settings" }
                 NavTab { to: Route::About {},    icon: "ⓘ", label: "About" }
@@ -165,6 +168,10 @@ fn New() -> Element {
 #[component]
 fn Words() -> Element {
     rsx! { word_list::WordListTab {} }
+}
+#[component]
+fn Stats() -> Element {
+    rsx! { stats::StatsTab {} }
 }
 #[component]
 fn LookupLayout() -> Element {
