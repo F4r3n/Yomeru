@@ -83,6 +83,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/auth/verify", post(api::auth_verify_handler))
         .route("/api/sync", post(api::sync_handler))
         .route("/api/lookup", post(api::lookup_handler))
+        .route("/api/lookup-by-sequence", post(api::lookup_by_sequence_handler))
         .route("/api/lookup-prefix", post(api::lookup_prefix_handler))
         .route("/api/kanji", post(api::kanji_handler))
         .route("/api/examples", post(api::examples_handler))

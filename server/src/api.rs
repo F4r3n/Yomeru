@@ -271,6 +271,16 @@ pub struct LookupResponse {
 }
 
 #[derive(Deserialize)]
+pub struct LookupBySequenceBody {
+    pub sequences: Vec<u32>,
+}
+
+#[derive(Serialize)]
+pub struct LookupBySequenceResponse {
+    pub results: Vec<Option<WordEntry>>,
+}
+
+#[derive(Deserialize)]
 pub struct LookupPrefixBody {
     pub text: String,
     #[serde(default = "default_prefix_max")]
@@ -326,6 +336,25 @@ pub async fn lookup_handler(
     })
     .await?;
     Ok(Json(LookupResponse { results }).into_response())
+}
+
+pub async fn lookup_by_sequence_handler(
+    State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    Json(body): Json<LookupBySequenceBody>,
+) -> Result<Response, Response> {
+    if state.lookup_limiter.check_key(&addr.ip()).is_err() {
+        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
+    }
+    let sequences = body.sequences;
+    let results = run_blocking("lookup_by_sequence", move || {
+        Ok(sequences
+            .iter()
+            .map(|s| jmdict_core::lookup_by_sequence(*s))
+            .collect())
+    })
+    .await?;
+    Ok(Json(LookupBySequenceResponse { results }).into_response())
 }
 
 pub async fn lookup_prefix_handler(

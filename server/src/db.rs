@@ -15,7 +15,9 @@ pub type Db = SqlitePool;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Card {
     pub id: String,
-    pub word: String,
+    /// JMdict ent_seq of the entry this card reviews. Stable across dictionary
+    /// rebuilds, unlike the surface string the card used to key on.
+    pub sequence: i64,
     pub direction: String,
     pub due_ms: f64,
     pub stability: f64,
@@ -63,7 +65,7 @@ const SETTINGS_DDL: &str = "CREATE TABLE IF NOT EXISTS settings (
 const CARDS_DDL: &str = "CREATE TABLE IF NOT EXISTS cards (
              email           TEXT NOT NULL,
              id              TEXT NOT NULL,
-             word            TEXT NOT NULL,
+             sequence        INTEGER NOT NULL,
              direction       TEXT NOT NULL,
              due_ms          REAL NOT NULL,
              stability       REAL NOT NULL,
@@ -99,7 +101,7 @@ pub async fn init_db(path: &str) -> anyhow::Result<Db> {
 }
 
 async fn init_schema(pool: &SqlitePool) -> anyhow::Result<()> {
-    migrate_cards_from_blob(pool).await?;
+    drop_legacy_cards(pool).await?;
     let stmts = [
         CARDS_DDL,
         SETTINGS_DDL,
@@ -130,52 +132,24 @@ async fn init_schema(pool: &SqlitePool) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// One-time migration from the legacy single-`data`-blob `cards` table to the
-/// per-column layout. Detected by the presence of a `data` column. Every field
-/// is read out of the JSON blob — crucially `last_review_ms`, which the old
-/// promoted column failed to populate (it parsed the float merge key with
-/// `as_i64`, always yielding NULL). No-op on a fresh or already-migrated DB.
-async fn migrate_cards_from_blob(pool: &SqlitePool) -> anyhow::Result<()> {
+/// Drops any pre-`sequence` `cards` table so `init_schema` can recreate it in
+/// the current shape. Cards used to key on a surface `word` (or, even earlier,
+/// a single JSON `data` blob); both are incompatible with the `sequence`
+/// column. There is deliberately no data migration — the move to JMdict
+/// `ent_seq` keys is a clean break, and users re-import via export/import. No-op
+/// on a fresh DB or one already on the `sequence` layout.
+async fn drop_legacy_cards(pool: &SqlitePool) -> anyhow::Result<()> {
     let cols: Vec<String> = sqlx::query_scalar("SELECT name FROM pragma_table_info('cards')")
         .fetch_all(pool)
         .await
         .context("inspect cards columns")?;
-    if !cols.iter().any(|c| c == "data") {
-        return Ok(()); // fresh DB or already on the column layout
+    if cols.is_empty() || cols.iter().any(|c| c == "sequence") {
+        return Ok(()); // fresh DB or already on the sequence layout
     }
-
-    let mut tx = pool.begin().await.context("begin cards migration tx")?;
-    let stmts = [
-        "ALTER TABLE cards RENAME TO cards_blob_old",
-        CARDS_DDL,
-        // COALESCE guards a stray legacy row missing a field from tripping the
-        // NOT NULL columns; last_review_ms stays nullable so it isn't defaulted.
-        "INSERT INTO cards
-             (email, id, word, direction, due_ms, stability, difficulty,
-              reps, lapses, state, last_review_ms, added_ms, status)
-         SELECT email,
-                id,
-                COALESCE(json_extract(data, '$.word'), ''),
-                COALESCE(json_extract(data, '$.direction'), 'recognition'),
-                COALESCE(CAST(json_extract(data, '$.due_ms') AS REAL), 0),
-                COALESCE(CAST(json_extract(data, '$.stability') AS REAL), 0),
-                COALESCE(CAST(json_extract(data, '$.difficulty') AS REAL), 0),
-                COALESCE(CAST(json_extract(data, '$.reps') AS INTEGER), 0),
-                COALESCE(CAST(json_extract(data, '$.lapses') AS INTEGER), 0),
-                COALESCE(json_extract(data, '$.state'), 'new'),
-                CAST(json_extract(data, '$.last_review_ms') AS REAL),
-                COALESCE(CAST(json_extract(data, '$.added_ms') AS REAL), 0),
-                COALESCE(json_extract(data, '$.status'), 'active')
-         FROM cards_blob_old",
-        "DROP TABLE cards_blob_old",
-    ];
-    for s in stmts {
-        sqlx::query(s)
-            .execute(&mut *tx)
-            .await
-            .context("migrate cards from blob")?;
-    }
-    tx.commit().await.context("commit cards migration tx")?;
+    sqlx::query("DROP TABLE cards")
+        .execute(pool)
+        .await
+        .context("drop legacy cards table")?;
     Ok(())
 }
 
@@ -279,11 +253,11 @@ pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card]) -> anyhow::Resul
         }
         sqlx::query(
             "INSERT INTO cards
-                 (email, id, word, direction, due_ms, stability, difficulty,
+                 (email, id, sequence, direction, due_ms, stability, difficulty,
                   reps, lapses, state, last_review_ms, added_ms, status)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
              ON CONFLICT(email, id) DO UPDATE SET
-                 word = excluded.word,
+                 sequence = excluded.sequence,
                  direction = excluded.direction,
                  due_ms = excluded.due_ms,
                  stability = excluded.stability,
@@ -298,7 +272,7 @@ pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card]) -> anyhow::Resul
         )
         .bind(email)
         .bind(&c.id)
-        .bind(&c.word)
+        .bind(c.sequence)
         .bind(&c.direction)
         .bind(c.due_ms)
         .bind(c.stability)
@@ -325,7 +299,7 @@ pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card]) -> anyhow::Resul
 
 pub async fn get_all_cards(db: &Db, email: &str) -> anyhow::Result<Vec<Card>> {
     let rows = sqlx::query(
-        "SELECT id, word, direction, due_ms, stability, difficulty,
+        "SELECT id, sequence, direction, due_ms, stability, difficulty,
                 reps, lapses, state, last_review_ms, added_ms, status
          FROM cards WHERE email = ?1",
     )
@@ -337,7 +311,7 @@ pub async fn get_all_cards(db: &Db, email: &str) -> anyhow::Result<Vec<Card>> {
         .iter()
         .map(|r| Card {
             id: r.get("id"),
-            word: r.get("word"),
+            sequence: r.get("sequence"),
             direction: r.get("direction"),
             due_ms: r.get("due_ms"),
             stability: r.get("stability"),
@@ -487,7 +461,7 @@ mod tests {
     fn card(id: &str, last_review_ms: Option<f64>) -> Card {
         Card {
             id: id.to_string(),
-            word: "猫".to_string(),
+            sequence: 1_467_640,
             direction: "recognition".to_string(),
             due_ms: 0.0,
             stability: 0.0,
@@ -533,10 +507,10 @@ mod tests {
             .await
             .unwrap();
         let mut newer = card("a::recognition", Some(200.0));
-        newer.word = "犬".to_string();
+        newer.sequence = 1_586_270;
         upsert_cards(&db, ALICE, &[newer]).await.unwrap();
         let stored = get_all_cards(&db, ALICE).await.unwrap();
-        assert_eq!(stored[0].word, "犬");
+        assert_eq!(stored[0].sequence, 1_586_270);
         assert_eq!(stored[0].last_review_ms, Some(200.0));
     }
 
@@ -641,13 +615,13 @@ mod tests {
         // the other or one user seeing the other's data.
         let db = fresh_db().await;
         let mut alice_card = card("shared::id", Some(100.0));
-        alice_card.word = "猫".to_string();
+        alice_card.sequence = 1_467_640;
         let mut bob_card = card("shared::id", Some(100.0));
-        bob_card.word = "犬".to_string();
+        bob_card.sequence = 1_586_270;
         upsert_cards(&db, ALICE, &[alice_card]).await.unwrap();
         upsert_cards(&db, BOB, &[bob_card]).await.unwrap();
-        assert_eq!(get_all_cards(&db, ALICE).await.unwrap()[0].word, "猫");
-        assert_eq!(get_all_cards(&db, BOB).await.unwrap()[0].word, "犬");
+        assert_eq!(get_all_cards(&db, ALICE).await.unwrap()[0].sequence, 1_467_640);
+        assert_eq!(get_all_cards(&db, BOB).await.unwrap()[0].sequence, 1_586_270);
     }
 
     #[tokio::test]
@@ -800,10 +774,10 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn migrates_legacy_blob_cards_to_columns() {
-        // Stand up the old single-`data`-blob layout with the merge key living
-        // only inside the JSON (the column was always NULL), then confirm
-        // init_schema migrates it into typed columns and recovers last_review_ms.
+    async fn drops_legacy_word_keyed_cards_table() {
+        // A pre-`sequence` DB keyed cards on a surface `word` string. The move to
+        // JMdict ent_seq is a clean break: init_schema must drop that table and
+        // recreate it on the `sequence` layout (no migration — users re-import).
         let opts = SqliteConnectOptions::from_str(":memory:").unwrap();
         let pool = SqlitePoolOptions::new()
             .max_connections(1)
@@ -812,38 +786,41 @@ mod tests {
             .unwrap();
         sqlx::query(
             "CREATE TABLE cards (
-                 email TEXT NOT NULL, id TEXT NOT NULL, data TEXT NOT NULL,
-                 last_review_ms INTEGER, PRIMARY KEY (email, id))",
+                 email TEXT NOT NULL, id TEXT NOT NULL, word TEXT NOT NULL,
+                 direction TEXT NOT NULL, due_ms REAL NOT NULL, stability REAL NOT NULL,
+                 difficulty REAL NOT NULL, reps INTEGER NOT NULL, lapses INTEGER NOT NULL,
+                 state TEXT NOT NULL, last_review_ms REAL, added_ms REAL NOT NULL,
+                 status TEXT NOT NULL, PRIMARY KEY (email, id))",
         )
         .execute(&pool)
         .await
         .unwrap();
-        let blob = r#"{"id":"猫::recognition","word":"猫","direction":"recognition",
-            "due_ms":1780000000000.0,"stability":1.5,"difficulty":2.0,"reps":3,
-            "lapses":1,"state":"review","last_review_ms":1779000000000.0,
-            "added_ms":1778000000000.0,"status":"active"}"#;
         sqlx::query(
-            "INSERT INTO cards (email, id, data, last_review_ms) VALUES (?1, ?2, ?3, NULL)",
+            "INSERT INTO cards
+                 (email, id, word, direction, due_ms, stability, difficulty,
+                  reps, lapses, state, added_ms, status)
+             VALUES (?1, '猫::recognition', '猫', 'recognition', 0, 0, 0, 0, 0, 'new', 0, 'active')",
         )
         .bind(ALICE)
-        .bind("猫::recognition")
-        .bind(blob)
         .execute(&pool)
         .await
         .unwrap();
 
-        init_schema(&pool).await.unwrap(); // triggers the blob→columns migration
+        init_schema(&pool).await.unwrap(); // drops the legacy table, recreates on sequence
 
-        let stored = get_all_cards(&pool, ALICE).await.unwrap();
-        assert_eq!(stored.len(), 1);
-        assert_eq!(stored[0].word, "猫");
-        assert_eq!(stored[0].reps, 3);
-        assert_eq!(stored[0].status, "active");
-        assert_eq!(stored[0].due_ms, 1_780_000_000_000.0);
-        assert_eq!(
-            stored[0].last_review_ms,
-            Some(1_779_000_000_000.0),
-            "merge key must be recovered from the blob"
-        );
+        // Table is now on the new layout and empty (legacy rows discarded).
+        let cols: Vec<String> = sqlx::query_scalar("SELECT name FROM pragma_table_info('cards')")
+            .fetch_all(&pool)
+            .await
+            .unwrap();
+        assert!(cols.iter().any(|c| c == "sequence"));
+        assert!(!cols.iter().any(|c| c == "word"));
+        assert!(get_all_cards(&pool, ALICE).await.unwrap().is_empty());
+
+        // And the recreated table accepts sequence-keyed cards.
+        upsert_cards(&pool, ALICE, &[card("猫::recognition", Some(100.0))])
+            .await
+            .unwrap();
+        assert_eq!(get_all_cards(&pool, ALICE).await.unwrap().len(), 1);
     }
 }
