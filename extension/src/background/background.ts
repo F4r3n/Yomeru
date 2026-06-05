@@ -16,7 +16,8 @@ import {
   deleteCardById,
   addLookupHistory,
   getAllTombstones,
-  applySyncResponse,
+  clearTombstones,
+  replaceAllCards,
 } from "./idb";
 import { getSettings, saveSettings } from "./settings";
 import { importCards, syncCardsBackup, writeCardsBackup } from "./cards-backup";
@@ -184,23 +185,33 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
     return { error: "not authenticated" };
   }
   try {
-    const localCards = await getAllCards();
+    const allLocal = await getAllCards();
     const localTombstones = await getAllTombstones();
+    // Only sequence-keyed cards can be represented server-side. Legacy
+    // word-keyed rows (no numeric `sequence`) are left out of the upload so
+    // they can't 422 the request; since the server is the source of truth and
+    // its set replaces ours below, these unsyncable rows are dropped in the
+    // process rather than lingering to poison the next sync.
+    const upload = allLocal.filter(
+      (c) => typeof c.sequence === "number" && Number.isFinite(c.sequence),
+    );
     const res = await fetch(`${settings.serverUrl}/api/sync`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${settings.serverToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ cards: localCards, deletions: localTombstones }),
+      body: JSON.stringify({ cards: upload, deletions: localTombstones }),
     });
     if (res.status === 401) return { error: "session expired — re-verify" };
     if (!res.ok) return { error: `server ${res.status}` };
-    const resp = (await res.json()) as {
-      cards: SrsCard[];
-      deletions?: string[];
-    };
-    await applySyncResponse(resp, localTombstones);
+    const resp = (await res.json()) as { cards: SrsCard[] };
+    // Server wins: adopt its merged set verbatim, discarding any local row it
+    // didn't return (legacy junk, plus cards its last-write-wins merge rejected
+    // as older). The cards we just uploaded come back in resp.cards, so valid
+    // local-only cards aren't lost.
+    await replaceAllCards(resp.cards);
+    await clearTombstones(localTombstones);
     await writeCardsBackup();
     return { synced: resp.cards.length };
   } catch (e) {
@@ -208,9 +219,18 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
   }
 }
 
-const storageReady = syncCardsBackup().catch((e) => {
-  console.error("[yomeru] syncCardsBackup failed:", e);
-});
+// The message listener below waits on this before dispatching. A slow or
+// *blocked* IndexedDB open (e.g. a stalled version upgrade) would otherwise
+// leave it pending forever and wedge the entire message pipe — including auth
+// and dict lookups, which don't even need the card store. Cap the wait so every
+// message is still dispatched; card handlers re-open the DB themselves and
+// surface their own errors if it's genuinely broken.
+const storageReady = Promise.race([
+  syncCardsBackup().catch((e) => {
+    console.error("[yomeru] syncCardsBackup failed:", e);
+  }),
+  new Promise<void>((resolve) => setTimeout(resolve, 2000)),
+]);
 
 function syncIcon(enabled: boolean) {
   browser.action.setIcon({

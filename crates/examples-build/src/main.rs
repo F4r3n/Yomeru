@@ -10,7 +10,10 @@ use std::path::PathBuf;
 const MAX_PER_HEADWORD: usize = 20;
 
 #[derive(Parser)]
-#[command(name = "examples-build", about = "Build binary example-sentence index from Tanaka Corpus")]
+#[command(
+    name = "examples-build",
+    about = "Build binary example-sentence index from Tanaka Corpus"
+)]
 struct Args {
     #[arg(short, long)]
     input: PathBuf,
@@ -99,7 +102,10 @@ fn build(content: &str) -> Result<(Vec<(String, Vec<u32>)>, Vec<u8>, usize)> {
 
         let offset_usize = sentences_bytes.len();
         if offset_usize > u32::MAX as usize {
-            bail!("examples sentences blob exceeds 4 GiB ({} bytes)", offset_usize);
+            bail!(
+                "examples sentences blob exceeds 4 GiB ({} bytes)",
+                offset_usize
+            );
         }
         let offset = offset_usize as u32;
         let entry = ExampleEntry { japanese, english };
@@ -126,8 +132,32 @@ fn is_valid_headword(s: &str) -> bool {
             let n = c as u32;
             (0x3041..=0x30FF).contains(&n)  // hiragana + katakana
                 || (0x3400..=0x9FFF).contains(&n)  // CJK ext-A + unified
-                || (0xF900..=0xFAFF).contains(&n)   // CJK compat
+                || (0xF900..=0xFAFF).contains(&n) // CJK compat
         })
+}
+
+fn write_bin(
+    index: &[(String, Vec<u32>)],
+    sentences_bytes: &[u8],
+    path: &std::path::Path,
+) -> Result<()> {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+
+    let mut f = std::io::BufWriter::new(std::fs::File::create(path)?);
+
+    f.write_all(b"EXPL")?;
+    f.write_all(&[1u8])?;
+
+    let index_bytes = to_allocvec(index)?;
+    f.write_all(&(index_bytes.len() as u32).to_le_bytes())?;
+    f.write_all(&index_bytes)?;
+
+    f.write_all(&(sentences_bytes.len() as u32).to_le_bytes())?;
+    f.write_all(sentences_bytes)?;
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -136,10 +166,10 @@ mod tests {
 
     #[test]
     fn is_valid_headword_recognises_japanese_chars() {
-        assert!(is_valid_headword("猫"));      // kanji
-        assert!(is_valid_headword("ねこ"));    // hiragana
-        assert!(is_valid_headword("ネコ"));    // katakana
-        assert!(is_valid_headword("食べる"));   // mixed kanji + hiragana
+        assert!(is_valid_headword("猫")); // kanji
+        assert!(is_valid_headword("ねこ")); // hiragana
+        assert!(is_valid_headword("ネコ")); // katakana
+        assert!(is_valid_headword("食べる")); // mixed kanji + hiragana
     }
 
     #[test]
@@ -177,7 +207,11 @@ mod tests {
                      B: 猫(ねこ) と 猫(ねこ)\n";
         let (index, _, _) = build(input).unwrap();
         let entry = index.iter().find(|(k, _)| k == "猫").expect("猫 present");
-        assert_eq!(entry.1.len(), 1, "duplicate headword in B-line should be folded");
+        assert_eq!(
+            entry.1.len(),
+            1,
+            "duplicate headword in B-line should be folded"
+        );
     }
 
     /// Per-headword offsets are capped at MAX_PER_HEADWORD (20) across the
@@ -210,7 +244,10 @@ mod tests {
         let (index, _, count) = build(input).unwrap();
         // The leading comment + B line make a malformed pair → skipped.
         // We then advance past it and pick up the cat + dog pairs.
-        assert!(count >= 1, "expected at least one sentence parsed, got {count}");
+        assert!(
+            count >= 1,
+            "expected at least one sentence parsed, got {count}"
+        );
         let keys: Vec<&str> = index.iter().map(|(k, _)| k.as_str()).collect();
         assert!(keys.contains(&"猫") || keys.contains(&"犬"));
     }
@@ -223,28 +260,4 @@ mod tests {
         assert_eq!(count, 0);
         assert!(index.is_empty());
     }
-}
-
-fn write_bin(
-    index: &[(String, Vec<u32>)],
-    sentences_bytes: &[u8],
-    path: &std::path::Path,
-) -> Result<()> {
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent)?;
-    }
-
-    let mut f = std::io::BufWriter::new(std::fs::File::create(path)?);
-
-    f.write_all(b"EXPL")?;
-    f.write_all(&[1u8])?;
-
-    let index_bytes = to_allocvec(index)?;
-    f.write_all(&(index_bytes.len() as u32).to_le_bytes())?;
-    f.write_all(&index_bytes)?;
-
-    f.write_all(&(sentences_bytes.len() as u32).to_le_bytes())?;
-    f.write_all(sentences_bytes)?;
-
-    Ok(())
 }

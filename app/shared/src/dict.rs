@@ -75,6 +75,7 @@ pub fn primary_reading(e: &WordEntry) -> &str {
 ///   2. the only kanji form is tagged `rK`/`sK` (rare/search-only), or
 ///   3. the highest-priority reading outranks the highest-priority kanji form
 ///      under `priority_score`.
+///
 /// Otherwise returns the first kanji form (matching `primary_headword`).
 pub fn preferred_headword(e: &WordEntry) -> &str {
     let Some(kanji) = e.kanji_forms.first() else {

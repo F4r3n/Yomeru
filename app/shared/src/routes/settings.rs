@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use gloo_storage::{LocalStorage, Storage};
 use serde_json::json;
 use wasm_bindgen::JsCast;
 
@@ -9,11 +10,23 @@ use crate::settings::{load, save};
 use crate::sync::{schedule_sync, sync_now};
 use crate::types::{CARDS_SCHEMA_VERSION, SrsCard, SrsCardV1};
 
+/// localStorage key holding the email a pending OTP was sent to. Survives a
+/// popup close (extension popups are destroyed on blur), so reopening returns
+/// to the code-entry step instead of forcing a re-send — which would otherwise
+/// trip the server's resend rate limit.
+const OTP_PENDING_KEY: &str = "yomeru.otp_pending";
+
 #[component]
 pub fn SettingsTab() -> Element {
     let mut settings = use_signal(load);
     let mut saved = use_signal(|| false);
-    let mut otp_sent = use_signal(|| false);
+    // Restore the "awaiting code" step if a code was sent before the popup
+    // closed — but only for the email still configured, so a stale flag from a
+    // different account can't strand the user on a dead code field.
+    let mut otp_sent = use_signal(|| {
+        let pending: String = LocalStorage::get(OTP_PENDING_KEY).unwrap_or_default();
+        !pending.is_empty() && pending == load().server_email.trim()
+    });
     let mut otp_code = use_signal(String::new);
     let mut sync_status = use_signal(|| Option::<(String, bool)>::None);
     let mut backup_status = use_signal(|| Option::<(String, bool)>::None);
@@ -26,8 +39,12 @@ pub fn SettingsTab() -> Element {
     };
 
     let request_otp = move |_| {
-        sync_busy.set(true);
         let s = settings.read().clone();
+        if s.server_url.trim().is_empty() || s.server_email.trim().is_empty() {
+            sync_status.set(Some(("Enter the server URL and email first.".into(), true)));
+            return;
+        }
+        sync_busy.set(true);
         spawn(async move {
             match api::request_otp(s.server_url.trim(), s.server_email.trim()).await {
                 Ok(Some(token)) => {
@@ -36,13 +53,17 @@ pub fn SettingsTab() -> Element {
                     next.server_token = token;
                     let _ = save(&next);
                     settings.set(next);
+                    LocalStorage::delete(OTP_PENDING_KEY);
                     otp_sent.set(false);
                     sync_status.set(Some((
                         "Authenticated (dev mode — no code required).".into(),
                         false,
                     )));
                 }
-                Ok(None) => otp_sent.set(true),
+                Ok(None) => {
+                    let _ = LocalStorage::set(OTP_PENDING_KEY, s.server_email.trim());
+                    otp_sent.set(true);
+                }
                 Err(e) => sync_status.set(Some((e, true))),
             }
             sync_busy.set(false);
@@ -50,9 +71,13 @@ pub fn SettingsTab() -> Element {
     };
 
     let verify_otp = move |_| {
-        sync_busy.set(true);
         let s = settings.read().clone();
         let code = otp_code.read().trim().to_string();
+        if code.is_empty() {
+            sync_status.set(Some(("Enter the code from your email.".into(), true)));
+            return;
+        }
+        sync_busy.set(true);
         spawn(async move {
             match api::verify_otp(s.server_url.trim(), s.server_email.trim(), &code).await {
                 Ok(token) => {
@@ -60,6 +85,7 @@ pub fn SettingsTab() -> Element {
                     next.server_token = token;
                     let _ = save(&next);
                     settings.set(next);
+                    LocalStorage::delete(OTP_PENDING_KEY);
                     otp_sent.set(false);
                     otp_code.set(String::new());
                     sync_status.set(Some(("Authenticated. You can now sync.".into(), false)));
@@ -198,7 +224,18 @@ pub fn SettingsTab() -> Element {
                                 if *sync_busy.read() { "Verifying…" } else { "Verify" }
                             }
                         }
-                        span { class: "hint", "Check your email for the 6-digit code." }
+                        div { class: "row", style: "gap: 8px; align-items: baseline;",
+                            span { class: "hint", "Check your email for the 6-digit code." }
+                            button {
+                                class: "link",
+                                onclick: move |_| {
+                                    LocalStorage::delete(OTP_PENDING_KEY);
+                                    otp_code.set(String::new());
+                                    otp_sent.set(false);
+                                },
+                                "Use a different email"
+                            }
+                        }
                     }
                 }
                 if let Some((msg, err)) = sync_status.read().clone() {

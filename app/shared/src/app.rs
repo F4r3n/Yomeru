@@ -12,7 +12,30 @@ use crate::theme::global_css;
 
 const THEME_KEY: &str = "yomeru.theme";
 
-const FAVICON: Asset = asset!("/assets/icon.svg");
+/// Sets the document title and injects the global stylesheet directly into
+/// `<head>`, idempotently. Used instead of Dioxus' `document::*` components,
+/// which rely on JS `eval` (blocked by the browser-extension CSP).
+fn install_head() {
+    let Some(doc) = web_sys::window().and_then(|w| w.document()) else {
+        return;
+    };
+    doc.set_title("Yomeru");
+    // Inject once — keyed by id so re-renders/remounts don't duplicate it.
+    if doc.get_element_by_id("yomeru-global-css").is_some() {
+        return;
+    }
+    if let Some(head) = doc.head()
+        && let Ok(style) = doc.create_element("style")
+    {
+        if let Err(e) = style.set_attribute("id", "yomeru-global-css") {
+            error!("Cannot set attribute: {:?}", e);
+        }
+        style.set_text_content(Some(&global_css()));
+        if let Err(e) = head.append_child(&style) {
+            error!("Cannot append child: {:?}", e);
+        }
+    }
+}
 
 #[derive(Clone, Routable, PartialEq, Debug)]
 #[rustfmt::skip]
@@ -59,10 +82,15 @@ pub fn App() -> Element {
         }
     });
 
+    // Set the title and inject the global stylesheet via direct DOM calls.
+    // Dioxus' `document::Title`/`Link`/`Style` components route through its web
+    // `eval` (`new Function(...)`), which a browser-extension CSP blocks
+    // (`'wasm-unsafe-eval'` permits wasm but not JS eval) — that panics the
+    // popup on load. web_sys mutates the DOM without eval and works on every
+    // target.
+    use_effect(install_head);
+
     rsx! {
-        document::Title { "Yomeru" }
-        document::Link { rel: "icon", href: FAVICON }
-        document::Style { {global_css()} }
         // Disable Dioxus' default scroll-to-(0,0) on every navigation so
         // expanding a result card in /lookup doesn't yank the page to the
         // top. Manual scroll restoration on browser back is sacrificed —
@@ -96,12 +124,20 @@ fn Shell() -> Element {
     });
 
     let toggle_theme = move |_| {
-        let next = if *theme.read() == "light" { "dark" } else { "light" };
+        let next = if *theme.read() == "light" {
+            "dark"
+        } else {
+            "light"
+        };
         theme.set(next.to_string());
     };
 
     let is_light = *theme.read() == "light";
-    let toggle_label = if is_light { "Switch to dark theme" } else { "Switch to light theme" };
+    let toggle_label = if is_light {
+        "Switch to dark theme"
+    } else {
+        "Switch to light theme"
+    };
     let toggle_icon = if is_light { "☀" } else { "☾" };
 
     rsx! {
@@ -158,7 +194,10 @@ fn nav_active(to: &Route, current: &Route) -> bool {
         return true;
     }
     // The Lookup tab should stay highlighted on the LookupDetail sub-route.
-    matches!((to, current), (Route::Lookup {}, Route::LookupDetail { .. }))
+    matches!(
+        (to, current),
+        (Route::Lookup {}, Route::LookupDetail { .. })
+    )
 }
 
 #[component]

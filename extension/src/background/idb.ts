@@ -378,6 +378,26 @@ export async function applyRemoteDeletions(ids: string[]): Promise<void> {
   });
 }
 
+/**
+ * Server-authoritative reset of the cards store: clears every local card and
+ * writes the server's set verbatim, in a single transaction. Used by sync when
+ * the server is the source of truth — replacing rather than merging also drops
+ * any legacy word-keyed rows (no `sequence`) that can't be represented
+ * server-side and would otherwise re-poison every upload.
+ */
+export async function replaceAllCards(cards: SrsCard[]): Promise<void> {
+  const database = await openDb();
+  return new Promise((resolve, reject) => {
+    const t = database.transaction("cards", "readwrite");
+    const store = t.objectStore("cards");
+    store.clear();
+    for (const c of cards) store.put(c);
+    t.oncomplete = () => resolve();
+    t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error);
+  });
+}
+
 export function addLookupHistory(
   word: string,
   reading: string,

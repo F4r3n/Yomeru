@@ -92,7 +92,9 @@ fn forecast_counts(cards: &[SrsCard], now: f64, range: ForecastRange) -> Vec<u32
         } else {
             ((delta / step) as usize).min(n - 1)
         };
-        counts[idx] += 1;
+        if let Some(v) = counts.get_mut(idx) {
+            *v += 1;
+        }
     }
     counts
 }
@@ -113,7 +115,7 @@ pub fn StatsTab() -> Element {
         });
     };
 
-    use_reload_on_sync(move || load());
+    use_reload_on_sync(load);
 
     let all = cards.read();
     let active = all
