@@ -12,6 +12,8 @@ use crate::theme::global_css;
 
 const THEME_KEY: &str = "yomeru.theme";
 
+const FAVICON: Asset = asset!("/assets/icon.svg");
+
 #[derive(Clone, Routable, PartialEq, Debug)]
 #[rustfmt::skip]
 pub enum Route {
@@ -58,6 +60,8 @@ pub fn App() -> Element {
     });
 
     rsx! {
+        document::Title { "Yomeru" }
+        document::Link { rel: "icon", href: FAVICON }
         document::Style { {global_css()} }
         // Disable Dioxus' default scroll-to-(0,0) on every navigation so
         // expanding a result card in /lookup doesn't yank the page to the
