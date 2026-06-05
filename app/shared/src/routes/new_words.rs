@@ -2,7 +2,6 @@ use std::collections::{HashMap, HashSet};
 
 use dioxus::prelude::*;
 use jmdict_types::WordEntry;
-use log::warn;
 
 use crate::components::pos_list;
 use crate::dict::{frequency_label, lookup_by_sequence, preferred_headword, primary_reading};

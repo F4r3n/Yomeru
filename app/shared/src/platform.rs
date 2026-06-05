@@ -16,14 +16,13 @@ use gloo_storage::{LocalStorage, Storage};
 use gloo_timers::callback::Timeout;
 use jmdict_types::WordEntry;
 use kanjidic_types::KanjiEntry;
-use log::warn;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen_futures::spawn_local;
 
-use crate::settings::{default_server_url, SrsSettings, SETTINGS_KEY};
+use crate::settings::{SETTINGS_KEY, SrsSettings, default_server_url};
 use crate::types::SrsCard;
 use async_trait::async_trait;
-
+use dioxus::prelude::*;
 /// Read-only dictionary surface. Web/android use [`DefaultPlatform`] which
 /// posts JSON to the yomeru-server; the extension implements this against
 /// `browser.runtime.sendMessage` so its in-WASM dicts service the request.
@@ -31,7 +30,8 @@ use async_trait::async_trait;
 pub trait DictClient {
     async fn lookup(&self, word: &str) -> Result<Vec<WordEntry>, String>;
     async fn lookup_many(&self, words: &[String]) -> Result<Vec<Vec<WordEntry>>, String>;
-    async fn lookup_by_sequence(&self, sequences: &[u32]) -> Result<Vec<Option<WordEntry>>, String>;
+    async fn lookup_by_sequence(&self, sequences: &[u32])
+    -> Result<Vec<Option<WordEntry>>, String>;
     async fn lookup_prefix(&self, text: &str, max: u8) -> Result<Vec<WordEntry>, String>;
     async fn kanji_for(&self, word: &str) -> Result<Vec<KanjiEntry>, String>;
     async fn examples_for(&self, word: &str, max: u8) -> Result<Vec<ExampleEntry>, String>;
@@ -63,7 +63,7 @@ pub trait SettingsStore {
     /// means dev mode — server skipped the email and handed back a token.
     async fn request_otp(&self, server_url: &str, email: &str) -> Result<Option<String>, String>;
     async fn verify_otp(&self, server_url: &str, email: &str, code: &str)
-        -> Result<String, String>;
+    -> Result<String, String>;
 }
 
 /// What `routes/*` read out of Dioxus context. Cheap to clone — both fields
@@ -168,9 +168,15 @@ impl DictClient for HttpDict {
         Ok(parsed.results)
     }
 
-    async fn lookup_by_sequence(&self, sequences: &[u32]) -> Result<Vec<Option<WordEntry>>, String> {
-        let parsed: LookupBySequenceResponse =
-            post_json("/api/lookup-by-sequence", &LookupBySequenceBody { sequences }).await?;
+    async fn lookup_by_sequence(
+        &self,
+        sequences: &[u32],
+    ) -> Result<Vec<Option<WordEntry>>, String> {
+        let parsed: LookupBySequenceResponse = post_json(
+            "/api/lookup-by-sequence",
+            &LookupBySequenceBody { sequences },
+        )
+        .await?;
         Ok(parsed.results)
     }
 

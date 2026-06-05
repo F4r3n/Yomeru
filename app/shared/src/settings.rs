@@ -5,12 +5,12 @@
 //! `load()` / `save()` exactly as before; the bytes underneath are owned by
 //! whichever platform was installed via [`crate::launch_with`].
 
+use crate::platform::Platform;
 use dioxus::prelude::consume_context;
+use dioxus::prelude::*;
 use gloo_storage::errors::StorageError;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen_futures::spawn_local;
-
-use crate::platform::Platform;
 
 /// localStorage / browser.storage.local key under which settings serialize.
 pub const SETTINGS_KEY: &str = "srs_settings";
@@ -78,7 +78,7 @@ pub fn save(s: &SrsSettings) -> Result<(), StorageError> {
     let s_owned = s.clone();
     spawn_local(async move {
         if let Err(e) = platform.settings.save(s_owned).await {
-            log::warn!("settings save failed: {e}");
+            warn!("settings save failed: {e}");
         }
     });
     Ok(())

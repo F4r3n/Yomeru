@@ -3,14 +3,14 @@
 //! v6 replaces the old `word` secondary index with `sequence`; users carrying
 //! v5 data are expected to export and re-import.
 
-use log::error;
+use crate::types::{CardDirection, CardStatus, SrsCard, card_id};
+use dioxus::logger::tracing;
 use idb::{
     Database, DatabaseEvent, Factory, IndexParams, KeyPath, ObjectStoreParams, Query,
     TransactionMode,
 };
+use serde::{Serialize, de::DeserializeOwned};
 use wasm_bindgen::JsValue;
-
-use crate::types::{CardDirection, CardStatus, SrsCard, card_id};
 
 const DB_NAME: &str = "yomeru-db";
 // v7 re-runs the v6 sequence-keyed reset to self-heal any DB left half-migrated
@@ -30,7 +30,7 @@ async fn open() -> Result<Database, idb::Error> {
         let db = match event.database() {
             Ok(db) => db,
             Err(e) => {
-                error!("idb upgrade: event.database() failed: {e:?}");
+                dioxus::logger::tracing::error!("idb upgrade: event.database() failed: {e:?}");
                 return;
             }
         };
@@ -42,15 +42,15 @@ async fn open() -> Result<Database, idb::Error> {
         // the TS side: whichever layer opens yomeru-db first runs the upgrade,
         // and the other then relies on the `sequence` index existing.
         if (1..7).contains(&old_version) {
-            if db.store_names().iter().any(|n| n == STORE) {
-                if let Err(e) = db.delete_object_store(STORE) {
-                    error!("idb upgrade: delete_object_store({STORE}) failed: {e:?}");
-                }
+            if db.store_names().iter().any(|n| n == STORE)
+                && let Err(e) = db.delete_object_store(STORE)
+            {
+                tracing::error!("idb upgrade: delete_object_store({STORE}) failed: {e:?}");
             }
-            if db.store_names().iter().any(|n| n == TOMB_STORE) {
-                if let Err(e) = db.delete_object_store(TOMB_STORE) {
-                    error!("idb upgrade: delete_object_store({TOMB_STORE}) failed: {e:?}");
-                }
+            if db.store_names().iter().any(|n| n == TOMB_STORE)
+                && let Err(e) = db.delete_object_store(TOMB_STORE)
+            {
+                tracing::error!("idb upgrade: delete_object_store({TOMB_STORE}) failed: {e:?}");
             }
         }
         if !db.store_names().iter().any(|n| n == STORE) {
@@ -59,7 +59,7 @@ async fn open() -> Result<Database, idb::Error> {
             let store = match db.create_object_store(STORE, params) {
                 Ok(s) => s,
                 Err(e) => {
-                    error!("idb upgrade: create_object_store({STORE}) failed: {e:?}");
+                    tracing::error!("idb upgrade: create_object_store({STORE}) failed: {e:?}");
                     return;
                 }
             };
@@ -87,19 +87,19 @@ async fn open() -> Result<Database, idb::Error> {
             let mut params = ObjectStoreParams::new();
             params.key_path(Some(KeyPath::new_single("id")));
             if let Err(e) = db.create_object_store(TOMB_STORE, params) {
-                error!("idb upgrade: create_object_store({TOMB_STORE}) failed: {e:?}");
+                tracing::error!("idb upgrade: create_object_store({TOMB_STORE}) failed: {e:?}");
             }
         }
     });
     req.await
 }
 
-fn to_value(card: &SrsCard) -> Result<JsValue, serde_wasm_bindgen::Error> {
+fn to_value<S: Serialize>(card: &S) -> Result<JsValue, serde_wasm_bindgen::Error> {
     let ser = serde_wasm_bindgen::Serializer::json_compatible();
     serde::Serialize::serialize(card, &ser)
 }
 
-fn from_value(v: JsValue) -> Result<SrsCard, serde_wasm_bindgen::Error> {
+fn from_value<D: DeserializeOwned>(v: JsValue) -> Result<D, serde_wasm_bindgen::Error> {
     serde_wasm_bindgen::from_value(v)
 }
 
@@ -185,7 +185,7 @@ pub async fn get_cards_by_sequence(sequence: u32) -> Result<Vec<SrsCard>, String
         .map_err(|e| e.to_string())?;
     let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
     let index = store.index("sequence").map_err(|e| e.to_string())?;
-    let key = JsValue::from_f64(sequence as f64);
+    let key = JsValue::from_f64(f64::from(sequence));
     let arr = index
         .get_all(Some(Query::Key(key)), None)
         .map_err(|e| e.to_string())?
@@ -201,7 +201,7 @@ pub async fn has_card(sequence: u32) -> Result<bool, String> {
         .map_err(|e| e.to_string())?;
     let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
     let index = store.index("sequence").map_err(|e| e.to_string())?;
-    let key = JsValue::from_f64(sequence as f64);
+    let key = JsValue::from_f64(f64::from(sequence));
     let has_key = index
         .get_key(Query::Key(key))
         .map_err(|e| e.to_string())?
@@ -268,6 +268,12 @@ pub async fn delete_card(sequence: u32) -> Result<(), String> {
     delete_ids_with_tombstones(&ids).await
 }
 
+#[derive(Serialize)]
+struct Tombstone {
+    id: String,
+    deleted_at: f64,
+}
+
 pub async fn delete_card_by_id(id: &str) -> Result<(), String> {
     delete_ids_with_tombstones(std::slice::from_ref(&id.to_string())).await
 }
@@ -284,16 +290,17 @@ async fn delete_ids_with_tombstones(ids: &[String]) -> Result<(), String> {
     let tombs = tx.object_store(TOMB_STORE).map_err(|e| e.to_string())?;
     let now = js_sys::Date::now();
     for id in ids {
-        let tomb_val = serde_wasm_bindgen::to_value(&serde_json::json!({
-            "id": id,
-            "deleted_at": now,
-        }))
+        let tomb_val = to_value(&Tombstone {
+            deleted_at: now,
+            id: id.to_string(),
+        })
         .map_err(|e| e.to_string())?;
         tombs
             .put(&tomb_val, None)
             .map_err(|e| e.to_string())?
             .await
             .map_err(|e| e.to_string())?;
+
         cards
             .delete(Query::Key(JsValue::from_str(id)))
             .map_err(|e| e.to_string())?
