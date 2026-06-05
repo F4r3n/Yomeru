@@ -283,12 +283,10 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
             }
 
             // Flush pending elements on End events
-            Event::Empty(e) if in_entry => {
-                if e.name().as_ref() == b"re_nokanji" {
-                    #[cfg(feature = "full")]
-                    if let Some(r) = b.current_reading.as_mut() {
-                        r.no_kanji = true;
-                    }
+            Event::Empty(e) if in_entry && e.name().as_ref() == b"re_nokanji" => {
+                #[cfg(feature = "full")]
+                if let Some(r) = b.current_reading.as_mut() {
+                    r.no_kanji = true;
                 }
             }
 

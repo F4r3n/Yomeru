@@ -1,3 +1,6 @@
+// Offline build CLI: progress messages to stderr are intentional user output.
+#![allow(clippy::print_stderr)]
+
 use anyhow::{Result, bail};
 use clap::Parser;
 use examples_types::ExampleEntry;
@@ -44,19 +47,19 @@ fn main() -> Result<()> {
 //   B: word1(reading)[sense] word2 word3{surface} ...
 // --------------------------------------------------------------------------
 
-fn build(content: &str) -> Result<(Vec<(String, Vec<u32>)>, Vec<u8>, usize)> {
+/// `(headword → byte offsets, sentences blob, sentence count)`
+type BuildOutput = (Vec<(String, Vec<u32>)>, Vec<u8>, usize);
+
+fn build(content: &str) -> Result<BuildOutput> {
     let mut sentences_bytes: Vec<u8> = Vec::new();
     // headword → list of byte offsets (capped at MAX_PER_HEADWORD)
     let mut headword_offsets: BTreeMap<String, Vec<u32>> = BTreeMap::new();
     let mut sentence_count = 0usize;
 
     let lines: Vec<&str> = content.lines().collect();
-    let mut i = 0;
 
-    while i + 1 < lines.len() {
-        let a_line = lines[i];
-        let b_line = lines[i + 1];
-        i += 2;
+    for pair in lines.chunks_exact(2) {
+        let [a_line, b_line] = pair else { continue };
 
         if !a_line.starts_with("A: ") || !b_line.starts_with("B: ") {
             continue;
@@ -85,7 +88,7 @@ fn build(content: &str) -> Result<(Vec<(String, Vec<u32>)>, Vec<u8>, usize)> {
             .split_whitespace()
             .filter_map(|t| {
                 let end = t
-                    .find(|c| c == '(' || c == '[' || c == '{')
+                    .find(['(', '[', '{'])
                     .unwrap_or(t.len());
                 let hw = &t[..end];
                 if is_valid_headword(hw) && seen.insert(hw.to_string()) {

@@ -128,7 +128,7 @@ fn build_test_binary() -> Vec<u8> {
             lookup_table.push(indices);
             g
         };
-        fst_map.insert(key.into_bytes(), group_idx as u64);
+        fst_map.insert(key.into_bytes(), u64::from(group_idx));
     }
 
     let mut builder = MapBuilder::memory();

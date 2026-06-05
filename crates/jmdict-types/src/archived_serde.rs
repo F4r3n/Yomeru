@@ -14,7 +14,9 @@
 //! (fieldless, no heap), so we round-trip it to the owned type and let serde's
 //! derive emit the kebab-case name — guaranteeing the rename matches.
 
-use serde::ser::{Serialize, SerializeSeq, SerializeStruct, Serializer};
+#[cfg(feature = "full")]
+use serde::ser::SerializeSeq;
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 #[cfg(feature = "full")]
 use crate::entry::{ArchivedField, Field};

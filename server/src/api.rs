@@ -442,6 +442,8 @@ async fn send_otp_email(cfg: &Config, to: &str, code: &str) -> anyhow::Result<()
 
 #[cfg(test)]
 mod tests {
+    // Manually-run integration test prints status to stdout (`--nocapture`).
+    #![allow(clippy::print_stdout)]
     use super::*;
     use std::fs;
     use std::path::PathBuf;

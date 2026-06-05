@@ -1,3 +1,7 @@
+// Offline build CLI: progress output to stderr is intentional, and the byte
+// scanners in `parser` use bounds-guarded indexing on the input XML buffer.
+#![allow(clippy::print_stderr, clippy::indexing_slicing)]
+
 mod indexer;
 mod parser;
 mod serializer;

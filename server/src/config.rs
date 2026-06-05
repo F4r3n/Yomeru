@@ -1,3 +1,5 @@
+use anyhow::{bail, Result};
+
 pub struct Config {
     pub port: u16,
     pub db_path: String,
@@ -13,13 +15,13 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn from_args() -> Self {
+    pub fn from_args() -> Result<Self> {
         let args: Vec<String> = std::env::args().collect();
 
         fn cli_flag(args: &[String], name: &str) -> Option<String> {
             args.windows(2)
-                .find(|w| w[0] == name)
-                .map(|w| w[1].clone())
+                .find(|w| w.first().map(String::as_str) == Some(name))
+                .and_then(|w| w.get(1).cloned())
         }
 
         // CLI flag wins; env var is the fallback. Empty strings are treated as unset.
@@ -41,14 +43,14 @@ impl Config {
         let smtp_from = resolve(&args, "--smtp-from", "YOMERU_SMTP_FROM");
         if !dev_mode {
             if smtp_host.is_none() {
-                panic!("smtp host required (--smtp-host or YOMERU_SMTP_HOST)");
+                bail!("smtp host required (--smtp-host or YOMERU_SMTP_HOST)");
             }
             if smtp_from.is_none() {
-                panic!("smtp from required (--smtp-from or YOMERU_SMTP_FROM)");
+                bail!("smtp from required (--smtp-from or YOMERU_SMTP_FROM)");
             }
         }
 
-        Self {
+        Ok(Self {
             port: resolve(&args, "--port", "YOMERU_PORT")
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(8080),
@@ -64,6 +66,6 @@ impl Config {
             smtp_user: resolve(&args, "--smtp-user", "YOMERU_SMTP_USER"),
             smtp_pass: resolve(&args, "--smtp-pass", "YOMERU_SMTP_PASS"),
             dev_mode,
-        }
+        })
     }
 }

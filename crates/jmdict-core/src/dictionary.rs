@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail};
+use anyhow::{anyhow, bail, Context};
 use fst::Map;
 use jmdict_types::ArchivedWordEntry;
 use once_cell::sync::OnceCell;
@@ -96,54 +96,50 @@ pub fn is_loaded() -> bool {
     DICT.get().is_some()
 }
 
-fn parse_binary(bytes: &[u8]) -> anyhow::Result<DictionaryInner> {
+fn parse_binary<'a>(bytes: &'a [u8]) -> anyhow::Result<DictionaryInner> {
     if bytes.len() < 9 {
         bail!("Dictionary binary too short");
     }
-    if &bytes[0..4] != b"JMDI" {
+    if bytes.get(0..4) != Some(b"JMDI".as_slice()) {
         bail!("Invalid magic bytes");
     }
-    if bytes[4] != 5 {
-        bail!("Unsupported dictionary version {}", bytes[4]);
+    let version = bytes.get(4).copied().unwrap_or(0);
+    if version != 5 {
+        bail!("Unsupported dictionary version {version}");
     }
 
     let mut pos = 5usize;
 
     let read_u32 = |bytes: &[u8], pos: usize| -> anyhow::Result<usize> {
-        if pos + 4 > bytes.len() {
-            bail!("dictionary binary truncated reading length at {pos}");
-        }
-        Ok(u32::from_le_bytes(bytes[pos..pos + 4].try_into()?) as usize)
+        let raw = bytes
+            .get(pos..pos + 4)
+            .with_context(|| format!("dictionary binary truncated reading length at {pos}"))?;
+        Ok(u32::from_le_bytes(raw.try_into()?) as usize)
     };
-    let read_slice = |bytes: &[u8], pos: usize, len: usize, what: &str| -> anyhow::Result<()> {
-        if pos + len > bytes.len() {
-            bail!("dictionary binary truncated reading {what} ({len} bytes at {pos})");
-        }
-        Ok(())
+    let read_slice = |bytes: &'a [u8], pos: usize, len: usize, what: &str| -> anyhow::Result<&'a [u8]> {
+        bytes.get(pos..pos + len).with_context(|| {
+            format!("dictionary binary truncated reading {what} ({len} bytes at {pos})")
+        })
     };
 
     let fst_len = read_u32(bytes, pos)?;
     pos += 4;
-    read_slice(bytes, pos, fst_len, "fst")?;
-    let fst_bytes = bytes[pos..pos + fst_len].to_vec();
+    let fst_bytes = read_slice(bytes, pos, fst_len, "fst")?.to_vec();
     pos += fst_len;
 
     let lt_len = read_u32(bytes, pos)?;
     pos += 4;
-    read_slice(bytes, pos, lt_len, "lookup table")?;
-    let lookup_table: Vec<Vec<u32>> = from_bytes(&bytes[pos..pos + lt_len])?;
+    let lookup_table: Vec<Vec<u32>> = from_bytes(read_slice(bytes, pos, lt_len, "lookup table")?)?;
     pos += lt_len;
 
     let entries_len = read_u32(bytes, pos)?;
     pos += 4;
-    read_slice(bytes, pos, entries_len, "entries")?;
-    let entries_bytes = bytes[pos..pos + entries_len].to_vec();
+    let entries_bytes = read_slice(bytes, pos, entries_len, "entries")?.to_vec();
     pos += entries_len;
 
     let seq_len = read_u32(bytes, pos)?;
     pos += 4;
-    read_slice(bytes, pos, seq_len, "seq index")?;
-    let seq_index: Vec<(u32, u32)> = from_bytes(&bytes[pos..pos + seq_len])?;
+    let seq_index: Vec<(u32, u32)> = from_bytes(read_slice(bytes, pos, seq_len, "seq index")?)?;
 
     // Validate every archived entry once, up front. This turns a corrupt blob —
     // or a `jmdict-types/full` feature mismatch between builder and reader — into

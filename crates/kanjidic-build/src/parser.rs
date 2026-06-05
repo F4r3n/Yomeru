@@ -98,17 +98,15 @@ pub fn parse_kanjidic_bytes(raw: &[u8]) -> Result<Vec<KanjiEntry>> {
                     Ctx::Grade => {
                         b.grade = text.parse().ok();
                     }
-                    Ctx::StrokeCount => {
-                        // Only take the first stroke_count (some entries have variants).
-                        if b.stroke_count == 0 {
-                            b.stroke_count = text.parse().unwrap_or_else(|_| {
-                                eprintln!(
-                                    "kanjidic-build: invalid stroke_count {:?} for literal {:?}; defaulting to 0",
-                                    text, b.literal,
-                                );
-                                0
-                            });
-                        }
+                    // Only take the first stroke_count (some entries have variants).
+                    Ctx::StrokeCount if b.stroke_count == 0 => {
+                        b.stroke_count = text.parse().unwrap_or_else(|_| {
+                            eprintln!(
+                                "kanjidic-build: invalid stroke_count {:?} for literal {:?}; defaulting to 0",
+                                text, b.literal,
+                            );
+                            0
+                        });
                     }
                     Ctx::Freq => {
                         b.freq = text.parse().ok();
@@ -121,10 +119,8 @@ pub fn parse_kanjidic_bytes(raw: &[u8]) -> Result<Vec<KanjiEntry>> {
                         "ja_kun" => b.kun_readings.push(text),
                         _ => {}
                     },
-                    Ctx::Meaning => {
-                        if pending_is_english {
-                            b.meanings.push(text);
-                        }
+                    Ctx::Meaning if pending_is_english => {
+                        b.meanings.push(text);
                     }
                     _ => {}
                 }

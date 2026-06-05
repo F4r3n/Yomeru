@@ -5,6 +5,15 @@
 //!
 //! Run: `cargo bench -p jmdict-core --bench real_dict_bench`
 
+// Bench harness: unwrap/expect/indexing on known-good fixtures and stderr
+// progress notes are fine here (clippy's *-in-tests exemptions don't cover benches).
+#![allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::indexing_slicing,
+    clippy::print_stderr
+)]
+
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use std::sync::OnceLock;
 

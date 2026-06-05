@@ -41,7 +41,7 @@ async fn main() -> anyhow::Result<()> {
         Err(e) => warn!(error = %e, ".env load warning"),
     }
 
-    let cfg = Arc::new(Config::from_args());
+    let cfg = Arc::new(Config::from_args()?);
     if cfg.dev_mode {
         warn!("DEV MODE — SMTP skipped, /api/sync auth disabled");
     }

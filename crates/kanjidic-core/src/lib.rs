@@ -1,7 +1,7 @@
 //! Pure-Rust KANJIDIC runtime: binary loader + lookup. `kanjidic-wasm` is a
 //! thin `#[wasm_bindgen]` shim on top of this.
 
-use anyhow::{anyhow, bail};
+use anyhow::{anyhow, bail, Context};
 use japanese_utils::is_kanji;
 use kanjidic_types::KanjiEntry;
 use once_cell::sync::OnceCell;
@@ -48,56 +48,51 @@ fn get_entry(codepoint: u32) -> Option<KanjiEntry> {
         .index
         .binary_search_by_key(&codepoint, |&(cp, _)| cp)
         .ok()?;
-    let byte_offset = dict.index[pos].1 as usize;
+    let byte_offset = dict.index.get(pos)?.1 as usize;
     let bytes = &dict.data;
-    if byte_offset + 4 > bytes.len() {
-        return None;
-    }
-    let len =
-        u32::from_le_bytes(bytes[byte_offset..byte_offset + 4].try_into().ok()?) as usize;
+    let len = u32::from_le_bytes(bytes.get(byte_offset..byte_offset + 4)?.try_into().ok()?) as usize;
     let start = byte_offset + 4;
-    if start + len > bytes.len() {
-        return None;
-    }
-    from_bytes(&bytes[start..start + len]).ok()
+    from_bytes(bytes.get(start..start + len)?).ok()
 }
 
 fn parse_binary(bytes: &[u8]) -> anyhow::Result<KanjiDictInner> {
     if bytes.len() < 9 {
         bail!("kanjidic binary too short");
     }
-    if &bytes[0..4] != b"KDIC" {
+    if bytes.get(0..4) != Some(b"KDIC".as_slice()) {
         bail!("invalid magic bytes");
     }
-    if bytes[4] != 1 {
-        bail!("unsupported version {}", bytes[4]);
+    let version = bytes.get(4).copied().unwrap_or(0);
+    if version != 1 {
+        bail!("unsupported version {version}");
     }
 
+    let read_u32 = |bytes: &[u8], pos: usize| -> anyhow::Result<u32> {
+        let raw = bytes
+            .get(pos..pos + 4)
+            .with_context(|| format!("kanjidic binary truncated at {pos}"))?;
+        Ok(u32::from_le_bytes(raw.try_into()?))
+    };
+
     let mut pos = 5usize;
-    let count = u32::from_le_bytes(bytes[pos..pos + 4].try_into()?) as usize;
+    let count = read_u32(bytes, pos)? as usize;
     pos += 4;
 
     let mut index = Vec::with_capacity(count);
     for _ in 0..count {
-        if pos + 8 > bytes.len() {
-            bail!("index truncated");
-        }
-        let cp = u32::from_le_bytes(bytes[pos..pos + 4].try_into()?);
-        let off = u32::from_le_bytes(bytes[pos + 4..pos + 8].try_into()?);
+        let cp = read_u32(bytes, pos)?;
+        let off = read_u32(bytes, pos + 4)?;
         index.push((cp, off));
         pos += 8;
     }
 
-    if pos + 4 > bytes.len() {
-        bail!("data_len field missing");
-    }
-    let data_len = u32::from_le_bytes(bytes[pos..pos + 4].try_into()?) as usize;
+    let data_len = read_u32(bytes, pos)? as usize;
     pos += 4;
 
-    if pos + data_len > bytes.len() {
-        bail!("data blob truncated");
-    }
-    let data = bytes[pos..pos + data_len].to_vec();
+    let data = bytes
+        .get(pos..pos + data_len)
+        .context("data blob truncated")?
+        .to_vec();
 
     Ok(KanjiDictInner { index, data })
 }

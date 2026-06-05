@@ -43,7 +43,9 @@ pub fn lookup_longest_match(
     let mut seen = HashSet::new();
 
     for &end_byte in boundaries.iter().rev().filter(|&&b| b > 0) {
-        let char_count = byte_to_chars[&end_byte];
+        let Some(&char_count) = byte_to_chars.get(&end_byte) else {
+            continue;
+        };
         let surface = &text[..end_byte];
 
         if seen.insert(surface.to_string())
@@ -135,11 +137,14 @@ pub fn find_in_text(text: &str, known: &HashSet<String>) -> Vec<[usize; 2]> {
         }
         match lookup_longest_match(&text[byte_off..], 20) {
             Some((entries, match_len)) => {
-                let hw = entries[0]
-                    .kanji_forms
+                let hw = entries
                     .first()
-                    .map(|k| k.text.as_str())
-                    .or_else(|| entries[0].reading_forms.first().map(|r| r.text.as_str()))
+                    .and_then(|e| {
+                        e.kanji_forms
+                            .first()
+                            .map(|k| k.text.as_str())
+                            .or_else(|| e.reading_forms.first().map(|r| r.text.as_str()))
+                    })
                     .unwrap_or("");
                 if !hw.is_empty() && known.contains(hw) {
                     results.push([ci, match_len]);

@@ -1,3 +1,6 @@
+// Offline build CLI: progress/diagnostic output to stderr is intentional.
+#![allow(clippy::print_stderr)]
+
 mod parser;
 mod serializer;
 

@@ -40,9 +40,7 @@ pub fn build_index(entries: &[WordEntry]) -> Result<DictionaryIndex> {
     // BTreeMap because FST requires keys in sorted order.
     let mut key_to_indices: BTreeMap<String, Vec<u32>> = BTreeMap::new();
 
-    for (idx, entry) in entries.iter().enumerate() {
-        let byte_offset = entry_offsets[idx];
-
+    for (entry, &byte_offset) in entries.iter().zip(entry_offsets.iter()) {
         for k in &entry.kanji_forms {
             key_to_indices
                 .entry(k.text.to_string())
@@ -76,7 +74,7 @@ pub fn build_index(entries: &[WordEntry]) -> Result<DictionaryIndex> {
             g
         };
 
-        fst_map.insert(key.into_bytes(), group_idx as u64);
+        fst_map.insert(key.into_bytes(), u64::from(group_idx));
     }
 
     // Step 4: Build FST from sorted keys.
