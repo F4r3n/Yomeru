@@ -2,25 +2,61 @@ export interface Gloss {
   text: string;
 }
 
+/** `misc` tag discriminants — mirror `Misc` in `jmdict-types/src/entry.rs`
+ *  (serialized as u8 via serde_repr). Only the values the extension checks are
+ *  listed; add others here as needed, keeping the numbers in sync with Rust. */
+export const Misc = {
+  UsuallyKana: 51,
+} as const;
+
+/** `ke_inf` tag discriminants — mirror `KanjiInf` in `jmdict-types/src/entry.rs`
+ *  (serialized as u8 via serde_repr). */
+export const KanjiInf = {
+  IrregularKanji: 1,
+  IrregularOkurigana: 2,
+  OutdatedKanji: 3,
+  IrregularKana: 4,
+  Ateji: 5,
+  RareKanji: 6,
+  SearchOnlyKanji: 7,
+} as const;
+
+/** `ke_pri`/`re_pri` frequency-kind discriminants — mirror `FreqKind` in
+ *  `jmdict-types/src/entry.rs` (serialized as u8 via serde_repr). */
+export const FreqKind = {
+  Gai: 1,
+  Ichi: 2,
+  News: 3,
+  Nf: 4,
+  Spec: 5,
+} as const;
+
+/** A parsed frequency tag — mirrors `Freq` in `jmdict-types/src/entry.rs`.
+ *  e.g. "nf12" → { kind: FreqKind.Nf, value: 12 }, "news1" → { kind: FreqKind.News, value: 1 }. */
+export interface Freq {
+  kind: number;
+  value: number;
+}
+
 export interface Sense {
   pos: string[];
   glosses: Gloss[];
-  /** Misc tags — most usefully "uk" (usually written in kana). */
-  misc?: string[];
+  /** `misc` tag discriminants (see {@link Misc}) — most usefully UsuallyKana. */
+  misc?: number[];
 }
 
 export interface KanjiElement {
   text: string;
-  /** `ke_inf` tags — e.g. "rK" (rare), "sK" (search-only). */
-  info?: string[];
-  /** `ke_pri` frequency tags — e.g. "news1", "nf01". */
-  priorities?: string[];
+  /** `ke_inf` tag discriminants (see {@link KanjiInf}) — e.g. RareKanji. */
+  info?: number[];
+  /** `ke_pri` frequency tags (see {@link Freq}) — e.g. { kind: News, value: 1 }. */
+  priorities?: Freq[];
 }
 
 export interface ReadingElement {
   text: string;
   /** `re_pri` frequency tags — same vocabulary as KanjiElement.priorities. */
-  priorities?: string[];
+  priorities?: Freq[];
 }
 
 export interface WordEntry {
@@ -63,12 +99,12 @@ export function cardId(sequence: number, direction: CardDirection): string {
 }
 
 export interface SrsSettings {
-  graduationReps: number;   // 0 = never graduate
-  intervalScale: number;    // 1.0 = no scaling
+  graduationReps: number; // 0 = never graduate
+  intervalScale: number; // 1.0 = no scaling
   maxSessionCards: number;
   serverUrl: string;
   serverEmail: string;
-  serverToken: string;      // session token after OTP verification (not shown to user)
+  serverToken: string; // session token after OTP verification (not shown to user)
 }
 
 export const DEFAULT_SETTINGS: SrsSettings = {
@@ -95,4 +131,3 @@ export interface KanjiEntry {
   kun_readings: string[];
   meanings: string[];
 }
-

@@ -16,13 +16,23 @@ fn setup() {
     });
 }
 
-fn make_entry(seq: u32, kanji: &str, reading: &str, pos: Vec<PartOfSpeech>, gloss: &str) -> WordEntry {
+fn make_entry(
+    seq: u32,
+    kanji: &str,
+    reading: &str,
+    pos: Vec<PartOfSpeech>,
+    gloss: &str,
+) -> WordEntry {
     WordEntry {
         sequence: seq,
         kanji_forms: if kanji.is_empty() {
             vec![]
         } else {
-            vec![KanjiElement { text: kanji.into(), info: vec![], priorities: vec![] }]
+            vec![KanjiElement {
+                text: kanji.into(),
+                info: vec![],
+                priorities: vec![],
+            }]
         },
         reading_forms: vec![ReadingElement {
             text: reading.into(),
@@ -33,7 +43,10 @@ fn make_entry(seq: u32, kanji: &str, reading: &str, pos: Vec<PartOfSpeech>, glos
         }],
         senses: vec![Sense {
             pos,
-            glosses: vec![Gloss { text: gloss.into(), lang: "eng".into(), gloss_type: None }],
+            glosses: vec![Gloss {
+                text: gloss.into(),
+                gloss_type: None,
+            }],
             xrefs: vec![],
             antonyms: vec![],
             fields: vec![],
@@ -51,9 +64,27 @@ const FILLER_COUNT: u32 = 5000;
 
 fn build_test_binary() -> Vec<u8> {
     let mut entries = vec![
-        make_entry(1, "飲む",   "のむ",      vec![PartOfSpeech::VerbGodanMu],  "to drink"),
-        make_entry(2, "食べる", "たべる",    vec![PartOfSpeech::VerbIchidan],  "to eat"),
-        make_entry(3, "美しい", "うつくしい", vec![PartOfSpeech::Adjective],    "beautiful"),
+        make_entry(
+            1,
+            "飲む",
+            "のむ",
+            vec![PartOfSpeech::VerbGodanMu],
+            "to drink",
+        ),
+        make_entry(
+            2,
+            "食べる",
+            "たべる",
+            vec![PartOfSpeech::VerbIchidan],
+            "to eat",
+        ),
+        make_entry(
+            3,
+            "美しい",
+            "うつくしい",
+            vec![PartOfSpeech::Adjective],
+            "beautiful",
+        ),
     ];
     // Filler entries give the seq index realistic depth so the by-sequence
     // binary search isn't trivially shallow. Each carries a unique reading so
@@ -87,10 +118,16 @@ fn build_test_binary() -> Vec<u8> {
     for (idx, entry) in entries.iter().enumerate() {
         let byte_offset = entry_offsets[idx];
         for k in &entry.kanji_forms {
-            key_to_indices.entry(k.text.to_string()).or_default().push(byte_offset);
+            key_to_indices
+                .entry(k.text.to_string())
+                .or_default()
+                .push(byte_offset);
         }
         for r in &entry.reading_forms {
-            key_to_indices.entry(r.text.to_string()).or_default().push(byte_offset);
+            key_to_indices
+                .entry(r.text.to_string())
+                .or_default()
+                .push(byte_offset);
         }
     }
 
@@ -121,7 +158,7 @@ fn build_test_binary() -> Vec<u8> {
 
     let mut out = Vec::new();
     out.extend_from_slice(b"JMDI");
-    out.push(4u8); // v4: rkyv-archived entries + trailing seq index section
+    out.push(5u8); // v5: rkyv-archived entries (Freq/enum tags) + trailing seq index section
     out.extend_from_slice(&(fst_bytes.len() as u32).to_le_bytes());
     out.extend_from_slice(&fst_bytes);
     out.extend_from_slice(&(lt_bytes.len() as u32).to_le_bytes());
@@ -137,17 +174,11 @@ fn bench_lookup_exact(c: &mut Criterion) {
     setup();
     let mut g = c.benchmark_group("lookup_exact");
 
-    g.bench_function("hit_kanji", |b| {
-        b.iter(|| lookup(black_box("食べる")))
-    });
+    g.bench_function("hit_kanji", |b| b.iter(|| lookup(black_box("食べる"))));
 
-    g.bench_function("hit_reading", |b| {
-        b.iter(|| lookup(black_box("たべる")))
-    });
+    g.bench_function("hit_reading", |b| b.iter(|| lookup(black_box("たべる"))));
 
-    g.bench_function("miss", |b| {
-        b.iter(|| lookup(black_box("走る")))
-    });
+    g.bench_function("miss", |b| b.iter(|| lookup(black_box("走る"))));
 
     g.finish();
 }

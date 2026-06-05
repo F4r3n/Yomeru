@@ -46,7 +46,6 @@ fn make_entry(
             pos,
             glosses: vec![Gloss {
                 text: gloss.into(),
-                lang: "eng".into(),
                 gloss_type: None,
             }],
             xrefs: vec![],
@@ -142,7 +141,7 @@ fn build_test_binary() -> Vec<u8> {
 
     let mut out = Vec::new();
     out.extend_from_slice(b"JMDI");
-    out.push(4u8);
+    out.push(5u8);
     out.extend_from_slice(&(fst_bytes.len() as u32).to_le_bytes());
     out.extend_from_slice(&fst_bytes);
     out.extend_from_slice(&(lt_bytes.len() as u32).to_le_bytes());

@@ -8,7 +8,7 @@ use std::path::Path;
 /// | Field                  | Size   | Notes                                |
 /// |------------------------|--------|--------------------------------------|
 /// | magic                  | 4      | b"JMDI"                              |
-/// | version                | 1      | currently 4                          |
+/// | version                | 1      | currently 5                          |
 /// | fst_len                | 4 LE   | byte length of FST data              |
 /// | fst_data               | fst_len|                                      |
 /// | lookup_table_len       | 4 LE   | byte length of postcard lookup_table |
@@ -29,7 +29,9 @@ pub fn write_index(index: &DictionaryIndex, path: &Path) -> Result<()> {
     //     ke_inf info, and sense misc tags (previously feature-gated).
     // v3: appended sequence-index section for ent_seq -> byte_offset lookup.
     // v4: entries blob is rkyv-archived (zero-copy decode) instead of postcard.
-    f.write_all(&[4u8])?; // version
+    // v5: ke_pri/re_pri are Freq structs, ke_inf/misc/field are enums (was
+    //     strings), and Gloss dropped its `lang` field — incompatible layout.
+    f.write_all(&[5u8])?; // version
 
     let fst_len = index.fst_bytes.len() as u32;
     f.write_all(&fst_len.to_le_bytes())?;

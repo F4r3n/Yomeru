@@ -173,12 +173,18 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                     }
                     Ctx::KeInf => {
                         if let Some(k) = &mut b.current_kanji {
-                            k.info.push(text.into());
+                            use jmdict_types::KanjiInf;
+                            if let Some(inf) = KanjiInf::from_tag(text) {
+                                k.info.push(inf);
+                            }
                         }
                     }
                     Ctx::KePri => {
                         if let Some(k) = &mut b.current_kanji {
-                            k.priorities.push(text.into());
+                            use jmdict_types::Freq;
+                            if let Some(feq) = Freq::from_tag(text) {
+                                k.priorities.push(feq);
+                            }
                         }
                     }
                     Ctx::ReB => {
@@ -198,7 +204,10 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                     }
                     Ctx::RePri => {
                         if let Some(r) = &mut b.current_reading {
-                            r.priorities.push(text.into());
+                            use jmdict_types::Freq;
+                            if let Some(feq) = Freq::from_tag(text) {
+                                r.priorities.push(feq);
+                            }
                         }
                     }
 
@@ -216,17 +225,16 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                         b.current_sense_has_explicit_pos = true;
                     }
                     Ctx::Gloss => {
-                        if let Some(sense) = b.senses.last_mut() {
-                            if b.pending_lang == "eng" {
-                                sense.glosses.push(Gloss::new(
-                                    text,
-                                    b.pending_lang.clone(),
-                                    cfg_select! {
-                                    feature = "full" => b.pending_gtype.clone().map(Into::into),
-                                    _=> None
-                                    },
-                                ));
-                            }
+                        if let Some(sense) = b.senses.last_mut()
+                            && b.pending_lang == "eng"
+                        {
+                            sense.glosses.push(Gloss::new(
+                                text,
+                                cfg_select! {
+                                feature = "full" => b.pending_gtype.clone().map(Into::into),
+                                _=> None
+                                },
+                            ));
                         }
                     }
                     #[cfg(feature = "full")]
@@ -244,12 +252,18 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                     #[cfg(feature = "full")]
                     Ctx::Field => {
                         if let Some(s) = b.senses.last_mut() {
-                            s.fields.push(text.into());
+                            use jmdict_types::Field;
+                            if let Some(field) = Field::from_tag(text) {
+                                s.fields.push(field);
+                            }
                         }
                     }
                     Ctx::Misc => {
                         if let Some(s) = b.senses.last_mut() {
-                            s.misc.push(text.into());
+                            use jmdict_types::Misc;
+                            if let Some(misc) = Misc::from_tag(text) {
+                                s.misc.push(misc);
+                            }
                         }
                     }
                     #[cfg(feature = "full")]
@@ -395,9 +409,12 @@ mod tests {
             e.senses[0].pos,
             vec![PartOfSpeech::VerbGodanMu, PartOfSpeech::VerbTransitive]
         );
-        let glosses: Vec<&str> = e.senses[0].glosses.iter().map(|g| g.text.as_str()).collect();
+        let glosses: Vec<&str> = e.senses[0]
+            .glosses
+            .iter()
+            .map(|g| g.text.as_str())
+            .collect();
         assert_eq!(glosses, vec!["to drink", "to swallow"]);
-        assert_eq!(e.senses[0].glosses[0].lang, "eng");
     }
 
     /// JMdict carries POS forward when subsequent `<sense>` elements omit it.

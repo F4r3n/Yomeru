@@ -1,17 +1,17 @@
-import type { WordEntry } from "./types.ts";
+import { FreqKind, KanjiInf, Misc } from "./types.ts";
+import type { Freq, WordEntry } from "./types.ts";
 
 /** Lower is more common. `Infinity` means no priority tags at all. Mirrors
  *  `priority_score` in app/shared/src/dict.rs. */
-export function priorityScore(tags: string[] = []): number {
+export function priorityScore(tags: Freq[] = []): number {
   let best = Infinity;
   for (const t of tags) {
-    if (t.startsWith("nf")) {
-      const n = parseInt(t.slice(2), 10);
-      if (!Number.isNaN(n)) best = Math.min(best, n);
-    } else if (t === "news1" || t === "ichi1" || t === "spec1" || t === "gai1") {
-      best = Math.min(best, 1);
-    } else if (t === "news2" || t === "ichi2" || t === "spec2" || t === "gai2") {
-      best = Math.min(best, 24);
+    if (t.kind === FreqKind.Nf) {
+      // nf01–nf48: the value is the band directly.
+      best = Math.min(best, t.value);
+    } else {
+      // news/ichi/spec/gai: tier-1 (value 1) → 1, tier-2 (value 2) → 24.
+      best = Math.min(best, t.value === 1 ? 1 : 24);
     }
   }
   return best;
@@ -25,9 +25,9 @@ export function preferredHeadword(e: WordEntry): string {
   if (!kanji) return reading?.text ?? "";
   if (!reading) return kanji.text;
 
-  const usuallyKana = e.senses.some((s) => (s.misc ?? []).includes("uk"));
+  const usuallyKana = e.senses.some((s) => (s.misc ?? []).includes(Misc.UsuallyKana));
   const onlyRareKanji = e.kanji_forms.every((k) =>
-    (k.info ?? []).some((i) => i === "rK" || i === "sK"),
+    (k.info ?? []).some((i) => i === KanjiInf.RareKanji || i === KanjiInf.SearchOnlyKanji),
   );
   if (usuallyKana || onlyRareKanji) return reading.text;
 

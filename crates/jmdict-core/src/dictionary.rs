@@ -103,7 +103,7 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<DictionaryInner> {
     if &bytes[0..4] != b"JMDI" {
         bail!("Invalid magic bytes");
     }
-    if bytes[4] != 4 {
+    if bytes[4] != 5 {
         bail!("Unsupported dictionary version {}", bytes[4]);
     }
 

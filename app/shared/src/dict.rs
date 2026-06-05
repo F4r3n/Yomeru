@@ -9,7 +9,7 @@
 
 use dioxus::prelude::consume_context;
 use examples_types::ExampleEntry;
-use jmdict_types::WordEntry;
+use jmdict_types::{Freq, KanjiInf, Misc, WordEntry};
 use kanjidic_types::KanjiEntry;
 
 use crate::platform::Platform;
@@ -84,11 +84,12 @@ pub fn preferred_headword(e: &WordEntry) -> &str {
         return kanji.text.as_str();
     };
 
-    let usually_kana = e.senses.iter().any(|s| s.misc.iter().any(|m| m == "uk"));
-    let only_rare_kanji = e
-        .kanji_forms
-        .iter()
-        .all(|k| k.info.iter().any(|i| i == "rK" || i == "sK"));
+    let usually_kana = e.senses.iter().any(|s| s.misc.contains(&Misc::UsuallyKana));
+    let only_rare_kanji = e.kanji_forms.iter().all(|k| {
+        k.info
+            .iter()
+            .any(|i| *i == KanjiInf::RareKanji || *i == KanjiInf::SearchOnlyKanji)
+    });
 
     if usually_kana || only_rare_kanji {
         return reading.text.as_str();
@@ -106,17 +107,24 @@ pub fn preferred_headword(e: &WordEntry) -> &str {
 /// 23,501–24,000. Tier-1 tags (`news1`, `ichi1`, `spec1`, `gai1`) are scored
 /// as 1; tier-2 (`news2`, `ichi2`, `spec2`, `gai2`) as 24 — i.e. roughly
 /// "outside the top 12k".
-pub fn priority_score<S: AsRef<str>>(tags: &[S]) -> u32 {
+pub fn priority_score(tags: &[Freq]) -> u32 {
     let mut best = u32::MAX;
     for t in tags {
-        let t = t.as_ref();
-        if let Some(num) = t.strip_prefix("nf").and_then(|n| n.parse::<u32>().ok()) {
-            best = best.min(num);
-        } else if matches!(t, "news1" | "ichi1" | "spec1" | "gai1") {
-            best = best.min(1);
-        } else if matches!(t, "news2" | "ichi2" | "spec2" | "gai2") {
-            best = best.min(24);
-        }
+        best = match t.kind {
+            //1-48
+            jmdict_types::FreqKind::Nf => best.min(u32::from(t.value)),
+            //1-2
+            jmdict_types::FreqKind::News
+            | jmdict_types::FreqKind::Gai
+            | jmdict_types::FreqKind::Ichi
+            | jmdict_types::FreqKind::Spec => {
+                if t.value == 1 {
+                    best.min(1)
+                } else {
+                    best.min(24)
+                }
+            }
+        };
     }
     best
 }
@@ -129,7 +137,11 @@ pub fn frequency_label(e: &WordEntry) -> Option<&'static str> {
         .kanji_forms
         .iter()
         .map(|k| priority_score(&k.priorities))
-        .chain(e.reading_forms.iter().map(|r| priority_score(&r.priorities)))
+        .chain(
+            e.reading_forms
+                .iter()
+                .map(|r| priority_score(&r.priorities)),
+        )
         .min()
         .unwrap_or(u32::MAX);
     match best {
