@@ -22,7 +22,7 @@ members = [
     "app/web",
     "app/android",
     "app/extension",
-    "xtask", "crates/examples-generator",
+    "xtask",
 ]
 default-members = [
     "server",
