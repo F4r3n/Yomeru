@@ -6,6 +6,7 @@ use dioxus::router::components::HistoryProvider;
 use dioxus::web::WebHistory;
 use gloo_storage::{LocalStorage, Storage};
 
+use crate::platform::Platform;
 use crate::routes::{about, lookup, new_words, review, settings, stats, word_list};
 use crate::sync::SyncGen;
 use crate::theme::global_css;
@@ -149,6 +150,7 @@ fn Shell() -> Element {
                     span { class: "tag", "Japanese reader & SRS" }
                 }
                 div { class: "topbar-actions",
+                    LookupToggle {}
                     button {
                         class: "icon-btn",
                         title: "{toggle_label}",
@@ -172,6 +174,67 @@ fn Shell() -> Element {
                     Outlet::<Route> {}
                 }
             }
+        }
+    }
+}
+
+/// Topbar on/off switch for content-script page lookups. Renders nothing on
+/// platforms without a content script (web/android). Backed by the global
+/// `storage.local.enabled` flag the extension content script watches, so a
+/// single toggle here stays in effect across every tab and future page load.
+#[component]
+fn LookupToggle() -> Element {
+    let platform = use_context::<Platform>();
+    if !platform.settings.supports_lookup_toggle() {
+        return rsx! {};
+    }
+
+    // `None` until the initial async read lands, so we don't flash the wrong
+    // state. Default to enabled to match the content script's `?? true`.
+    let mut enabled = use_signal(|| Option::<bool>::None);
+
+    {
+        let platform = platform.clone();
+        use_future(move || {
+            let platform = platform.clone();
+            async move {
+                match platform.settings.lookups_enabled().await {
+                    Ok(v) => enabled.set(Some(v)),
+                    Err(e) => {
+                        log::warn!("[yomeru] read enabled flag failed: {e}");
+                        enabled.set(Some(true));
+                    }
+                }
+            }
+        });
+    }
+
+    let on = enabled.read().unwrap_or(true);
+    let toggle = move |_| {
+        let next = !on;
+        enabled.set(Some(next));
+        let platform = platform.clone();
+        spawn(async move {
+            if let Err(e) = platform.settings.set_lookups_enabled(next).await {
+                log::warn!("[yomeru] write enabled flag failed: {e}");
+            }
+        });
+    };
+
+    let (icon, label) = if on {
+        ("◉", "Disable page lookups")
+    } else {
+        ("◯", "Enable page lookups")
+    };
+    let class = if on { "icon-btn lookups-on" } else { "icon-btn" };
+
+    rsx! {
+        button {
+            class: "{class}",
+            title: "{label}",
+            "aria-label": "{label}",
+            onclick: toggle,
+            "{icon}"
         }
     }
 }

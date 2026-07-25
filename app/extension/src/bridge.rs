@@ -8,6 +8,9 @@ export function send_message(msg) {
 export function storage_get(key) {
     return browser.storage.local.get(key);
 }
+export function storage_set_enabled(value) {
+    return browser.storage.local.set({ enabled: value });
+}
 export function add_storage_listener(cb) {
     browser.storage.onChanged.addListener(function(changes, area) {
         if (area === "local") { cb(changes); }
@@ -22,6 +25,7 @@ export function navigate_to_root() {
 extern "C" {
     pub fn send_message(msg: JsValue) -> Promise;
     pub fn storage_get(key: &str) -> Promise;
+    pub fn storage_set_enabled(value: bool) -> Promise;
     pub fn add_storage_listener(cb: &Function);
     pub fn navigate_to_root();
 }

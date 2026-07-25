@@ -64,6 +64,26 @@ pub trait SettingsStore {
     async fn request_otp(&self, server_url: &str, email: &str) -> Result<Option<String>, String>;
     async fn verify_otp(&self, server_url: &str, email: &str, code: &str)
     -> Result<String, String>;
+
+    /// Whether this platform has a page-lookup on/off switch. Only the
+    /// extension (which injects a content script) does; web/android have no
+    /// page to enable lookups on, so the toggle UI is hidden there.
+    fn supports_lookup_toggle(&self) -> bool {
+        false
+    }
+
+    /// Read the global "page lookups enabled" flag. Defaults to `true` so a
+    /// fresh install is active out of the box.
+    async fn lookups_enabled(&self) -> Result<bool, String> {
+        Ok(true)
+    }
+
+    /// Persist the global "page lookups enabled" flag. The extension content
+    /// script watches `storage.local` for this key, so flipping it here takes
+    /// effect on every open tab and every page loaded afterwards.
+    async fn set_lookups_enabled(&self, _enabled: bool) -> Result<(), String> {
+        Ok(())
+    }
 }
 
 /// What `routes/*` read out of Dioxus context. Cheap to clone — both fields

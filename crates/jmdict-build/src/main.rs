@@ -2,6 +2,7 @@
 // scanners in `parser` use bounds-guarded indexing on the input XML buffer.
 #![allow(clippy::print_stderr, clippy::indexing_slicing)]
 
+mod disambig;
 mod indexer;
 mod parser;
 mod serializer;
@@ -20,6 +21,12 @@ struct Args {
     /// Output path for the binary index
     #[arg(short, long, default_value = "extension/data/jmdict.bin")]
     output: PathBuf,
+
+    /// Output path for the build-only `(surface, reading) -> ent_seq` table
+    /// consumed by examples-generator. Lives under target/ since it is a build
+    /// intermediate — never shipped to the extension.
+    #[arg(long, default_value = "target/disambig.bin")]
+    disambig_output: PathBuf,
 }
 
 fn main() -> Result<()> {
@@ -37,6 +44,16 @@ fn main() -> Result<()> {
 
     let size = std::fs::metadata(&args.output)?.len();
     eprintln!("Done. Output size: {:.1} MB", size as f64 / 1_048_576.0);
+
+    eprintln!("Building disambiguation table -> {:?}...", args.disambig_output);
+    let table = disambig::build_disambig(&entries);
+    disambig::write_disambig(&table, &args.disambig_output)?;
+    let dsize = std::fs::metadata(&args.disambig_output)?.len();
+    eprintln!(
+        "Done. {} (surface, reading) keys, {:.1} MB",
+        table.len(),
+        dsize as f64 / 1_048_576.0
+    );
 
     Ok(())
 }

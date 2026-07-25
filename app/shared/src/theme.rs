@@ -143,6 +143,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
     cursor: pointer;
 }
 .icon-btn:hover { color: var(--text); background: var(--card); }
+.icon-btn.lookups-on { color: var(--accent); }
 
 .sidebar {
     grid-area: sidebar;

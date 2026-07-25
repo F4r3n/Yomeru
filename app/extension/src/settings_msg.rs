@@ -183,4 +183,28 @@ impl SettingsStore for ExtensionSettings {
         resp.token
             .ok_or_else(|| "verify_otp: background did not return a token".into())
     }
+
+    fn supports_lookup_toggle(&self) -> bool {
+        true
+    }
+
+    async fn lookups_enabled(&self) -> Result<bool, String> {
+        let js_val = JsFuture::from(bridge::storage_get("enabled"))
+            .await
+            .map_err(|e| format!("{e:?}"))?;
+        let inner =
+            Reflect::get(&js_val, &JsValue::from_str("enabled")).map_err(|e| format!("{e:?}"))?;
+        // Absent key → enabled by default (matches content.ts `?? true`).
+        if inner.is_undefined() || inner.is_null() {
+            return Ok(true);
+        }
+        Ok(inner.as_bool().unwrap_or(true))
+    }
+
+    async fn set_lookups_enabled(&self, enabled: bool) -> Result<(), String> {
+        JsFuture::from(bridge::storage_set_enabled(enabled))
+            .await
+            .map_err(|e| format!("{e:?}"))?;
+        Ok(())
+    }
 }
