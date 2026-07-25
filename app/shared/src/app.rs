@@ -185,12 +185,13 @@ fn Shell() -> Element {
 #[component]
 fn LookupToggle() -> Element {
     let platform = use_context::<Platform>();
-    if !platform.settings.supports_lookup_toggle() {
-        return rsx! {};
-    }
+    let supported = platform.settings.supports_lookup_toggle();
 
-    // `None` until the initial async read lands, so we don't flash the wrong
-    // state. Default to enabled to match the content script's `?? true`.
+    // Every hook runs unconditionally, before any early return. Dioxus
+    // identifies hooks by call order within a component, so a `return` above
+    // one desyncs all the hooks below it the moment the branch stops being
+    // constant — `supported` is fixed per platform today, but the ordering
+    // requirement is not something to leave resting on that.
     let mut enabled = use_signal(|| Option::<bool>::None);
 
     {
@@ -198,6 +199,9 @@ fn LookupToggle() -> Element {
         use_future(move || {
             let platform = platform.clone();
             async move {
+                if !supported {
+                    return;
+                }
                 match platform.settings.lookups_enabled().await {
                     Ok(v) => enabled.set(Some(v)),
                     Err(e) => {
@@ -209,7 +213,26 @@ fn LookupToggle() -> Element {
         });
     }
 
-    let on = enabled.read().unwrap_or(true);
+    if !supported {
+        return rsx! {};
+    }
+
+    // Until the stored value lands, render a neutral, inert button rather than
+    // guessing. Defaulting to "on" here would show ◉ and then visibly flip to
+    // ◯ for anyone who had lookups disabled, and a click landing in that window
+    // would write a value derived from the guess rather than from storage.
+    let Some(on) = *enabled.read() else {
+        return rsx! {
+            button {
+                class: "icon-btn",
+                disabled: true,
+                title: "Page lookups",
+                "aria-label": "Page lookups (loading)",
+                "◌"
+            }
+        };
+    };
+
     let toggle = move |_| {
         let next = !on;
         enabled.set(Some(next));
@@ -226,7 +249,11 @@ fn LookupToggle() -> Element {
     } else {
         ("◯", "Enable page lookups")
     };
-    let class = if on { "icon-btn lookups-on" } else { "icon-btn" };
+    let class = if on {
+        "icon-btn lookups-on"
+    } else {
+        "icon-btn"
+    };
 
     rsx! {
         button {

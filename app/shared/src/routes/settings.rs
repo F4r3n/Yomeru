@@ -553,7 +553,10 @@ mod tests {
 
     #[test]
     fn current_existing_ids_are_skipped() {
-        let cards = vec![new_format_card(1001, "recall"), new_format_card(1002, "recall")];
+        let cards = vec![
+            new_format_card(1001, "recall"),
+            new_format_card(1002, "recall"),
+        ];
         let existing = HashSet::from(["1001::recall".to_string()]);
         let (to_put, skips) = parse_current_cards(&cards, &existing);
         assert_eq!(skips.existing, 1);
@@ -612,9 +615,9 @@ mod tests {
     #[test]
     fn legacy_batch_counts_by_reason() {
         let cards = vec![
-            old_format_card("一発", "recall"),  // resolved -> imported
-            old_format_card("謎", "recall"),     // unresolved -> skipped
-            json!({ "not": "a card" }),           // invalid -> skipped
+            old_format_card("一発", "recall"), // resolved -> imported
+            old_format_card("謎", "recall"),   // unresolved -> skipped
+            json!({ "not": "a card" }),        // invalid -> skipped
         ];
         let word_seq = HashMap::from([("一発".to_string(), 1583460u32)]);
         let (to_put, skips) = parse_legacy_cards(&cards, &word_seq, &HashSet::new());
@@ -639,12 +642,19 @@ mod tests {
 
     #[test]
     fn message_all_imported() {
-        assert_eq!(format_import_result(3, Skips::default()), "Imported 3 card(s).");
+        assert_eq!(
+            format_import_result(3, Skips::default()),
+            "Imported 3 card(s)."
+        );
     }
 
     #[test]
     fn message_breaks_down_skips() {
-        let skips = Skips { existing: 157, unresolved: 3, invalid: 0 };
+        let skips = Skips {
+            existing: 157,
+            unresolved: 3,
+            invalid: 0,
+        };
         assert_eq!(
             format_import_result(0, skips),
             "Imported 0 card(s); skipped 160 (157 already present, 3 not in dictionary)."

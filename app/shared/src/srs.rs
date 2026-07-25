@@ -4,7 +4,7 @@
 use srs_core::ReviewRating;
 
 use crate::settings::SrsSettings;
-use crate::types::{CardStatus, SrsCard, MS_PER_DAY};
+use crate::types::{CardStatus, MS_PER_DAY, SrsCard};
 
 pub enum ReviewOutcome {
     /// Card was rescheduled; persist it.

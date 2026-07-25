@@ -13,7 +13,7 @@ mod components;
 mod routes;
 
 pub use app::App;
-pub use platform::{default_http_platform, Platform};
+pub use platform::{Platform, default_http_platform};
 
 use std::cell::RefCell;
 

@@ -20,11 +20,7 @@ pub async fn request_otp(server_url: &str, email: &str) -> Result<Option<String>
         .await
 }
 
-pub async fn verify_otp(
-    server_url: &str,
-    email: &str,
-    code: &str,
-) -> Result<String, String> {
+pub async fn verify_otp(server_url: &str, email: &str, code: &str) -> Result<String, String> {
     consume_context::<Platform>()
         .settings
         .verify_otp(server_url, email, code)
