@@ -1,4 +1,4 @@
-use std::{net::IpAddr, net::SocketAddr, num::NonZeroU32, sync::Arc};
+use std::{net::IpAddr, net::SocketAddr, num::NonZeroU32, sync::Arc, time::Duration};
 
 use anyhow::Context;
 use axum::{Router, http::HeaderMap, routing::post};
@@ -22,6 +22,13 @@ pub struct AppState {
     pub cfg: Arc<Config>,
     pub limiter: Arc<DefaultKeyedRateLimiter<IpAddr>>,
     pub lookup_limiter: Arc<DefaultKeyedRateLimiter<IpAddr>>,
+}
+
+fn now_ms() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0)
 }
 
 impl AppState {
@@ -67,15 +74,31 @@ async fn main() -> anyhow::Result<()> {
 
     let db = db::init_db(&cfg.db_path).await.context("init db")?;
     {
-        let now_ms = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_millis() as i64)
-            .unwrap_or(0);
+        let now = now_ms();
         // 90 days
-        db::prune_old_deletions(&db, now_ms - 90 * 86_400_000)
+        db::prune_old_deletions(&db, now - 90 * 86_400_000)
             .await
             .context("prune old deletions at startup")?;
+        db::prune_expired_auth(&db, now)
+            .await
+            .context("prune expired auth rows at startup")?;
     }
+
+    // Sessions last 30 days and OTPs 10 minutes, so a long-lived process would
+    // otherwise accumulate dead rows indefinitely between restarts.
+    tokio::spawn({
+        let db = db.clone();
+        async move {
+            let mut ticker = tokio::time::interval(Duration::from_secs(6 * 3_600));
+            ticker.tick().await; // fires immediately; startup already pruned
+            loop {
+                ticker.tick().await;
+                if let Err(e) = db::prune_expired_auth(&db, now_ms()).await {
+                    warn!(error = ?e, "periodic auth prune failed");
+                }
+            }
+        }
+    });
 
     dicts::init_all(&cfg.data_dir)
         .with_context(|| format!("load dict data from {}", cfg.data_dir))?;
