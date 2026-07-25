@@ -26,38 +26,62 @@ pub fn lookup_longest_match(
     text: &str,
     max_chars: usize,
 ) -> Option<(Vec<&'static ArchivedWordEntry>, usize)> {
-    let boundaries: Vec<usize> = text
-        .char_indices()
-        .map(|(i, _)| i)
-        .chain(std::iter::once(text.len()))
-        .take(max_chars + 1)
-        .collect();
+    lookup_longest_match_with(text, max_chars, &mut Scratch::default())
+}
 
-    // Map byte_end → number of chars in that prefix (boundaries[k] = k-char prefix end).
-    let byte_to_chars: std::collections::HashMap<usize, usize> = boundaries
-        .iter()
-        .enumerate()
-        .map(|(i, &b)| (b, i))
-        .collect();
+/// Reusable buffers for [`lookup_longest_match_with`].
+///
+/// Both collections are rebuilt from scratch on every call, so a caller that
+/// scans a whole document — one call per character position — would otherwise
+/// pay two allocations per character. Hoisting them into a scratch struct lets
+/// that caller keep the capacity across positions.
+#[derive(Default)]
+struct Scratch {
+    seen: HashSet<String>,
+    boundaries: Vec<usize>,
+}
 
-    let mut seen = HashSet::new();
+/// Body of [`lookup_longest_match`], with the scratch buffers passed in.
+/// Contents are reset on entry; only the allocations are reused.
+fn lookup_longest_match_with(
+    text: &str,
+    max_chars: usize,
+    scratch: &mut Scratch,
+) -> Option<(Vec<&'static ArchivedWordEntry>, usize)> {
+    let Scratch { seen, boundaries } = scratch;
+    seen.clear();
+    boundaries.clear();
 
-    for &end_byte in boundaries.iter().rev().filter(|&&b| b > 0) {
-        let Some(&char_count) = byte_to_chars.get(&end_byte) else {
+    // boundaries[k] is the byte offset just past the k-char prefix, so an
+    // entry's *index* is that prefix's char count — which is why no separate
+    // byte→char lookup is needed here.
+    boundaries.extend(
+        text.char_indices()
+            .map(|(i, _)| i)
+            .chain(std::iter::once(text.len()))
+            .take(max_chars + 1),
+    );
+
+    for (char_count, &end_byte) in boundaries.iter().enumerate().rev() {
+        if end_byte == 0 {
             continue;
-        };
+        }
         let surface = &text[..end_byte];
 
-        if seen.insert(surface.to_string())
-            && let Some(entries) = try_get_entries(surface)
-        {
-            return Some((entries, char_count));
+        // `contains` borrows, so the miss path costs no allocation; only a
+        // candidate we're about to move past gets copied into the set.
+        if !seen.contains(surface) {
+            if let Some(entries) = try_get_entries(surface) {
+                return Some((entries, char_count));
+            }
+            seen.insert(surface.to_owned());
         }
         for d in deinflect::deinflect(surface) {
-            if seen.insert(d.text.clone())
-                && let Some(entries) = try_get_entries(&d.text)
-            {
-                return Some((entries, char_count));
+            if !seen.contains(&d.text) {
+                if let Some(entries) = try_get_entries(&d.text) {
+                    return Some((entries, char_count));
+                }
+                seen.insert(d.text);
             }
         }
     }
@@ -149,6 +173,8 @@ pub fn find_in_text(text: &str, known: &HashSet<String>) -> Vec<[usize; 2]> {
     let mut results: Vec<[usize; 2]> = Vec::new();
     let mut chars = text.char_indices().peekable();
     let mut utf16_off = 0usize;
+    // One set of buffers for the whole document rather than per position.
+    let mut scratch = Scratch::default();
 
     while let Some((byte_off, ch)) = chars.peek().copied() {
         if !japanese_utils::is_japanese(ch) {
@@ -157,14 +183,27 @@ pub fn find_in_text(text: &str, known: &HashSet<String>) -> Vec<[usize; 2]> {
             continue;
         }
 
+        // Only scan as far as the Japanese run actually extends. Headwords are
+        // wholly Japanese, so prefixes reaching past the run can never match —
+        // and each one costs a full deinflection pass. On mixed text this is
+        // the difference between MAX_SCAN_CHARS attempts per position and the
+        // handful the run can support.
+        let run_chars = text[byte_off..]
+            .chars()
+            .take(MAX_SCAN_CHARS)
+            .take_while(|c| japanese_utils::is_japanese(*c))
+            .count();
+
         // A lookup group can hold several entries; the card may be keyed on any
         // one of them, so check them all rather than just the first.
-        let hit = lookup_longest_match(&text[byte_off..], MAX_SCAN_CHARS).filter(|(entries, _)| {
-            entries.iter().any(|e| {
-                let hw = preferred_headword(e);
-                !hw.is_empty() && known.contains(hw)
-            })
-        });
+        let hit = lookup_longest_match_with(&text[byte_off..], run_chars, &mut scratch).filter(
+            |(entries, _)| {
+                entries.iter().any(|e| {
+                    let hw = preferred_headword(e);
+                    !hw.is_empty() && known.contains(hw)
+                })
+            },
+        );
 
         match hit {
             Some((_, match_len)) => {

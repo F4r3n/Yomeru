@@ -1,10 +1,10 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use fst::MapBuilder;
-use jmdict_core::lookup::{lookup, lookup_longest_match, lookup_prefix};
+use jmdict_core::lookup::{find_in_text, lookup, lookup_longest_match, lookup_prefix};
 use jmdict_core::lookup_by_sequence;
 use jmdict_types::{Gloss, KanjiElement, PartOfSpeech, ReadingElement, Sense, WordEntry};
 use postcard::to_allocvec;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::sync::Once;
 
 static DICT_INIT: Once = Once::new();
@@ -243,11 +243,54 @@ fn bench_lookup_by_sequence(c: &mut Criterion) {
     g.finish();
 }
 
+/// A paragraph shaped like real page text: Japanese prose interleaved with
+/// Latin words and punctuation. The highlighter runs `find_in_text` over every
+/// text node on a page, so the per-position cost here is what governs whether
+/// re-highlighting after a DOM mutation stays imperceptible.
+const PAGE_TEXT: &str = "\
+今日はとても美しい日ですね。I had coffee at the cafe and 食べる something nice. \
+友達と一緒にビールを飲むつもりです。The weather was lovely, so we walked around \
+the park for a while. 明日also美しい天気になるといいですね。Let's meet again soon.";
+
+fn bench_find_in_text(c: &mut Criterion) {
+    setup();
+    let mut g = c.benchmark_group("find_in_text");
+
+    let known: HashSet<String> = ["飲む", "食べる", "美しい"]
+        .iter()
+        .map(|s| (*s).to_string())
+        .collect();
+
+    g.bench_function("mixed_page_text", |b| {
+        b.iter(|| find_in_text(black_box(PAGE_TEXT), black_box(&known)))
+    });
+
+    // Pure Japanese: no run boundaries to cut the scan window short, so this is
+    // the worst case for per-position work.
+    g.bench_function("dense_japanese", |b| {
+        b.iter(|| {
+            find_in_text(
+                black_box("友達と一緒にビールを飲むつもりですが明日も美しい天気になるといいですね"),
+                black_box(&known),
+            )
+        })
+    });
+
+    // Nothing to match: every position pays the full miss path.
+    g.bench_function("no_known_words_hit", |b| {
+        let empty: HashSet<String> = ["走る".to_string()].into_iter().collect();
+        b.iter(|| find_in_text(black_box(PAGE_TEXT), black_box(&empty)))
+    });
+
+    g.finish();
+}
+
 criterion_group!(
     benches,
     bench_lookup_exact,
     bench_lookup_at,
     bench_lookup_prefix,
-    bench_lookup_by_sequence
+    bench_lookup_by_sequence,
+    bench_find_in_text
 );
 criterion_main!(benches);
