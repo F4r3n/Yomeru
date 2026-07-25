@@ -10,3 +10,16 @@ release
 yomeru.zip
 kanjidic2
 extension/data
+examples.utf
+web-dist/
+
+# Secrets. server/.env holds live SMTP credentials — it was untracked but not
+# ignored, so a single `git add -A` would have committed them.
+.env
+*.env
+!xtask/dict-sources.env
+
+# Local runtime state
+*.db
+*.db-wal
+*.db-shm
