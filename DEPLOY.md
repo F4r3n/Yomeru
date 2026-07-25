@@ -148,6 +148,11 @@ Environment=YOMERU_DATA_DIR=/srv/yomeru/dicts
 Environment=YOMERU_SMTP_HOST=smtp.example.com
 Environment=YOMERU_SMTP_PORT=587
 Environment=YOMERU_SMTP_FROM=noreply@example.com
+# Rate limiting keys on the client IP. Behind nginx the peer address is
+# always loopback, so the server reads X-Real-IP / X-Forwarded-For — but
+# only from a trusted peer. See "Client IP & rate limiting" below.
+Environment=YOMERU_TRUST_PROXY=private
+Environment=YOMERU_TRUSTED_PROXY_HOPS=1
 EnvironmentFile=-/etc/yomeru/secrets.env
 ExecStart=/usr/local/bin/yomeru-server
 Restart=on-failure
@@ -230,6 +235,9 @@ server {
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;
         proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        # Both headers above are required — without them every request looks
+        # like it came from 127.0.0.1 and the per-IP rate limits collapse
+        # into a single shared bucket for the whole internet.
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_buffering off;
         client_max_body_size 4m;          # /api/sync can carry a few hundred cards
@@ -264,6 +272,23 @@ TLS via Certbot (one-time):
 sudo apt install certbot python3-certbot-nginx
 sudo certbot --nginx -d yomeru.example.com
 ```
+
+### Client IP & rate limiting
+
+The auth endpoints (10/min) and lookup endpoints (20/s) are rate-limited
+per client IP. Behind a proxy the TCP peer is the proxy, not the client,
+so the server falls back to forwarding headers — but only when the peer
+is itself trusted, otherwise anyone could spoof their way out of their
+own bucket.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `YOMERU_TRUST_PROXY` | `private` | `none` = always use the peer address (use when the server is exposed directly, with no proxy). `private` = trust loopback / RFC1918 / unique-local / link-local peers; covers nginx-on-localhost and container bridges. `all` = trust every peer; only safe if something upstream always overwrites the headers. |
+| `YOMERU_TRUSTED_PROXY_HOPS` | `1` | How many trusted proxies sit in front. `X-Forwarded-For` is append-only, so the value is counted this many entries in from the right; anything further left is client-supplied and ignored. Set to `2` for e.g. Cloudflare → nginx. |
+
+Getting `HOPS` wrong is not just cosmetic: too high and you rate-limit on
+an attacker-controlled value, too low and you rate-limit on your own
+proxy. Check it against the logs after any change to the proxy chain.
 
 ## 5. Smoke test
 

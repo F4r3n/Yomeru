@@ -1,13 +1,14 @@
 use std::{net::IpAddr, net::SocketAddr, num::NonZeroU32, sync::Arc};
 
 use anyhow::Context;
-use axum::{routing::post, Router};
+use axum::{Router, http::HeaderMap, routing::post};
 use governor::{DefaultKeyedRateLimiter, Quota, RateLimiter};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::{info, warn};
-use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
 mod api;
+mod client_ip;
 mod config;
 mod db;
 mod dicts;
@@ -21,6 +22,19 @@ pub struct AppState {
     pub cfg: Arc<Config>,
     pub limiter: Arc<DefaultKeyedRateLimiter<IpAddr>>,
     pub lookup_limiter: Arc<DefaultKeyedRateLimiter<IpAddr>>,
+}
+
+impl AppState {
+    /// Rate-limiter key for a request: the real client address, not the peer
+    /// (which is the reverse proxy in any fronted deployment).
+    pub fn client_ip(&self, peer: SocketAddr, headers: &HeaderMap) -> IpAddr {
+        client_ip::client_ip(
+            peer.ip(),
+            headers,
+            self.cfg.trust_proxy,
+            self.cfg.proxy_hops,
+        )
+    }
 }
 
 #[tokio::main]
@@ -45,6 +59,11 @@ async fn main() -> anyhow::Result<()> {
     if cfg.dev_mode {
         warn!("DEV MODE — SMTP skipped, /api/sync auth disabled");
     }
+    info!(
+        trust_proxy = ?cfg.trust_proxy,
+        hops = cfg.proxy_hops,
+        "rate-limit client-IP resolution"
+    );
 
     let db = db::init_db(&cfg.db_path).await.context("init db")?;
     {
@@ -83,7 +102,10 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/auth/verify", post(api::auth_verify_handler))
         .route("/api/sync", post(api::sync_handler))
         .route("/api/lookup", post(api::lookup_handler))
-        .route("/api/lookup-by-sequence", post(api::lookup_by_sequence_handler))
+        .route(
+            "/api/lookup-by-sequence",
+            post(api::lookup_by_sequence_handler),
+        )
         .route("/api/lookup-prefix", post(api::lookup_prefix_handler))
         .route("/api/kanji", post(api::kanji_handler))
         .route("/api/examples", post(api::examples_handler))

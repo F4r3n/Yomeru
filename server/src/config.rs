@@ -1,9 +1,17 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
+
+use crate::client_ip::TrustProxy;
 
 pub struct Config {
     pub port: u16,
     pub db_path: String,
     pub data_dir: String,
+    /// Which peers may set the client address via forwarding headers.
+    /// `YOMERU_TRUST_PROXY` = `none` | `private` (default) | `all`.
+    pub trust_proxy: TrustProxy,
+    /// Number of trusted proxies in front of the server. Used to index
+    /// `X-Forwarded-For` from the right. `YOMERU_TRUSTED_PROXY_HOPS`, default 1.
+    pub proxy_hops: usize,
     pub smtp_host: String,
     pub smtp_port: u16,
     pub smtp_from: String,
@@ -50,6 +58,23 @@ impl Config {
             }
         }
 
+        // Unparseable values are a misconfiguration that would silently weaken
+        // (or break) rate limiting, so fail loudly rather than guessing.
+        let trust_proxy = match resolve(&args, "--trust-proxy", "YOMERU_TRUST_PROXY") {
+            Some(s) => match TrustProxy::parse(&s) {
+                Some(t) => t,
+                None => bail!("invalid trust-proxy {s:?} (expected none, private, or all)"),
+            },
+            None => TrustProxy::Private,
+        };
+        let proxy_hops = match resolve(&args, "--proxy-hops", "YOMERU_TRUSTED_PROXY_HOPS") {
+            Some(s) => match s.parse::<usize>() {
+                Ok(n) if n >= 1 => n,
+                _ => bail!("invalid proxy-hops {s:?} (expected a positive integer)"),
+            },
+            None => 1,
+        };
+
         Ok(Self {
             port: resolve(&args, "--port", "YOMERU_PORT")
                 .and_then(|s| s.parse().ok())
@@ -58,6 +83,8 @@ impl Config {
                 .unwrap_or_else(|| "./yomeru.db".into()),
             data_dir: resolve(&args, "--data-dir", "YOMERU_DATA_DIR")
                 .unwrap_or_else(|| "./data".into()),
+            trust_proxy,
+            proxy_hops,
             smtp_host: smtp_host.unwrap_or_default(),
             smtp_port: resolve(&args, "--smtp-port", "YOMERU_SMTP_PORT")
                 .and_then(|s| s.parse().ok())

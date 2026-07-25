@@ -107,9 +107,14 @@ fn db_err(op: &'static str, e: anyhow::Error) -> Response {
 pub async fn auth_request_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
     Json(body): Json<AuthRequestBody>,
 ) -> Result<Response, Response> {
-    if state.limiter.check_key(&addr.ip()).is_err() {
+    if state
+        .limiter
+        .check_key(&state.client_ip(addr, &headers))
+        .is_err()
+    {
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
 
@@ -153,9 +158,14 @@ pub async fn auth_request_handler(
 pub async fn auth_verify_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
     Json(body): Json<VerifyBody>,
 ) -> Result<Response, Response> {
-    if state.limiter.check_key(&addr.ip()).is_err() {
+    if state
+        .limiter
+        .check_key(&state.client_ip(addr, &headers))
+        .is_err()
+    {
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
 
@@ -191,7 +201,11 @@ pub async fn sync_handler(
     headers: HeaderMap,
     Json(body): Json<SyncBody>,
 ) -> Result<Response, Response> {
-    if state.limiter.check_key(&addr.ip()).is_err() {
+    if state
+        .limiter
+        .check_key(&state.client_ip(addr, &headers))
+        .is_err()
+    {
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
 
@@ -325,9 +339,14 @@ pub struct ExamplesResponse {
 pub async fn lookup_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
     Json(body): Json<LookupBody>,
 ) -> Result<Response, Response> {
-    if state.lookup_limiter.check_key(&addr.ip()).is_err() {
+    if state
+        .lookup_limiter
+        .check_key(&state.client_ip(addr, &headers))
+        .is_err()
+    {
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let words = body.words;
@@ -341,9 +360,14 @@ pub async fn lookup_handler(
 pub async fn lookup_by_sequence_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
     Json(body): Json<LookupBySequenceBody>,
 ) -> Result<Response, Response> {
-    if state.lookup_limiter.check_key(&addr.ip()).is_err() {
+    if state
+        .lookup_limiter
+        .check_key(&state.client_ip(addr, &headers))
+        .is_err()
+    {
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let sequences = body.sequences;
@@ -360,9 +384,14 @@ pub async fn lookup_by_sequence_handler(
 pub async fn lookup_prefix_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
     Json(body): Json<LookupPrefixBody>,
 ) -> Result<Response, Response> {
-    if state.lookup_limiter.check_key(&addr.ip()).is_err() {
+    if state
+        .lookup_limiter
+        .check_key(&state.client_ip(addr, &headers))
+        .is_err()
+    {
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let text = body.text;
@@ -377,9 +406,14 @@ pub async fn lookup_prefix_handler(
 pub async fn kanji_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
     Json(body): Json<KanjiBody>,
 ) -> Result<Response, Response> {
-    if state.lookup_limiter.check_key(&addr.ip()).is_err() {
+    if state
+        .lookup_limiter
+        .check_key(&state.client_ip(addr, &headers))
+        .is_err()
+    {
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let word = body.word;
@@ -393,9 +427,14 @@ pub async fn kanji_handler(
 pub async fn examples_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
     Json(body): Json<ExamplesBody>,
 ) -> Result<Response, Response> {
-    if state.lookup_limiter.check_key(&addr.ip()).is_err() {
+    if state
+        .lookup_limiter
+        .check_key(&state.client_ip(addr, &headers))
+        .is_err()
+    {
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let word = body.word;
@@ -489,6 +528,8 @@ mod tests {
             port: 0,
             db_path: String::new(),
             data_dir: String::new(),
+            trust_proxy: crate::client_ip::TrustProxy::Private,
+            proxy_hops: 1,
             smtp_host: get("YOMERU_SMTP_HOST").expect("YOMERU_SMTP_HOST missing"),
             smtp_port: get("YOMERU_SMTP_PORT")
                 .and_then(|s| s.parse().ok())

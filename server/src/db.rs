@@ -620,8 +620,14 @@ mod tests {
         bob_card.sequence = 1_586_270;
         upsert_cards(&db, ALICE, &[alice_card]).await.unwrap();
         upsert_cards(&db, BOB, &[bob_card]).await.unwrap();
-        assert_eq!(get_all_cards(&db, ALICE).await.unwrap()[0].sequence, 1_467_640);
-        assert_eq!(get_all_cards(&db, BOB).await.unwrap()[0].sequence, 1_586_270);
+        assert_eq!(
+            get_all_cards(&db, ALICE).await.unwrap()[0].sequence,
+            1_467_640
+        );
+        assert_eq!(
+            get_all_cards(&db, BOB).await.unwrap()[0].sequence,
+            1_586_270
+        );
     }
 
     #[tokio::test]
@@ -642,17 +648,21 @@ mod tests {
         // Within the anti-spam floor while the code is still valid: blocked.
         assert!(!store_otp(&db, ALICE, "222222", now + 5_000).await.unwrap());
         // After the floor but code still valid: allowed (rotates the code).
-        assert!(store_otp(&db, ALICE, "333333", now + OTP_RESEND_FLOOR_MS)
-            .await
-            .unwrap());
+        assert!(
+            store_otp(&db, ALICE, "333333", now + OTP_RESEND_FLOOR_MS)
+                .await
+                .unwrap()
+        );
         // Once the latest code has expired, a resend is always allowed even
         // immediately — the user is never stranded by the TTL.
         let expired_at = now + OTP_RESEND_FLOOR_MS + OTP_TTL_MS + 1;
         assert!(store_otp(&db, ALICE, "444444", expired_at).await.unwrap());
         // And the freshly issued code verifies.
-        assert!(verify_otp(&db, ALICE, "444444", expired_at + 1_000)
-            .await
-            .unwrap());
+        assert!(
+            verify_otp(&db, ALICE, "444444", expired_at + 1_000)
+                .await
+                .unwrap()
+        );
     }
 
     #[tokio::test]
