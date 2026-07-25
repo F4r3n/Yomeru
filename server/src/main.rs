@@ -64,7 +64,11 @@ async fn main() -> anyhow::Result<()> {
 
     let cfg = Arc::new(Config::from_args()?);
     if cfg.dev_mode {
-        warn!("DEV MODE — SMTP skipped, /api/sync auth disabled");
+        warn!(
+            bind = %cfg.bind,
+            "DEV MODE — /api/auth/request issues a session token for ANY email \
+             with no OTP. Never enable this on a public deployment."
+        );
     }
     info!(
         trust_proxy = ?cfg.trust_proxy,
@@ -136,7 +140,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(CorsLayer::permissive())
         .with_state(state);
 
-    let addr = format!("0.0.0.0:{}", cfg.port);
+    let addr = format!("{}:{}", cfg.bind, cfg.port);
     info!(%addr, "listening");
 
     let listener = tokio::net::TcpListener::bind(&addr)

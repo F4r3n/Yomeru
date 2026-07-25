@@ -4,6 +4,11 @@ use crate::client_ip::TrustProxy;
 
 pub struct Config {
     pub port: u16,
+    /// Address to listen on. Defaults to `0.0.0.0`, but to `127.0.0.1` in dev
+    /// mode — dev mode hands out session tokens without any verification, so it
+    /// must not be reachable off-box by accident. Override with `YOMERU_BIND`
+    /// (needed to reach a dev server from a phone on the LAN).
+    pub bind: String,
     pub db_path: String,
     pub data_dir: String,
     /// Which peers may set the client address via forwarding headers.
@@ -75,7 +80,21 @@ impl Config {
             None => 1,
         };
 
+        // Dev mode issues session tokens for any address with no OTP, so the
+        // safe default there is loopback-only: a stray YOMERU_DEV_MODE=1 in a
+        // deployed environment then fails closed instead of exposing an open
+        // door. An explicit --bind/YOMERU_BIND still wins, so LAN testing
+        // against a phone stays possible — it just has to be deliberate.
+        let bind = resolve(&args, "--bind", "YOMERU_BIND").unwrap_or_else(|| {
+            if dev_mode {
+                "127.0.0.1".into()
+            } else {
+                "0.0.0.0".into()
+            }
+        });
+
         Ok(Self {
+            bind,
             port: resolve(&args, "--port", "YOMERU_PORT")
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(8080),

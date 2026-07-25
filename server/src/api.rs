@@ -526,6 +526,7 @@ mod tests {
 
         let cfg = Config {
             port: 0,
+            bind: "127.0.0.1".into(),
             db_path: String::new(),
             data_dir: String::new(),
             trust_proxy: crate::client_ip::TrustProxy::Private,
