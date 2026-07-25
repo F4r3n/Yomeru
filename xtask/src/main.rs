@@ -184,6 +184,14 @@ fn main() -> Result<()> {
                     "yomeru-extension",
                 ])
                 .current_dir(&root))?;
+
+            // The `full` feature gates real code paths (re_restr handling and
+            // the disambiguation table that depends on it) which the default
+            // build compiles out entirely, so a default-only run reports green
+            // without ever touching them.
+            run(Command::new("cargo")
+                .args(["test", "-p", "jmdict-build", "--features", "full"])
+                .current_dir(&root))?;
         }
     }
 
@@ -425,7 +433,11 @@ fn build_js(root: &Path) -> Result<()> {
 fn build_extension_wasm(root: &Path, profile: &str) -> Result<()> {
     let out_dir = root.join("extension/_generated/yomeru-extension");
     let crate_dir = root.join("app/extension");
-    let profile_flag = if profile == "release" { "--release" } else { "--dev" };
+    let profile_flag = if profile == "release" {
+        "--release"
+    } else {
+        "--dev"
+    };
     run(Command::new("wasm-pack")
         .args([
             "build",
@@ -484,10 +496,18 @@ fn build_dicts(root: &Path, input: Option<PathBuf>) -> Result<()> {
     build_dict(root, &xml_path, &root.join("extension/data/jmdict.bin"))?;
     eprintln!("Downloading KANJIDIC2...");
     let kanjidic_xml = download_kanjidic(root)?;
-    build_kanjidic(root, &kanjidic_xml, &root.join("extension/data/kanjidic.bin"))?;
+    build_kanjidic(
+        root,
+        &kanjidic_xml,
+        &root.join("extension/data/kanjidic.bin"),
+    )?;
     eprintln!("Downloading example sentences...");
     let examples_utf = download_examples(root)?;
-    build_examples(root, &examples_utf, &root.join("extension/data/examples.bin"))?;
+    build_examples(
+        root,
+        &examples_utf,
+        &root.join("extension/data/examples.bin"),
+    )?;
     Ok(())
 }
 

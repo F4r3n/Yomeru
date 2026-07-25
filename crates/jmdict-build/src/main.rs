@@ -2,6 +2,9 @@
 // scanners in `parser` use bounds-guarded indexing on the input XML buffer.
 #![allow(clippy::print_stderr, clippy::indexing_slicing)]
 
+// The disambiguation table needs `re_restr`, which only exists on
+// `ReadingElement` under the `full` feature. See `disambig`'s module docs.
+#[cfg(feature = "full")]
 mod disambig;
 mod indexer;
 mod parser;
@@ -22,11 +25,14 @@ struct Args {
     #[arg(short, long, default_value = "extension/data/jmdict.bin")]
     output: PathBuf,
 
-    /// Output path for the build-only `(surface, reading) -> ent_seq` table
-    /// consumed by examples-generator. Lives under target/ since it is a build
-    /// intermediate — never shipped to the extension.
-    #[arg(long, default_value = "target/disambig.bin")]
-    disambig_output: PathBuf,
+    /// Also emit the build-only `(surface, reading) -> ent_seq` table consumed
+    /// by examples-generator, at this path (conventionally under target/, since
+    /// it is a build intermediate never shipped to the extension).
+    ///
+    /// Opt-in: the ordinary dictionary build has no use for it, and producing
+    /// it correctly requires `--features full`.
+    #[arg(long)]
+    disambig_output: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -45,15 +51,30 @@ fn main() -> Result<()> {
     let size = std::fs::metadata(&args.output)?.len();
     eprintln!("Done. Output size: {:.1} MB", size as f64 / 1_048_576.0);
 
-    eprintln!("Building disambiguation table -> {:?}...", args.disambig_output);
-    let table = disambig::build_disambig(&entries);
-    disambig::write_disambig(&table, &args.disambig_output)?;
-    let dsize = std::fs::metadata(&args.disambig_output)?.len();
-    eprintln!(
-        "Done. {} (surface, reading) keys, {:.1} MB",
-        table.len(),
-        dsize as f64 / 1_048_576.0
-    );
+    if let Some(disambig_path) = &args.disambig_output {
+        #[cfg(feature = "full")]
+        {
+            eprintln!("Building disambiguation table -> {disambig_path:?}...");
+            let table = disambig::build_disambig(&entries);
+            disambig::write_disambig(&table, disambig_path)?;
+            let dsize = std::fs::metadata(disambig_path)?.len();
+            eprintln!(
+                "Done. {} (surface, reading) keys, {:.1} MB",
+                table.len(),
+                dsize as f64 / 1_048_576.0
+            );
+        }
+        #[cfg(not(feature = "full"))]
+        {
+            let _ = disambig_path;
+            anyhow::bail!(
+                "--disambig-output requires --features full: without it JMdict's \
+                 re_restr data is not parsed, so every reading would be paired with \
+                 every kanji form and the table would map real lookups to the wrong \
+                 ent_seq. Rebuild with `cargo run -p jmdict-build --features full`."
+            );
+        }
+    }
 
     Ok(())
 }

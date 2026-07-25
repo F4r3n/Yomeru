@@ -231,7 +231,7 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                             sense.glosses.push(Gloss::new(
                                 text,
                                 cfg_select! {
-                                feature = "full" => b.pending_gtype.clone().map(Into::into),
+                                feature = "full" => b.pending_gtype.clone(),
                                 _=> None
                                 },
                             ));

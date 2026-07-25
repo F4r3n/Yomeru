@@ -10,6 +10,14 @@
 //! reading: lindera resolves e.g. 辛い → からい vs つらい, and that reading
 //! selects the right sequence. The surface is the kanji form (or, for kana-only
 //! words, the reading itself, since the base form lindera returns is kana).
+//!
+//! Requires the `full` feature: pairing a reading with the kanji forms it
+//! actually applies to needs JMdict's `re_restr` data, which only exists on
+//! `ReadingElement` under `full`. Without it every reading would be paired with
+//! every kanji form, so an entry carrying several of each would emit keys JMdict
+//! says are invalid — and those spurious keys resolve to the wrong sequence,
+//! which is the exact failure this table exists to prevent. `main` refuses to
+//! emit the table rather than write a plausible-looking wrong one.
 
 use anyhow::Result;
 use jmdict_types::{ReadingElement, WordEntry};
@@ -58,19 +66,11 @@ fn push_unique(map: &mut BTreeMap<(String, String), Vec<u32>>, key: (String, Str
     }
 }
 
-/// Whether a reading applies to a given kanji form. With JMdict's `re_restr`
-/// data (the `full` feature) a reading may be restricted to specific kanji;
-/// without it we conservatively pair every reading with every kanji form.
+/// Whether a reading applies to a given kanji form, per JMdict's `re_restr`:
+/// an empty restriction list means the reading applies to every kanji form,
+/// otherwise only to the ones listed.
 fn reading_applies_to(reading: &ReadingElement, kanji: &str) -> bool {
-    #[cfg(feature = "full")]
-    {
-        reading.restricted_to.is_empty() || reading.restricted_to.iter().any(|k| k == kanji)
-    }
-    #[cfg(not(feature = "full"))]
-    {
-        let _ = (reading, kanji);
-        true
-    }
+    reading.restricted_to.is_empty() || reading.restricted_to.iter().any(|k| k == kanji)
 }
 
 /// Binary format:
@@ -115,6 +115,24 @@ mod tests {
         }
     }
 
+    /// One entry with several kanji forms and readings, where each reading is
+    /// restricted to a subset of the kanji — the shape `re_restr` exists for.
+    fn restricted_entry(seq: u32, kanji: &[&str], readings: &[(&str, &[&str])]) -> WordEntry {
+        WordEntry {
+            sequence: seq,
+            kanji_forms: kanji.iter().map(|k| KanjiElement::from_text(*k)).collect(),
+            reading_forms: readings
+                .iter()
+                .map(|(r, restr)| {
+                    let mut re = ReadingElement::from_reading(*r);
+                    re.restricted_to = restr.iter().map(|k| (*k).to_string()).collect();
+                    re
+                })
+                .collect(),
+            senses: vec![],
+        }
+    }
+
     fn lookup<'a>(table: &'a DisambigTable, surface: &str, reading: &str) -> Option<&'a [u32]> {
         let key = (surface.to_string(), reading.to_string());
         table
@@ -140,7 +158,10 @@ mod tests {
     fn kana_only_word_keys_on_reading() {
         let entries = vec![entry(3000, &[], &["きれい"])];
         let table = build_disambig(&entries);
-        assert_eq!(lookup(&table, "きれい", "きれい"), Some([3000u32].as_slice()));
+        assert_eq!(
+            lookup(&table, "きれい", "きれい"),
+            Some([3000u32].as_slice())
+        );
     }
 
     #[test]
@@ -152,7 +173,56 @@ mod tests {
         ];
         let table = build_disambig(&entries);
         let keys: Vec<&(String, String)> = table.iter().map(|(k, _)| k).collect();
-        assert!(keys.windows(2).all(|w| w[0] <= w[1]), "table must be sorted");
+        assert!(
+            keys.windows(2).all(|w| w[0] <= w[1]),
+            "table must be sorted"
+        );
+    }
+
+    #[test]
+    fn respects_re_restr_within_one_entry() {
+        // The case the earlier tests all missed: a single entry with two kanji
+        // forms and two readings, each reading valid for only one of them.
+        // Pairing every reading with every kanji would emit 4 keys instead of
+        // 2, and the two extra ones are combinations JMdict says don't exist.
+        let entries = vec![restricted_entry(
+            1000,
+            &["日本人", "日本語"],
+            &[("にほんじん", &["日本人"]), ("にほんご", &["日本語"])],
+        )];
+        let table = build_disambig(&entries);
+
+        assert_eq!(
+            lookup(&table, "日本人", "にほんじん"),
+            Some([1000u32].as_slice())
+        );
+        assert_eq!(
+            lookup(&table, "日本語", "にほんご"),
+            Some([1000u32].as_slice())
+        );
+        assert_eq!(
+            lookup(&table, "日本人", "にほんご"),
+            None,
+            "reading restricted away from this kanji form must not be keyed"
+        );
+        assert_eq!(lookup(&table, "日本語", "にほんじん"), None);
+        assert_eq!(table.len(), 2, "cross product would give 4 keys");
+    }
+
+    #[test]
+    fn unrestricted_reading_pairs_with_every_kanji_form() {
+        // An empty re_restr list means "applies to all", so the cross product
+        // is correct here and must not be over-filtered.
+        let entries = vec![entry(2000, &["取り消し", "取消し"], &["とりけし"])];
+        let table = build_disambig(&entries);
+        assert_eq!(
+            lookup(&table, "取り消し", "とりけし"),
+            Some([2000u32].as_slice())
+        );
+        assert_eq!(
+            lookup(&table, "取消し", "とりけし"),
+            Some([2000u32].as_slice())
+        );
     }
 
     #[test]
@@ -164,6 +234,9 @@ mod tests {
             entry(50, &["生"], &["せい"]), // duplicate sequence must fold
         ];
         let table = build_disambig(&entries);
-        assert_eq!(lookup(&table, "生", "せい"), Some([40u32, 50u32].as_slice()));
+        assert_eq!(
+            lookup(&table, "生", "せい"),
+            Some([40u32, 50u32].as_slice())
+        );
     }
 }
