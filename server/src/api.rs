@@ -274,6 +274,30 @@ pub async fn sync_handler(
 
 // ---- Lookup endpoints (no auth, rate-limited by lookup_limiter) ----------
 
+// These endpoints are unauthenticated, so the request body is the one input an
+// anonymous caller fully controls. Axum's 2 MB default body cap still allows
+// tens of thousands of entries per request, and the response is far larger than
+// the request that triggers it — so bound the batch explicitly.
+//
+// The limits are set above real client usage rather than at it: word_list
+// resolves an entire deck in one call, so the sequence cap has to clear a large
+// collection. Over-limit is a 400 rather than a truncation, because
+// `lookup`/`lookup_by_sequence` results are positionally aligned with the
+// request and a short response would silently misalign the client's mapping.
+const MAX_LOOKUP_WORDS: usize = 1_000;
+const MAX_LOOKUP_SEQUENCES: usize = 20_000;
+const MAX_QUERY_CHARS: usize = 256;
+
+fn too_large(what: &str, got: usize, max: usize) -> Response {
+    (
+        StatusCode::BAD_REQUEST,
+        Json(serde_json::json!({
+            "error": format!("{what} too large: {got} (max {max})")
+        })),
+    )
+        .into_response()
+}
+
 #[derive(Deserialize)]
 pub struct LookupBody {
     pub words: Vec<String>,
@@ -350,6 +374,9 @@ pub async fn lookup_handler(
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let words = body.words;
+    if words.len() > MAX_LOOKUP_WORDS {
+        return Err(too_large("words", words.len(), MAX_LOOKUP_WORDS));
+    }
     let results = run_blocking("lookup", move || {
         Ok(words.iter().map(|w| jmdict_core::lookup(w)).collect())
     })
@@ -371,6 +398,13 @@ pub async fn lookup_by_sequence_handler(
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let sequences = body.sequences;
+    if sequences.len() > MAX_LOOKUP_SEQUENCES {
+        return Err(too_large(
+            "sequences",
+            sequences.len(),
+            MAX_LOOKUP_SEQUENCES,
+        ));
+    }
     let results = run_blocking("lookup_by_sequence", move || {
         Ok(sequences
             .iter()
@@ -395,6 +429,9 @@ pub async fn lookup_prefix_handler(
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let text = body.text;
+    if text.chars().count() > MAX_QUERY_CHARS {
+        return Err(too_large("text", text.chars().count(), MAX_QUERY_CHARS));
+    }
     let max = body.max;
     let results = run_blocking("lookup_prefix", move || {
         Ok(jmdict_core::lookup_prefix(&text, max))
@@ -417,6 +454,9 @@ pub async fn kanji_handler(
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let word = body.word;
+    if word.chars().count() > MAX_QUERY_CHARS {
+        return Err(too_large("word", word.chars().count(), MAX_QUERY_CHARS));
+    }
     let entries = run_blocking("kanji_lookup", move || {
         Ok(kanjidic_core::lookup_many(&word))
     })
@@ -438,6 +478,9 @@ pub async fn examples_handler(
         return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
     }
     let word = body.word;
+    if word.chars().count() > MAX_QUERY_CHARS {
+        return Err(too_large("word", word.chars().count(), MAX_QUERY_CHARS));
+    }
     let max = body.max as usize;
     let entries = run_blocking("examples_lookup", move || {
         Ok(examples_core::lookup(&word, max))
