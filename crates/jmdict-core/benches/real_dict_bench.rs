@@ -17,8 +17,10 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use std::sync::OnceLock;
 
-const DEFAULT_BIN_PATH: &str =
-    concat!(env!("CARGO_MANIFEST_DIR"), "/../../extension/data/jmdict.bin");
+const DEFAULT_BIN_PATH: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../extension/data/jmdict.bin"
+);
 
 /// The dictionary binary must be built with the **same** `jmdict-types/full`
 /// setting as this bench's reader (benches enable `full` via the dev-dep), or

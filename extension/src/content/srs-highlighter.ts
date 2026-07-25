@@ -56,6 +56,8 @@ async function rebuildHighlights(): Promise<void> {
         number,
         number,
       ][];
+      // find_in_text returns UTF-16 code-unit offsets, which is exactly what
+      // Range wants for a text node — do not convert these to char indices.
       for (const [start, len] of matches ?? []) {
         const r = new Range();
         r.setStart(node, start);

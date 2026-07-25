@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Context};
+use anyhow::{Context, anyhow, bail};
 use fst::Map;
 use jmdict_types::ArchivedWordEntry;
 use once_cell::sync::OnceCell;
@@ -116,11 +116,12 @@ fn parse_binary<'a>(bytes: &'a [u8]) -> anyhow::Result<DictionaryInner> {
             .with_context(|| format!("dictionary binary truncated reading length at {pos}"))?;
         Ok(u32::from_le_bytes(raw.try_into()?) as usize)
     };
-    let read_slice = |bytes: &'a [u8], pos: usize, len: usize, what: &str| -> anyhow::Result<&'a [u8]> {
-        bytes.get(pos..pos + len).with_context(|| {
-            format!("dictionary binary truncated reading {what} ({len} bytes at {pos})")
-        })
-    };
+    let read_slice =
+        |bytes: &'a [u8], pos: usize, len: usize, what: &str| -> anyhow::Result<&'a [u8]> {
+            bytes.get(pos..pos + len).with_context(|| {
+                format!("dictionary binary truncated reading {what} ({len} bytes at {pos})")
+            })
+        };
 
     let fst_len = read_u32(bytes, pos)?;
     pos += 4;

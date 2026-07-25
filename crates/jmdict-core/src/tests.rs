@@ -316,3 +316,72 @@ fn prefix_search_respects_max_results() {
     let entries = lookup_prefix("", 1);
     assert!(entries.len() <= 1);
 }
+
+// ---- find_in_text -------------------------------------------------------
+
+fn known(words: &[&str]) -> std::collections::HashSet<String> {
+    words.iter().map(|w| (*w).to_string()).collect()
+}
+
+#[test]
+fn find_in_text_locates_a_known_word() {
+    ensure_test_dict();
+    let hits = crate::find_in_text("私は飲む", &known(&["飲む"]));
+    // "私は" is 2 UTF-16 units, "飲む" is 2 more.
+    assert_eq!(hits, vec![[2, 2]]);
+}
+
+#[test]
+fn find_in_text_ignores_unknown_words() {
+    ensure_test_dict();
+    assert!(crate::find_in_text("私は飲む", &known(&["食べる"])).is_empty());
+}
+
+#[test]
+fn find_in_text_empty_known_set_matches_nothing() {
+    ensure_test_dict();
+    assert!(crate::find_in_text("飲む", &known(&[])).is_empty());
+}
+
+#[test]
+fn find_in_text_matches_inflected_form() {
+    ensure_test_dict();
+    // 飲んで deinflects to 飲む; the highlight must cover the surface form.
+    let hits = crate::find_in_text("飲んでいる", &known(&["飲む"]));
+    assert_eq!(hits.len(), 1);
+    assert_eq!(hits[0][0], 0);
+    assert!(hits[0][1] >= 3, "should span the inflected surface form");
+}
+
+#[test]
+fn find_in_text_offsets_are_utf16_not_chars() {
+    // The regression this guards: DOM Range offsets are UTF-16 code units, so
+    // an astral-plane char ahead of the match must shift it by 2, not 1.
+    // 𝄞 (U+1D11E) is one char but two UTF-16 units.
+    ensure_test_dict();
+    let hits = crate::find_in_text("𝄞飲む", &known(&["飲む"]));
+    assert_eq!(hits, vec![[2, 2]], "char index would wrongly report 1");
+}
+
+#[test]
+fn find_in_text_counts_astral_chars_inside_the_run() {
+    ensure_test_dict();
+    let hits = crate::find_in_text("𝄞𝄞食べる", &known(&["食べる"]));
+    assert_eq!(hits, vec![[4, 3]]);
+}
+
+#[test]
+fn find_in_text_finds_multiple_occurrences() {
+    ensure_test_dict();
+    let hits = crate::find_in_text("飲む、飲む", &known(&["飲む"]));
+    assert_eq!(hits, vec![[0, 2], [3, 2]]);
+}
+
+#[test]
+fn find_in_text_advances_past_a_match() {
+    // A match must not be re-scanned from its interior, which would emit
+    // overlapping ranges.
+    ensure_test_dict();
+    let hits = crate::find_in_text("美しい", &known(&["美しい"]));
+    assert_eq!(hits, vec![[0, 3]]);
+}

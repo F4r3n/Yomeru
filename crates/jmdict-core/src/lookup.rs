@@ -87,9 +87,7 @@ pub fn lookup_prefix(text: &str, max_results: u8) -> Vec<&'static ArchivedWordEn
     let mut entries: Vec<&'static ArchivedWordEntry> = Vec::new();
 
     // Exact match first, then FST prefix hits.
-    let exact = fst_get(text)
-        .and_then(get_entry_group)
-        .unwrap_or_default();
+    let exact = fst_get(text).and_then(get_entry_group).unwrap_or_default();
     for i in exact {
         if seen.insert(i)
             && let Some(e) = get_entry(i)
@@ -119,46 +117,71 @@ pub fn lookup_prefix(text: &str, max_results: u8) -> Vec<&'static ArchivedWordEn
     entries
 }
 
+/// Longest surface form (in chars) considered when scanning running text.
+const MAX_SCAN_CHARS: usize = 20;
+
+/// The form a card is keyed on for display: first kanji form, else first
+/// reading. Mirrors what the client stores in its known-word set.
+fn preferred_headword(entry: &ArchivedWordEntry) -> &str {
+    entry
+        .kanji_forms
+        .first()
+        .map(|k| k.text.as_str())
+        .or_else(|| entry.reading_forms.first().map(|r| r.text.as_str()))
+        .unwrap_or("")
+}
+
 /// Scan `text` for all positions matching words in `known` (a set of headwords).
-/// Returns `[char_start, match_len_chars]` pairs. Non-Japanese chars are skipped;
-/// matched segments are advanced past to avoid double-counting.
+///
+/// Returns `[start, len]` pairs measured in **UTF-16 code units**, not chars or
+/// bytes. The sole consumer feeds these straight to `Range.setStart`/`setEnd`,
+/// and DOM offsets into a text node are UTF-16 — so a char index silently
+/// misaligns every highlight after the first astral-plane character on the page
+/// (emoji, or rare kanji like 𠮟 U+20B9F, which occupy two code units each).
+///
+/// Non-Japanese chars are skipped; matched segments are advanced past to avoid
+/// double-counting.
 pub fn find_in_text(text: &str, known: &HashSet<String>) -> Vec<[usize; 2]> {
     if known.is_empty() {
         return Vec::new();
     }
 
     let mut results: Vec<[usize; 2]> = Vec::new();
-    let mut iter = text.char_indices().enumerate().peekable();
+    let mut chars = text.char_indices().peekable();
+    let mut utf16_off = 0usize;
 
-    while let Some(&(ci, (byte_off, ch))) = iter.peek() {
+    while let Some((byte_off, ch)) = chars.peek().copied() {
         if !japanese_utils::is_japanese(ch) {
-            iter.next();
+            utf16_off += ch.len_utf16();
+            chars.next();
             continue;
         }
-        match lookup_longest_match(&text[byte_off..], 20) {
-            Some((entries, match_len)) => {
-                let hw = entries
-                    .first()
-                    .and_then(|e| {
-                        e.kanji_forms
-                            .first()
-                            .map(|k| k.text.as_str())
-                            .or_else(|| e.reading_forms.first().map(|r| r.text.as_str()))
-                    })
-                    .unwrap_or("");
-                if !hw.is_empty() && known.contains(hw) {
-                    results.push([ci, match_len]);
-                    for _ in 0..match_len {
-                        if iter.next().is_none() {
-                            break;
-                        }
+
+        // A lookup group can hold several entries; the card may be keyed on any
+        // one of them, so check them all rather than just the first.
+        let hit = lookup_longest_match(&text[byte_off..], MAX_SCAN_CHARS).filter(|(entries, _)| {
+            entries.iter().any(|e| {
+                let hw = preferred_headword(e);
+                !hw.is_empty() && known.contains(hw)
+            })
+        });
+
+        match hit {
+            Some((_, match_len)) => {
+                // Walk the matched chars, summing their UTF-16 width as we go.
+                let mut width = 0usize;
+                for _ in 0..match_len {
+                    match chars.next() {
+                        Some((_, c)) => width += c.len_utf16(),
+                        None => break,
                     }
-                } else {
-                    iter.next();
                 }
+                results.push([utf16_off, width]);
+                utf16_off += width;
             }
             None => {
-                iter.next();
+                utf16_off += ch.len_utf16();
+                chars.next();
             }
         }
     }

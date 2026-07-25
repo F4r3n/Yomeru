@@ -54,12 +54,14 @@ impl Dictionary {
     }
 
     /// Scan `text` for all positions matching words in `known` (a JS Array of strings).
-    /// Returns a JS array of `[charStart, matchLen]` pairs.
+    ///
+    /// Returns a JS array of `[start, len]` pairs in **UTF-16 code units**, so
+    /// they can be handed to `Range.setStart`/`setEnd` directly — DOM offsets
+    /// into a text node are UTF-16, and a char index would drift on any text
+    /// containing surrogate pairs.
     pub fn find_in_text(&self, text: &str, known: js_sys::Array) -> JsValue {
-        let known_set: std::collections::HashSet<String> = known
-            .iter()
-            .filter_map(|v| v.as_string())
-            .collect();
+        let known_set: std::collections::HashSet<String> =
+            known.iter().filter_map(|v| v.as_string()).collect();
         let results = jmdict_core::find_in_text(text, &known_set);
         serde_wasm_bindgen::to_value(&results)
             .unwrap_or_else(|_| JsValue::from(js_sys::Array::new()))
@@ -100,5 +102,8 @@ pub fn extract_japanese_run(text: &str, char_offset: usize) -> String {
 /// Returns true if the character (as a JS string of length 1) is Japanese.
 #[wasm_bindgen]
 pub fn is_japanese_str(s: &str) -> bool {
-    s.chars().next().map(japanese_utils::is_japanese).unwrap_or(false)
+    s.chars()
+        .next()
+        .map(japanese_utils::is_japanese)
+        .unwrap_or(false)
 }
