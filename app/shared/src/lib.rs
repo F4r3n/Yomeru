@@ -2,6 +2,7 @@ pub mod api;
 pub mod dict;
 pub mod idb;
 pub mod platform;
+pub mod romaji;
 pub mod settings;
 pub mod srs;
 pub mod sync;

@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 use jmdict_types::{PartOfSpeech, WordEntry};
 
 use crate::dict::{frequency_label, preferred_headword, primary_reading};
-use crate::types::CardStatus;
+use crate::types::{CardStatus, MAX_PRIORITY};
 
 pub fn pos_label(p: &PartOfSpeech) -> String {
     // Debug repr is "Adjective" / "AdjectiveNa" etc — readable enough for now.
@@ -20,6 +20,16 @@ pub fn EntryCard(
     on_reset: Option<EventHandler<u32>>,
     on_select: Option<EventHandler<()>>,
     #[props(default)] status: Option<CardStatus>,
+    /// Current priority score, for the Staging button's label. Irrelevant
+    /// once `status` is `Active` (priority is staging-only).
+    #[props(default)]
+    priority: u32,
+    /// True once the user has already clicked Add/+Priority for this word
+    /// during the current search — locks the button so a slow-to-land async
+    /// bump can't be re-triggered by an impatient double-click. Cleared by
+    /// the caller on the next search.
+    #[props(default)]
+    locked: bool,
 ) -> Element {
     let title = preferred_headword(&entry).to_string();
     let reading = primary_reading(&entry).to_string();
@@ -76,14 +86,30 @@ pub fn EntryCard(
                     } else if status == Some(CardStatus::Active) {
                         button { class: "success", disabled: true, "✓ Added" }
                     } else if status == Some(CardStatus::Staging) {
-                        button {
-                            class: "success",
-                            onclick: move |e| {
-                                e.stop_propagation();
-                                handler.call(on_add_for);
-                            },
-                            "☆ Staged · +Priority"
+                        if priority >= MAX_PRIORITY {
+                            button {
+                                class: "success",
+                                disabled: true,
+                                "★ Staged · Priority maxed ({MAX_PRIORITY})"
+                            }
+                        } else if locked {
+                            button {
+                                class: "success",
+                                disabled: true,
+                                "☆ Staged · +Priority (★{priority})"
+                            }
+                        } else {
+                            button {
+                                class: "success",
+                                onclick: move |e| {
+                                    e.stop_propagation();
+                                    handler.call(on_add_for);
+                                },
+                                "☆ Staged · +Priority (★{priority})"
+                            }
                         }
+                    } else if locked {
+                        button { class: "primary", disabled: true, "+ Add" }
                     } else {
                         button {
                             class: "primary",

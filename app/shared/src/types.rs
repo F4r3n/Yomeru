@@ -9,6 +9,10 @@ pub const MS_PER_DAY: f64 = 86_400_000.0;
 /// JMdict `sequence`.
 pub const CARDS_SCHEMA_VERSION: u64 = 2;
 
+/// Ceiling on [`SrsCard::priority`] — re-clicking "Add" on an already-staged
+/// word bumps it, but stops moving the needle past this.
+pub const MAX_PRIORITY: u32 = 10;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum CardDirection {

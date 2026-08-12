@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use dioxus::prelude::*;
 use gloo_storage::{LocalStorage, Storage};
@@ -9,6 +9,7 @@ use crate::app::Route;
 use crate::components::EntryCard;
 use crate::dict::{self, examples_for, kanji_for, primary_headword};
 use crate::idb::{bump_priority, get_cards_by_sequence, put_cards, reset_card};
+use crate::romaji::{is_romaji, romaji_to_hiragana};
 use crate::srs::now_ms;
 use crate::sync::schedule_sync;
 use crate::types::{CardDirection, CardStatus, SrsCard};
@@ -45,192 +46,15 @@ fn push_history(mut h: Vec<String>, term: &str) -> Vec<String> {
     h
 }
 
-fn is_romaji(s: &str) -> bool {
-    !s.is_empty() && s.chars().all(|c| c.is_ascii_alphabetic() || c == '-')
-}
-
-/// Hepburn romaji → hiragana. Mirrors `extension/src/options/romaji.ts`.
-fn romaji_to_hiragana(input: &str) -> String {
-    let s = input.to_lowercase();
-    let mut out = String::with_capacity(s.len()); // Pre-allocate to avoid re-allocations
-    let mut remainder = s.as_str();
-
-    while !remainder.is_empty() {
-        // 1. Handle double consonants (Sokuon 'っ')
-        let mut chars = remainder.chars();
-        if let (Some(c1), Some(c2)) = (chars.next(), chars.next())
-            && c1 != 'n'
-            && c1.is_ascii_alphabetic()
-            && !matches!(c1, 'a' | 'e' | 'i' | 'o' | 'u')
-            && c1 == c2
-        {
-            out.push('っ');
-            remainder = &remainder[c1.len_utf8()..];
-            continue;
-        }
-
-        // 2. Handle standalone 'n' (ん)
-        if remainder.starts_with('n') {
-            let next_char = remainder.chars().nth(1);
-            if next_char.is_none() || !matches!(next_char, Some('a' | 'e' | 'i' | 'o' | 'u' | 'y'))
-            {
-                out.push('ん');
-                remainder = &remainder[1..];
-                continue;
-            }
-        }
-
-        // 3. Match Romaji chunks (3, 2, or 1 chars) without allocating Strings
-        let mut matched = false;
-        // Check chunks by character count, mapping them to byte lengths
-        for char_len in [3, 2, 1] {
-            let byte_end = remainder
-                .char_indices()
-                .nth(char_len)
-                .map_or(remainder.len(), |(idx, _)| idx);
-            let chunk = &remainder[..byte_end];
-
-            if !chunk.is_empty()
-                && let Some(rep) = lookup_romaji(chunk)
-            {
-                out.push_str(rep);
-                remainder = &remainder[byte_end..];
-                matched = true;
-                break;
-            }
-
-            // If we've reached the end of the string, no need to try smaller lengths
-            if byte_end == remainder.len() && char_len > remainder.chars().count() {
-                continue;
-            }
-        }
-
-        // 4. Fallback for un-matched characters (punctuation, spaces, etc.)
-        if !matched && let Some(c) = remainder.chars().next() {
-            out.push(c);
-            remainder = &remainder[c.len_utf8()..];
-        }
-    }
-
-    out
-}
-
-fn lookup_romaji(c: &str) -> Option<&'static str> {
-    Some(match c {
-        "kya" => "きゃ",
-        "kyu" => "きゅ",
-        "kyo" => "きょ",
-        "sha" => "しゃ",
-        "shu" => "しゅ",
-        "sho" => "しょ",
-        "shi" => "し",
-        "cha" => "ちゃ",
-        "chu" => "ちゅ",
-        "cho" => "ちょ",
-        "chi" => "ち",
-        "tsu" => "つ",
-        "nya" => "にゃ",
-        "nyu" => "にゅ",
-        "nyo" => "にょ",
-        "hya" => "ひゃ",
-        "hyu" => "ひゅ",
-        "hyo" => "ひょ",
-        "mya" => "みゃ",
-        "myu" => "みゅ",
-        "myo" => "みょ",
-        "rya" => "りゃ",
-        "ryu" => "りゅ",
-        "ryo" => "りょ",
-        "gya" => "ぎゃ",
-        "gyu" => "ぎゅ",
-        "gyo" => "ぎょ",
-        "ja" => "じゃ",
-        "ju" => "じゅ",
-        "jo" => "じょ",
-        "ji" => "じ",
-        "jya" => "じゃ",
-        "jyu" => "じゅ",
-        "jyo" => "じょ",
-        "bya" => "びゃ",
-        "byu" => "びゅ",
-        "byo" => "びょ",
-        "pya" => "ぴゃ",
-        "pyu" => "ぴゅ",
-        "pyo" => "ぴょ",
-        "ka" => "か",
-        "ki" => "き",
-        "ku" => "く",
-        "ke" => "け",
-        "ko" => "こ",
-        "ga" => "が",
-        "gi" => "ぎ",
-        "gu" => "ぐ",
-        "ge" => "げ",
-        "go" => "ご",
-        "sa" => "さ",
-        "su" => "す",
-        "se" => "せ",
-        "so" => "そ",
-        "za" => "ざ",
-        "zu" => "ず",
-        "ze" => "ぜ",
-        "zo" => "ぞ",
-        "ta" => "た",
-        "te" => "て",
-        "to" => "と",
-        "da" => "だ",
-        "de" => "で",
-        "do" => "ど",
-        "na" => "な",
-        "ni" => "に",
-        "nu" => "ぬ",
-        "ne" => "ね",
-        "no" => "の",
-        "ha" => "は",
-        "hi" => "ひ",
-        "fu" => "ふ",
-        "he" => "へ",
-        "ho" => "ほ",
-        "ba" => "ば",
-        "bi" => "び",
-        "bu" => "ぶ",
-        "be" => "べ",
-        "bo" => "ぼ",
-        "pa" => "ぱ",
-        "pi" => "ぴ",
-        "pu" => "ぷ",
-        "pe" => "ぺ",
-        "po" => "ぽ",
-        "ma" => "ま",
-        "mi" => "み",
-        "mu" => "む",
-        "me" => "め",
-        "mo" => "も",
-        "ya" => "や",
-        "yu" => "ゆ",
-        "yo" => "よ",
-        "ra" => "ら",
-        "ri" => "り",
-        "ru" => "る",
-        "re" => "れ",
-        "ro" => "ろ",
-        "wa" => "わ",
-        "wo" => "を",
-        "a" => "あ",
-        "i" => "い",
-        "u" => "う",
-        "e" => "え",
-        "o" => "お",
-        "n" => "ん",
-        _ => return None,
-    })
-}
-
 /// Handles the two non-destructive "Add" outcomes: create fresh staging
 /// cards for a word not yet in the list, or bump the priority of one
 /// already staged. Never called when the word is `Active` — that's
 /// `on_reset`'s job instead.
-async fn add_or_bump(sequence: u32, mut card_status: Signal<HashMap<u32, CardStatus>>) {
+async fn add_or_bump(
+    sequence: u32,
+    mut card_status: Signal<HashMap<u32, CardStatus>>,
+    mut card_priority: Signal<HashMap<u32, u32>>,
+) {
     let existing = match get_cards_by_sequence(sequence).await {
         Ok(e) => e,
         Err(e) => {
@@ -249,12 +73,23 @@ async fn add_or_bump(sequence: u32, mut card_status: Signal<HashMap<u32, CardSta
             return;
         }
         schedule_sync();
+        card_priority.with_mut(|m| {
+            m.insert(sequence, 0);
+        });
     } else if !existing.iter().any(|c| matches!(c.status, CardStatus::Active)) {
         if let Err(e) = bump_priority(sequence).await {
             warn!("bump_priority(seq={sequence}) failed: {e}");
             return;
         }
         schedule_sync();
+        // Re-fetch rather than compute locally so the displayed value always
+        // matches what `bump_priority`'s cap actually wrote.
+        let refreshed = get_cards_by_sequence(sequence).await.unwrap_or_default();
+        if let Some(p) = refreshed.iter().map(|c| c.priority).max() {
+            card_priority.with_mut(|m| {
+                m.insert(sequence, p);
+            });
+        }
     }
     card_status.with_mut(|m| {
         m.insert(sequence, CardStatus::Staging);
@@ -320,6 +155,11 @@ fn LookupListPane() -> Element {
     let mut searched = use_signal(|| false);
     let mut load_err = use_signal(|| Option::<String>::None);
     let mut history = use_signal(load_history);
+    let mut card_priority = use_signal(HashMap::<u32, u32>::new);
+    // Sequences whose Add/+Priority button was already clicked during the
+    // current search — cleared on the next search so the button can't be
+    // spammed while the async bump/create is in flight.
+    let mut locked = use_signal(HashSet::<u32>::new);
 
     // Inline-expansion state — kanji + examples for the URL's selected word.
     let mut kanji_data = use_signal(Vec::<kanjidic_types::KanjiEntry>::new);
@@ -390,6 +230,7 @@ fn LookupListPane() -> Element {
                 history.set(next);
             }
             let mut statuses: HashMap<u32, CardStatus> = HashMap::new();
+            let mut priorities: HashMap<u32, u32> = HashMap::new();
 
             //TODO: for each result we open IDB to see if the card exists.
             // It's slow, need to do it on batch
@@ -398,8 +239,15 @@ fn LookupListPane() -> Element {
                 if let Some(s) = status_of(&siblings) {
                     statuses.insert(e.sequence, s);
                 }
+                if let Some(p) = siblings.iter().map(|c| c.priority).max() {
+                    priorities.insert(e.sequence, p);
+                }
             }
             card_status.set(statuses);
+            card_priority.set(priorities);
+            // A new set of results invalidates any button lock from the
+            // previous search.
+            locked.set(HashSet::new());
             let single_word = if results.len() == 1 {
                 results.first().map(|v| primary_headword(v).to_string())
             } else {
@@ -448,7 +296,10 @@ fn LookupListPane() -> Element {
     };
 
     let on_add = move |sequence: u32| {
-        spawn(async move { add_or_bump(sequence, card_status).await });
+        locked.with_mut(|s| {
+            s.insert(sequence);
+        });
+        spawn(async move { add_or_bump(sequence, card_status, card_priority).await });
     };
 
     let on_reset = move |sequence: u32| {
@@ -524,6 +375,8 @@ fn LookupListPane() -> Element {
                     {
                         let head = primary_headword(entry).to_string();
                         let status = card_status.read().get(&entry.sequence).copied();
+                        let priority = card_priority.read().get(&entry.sequence).copied().unwrap_or(0);
+                        let is_locked = locked.read().contains(&entry.sequence);
                         let expanded = selected_word.as_deref() == Some(&head);
                         let head_for_select = head.clone();
                         let head_for_close = head.clone();
@@ -546,6 +399,8 @@ fn LookupListPane() -> Element {
                                 on_reset: Some(EventHandler::new(on_reset)),
                                 on_select,
                                 status,
+                                priority,
+                                locked: is_locked,
                             }
                             if expanded {
                                 ExpansionPanel {
@@ -691,112 +546,5 @@ fn ExampleJp(sentence: String, word: String) -> Element {
         }
     } else {
         rsx! { "{sentence}" }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn empty_input_returns_empty() {
-        assert_eq!(romaji_to_hiragana(""), "");
-    }
-
-    #[test]
-    fn single_vowels_map() {
-        assert_eq!(romaji_to_hiragana("a"), "あ");
-        assert_eq!(romaji_to_hiragana("i"), "い");
-        assert_eq!(romaji_to_hiragana("u"), "う");
-        assert_eq!(romaji_to_hiragana("e"), "え");
-        assert_eq!(romaji_to_hiragana("o"), "お");
-    }
-
-    #[test]
-    fn basic_cv_syllables() {
-        assert_eq!(romaji_to_hiragana("ka"), "か");
-        assert_eq!(romaji_to_hiragana("su"), "す");
-        assert_eq!(romaji_to_hiragana("to"), "と");
-        assert_eq!(romaji_to_hiragana("ne"), "ね");
-        assert_eq!(romaji_to_hiragana("mo"), "も");
-    }
-
-    #[test]
-    fn prefers_longest_match() {
-        // "kya" must consume all three chars, not split into "k" + "ya".
-        assert_eq!(romaji_to_hiragana("kya"), "きゃ");
-        assert_eq!(romaji_to_hiragana("ryu"), "りゅ");
-    }
-
-    #[test]
-    fn three_char_digraphs() {
-        assert_eq!(romaji_to_hiragana("sha"), "しゃ");
-        assert_eq!(romaji_to_hiragana("cho"), "ちょ");
-        assert_eq!(romaji_to_hiragana("tsu"), "つ");
-    }
-
-    #[test]
-    fn sokuon_doubles_consonant() {
-        // Doubled non-vowel, non-n consonant → っ + the syllable.
-        assert_eq!(romaji_to_hiragana("kka"), "っか");
-        assert_eq!(romaji_to_hiragana("tta"), "った");
-        assert_eq!(romaji_to_hiragana("sshi"), "っし");
-        assert_eq!(romaji_to_hiragana("kitte"), "きって");
-    }
-
-    #[test]
-    fn sokuon_skips_n_and_vowels() {
-        // "nn" must become ん + n…, NOT っ — the algorithm excludes 'n' from
-        // the gemination rule because "nn" is the standard way to type ん
-        // before a vowel.
-        assert_eq!(romaji_to_hiragana("nni"), "んに");
-        // Doubled vowels are just two vowels, never っ.
-        assert_eq!(romaji_to_hiragana("aa"), "ああ");
-        assert_eq!(romaji_to_hiragana("oo"), "おお");
-    }
-
-    #[test]
-    fn n_before_consonant_becomes_hiragana_n() {
-        assert_eq!(romaji_to_hiragana("nko"), "んこ");
-        assert_eq!(romaji_to_hiragana("konnichiwa"), "こんにちわ");
-    }
-
-    #[test]
-    fn n_before_vowel_or_y_stays_attached() {
-        // "na" is the syllable な, NOT ん + あ.
-        assert_eq!(romaji_to_hiragana("na"), "な");
-        assert_eq!(romaji_to_hiragana("ni"), "に");
-        // "nya" is the digraph にゃ, NOT ん + や.
-        assert_eq!(romaji_to_hiragana("nya"), "にゃ");
-        assert_eq!(romaji_to_hiragana("nyu"), "にゅ");
-    }
-
-    #[test]
-    fn bare_and_terminal_n() {
-        assert_eq!(romaji_to_hiragana("n"), "ん");
-        assert_eq!(romaji_to_hiragana("san"), "さん");
-        assert_eq!(romaji_to_hiragana("ramen"), "らめん");
-    }
-
-    #[test]
-    fn ji_variants_both_map_to_zi() {
-        assert_eq!(romaji_to_hiragana("ji"), "じ");
-        // Both nihon-shiki ("jya") and hepburn-ish ("ja") map to じゃ.
-        assert_eq!(romaji_to_hiragana("ja"), "じゃ");
-        assert_eq!(romaji_to_hiragana("jya"), "じゃ");
-    }
-
-    #[test]
-    fn input_is_lowercased() {
-        assert_eq!(romaji_to_hiragana("Ka"), "か");
-        assert_eq!(romaji_to_hiragana("KONNICHIWA"), "こんにちわ");
-    }
-
-    #[test]
-    fn unmatched_chars_pass_through() {
-        // Hyphens, punctuation, spaces aren't in the table — preserved verbatim.
-        assert_eq!(romaji_to_hiragana("ka-ki"), "か-き");
-        assert_eq!(romaji_to_hiragana("ka ki"), "か き");
-        assert_eq!(romaji_to_hiragana("ka, ki"), "か, き");
     }
 }

@@ -249,15 +249,16 @@ pub async fn get_staging_cards() -> Result<Vec<SrsCard>, String> {
     Ok(all)
 }
 
-/// Bumps the priority score of every staging sibling of `sequence` by 1.
-/// Called when the user re-clicks "Add" on an already-staged word.
+/// Bumps the priority score of every staging sibling of `sequence` by 1, up
+/// to [`crate::types::MAX_PRIORITY`]. Called when the user re-clicks "Add"
+/// on an already-staged word.
 pub async fn bump_priority(sequence: u32) -> Result<(), String> {
     let siblings = get_cards_by_sequence(sequence).await?;
     let to_put: Vec<SrsCard> = siblings
         .into_iter()
         .filter(|c| matches!(c.status, CardStatus::Staging))
         .map(|mut c| {
-            c.priority = c.priority.saturating_add(1);
+            c.priority = c.priority.saturating_add(1).min(crate::types::MAX_PRIORITY);
             c
         })
         .collect();

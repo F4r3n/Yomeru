@@ -2,8 +2,9 @@ use std::collections::HashMap;
 
 use dioxus::prelude::*;
 
-use crate::dict::{lookup_by_sequence, preferred_headword};
+use crate::dict::{lookup_by_sequence, preferred_headword, primary_reading};
 use crate::idb::{delete_card, get_all_cards, reset_card};
+use crate::romaji::matches_query;
 use crate::srs::now_ms;
 use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::{CardDirection, CardStatus, SrsCard};
@@ -11,9 +12,10 @@ use crate::types::{CardDirection, CardStatus, SrsCard};
 #[component]
 pub fn WordListTab() -> Element {
     let mut cards = use_signal(Vec::<SrsCard>::new);
-    // sequence -> displayed headword, looked up from JMdict at load time so
-    // filtering and rendering don't need an async dict hop per row.
+    // sequence -> displayed headword/reading, looked up from JMdict at load
+    // time so filtering and rendering don't need an async dict hop per row.
     let mut headwords = use_signal(HashMap::<u32, String>::new);
+    let mut readings = use_signal(HashMap::<u32, String>::new);
     let mut filter = use_signal(String::new);
     let mut loading = use_signal(|| true);
 
@@ -29,9 +31,11 @@ pub fn WordListTab() -> Element {
             seqs.dedup();
             let entries = lookup_by_sequence(&seqs).await.unwrap_or_default();
             let mut map: HashMap<u32, String> = HashMap::with_capacity(seqs.len());
+            let mut reading_map: HashMap<u32, String> = HashMap::with_capacity(seqs.len());
             for (seq, entry) in seqs.iter().zip(entries.iter()) {
                 if let Some(e) = entry {
                     map.insert(*seq, preferred_headword(e).to_string());
+                    reading_map.insert(*seq, primary_reading(e).to_string());
                 }
             }
             active.sort_by(|a, b| {
@@ -41,6 +45,7 @@ pub fn WordListTab() -> Element {
                     .then_with(|| a.direction.as_str().cmp(b.direction.as_str()))
             });
             headwords.set(map);
+            readings.set(reading_map);
             cards.set(active);
             loading.set(false);
         });
@@ -87,16 +92,16 @@ pub fn WordListTab() -> Element {
     let total = rows.len();
     let filter_s = filter.read().to_lowercase();
     let heads = headwords.read().clone();
+    let reads = readings.read().clone();
     let filtered: Vec<_> = rows
         .into_iter()
         .filter(|c| {
             if filter_s.is_empty() {
                 return true;
             }
-            heads
-                .get(&c.sequence)
-                .map(|w| w.to_lowercase().contains(&filter_s))
-                .unwrap_or(false)
+            let head = heads.get(&c.sequence).map(String::as_str).unwrap_or("");
+            let reading = reads.get(&c.sequence).map(String::as_str).unwrap_or("");
+            matches_query(head, reading, &filter_s)
         })
         .collect();
     let due_count = filtered.iter().filter(|c| c.due_ms <= now).count();
@@ -117,7 +122,7 @@ pub fn WordListTab() -> Element {
             div { class: "toolbar",
                 input {
                     r#type: "search",
-                    placeholder: "Filter by word…",
+                    placeholder: "Filter by word, reading, or romaji…",
                     value: "{filter}",
                     oninput: move |e| filter.set(e.value()),
                 }

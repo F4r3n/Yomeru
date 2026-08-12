@@ -6,6 +6,7 @@ use jmdict_types::WordEntry;
 use crate::components::pos_list;
 use crate::dict::{frequency_label, lookup_by_sequence, preferred_headword, primary_reading};
 use crate::idb::{delete_card, get_staging_cards, promote_card};
+use crate::romaji::matches_query;
 use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::SrsCard;
 
@@ -104,7 +105,7 @@ pub fn NewWordsTab() -> Element {
             entries
                 .read()
                 .get(&c.sequence)
-                .map(|e| preferred_headword(e).to_lowercase().contains(&filter_s))
+                .map(|e| matches_query(preferred_headword(e), primary_reading(e), &filter_s))
                 .unwrap_or(false)
         })
         .collect();
@@ -128,7 +129,7 @@ pub fn NewWordsTab() -> Element {
                 div { class: "toolbar",
                     input {
                         r#type: "search",
-                        placeholder: "Filter by word…",
+                        placeholder: "Filter by word, reading, or romaji…",
                         value: "{filter}",
                         oninput: move |e| filter.set(e.value()),
                     }
