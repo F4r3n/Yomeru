@@ -44,13 +44,14 @@ that can also reverse-proxy `/api/*` to `yomeru-server`.
 The release `.wasm` is ~2.3 MB. No dict bytes are bundled — all lookup
 goes to the server.
 
-### Build via Docker
+### Build via Podman
 
 If you don't want Rust + `dioxus-cli` on the build host, build inside
-Docker and extract the bundle. From the workspace root:
+Podman (or Docker — the Dockerfile is runtime-agnostic) and extract the
+bundle. From the workspace root:
 
 ```bash
-docker build -f app/web/Dockerfile --target export \
+podman build -f app/web/Dockerfile --target export \
     --output type=local,dest=./web-dist .
 ```
 

@@ -6,7 +6,7 @@
 # the dictionaries doesn't require rebuilding this image.
 #
 # Build context: the workspace root (this file lives in `server/`).
-#   docker build -f server/Dockerfile -t yomeru-server .
+#   podman build -f server/Dockerfile -t yomeru-server .
 
 # ---------- Build stage ----------
 FROM rust:1-slim-bookworm AS builder

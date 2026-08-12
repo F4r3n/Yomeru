@@ -5,21 +5,21 @@
 # Produces `target/dx/yomeru-web/release/web/public/` — pure static
 # files (HTML + JS glue + hashed .wasm) ready to drop behind any
 # static host (see DEPLOY.md). Lets you build the website on a host
-# that only has Docker, without installing Rust + dioxus-cli.
+# that only has Podman (or Docker), without installing Rust + dioxus-cli.
 #
 # Build context is the workspace root.
 #
 # Extract the bundle to ./web-dist on the host:
 #
-#   docker build -f app/web/Dockerfile --target export \
+#   podman build -f app/web/Dockerfile --target export \
 #       --output type=local,dest=./web-dist .
 #
 # Or build the full image and copy out manually:
 #
-#   docker build -f app/web/Dockerfile -t yomeru-web-build .
-#   id=$(docker create yomeru-web-build) \
-#       && docker cp "$id":/out ./web-dist \
-#       && docker rm "$id"
+#   podman build -f app/web/Dockerfile -t yomeru-web-build .
+#   id=$(podman create yomeru-web-build) \
+#       && podman cp "$id":/out ./web-dist \
+#       && podman rm "$id"
 
 # ---------- Build stage ----------
 # Trixie (not bookworm) — the prebuilt dx binary is linked against
@@ -64,7 +64,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
  && cp -r target/dx/yomeru-web/release/web/public /out
 
 # ---------- Export stage ----------
-# `docker build --target export --output type=local,dest=./web-dist`
+# `podman build --target export --output type=local,dest=./web-dist`
 # copies the bundle straight to the host without a runtime image.
 FROM scratch AS export
 COPY --from=builder /out /

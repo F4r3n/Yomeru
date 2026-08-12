@@ -7,10 +7,10 @@
 # Lets you refresh the dictionaries without rebuilding the server
 # image or touching the SQLite volume. Triggered manually with
 #
-#   docker compose run --rm yomeru-dicts          # build if missing
-#   docker compose run --rm -e FORCE=1 yomeru-dicts  # rebuild from scratch
+#   podman-compose run --rm yomeru-dicts          # build if missing
+#   podman-compose run --rm -e FORCE=1 yomeru-dicts  # rebuild from scratch
 #
-# `docker compose up -d` also runs this once (via depends_on) before
+# `podman-compose up -d` also runs this once (via depends_on) before
 # starting the server, so first-time setup populates the volume.
 #
 # Build context is the workspace root.

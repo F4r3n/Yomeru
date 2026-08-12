@@ -15,7 +15,7 @@ throughout.
 The server needs three binary files at startup
 (`jmdict.bin` / `kanjidic.bin` / `examples.bin`).
 
-**Docker deploy** (compose, below): you can skip this section — the
+**Podman deploy** (compose, below): you can skip this section — the
 `yomeru-dicts` builder service in `server/docker-compose.yml`
 produces the bins inside the cluster and writes them to a named
 volume. The server image itself doesn't bake them in. Jump to
@@ -47,11 +47,12 @@ dx bundle --package yomeru-web --platform web --release
 Output: `target/dx/yomeru-web/release/web/public/` — pure static files.
 Copy that directory to the deploy host (e.g. `/srv/yomeru/web/`).
 
-Or, if you only have Docker on the build host, run the bundle inside
-a container and extract the artifacts (workspace root as context):
+Or, if you only have Podman on the build host (Docker works too — the
+Dockerfile is runtime-agnostic), run the bundle inside a container and
+extract the artifacts (workspace root as context):
 
 ```bash
-docker build -f app/web/Dockerfile --target export \
+podman build -f app/web/Dockerfile --target export \
     --output type=local,dest=./web-dist .
 ```
 
@@ -63,10 +64,10 @@ total. No dict bytes are bundled — every lookup is an HTTP call.
 
 ## 3. Build & run the server
 
-Either with Docker (simplest) or as a systemd unit. Both work; pick
+Either with Podman (simplest) or as a systemd unit. Both work; pick
 one.
 
-### Option A: Docker
+### Option A: Podman
 
 ```bash
 # on the deploy host, in a checkout of this repo
@@ -92,7 +93,7 @@ The compose file defines two services that share named volumes:
   `/data` for SQLite.
 
 ```bash
-docker compose up -d --build
+podman-compose up -d --build
 ```
 
 First run takes ~5–10 min while the dict builder downloads JMdict /
@@ -116,8 +117,8 @@ volume rather than in the image, you can refresh them without
 rebuilding the server or touching SQLite:
 
 ```bash
-docker compose run --rm -e FORCE=1 yomeru-dicts   # rebuild from scratch
-docker compose restart yomeru-server              # server caches dicts in memory
+podman-compose run --rm -e FORCE=1 yomeru-dicts   # rebuild from scratch
+podman-compose restart yomeru-server              # server caches dicts in memory
 ```
 
 `yomeru-data` (SQLite) is untouched.
@@ -335,14 +336,14 @@ unsynced data:
    the JSON from step 1, then sync.
 
 ```bash
-# new server binary (Docker — only rebuilds the server stage, dict volume untouched)
-docker compose -f server/docker-compose.yml up -d --build yomeru-server
+# new server binary (Podman — only rebuilds the server stage, dict volume untouched)
+podman-compose -f server/docker-compose.yml up -d --build yomeru-server
 # or, for systemd:
 cargo build --release -p server && sudo install -m 0755 target/release/yomeru-server /usr/local/bin/ && sudo systemctl restart yomeru-server
 
-# refreshed dict bins (Docker)
-docker compose -f server/docker-compose.yml run --rm -e FORCE=1 yomeru-dicts
-docker compose -f server/docker-compose.yml restart yomeru-server
+# refreshed dict bins (Podman)
+podman-compose -f server/docker-compose.yml run --rm -e FORCE=1 yomeru-dicts
+podman-compose -f server/docker-compose.yml restart yomeru-server
 
 # new website bundle
 dx bundle --package yomeru-web --platform web --release

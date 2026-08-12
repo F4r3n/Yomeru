@@ -21,7 +21,7 @@ cp .env.example .env
 |--------------------|--------------------|----------------------------------------------------------|
 | `YOMERU_PORT`      | `8080`             | HTTP port the server listens on.                         |
 | `YOMERU_DB_PATH`   | `/data/yomeru.db`  | SQLite file path. `/data` is the mounted volume.         |
-| `YOMERU_DATA_DIR`  | `/usr/share/yomeru-server/dicts` (in Docker) / `./data` (host) | Dir holding `jmdict.bin` / `kanjidic.bin` / `examples.bin`. **Required at startup.** In compose this is the `yomeru-dicts` volume populated by the `yomeru-dicts` builder service; on the host, build with `cargo xtask build-all`. |
+| `YOMERU_DATA_DIR`  | `/usr/share/yomeru-server/dicts` (in Podman/Docker) / `./data` (host) | Dir holding `jmdict.bin` / `kanjidic.bin` / `examples.bin`. **Required at startup.** In compose this is the `yomeru-dicts` volume populated by the `yomeru-dicts` builder service; on the host, build with `cargo xtask build-all`. |
 | `YOMERU_SMTP_HOST` | —                  | **Required.** STARTTLS relay host.                       |
 | `YOMERU_SMTP_PORT` | `587`              |                                                          |
 | `YOMERU_SMTP_FROM` | —                  | **Required.** Address OTP emails are sent from.          |
@@ -30,13 +30,15 @@ cp .env.example .env
 
 Each setting also accepts an equivalent CLI flag (`--port`, `--db`, `--smtp-host`, …), which takes priority over the env var when both are set.
 
-## Run with Docker
+## Run with Podman
 
 The Dockerfile lives in this directory but its build context is the workspace root (cargo needs the workspace `Cargo.toml`).
 
+Uses `podman-compose` (the `docker-compose.yml` in this directory is runtime-agnostic — swap `podman`/`podman-compose` for `docker`/`docker compose` throughout this section if you prefer Docker).
+
 ```bash
 # from server/
-docker compose up -d --build
+podman-compose up -d --build
 ```
 
 Compose orchestrates two services that share three named volumes:
@@ -53,31 +55,31 @@ Compose orchestrates two services that share three named volumes:
 Because the dict bins live on their own volume — not in the image and not bundled with SQLite — you can refresh them without rebuilding the server or touching user data:
 
 ```bash
-docker compose run --rm -e FORCE=1 yomeru-dicts   # re-download + re-build
-docker compose restart yomeru-server              # server caches dicts in memory
+podman-compose run --rm -e FORCE=1 yomeru-dicts   # re-download + re-build
+podman-compose restart yomeru-server              # server caches dicts in memory
 ```
 
 `yomeru-data` (SQLite) is untouched. `FORCE=1` is what bypasses the "already populated" check in the builder entrypoint.
 
 Logs / lifecycle:
 ```bash
-docker compose logs -f
-docker compose down          # stop, keep the volumes
-docker compose down -v       # stop and wipe BOTH volumes (SQLite + dicts)
+podman-compose logs -f
+podman-compose down          # stop, keep the volumes
+podman-compose down -v       # stop and wipe BOTH volumes (SQLite + dicts)
 ```
 
 ### Build / run without compose
 
 ```bash
 # from the workspace root — server image
-docker build -f server/Dockerfile -t yomeru-server .
+podman build -f server/Dockerfile -t yomeru-server .
 
 # populate the dict volume once
-docker volume create yomeru-dicts
-docker build -f xtask/Dockerfile -t yomeru-dicts .
-docker run --rm -v yomeru-dicts:/dicts yomeru-dicts
+podman volume create yomeru-dicts
+podman build -f xtask/Dockerfile -t yomeru-dicts .
+podman run --rm -v yomeru-dicts:/dicts yomeru-dicts
 
-docker run -d --name yomeru-server \
+podman run -d --name yomeru-server \
   --env-file server/.env \
   -p 8080:8080 \
   -v yomeru-data:/data \
@@ -85,7 +87,7 @@ docker run -d --name yomeru-server \
   yomeru-server
 ```
 
-## Run without Docker
+## Run without Podman
 
 ```bash
 cargo run -p server --release -- \
