@@ -240,11 +240,43 @@ pub async fn get_staging_cards() -> Result<Vec<SrsCard>, String> {
     let mut all = get_all_cards().await?;
     all.retain(|c| matches!(c.status, CardStatus::Staging));
     all.sort_by(|a, b| {
-        a.added_ms
-            .partial_cmp(&b.added_ms)
-            .unwrap_or(std::cmp::Ordering::Equal)
+        b.priority.cmp(&a.priority).then_with(|| {
+            b.added_ms
+                .partial_cmp(&a.added_ms)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
     });
     Ok(all)
+}
+
+/// Bumps the priority score of every staging sibling of `sequence` by 1.
+/// Called when the user re-clicks "Add" on an already-staged word.
+pub async fn bump_priority(sequence: u32) -> Result<(), String> {
+    let siblings = get_cards_by_sequence(sequence).await?;
+    let to_put: Vec<SrsCard> = siblings
+        .into_iter()
+        .filter(|c| matches!(c.status, CardStatus::Staging))
+        .map(|mut c| {
+            c.priority = c.priority.saturating_add(1);
+            c
+        })
+        .collect();
+    put_cards(&to_put).await
+}
+
+/// Resets every active sibling of `sequence` back to a fresh "New" FSRS
+/// state, keeping it in the active word list. Destructive.
+pub async fn reset_card(sequence: u32, now_ms: f64) -> Result<(), String> {
+    let siblings = get_cards_by_sequence(sequence).await?;
+    let to_put: Vec<SrsCard> = siblings
+        .into_iter()
+        .filter(|c| matches!(c.status, CardStatus::Active))
+        .map(|mut c| {
+            c.reset_progression(now_ms);
+            c
+        })
+        .collect();
+    put_cards(&to_put).await
 }
 
 pub async fn promote_card(sequence: u32) -> Result<(), String> {

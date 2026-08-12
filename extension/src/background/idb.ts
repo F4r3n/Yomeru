@@ -24,6 +24,7 @@ export function freshRecallCard(sequence: number, nowMs: number, addedMs: number
     last_review_ms: null,
     added_ms: addedMs,
     status: "active",
+    priority: 0,
   };
 }
 

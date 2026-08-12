@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use dioxus::prelude::*;
 
 use crate::dict::{lookup_by_sequence, preferred_headword};
-use crate::idb::{delete_card, get_all_cards};
+use crate::idb::{delete_card, get_all_cards, reset_card};
 use crate::srs::now_ms;
 use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::{CardDirection, CardStatus, SrsCard};
@@ -53,6 +53,28 @@ pub fn WordListTab() -> Element {
         spawn(async move {
             if let Err(e) = delete_card(seq).await {
                 warn!("delete_card(seq={seq}) failed: {e}");
+                return;
+            }
+            schedule_sync();
+            reload();
+        });
+    };
+
+    let on_reset = move |seq: u32| {
+        spawn(async move {
+            let confirmed = web_sys::window()
+                .and_then(|w| {
+                    w.confirm_with_message(
+                        "Reset this word's SRS progress? This can't be undone.",
+                    )
+                    .ok()
+                })
+                .unwrap_or(false);
+            if !confirmed {
+                return;
+            }
+            if let Err(e) = reset_card(seq, now_ms()).await {
+                warn!("reset_card(seq={seq}) failed: {e}");
                 return;
             }
             schedule_sync();
@@ -156,6 +178,11 @@ pub fn WordListTab() -> Element {
                                             td { class: "muted", "{state}" }
                                             td { span { class: "{due_class}", "{due_label}" } }
                                             td { style: "text-align: right; padding-right: 16px;",
+                                                button {
+                                                    class: "secondary",
+                                                    onclick: move |_| on_reset(seq),
+                                                    "Reset"
+                                                }
                                                 button {
                                                     class: "danger",
                                                     onclick: move |_| on_delete(seq),

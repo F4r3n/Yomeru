@@ -16,6 +16,7 @@ pub fn NewWordsTab() -> Element {
     let mut expanded = use_signal(HashSet::<u32>::new);
     let mut loading = use_signal(|| true);
     let mut err = use_signal(|| Option::<String>::None);
+    let mut filter = use_signal(String::new);
 
     let reload = move || {
         spawn(async move {
@@ -92,6 +93,21 @@ pub fn NewWordsTab() -> Element {
     };
 
     let count = cards.read().len();
+    let filter_s = filter.read().to_lowercase();
+    let all_cards = cards.read().clone();
+    let filtered: Vec<SrsCard> = all_cards
+        .into_iter()
+        .filter(|c| {
+            if filter_s.is_empty() {
+                return true;
+            }
+            entries
+                .read()
+                .get(&c.sequence)
+                .map(|e| preferred_headword(e).to_lowercase().contains(&filter_s))
+                .unwrap_or(false)
+        })
+        .collect();
 
     rsx! {
         div {
@@ -108,6 +124,17 @@ pub fn NewWordsTab() -> Element {
                 }
             }
 
+            if count > 0 {
+                div { class: "toolbar",
+                    input {
+                        r#type: "search",
+                        placeholder: "Filter by word…",
+                        value: "{filter}",
+                        oninput: move |e| filter.set(e.value()),
+                    }
+                }
+            }
+
             if *loading.read() {
                 div { class: "loading", "Loading…" }
             } else if let Some(e) = err.read().clone() {
@@ -118,9 +145,15 @@ pub fn NewWordsTab() -> Element {
                     div { class: "headline", "No staged words" }
                     div { class: "helper", "Add words from the Lookup tab to queue them here." }
                 }
+            } else if filtered.is_empty() {
+                div { class: "empty-state",
+                    div { class: "glyph", "⌕" }
+                    div { class: "headline", "No matches" }
+                    div { class: "helper", "Nothing staged contains 「{filter_s}」." }
+                }
             } else {
                 div { class: "col",
-                    for card in cards.read().iter().cloned() {
+                    for card in filtered.iter().cloned() {
                         {
                             let seq = card.sequence;
                             let entry = entries.read().get(&seq).cloned();
@@ -153,6 +186,9 @@ pub fn NewWordsTab() -> Element {
                                             }
                                             if let Some(f) = freq {
                                                 span { class: "freq-badge", "{f}" }
+                                            }
+                                            if card.priority > 0 {
+                                                span { class: "freq-badge", "★ {card.priority}" }
                                             }
                                         }
                                         div { class: "row",

@@ -574,6 +574,27 @@ mod tests {
         assert!(to_put.is_empty());
     }
 
+    #[test]
+    fn current_card_without_priority_defaults_to_zero() {
+        // `new_format_card` has no `priority` key — exactly what a JSON file
+        // exported before this field existed looks like.
+        let cards = vec![new_format_card(1001, "recall")];
+        let (to_put, skips) = parse_current_cards(&cards, &HashSet::new());
+        assert_eq!(skips.total(), 0);
+        assert_eq!(to_put[0].priority, 0);
+    }
+
+    #[test]
+    fn current_card_with_priority_is_preserved() {
+        let mut card = new_format_card(1001, "recall");
+        card.as_object_mut()
+            .unwrap()
+            .insert("priority".to_string(), json!(3));
+        let (to_put, skips) = parse_current_cards(&[card], &HashSet::new());
+        assert_eq!(skips.total(), 0);
+        assert_eq!(to_put[0].priority, 3);
+    }
+
     // --- legacy (v1) format --------------------------------------------------
 
     #[test]
@@ -591,6 +612,8 @@ mod tests {
         // Other fields survive the upgrade.
         assert_eq!(card.stability, 2.0);
         assert_eq!(card.last_review_ms, Some(0.5));
+        // Legacy exports never had priority — upgrade defaults it to 0.
+        assert_eq!(card.priority, 0);
     }
 
     #[test]

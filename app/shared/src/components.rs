@@ -2,6 +2,7 @@ use dioxus::prelude::*;
 use jmdict_types::{PartOfSpeech, WordEntry};
 
 use crate::dict::{frequency_label, preferred_headword, primary_reading};
+use crate::types::CardStatus;
 
 pub fn pos_label(p: &PartOfSpeech) -> String {
     // Debug repr is "Adjective" / "AdjectiveNa" etc — readable enough for now.
@@ -16,8 +17,9 @@ pub fn pos_list(ps: &[PartOfSpeech]) -> String {
 pub fn EntryCard(
     entry: WordEntry,
     on_add: Option<EventHandler<u32>>,
+    on_reset: Option<EventHandler<u32>>,
     on_select: Option<EventHandler<()>>,
-    #[props(default)] is_added: bool,
+    #[props(default)] status: Option<CardStatus>,
 ) -> Element {
     let title = preferred_headword(&entry).to_string();
     let reading = primary_reading(&entry).to_string();
@@ -60,12 +62,27 @@ pub fn EntryCard(
                     }
                 }
                 if let Some(handler) = on_add {
-                    if is_added {
+                    if status == Some(CardStatus::Active) && on_reset.is_some() {
                         button {
                             class: "success",
-                            disabled: true,
-                            onclick: move |e| e.stop_propagation(),
-                            "✓ Added"
+                            onclick: move |e| {
+                                e.stop_propagation();
+                                if let Some(reset) = on_reset {
+                                    reset.call(on_add_for);
+                                }
+                            },
+                            "✓ In list · Reset"
+                        }
+                    } else if status == Some(CardStatus::Active) {
+                        button { class: "success", disabled: true, "✓ Added" }
+                    } else if status == Some(CardStatus::Staging) {
+                        button {
+                            class: "success",
+                            onclick: move |e| {
+                                e.stop_propagation();
+                                handler.call(on_add_for);
+                            },
+                            "☆ Staged · +Priority"
                         }
                     } else {
                         button {

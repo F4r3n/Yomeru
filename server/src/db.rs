@@ -29,6 +29,8 @@ pub struct Card {
     pub last_review_ms: Option<f64>,
     pub added_ms: f64,
     pub status: String,
+    #[serde(default)]
+    pub priority: i64,
 }
 
 /// A user's synced scheduler settings. One row per email. `updated_ms` is the
@@ -76,6 +78,7 @@ const CARDS_DDL: &str = "CREATE TABLE IF NOT EXISTS cards (
              last_review_ms  REAL,
              added_ms        REAL NOT NULL,
              status          TEXT NOT NULL,
+             priority        INTEGER NOT NULL DEFAULT 0,
              PRIMARY KEY (email, id)
          )";
 
@@ -117,7 +120,7 @@ pub async fn init_db(path: &str) -> anyhow::Result<Db> {
 }
 
 async fn init_schema(pool: &SqlitePool) -> anyhow::Result<()> {
-    drop_legacy_cards(pool).await?;
+    drop_stale_cards(pool).await?;
     drop_plaintext_sessions(pool).await?;
     let stmts = [
         CARDS_DDL,
@@ -191,24 +194,26 @@ async fn drop_plaintext_sessions(pool: &SqlitePool) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Drops any pre-`sequence` `cards` table so `init_schema` can recreate it in
-/// the current shape. Cards used to key on a surface `word` (or, even earlier,
-/// a single JSON `data` blob); both are incompatible with the `sequence`
-/// column. There is deliberately no data migration — the move to JMdict
-/// `ent_seq` keys is a clean break, and users re-import via export/import. No-op
-/// on a fresh DB or one already on the `sequence` layout.
-async fn drop_legacy_cards(pool: &SqlitePool) -> anyhow::Result<()> {
+/// Drops any stale `cards` table so `init_schema` can recreate it in the
+/// current shape. This has covered two breaks so far — the move off a
+/// surface-`word`/`data`-blob key to JMdict `sequence`, and now the
+/// addition of `priority` — and will cover future ones the same way: no
+/// data migration, users re-import via export/import. Checking for the
+/// newest known column (`priority`) is sufficient on its own, since a
+/// table missing it is also missing everything older (`sequence`
+/// included). No-op on a fresh DB or one already on the current layout.
+async fn drop_stale_cards(pool: &SqlitePool) -> anyhow::Result<()> {
     let cols: Vec<String> = sqlx::query_scalar("SELECT name FROM pragma_table_info('cards')")
         .fetch_all(pool)
         .await
         .context("inspect cards columns")?;
-    if cols.is_empty() || cols.iter().any(|c| c == "sequence") {
-        return Ok(()); // fresh DB or already on the sequence layout
+    if cols.is_empty() || cols.iter().any(|c| c == "priority") {
+        return Ok(()); // fresh DB or already on the current layout
     }
     sqlx::query("DROP TABLE cards")
         .execute(pool)
         .await
-        .context("drop legacy cards table")?;
+        .context("drop stale cards table")?;
     Ok(())
 }
 
@@ -365,8 +370,8 @@ pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card]) -> anyhow::Resul
         sqlx::query(
             "INSERT INTO cards
                  (email, id, sequence, direction, due_ms, stability, difficulty,
-                  reps, lapses, state, last_review_ms, added_ms, status)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
+                  reps, lapses, state, last_review_ms, added_ms, status, priority)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
              ON CONFLICT(email, id) DO UPDATE SET
                  sequence = excluded.sequence,
                  direction = excluded.direction,
@@ -378,7 +383,8 @@ pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card]) -> anyhow::Resul
                  state = excluded.state,
                  last_review_ms = excluded.last_review_ms,
                  added_ms = excluded.added_ms,
-                 status = excluded.status
+                 status = excluded.status,
+                 priority = excluded.priority
              WHERE COALESCE(excluded.last_review_ms, 0) >= COALESCE(cards.last_review_ms, 0)",
         )
         .bind(email)
@@ -394,6 +400,7 @@ pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card]) -> anyhow::Resul
         .bind(c.last_review_ms)
         .bind(c.added_ms)
         .bind(&c.status)
+        .bind(c.priority)
         .execute(&mut *tx)
         .await
         .context("upsert card")?;
@@ -411,7 +418,7 @@ pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card]) -> anyhow::Resul
 pub async fn get_all_cards(db: &Db, email: &str) -> anyhow::Result<Vec<Card>> {
     let rows = sqlx::query(
         "SELECT id, sequence, direction, due_ms, stability, difficulty,
-                reps, lapses, state, last_review_ms, added_ms, status
+                reps, lapses, state, last_review_ms, added_ms, status, priority
          FROM cards WHERE email = ?1",
     )
     .bind(email)
@@ -433,6 +440,7 @@ pub async fn get_all_cards(db: &Db, email: &str) -> anyhow::Result<Vec<Card>> {
             last_review_ms: r.get("last_review_ms"),
             added_ms: r.get("added_ms"),
             status: r.get("status"),
+            priority: r.get("priority"),
         })
         .collect();
     Ok(cards)
@@ -583,6 +591,7 @@ mod tests {
             last_review_ms,
             added_ms: 0.0,
             status: "active".to_string(),
+            priority: 0,
         }
     }
 
@@ -1119,6 +1128,67 @@ mod tests {
         assert!(get_all_cards(&pool, ALICE).await.unwrap().is_empty());
 
         // And the recreated table accepts sequence-keyed cards.
+        upsert_cards(&pool, ALICE, &[card("猫::recognition", Some(100.0))])
+            .await
+            .unwrap();
+        assert_eq!(get_all_cards(&pool, ALICE).await.unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn upsert_and_read_roundtrips_priority() {
+        let db = fresh_db().await;
+        let mut c = card("a::recognition", Some(100.0));
+        c.priority = 5;
+        upsert_cards(&db, ALICE, &[c]).await.unwrap();
+        let stored = get_all_cards(&db, ALICE).await.unwrap();
+        assert_eq!(stored[0].priority, 5);
+    }
+
+    #[tokio::test]
+    async fn drops_pre_priority_cards_table() {
+        // A DB on the sequence-keyed layout from before `priority` existed.
+        // init_schema must drop and recreate it (clean break, not migrated —
+        // users re-import), same as the word->sequence break above.
+        let opts = SqliteConnectOptions::from_str(":memory:").unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect_with(opts)
+            .await
+            .unwrap();
+        sqlx::query(
+            "CREATE TABLE cards (
+                 email TEXT NOT NULL, id TEXT NOT NULL, sequence INTEGER NOT NULL,
+                 direction TEXT NOT NULL, due_ms REAL NOT NULL, stability REAL NOT NULL,
+                 difficulty REAL NOT NULL, reps INTEGER NOT NULL, lapses INTEGER NOT NULL,
+                 state TEXT NOT NULL, last_review_ms REAL, added_ms REAL NOT NULL,
+                 status TEXT NOT NULL, PRIMARY KEY (email, id))",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "INSERT INTO cards
+                 (email, id, sequence, direction, due_ms, stability, difficulty,
+                  reps, lapses, state, added_ms, status)
+             VALUES (?1, '猫::recognition', 1467640, 'recognition', 0, 0, 0, 0, 0, 'new', 0, 'active')",
+        )
+        .bind(ALICE)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        init_schema(&pool).await.unwrap();
+
+        let cols: Vec<String> = sqlx::query_scalar("SELECT name FROM pragma_table_info('cards')")
+            .fetch_all(&pool)
+            .await
+            .unwrap();
+        assert!(cols.iter().any(|c| c == "priority"));
+        assert!(
+            get_all_cards(&pool, ALICE).await.unwrap().is_empty(),
+            "pre-priority row must be dropped, not migrated"
+        );
+
         upsert_cards(&pool, ALICE, &[card("猫::recognition", Some(100.0))])
             .await
             .unwrap();

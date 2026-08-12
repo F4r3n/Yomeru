@@ -343,6 +343,7 @@ async function handleAddWord({ sequence }: { sequence: number }) {
     sequence,
     direction: "recognition",
     status: "staging",
+    priority: 0,
   };
   const recall: SrsCard = {
     ...base,
@@ -350,6 +351,7 @@ async function handleAddWord({ sequence }: { sequence: number }) {
     sequence,
     direction: "recall",
     status: "staging",
+    priority: 0,
   };
   await putCards([recognition, recall]);
   await bumpDbVersion();

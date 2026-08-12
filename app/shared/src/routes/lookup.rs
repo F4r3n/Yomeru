@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 use dioxus::prelude::*;
 use gloo_storage::{LocalStorage, Storage};
@@ -8,10 +8,10 @@ use jmdict_types::WordEntry;
 use crate::app::Route;
 use crate::components::EntryCard;
 use crate::dict::{self, examples_for, kanji_for, primary_headword};
-use crate::idb::{get_cards_by_sequence, has_card, put_cards};
+use crate::idb::{bump_priority, get_cards_by_sequence, put_cards, reset_card};
 use crate::srs::now_ms;
 use crate::sync::schedule_sync;
-use crate::types::{CardDirection, SrsCard};
+use crate::types::{CardDirection, CardStatus, SrsCard};
 
 const HISTORY_KEY: &str = "lookup_history";
 const HISTORY_MAX: usize = 10;
@@ -23,12 +23,12 @@ enum ExtraTab {
 }
 
 /// Shared lookup state across the list and the (currently empty) child
-/// route components. Currently just `added` so `+ Add` from the expansion
-/// panel can flip the badge on the result card too. Tracks JMdict ent_seq
-/// values so kanji-vs-kana display swaps don't desync the badge.
+/// route components. Currently just `card_status` so `+ Add` from the
+/// expansion panel can flip the badge on the result card too. Keyed by
+/// JMdict ent_seq so kanji-vs-kana display swaps don't desync the badge.
 #[derive(Clone, Copy)]
 struct LookupShared {
-    added: Signal<HashSet<u32>>,
+    card_status: Signal<HashMap<u32, CardStatus>>,
 }
 
 // ── helpers ──────────────────────────────────────────────────────────
@@ -226,7 +226,11 @@ fn lookup_romaji(c: &str) -> Option<&'static str> {
     })
 }
 
-async fn add_entry(sequence: u32, mut added: Signal<HashSet<u32>>) {
+/// Handles the two non-destructive "Add" outcomes: create fresh staging
+/// cards for a word not yet in the list, or bump the priority of one
+/// already staged. Never called when the word is `Active` — that's
+/// `on_reset`'s job instead.
+async fn add_or_bump(sequence: u32, mut card_status: Signal<HashMap<u32, CardStatus>>) {
     let existing = match get_cards_by_sequence(sequence).await {
         Ok(e) => e,
         Err(e) => {
@@ -245,10 +249,26 @@ async fn add_entry(sequence: u32, mut added: Signal<HashSet<u32>>) {
             return;
         }
         schedule_sync();
+    } else if !existing.iter().any(|c| matches!(c.status, CardStatus::Active)) {
+        if let Err(e) = bump_priority(sequence).await {
+            warn!("bump_priority(seq={sequence}) failed: {e}");
+            return;
+        }
+        schedule_sync();
     }
-    added.with_mut(|s| {
-        s.insert(sequence);
+    card_status.with_mut(|m| {
+        m.insert(sequence, CardStatus::Staging);
     });
+}
+
+fn status_of(cards: &[SrsCard]) -> Option<CardStatus> {
+    if cards.iter().any(|c| matches!(c.status, CardStatus::Active)) {
+        Some(CardStatus::Active)
+    } else if !cards.is_empty() {
+        Some(CardStatus::Staging)
+    } else {
+        None
+    }
 }
 
 // ── Layout (shared by /lookup and /lookup/:word) ─────────────────────
@@ -259,8 +279,8 @@ async fn add_entry(sequence: u32, mut added: Signal<HashSet<u32>>) {
 
 #[component]
 pub fn LookupLayout() -> Element {
-    let added = use_signal(HashSet::<u32>::new);
-    use_context_provider(|| LookupShared { added });
+    let card_status = use_signal(HashMap::<u32, CardStatus>::new);
+    use_context_provider(|| LookupShared { card_status });
     rsx! {
         LookupListPane {}
         Outlet::<Route> {}
@@ -284,7 +304,7 @@ pub fn LookupDetailPane(word: String) -> Element {
 
 #[component]
 fn LookupListPane() -> Element {
-    let LookupShared { mut added } = use_context::<LookupShared>();
+    let LookupShared { mut card_status } = use_context::<LookupShared>();
     let nav = use_navigator();
     let current = use_route::<Route>();
     let selected_word: Option<String> = match current {
@@ -369,16 +389,17 @@ fn LookupListPane() -> Element {
                 let next = push_history(history.read().clone(), &target);
                 history.set(next);
             }
-            let mut already: HashSet<u32> = HashSet::new();
+            let mut statuses: HashMap<u32, CardStatus> = HashMap::new();
 
-            //TODO: for each result we open IDB to see if the card exist.
+            //TODO: for each result we open IDB to see if the card exists.
             // It's slow, need to do it on batch
             for e in &results {
-                if has_card(e.sequence).await.unwrap_or(false) {
-                    already.insert(e.sequence);
+                let siblings = get_cards_by_sequence(e.sequence).await.unwrap_or_default();
+                if let Some(s) = status_of(&siblings) {
+                    statuses.insert(e.sequence, s);
                 }
             }
-            added.set(already);
+            card_status.set(statuses);
             let single_word = if results.len() == 1 {
                 results.first().map(|v| primary_headword(v).to_string())
             } else {
@@ -427,7 +448,31 @@ fn LookupListPane() -> Element {
     };
 
     let on_add = move |sequence: u32| {
-        spawn(async move { add_entry(sequence, added).await });
+        spawn(async move { add_or_bump(sequence, card_status).await });
+    };
+
+    let on_reset = move |sequence: u32| {
+        spawn(async move {
+            let confirmed = web_sys::window()
+                .and_then(|w| {
+                    w.confirm_with_message(
+                        "Reset this word's SRS progress? This can't be undone.",
+                    )
+                    .ok()
+                })
+                .unwrap_or(false);
+            if !confirmed {
+                return;
+            }
+            if let Err(e) = reset_card(sequence, now_ms()).await {
+                warn!("reset_card(seq={sequence}) failed: {e}");
+                return;
+            }
+            schedule_sync();
+            card_status.with_mut(|m| {
+                m.insert(sequence, CardStatus::Active);
+            });
+        });
     };
 
     let q_trim = query.read().trim().to_string();
@@ -478,7 +523,7 @@ fn LookupListPane() -> Element {
                 for entry in entries.read().iter() {
                     {
                         let head = primary_headword(entry).to_string();
-                        let is_added = added.read().contains(&entry.sequence);
+                        let status = card_status.read().get(&entry.sequence).copied();
                         let expanded = selected_word.as_deref() == Some(&head);
                         let head_for_select = head.clone();
                         let head_for_close = head.clone();
@@ -498,8 +543,9 @@ fn LookupListPane() -> Element {
                             EntryCard {
                                 entry: entry.clone(),
                                 on_add: Some(EventHandler::new(on_add)),
+                                on_reset: Some(EventHandler::new(on_reset)),
                                 on_select,
-                                is_added,
+                                status,
                             }
                             if expanded {
                                 ExpansionPanel {

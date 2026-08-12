@@ -92,6 +92,9 @@ export interface SrsCard {
   last_review_ms: number | null;
   added_ms: number;
   status: "staging" | "active";
+  /** Bumped when the app's Lookup re-clicks "Add" on an already-staged
+   * word; pushes it up the New Words queue. Not set from this extension. */
+  priority: number;
 }
 
 export function cardId(sequence: number, direction: CardDirection): string {

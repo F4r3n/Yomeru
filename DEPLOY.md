@@ -313,6 +313,27 @@ type `飲む` (or `nomu` — romaji works). You should see entries.
 
 ## Updating
 
+### Before updating: back up cards
+
+Any release that changes the server's `cards` table shape (see
+CHANGELOG/commit history for "clean break" schema changes — e.g. the
+word→sequence rekey, and later the `priority` column) drops and recreates
+that table on the next `yomeru-server` restart: the sync merge point is
+wiped, not migrated. Local IndexedDB on each device is never touched and
+stays the source of truth, but do this first so no device is caught with
+unsynced data:
+
+1. On every device that uses the site/extension: Settings → Export, save
+   the JSON somewhere safe.
+2. Update, using the commands below (or run `./deploy.sh` from the repo
+   root, which does both the website rebuild and
+   `podman-compose -f server/docker-compose.yml up -d --build` for the
+   server in one shot).
+3. Open the site/extension on each device again — auto-sync (or Settings
+   → Sync now) repopulates the fresh server table from local IndexedDB.
+4. Only if a device's local IndexedDB was itself lost: Settings → Import
+   the JSON from step 1, then sync.
+
 ```bash
 # new server binary (Docker — only rebuilds the server stage, dict volume untouched)
 docker compose -f server/docker-compose.yml up -d --build yomeru-server

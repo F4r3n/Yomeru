@@ -52,6 +52,8 @@ pub struct SrsCard {
     pub last_review_ms: Option<f64>,
     pub added_ms: f64,
     pub status: CardStatus,
+    #[serde(default)]
+    pub priority: u32,
 }
 
 pub fn card_id(sequence: u32, direction: CardDirection) -> String {
@@ -95,6 +97,7 @@ impl SrsCardV1 {
             last_review_ms: self.last_review_ms,
             added_ms: self.added_ms,
             status: self.status,
+            priority: 0,
         }
     }
 }
@@ -115,6 +118,7 @@ impl SrsCard {
             last_review_ms: None,
             added_ms: now_ms,
             status: CardStatus::Staging,
+            priority: 0,
         }
     }
 
@@ -140,5 +144,18 @@ impl SrsCard {
         self.lapses = s.lapses;
         self.state = s.state;
         self.last_review_ms = s.last_review_ms;
+    }
+
+    /// Resets FSRS progress back to a fresh "New" card while preserving
+    /// identity/status/`added_ms`/`priority`. Destructive; callers must
+    /// confirm with the user first.
+    pub fn reset_progression(&mut self, now_ms: f64) {
+        self.due_ms = now_ms;
+        self.stability = 0.0;
+        self.difficulty = 0.0;
+        self.reps = 0;
+        self.lapses = 0;
+        self.state = CardState::New;
+        self.last_review_ms = None;
     }
 }

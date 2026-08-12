@@ -25,6 +25,7 @@ function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
     last_review_ms: null,
     added_ms: 0,
     status: "active",
+    priority: 0,
     ...overrides,
   };
 }
