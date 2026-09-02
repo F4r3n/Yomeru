@@ -87,7 +87,12 @@ mod tests {
     /// Reviews `card` once and unwraps the `Rescheduled` outcome, panicking
     /// (test failure) if it graduated instead — helper for building up a
     /// multi-review sequence in tests where graduation is not expected yet.
-    fn review_once(card: &SrsCard, rating: ReviewRating, now_ms: f64, settings: &SrsSettings) -> SrsCard {
+    fn review_once(
+        card: &SrsCard,
+        rating: ReviewRating,
+        now_ms: f64,
+        settings: &SrsSettings,
+    ) -> SrsCard {
         match apply_review(card, rating, now_ms, settings) {
             ReviewOutcome::Rescheduled(c) => c,
             ReviewOutcome::Graduated => panic!("expected Rescheduled, got Graduated"),

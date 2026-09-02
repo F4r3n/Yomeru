@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IDBFactory, IDBKeyRange as FakeIDBKeyRange } from "fake-indexeddb";
 import type { SrsCard } from "../shared/types.ts";
 import { cardId } from "../shared/types.ts";
+import { makeCard } from "./test-helpers.ts";
 
 type IdbModule = typeof import("./idb.ts");
 
@@ -11,28 +12,6 @@ const CAT = 1_001;
 const DOG = 1_002;
 const BIRD = 1_003;
 const BOOK = 1_004;
-
-function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
-  const sequence = overrides.sequence ?? 1_358_280;
-  const direction = overrides.direction ?? "recognition";
-  return {
-    id: cardId(sequence, direction),
-    sequence,
-    direction,
-    due_ms: 0,
-    stability: 0,
-    difficulty: 0,
-    reps: 0,
-    lapses: 0,
-    state: "new",
-    last_review_ms: null,
-    added_ms: 0,
-    status: "active",
-    priority: 0,
-    consecutiveCorrect: 0,
-    ...overrides,
-  };
-}
 
 describe("idb", () => {
   let idb: IdbModule;

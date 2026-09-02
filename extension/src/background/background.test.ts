@@ -5,30 +5,7 @@ import {
   checkGraduation,
   nextConsecutiveCorrect,
 } from "./review-utils.ts";
-import type { SrsCard } from "../shared/types.ts";
-import { cardId } from "../shared/types.ts";
-
-function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
-  const sequence = overrides.sequence ?? 1_358_280;
-  const direction = overrides.direction ?? "recognition";
-  return {
-    id: cardId(sequence, direction),
-    sequence,
-    direction,
-    due_ms: 0,
-    stability: 0,
-    difficulty: 0,
-    reps: 0,
-    lapses: 0,
-    state: "new",
-    last_review_ms: null,
-    added_ms: 0,
-    status: "active",
-    priority: 0,
-    consecutiveCorrect: 0,
-    ...overrides,
-  };
-}
+import { makeCard } from "./test-helpers.ts";
 
 describe("mergeReview", () => {
   it("carries over updated FSRS scheduling fields from the reviewed card", () => {
