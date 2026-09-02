@@ -34,6 +34,11 @@ impl CardDirection {
 pub enum CardStatus {
     Staging,
     Active,
+    /// FSRS's computed next-review interval reached the graduation threshold
+    /// (`SrsSettings::graduation_interval_days`) — the card is considered
+    /// learned. Kept (not deleted) and excluded from Review, shown in Word
+    /// List, and reversible via [`crate::idb::reset_card`].
+    Graduated,
 }
 
 /// A card as persisted in IndexedDB. Wraps the FSRS scheduling fields with

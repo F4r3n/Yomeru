@@ -264,7 +264,7 @@ struct VerifyResponse {
 /// fields (server_url/email/token) are deliberately absent.
 #[derive(Serialize, Deserialize, Clone)]
 struct SettingsPayload {
-    graduation_reps: u32,
+    graduation_interval_days: u32,
     interval_scale: f64,
     max_session_cards: u32,
     request_retention: f64,
@@ -274,7 +274,7 @@ struct SettingsPayload {
 impl SettingsPayload {
     fn from_settings(s: &SrsSettings) -> Self {
         Self {
-            graduation_reps: s.graduation_reps,
+            graduation_interval_days: s.graduation_interval_days,
             interval_scale: s.interval_scale,
             max_session_cards: s.max_session_cards,
             request_retention: s.request_retention,
@@ -365,7 +365,7 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     if let Some(remote) = resp.settings {
         let mut merged: SrsSettings = LocalStorage::get(SETTINGS_KEY).unwrap_or_default();
         if remote.updated_ms > merged.settings_updated_ms {
-            merged.graduation_reps = remote.graduation_reps;
+            merged.graduation_interval_days = remote.graduation_interval_days;
             merged.interval_scale = remote.interval_scale;
             merged.max_session_cards = remote.max_session_cards;
             merged.request_retention = remote.request_retention;
@@ -426,7 +426,7 @@ impl SettingsStore for LocalSettings {
         // changed. Saving the server URL/email/token (a different, device-local
         // concern) must not let a stale scheduler config win a later sync.
         let prev: SrsSettings = LocalStorage::get(SETTINGS_KEY).unwrap_or_default();
-        let scheduler_changed = prev.graduation_reps != s.graduation_reps
+        let scheduler_changed = prev.graduation_interval_days != s.graduation_interval_days
             || prev.interval_scale != s.interval_scale
             || prev.max_session_cards != s.max_session_cards
             || prev.request_retention != s.request_retention;

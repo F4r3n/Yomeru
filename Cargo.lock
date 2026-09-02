@@ -8033,6 +8033,7 @@ dependencies = [
  "gloo-storage",
  "gloo-timers",
  "idb",
+ "japanese-utils",
  "jmdict-types",
  "js-sys",
  "kanjidic-types",

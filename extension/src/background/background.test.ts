@@ -1,28 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { mergeReview, applyIntervalScale, checkGraduation } from "./review-utils.ts";
-import type { SrsCard } from "../shared/types.ts";
-import { cardId } from "../shared/types.ts";
-
-function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
-  const sequence = overrides.sequence ?? 1_358_280;
-  const direction = overrides.direction ?? "recognition";
-  return {
-    id: cardId(sequence, direction),
-    sequence,
-    direction,
-    due_ms: 0,
-    stability: 0,
-    difficulty: 0,
-    reps: 0,
-    lapses: 0,
-    state: "new",
-    last_review_ms: null,
-    added_ms: 0,
-    status: "active",
-    priority: 0,
-    ...overrides,
-  };
-}
+import { makeCard } from "./test-helpers.ts";
 
 describe("mergeReview", () => {
   it("carries over updated FSRS scheduling fields from the reviewed card", () => {
@@ -94,19 +72,19 @@ describe("applyIntervalScale", () => {
 });
 
 describe("checkGraduation", () => {
-  it("returns true when reps meet the threshold", () => {
+  it("returns true when the interval meets the threshold", () => {
     expect(checkGraduation(5, 5)).toBe(true);
   });
 
-  it("returns true when reps exceed the threshold", () => {
+  it("returns true when the interval exceeds the threshold", () => {
     expect(checkGraduation(7, 5)).toBe(true);
   });
 
-  it("returns false when reps are below the threshold", () => {
+  it("returns false when the interval is below the threshold", () => {
     expect(checkGraduation(4, 5)).toBe(false);
   });
 
-  it("returns false when graduationReps is 0 (graduation disabled)", () => {
+  it("returns false when graduationIntervalDays is 0 (graduation disabled)", () => {
     expect(checkGraduation(100, 0)).toBe(false);
   });
 });

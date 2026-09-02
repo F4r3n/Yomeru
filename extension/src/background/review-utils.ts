@@ -52,7 +52,12 @@ export function applyIntervalScale<T extends SrsSchedFields>(
   };
 }
 
-/** Returns true when the card should leave the review queue (graduation threshold met). */
-export function checkGraduation(reps: number, graduationReps: number): boolean {
-  return graduationReps > 0 && reps >= graduationReps;
+/**
+ * Returns true when the card's freshly-scheduled interval is long enough
+ * that it should graduate out of the review queue. No streak tracking
+ * needed — a failed review naturally collapses `intervalDays` back below
+ * threshold on its own. Mirrors `apply_review` in `app/shared/src/srs.rs`.
+ */
+export function checkGraduation(intervalDays: number, graduationIntervalDays: number): boolean {
+  return graduationIntervalDays > 0 && intervalDays >= graduationIntervalDays;
 }

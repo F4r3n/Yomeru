@@ -5,9 +5,7 @@ use crate::components::pos_list;
 use crate::dict::{
     examples_for, kanji_for, lookup_by_sequence, preferred_headword, primary_reading,
 };
-use crate::idb::{
-    delete_card_by_id, get_all_cards, get_due_cards, get_staging_cards, promote_card, put_card,
-};
+use crate::idb::{get_all_cards, get_due_cards, get_staging_cards, promote_card, put_card};
 use crate::settings::load as load_settings;
 use crate::srs::{ReviewOutcome, apply_review, now_ms, rating_from_u8};
 use crate::sync::{schedule_sync, use_reload_on_sync};
@@ -18,6 +16,13 @@ enum BackTab {
     Word,
     Kanji,
     Examples,
+}
+
+/// True when `word` mixes at least one kanji character with at least one
+/// hiragana character (e.g. 食べる) — the combo case whose reading line
+/// should stay hidden on the front face until the answer is revealed.
+fn is_kana_kanji_combo(word: &str) -> bool {
+    word.chars().any(japanese_utils::is_kanji) && word.chars().any(japanese_utils::is_hiragana)
 }
 
 fn shuffle<T>(mut v: Vec<T>) -> Vec<T> {
@@ -202,9 +207,9 @@ pub fn ReviewTab() -> Element {
                         schedule_sync();
                     }
                 }
-                ReviewOutcome::Graduated => {
-                    if let Err(e) = delete_card_by_id(&card_id).await {
-                        warn!("delete_card_by_id({card_id}) on graduation failed: {e}");
+                ReviewOutcome::Graduated(c) => {
+                    if let Err(e) = put_card(&c).await {
+                        warn!("put_card({card_id}) on graduation failed: {e}");
                     } else {
                         schedule_sync();
                     }
@@ -213,7 +218,7 @@ pub fn ReviewTab() -> Element {
                         .map(|e| preferred_headword(e).to_string())
                         .unwrap_or_else(|| format!("seq {}", card.sequence));
                     graduated_msg.set(Some(format!(
-                        "「{}」 ({}) graduated — removed from review queue.",
+                        "「{}」 ({}) graduated — kept in Word List, hidden from Review.",
                         label,
                         match card.direction {
                             CardDirection::Recognition => "recognition",
@@ -360,6 +365,10 @@ pub fn ReviewTab() -> Element {
                         .unwrap_or_default();
                     let show_back_v = *show_back.read();
                     let is_recall = matches!(c.direction, CardDirection::Recall);
+                    // Combo kanji/hiragana words (e.g. 食べる) spell out their
+                    // own reading via okurigana — don't also spoil it via the
+                    // reading line until the answer is revealed.
+                    let hide_reading = !show_back_v && is_kana_kanji_combo(&front_word);
 
                     rsx! {
                         div { class: "review-card",
@@ -384,10 +393,12 @@ pub fn ReviewTab() -> Element {
                                     }
                                 } else {
                                     div { class: "word", "{front_word}" }
-                                    if let Some(k) = sub_kanji.clone() {
-                                        div { class: "kanji-sub", "{k}" }
-                                    } else if !reading.is_empty() && reading != front_word {
-                                        div { class: "reading", "{reading}" }
+                                    if !hide_reading {
+                                        if let Some(k) = sub_kanji.clone() {
+                                            div { class: "kanji-sub", "{k}" }
+                                        } else if !reading.is_empty() && reading != front_word {
+                                            div { class: "reading", "{reading}" }
+                                        }
                                     }
                                 }
                             }
@@ -536,5 +547,30 @@ fn TabButton(active: bool, onclick: EventHandler<MouseEvent>, label: &'static st
     let class = if active { "active" } else { "" };
     rsx! {
         button { class: "{class}", onclick: move |e| onclick.call(e), "{label}" }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pure_kanji_is_not_a_combo() {
+        assert!(!is_kana_kanji_combo("食事"));
+    }
+
+    #[test]
+    fn pure_kana_is_not_a_combo() {
+        assert!(!is_kana_kanji_combo("たべる"));
+    }
+
+    #[test]
+    fn trailing_okurigana_is_a_combo() {
+        assert!(is_kana_kanji_combo("食べる"));
+    }
+
+    #[test]
+    fn kanji_sandwiched_between_kana_is_a_combo() {
+        assert!(is_kana_kanji_combo("取り消す"));
     }
 }

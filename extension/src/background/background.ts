@@ -13,7 +13,6 @@ import {
   promoteCard,
   promoteAll,
   deleteCard,
-  deleteCardById,
   addLookupHistory,
   getAllTombstones,
   clearTombstones,
@@ -29,7 +28,7 @@ import type {
   SrsSettings,
   WordEntry,
 } from "../shared/types.ts";
-import { cardId } from "../shared/types.ts";
+import { cardId, MS_PER_DAY } from "../shared/types.ts";
 import {
   mergeReview,
   applyIntervalScale,
@@ -374,8 +373,9 @@ async function handleReviewCard({
   const now_ms = Date.now();
   const wasmOut = srs!.review_card(card, rating, now_ms) as WasmCardShape;
   const scaled = applyIntervalScale(wasmOut, settings.intervalScale, now_ms);
-  if (checkGraduation(scaled.reps, settings.graduationReps)) {
-    await deleteCardById(cardId(sequence, direction));
+  const intervalDays = (scaled.due_ms - now_ms) / MS_PER_DAY;
+  if (checkGraduation(intervalDays, settings.graduationIntervalDays)) {
+    await putCard({ ...mergeReview(card, scaled), status: "graduated" });
     await bumpDbVersion();
     return { success: true, graduated: true };
   }

@@ -91,7 +91,10 @@ export interface SrsCard {
   state: CardState;
   last_review_ms: number | null;
   added_ms: number;
-  status: "staging" | "active";
+  /** "graduated" = FSRS's computed next-review interval reached
+   * `SrsSettings.graduationIntervalDays`. Kept (not deleted), excluded from
+   * Review, reversible — see `checkGraduation`. */
+  status: "staging" | "active" | "graduated";
   /** Bumped when the app's Lookup re-clicks "Add" on an already-staged
    * word; pushes it up the New Words queue. Not set from this extension. */
   priority: number;
@@ -102,7 +105,9 @@ export function cardId(sequence: number, direction: CardDirection): string {
 }
 
 export interface SrsSettings {
-  graduationReps: number; // 0 = never graduate
+  /** Card graduates once FSRS's computed next-review interval reaches this
+   * many days. 0 = never graduate. */
+  graduationIntervalDays: number;
   intervalScale: number; // 1.0 = no scaling
   maxSessionCards: number;
   serverUrl: string;
@@ -111,7 +116,7 @@ export interface SrsSettings {
 }
 
 export const DEFAULT_SETTINGS: SrsSettings = {
-  graduationReps: 0,
+  graduationIntervalDays: 365,
   intervalScale: 1.0,
   maxSessionCards: 20,
   serverUrl: "",
