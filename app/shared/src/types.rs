@@ -58,6 +58,13 @@ pub struct SrsCard {
     pub status: CardStatus,
     #[serde(default)]
     pub priority: u32,
+    /// Consecutive correct (non-"Again") reviews in a row. Reset to 0 on
+    /// "Again"; feeds graduation (`SrsSettings::graduation_reps`), which
+    /// counts a streak of successes, not cumulative review count — see
+    /// [`crate::srs::apply_review`]. `#[serde(default)]` because cards
+    /// persisted before this field existed have no value for it.
+    #[serde(default)]
+    pub consecutive_correct: u32,
 }
 
 pub fn card_id(sequence: u32, direction: CardDirection) -> String {
@@ -102,6 +109,7 @@ impl SrsCardV1 {
             added_ms: self.added_ms,
             status: self.status,
             priority: 0,
+            consecutive_correct: 0,
         }
     }
 }
@@ -123,6 +131,7 @@ impl SrsCard {
             added_ms: now_ms,
             status: CardStatus::Staging,
             priority: 0,
+            consecutive_correct: 0,
         }
     }
 
@@ -161,5 +170,6 @@ impl SrsCard {
         self.lapses = 0;
         self.state = CardState::New;
         self.last_review_ms = None;
+        self.consecutive_correct = 0;
     }
 }

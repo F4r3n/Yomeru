@@ -53,6 +53,16 @@ export function applyIntervalScale<T extends SrsSchedFields>(
 }
 
 /** Returns true when the card should leave the review queue (graduation threshold met). */
-export function checkGraduation(reps: number, graduationReps: number): boolean {
-  return graduationReps > 0 && reps >= graduationReps;
+export function checkGraduation(consecutiveCorrect: number, graduationReps: number): boolean {
+  return graduationReps > 0 && consecutiveCorrect >= graduationReps;
+}
+
+/**
+ * Next consecutive-correct streak given the rating just given. Rating 1 is
+ * "Again" — any other rating (Hard/Good/Easy) is a pass and extends the
+ * streak; "Again" resets it to 0. Mirrors `apply_review` in
+ * `app/shared/src/srs.rs`.
+ */
+export function nextConsecutiveCorrect(current: number, rating: number): number {
+  return rating === 1 ? 0 : current + 1;
 }

@@ -95,6 +95,11 @@ export interface SrsCard {
   /** Bumped when the app's Lookup re-clicks "Add" on an already-staged
    * word; pushes it up the New Words queue. Not set from this extension. */
   priority: number;
+  /** Consecutive correct (non-"Again") reviews in a row; reset to 0 on
+   * "Again". Drives graduation (`SrsSettings.graduationReps` counts a streak
+   * of successes, not cumulative `reps`) — see `checkGraduation`. Cards
+   * persisted before this field existed have it `undefined`; treat as 0. */
+  consecutiveCorrect: number;
 }
 
 export function cardId(sequence: number, direction: CardDirection): string {

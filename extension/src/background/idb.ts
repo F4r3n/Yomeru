@@ -25,6 +25,7 @@ export function freshRecallCard(sequence: number, nowMs: number, addedMs: number
     added_ms: addedMs,
     status: "active",
     priority: 0,
+    consecutiveCorrect: 0,
   };
 }
 

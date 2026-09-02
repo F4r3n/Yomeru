@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { mergeReview, applyIntervalScale, checkGraduation } from "./review-utils.ts";
+import {
+  mergeReview,
+  applyIntervalScale,
+  checkGraduation,
+  nextConsecutiveCorrect,
+} from "./review-utils.ts";
 import type { SrsCard } from "../shared/types.ts";
 import { cardId } from "../shared/types.ts";
 
@@ -20,6 +25,7 @@ function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
     added_ms: 0,
     status: "active",
     priority: 0,
+    consecutiveCorrect: 0,
     ...overrides,
   };
 }
@@ -108,5 +114,29 @@ describe("checkGraduation", () => {
 
   it("returns false when graduationReps is 0 (graduation disabled)", () => {
     expect(checkGraduation(100, 0)).toBe(false);
+  });
+});
+
+describe("nextConsecutiveCorrect", () => {
+  it("resets to 0 on Again (rating 1)", () => {
+    expect(nextConsecutiveCorrect(3, 1)).toBe(0);
+  });
+
+  it("increments on Hard/Good/Easy", () => {
+    expect(nextConsecutiveCorrect(0, 2)).toBe(1);
+    expect(nextConsecutiveCorrect(1, 3)).toBe(2);
+    expect(nextConsecutiveCorrect(2, 4)).toBe(3);
+  });
+
+  it("an interrupted streak does not reach a threshold that cumulative reps would have", () => {
+    // Good, Again, Good, Good — 4 total passes-through, but only a streak of
+    // 2 at the end; checkGraduation must not fire at graduationReps=4.
+    let streak = 0;
+    streak = nextConsecutiveCorrect(streak, 3); // Good -> 1
+    streak = nextConsecutiveCorrect(streak, 1); // Again -> 0
+    streak = nextConsecutiveCorrect(streak, 3); // Good -> 1
+    streak = nextConsecutiveCorrect(streak, 3); // Good -> 2
+    expect(streak).toBe(2);
+    expect(checkGraduation(streak, 4)).toBe(false);
   });
 });

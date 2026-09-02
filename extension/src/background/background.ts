@@ -34,6 +34,7 @@ import {
   mergeReview,
   applyIntervalScale,
   checkGraduation,
+  nextConsecutiveCorrect,
   type SrsSchedFields,
 } from "./review-utils.ts";
 
@@ -344,6 +345,7 @@ async function handleAddWord({ sequence }: { sequence: number }) {
     direction: "recognition",
     status: "staging",
     priority: 0,
+    consecutiveCorrect: 0,
   };
   const recall: SrsCard = {
     ...base,
@@ -352,6 +354,7 @@ async function handleAddWord({ sequence }: { sequence: number }) {
     direction: "recall",
     status: "staging",
     priority: 0,
+    consecutiveCorrect: 0,
   };
   await putCards([recognition, recall]);
   await bumpDbVersion();
@@ -374,12 +377,13 @@ async function handleReviewCard({
   const now_ms = Date.now();
   const wasmOut = srs!.review_card(card, rating, now_ms) as WasmCardShape;
   const scaled = applyIntervalScale(wasmOut, settings.intervalScale, now_ms);
-  if (checkGraduation(scaled.reps, settings.graduationReps)) {
+  const streak = nextConsecutiveCorrect(card.consecutiveCorrect ?? 0, rating);
+  if (checkGraduation(streak, settings.graduationReps)) {
     await deleteCardById(cardId(sequence, direction));
     await bumpDbVersion();
     return { success: true, graduated: true };
   }
-  await putCard(mergeReview(card, scaled));
+  await putCard({ ...mergeReview(card, scaled), consecutiveCorrect: streak });
   await bumpDbVersion();
   return { success: true, graduated: false };
 }

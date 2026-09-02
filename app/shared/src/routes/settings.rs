@@ -260,7 +260,7 @@ pub fn SettingsTab() -> Element {
                         value: "{cur.graduation_reps}",
                         oninput: move |e| settings.write().graduation_reps = e.value().parse().unwrap_or(0),
                     }
-                    span { class: "hint", "0 = never graduate" }
+                    span { class: "hint", "0 = never graduate · resets on \"Again\"" }
                 }
                 div { class: "form-row",
                     label { "Interval scale ×{cur.interval_scale:.2}" }
