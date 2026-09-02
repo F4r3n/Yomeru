@@ -38,7 +38,7 @@ describe("settings", () => {
       const s = await settings.getSettings();
 
       expect(s.maxSessionCards).toBe(5);
-      expect(s.graduationReps).toBe(DEFAULT_SETTINGS.graduationReps);
+      expect(s.graduationIntervalDays).toBe(DEFAULT_SETTINGS.graduationIntervalDays);
       expect(s.intervalScale).toBe(DEFAULT_SETTINGS.intervalScale);
     });
 
@@ -48,14 +48,14 @@ describe("settings", () => {
       const s = await settings.getSettings();
 
       expect(s.maxSessionCards).toBe(10);
-      expect(s.graduationReps).toBe(DEFAULT_SETTINGS.graduationReps);
+      expect(s.graduationIntervalDays).toBe(DEFAULT_SETTINGS.graduationIntervalDays);
     });
   });
 
   describe("saveSettings", () => {
     it("persists settings that getSettings reads back", async () => {
       const custom: SrsSettings = {
-        graduationReps: 5,
+        graduationIntervalDays: 5,
         intervalScale: 1.5,
         maxSessionCards: 15,
         serverUrl: "",

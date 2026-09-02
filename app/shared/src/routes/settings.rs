@@ -254,13 +254,13 @@ pub fn SettingsTab() -> Element {
                 }
 
                 div { class: "form-row",
-                    label { "Graduate after N successes" }
+                    label { "Graduate when next review is ≥ N days away" }
                     input {
                         r#type: "number", min: "0",
-                        value: "{cur.graduation_reps}",
-                        oninput: move |e| settings.write().graduation_reps = e.value().parse().unwrap_or(0),
+                        value: "{cur.graduation_interval_days}",
+                        oninput: move |e| settings.write().graduation_interval_days = e.value().parse().unwrap_or(0),
                     }
-                    span { class: "hint", "0 = never graduate · resets on \"Again\"" }
+                    span { class: "hint", "0 = never graduate · e.g. 365 = 1 year" }
                 }
                 div { class: "form-row",
                     label { "Interval scale ×{cur.interval_scale:.2}" }

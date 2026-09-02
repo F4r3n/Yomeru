@@ -25,7 +25,6 @@ export function freshRecallCard(sequence: number, nowMs: number, addedMs: number
     added_ms: addedMs,
     status: "active",
     priority: 0,
-    consecutiveCorrect: 0,
   };
 }
 
@@ -254,7 +253,7 @@ export async function deleteCard(sequence: number): Promise<void> {
   ]);
 }
 
-/** Deletes a single sibling by composite id (used when one direction graduates). */
+/** Deletes a single sibling by composite id. */
 export function deleteCardById(id: string): Promise<void> {
   return deleteIdsWithTombstones([id]);
 }

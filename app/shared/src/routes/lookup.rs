@@ -48,8 +48,8 @@ fn push_history(mut h: Vec<String>, term: &str) -> Vec<String> {
 
 /// Handles the two non-destructive "Add" outcomes: create fresh staging
 /// cards for a word not yet in the list, or bump the priority of one
-/// already staged. Never called when the word is `Active` — that's
-/// `on_reset`'s job instead.
+/// already staged. Never called when the word is `Active` or `Graduated` —
+/// that's `on_reset`'s job instead.
 async fn add_or_bump(
     sequence: u32,
     mut card_status: Signal<HashMap<u32, CardStatus>>,
@@ -76,7 +76,10 @@ async fn add_or_bump(
         card_priority.with_mut(|m| {
             m.insert(sequence, 0);
         });
-    } else if !existing.iter().any(|c| matches!(c.status, CardStatus::Active)) {
+    } else if !existing
+        .iter()
+        .any(|c| matches!(c.status, CardStatus::Active | CardStatus::Graduated))
+    {
         if let Err(e) = bump_priority(sequence).await {
             warn!("bump_priority(seq={sequence}) failed: {e}");
             return;
@@ -99,6 +102,11 @@ async fn add_or_bump(
 fn status_of(cards: &[SrsCard]) -> Option<CardStatus> {
     if cards.iter().any(|c| matches!(c.status, CardStatus::Active)) {
         Some(CardStatus::Active)
+    } else if cards
+        .iter()
+        .any(|c| matches!(c.status, CardStatus::Graduated))
+    {
+        Some(CardStatus::Graduated)
     } else if !cards.is_empty() {
         Some(CardStatus::Staging)
     } else {

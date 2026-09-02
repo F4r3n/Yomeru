@@ -1,5 +1,5 @@
 //! FSRS review glue. Wraps `srs_core::review_card` with the extension's
-//! `intervalScale` and `graduationReps` overlay so behavior matches.
+//! `intervalScale` and `graduationIntervalDays` overlay so behavior matches.
 
 use srs_core::ReviewRating;
 
@@ -9,8 +9,11 @@ use crate::types::{CardStatus, MS_PER_DAY, SrsCard};
 pub enum ReviewOutcome {
     /// Card was rescheduled; persist it.
     Rescheduled(SrsCard),
-    /// Card hit the graduation threshold; delete it.
-    Graduated,
+    /// Card's computed next-review interval crossed the graduation
+    /// threshold. Carries the fully-rescheduled card (status already set to
+    /// `Graduated`) — callers persist it like any other reschedule, they
+    /// just don't show it in Review anymore.
+    Graduated(SrsCard),
 }
 
 pub fn rating_from_u8(n: u8) -> ReviewRating {
@@ -43,23 +46,22 @@ pub fn apply_review(
         }
     };
 
-    // Consecutive correct (non-Again) reviews in a row. Graduation counts a
-    // streak of successes, not FSRS's cumulative `reps` — an "Again" resets
-    // it to 0 rather than merely pausing it.
-    let streak = if rating == ReviewRating::Again {
-        0
-    } else {
-        card.consecutive_correct + 1
-    };
-
-    if settings.graduation_reps > 0 && streak >= settings.graduation_reps {
-        return ReviewOutcome::Graduated;
-    }
-
     let mut next = card.clone();
     next.apply_scheduling(&scaled);
+
+    // Graduate once FSRS's own computed next-review interval is long enough
+    // that the word is considered learned. No streak-tracking needed: a
+    // failed review naturally collapses the interval back below threshold on
+    // its own, so "Again" doesn't need special-casing here.
+    let interval_days = (scaled.due_ms - now_ms) / MS_PER_DAY;
+    if settings.graduation_interval_days > 0
+        && interval_days >= settings.graduation_interval_days as f64
+    {
+        next.status = CardStatus::Graduated;
+        return ReviewOutcome::Graduated(next);
+    }
+
     next.status = CardStatus::Active;
-    next.consecutive_correct = streak;
     ReviewOutcome::Rescheduled(next)
 }
 
@@ -73,9 +75,9 @@ mod tests {
     use crate::settings::SrsSettings;
     use crate::types::CardDirection;
 
-    fn settings_with_graduation(n: u32) -> SrsSettings {
+    fn settings_with_graduation(days: u32) -> SrsSettings {
         SrsSettings {
-            graduation_reps: n,
+            graduation_interval_days: days,
             ..Default::default()
         }
     }
@@ -95,53 +97,53 @@ mod tests {
     ) -> SrsCard {
         match apply_review(card, rating, now_ms, settings) {
             ReviewOutcome::Rescheduled(c) => c,
-            ReviewOutcome::Graduated => panic!("expected Rescheduled, got Graduated"),
+            ReviewOutcome::Graduated(_) => panic!("expected Rescheduled, got Graduated"),
         }
     }
 
     #[test]
-    fn again_resets_streak_to_zero() {
-        let settings = settings_with_graduation(3);
+    fn graduates_once_computed_interval_crosses_threshold() {
+        // A very low threshold (1 day) is reached quickly by an Easy rating
+        // on a fresh card, whose initial stability is already several days.
+        let settings = settings_with_graduation(1);
+        let c = fresh_card();
+        let outcome = apply_review(&c, ReviewRating::Easy, 0.0, &settings);
+        match outcome {
+            ReviewOutcome::Graduated(g) => {
+                assert!(matches!(g.status, CardStatus::Graduated));
+                // The rescheduled fields are carried, not discarded.
+                assert!(g.stability > 0.0);
+                assert!(g.due_ms > 0.0);
+            }
+            ReviewOutcome::Rescheduled(_) => panic!("expected Graduated"),
+        }
+    }
+
+    #[test]
+    fn does_not_graduate_below_threshold() {
+        // A huge threshold (10 years) is never reached by a single review.
+        let settings = settings_with_graduation(3650);
         let c = fresh_card();
         let c = review_once(&c, ReviewRating::Good, 0.0, &settings);
-        assert_eq!(c.consecutive_correct, 1);
+        assert!(matches!(c.status, CardStatus::Active));
+    }
+
+    #[test]
+    fn again_after_long_interval_does_not_graduate() {
+        // Build up a long interval, then answer Again — the interval
+        // collapses back down on its own, no streak bookkeeping needed.
+        let settings = settings_with_graduation(3650); // effectively "never" for this test
+        let c = fresh_card();
+        let c = review_once(&c, ReviewRating::Easy, 0.0, &settings);
         let c = review_once(&c, ReviewRating::Again, 1.0, &settings);
-        assert_eq!(c.consecutive_correct, 0);
+        assert!(matches!(c.status, CardStatus::Active));
     }
 
     #[test]
-    fn consecutive_passes_accumulate_and_graduate_at_threshold() {
-        let settings = settings_with_graduation(3);
-        let c = fresh_card();
-        let c = review_once(&c, ReviewRating::Good, 0.0, &settings);
-        let c = review_once(&c, ReviewRating::Good, 1.0, &settings);
-        assert_eq!(c.consecutive_correct, 2);
-        let outcome = apply_review(&c, ReviewRating::Good, 2.0, &settings);
-        assert!(matches!(outcome, ReviewOutcome::Graduated));
-    }
-
-    #[test]
-    fn interrupted_streak_does_not_graduate_even_though_cumulative_reps_would_have() {
-        // Good, Again, Good, Good: 4 total reviews (old cumulative-reps
-        // behavior would graduate at graduation_reps=4), but the streak is
-        // only 2 — must not graduate.
-        let settings = settings_with_graduation(4);
-        let c = fresh_card();
-        let c = review_once(&c, ReviewRating::Good, 0.0, &settings);
-        let c = review_once(&c, ReviewRating::Again, 1.0, &settings);
-        let c = review_once(&c, ReviewRating::Good, 2.0, &settings);
-        let c = review_once(&c, ReviewRating::Good, 3.0, &settings);
-        assert_eq!(c.consecutive_correct, 2);
-        assert!(c.reps >= 4);
-    }
-
-    #[test]
-    fn zero_graduation_reps_never_graduates() {
+    fn zero_graduation_interval_never_graduates() {
         let settings = settings_with_graduation(0);
         let c = fresh_card();
-        let c = review_once(&c, ReviewRating::Good, 0.0, &settings);
-        let c = review_once(&c, ReviewRating::Good, 1.0, &settings);
-        let outcome = apply_review(&c, ReviewRating::Good, 2.0, &settings);
+        let outcome = apply_review(&c, ReviewRating::Easy, 0.0, &settings);
         assert!(matches!(outcome, ReviewOutcome::Rescheduled(_)));
     }
 }

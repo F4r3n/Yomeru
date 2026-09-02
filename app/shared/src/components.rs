@@ -85,6 +85,19 @@ pub fn EntryCard(
                         }
                     } else if status == Some(CardStatus::Active) {
                         button { class: "success", disabled: true, "✓ Added" }
+                    } else if status == Some(CardStatus::Graduated) && on_reset.is_some() {
+                        button {
+                            class: "success",
+                            onclick: move |e| {
+                                e.stop_propagation();
+                                if let Some(reset) = on_reset {
+                                    reset.call(on_add_for);
+                                }
+                            },
+                            "✓ Graduated · Reset"
+                        }
+                    } else if status == Some(CardStatus::Graduated) {
+                        button { class: "success", disabled: true, "✓ Graduated" }
                     } else if status == Some(CardStatus::Staging) {
                         if priority >= MAX_PRIORITY {
                             button {

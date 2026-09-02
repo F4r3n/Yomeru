@@ -39,7 +39,7 @@ pub struct Card {
 /// stored here — only the knobs that affect scheduling.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
-    pub graduation_reps: i64,
+    pub graduation_interval_days: i64,
     pub interval_scale: f64,
     pub max_session_cards: i64,
     /// FSRS desired retention. Defaulted so a client that predates this field
@@ -54,12 +54,12 @@ fn default_request_retention() -> f64 {
 }
 
 const SETTINGS_DDL: &str = "CREATE TABLE IF NOT EXISTS settings (
-             email             TEXT PRIMARY KEY,
-             graduation_reps   INTEGER NOT NULL,
-             interval_scale    REAL NOT NULL,
-             max_session_cards INTEGER NOT NULL,
-             request_retention REAL NOT NULL,
-             updated_ms        REAL NOT NULL
+             email                     TEXT PRIMARY KEY,
+             graduation_interval_days  INTEGER NOT NULL,
+             interval_scale            REAL NOT NULL,
+             max_session_cards         INTEGER NOT NULL,
+             request_retention         REAL NOT NULL,
+             updated_ms                REAL NOT NULL
          )";
 
 /// New per-column `cards` schema. `last_review_ms` is the sync merge key and is
@@ -121,6 +121,7 @@ pub async fn init_db(path: &str) -> anyhow::Result<Db> {
 
 async fn init_schema(pool: &SqlitePool) -> anyhow::Result<()> {
     drop_stale_cards(pool).await?;
+    drop_stale_settings(pool).await?;
     drop_plaintext_sessions(pool).await?;
     let stmts = [
         CARDS_DDL,
@@ -214,6 +215,27 @@ async fn drop_stale_cards(pool: &SqlitePool) -> anyhow::Result<()> {
         .execute(pool)
         .await
         .context("drop stale cards table")?;
+    Ok(())
+}
+
+/// Drops any stale `settings` table so `init_schema` can recreate it in the
+/// current shape — same rename-by-drop-and-recreate approach as
+/// `drop_stale_cards` (`graduation_reps` → `graduation_interval_days`). Safe
+/// because `get_settings` already treats a missing row as "client keeps its
+/// local settings"; no data migration needed, just a re-sync on next contact.
+/// No-op on a fresh DB or one already on the current layout.
+async fn drop_stale_settings(pool: &SqlitePool) -> anyhow::Result<()> {
+    let cols: Vec<String> = sqlx::query_scalar("SELECT name FROM pragma_table_info('settings')")
+        .fetch_all(pool)
+        .await
+        .context("inspect settings columns")?;
+    if cols.is_empty() || cols.iter().any(|c| c == "graduation_interval_days") {
+        return Ok(()); // fresh DB or already on the current layout
+    }
+    sqlx::query("DROP TABLE settings")
+        .execute(pool)
+        .await
+        .context("drop stale settings table")?;
     Ok(())
 }
 
@@ -498,11 +520,11 @@ pub async fn get_all_deletions(db: &Db, email: &str) -> anyhow::Result<Vec<Strin
 pub async fn upsert_settings(db: &Db, email: &str, s: &Settings) -> anyhow::Result<()> {
     sqlx::query(
         "INSERT INTO settings
-             (email, graduation_reps, interval_scale, max_session_cards,
+             (email, graduation_interval_days, interval_scale, max_session_cards,
               request_retention, updated_ms)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)
          ON CONFLICT(email) DO UPDATE SET
-             graduation_reps = excluded.graduation_reps,
+             graduation_interval_days = excluded.graduation_interval_days,
              interval_scale = excluded.interval_scale,
              max_session_cards = excluded.max_session_cards,
              request_retention = excluded.request_retention,
@@ -510,7 +532,7 @@ pub async fn upsert_settings(db: &Db, email: &str, s: &Settings) -> anyhow::Resu
          WHERE excluded.updated_ms >= settings.updated_ms",
     )
     .bind(email)
-    .bind(s.graduation_reps)
+    .bind(s.graduation_interval_days)
     .bind(s.interval_scale)
     .bind(s.max_session_cards)
     .bind(s.request_retention)
@@ -525,7 +547,7 @@ pub async fn upsert_settings(db: &Db, email: &str, s: &Settings) -> anyhow::Resu
 /// any (so the client keeps its local defaults).
 pub async fn get_settings(db: &Db, email: &str) -> anyhow::Result<Option<Settings>> {
     let row = sqlx::query(
-        "SELECT graduation_reps, interval_scale, max_session_cards,
+        "SELECT graduation_interval_days, interval_scale, max_session_cards,
                 request_retention, updated_ms
          FROM settings WHERE email = ?1",
     )
@@ -534,7 +556,7 @@ pub async fn get_settings(db: &Db, email: &str) -> anyhow::Result<Option<Setting
     .await
     .context("query get_settings")?;
     Ok(row.map(|r| Settings {
-        graduation_reps: r.get("graduation_reps"),
+        graduation_interval_days: r.get("graduation_interval_days"),
         interval_scale: r.get("interval_scale"),
         max_session_cards: r.get("max_session_cards"),
         request_retention: r.get("request_retention"),
@@ -1021,7 +1043,7 @@ mod tests {
 
     fn settings(updated_ms: f64, retention: f64) -> Settings {
         Settings {
-            graduation_reps: 0,
+            graduation_interval_days: 0,
             interval_scale: 1.0,
             max_session_cards: 20,
             request_retention: retention,
@@ -1193,5 +1215,59 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(get_all_cards(&pool, ALICE).await.unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn drops_pre_graduation_interval_settings_table() {
+        // A DB on the old graduation_reps layout. init_schema must drop and
+        // recreate it (clean break, not migrated — client re-syncs its local
+        // settings on next contact), same approach as the cards-table breaks.
+        let opts = SqliteConnectOptions::from_str(":memory:").unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect_with(opts)
+            .await
+            .unwrap();
+        sqlx::query(
+            "CREATE TABLE settings (
+                 email             TEXT PRIMARY KEY,
+                 graduation_reps   INTEGER NOT NULL,
+                 interval_scale    REAL NOT NULL,
+                 max_session_cards INTEGER NOT NULL,
+                 request_retention REAL NOT NULL,
+                 updated_ms        REAL NOT NULL
+             )",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "INSERT INTO settings
+                 (email, graduation_reps, interval_scale, max_session_cards,
+                  request_retention, updated_ms)
+             VALUES (?1, 5, 1.0, 20, 0.9, 100)",
+        )
+        .bind(ALICE)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        init_schema(&pool).await.unwrap();
+
+        let cols: Vec<String> =
+            sqlx::query_scalar("SELECT name FROM pragma_table_info('settings')")
+                .fetch_all(&pool)
+                .await
+                .unwrap();
+        assert!(cols.iter().any(|c| c == "graduation_interval_days"));
+        assert!(
+            get_settings(&pool, ALICE).await.unwrap().is_none(),
+            "pre-migration settings row must be dropped, not migrated"
+        );
+
+        upsert_settings(&pool, ALICE, &settings(200.0, 0.9))
+            .await
+            .unwrap();
+        assert!(get_settings(&pool, ALICE).await.unwrap().is_some());
     }
 }

@@ -17,8 +17,10 @@ pub const SETTINGS_KEY: &str = "srs_settings";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SrsSettings {
-    #[serde(rename = "graduationReps")]
-    pub graduation_reps: u32,
+    /// Card graduates once FSRS's computed next-review interval reaches this
+    /// many days. 0 = never graduate.
+    #[serde(rename = "graduationIntervalDays")]
+    pub graduation_interval_days: u32,
     #[serde(rename = "intervalScale")]
     pub interval_scale: f64,
     #[serde(rename = "maxSessionCards")]
@@ -50,7 +52,7 @@ fn default_request_retention() -> f64 {
 impl Default for SrsSettings {
     fn default() -> Self {
         Self {
-            graduation_reps: 0,
+            graduation_interval_days: 365,
             interval_scale: 1.0,
             max_session_cards: 20,
             request_retention: default_request_retention(),
@@ -115,7 +117,7 @@ mod tests {
         let v: serde_json::Value = serde_json::to_value(&s).unwrap();
         let obj = v.as_object().unwrap();
         for field in [
-            "graduationReps",
+            "graduationIntervalDays",
             "intervalScale",
             "maxSessionCards",
             "requestRetention",

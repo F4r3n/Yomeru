@@ -265,15 +265,17 @@ pub async fn bump_priority(sequence: u32) -> Result<(), String> {
     put_cards(&to_put).await
 }
 
-/// Resets every active sibling of `sequence` back to a fresh "New" FSRS
-/// state, keeping it in the active word list. Destructive.
+/// Resets every active or graduated sibling of `sequence` back to a fresh
+/// "New" FSRS state in the active word list — the mechanism by which a
+/// graduated card can re-enter Review. Destructive.
 pub async fn reset_card(sequence: u32, now_ms: f64) -> Result<(), String> {
     let siblings = get_cards_by_sequence(sequence).await?;
     let to_put: Vec<SrsCard> = siblings
         .into_iter()
-        .filter(|c| matches!(c.status, CardStatus::Active))
+        .filter(|c| matches!(c.status, CardStatus::Active | CardStatus::Graduated))
         .map(|mut c| {
             c.reset_progression(now_ms);
+            c.status = CardStatus::Active;
             c
         })
         .collect();

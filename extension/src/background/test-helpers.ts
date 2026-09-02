@@ -21,7 +21,6 @@ export function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
     added_ms: 0,
     status: "active",
     priority: 0,
-    consecutiveCorrect: 0,
     ...overrides,
   };
 }

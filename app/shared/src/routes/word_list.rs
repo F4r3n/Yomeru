@@ -24,7 +24,7 @@ pub fn WordListTab() -> Element {
             let all = get_all_cards().await.unwrap_or_default();
             let mut active: Vec<_> = all
                 .into_iter()
-                .filter(|c| matches!(c.status, CardStatus::Active))
+                .filter(|c| matches!(c.status, CardStatus::Active | CardStatus::Graduated))
                 .collect();
             let mut seqs: Vec<u32> = active.iter().map(|c| c.sequence).collect();
             seqs.sort_unstable();
@@ -90,6 +90,14 @@ pub fn WordListTab() -> Element {
     let now = now_ms();
     let rows = cards.read().clone();
     let total = rows.len();
+    let active_count = rows
+        .iter()
+        .filter(|c| matches!(c.status, CardStatus::Active))
+        .count();
+    let graduated_count = rows
+        .iter()
+        .filter(|c| matches!(c.status, CardStatus::Graduated))
+        .count();
     let filter_s = filter.read().to_lowercase();
     let heads = headwords.read().clone();
     let reads = readings.read().clone();
@@ -104,7 +112,10 @@ pub fn WordListTab() -> Element {
             matches_query(head, reading, &filter_s)
         })
         .collect();
-    let due_count = filtered.iter().filter(|c| c.due_ms <= now).count();
+    let due_count = filtered
+        .iter()
+        .filter(|c| matches!(c.status, CardStatus::Active) && c.due_ms <= now)
+        .count();
     let visible = filtered.len();
 
     rsx! {
@@ -115,7 +126,8 @@ pub fn WordListTab() -> Element {
                     div { class: "subtitle", "Active SRS cards across both review directions." }
                 }
                 div { class: "actions",
-                    span { class: "pill", "{total} active" }
+                    span { class: "pill", "{active_count} active" }
+                    span { class: "pill", "{graduated_count} graduated" }
                 }
             }
 
@@ -169,8 +181,19 @@ pub fn WordListTab() -> Element {
                                         .get(&seq)
                                         .cloned()
                                         .unwrap_or_else(|| format!("(seq {seq})"));
-                                    let due_label = format_due(c.due_ms, now);
-                                    let due_class = if c.due_ms <= now { "badge due" } else { "badge" };
+                                    let graduated = matches!(c.status, CardStatus::Graduated);
+                                    let due_label = if graduated {
+                                        "graduated".to_string()
+                                    } else {
+                                        format_due(c.due_ms, now)
+                                    };
+                                    let due_class = if graduated {
+                                        "badge"
+                                    } else if c.due_ms <= now {
+                                        "badge due"
+                                    } else {
+                                        "badge"
+                                    };
                                     let direction = match c.direction {
                                         CardDirection::Recognition => "Recognition",
                                         CardDirection::Recall => "Recall",

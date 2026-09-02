@@ -13,7 +13,6 @@ import {
   promoteCard,
   promoteAll,
   deleteCard,
-  deleteCardById,
   addLookupHistory,
   getAllTombstones,
   clearTombstones,
@@ -29,12 +28,11 @@ import type {
   SrsSettings,
   WordEntry,
 } from "../shared/types.ts";
-import { cardId } from "../shared/types.ts";
+import { cardId, MS_PER_DAY } from "../shared/types.ts";
 import {
   mergeReview,
   applyIntervalScale,
   checkGraduation,
-  nextConsecutiveCorrect,
   type SrsSchedFields,
 } from "./review-utils.ts";
 
@@ -345,7 +343,6 @@ async function handleAddWord({ sequence }: { sequence: number }) {
     direction: "recognition",
     status: "staging",
     priority: 0,
-    consecutiveCorrect: 0,
   };
   const recall: SrsCard = {
     ...base,
@@ -354,7 +351,6 @@ async function handleAddWord({ sequence }: { sequence: number }) {
     direction: "recall",
     status: "staging",
     priority: 0,
-    consecutiveCorrect: 0,
   };
   await putCards([recognition, recall]);
   await bumpDbVersion();
@@ -377,13 +373,13 @@ async function handleReviewCard({
   const now_ms = Date.now();
   const wasmOut = srs!.review_card(card, rating, now_ms) as WasmCardShape;
   const scaled = applyIntervalScale(wasmOut, settings.intervalScale, now_ms);
-  const streak = nextConsecutiveCorrect(card.consecutiveCorrect ?? 0, rating);
-  if (checkGraduation(streak, settings.graduationReps)) {
-    await deleteCardById(cardId(sequence, direction));
+  const intervalDays = (scaled.due_ms - now_ms) / MS_PER_DAY;
+  if (checkGraduation(intervalDays, settings.graduationIntervalDays)) {
+    await putCard({ ...mergeReview(card, scaled), status: "graduated" });
     await bumpDbVersion();
     return { success: true, graduated: true };
   }
-  await putCard({ ...mergeReview(card, scaled), consecutiveCorrect: streak });
+  await putCard(mergeReview(card, scaled));
   await bumpDbVersion();
   return { success: true, graduated: false };
 }

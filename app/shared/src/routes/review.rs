@@ -5,9 +5,7 @@ use crate::components::pos_list;
 use crate::dict::{
     examples_for, kanji_for, lookup_by_sequence, preferred_headword, primary_reading,
 };
-use crate::idb::{
-    delete_card_by_id, get_all_cards, get_due_cards, get_staging_cards, promote_card, put_card,
-};
+use crate::idb::{get_all_cards, get_due_cards, get_staging_cards, promote_card, put_card};
 use crate::settings::load as load_settings;
 use crate::srs::{ReviewOutcome, apply_review, now_ms, rating_from_u8};
 use crate::sync::{schedule_sync, use_reload_on_sync};
@@ -209,9 +207,9 @@ pub fn ReviewTab() -> Element {
                         schedule_sync();
                     }
                 }
-                ReviewOutcome::Graduated => {
-                    if let Err(e) = delete_card_by_id(&card_id).await {
-                        warn!("delete_card_by_id({card_id}) on graduation failed: {e}");
+                ReviewOutcome::Graduated(c) => {
+                    if let Err(e) = put_card(&c).await {
+                        warn!("put_card({card_id}) on graduation failed: {e}");
                     } else {
                         schedule_sync();
                     }
@@ -220,7 +218,7 @@ pub fn ReviewTab() -> Element {
                         .map(|e| preferred_headword(e).to_string())
                         .unwrap_or_else(|| format!("seq {}", card.sequence));
                     graduated_msg.set(Some(format!(
-                        "「{}」 ({}) graduated — removed from review queue.",
+                        "「{}」 ({}) graduated — kept in Word List, hidden from Review.",
                         label,
                         match card.direction {
                             CardDirection::Recognition => "recognition",
