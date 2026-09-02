@@ -20,6 +20,13 @@ enum BackTab {
     Examples,
 }
 
+/// True when `word` mixes at least one kanji character with at least one
+/// hiragana character (e.g. 食べる) — the combo case whose reading line
+/// should stay hidden on the front face until the answer is revealed.
+fn is_kana_kanji_combo(word: &str) -> bool {
+    word.chars().any(japanese_utils::is_kanji) && word.chars().any(japanese_utils::is_hiragana)
+}
+
 fn shuffle<T>(mut v: Vec<T>) -> Vec<T> {
     // Fisher-Yates with Math.random() — good enough for review-order randomness.
     for i in (1..v.len()).rev() {
@@ -360,6 +367,10 @@ pub fn ReviewTab() -> Element {
                         .unwrap_or_default();
                     let show_back_v = *show_back.read();
                     let is_recall = matches!(c.direction, CardDirection::Recall);
+                    // Combo kanji/hiragana words (e.g. 食べる) spell out their
+                    // own reading via okurigana — don't also spoil it via the
+                    // reading line until the answer is revealed.
+                    let hide_reading = !show_back_v && is_kana_kanji_combo(&front_word);
 
                     rsx! {
                         div { class: "review-card",
@@ -384,10 +395,12 @@ pub fn ReviewTab() -> Element {
                                     }
                                 } else {
                                     div { class: "word", "{front_word}" }
-                                    if let Some(k) = sub_kanji.clone() {
-                                        div { class: "kanji-sub", "{k}" }
-                                    } else if !reading.is_empty() && reading != front_word {
-                                        div { class: "reading", "{reading}" }
+                                    if !hide_reading {
+                                        if let Some(k) = sub_kanji.clone() {
+                                            div { class: "kanji-sub", "{k}" }
+                                        } else if !reading.is_empty() && reading != front_word {
+                                            div { class: "reading", "{reading}" }
+                                        }
                                     }
                                 }
                             }
@@ -536,5 +549,30 @@ fn TabButton(active: bool, onclick: EventHandler<MouseEvent>, label: &'static st
     let class = if active { "active" } else { "" };
     rsx! {
         button { class: "{class}", onclick: move |e| onclick.call(e), "{label}" }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pure_kanji_is_not_a_combo() {
+        assert!(!is_kana_kanji_combo("食事"));
+    }
+
+    #[test]
+    fn pure_kana_is_not_a_combo() {
+        assert!(!is_kana_kanji_combo("たべる"));
+    }
+
+    #[test]
+    fn trailing_okurigana_is_a_combo() {
+        assert!(is_kana_kanji_combo("食べる"));
+    }
+
+    #[test]
+    fn kanji_sandwiched_between_kana_is_a_combo() {
+        assert!(is_kana_kanji_combo("取り消す"));
     }
 }
