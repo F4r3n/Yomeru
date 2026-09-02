@@ -18,13 +18,6 @@ enum BackTab {
     Examples,
 }
 
-/// True when `word` mixes at least one kanji character with at least one
-/// hiragana character (e.g. 食べる) — the combo case whose reading line
-/// should stay hidden on the front face until the answer is revealed.
-fn is_kana_kanji_combo(word: &str) -> bool {
-    word.chars().any(japanese_utils::is_kanji) && word.chars().any(japanese_utils::is_hiragana)
-}
-
 fn shuffle<T>(mut v: Vec<T>) -> Vec<T> {
     // Fisher-Yates with Math.random() — good enough for review-order randomness.
     for i in (1..v.len()).rev() {
@@ -365,10 +358,12 @@ pub fn ReviewTab() -> Element {
                         .unwrap_or_default();
                     let show_back_v = *show_back.read();
                     let is_recall = matches!(c.direction, CardDirection::Recall);
-                    // Combo kanji/hiragana words (e.g. 食べる) spell out their
-                    // own reading via okurigana — don't also spoil it via the
-                    // reading line until the answer is revealed.
-                    let hide_reading = !show_back_v && is_kana_kanji_combo(&front_word);
+                    // Recognition cards test going from the written word to its
+                    // reading, so the reading (and, for kana-preferred headwords,
+                    // the underlying kanji spelling) must stay hidden on the front
+                    // face for every word, not just kanji/hiragana combos like
+                    // 食べる, until the answer is revealed.
+                    let hide_reading = !show_back_v;
 
                     rsx! {
                         div { class: "review-card",
@@ -550,27 +545,3 @@ fn TabButton(active: bool, onclick: EventHandler<MouseEvent>, label: &'static st
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn pure_kanji_is_not_a_combo() {
-        assert!(!is_kana_kanji_combo("食事"));
-    }
-
-    #[test]
-    fn pure_kana_is_not_a_combo() {
-        assert!(!is_kana_kanji_combo("たべる"));
-    }
-
-    #[test]
-    fn trailing_okurigana_is_a_combo() {
-        assert!(is_kana_kanji_combo("食べる"));
-    }
-
-    #[test]
-    fn kanji_sandwiched_between_kana_is_a_combo() {
-        assert!(is_kana_kanji_combo("取り消す"));
-    }
-}
