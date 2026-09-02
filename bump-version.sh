@@ -39,6 +39,10 @@ CARGO_TOMLS=(
     crates/examples-types/Cargo.toml
     crates/examples-build/Cargo.toml
     crates/examples-wasm/Cargo.toml
+    app/shared/Cargo.toml
+    app/web/Cargo.toml
+    app/extension/Cargo.toml
+    app/android/Cargo.toml
 )
 for toml in "${CARGO_TOMLS[@]}"; do
     sed -i "s/^version = \"[^\"]*\"/version = \"$VERSION\"/" "$toml"
