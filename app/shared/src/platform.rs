@@ -19,6 +19,7 @@ use kanjidic_types::KanjiEntry;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen_futures::spawn_local;
 
+use crate::idb::Tombstone;
 use crate::settings::{SETTINGS_KEY, SrsSettings, default_server_url};
 use crate::types::SrsCard;
 use async_trait::async_trait;
@@ -286,7 +287,11 @@ impl SettingsPayload {
 #[derive(Serialize)]
 struct SyncBody<'a> {
     cards: &'a [SrsCard],
-    deletions: &'a [String],
+    /// Tombstones with the time the user actually deleted, so a delete made
+    /// offline isn't stamped with upload time server-side. Serialized as
+    /// objects; the server also still accepts the bare-id form older clients
+    /// send, so it must be deployed before clients pick this up.
+    deletions: &'a [Tombstone],
     settings: SettingsPayload,
 }
 
@@ -311,12 +316,17 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     if s.server_url.is_empty() || s.server_token.is_empty() {
         return Err("not authenticated".into());
     }
+    // Captured before the reads, not after: a card written between the read and
+    // the timestamp would be missing from the payload yet still look like the
+    // server had ruled on it, and a returned tombstone would delete it.
+    let uploaded_at = js_sys::Date::now();
     let local_cards = get_all_cards()
         .await
         .map_err(|e| format!("read cards: {e}"))?;
     let local_tombstones = get_all_tombstones()
         .await
         .map_err(|e| format!("read tombstones: {e}"))?;
+    let sent_ids: Vec<String> = local_tombstones.iter().map(|t| t.id.clone()).collect();
 
     let res = Request::post(&join_url(s.server_url.trim(), "/api/sync"))
         .header("Authorization", &format!("Bearer {}", s.server_token))
@@ -338,23 +348,23 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     let resp: SyncResponse = res.json().await.map_err(|e| e.to_string())?;
 
     if !resp.cards.is_empty() {
-        put_cards_skip_older(&resp.cards).await?;
+        merge_remote_cards(&resp.cards).await?;
     }
-    // Race-safe: ids we sent tombstones for must NOT be re-deleted —
-    // either the local cards store already lacks them, or the user
-    // re-added the card mid-sync and we'd silently eat the re-add.
-    let sent: std::collections::HashSet<&str> =
-        local_tombstones.iter().map(String::as_str).collect();
-    let foreign: Vec<String> = resp
-        .deletions
-        .iter()
-        .filter(|id| !sent.contains(id.as_str()))
-        .cloned()
-        .collect();
+    // Re-read the local cards: one added while the sync was in flight must be
+    // visible here or the deletion filter can't tell it from a stale copy.
+    let local_after_merge = crate::idb::get_all_cards()
+        .await
+        .map_err(|e| format!("read cards for deletions: {e}"))?;
+    let foreign = crate::sync::deletions_to_apply(
+        &resp.deletions,
+        &sent_ids,
+        &local_after_merge,
+        uploaded_at,
+    );
     apply_remote_deletions(&foreign)
         .await
         .map_err(|e| format!("apply deletions: {e}"))?;
-    clear_tombstones(&local_tombstones)
+    clear_tombstones(&sent_ids)
         .await
         .map_err(|e| format!("clear tombstones: {e}"))?;
 
@@ -382,27 +392,20 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     ))
 }
 
-/// Mirrors the server-side `last_review_ms` last-write-wins rule on the
-/// client: skip an incoming card if the local copy has a newer review
-/// timestamp (we reviewed it locally while the sync was in flight).
-async fn put_cards_skip_older(remote: &[SrsCard]) -> Result<(), String> {
-    use crate::idb::{get_all_cards, put_cards};
+/// Mirrors the server-side `updated_ms` last-write-wins rule on the client:
+/// skip an incoming card if the local copy was written more recently (we
+/// reviewed, promoted or reset it while the sync was in flight).
+///
+/// Writes through `put_cards_synced` so the adopted cards keep the version they
+/// arrived with — stamping them here would mark every synced card as locally
+/// modified and bounce it straight back at the server.
+async fn merge_remote_cards(remote: &[SrsCard]) -> Result<(), String> {
+    use crate::idb::{get_all_cards, put_cards_synced};
     let local = get_all_cards()
         .await
         .map_err(|e| format!("read cards for merge: {e}"))?;
-    let local_by_id: std::collections::HashMap<&str, f64> = local
-        .iter()
-        .map(|c| (c.id.as_str(), c.last_review_ms.unwrap_or(0.0)))
-        .collect();
-    let to_put: Vec<SrsCard> = remote
-        .iter()
-        .filter(|c| {
-            let local_ts = local_by_id.get(c.id.as_str()).copied().unwrap_or(0.0);
-            c.last_review_ms.unwrap_or(0.0) >= local_ts
-        })
-        .cloned()
-        .collect();
-    put_cards(&to_put)
+    let to_put = crate::sync::cards_to_apply(remote, &local);
+    put_cards_synced(&to_put)
         .await
         .map_err(|e| format!("put cards: {e}"))
 }

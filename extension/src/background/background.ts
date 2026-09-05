@@ -200,6 +200,10 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
         Authorization: `Bearer ${settings.serverToken}`,
         "Content-Type": "application/json",
       },
+      // Tombstones go as {id, deleted_at} objects so a delete made offline is
+      // ordered by when it happened, not when it reached the server. The server
+      // still accepts the bare-id form older clients send, so it must be
+      // deployed before this client ships.
       body: JSON.stringify({ cards: upload, deletions: localTombstones }),
     });
     if (res.status === 401) return { error: "session expired — re-verify" };
@@ -210,7 +214,7 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
     // as older). The cards we just uploaded come back in resp.cards, so valid
     // local-only cards aren't lost.
     await replaceAllCards(resp.cards);
-    await clearTombstones(localTombstones);
+    await clearTombstones(localTombstones.map((t) => t.id));
     await writeCardsBackup();
     return { synced: resp.cards.length };
   } catch (e) {

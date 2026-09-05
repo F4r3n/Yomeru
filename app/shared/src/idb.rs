@@ -9,7 +9,7 @@ use idb::{
     Database, DatabaseEvent, Factory, IndexParams, KeyPath, ObjectStoreParams, Query,
     TransactionMode,
 };
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use wasm_bindgen::JsValue;
 
 const DB_NAME: &str = "yomeru-db";
@@ -120,36 +120,31 @@ where
     Ok(out)
 }
 
-pub async fn put_card(card: &SrsCard) -> Result<(), String> {
-    let db = open().await.map_err(|e| e.to_string())?;
-    let tx = db
-        .transaction(&[STORE], TransactionMode::ReadWrite)
-        .map_err(|e| e.to_string())?;
-    let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
-    let val = to_value(card).map_err(|e| e.to_string())?;
-    store
-        .put(&val, None)
-        .map_err(|e| e.to_string())?
-        .await
-        .map_err(|e| e.to_string())?;
-    tx.commit()
-        .map_err(|e| e.to_string())?
-        .await
-        .map_err(|e| e.to_string())?;
-    Ok(())
-}
-
-pub async fn put_cards(cards: &[SrsCard]) -> Result<(), String> {
+/// Writes `cards`, optionally stamping each with a fresh `updated_ms`.
+///
+/// `stamp` is the whole reason the card writes funnel through here: every local
+/// mutation has to advance the sync merge key, and doing it at the single write
+/// point means review, promotion, reset, priority and import all get it without
+/// remembering to. Sync writes pass `false` — re-stamping cards the server just
+/// sent would make them look locally-modified and ping-pong between devices.
+async fn put_all(cards: &[SrsCard], stamp: bool) -> Result<(), String> {
     if cards.is_empty() {
         return Ok(());
     }
+    let now = js_sys::Date::now();
     let db = open().await.map_err(|e| e.to_string())?;
     let tx = db
         .transaction(&[STORE], TransactionMode::ReadWrite)
         .map_err(|e| e.to_string())?;
     let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
     for c in cards {
-        let val = to_value(c).map_err(|e| e.to_string())?;
+        let val = if stamp {
+            let mut c = c.clone();
+            c.updated_ms = now;
+            to_value(&c).map_err(|e| e.to_string())?
+        } else {
+            to_value(c).map_err(|e| e.to_string())?
+        };
         store
             .put(&val, None)
             .map_err(|e| e.to_string())?
@@ -161,6 +156,20 @@ pub async fn put_cards(cards: &[SrsCard]) -> Result<(), String> {
         .await
         .map_err(|e| e.to_string())?;
     Ok(())
+}
+
+pub async fn put_card(card: &SrsCard) -> Result<(), String> {
+    put_all(std::slice::from_ref(card), true).await
+}
+
+pub async fn put_cards(cards: &[SrsCard]) -> Result<(), String> {
+    put_all(cards, true).await
+}
+
+/// Writes cards adopted from the server verbatim, keeping the `updated_ms` they
+/// arrived with. Only the sync merge should use this — see [`put_all`].
+pub async fn put_cards_synced(cards: &[SrsCard]) -> Result<(), String> {
+    put_all(cards, false).await
 }
 
 pub async fn get_card(sequence: u32, direction: CardDirection) -> Result<Option<SrsCard>, String> {
@@ -222,7 +231,17 @@ pub async fn get_all_cards() -> Result<Vec<SrsCard>, String> {
         .map_err(|e| e.to_string())?
         .await
         .map_err(|e| e.to_string())?;
-    Ok(arr.into_iter().filter_map(|v| from_value(v).ok()).collect())
+    Ok(arr
+        .into_iter()
+        .filter_map(|v| from_value::<SrsCard>(v).ok())
+        // Cards stored before `updated_ms` existed deserialize with 0. Resolve
+        // that here so callers — the sync upload above all — always hand out a
+        // real merge version rather than one that loses every comparison.
+        .map(|mut c| {
+            c.updated_ms = c.version_ms();
+            c
+        })
+        .collect())
 }
 
 pub async fn get_due_cards(now_ms: f64) -> Result<Vec<SrsCard>, String> {
@@ -303,10 +322,13 @@ pub async fn delete_card(sequence: u32) -> Result<(), String> {
     delete_ids_with_tombstones(&ids).await
 }
 
-#[derive(Serialize)]
-struct Tombstone {
-    id: String,
-    deleted_at: f64,
+/// A local record that the user deleted a card, and when. The time travels to
+/// the server on the next sync so a delete made while offline is ordered by
+/// when it actually happened rather than when it was finally uploaded.
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Tombstone {
+    pub id: String,
+    pub deleted_at: f64,
 }
 
 pub async fn delete_card_by_id(id: &str) -> Result<(), String> {
@@ -349,7 +371,7 @@ async fn delete_ids_with_tombstones(ids: &[String]) -> Result<(), String> {
     Ok(())
 }
 
-pub async fn get_all_tombstones() -> Result<Vec<String>, String> {
+pub async fn get_all_tombstones() -> Result<Vec<Tombstone>, String> {
     let db = open().await.map_err(|e| e.to_string())?;
     let tx = db
         .transaction(&[TOMB_STORE], TransactionMode::ReadOnly)
@@ -360,12 +382,11 @@ pub async fn get_all_tombstones() -> Result<Vec<String>, String> {
         .map_err(|e| e.to_string())?
         .await
         .map_err(|e| e.to_string())?;
-    let ids = arr
+    Ok(arr
         .into_iter()
-        .filter_map(|v| serde_wasm_bindgen::from_value::<serde_json::Value>(v).ok())
-        .filter_map(|v| v.get("id").and_then(|x| x.as_str()).map(|s| s.to_string()))
-        .collect();
-    Ok(ids)
+        .filter_map(|v| from_value::<Tombstone>(v).ok())
+        .filter(|t| !t.id.is_empty())
+        .collect())
 }
 
 pub async fn clear_tombstones(ids: &[String]) -> Result<(), String> {

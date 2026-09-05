@@ -35,8 +35,13 @@ pub struct VerifyResponse {
 #[derive(Deserialize)]
 pub struct SyncBody {
     pub cards: Vec<db::Card>,
+    /// Deleted card ids, each either a bare string (older clients) or an object
+    /// carrying the client's own delete time. The time matters because a device
+    /// that deleted while offline for a week would otherwise have the tombstone
+    /// stamped with server receipt time, beating a re-add another device made
+    /// yesterday.
     #[serde(default)]
-    pub deletions: Vec<String>,
+    pub deletions: Vec<db::DeletionEntry>,
     /// Client's current scheduler settings. Optional so older clients that
     /// don't send settings keep working (cards-only sync).
     #[serde(default)]
@@ -46,6 +51,9 @@ pub struct SyncBody {
 #[derive(Serialize)]
 pub struct SyncResponse {
     pub cards: Vec<db::Card>,
+    /// Tombstone ids only. Clients don't need the delete times back: a re-add
+    /// that genuinely superseded a delete has already cleared the tombstone
+    /// server-side, so anything still listed here is a delete that stands.
     pub deletions: Vec<String>,
     /// The user's stored settings after the merge, or `None` if they've never
     /// synced any. Omitted from the JSON when absent.
@@ -238,11 +246,12 @@ pub async fn sync_handler(
         }
     };
 
-    db::apply_deletions(&state.db, &email, &body.deletions, now)
+    let incoming: Vec<db::Deletion> = body.deletions.iter().map(|d| d.to_deletion(now)).collect();
+    db::apply_deletions(&state.db, &email, &incoming)
         .await
         .map_err(|e| db_err("apply_deletions", e))?;
 
-    db::upsert_cards(&state.db, &email, &body.cards)
+    db::upsert_cards(&state.db, &email, &body.cards, now)
         .await
         .map_err(|e| db_err("upsert_cards", e))?;
 

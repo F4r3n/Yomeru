@@ -31,6 +31,93 @@ pub struct Card {
     pub status: String,
     #[serde(default)]
     pub priority: i64,
+    /// Wall-clock ms of the last write to this card on any device, and the sync
+    /// merge key. Distinct from `last_review_ms`, which only moves on a review
+    /// and is reset to NULL by `reset_progression` — a status promotion or a
+    /// priority edit advances this and not that, which is exactly why the merge
+    /// can't key on the review time. Defaulted so a client that predates the
+    /// field still syncs; [`normalize_version`] derives a usable value for it.
+    #[serde(default)]
+    pub updated_ms: f64,
+}
+
+/// The effective merge version for an incoming card. A client that predates
+/// `updated_ms` sends 0; deriving from the review/added times (both already
+/// agreed on by every device) keeps such a card comparable instead of losing
+/// every merge, and yields the same answer on whichever device it arrives from.
+///
+/// Clamped to `now` for the same reason tombstone times are: the value is
+/// client wall-clock, so a device whose clock runs a month fast would otherwise
+/// stamp every card it touches a month ahead, win every merge for that month,
+/// and revert every other device's edits on each sync.
+fn normalize_version(c: &Card, now: i64) -> f64 {
+    let raw = if c.updated_ms > 0.0 {
+        c.updated_ms
+    } else {
+        c.last_review_ms.unwrap_or(0.0).max(c.added_ms)
+    };
+    #[allow(clippy::cast_precision_loss)]
+    let now_f = now as f64;
+    if raw > now_f { now_f } else { raw }
+}
+
+/// A tombstone: a card id plus when the user deleted it, in client wall-clock
+/// ms. The time is what lets [`upsert_cards`] tell a genuine re-add (added
+/// after the delete) from a stale replica uploaded by a device that hasn't
+/// pulled the delete yet.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Deletion {
+    pub id: String,
+    pub deleted_at: i64,
+}
+
+/// One entry of a client's `deletions` list. Clients that predate the delete
+/// time send a bare id string; current ones send the object. Untagged so both
+/// shapes live under the same field name — variant order matters, since a bare
+/// string can only match [`DeletionEntry::Id`].
+///
+/// `deleted_at` is `f64` because that is what the client puts on the wire (JS
+/// `Date.now()`, serialized as `1757000000123.0`), matching every other
+/// timestamp in this API. An `i64` here would reject that number, and because
+/// the enum is untagged the failure surfaces as an unhelpful "did not match any
+/// variant" over the *whole* request rather than a field-level error.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum DeletionEntry {
+    Timed { id: String, deleted_at: f64 },
+    Id(String),
+}
+
+impl DeletionEntry {
+    /// Resolves to a tombstone, falling back to `now` for a client that didn't
+    /// send a time. `deleted_at` is client wall-clock, so it's clamped to `now`:
+    /// a device with a fast clock must not be able to claim a delete far in the
+    /// future and outrank every re-add made after it. A negative or NaN value
+    /// (a broken client) also lands on `now`.
+    pub fn to_deletion(&self, now: i64) -> Deletion {
+        match self {
+            Self::Timed { id, deleted_at } => Deletion {
+                id: id.clone(),
+                deleted_at: ms_to_epoch(*deleted_at, now),
+            },
+            Self::Id(id) => Deletion {
+                id: id.clone(),
+                deleted_at: now,
+            },
+        }
+    }
+}
+
+/// Clamps a client-supplied wall-clock ms value into `0..=now` as an integer.
+/// NaN fails both comparisons and falls through to `now`.
+fn ms_to_epoch(ms: f64, now: i64) -> i64 {
+    #[allow(clippy::cast_precision_loss)]
+    let now_f = now as f64;
+    if ms >= 0.0 && ms <= now_f {
+        #[allow(clippy::cast_possible_truncation)]
+        return ms as i64;
+    }
+    now
 }
 
 /// A user's synced scheduler settings. One row per email. `updated_ms` is the
@@ -62,8 +149,9 @@ const SETTINGS_DDL: &str = "CREATE TABLE IF NOT EXISTS settings (
              updated_ms                REAL NOT NULL
          )";
 
-/// New per-column `cards` schema. `last_review_ms` is the sync merge key and is
-/// nullable (never-reviewed cards have no value); everything else is required.
+/// New per-column `cards` schema. `updated_ms` is the sync merge key;
+/// `last_review_ms` is scheduling data and is nullable (never-reviewed cards
+/// have no value). Everything else is required.
 const CARDS_DDL: &str = "CREATE TABLE IF NOT EXISTS cards (
              email           TEXT NOT NULL,
              id              TEXT NOT NULL,
@@ -79,6 +167,7 @@ const CARDS_DDL: &str = "CREATE TABLE IF NOT EXISTS cards (
              added_ms        REAL NOT NULL,
              status          TEXT NOT NULL,
              priority        INTEGER NOT NULL DEFAULT 0,
+             updated_ms      REAL NOT NULL DEFAULT 0,
              PRIMARY KEY (email, id)
          )";
 
@@ -196,19 +285,22 @@ async fn drop_plaintext_sessions(pool: &SqlitePool) -> anyhow::Result<()> {
 }
 
 /// Drops any stale `cards` table so `init_schema` can recreate it in the
-/// current shape. This has covered two breaks so far — the move off a
-/// surface-`word`/`data`-blob key to JMdict `sequence`, and now the
-/// addition of `priority` — and will cover future ones the same way: no
-/// data migration, users re-import via export/import. Checking for the
-/// newest known column (`priority`) is sufficient on its own, since a
-/// table missing it is also missing everything older (`sequence`
-/// included). No-op on a fresh DB or one already on the current layout.
+/// current shape. This has covered three breaks so far — the move off a
+/// surface-`word`/`data`-blob key to JMdict `sequence`, the addition of
+/// `priority`, and now the addition of the `updated_ms` merge key — and will
+/// cover future ones the same way: no data migration, users re-import via
+/// export/import. Dropping costs nothing here beyond one re-upload: the table
+/// is only a mirror of what clients hold locally, and every client pushes its
+/// full card set on each sync. Checking for the newest known column
+/// (`updated_ms`) is sufficient on its own, since a table missing it is also
+/// missing everything older (`sequence` included). No-op on a fresh DB or one
+/// already on the current layout.
 async fn drop_stale_cards(pool: &SqlitePool) -> anyhow::Result<()> {
     let cols: Vec<String> = sqlx::query_scalar("SELECT name FROM pragma_table_info('cards')")
         .fetch_all(pool)
         .await
         .context("inspect cards columns")?;
-    if cols.is_empty() || cols.iter().any(|c| c == "priority") {
+    if cols.is_empty() || cols.iter().any(|c| c == "updated_ms") {
         return Ok(()); // fresh DB or already on the current layout
     }
     sqlx::query("DROP TABLE cards")
@@ -380,20 +472,45 @@ pub async fn prune_expired_auth(db: &Db, now_ms: i64) -> anyhow::Result<()> {
 }
 
 /// Upserts incoming cards for `email`: replaces a stored card only if the
-/// incoming one is newer (higher last_review_ms; NULL treated as 0). Any
-/// tombstone for the same (email, id) is cleared — a re-add wins over an
-/// old delete.
-pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card]) -> anyhow::Result<()> {
+/// incoming one is newer (higher `updated_ms`).
+///
+/// A card whose id carries a tombstone is only accepted when it was added
+/// *after* the delete (`added_ms > deleted_at`), i.e. a genuine re-add — and
+/// only then is the tombstone cleared. This guard is what stops a delete from
+/// being undone: every client uploads its whole local card set on every sync,
+/// so a device that hasn't pulled the delete yet re-sends its stale copy, and
+/// without the check that copy would both resurrect the card and destroy the
+/// tombstone, leaving no device able to learn about the delete.
+///
+/// Known gap: importing an old export restores the card's original `added_ms`,
+/// so re-importing a card deleted on another device looks stale and the delete
+/// wins. Rare, and it fails in the safe direction.
+pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card], now: i64) -> anyhow::Result<()> {
     let mut tx = db.begin().await.context("begin upsert tx")?;
     for c in cards {
         if c.id.is_empty() {
             continue;
         }
+        // Read the tombstone first rather than folding this into the upsert's
+        // WHERE: the insert guard and the tombstone clear have to agree on
+        // whether this card won, and two separate predicates can drift apart.
+        let deleted_at: Option<i64> =
+            sqlx::query_scalar("SELECT deleted_at FROM deletions WHERE email = ?1 AND id = ?2")
+                .bind(email)
+                .bind(&c.id)
+                .fetch_optional(&mut *tx)
+                .await
+                .context("read matching tombstone")?;
+        if deleted_at.is_some_and(|d| d as f64 >= c.added_ms) {
+            continue; // stale replica of a deleted card, not a re-add
+        }
+
         sqlx::query(
             "INSERT INTO cards
                  (email, id, sequence, direction, due_ms, stability, difficulty,
-                  reps, lapses, state, last_review_ms, added_ms, status, priority)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
+                  reps, lapses, state, last_review_ms, added_ms, status, priority,
+                  updated_ms)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
              ON CONFLICT(email, id) DO UPDATE SET
                  sequence = excluded.sequence,
                  direction = excluded.direction,
@@ -406,8 +523,9 @@ pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card]) -> anyhow::Resul
                  last_review_ms = excluded.last_review_ms,
                  added_ms = excluded.added_ms,
                  status = excluded.status,
-                 priority = excluded.priority
-             WHERE COALESCE(excluded.last_review_ms, 0) >= COALESCE(cards.last_review_ms, 0)",
+                 priority = excluded.priority,
+                 updated_ms = excluded.updated_ms
+             WHERE excluded.updated_ms >= cards.updated_ms",
         )
         .bind(email)
         .bind(&c.id)
@@ -423,15 +541,19 @@ pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card]) -> anyhow::Resul
         .bind(c.added_ms)
         .bind(&c.status)
         .bind(c.priority)
+        .bind(normalize_version(c, now))
         .execute(&mut *tx)
         .await
         .context("upsert card")?;
-        sqlx::query("DELETE FROM deletions WHERE email = ?1 AND id = ?2")
-            .bind(email)
-            .bind(&c.id)
-            .execute(&mut *tx)
-            .await
-            .context("clear matching tombstone")?;
+
+        if deleted_at.is_some() {
+            sqlx::query("DELETE FROM deletions WHERE email = ?1 AND id = ?2")
+                .bind(email)
+                .bind(&c.id)
+                .execute(&mut *tx)
+                .await
+                .context("clear matching tombstone")?;
+        }
     }
     tx.commit().await.context("commit upsert tx")?;
     Ok(())
@@ -440,7 +562,8 @@ pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card]) -> anyhow::Resul
 pub async fn get_all_cards(db: &Db, email: &str) -> anyhow::Result<Vec<Card>> {
     let rows = sqlx::query(
         "SELECT id, sequence, direction, due_ms, stability, difficulty,
-                reps, lapses, state, last_review_ms, added_ms, status, priority
+                reps, lapses, state, last_review_ms, added_ms, status, priority,
+                updated_ms
          FROM cards WHERE email = ?1",
     )
     .bind(email)
@@ -463,6 +586,7 @@ pub async fn get_all_cards(db: &Db, email: &str) -> anyhow::Result<Vec<Card>> {
             added_ms: r.get("added_ms"),
             status: r.get("status"),
             priority: r.get("priority"),
+            updated_ms: r.get("updated_ms"),
         })
         .collect();
     Ok(cards)
@@ -470,33 +594,51 @@ pub async fn get_all_cards(db: &Db, email: &str) -> anyhow::Result<Vec<Card>> {
 
 /// Applies incoming tombstones for `email`: drops each id from `cards` and
 /// records the tombstone so the user's other clients can replay the delete.
-pub async fn apply_deletions(
-    db: &Db,
-    email: &str,
-    ids: &[String],
-    now_ms: i64,
-) -> anyhow::Result<()> {
-    if ids.is_empty() {
+///
+/// A repeat delete keeps the *earliest* `deleted_at`. Every client re-sends its
+/// pending tombstones until they're acknowledged, so taking the latest would
+/// let a lagging device keep pushing the delete time forward and outrank a
+/// re-add that genuinely came after the original delete.
+pub async fn apply_deletions(db: &Db, email: &str, deletions: &[Deletion]) -> anyhow::Result<()> {
+    if deletions.is_empty() {
         return Ok(());
     }
     let mut tx = db.begin().await.context("begin deletions tx")?;
-    for id in ids {
-        if id.is_empty() {
+    for d in deletions {
+        if d.id.is_empty() {
             continue;
         }
+        // Mirror of the re-add guard in `upsert_cards`, and needed for the same
+        // reason from the other direction: a client re-sends pending tombstones
+        // until a sync succeeds, so a delete whose response was lost can arrive
+        // after another device legitimately re-added the card. Without this the
+        // stale delete wins and the re-add is gone everywhere — the deleting
+        // device has no copy left for `upsert_cards` to restore.
+        let added_ms: Option<f64> =
+            sqlx::query_scalar("SELECT added_ms FROM cards WHERE email = ?1 AND id = ?2")
+                .bind(email)
+                .bind(&d.id)
+                .fetch_optional(&mut *tx)
+                .await
+                .context("read card for deletion guard")?;
+        if added_ms.is_some_and(|a| a > d.deleted_at as f64) {
+            continue; // the stored card is a re-add that postdates this delete
+        }
+
         sqlx::query("DELETE FROM cards WHERE email = ?1 AND id = ?2")
             .bind(email)
-            .bind(id)
+            .bind(&d.id)
             .execute(&mut *tx)
             .await
             .context("delete card")?;
         sqlx::query(
             "INSERT INTO deletions (email, id, deleted_at) VALUES (?1, ?2, ?3)
-             ON CONFLICT(email, id) DO UPDATE SET deleted_at = excluded.deleted_at",
+             ON CONFLICT(email, id) DO UPDATE SET
+                 deleted_at = MIN(deletions.deleted_at, excluded.deleted_at)",
         )
         .bind(email)
-        .bind(id)
-        .bind(now_ms)
+        .bind(&d.id)
+        .bind(d.deleted_at)
         .execute(&mut *tx)
         .await
         .context("upsert tombstone")?;
@@ -512,6 +654,18 @@ pub async fn get_all_deletions(db: &Db, email: &str) -> anyhow::Result<Vec<Strin
         .await
         .context("query get_all_deletions")?;
     Ok(ids)
+}
+
+/// When the tombstone for `id` says the delete happened, if there is one.
+/// Exposed for tests — the sync response only needs the ids.
+#[cfg(test)]
+async fn deleted_at(db: &Db, email: &str, id: &str) -> Option<i64> {
+    sqlx::query_scalar("SELECT deleted_at FROM deletions WHERE email = ?1 AND id = ?2")
+        .bind(email)
+        .bind(id)
+        .fetch_optional(db)
+        .await
+        .unwrap()
 }
 
 /// Upserts a user's scheduler settings, last-write-wins: the incoming row
@@ -599,6 +753,85 @@ mod tests {
     const ALICE: &str = "alice@example.com";
     const BOB: &str = "bob@example.com";
 
+    // `added_ms` is non-zero so the tombstone guard has something meaningful to
+    // compare against, but small enough that it never dominates the review
+    // timestamps in `normalize_version`. `updated_ms` is deliberately left at 0
+    // so the common fixture exercises that fallback — the path a
+    // pre-`updated_ms` client takes. Tests about the merge key itself, or about
+    // a re-add beating a tombstone, set the relevant field explicitly.
+    const ADDED: f64 = 1.0;
+
+    /// Server "now" for tests. Far enough ahead that no fixture timestamp trips
+    /// the fast-clock clamp in `normalize_version`.
+    const NOW: i64 = 1_900_000_000_000;
+
+    #[test]
+    fn bare_id_deletion_deserializes_and_takes_receipt_time() {
+        // The shape a client that predates the delete time sends.
+        let parsed: Vec<DeletionEntry> = serde_json::from_str(r#"["a::recognition"]"#).unwrap();
+        let d = parsed[0].to_deletion(9_000);
+        assert_eq!(d.id, "a::recognition");
+        assert_eq!(d.deleted_at, 9_000);
+    }
+
+    #[test]
+    fn timed_deletion_keeps_the_client_delete_time() {
+        // The point of sending the time: a delete made while offline keeps when
+        // it happened, so a re-add another device made afterwards still wins.
+        // The literal is written the way serde_json renders the client's f64 —
+        // a trailing `.0` that an i64 field would reject outright, taking the
+        // whole request down with an untagged "matched no variant" error.
+        let parsed: Vec<DeletionEntry> =
+            serde_json::from_str(r#"[{"id":"a::recognition","deleted_at":1757000000123.0}]"#)
+                .unwrap();
+        assert_eq!(
+            parsed[0].to_deletion(1_757_000_009_999).deleted_at,
+            1_757_000_000_123
+        );
+    }
+
+    #[test]
+    fn future_delete_time_is_clamped_to_now() {
+        // A device with a fast clock must not claim a delete far in the future
+        // and outrank every re-add anyone makes after it.
+        let parsed: Vec<DeletionEntry> =
+            serde_json::from_str(r#"[{"id":"a::recognition","deleted_at":99000.0}]"#).unwrap();
+        assert_eq!(parsed[0].to_deletion(9_000).deleted_at, 9_000);
+    }
+
+    #[test]
+    fn nonsense_delete_time_falls_back_to_now() {
+        let parsed: Vec<DeletionEntry> =
+            serde_json::from_str(r#"[{"id":"a","deleted_at":-5.0}]"#).unwrap();
+        assert_eq!(parsed[0].to_deletion(9_000).deleted_at, 9_000);
+    }
+
+    #[test]
+    fn mixed_deletion_shapes_parse_together() {
+        // An older client and a current one can be syncing the same account.
+        let parsed: Vec<DeletionEntry> =
+            serde_json::from_str(r#"["a",{"id":"b","deleted_at":1000.0}]"#).unwrap();
+        let out: Vec<Deletion> = parsed.iter().map(|d| d.to_deletion(9_000)).collect();
+        assert_eq!(out[0].id, "a");
+        assert_eq!(out[0].deleted_at, 9_000);
+        assert_eq!(out[1].id, "b");
+        assert_eq!(out[1].deleted_at, 1_000);
+    }
+
+    fn del(id: &str, deleted_at: i64) -> Deletion {
+        Deletion {
+            id: id.to_string(),
+            deleted_at,
+        }
+    }
+
+    /// Tombstone ids, sorted — the table has no inherent row order.
+    async fn deleted_ids(db: &Db, email: &str) -> Vec<String> {
+        let mut ids = get_all_deletions(db, email).await.unwrap();
+        ids.sort();
+        ids
+    }
+
     fn card(id: &str, last_review_ms: Option<f64>) -> Card {
         Card {
             id: id.to_string(),
@@ -611,16 +844,17 @@ mod tests {
             lapses: 0,
             state: "new".to_string(),
             last_review_ms,
-            added_ms: 0.0,
+            added_ms: ADDED,
             status: "active".to_string(),
             priority: 0,
+            updated_ms: 0.0,
         }
     }
 
     #[tokio::test]
     async fn upsert_inserts_new_cards() {
         let db = fresh_db().await;
-        upsert_cards(&db, ALICE, &[card("a::recognition", Some(100.0))])
+        upsert_cards(&db, ALICE, &[card("a::recognition", Some(100.0))], NOW)
             .await
             .unwrap();
         let stored = get_all_cards(&db, ALICE).await.unwrap();
@@ -631,11 +865,11 @@ mod tests {
     #[tokio::test]
     async fn upsert_keeps_newer_last_review() {
         let db = fresh_db().await;
-        upsert_cards(&db, ALICE, &[card("a::recognition", Some(100.0))])
+        upsert_cards(&db, ALICE, &[card("a::recognition", Some(100.0))], NOW)
             .await
             .unwrap();
         // Older incoming write should be ignored.
-        upsert_cards(&db, ALICE, &[card("a::recognition", Some(50.0))])
+        upsert_cards(&db, ALICE, &[card("a::recognition", Some(50.0))], NOW)
             .await
             .unwrap();
         let stored = get_all_cards(&db, ALICE).await.unwrap();
@@ -645,12 +879,12 @@ mod tests {
     #[tokio::test]
     async fn upsert_replaces_with_equal_or_newer_last_review() {
         let db = fresh_db().await;
-        upsert_cards(&db, ALICE, &[card("a::recognition", Some(100.0))])
+        upsert_cards(&db, ALICE, &[card("a::recognition", Some(100.0))], NOW)
             .await
             .unwrap();
         let mut newer = card("a::recognition", Some(200.0));
         newer.sequence = 1_586_270;
-        upsert_cards(&db, ALICE, &[newer]).await.unwrap();
+        upsert_cards(&db, ALICE, &[newer], NOW).await.unwrap();
         let stored = get_all_cards(&db, ALICE).await.unwrap();
         assert_eq!(stored[0].sequence, 1_586_270);
         assert_eq!(stored[0].last_review_ms, Some(200.0));
@@ -659,88 +893,218 @@ mod tests {
     #[tokio::test]
     async fn apply_deletions_removes_card_and_records_tombstone() {
         let db = fresh_db().await;
-        upsert_cards(&db, ALICE, &[card("a::recognition", Some(100.0))])
+        upsert_cards(&db, ALICE, &[card("a::recognition", Some(100.0))], NOW)
             .await
             .unwrap();
-        apply_deletions(
-            &db,
-            ALICE,
-            &["a::recognition".to_string()],
-            1_700_000_000_000,
-        )
-        .await
-        .unwrap();
+        apply_deletions(&db, ALICE, &[del("a::recognition", 1_700_000_000_000)])
+            .await
+            .unwrap();
         assert!(get_all_cards(&db, ALICE).await.unwrap().is_empty());
-        assert_eq!(
-            get_all_deletions(&db, ALICE).await.unwrap(),
-            vec!["a::recognition".to_string()]
-        );
+        assert_eq!(deleted_ids(&db, ALICE).await, ["a::recognition"]);
     }
 
     #[tokio::test]
-    async fn upsert_clears_matching_tombstone() {
+    async fn genuine_re_add_clears_matching_tombstone() {
         // Re-add must win over an old delete: otherwise a client that brings
         // back a card after deleting it would see the resurrection wiped
-        // out on the next sync.
+        // out on the next sync. "Genuine" means added after the delete —
+        // re-adding through the UI mints a fresh card with `added_ms = now`.
         let db = fresh_db().await;
-        apply_deletions(&db, ALICE, &["a::recognition".to_string()], 1_000)
+        apply_deletions(&db, ALICE, &[del("a::recognition", 1_000)])
             .await
             .unwrap();
-        upsert_cards(&db, ALICE, &[card("a::recognition", Some(2_000.0))])
-            .await
-            .unwrap();
+        let mut re_added = card("a::recognition", None);
+        re_added.added_ms = 2_000.0;
+        upsert_cards(&db, ALICE, &[re_added], NOW).await.unwrap();
         assert_eq!(get_all_cards(&db, ALICE).await.unwrap().len(), 1);
         assert!(get_all_deletions(&db, ALICE).await.unwrap().is_empty());
     }
 
     #[tokio::test]
+    async fn stale_replica_cannot_resurrect_a_deleted_card() {
+        // The production bug. Every client uploads its whole card set on every
+        // sync, so a device that hasn't pulled the delete yet re-sends its old
+        // copy. That copy used to both resurrect the card and clear the
+        // tombstone, after which no device could ever learn about the delete.
+        let db = fresh_db().await;
+        upsert_cards(&db, ALICE, &[card("a::recognition", Some(100.0))], NOW)
+            .await
+            .unwrap();
+        apply_deletions(&db, ALICE, &[del("a::recognition", 5_000)])
+            .await
+            .unwrap();
+
+        // Same card as before the delete: added_ms predates the tombstone.
+        upsert_cards(&db, ALICE, &[card("a::recognition", Some(100.0))], NOW)
+            .await
+            .unwrap();
+
+        assert!(
+            get_all_cards(&db, ALICE).await.unwrap().is_empty(),
+            "stale copy must not resurrect the card"
+        );
+        assert_eq!(
+            deleted_ids(&db, ALICE).await,
+            ["a::recognition"],
+            "tombstone must survive so the lagging device still learns the delete"
+        );
+    }
+
+    #[tokio::test]
+    async fn promotion_survives_a_stale_copy_carrying_a_later_review() {
+        // Staging→Active never touches `last_review_ms`, so under the old
+        // merge key a stale copy with any review time reverted the promotion —
+        // which is what made devices disagree on their Active card counts.
+        let db = fresh_db().await;
+        let mut promoted = card("a::recognition", None);
+        promoted.status = "active".to_string();
+        promoted.updated_ms = 5_000.0;
+        upsert_cards(&db, ALICE, &[promoted], NOW).await.unwrap();
+
+        let mut stale = card("a::recognition", Some(9_000.0));
+        stale.status = "staging".to_string();
+        stale.updated_ms = 3_000.0;
+        upsert_cards(&db, ALICE, &[stale], NOW).await.unwrap();
+
+        let stored = get_all_cards(&db, ALICE).await.unwrap();
+        assert_eq!(stored[0].status, "active");
+    }
+
+    #[tokio::test]
+    async fn reset_survives_a_stale_reviewed_copy() {
+        // `reset_progression` clears `reps` and sets `last_review_ms` back to
+        // NULL, moving the old merge key *backwards* — so a reset always lost
+        // to the pre-reset copy on another device and silently undid itself.
+        let db = fresh_db().await;
+        let mut reviewed = card("a::recognition", Some(9_000.0));
+        reviewed.reps = 12;
+        reviewed.updated_ms = 9_000.0;
+        upsert_cards(&db, ALICE, &[reviewed.clone()], NOW).await.unwrap();
+
+        let mut reset = card("a::recognition", None);
+        reset.reps = 0;
+        reset.updated_ms = 10_000.0;
+        upsert_cards(&db, ALICE, &[reset], NOW).await.unwrap();
+
+        // The stale pre-reset copy arrives afterwards and must lose.
+        upsert_cards(&db, ALICE, &[reviewed], NOW).await.unwrap();
+
+        let stored = get_all_cards(&db, ALICE).await.unwrap();
+        assert_eq!(stored[0].reps, 0, "reset must not be undone by a stale copy");
+        assert_eq!(stored[0].last_review_ms, None);
+    }
+
+    #[tokio::test]
+    async fn legacy_card_without_updated_ms_is_ordered_by_review_time() {
+        // A client that predates `updated_ms` sends 0. Falling back to the
+        // review/added times keeps it comparable instead of losing every merge.
+        let db = fresh_db().await;
+        upsert_cards(&db, ALICE, &[card("a::recognition", Some(8_000.0))], NOW)
+            .await
+            .unwrap();
+        upsert_cards(&db, ALICE, &[card("a::recognition", Some(2_000.0))], NOW)
+            .await
+            .unwrap();
+        let stored = get_all_cards(&db, ALICE).await.unwrap();
+        assert_eq!(stored[0].last_review_ms, Some(8_000.0));
+        assert_eq!(stored[0].updated_ms, 8_000.0);
+    }
+
+    #[tokio::test]
+    async fn a_re_add_survives_a_stale_tombstone_arriving_late() {
+        // Device A deletes at T1 but loses the response, so it keeps the
+        // tombstone pending. Device B re-adds at T2 > T1 and syncs. When A
+        // finally retries, its stale delete must not take B's re-add — A has no
+        // copy of the card left, so nothing could restore it.
+        let db = fresh_db().await;
+        let mut re_added = card("a::recognition", None);
+        re_added.added_ms = 2_000.0;
+        upsert_cards(&db, ALICE, &[re_added], NOW).await.unwrap();
+
+        apply_deletions(&db, ALICE, &[del("a::recognition", 1_000)])
+            .await
+            .unwrap();
+
+        assert_eq!(
+            get_all_cards(&db, ALICE).await.unwrap().len(),
+            1,
+            "a delete older than the card must not remove it"
+        );
+        assert!(
+            deleted_ids(&db, ALICE).await.is_empty(),
+            "and it must not leave a tombstone that would delete it elsewhere"
+        );
+    }
+
+    #[tokio::test]
+    async fn fast_clock_card_version_is_clamped_to_now() {
+        // A device a month ahead would otherwise win every merge for a month
+        // and revert every other device's edits on each sync.
+        let db = fresh_db().await;
+        let mut skewed = card("a::recognition", None);
+        skewed.updated_ms = (NOW + 30 * 86_400_000) as f64;
+        skewed.status = "staging".to_string();
+        upsert_cards(&db, ALICE, &[skewed], NOW).await.unwrap();
+
+        let mut honest = card("a::recognition", None);
+        honest.updated_ms = NOW as f64;
+        honest.status = "active".to_string();
+        upsert_cards(&db, ALICE, &[honest], NOW).await.unwrap();
+
+        let stored = get_all_cards(&db, ALICE).await.unwrap();
+        assert_eq!(
+            stored[0].status, "active",
+            "an honest write at server-now must still be able to win"
+        );
+    }
+
+    #[tokio::test]
     async fn apply_deletions_is_idempotent() {
         let db = fresh_db().await;
-        apply_deletions(&db, ALICE, &["a::recognition".to_string()], 100)
+        apply_deletions(&db, ALICE, &[del("a::recognition", 100)])
             .await
             .unwrap();
-        apply_deletions(&db, ALICE, &["a::recognition".to_string()], 200)
+        apply_deletions(&db, ALICE, &[del("a::recognition", 200)])
             .await
             .unwrap();
-        let tombs = get_all_deletions(&db, ALICE).await.unwrap();
-        assert_eq!(tombs.len(), 1);
+        assert_eq!(deleted_ids(&db, ALICE).await, ["a::recognition"]);
+        assert_eq!(
+            deleted_at(&db, ALICE, "a::recognition").await,
+            Some(100),
+            "a re-sent tombstone must keep the earliest delete time, or a \
+             lagging device could keep pushing it past a later re-add"
+        );
     }
 
     #[tokio::test]
     async fn apply_deletions_skips_empty_ids() {
         let db = fresh_db().await;
-        apply_deletions(&db, ALICE, &[String::new(), "a".into()], 100)
+        apply_deletions(&db, ALICE, &[del("", 100), del("a", 100)])
             .await
             .unwrap();
-        assert_eq!(
-            get_all_deletions(&db, ALICE).await.unwrap(),
-            vec!["a".to_string()]
-        );
+        assert_eq!(deleted_ids(&db, ALICE).await, ["a"]);
     }
 
     #[tokio::test]
     async fn prune_drops_only_old_tombstones() {
         let db = fresh_db().await;
-        apply_deletions(&db, ALICE, &["old".into()], 100)
+        apply_deletions(&db, ALICE, &[del("old", 100)])
             .await
             .unwrap();
-        apply_deletions(&db, ALICE, &["recent".into()], 5_000)
+        apply_deletions(&db, ALICE, &[del("recent", 5_000)])
             .await
             .unwrap();
         prune_old_deletions(&db, 1_000).await.unwrap();
-        assert_eq!(
-            get_all_deletions(&db, ALICE).await.unwrap(),
-            vec!["recent".to_string()]
-        );
+        assert_eq!(deleted_ids(&db, ALICE).await, ["recent"]);
     }
 
     #[tokio::test]
     async fn users_cannot_see_each_others_cards() {
         let db = fresh_db().await;
-        upsert_cards(&db, ALICE, &[card("a::recognition", Some(100.0))])
+        upsert_cards(&db, ALICE, &[card("a::recognition", Some(100.0))], NOW)
             .await
             .unwrap();
-        upsert_cards(&db, BOB, &[card("b::recognition", Some(200.0))])
+        upsert_cards(&db, BOB, &[card("b::recognition", Some(200.0))], NOW)
             .await
             .unwrap();
         let alice_cards = get_all_cards(&db, ALICE).await.unwrap();
@@ -760,8 +1124,8 @@ mod tests {
         alice_card.sequence = 1_467_640;
         let mut bob_card = card("shared::id", Some(100.0));
         bob_card.sequence = 1_586_270;
-        upsert_cards(&db, ALICE, &[alice_card]).await.unwrap();
-        upsert_cards(&db, BOB, &[bob_card]).await.unwrap();
+        upsert_cards(&db, ALICE, &[alice_card], NOW).await.unwrap();
+        upsert_cards(&db, BOB, &[bob_card], NOW).await.unwrap();
         assert_eq!(
             get_all_cards(&db, ALICE).await.unwrap()[0].sequence,
             1_467_640
@@ -998,22 +1362,19 @@ mod tests {
     #[tokio::test]
     async fn deletions_isolated_per_user() {
         let db = fresh_db().await;
-        upsert_cards(&db, ALICE, &[card("x", Some(100.0))])
+        upsert_cards(&db, ALICE, &[card("x", Some(100.0))], NOW)
             .await
             .unwrap();
-        upsert_cards(&db, BOB, &[card("x", Some(100.0))])
+        upsert_cards(&db, BOB, &[card("x", Some(100.0))], NOW)
             .await
             .unwrap();
         // Alice deletes; Bob's copy must survive.
-        apply_deletions(&db, ALICE, &["x".to_string()], 1_000)
+        apply_deletions(&db, ALICE, &[del("x", 1_000)])
             .await
             .unwrap();
         assert!(get_all_cards(&db, ALICE).await.unwrap().is_empty());
         assert_eq!(get_all_cards(&db, BOB).await.unwrap().len(), 1);
-        assert_eq!(
-            get_all_deletions(&db, ALICE).await.unwrap(),
-            vec!["x".to_string()]
-        );
+        assert_eq!(deleted_ids(&db, ALICE).await, ["x"]);
         assert!(get_all_deletions(&db, BOB).await.unwrap().is_empty());
     }
 
@@ -1026,11 +1387,11 @@ mod tests {
         let db = fresh_db().await;
         let mut reviewed = card("猫::recognition", Some(1_779_000_000_000.0));
         reviewed.due_ms = 1_780_000_000_000.0; // scheduled into the future
-        upsert_cards(&db, ALICE, &[reviewed]).await.unwrap();
+        upsert_cards(&db, ALICE, &[reviewed], NOW).await.unwrap();
 
         let mut stale = card("猫::recognition", None);
         stale.due_ms = 1_700_000_000_000.0; // older, "due now" copy
-        upsert_cards(&db, ALICE, &[stale]).await.unwrap();
+        upsert_cards(&db, ALICE, &[stale], NOW).await.unwrap();
 
         let stored = get_all_cards(&db, ALICE).await.unwrap();
         assert_eq!(stored.len(), 1);
@@ -1150,7 +1511,7 @@ mod tests {
         assert!(get_all_cards(&pool, ALICE).await.unwrap().is_empty());
 
         // And the recreated table accepts sequence-keyed cards.
-        upsert_cards(&pool, ALICE, &[card("猫::recognition", Some(100.0))])
+        upsert_cards(&pool, ALICE, &[card("猫::recognition", Some(100.0))], NOW)
             .await
             .unwrap();
         assert_eq!(get_all_cards(&pool, ALICE).await.unwrap().len(), 1);
@@ -1161,7 +1522,7 @@ mod tests {
         let db = fresh_db().await;
         let mut c = card("a::recognition", Some(100.0));
         c.priority = 5;
-        upsert_cards(&db, ALICE, &[c]).await.unwrap();
+        upsert_cards(&db, ALICE, &[c], NOW).await.unwrap();
         let stored = get_all_cards(&db, ALICE).await.unwrap();
         assert_eq!(stored[0].priority, 5);
     }
@@ -1211,7 +1572,59 @@ mod tests {
             "pre-priority row must be dropped, not migrated"
         );
 
-        upsert_cards(&pool, ALICE, &[card("猫::recognition", Some(100.0))])
+        upsert_cards(&pool, ALICE, &[card("猫::recognition", Some(100.0))], NOW)
+            .await
+            .unwrap();
+        assert_eq!(get_all_cards(&pool, ALICE).await.unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn drops_pre_updated_ms_cards_table() {
+        // A DB from before `updated_ms` became the merge key. Same clean break
+        // as the two above: the table only mirrors what clients hold, and every
+        // client re-uploads its full set on the next sync.
+        let opts = SqliteConnectOptions::from_str(":memory:").unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect_with(opts)
+            .await
+            .unwrap();
+        sqlx::query(
+            "CREATE TABLE cards (
+                 email TEXT NOT NULL, id TEXT NOT NULL, sequence INTEGER NOT NULL,
+                 direction TEXT NOT NULL, due_ms REAL NOT NULL, stability REAL NOT NULL,
+                 difficulty REAL NOT NULL, reps INTEGER NOT NULL, lapses INTEGER NOT NULL,
+                 state TEXT NOT NULL, last_review_ms REAL, added_ms REAL NOT NULL,
+                 status TEXT NOT NULL, priority INTEGER NOT NULL DEFAULT 0,
+                 PRIMARY KEY (email, id))",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "INSERT INTO cards
+                 (email, id, sequence, direction, due_ms, stability, difficulty,
+                  reps, lapses, state, added_ms, status, priority)
+             VALUES (?1, '猫::recognition', 1467640, 'recognition', 0, 0, 0, 0, 0, 'new', 0, 'active', 0)",
+        )
+        .bind(ALICE)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        init_schema(&pool).await.unwrap();
+
+        let cols: Vec<String> = sqlx::query_scalar("SELECT name FROM pragma_table_info('cards')")
+            .fetch_all(&pool)
+            .await
+            .unwrap();
+        assert!(cols.iter().any(|c| c == "updated_ms"));
+        assert!(
+            get_all_cards(&pool, ALICE).await.unwrap().is_empty(),
+            "pre-updated_ms row must be dropped, not migrated"
+        );
+
+        upsert_cards(&pool, ALICE, &[card("猫::recognition", Some(100.0))], NOW)
             .await
             .unwrap();
         assert_eq!(get_all_cards(&pool, ALICE).await.unwrap().len(), 1);

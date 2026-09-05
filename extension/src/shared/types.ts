@@ -98,6 +98,29 @@ export interface SrsCard {
   /** Bumped when the app's Lookup re-clicks "Add" on an already-staged
    * word; pushes it up the New Words queue. Not set from this extension. */
   priority: number;
+  /**
+   * Wall-clock ms of the last write to this card on any device, and the sync
+   * merge key. Stamped by `putCard`/`putCards` so every mutation advances it.
+   *
+   * It is deliberately NOT `last_review_ms`: promoting a card to "active" or
+   * bumping its priority changes neither, and the app's reset clears
+   * `last_review_ms` outright, so keying the merge on the review time let a
+   * stale device revert those edits. Optional because cards written before the
+   * field existed lack it — read those through `versionMs`.
+   */
+  updated_ms?: number;
+}
+
+/**
+ * A card's merge version, with the fallback for cards stored before
+ * `updated_ms` existed. Both inputs are values every device already agrees on,
+ * so the fallback is deterministic rather than an arbitrary tiebreak.
+ * Mirrors `SrsCard::version_ms` in `app/shared/src/types.rs`.
+ */
+export function versionMs(c: SrsCard): number {
+  return c.updated_ms && c.updated_ms > 0
+    ? c.updated_ms
+    : Math.max(c.last_review_ms ?? 0, c.added_ms);
 }
 
 export function cardId(sequence: number, direction: CardDirection): string {

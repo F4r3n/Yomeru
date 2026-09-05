@@ -63,6 +63,14 @@ pub struct SrsCard {
     pub status: CardStatus,
     #[serde(default)]
     pub priority: u32,
+    /// Wall-clock ms of the last local write, and the sync merge key. Stamped
+    /// by [`crate::idb::put_cards`] so every mutation advances it — including
+    /// the ones `last_review_ms` misses (a Staging→Active promotion, a priority
+    /// bump) or actively moves backwards ([`SrsCard::reset_progression`], which
+    /// clears the review time). Defaulted for cards stored before the field
+    /// existed; read those through [`SrsCard::version_ms`].
+    #[serde(default)]
+    pub updated_ms: f64,
 }
 
 pub fn card_id(sequence: u32, direction: CardDirection) -> String {
@@ -107,6 +115,7 @@ impl SrsCardV1 {
             added_ms: self.added_ms,
             status: self.status,
             priority: 0,
+            updated_ms: self.last_review_ms.unwrap_or(0.0).max(self.added_ms),
         }
     }
 }
@@ -128,6 +137,19 @@ impl SrsCard {
             added_ms: now_ms,
             status: CardStatus::Staging,
             priority: 0,
+            updated_ms: now_ms,
+        }
+    }
+
+    /// The card's merge version. Falls back to the review/added times for cards
+    /// written before `updated_ms` existed, so the first sync after upgrading
+    /// compares something meaningful instead of an all-zero tie. Both inputs are
+    /// already agreed on by every device, so the fallback is deterministic.
+    pub fn version_ms(&self) -> f64 {
+        if self.updated_ms > 0.0 {
+            self.updated_ms
+        } else {
+            self.last_review_ms.unwrap_or(0.0).max(self.added_ms)
         }
     }
 

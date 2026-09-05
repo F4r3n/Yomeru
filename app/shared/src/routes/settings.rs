@@ -412,6 +412,23 @@ async fn import_cards_json(text: &str) -> Result<(usize, Skips), String> {
         parse_legacy_cards(arr, &word_seq, &existing_ids)
     };
 
+    // Both parse paths drop ids already present locally, so everything left is
+    // genuinely (re-)entering the collection now. Stamp `added_ms` accordingly:
+    // the server treats a card older than a tombstone as a stale replica and
+    // refuses it, so an import carrying its original `added_ms` would be
+    // rejected, then deleted locally on the next sync — the restored cards
+    // would appear and silently vanish. `added_ms` is also FSRS's last-review
+    // fallback, so this resets the scheduling baseline for never-reviewed
+    // cards; reviewed ones carry `last_review_ms` and are unaffected.
+    let now = js_sys::Date::now();
+    let to_put: Vec<SrsCard> = to_put
+        .into_iter()
+        .map(|mut c| {
+            c.added_ms = now;
+            c
+        })
+        .collect();
+
     let added = to_put.len();
     put_cards(&to_put).await.map_err(|e| e.to_string())?;
     if added > 0 {
