@@ -69,10 +69,8 @@ pub fn WordListTab() -> Element {
         spawn(async move {
             let confirmed = web_sys::window()
                 .and_then(|w| {
-                    w.confirm_with_message(
-                        "Reset this word's SRS progress? This can't be undone.",
-                    )
-                    .ok()
+                    w.confirm_with_message("Reset this word's SRS progress? This can't be undone.")
+                        .ok()
                 })
                 .unwrap_or(false);
             if !confirmed {

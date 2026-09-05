@@ -1,7 +1,7 @@
 mod rules;
 
-use std::collections::VecDeque;
 use rules::RULES;
+use std::collections::VecDeque;
 
 /// Result of deinflecting a word.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -33,14 +33,19 @@ pub fn deinflect(text: &str) -> Vec<Deinflected> {
             continue;
         }
 
-        results.push(Deinflected { text: candidate.clone(), reason: reason.clone() });
+        results.push(Deinflected {
+            text: candidate.clone(),
+            reason: reason.clone(),
+        });
 
         if depth >= 3 {
             continue;
         }
 
         for rule in RULES {
-            let Some(stem) = candidate.strip_suffix(rule.suffix_in) else { continue };
+            let Some(stem) = candidate.strip_suffix(rule.suffix_in) else {
+                continue;
+            };
 
             // Don't produce single-kana candidates from multi-char input
             // (avoids garbage like "" or "い" matching half a word).

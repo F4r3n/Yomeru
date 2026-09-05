@@ -9,7 +9,10 @@ use clap::Parser;
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "kanjidic-build", about = "Build binary KANJIDIC2 index from XML")]
+#[command(
+    name = "kanjidic-build",
+    about = "Build binary KANJIDIC2 index from XML"
+)]
 struct Args {
     #[arg(short, long)]
     input: PathBuf,

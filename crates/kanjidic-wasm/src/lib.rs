@@ -27,8 +27,7 @@ impl KanjiDictionary {
             .next()
             .ok_or_else(|| JsError::new("empty string"))?;
         match kanjidic_core::lookup_one(c) {
-            Some(e) => serde_wasm_bindgen::to_value(&e)
-                .map_err(|e| JsError::new(&e.to_string())),
+            Some(e) => serde_wasm_bindgen::to_value(&e).map_err(|e| JsError::new(&e.to_string())),
             None => Ok(JsValue::null()),
         }
     }

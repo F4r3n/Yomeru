@@ -79,12 +79,13 @@ impl DictClient for ExtensionDict {
         Ok(r.results)
     }
 
-    async fn lookup_by_sequence(&self, sequences: &[u32]) -> Result<Vec<Option<WordEntry>>, String> {
-        let r: LookupBySequenceResp = crate::send_bg_message(
-            "LOOKUP_BY_SEQUENCE",
-            LookupBySequencePayload { sequences },
-        )
-        .await?;
+    async fn lookup_by_sequence(
+        &self,
+        sequences: &[u32],
+    ) -> Result<Vec<Option<WordEntry>>, String> {
+        let r: LookupBySequenceResp =
+            crate::send_bg_message("LOOKUP_BY_SEQUENCE", LookupBySequencePayload { sequences })
+                .await?;
         Ok(r.results)
     }
 

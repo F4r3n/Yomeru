@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use kanjidic_types::KanjiEntry;
-use quick_xml::Reader;
 use quick_xml::events::Event;
+use quick_xml::Reader;
 use std::path::Path;
 
 pub fn parse_kanjidic(path: &Path) -> Result<Vec<KanjiEntry>> {
@@ -54,8 +54,7 @@ pub fn parse_kanjidic_bytes(raw: &[u8]) -> Result<Vec<KanjiEntry>> {
                     pending_r_type.clear();
                     for attr in e.attributes().flatten() {
                         if attr.key.as_ref() == b"r_type" {
-                            pending_r_type =
-                                String::from_utf8_lossy(&attr.value).into_owned();
+                            pending_r_type = String::from_utf8_lossy(&attr.value).into_owned();
                         }
                     }
                     ctx = Ctx::Reading;

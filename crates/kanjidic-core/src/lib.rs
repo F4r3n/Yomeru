@@ -50,7 +50,8 @@ fn get_entry(codepoint: u32) -> Option<KanjiEntry> {
         .ok()?;
     let byte_offset = dict.index.get(pos)?.1 as usize;
     let bytes = &dict.data;
-    let len = u32::from_le_bytes(bytes.get(byte_offset..byte_offset + 4)?.try_into().ok()?) as usize;
+    let len =
+        u32::from_le_bytes(bytes.get(byte_offset..byte_offset + 4)?.try_into().ok()?) as usize;
     let start = byte_offset + 4;
     from_bytes(bytes.get(start..start + len)?).ok()
 }
@@ -103,7 +104,13 @@ mod tests {
     use kanjidic_types::KanjiEntry;
     use postcard::to_allocvec;
 
-    fn entry(literal: char, strokes: u8, on: &[&str], kun: &[&str], meanings: &[&str]) -> KanjiEntry {
+    fn entry(
+        literal: char,
+        strokes: u8,
+        on: &[&str],
+        kun: &[&str],
+        meanings: &[&str],
+    ) -> KanjiEntry {
         KanjiEntry {
             literal,
             stroke_count: strokes,
@@ -160,7 +167,10 @@ mod tests {
 
     #[test]
     fn parse_binary_rejects_short_input() {
-        let err = parse_binary(&[0u8; 4]).err().expect("expected parse error").to_string();
+        let err = parse_binary(&[0u8; 4])
+            .err()
+            .expect("expected parse error")
+            .to_string();
         assert!(err.contains("too short"), "got: {err}");
     }
 
@@ -168,7 +178,10 @@ mod tests {
     fn parse_binary_rejects_bad_magic() {
         let mut bin = build_binary(&[entry('a', 1, &[], &[], &[])]);
         bin[0] = b'X';
-        let err = parse_binary(&bin).err().expect("expected parse error").to_string();
+        let err = parse_binary(&bin)
+            .err()
+            .expect("expected parse error")
+            .to_string();
         assert!(err.contains("magic"), "got: {err}");
     }
 
@@ -176,7 +189,10 @@ mod tests {
     fn parse_binary_rejects_bad_version() {
         let mut bin = build_binary(&[entry('a', 1, &[], &[], &[])]);
         bin[4] = 99;
-        let err = parse_binary(&bin).err().expect("expected parse error").to_string();
+        let err = parse_binary(&bin)
+            .err()
+            .expect("expected parse error")
+            .to_string();
         assert!(err.contains("unsupported version"), "got: {err}");
     }
 
@@ -185,7 +201,10 @@ mod tests {
         let bin = build_binary(&[entry('字', 6, &["ジ"], &[], &["character"])]);
         // Cut off the last few bytes of the data blob.
         let truncated = &bin[..bin.len() - 4];
-        let err = parse_binary(truncated).err().expect("expected parse error").to_string();
+        let err = parse_binary(truncated)
+            .err()
+            .expect("expected parse error")
+            .to_string();
         assert!(err.contains("truncated"), "got: {err}");
     }
 

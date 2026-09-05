@@ -544,4 +544,3 @@ fn TabButton(active: bool, onclick: EventHandler<MouseEvent>, label: &'static st
         button { class: "{class}", onclick: move |e| onclick.call(e), "{label}" }
     }
 }
-
