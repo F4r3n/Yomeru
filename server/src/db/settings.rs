@@ -5,8 +5,6 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 
-use super::Db;
-
 /// A user's synced scheduler settings. One row per email. `updated_ms` is the
 /// last-write-wins merge key (wall-clock ms of the client edit that produced
 /// these values). Device-local fields (server URL/email/token) are never
@@ -30,7 +28,10 @@ fn default_request_retention() -> f64 {
 /// Upserts a user's scheduler settings, last-write-wins: the incoming row
 /// replaces the stored one only if its `updated_ms` is greater than or equal
 /// to what's stored (ties favor the incoming write, matching the cards merge).
-pub async fn upsert_settings(db: &Db, email: &str, s: &Settings) -> anyhow::Result<()> {
+pub async fn upsert_settings<'e, E>(ex: E, email: &str, s: &Settings) -> anyhow::Result<()>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+{
     sqlx::query(
         "INSERT INTO settings
              (email, graduation_interval_days, interval_scale, max_session_cards,
@@ -50,7 +51,7 @@ pub async fn upsert_settings(db: &Db, email: &str, s: &Settings) -> anyhow::Resu
     .bind(s.max_session_cards)
     .bind(s.request_retention)
     .bind(s.updated_ms)
-    .execute(db)
+    .execute(ex)
     .await
     .context("upsert settings")?;
     Ok(())
@@ -58,14 +59,17 @@ pub async fn upsert_settings(db: &Db, email: &str, s: &Settings) -> anyhow::Resu
 
 /// Returns the user's stored settings, or `Ok(None)` if they've never synced
 /// any (so the client keeps its local defaults).
-pub async fn get_settings(db: &Db, email: &str) -> anyhow::Result<Option<Settings>> {
+pub async fn get_settings<'e, E>(ex: E, email: &str) -> anyhow::Result<Option<Settings>>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+{
     let row = sqlx::query(
         "SELECT graduation_interval_days, interval_scale, max_session_cards,
                 request_retention, updated_ms
          FROM settings WHERE email = ?1",
     )
     .bind(email)
-    .fetch_optional(db)
+    .fetch_optional(ex)
     .await
     .context("query get_settings")?;
     Ok(row.map(|r| Settings {

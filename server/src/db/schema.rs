@@ -71,7 +71,13 @@ pub(super) async fn init_schema(pool: &SqlitePool) -> anyhow::Result<()> {
     drop_stale_cards(pool).await?;
     drop_stale_settings(pool).await?;
     drop_plaintext_sessions(pool).await?;
-    for s in [CARDS_DDL, SETTINGS_DDL, OTPS_DDL, SESSIONS_DDL, DELETIONS_DDL] {
+    for s in [
+        CARDS_DDL,
+        SETTINGS_DDL,
+        OTPS_DDL,
+        SESSIONS_DDL,
+        DELETIONS_DDL,
+    ] {
         sqlx::query(s)
             .execute(pool)
             .await
@@ -171,8 +177,9 @@ async fn drop_stale_settings(pool: &SqlitePool) -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::db::cards::{get_all_cards, upsert_cards};
+    use crate::db::settings::{get_settings, upsert_settings};
     use crate::db::test_support::*;
-    use crate::db::{get_all_cards, get_settings, upsert_cards, upsert_settings};
     use crate::db::{validate_session, verify_otp};
     use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
     use std::str::FromStr;

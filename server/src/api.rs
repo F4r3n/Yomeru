@@ -246,32 +246,46 @@ pub async fn sync_handler(
         }
     };
 
+    // One transaction for the whole round trip. The reads have to see exactly
+    // the state the writes just produced: run separately, two devices syncing
+    // at once can interleave and each be handed a merged snapshot that never
+    // existed, which is how a client ends up adopting a half-applied merge.
+    let mut tx = state
+        .db
+        .begin()
+        .await
+        .map_err(|e| db_err("begin sync tx", e.into()))?;
+
     let incoming: Vec<db::Deletion> = body.deletions.iter().map(|d| d.to_deletion(now)).collect();
-    db::apply_deletions(&state.db, &email, &incoming)
+    db::apply_deletions_tx(&mut tx, &email, &incoming)
         .await
         .map_err(|e| db_err("apply_deletions", e))?;
 
-    db::upsert_cards(&state.db, &email, &body.cards, now)
+    db::upsert_cards_tx(&mut tx, &email, &body.cards, now)
         .await
         .map_err(|e| db_err("upsert_cards", e))?;
 
     if let Some(ref s) = body.settings {
-        db::upsert_settings(&state.db, &email, s)
+        db::upsert_settings(&mut *tx, &email, s)
             .await
             .map_err(|e| db_err("upsert_settings", e))?;
     }
 
-    let merged = db::get_all_cards(&state.db, &email)
+    let merged = db::get_all_cards(&mut *tx, &email)
         .await
         .map_err(|e| db_err("get_all_cards", e))?;
 
-    let tombstones = db::get_all_deletions(&state.db, &email)
+    let tombstones = db::get_all_deletions(&mut *tx, &email)
         .await
         .map_err(|e| db_err("get_all_deletions", e))?;
 
-    let settings = db::get_settings(&state.db, &email)
+    let settings = db::get_settings(&mut *tx, &email)
         .await
         .map_err(|e| db_err("get_settings", e))?;
+
+    tx.commit()
+        .await
+        .map_err(|e| db_err("commit sync tx", e.into()))?;
 
     Ok(Json(SyncResponse {
         cards: merged,

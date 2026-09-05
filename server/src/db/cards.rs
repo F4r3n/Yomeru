@@ -9,7 +9,9 @@
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use std::collections::HashMap;
 
+#[cfg(test)]
 use super::Db;
 
 /// A spaced-repetition card as exchanged with clients and stored one field per
@@ -85,22 +87,49 @@ fn normalize_version(c: &Card, now: i64) -> f64 {
 /// card carrying its original `added_ms` reads as a stale replica here, gets
 /// refused, and is then deleted locally on the next sync, so a restored backup
 /// would appear and silently vanish.
+///
+/// Test-only: production always calls [`upsert_cards_tx`] inside the sync
+/// handler's transaction. Kept because almost every test here is about the
+/// merge rule rather than transaction plumbing, and a standalone call keeps
+/// them readable.
+#[cfg(test)]
 pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card], now: i64) -> anyhow::Result<()> {
     let mut tx = db.begin().await.context("begin upsert tx")?;
+    upsert_cards_tx(&mut tx, email, cards, now).await?;
+    tx.commit().await.context("commit upsert tx")?;
+    Ok(())
+}
+
+/// [`upsert_cards`] without the surrounding transaction, so a caller that has
+/// one open — the sync handler, which needs its writes and reads to land as a
+/// single snapshot — can enlist this in it.
+pub async fn upsert_cards_tx(
+    conn: &mut sqlx::SqliteConnection,
+    email: &str,
+    cards: &[Card],
+    now: i64,
+) -> anyhow::Result<()> {
+    // One read for the whole batch rather than one per card. Clients upload
+    // their entire deck on every sync, so a per-card lookup made the cost of a
+    // sync scale with deck size for the sake of a table that is usually tiny.
+    let tombstones: HashMap<String, i64> =
+        sqlx::query("SELECT id, deleted_at FROM deletions WHERE email = ?1")
+            .bind(email)
+            .fetch_all(&mut *conn)
+            .await
+            .context("read tombstones for upsert")?
+            .iter()
+            .map(|r| (r.get("id"), r.get("deleted_at")))
+            .collect();
+
     for c in cards {
         if c.id.is_empty() {
             continue;
         }
-        // Read the tombstone first rather than folding this into the upsert's
-        // WHERE: the insert guard and the tombstone clear have to agree on
-        // whether this card won, and two separate predicates can drift apart.
-        let deleted_at: Option<i64> =
-            sqlx::query_scalar("SELECT deleted_at FROM deletions WHERE email = ?1 AND id = ?2")
-                .bind(email)
-                .bind(&c.id)
-                .fetch_optional(&mut *tx)
-                .await
-                .context("read matching tombstone")?;
+        // Resolved before the insert rather than folded into its WHERE: the
+        // insert guard and the tombstone clear have to agree on whether this
+        // card won, and two separate predicates can drift apart.
+        let deleted_at = tombstones.get(&c.id).copied();
         if deleted_at.is_some_and(|d| d as f64 >= c.added_ms) {
             continue; // stale replica of a deleted card, not a re-add
         }
@@ -142,7 +171,7 @@ pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card], now: i64) -> any
         .bind(&c.status)
         .bind(c.priority)
         .bind(normalize_version(c, now))
-        .execute(&mut *tx)
+        .execute(&mut *conn)
         .await
         .context("upsert card")?;
 
@@ -150,16 +179,18 @@ pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card], now: i64) -> any
             sqlx::query("DELETE FROM deletions WHERE email = ?1 AND id = ?2")
                 .bind(email)
                 .bind(&c.id)
-                .execute(&mut *tx)
+                .execute(&mut *conn)
                 .await
                 .context("clear matching tombstone")?;
         }
     }
-    tx.commit().await.context("commit upsert tx")?;
     Ok(())
 }
 
-pub async fn get_all_cards(db: &Db, email: &str) -> anyhow::Result<Vec<Card>> {
+pub async fn get_all_cards<'e, E>(ex: E, email: &str) -> anyhow::Result<Vec<Card>>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+{
     let rows = sqlx::query(
         "SELECT id, sequence, direction, due_ms, stability, difficulty,
                 reps, lapses, state, last_review_ms, added_ms, status, priority,
@@ -167,7 +198,7 @@ pub async fn get_all_cards(db: &Db, email: &str) -> anyhow::Result<Vec<Card>> {
          FROM cards WHERE email = ?1",
     )
     .bind(email)
-    .fetch_all(db)
+    .fetch_all(ex)
     .await
     .context("query get_all_cards")?;
     let cards = rows
@@ -195,8 +226,8 @@ pub async fn get_all_cards(db: &Db, email: &str) -> anyhow::Result<Vec<Card>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::db::deletions::{apply_deletions, get_all_deletions};
     use crate::db::test_support::*;
-    use crate::db::{apply_deletions, get_all_deletions};
 
     #[tokio::test]
     async fn upsert_inserts_new_cards() {
@@ -313,7 +344,9 @@ mod tests {
         let mut reviewed = card("a::recognition", Some(9_000.0));
         reviewed.reps = 12;
         reviewed.updated_ms = 9_000.0;
-        upsert_cards(&db, ALICE, &[reviewed.clone()], NOW).await.unwrap();
+        upsert_cards(&db, ALICE, &[reviewed.clone()], NOW)
+            .await
+            .unwrap();
 
         let mut reset = card("a::recognition", None);
         reset.reps = 0;
@@ -324,7 +357,10 @@ mod tests {
         upsert_cards(&db, ALICE, &[reviewed], NOW).await.unwrap();
 
         let stored = get_all_cards(&db, ALICE).await.unwrap();
-        assert_eq!(stored[0].reps, 0, "reset must not be undone by a stale copy");
+        assert_eq!(
+            stored[0].reps, 0,
+            "reset must not be undone by a stale copy"
+        );
         assert_eq!(stored[0].last_review_ms, None);
     }
 

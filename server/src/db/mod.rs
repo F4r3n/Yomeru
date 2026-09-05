@@ -8,8 +8,8 @@
 //! guards only work as a pair.
 
 use anyhow::Context;
-use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
 use sqlx::SqlitePool;
+use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
 use std::str::FromStr;
 use std::time::Duration;
 
@@ -22,9 +22,9 @@ mod settings;
 mod test_support;
 
 pub use auth::{create_session, prune_expired_auth, store_otp, validate_session, verify_otp};
-pub use cards::{Card, get_all_cards, upsert_cards};
+pub use cards::{Card, get_all_cards, upsert_cards_tx};
 pub use deletions::{
-    Deletion, DeletionEntry, apply_deletions, get_all_deletions, prune_old_deletions,
+    Deletion, DeletionEntry, apply_deletions_tx, get_all_deletions, prune_old_deletions,
 };
 pub use settings::{Settings, get_settings, upsert_settings};
 

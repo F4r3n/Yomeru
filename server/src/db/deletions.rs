@@ -77,11 +77,26 @@ fn ms_to_epoch(ms: f64, now: i64) -> i64 {
 /// pending tombstones until they're acknowledged, so taking the latest would
 /// let a lagging device keep pushing the delete time forward and outrank a
 /// re-add that genuinely came after the original delete.
+///
+/// Test-only, for the same reason as [`super::cards::upsert_cards`].
+#[cfg(test)]
 pub async fn apply_deletions(db: &Db, email: &str, deletions: &[Deletion]) -> anyhow::Result<()> {
+    let mut tx = db.begin().await.context("begin deletions tx")?;
+    apply_deletions_tx(&mut tx, email, deletions).await?;
+    tx.commit().await.context("commit deletions tx")?;
+    Ok(())
+}
+
+/// [`apply_deletions`] without the surrounding transaction — see
+/// [`super::cards::upsert_cards_tx`].
+pub async fn apply_deletions_tx(
+    conn: &mut sqlx::SqliteConnection,
+    email: &str,
+    deletions: &[Deletion],
+) -> anyhow::Result<()> {
     if deletions.is_empty() {
         return Ok(());
     }
-    let mut tx = db.begin().await.context("begin deletions tx")?;
     for d in deletions {
         if d.id.is_empty() {
             continue;
@@ -96,7 +111,7 @@ pub async fn apply_deletions(db: &Db, email: &str, deletions: &[Deletion]) -> an
             sqlx::query_scalar("SELECT added_ms FROM cards WHERE email = ?1 AND id = ?2")
                 .bind(email)
                 .bind(&d.id)
-                .fetch_optional(&mut *tx)
+                .fetch_optional(&mut *conn)
                 .await
                 .context("read card for deletion guard")?;
         if added_ms.is_some_and(|a| a > d.deleted_at as f64) {
@@ -106,7 +121,7 @@ pub async fn apply_deletions(db: &Db, email: &str, deletions: &[Deletion]) -> an
         sqlx::query("DELETE FROM cards WHERE email = ?1 AND id = ?2")
             .bind(email)
             .bind(&d.id)
-            .execute(&mut *tx)
+            .execute(&mut *conn)
             .await
             .context("delete card")?;
         sqlx::query(
@@ -117,18 +132,20 @@ pub async fn apply_deletions(db: &Db, email: &str, deletions: &[Deletion]) -> an
         .bind(email)
         .bind(&d.id)
         .bind(d.deleted_at)
-        .execute(&mut *tx)
+        .execute(&mut *conn)
         .await
         .context("upsert tombstone")?;
     }
-    tx.commit().await.context("commit deletions tx")?;
     Ok(())
 }
 
-pub async fn get_all_deletions(db: &Db, email: &str) -> anyhow::Result<Vec<String>> {
+pub async fn get_all_deletions<'e, E>(ex: E, email: &str) -> anyhow::Result<Vec<String>>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+{
     let ids: Vec<String> = sqlx::query_scalar("SELECT id FROM deletions WHERE email = ?1")
         .bind(email)
-        .fetch_all(db)
+        .fetch_all(ex)
         .await
         .context("query get_all_deletions")?;
     Ok(ids)
@@ -148,8 +165,8 @@ pub async fn prune_old_deletions(db: &Db, cutoff_ms: i64) -> anyhow::Result<()> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::db::cards::{get_all_cards, upsert_cards};
     use crate::db::test_support::*;
-    use crate::db::{get_all_cards, upsert_cards};
 
     #[test]
     fn bare_id_deletion_deserializes_and_takes_receipt_time() {

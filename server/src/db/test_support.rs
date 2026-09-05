@@ -3,8 +3,8 @@
 //! Lives in its own file so each table's module can keep its tests next to the
 //! code they cover without duplicating the setup.
 
-use super::*;
 use super::schema::init_schema;
+use super::*;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use std::str::FromStr;
 
