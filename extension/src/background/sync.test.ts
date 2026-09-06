@@ -229,11 +229,17 @@ describe("sync", () => {
       // ruled on. Its absence from resp.cards means nothing, and the tombstone
       // the server still holds is about the *old* copy, not this one. Wholesale
       // replacement deleted it on both counts.
+      //
+      // `added_ms` is offset rather than left at `Date.now()`: the whole round
+      // trip runs well inside one millisecond here, so a bare read ties with
+      // the `uploadedAt` captured just before it, and the guard (`added <=
+      // uploadedAt`) reads a tie as a card the server had already seen. That
+      // boundary is its own question; this test is about the unambiguous case.
       respondWith(
         { cards: [], deletions: [cardId(DOG, "recognition")] },
         {
           duringFlight: async () => {
-            await idb.putCard(makeCard({ sequence: DOG, added_ms: Date.now() }));
+            await idb.putCard(makeCard({ sequence: DOG, added_ms: Date.now() + 1_000 }));
           },
         },
       );
