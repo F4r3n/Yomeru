@@ -8,6 +8,10 @@ type IdbModule = typeof import("./idb.ts");
 
 // Cards key on JMdict ent_seq; the exact numbers are arbitrary, only their
 // distinctness matters for these tests.
+/// Stands in for the moment a sync request went out. Fixture cards default to
+/// `added_ms: 0`, so they read as "already uploaded" against this.
+const UPLOADED_AT = 1_800_000_000_000;
+
 const CAT = 1_001;
 const DOG = 1_002;
 const BIRD = 1_003;
@@ -235,9 +239,12 @@ describe("idb", () => {
       await idb.deleteCard(CAT);
 
       const tombs = await idb.getAllTombstones();
-      expect(tombs.sort()).toEqual(
+      expect(tombs.map((t) => t.id).sort()).toEqual(
         [cardId(CAT, "recognition"), cardId(CAT, "recall")].sort(),
       );
+      // The delete time travels to the server so an offline delete is ordered
+      // by when it happened, not when it was finally uploaded.
+      for (const t of tombs) expect(t.deleted_at).toBeGreaterThan(0);
     });
 
     it("deleteCardById writes exactly one tombstone", async () => {
@@ -245,7 +252,7 @@ describe("idb", () => {
 
       await idb.deleteCardById(cardId(CAT, "recognition"));
 
-      expect(await idb.getAllTombstones()).toEqual([
+      expect((await idb.getAllTombstones()).map((t) => t.id)).toEqual([
         cardId(CAT, "recognition"),
       ]);
     });
@@ -255,7 +262,7 @@ describe("idb", () => {
       const before = await idb.getAllTombstones();
       expect(before).toHaveLength(2);
 
-      await idb.clearTombstones(before);
+      await idb.clearTombstones(before.map((t) => t.id));
 
       expect(await idb.getAllTombstones()).toEqual([]);
     });
@@ -296,7 +303,11 @@ describe("idb", () => {
         stability: 4.2,
       });
 
-      await idb.applySyncResponse({ cards: [fromServer], deletions: [] }, []);
+      await idb.applySyncResponse(
+        { cards: [fromServer], deletions: [] },
+        [],
+        UPLOADED_AT,
+      );
 
       const stored = await idb.getCard(BOOK, "recognition");
       expect(stored?.stability).toBe(4.2);
@@ -308,6 +319,7 @@ describe("idb", () => {
       await idb.applySyncResponse(
         { cards: [], deletions: [cardId(CAT, "recognition")] },
         [],
+        UPLOADED_AT,
       );
 
       expect(await idb.getCard(CAT, "recognition")).toBeNull();
@@ -319,6 +331,7 @@ describe("idb", () => {
       await idb.applySyncResponse(
         { cards: [], deletions: [cardId(CAT, "recognition")] },
         [],
+        UPLOADED_AT,
       );
 
       expect(await idb.getAllTombstones()).toEqual([]);
@@ -327,12 +340,16 @@ describe("idb", () => {
     it("clears tombstones we successfully forwarded", async () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
       await idb.deleteCard(CAT);
-      const sent = await idb.getAllTombstones();
+      const sent = (await idb.getAllTombstones()).map((t) => t.id);
       expect(sent.length).toBeGreaterThan(0);
 
       // Server acks: deletions list reflects everything it knows, including
       // the ids we just sent.
-      await idb.applySyncResponse({ cards: [], deletions: sent }, sent);
+      await idb.applySyncResponse(
+        { cards: [], deletions: sent },
+        sent,
+        UPLOADED_AT,
+      );
 
       expect(await idb.getAllTombstones()).toEqual([]);
     });
@@ -340,7 +357,7 @@ describe("idb", () => {
     it("is a no-op when the server returns no changes", async () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
 
-      await idb.applySyncResponse({ cards: [], deletions: [] }, []);
+      await idb.applySyncResponse({ cards: [], deletions: [] }, [], UPLOADED_AT);
 
       expect(await idb.getCard(CAT, "recognition")).not.toBeNull();
     });
@@ -348,7 +365,7 @@ describe("idb", () => {
     it("tolerates a missing 'deletions' field for backwards-compat", async () => {
       // Older servers may not send the field at all.
       const card = makeCard({ sequence: BOOK });
-      await idb.applySyncResponse({ cards: [card] }, []);
+      await idb.applySyncResponse({ cards: [card] }, [], UPLOADED_AT);
       expect(await idb.getCard(BOOK, "recognition")).not.toBeNull();
     });
 
@@ -369,6 +386,7 @@ describe("idb", () => {
       await idb.applySyncResponse(
         { cards: [], deletions: [id] },
         sentTombstones,
+        UPLOADED_AT,
       );
 
       // Card must survive.
@@ -382,57 +400,125 @@ describe("idb", () => {
       const id = cardId(CAT, "recognition");
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
 
-      await idb.applySyncResponse({ cards: [], deletions: [id] }, []);
+      await idb.applySyncResponse({ cards: [], deletions: [id] }, [], UPLOADED_AT);
 
       expect(await idb.getCard(CAT, "recognition")).toBeNull();
     });
 
-    it("does not clobber a card with a newer local last_review_ms", async () => {
-      // Scenario: sync goes out, user reviews 猫 during the round-trip
-      // (newer last_review_ms locally), server returns the old version.
-      // Server's older copy must NOT overwrite the freshly-reviewed local
-      // card.
+    it("does not clobber a card with a newer local updated_ms", async () => {
+      // Scenario: sync goes out, user reviews 猫 during the round-trip, so the
+      // local copy is the newer write. The server's older copy must not
+      // overwrite it. `putCard` stamps updated_ms, so the local card is newer
+      // than anything the fixture builds by hand.
       await idb.putCard(
-        makeCard({
-          sequence: CAT,
-          direction: "recognition",
-          stability: 9.0,
-          last_review_ms: 2_000,
-        }),
+        makeCard({ sequence: CAT, direction: "recognition", stability: 9.0 }),
       );
       const olderFromServer = makeCard({
         sequence: CAT,
         direction: "recognition",
         stability: 1.0,
-        last_review_ms: 1_000,
+        updated_ms: 1_000,
       });
 
-      await idb.applySyncResponse({ cards: [olderFromServer], deletions: [] }, []);
+      await idb.applySyncResponse(
+        { cards: [olderFromServer], deletions: [] },
+        [],
+        UPLOADED_AT,
+      );
 
       const local = await idb.getCard(CAT, "recognition");
       expect(local?.stability).toBe(9.0);
     });
 
-    it("accepts a server card when its last_review_ms is newer", async () => {
+    it("accepts a server card when its updated_ms is newer", async () => {
       await idb.putCard(
-        makeCard({
-          sequence: CAT,
-          direction: "recognition",
-          stability: 1.0,
-          last_review_ms: 1_000,
-        }),
+        makeCard({ sequence: CAT, direction: "recognition", stability: 1.0 }),
       );
       const newerFromServer = makeCard({
         sequence: CAT,
         direction: "recognition",
         stability: 9.0,
-        last_review_ms: 2_000,
+        updated_ms: Date.now() + 10_000,
       });
 
-      await idb.applySyncResponse({ cards: [newerFromServer], deletions: [] }, []);
+      await idb.applySyncResponse(
+        { cards: [newerFromServer], deletions: [] },
+        [],
+        UPLOADED_AT,
+      );
 
       const local = await idb.getCard(CAT, "recognition");
       expect(local?.stability).toBe(9.0);
+    });
+
+    it("keeps the server's updated_ms rather than re-stamping it", async () => {
+      // Re-stamping an adopted card would mark it locally modified, so it would
+      // upload again next sync and bounce between devices forever.
+      const fromServer = makeCard({
+        sequence: BOOK,
+        direction: "recognition",
+        updated_ms: Date.now() + 10_000,
+      });
+
+      await idb.applySyncResponse(
+        { cards: [fromServer], deletions: [] },
+        [],
+        UPLOADED_AT,
+      );
+
+      const stored = await idb.getCard(BOOK, "recognition");
+      expect(stored?.updated_ms).toBe(fromServer.updated_ms);
+    });
+
+    it("keeps a card added after the upload went out", async () => {
+      // The card was never in the payload the server ruled on, so its tombstone
+      // can't be a verdict on it. Deleting it here would eat the re-add.
+      const id = cardId(CAT, "recognition");
+      await idb.putCard(
+        makeCard({
+          sequence: CAT,
+          direction: "recognition",
+          added_ms: UPLOADED_AT + 1,
+        }),
+      );
+
+      await idb.applySyncResponse({ cards: [], deletions: [id] }, [], UPLOADED_AT);
+
+      expect(await idb.getCard(CAT, "recognition")).not.toBeNull();
+    });
+  });
+
+  describe("updated_ms stamping", () => {
+    it("putCard advances updated_ms even when the spread carries an old one", async () => {
+      // mergeReview and the `{...c, status}` spreads copy the previous
+      // updated_ms forward. Without the stamp an extension review would upload
+      // under a stale version and the server would silently discard it.
+      const stale = makeCard({
+        sequence: CAT,
+        direction: "recognition",
+        updated_ms: 1_000,
+      });
+
+      await idb.putCard({ ...stale, reps: 1 });
+
+      const stored = await idb.getCard(CAT, "recognition");
+      expect(stored?.updated_ms).toBeGreaterThan(1_000);
+    });
+
+    it("getAllCards fills in a version for cards stored without one", async () => {
+      // Cards written before the field existed must still be comparable.
+      const database = await idb.openDb();
+      await new Promise((resolve, reject) => {
+        const t = database.transaction("cards", "readwrite");
+        t.objectStore("cards").put(
+          makeCard({ sequence: BOOK, last_review_ms: 7_000, added_ms: 3_000 }),
+        );
+        t.oncomplete = () => resolve(undefined);
+        t.onerror = () => reject(t.error);
+      });
+
+      const [stored] = await idb.getAllCards();
+      expect(stored.updated_ms).toBe(7_000);
     });
   });
 

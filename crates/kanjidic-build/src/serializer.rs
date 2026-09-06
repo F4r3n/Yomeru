@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use kanjidic_types::KanjiEntry;
 use std::io::Write;
 use std::path::Path;

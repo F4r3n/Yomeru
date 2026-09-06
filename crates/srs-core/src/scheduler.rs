@@ -46,7 +46,11 @@ mod tests {
 
     #[test]
     fn filter_due_mixed() {
-        let cards = vec![card_with_due(100.0), card_with_due(1000.0), card_with_due(200.0)];
+        let cards = vec![
+            card_with_due(100.0),
+            card_with_due(1000.0),
+            card_with_due(200.0),
+        ];
         let due = filter_due(&cards, 500.0);
         assert_eq!(due.len(), 2);
         assert_eq!(due[0].due_ms, 100.0);
@@ -66,7 +70,11 @@ mod tests {
 
     #[test]
     fn next_review_ms_returns_minimum() {
-        let cards = vec![card_with_due(300.0), card_with_due(100.0), card_with_due(200.0)];
+        let cards = vec![
+            card_with_due(300.0),
+            card_with_due(100.0),
+            card_with_due(200.0),
+        ];
         assert_eq!(next_review_ms(&cards), Some(100.0));
     }
 }

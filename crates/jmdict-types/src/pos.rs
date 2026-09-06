@@ -9,16 +9,16 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "kebab-case")]
 pub enum PartOfSpeech {
     // Adjectives
-    Adjective,          // adj-i
-    AdjectiveNa,        // adj-na
-    AdjectiveNo,        // adj-no
+    Adjective,           // adj-i
+    AdjectiveNa,         // adj-na
+    AdjectiveNo,         // adj-no
     AdjectivePrenominal, // adj-pn
-    AdjectiveT,         // adj-t (taru)
-    AdjectiveFormal,    // adj-f (TODO: not in old JMdict, kept for compat)
+    AdjectiveT,          // adj-t (taru)
+    AdjectiveFormal,     // adj-f (TODO: not in old JMdict, kept for compat)
 
     // Adverb
-    Adverb,             // adv
-    AdverbTo,           // adv-to
+    Adverb,   // adv
+    AdverbTo, // adv-to
 
     // Auxiliary
     Auxiliary,          // aux
@@ -26,58 +26,58 @@ pub enum PartOfSpeech {
     AuxiliaryVerb,      // aux-v
 
     // Conjunction / interjection / particle / prefix / suffix
-    Conjunction,        // conj
-    Interjection,       // int
-    Particle,           // prt
-    Prefix,             // pref
-    Suffix,             // suf
+    Conjunction,  // conj
+    Interjection, // int
+    Particle,     // prt
+    Prefix,       // pref
+    Suffix,       // suf
 
     // Nouns
-    Noun,               // n
-    NounAdverbial,      // n-adv
-    NounProper,         // n-pr  (proper noun)
-    NounSuffix,         // n-suf
-    NounPrefix,         // n-pref
-    NounTemporal,       // n-t
+    Noun,          // n
+    NounAdverbial, // n-adv
+    NounProper,    // n-pr  (proper noun)
+    NounSuffix,    // n-suf
+    NounPrefix,    // n-pref
+    NounTemporal,  // n-t
 
     // Numeric / counter
-    Numeric,            // num
-    Counter,            // ctr
+    Numeric, // num
+    Counter, // ctr
 
     // Verbs — ichidan
-    VerbIchidan,        // v1
-    VerbIchidanS,       // v1-s (kureru)
+    VerbIchidan,  // v1
+    VerbIchidanS, // v1-s (kureru)
 
     // Verbs — godan
-    VerbGodanBu,        // v5b
-    VerbGodanGu,        // v5g
-    VerbGodanKu,        // v5k
-    VerbGodanKuS,       // v5k-s
-    VerbGodanMu,        // v5m
-    VerbGodanNu,        // v5n
-    VerbGodanRu,        // v5r
-    VerbGodanRuIrr,     // v5r-i
-    VerbGodanSu,        // v5s
-    VerbGodanTsu,       // v5t
-    VerbGodanU,         // v5u
-    VerbGodanUS,        // v5u-s
-    VerbGodanUru,       // v5uru
+    VerbGodanBu,    // v5b
+    VerbGodanGu,    // v5g
+    VerbGodanKu,    // v5k
+    VerbGodanKuS,   // v5k-s
+    VerbGodanMu,    // v5m
+    VerbGodanNu,    // v5n
+    VerbGodanRu,    // v5r
+    VerbGodanRuIrr, // v5r-i
+    VerbGodanSu,    // v5s
+    VerbGodanTsu,   // v5t
+    VerbGodanU,     // v5u
+    VerbGodanUS,    // v5u-s
+    VerbGodanUru,   // v5uru
 
     // Verbs — irregular / special
-    VerbSuru,           // vs-i (suru — included form)
-    VerbSuruS,          // vs-s (suru — special class)
-    VerbSuruC,          // vs-c (su — classical)
-    VerbKuru,           // vk
-    VerbNu,             // vn (nu)
-    VerbRu,             // vr (ru — irregular)
-    VerbUnclassified,   // v-unspec
-    VerbTransitive,     // vt
-    VerbIntransitive,   // vi
+    VerbSuru,         // vs-i (suru — included form)
+    VerbSuruS,        // vs-s (suru — special class)
+    VerbSuruC,        // vs-c (su — classical)
+    VerbKuru,         // vk
+    VerbNu,           // vn (nu)
+    VerbRu,           // vr (ru — irregular)
+    VerbUnclassified, // v-unspec
+    VerbTransitive,   // vt
+    VerbIntransitive, // vi
 
     // Expression / copula / pronoun
-    Expression,         // exp
-    Copula,             // cop
-    Pronoun,            // pn
+    Expression, // exp
+    Copula,     // cop
+    Pronoun,    // pn
 
     // Unknown/other
     Unknown,
@@ -152,9 +152,15 @@ impl PartOfSpeech {
             Self::AdjectiveNo => "adj-no",
             Self::Noun => "n",
             Self::VerbIchidan => "v1",
-            Self::VerbGodanBu | Self::VerbGodanGu | Self::VerbGodanKu
-            | Self::VerbGodanMu | Self::VerbGodanNu | Self::VerbGodanRu
-            | Self::VerbGodanSu | Self::VerbGodanTsu | Self::VerbGodanU => "v5",
+            Self::VerbGodanBu
+            | Self::VerbGodanGu
+            | Self::VerbGodanKu
+            | Self::VerbGodanMu
+            | Self::VerbGodanNu
+            | Self::VerbGodanRu
+            | Self::VerbGodanSu
+            | Self::VerbGodanTsu
+            | Self::VerbGodanU => "v5",
             Self::VerbSuru | Self::VerbSuruS | Self::VerbSuruC => "vs",
             Self::VerbKuru => "vk",
             Self::Adverb | Self::AdverbTo => "adv",
@@ -172,9 +178,18 @@ mod tests {
     #[test]
     fn from_entity_adjectives() {
         assert_eq!(PartOfSpeech::from_entity("adj-i"), PartOfSpeech::Adjective);
-        assert_eq!(PartOfSpeech::from_entity("adj-na"), PartOfSpeech::AdjectiveNa);
-        assert_eq!(PartOfSpeech::from_entity("adj-no"), PartOfSpeech::AdjectiveNo);
-        assert_eq!(PartOfSpeech::from_entity("adj-pn"), PartOfSpeech::AdjectivePrenominal);
+        assert_eq!(
+            PartOfSpeech::from_entity("adj-na"),
+            PartOfSpeech::AdjectiveNa
+        );
+        assert_eq!(
+            PartOfSpeech::from_entity("adj-no"),
+            PartOfSpeech::AdjectiveNo
+        );
+        assert_eq!(
+            PartOfSpeech::from_entity("adj-pn"),
+            PartOfSpeech::AdjectivePrenominal
+        );
         assert_eq!(PartOfSpeech::from_entity("adj-t"), PartOfSpeech::AdjectiveT);
     }
 
@@ -183,24 +198,39 @@ mod tests {
         assert_eq!(PartOfSpeech::from_entity("adv"), PartOfSpeech::Adverb);
         assert_eq!(PartOfSpeech::from_entity("adv-to"), PartOfSpeech::AdverbTo);
         assert_eq!(PartOfSpeech::from_entity("aux"), PartOfSpeech::Auxiliary);
-        assert_eq!(PartOfSpeech::from_entity("aux-adj"), PartOfSpeech::AuxiliaryAdjective);
-        assert_eq!(PartOfSpeech::from_entity("aux-v"), PartOfSpeech::AuxiliaryVerb);
+        assert_eq!(
+            PartOfSpeech::from_entity("aux-adj"),
+            PartOfSpeech::AuxiliaryAdjective
+        );
+        assert_eq!(
+            PartOfSpeech::from_entity("aux-v"),
+            PartOfSpeech::AuxiliaryVerb
+        );
     }
 
     #[test]
     fn from_entity_nouns() {
         assert_eq!(PartOfSpeech::from_entity("n"), PartOfSpeech::Noun);
-        assert_eq!(PartOfSpeech::from_entity("n-adv"), PartOfSpeech::NounAdverbial);
+        assert_eq!(
+            PartOfSpeech::from_entity("n-adv"),
+            PartOfSpeech::NounAdverbial
+        );
         assert_eq!(PartOfSpeech::from_entity("n-pr"), PartOfSpeech::NounProper);
         assert_eq!(PartOfSpeech::from_entity("n-suf"), PartOfSpeech::NounSuffix);
-        assert_eq!(PartOfSpeech::from_entity("n-pref"), PartOfSpeech::NounPrefix);
+        assert_eq!(
+            PartOfSpeech::from_entity("n-pref"),
+            PartOfSpeech::NounPrefix
+        );
         assert_eq!(PartOfSpeech::from_entity("n-t"), PartOfSpeech::NounTemporal);
     }
 
     #[test]
     fn from_entity_ichidan_verbs() {
         assert_eq!(PartOfSpeech::from_entity("v1"), PartOfSpeech::VerbIchidan);
-        assert_eq!(PartOfSpeech::from_entity("v1-s"), PartOfSpeech::VerbIchidanS);
+        assert_eq!(
+            PartOfSpeech::from_entity("v1-s"),
+            PartOfSpeech::VerbIchidanS
+        );
     }
 
     #[test]
@@ -208,16 +238,28 @@ mod tests {
         assert_eq!(PartOfSpeech::from_entity("v5b"), PartOfSpeech::VerbGodanBu);
         assert_eq!(PartOfSpeech::from_entity("v5g"), PartOfSpeech::VerbGodanGu);
         assert_eq!(PartOfSpeech::from_entity("v5k"), PartOfSpeech::VerbGodanKu);
-        assert_eq!(PartOfSpeech::from_entity("v5k-s"), PartOfSpeech::VerbGodanKuS);
+        assert_eq!(
+            PartOfSpeech::from_entity("v5k-s"),
+            PartOfSpeech::VerbGodanKuS
+        );
         assert_eq!(PartOfSpeech::from_entity("v5m"), PartOfSpeech::VerbGodanMu);
         assert_eq!(PartOfSpeech::from_entity("v5n"), PartOfSpeech::VerbGodanNu);
         assert_eq!(PartOfSpeech::from_entity("v5r"), PartOfSpeech::VerbGodanRu);
-        assert_eq!(PartOfSpeech::from_entity("v5r-i"), PartOfSpeech::VerbGodanRuIrr);
+        assert_eq!(
+            PartOfSpeech::from_entity("v5r-i"),
+            PartOfSpeech::VerbGodanRuIrr
+        );
         assert_eq!(PartOfSpeech::from_entity("v5s"), PartOfSpeech::VerbGodanSu);
         assert_eq!(PartOfSpeech::from_entity("v5t"), PartOfSpeech::VerbGodanTsu);
         assert_eq!(PartOfSpeech::from_entity("v5u"), PartOfSpeech::VerbGodanU);
-        assert_eq!(PartOfSpeech::from_entity("v5u-s"), PartOfSpeech::VerbGodanUS);
-        assert_eq!(PartOfSpeech::from_entity("v5uru"), PartOfSpeech::VerbGodanUru);
+        assert_eq!(
+            PartOfSpeech::from_entity("v5u-s"),
+            PartOfSpeech::VerbGodanUS
+        );
+        assert_eq!(
+            PartOfSpeech::from_entity("v5uru"),
+            PartOfSpeech::VerbGodanUru
+        );
     }
 
     #[test]
@@ -228,9 +270,18 @@ mod tests {
         assert_eq!(PartOfSpeech::from_entity("vk"), PartOfSpeech::VerbKuru);
         assert_eq!(PartOfSpeech::from_entity("vn"), PartOfSpeech::VerbNu);
         assert_eq!(PartOfSpeech::from_entity("vr"), PartOfSpeech::VerbRu);
-        assert_eq!(PartOfSpeech::from_entity("v-unspec"), PartOfSpeech::VerbUnclassified);
-        assert_eq!(PartOfSpeech::from_entity("vt"), PartOfSpeech::VerbTransitive);
-        assert_eq!(PartOfSpeech::from_entity("vi"), PartOfSpeech::VerbIntransitive);
+        assert_eq!(
+            PartOfSpeech::from_entity("v-unspec"),
+            PartOfSpeech::VerbUnclassified
+        );
+        assert_eq!(
+            PartOfSpeech::from_entity("vt"),
+            PartOfSpeech::VerbTransitive
+        );
+        assert_eq!(
+            PartOfSpeech::from_entity("vi"),
+            PartOfSpeech::VerbIntransitive
+        );
     }
 
     #[test]

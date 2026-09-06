@@ -27,12 +27,7 @@ impl SrsEngine {
     }
 
     /// Apply a review rating (0-5) to a card. Returns the updated card.
-    pub fn review_card(
-        &self,
-        card: JsValue,
-        rating: u8,
-        now_ms: f64,
-    ) -> Result<JsValue, JsError> {
+    pub fn review_card(&self, card: JsValue, rating: u8, now_ms: f64) -> Result<JsValue, JsError> {
         let card: SrsCard = serde_wasm_bindgen::from_value(card)
             .map_err(|e| JsError::new(&format!("Invalid card: {e}")))?;
         let updated = review_card(card, ReviewRating::from_u8(rating), now_ms);

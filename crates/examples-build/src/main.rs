@@ -87,9 +87,7 @@ fn build(content: &str) -> Result<BuildOutput> {
         let headwords: Vec<String> = b_rest
             .split_whitespace()
             .filter_map(|t| {
-                let end = t
-                    .find(['(', '[', '{'])
-                    .unwrap_or(t.len());
+                let end = t.find(['(', '[', '{']).unwrap_or(t.len());
                 let hw = &t[..end];
                 if is_valid_headword(hw) && seen.insert(hw.to_string()) {
                     Some(hw.to_string())

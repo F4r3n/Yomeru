@@ -1,5 +1,5 @@
 import type { CardDirection, SrsCard } from "../shared/types.ts";
-import { cardId } from "../shared/types.ts";
+import { cardId, versionMs } from "../shared/types.ts";
 
 const DB_NAME = "yomeru-db";
 // v7 re-runs the v6 sequence-keyed reset to self-heal any DB left half-migrated
@@ -133,8 +133,22 @@ async function tx<T>(
   );
 }
 
+/**
+ * Stamps a card as written now. Every local mutation must advance the merge
+ * key, and doing it at the single write point means reviews, promotions and
+ * adds all get it without each call site remembering to.
+ *
+ * `mergeReview` and the various `{...c, status}` spreads carry the *old*
+ * `updated_ms` forward, so without this stamp an extension review would upload
+ * under a stale version and be silently discarded by the server.
+ */
+function stamped(card: SrsCard, now: number): SrsCard {
+  return { ...card, updated_ms: now };
+}
+
 export function putCard(card: SrsCard): Promise<IDBValidKey> {
-  return tx("cards", "readwrite", (s) => s.put(card));
+  const c = stamped(card, Date.now());
+  return tx("cards", "readwrite", (s) => s.put(c));
 }
 
 /**
@@ -143,12 +157,27 @@ export function putCard(card: SrsCard): Promise<IDBValidKey> {
  * other.
  */
 export async function putCards(cards: SrsCard[]): Promise<void> {
+  return putAll(cards, true);
+}
+
+/**
+ * Writes cards adopted from the server verbatim, keeping the `updated_ms` they
+ * arrived with. Only the sync merge should use this: re-stamping them would
+ * mark every synced card as locally modified and bounce it back at the server
+ * on the next round, forever.
+ */
+export async function putCardsSynced(cards: SrsCard[]): Promise<void> {
+  return putAll(cards, false);
+}
+
+async function putAll(cards: SrsCard[], stamp: boolean): Promise<void> {
   if (cards.length === 0) return;
+  const now = Date.now();
   const database = await openDb();
   return new Promise((resolve, reject) => {
     const t = database.transaction("cards", "readwrite");
     const store = t.objectStore("cards");
-    for (const c of cards) store.put(c);
+    for (const c of cards) store.put(stamp ? stamped(c, now) : c);
     t.oncomplete = () => resolve();
     t.onerror = () => reject(t.error);
     t.onabort = () => reject(t.error);
@@ -179,8 +208,12 @@ export async function getCardsBySequence(sequence: number): Promise<SrsCard[]> {
   );
 }
 
-export function getAllCards(): Promise<SrsCard[]> {
-  return tx<SrsCard[]>("cards", "readonly", (s) => s.getAll());
+export async function getAllCards(): Promise<SrsCard[]> {
+  const cards = await tx<SrsCard[]>("cards", "readonly", (s) => s.getAll());
+  // Cards stored before `updated_ms` existed come back without it. Resolve the
+  // fallback here so callers — the sync upload above all — always hand out a
+  // real merge version rather than one that loses every comparison.
+  return cards.map((c) => ({ ...c, updated_ms: versionMs(c) }));
 }
 
 export async function getDueCards(nowMs: number): Promise<SrsCard[]> {
@@ -282,7 +315,17 @@ async function deleteIdsWithTombstones(ids: string[]): Promise<void> {
   });
 }
 
-export async function getAllTombstones(): Promise<string[]> {
+/**
+ * A local record that the user deleted a card, and when. The time goes to the
+ * server on the next sync so a delete made while offline is ordered by when it
+ * actually happened rather than when it was finally uploaded.
+ */
+export interface Tombstone {
+  id: string;
+  deleted_at: number;
+}
+
+export async function getAllTombstones(): Promise<Tombstone[]> {
   const database = await openDb();
   return new Promise((resolve, reject) => {
     const req = database
@@ -291,7 +334,7 @@ export async function getAllTombstones(): Promise<string[]> {
       .getAll();
     req.onsuccess = () =>
       resolve(
-        (req.result as Array<{ id: string }>).map((r) => r.id).filter(Boolean),
+        (req.result as Tombstone[]).filter((t) => Boolean(t && t.id)),
       );
     req.onerror = () => reject(req.error);
   });
@@ -312,28 +355,38 @@ export async function clearTombstones(ids: string[]): Promise<void> {
 
 /**
  * Applies a sync response into IDB:
- *   1. upserts the server's cards, skipping any whose local copy has a
- *      newer `last_review_ms` (defends against clobbering a review the
- *      user did while the sync was in flight),
- *   2. drops cards the server reports as deleted *unless* we just sent a
- *      tombstone for that id — if we did, the local cards store either
- *      already lacks the id or holds an intentional re-add by the user,
- *      and either way it would be wrong to delete it,
+ *   1. upserts the server's cards, skipping any whose local copy was written
+ *      more recently (defends against clobbering a review, promotion or reset
+ *      the user did while the sync was in flight),
+ *   2. drops cards the server reports as deleted, except ones it hasn't ruled
+ *      on yet — those we just sent tombstones for, and those added locally
+ *      after we uploaded. Deleting either would silently eat a re-add,
  *   3. clears the tombstones we just forwarded (the server has them now).
  *
+ * A tombstone the server still lists is a delete that stands: had a re-add
+ * superseded it, the server's `upsert_cards` would have cleared it.
+ *
+ * `uploadedAt` must be the time captured *before* the request payload was read.
  * Pure data-shaping; no network. Exported so it's unit-testable against
  * fake-indexeddb.
  */
 export async function applySyncResponse(
   resp: { cards: SrsCard[]; deletions?: string[] },
   sentTombstones: string[],
+  uploadedAt: number,
 ): Promise<void> {
   if (resp.cards.length > 0) {
-    await putCardsSkipOlder(resp.cards);
+    await mergeRemoteCards(resp.cards);
   }
   if (resp.deletions && resp.deletions.length > 0) {
     const sent = new Set(sentTombstones);
-    const foreign = resp.deletions.filter((id) => !sent.has(id));
+    const localAdded = new Map<string, number>();
+    for (const c of await getAllCards()) localAdded.set(c.id, c.added_ms);
+    const foreign = resp.deletions.filter((id) => {
+      if (sent.has(id)) return false;
+      const added = localAdded.get(id);
+      return added === undefined || added <= uploadedAt;
+    });
     if (foreign.length > 0) {
       await applyRemoteDeletions(foreign);
     }
@@ -344,20 +397,21 @@ export async function applySyncResponse(
 }
 
 /**
- * Upserts `remote` cards into IDB, but skips any incoming card whose
- * `last_review_ms` is older than what we already have locally — that means
- * the user reviewed the card after the sync request went out, and the
- * server's copy is stale. Mirrors the server-side last-write-wins check.
+ * Upserts `remote` cards into IDB, but skips any incoming card whose local copy
+ * has a newer merge version — the user changed it after the sync request went
+ * out, so the server's copy is stale. Mirrors the server-side `updated_ms`
+ * last-write-wins check, and writes through `putCardsSynced` so adopted cards
+ * keep the version they arrived with.
  */
-async function putCardsSkipOlder(remote: SrsCard[]): Promise<void> {
+async function mergeRemoteCards(remote: SrsCard[]): Promise<void> {
   if (remote.length === 0) return;
   const local = await getAllCards();
-  const localTs = new Map<string, number>();
-  for (const c of local) localTs.set(c.id, c.last_review_ms ?? 0);
+  const localVersion = new Map<string, number>();
+  for (const c of local) localVersion.set(c.id, versionMs(c));
   const toPut = remote.filter(
-    (c) => (c.last_review_ms ?? 0) >= (localTs.get(c.id) ?? 0),
+    (c) => versionMs(c) >= (localVersion.get(c.id) ?? 0),
   );
-  if (toPut.length > 0) await putCards(toPut);
+  if (toPut.length > 0) await putCardsSynced(toPut);
 }
 
 /**
@@ -373,26 +427,6 @@ export async function applyRemoteDeletions(ids: string[]): Promise<void> {
     const t = database.transaction("cards", "readwrite");
     const store = t.objectStore("cards");
     for (const id of ids) store.delete(id);
-    t.oncomplete = () => resolve();
-    t.onerror = () => reject(t.error);
-    t.onabort = () => reject(t.error);
-  });
-}
-
-/**
- * Server-authoritative reset of the cards store: clears every local card and
- * writes the server's set verbatim, in a single transaction. Used by sync when
- * the server is the source of truth — replacing rather than merging also drops
- * any legacy word-keyed rows (no `sequence`) that can't be represented
- * server-side and would otherwise re-poison every upload.
- */
-export async function replaceAllCards(cards: SrsCard[]): Promise<void> {
-  const database = await openDb();
-  return new Promise((resolve, reject) => {
-    const t = database.transaction("cards", "readwrite");
-    const store = t.objectStore("cards");
-    store.clear();
-    for (const c of cards) store.put(c);
     t.oncomplete = () => resolve();
     t.onerror = () => reject(t.error);
     t.onabort = () => reject(t.error);

@@ -1,0 +1,26 @@
+{
+  "cards": [
+    {
+      "id": "1467640::recognition",
+      "sequence": 1467640,
+      "direction": "recognition",
+      "due_ms": 1757000000000,
+      "stability": 4.2,
+      "difficulty": 5.5,
+      "reps": 3,
+      "lapses": 1,
+      "state": "review",
+      "last_review_ms": 1756900000000,
+      "added_ms": 1756000000000,
+      "status": "active",
+      "priority": 0,
+      "updated_ms": 1756900000000
+    }
+  ],
+  "deletions": [
+    {
+      "id": "1467640::recall",
+      "deleted_at": 1757000000123
+    }
+  ]
+}

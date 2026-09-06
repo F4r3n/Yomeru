@@ -1,7 +1,7 @@
 //! Pure-Rust examples (Tatoeba-style sentences) runtime. `examples-wasm` is
 //! a thin `#[wasm_bindgen]` shim on top of this.
 
-use anyhow::{anyhow, bail, Context};
+use anyhow::{Context, anyhow, bail};
 use examples_types::ExampleEntry;
 use once_cell::sync::OnceCell;
 use postcard::from_bytes;
@@ -35,7 +35,10 @@ pub fn lookup(headword: &str, max: usize) -> Vec<ExampleEntry> {
         Some(d) => d,
         None => return vec![],
     };
-    match dict.index.binary_search_by(|(k, _)| k.as_str().cmp(headword)) {
+    match dict
+        .index
+        .binary_search_by(|(k, _)| k.as_str().cmp(headword))
+    {
         Err(_) => vec![],
         Ok(i) => match dict.index.get(i) {
             Some((_, offsets)) => offsets
@@ -75,11 +78,12 @@ fn parse_binary<'a>(bytes: &'a [u8]) -> anyhow::Result<ExamplesDictInner> {
             .with_context(|| format!("examples binary truncated reading length at {pos}"))?;
         Ok(u32::from_le_bytes(raw.try_into()?) as usize)
     };
-    let read_slice = |bytes: &'a [u8], pos: usize, len: usize, what: &str| -> anyhow::Result<&'a [u8]> {
-        bytes.get(pos..pos + len).with_context(|| {
-            format!("examples binary truncated reading {what} ({len} bytes at {pos})")
-        })
-    };
+    let read_slice =
+        |bytes: &'a [u8], pos: usize, len: usize, what: &str| -> anyhow::Result<&'a [u8]> {
+            bytes.get(pos..pos + len).with_context(|| {
+                format!("examples binary truncated reading {what} ({len} bytes at {pos})")
+            })
+        };
 
     let index_len = read_u32(bytes, pos)?;
     pos += 4;
@@ -166,7 +170,10 @@ mod tests {
     fn parse_binary_rejects_bad_magic() {
         let mut bin = build_binary(&[ex("x", "X")], &[("k", vec![0])]);
         bin[0] = b'Q';
-        let err = parse_binary(&bin).err().expect("expected error").to_string();
+        let err = parse_binary(&bin)
+            .err()
+            .expect("expected error")
+            .to_string();
         assert!(err.contains("magic"), "got: {err}");
     }
 
@@ -174,7 +181,10 @@ mod tests {
     fn parse_binary_rejects_bad_version() {
         let mut bin = build_binary(&[ex("x", "X")], &[("k", vec![0])]);
         bin[4] = 7;
-        let err = parse_binary(&bin).err().expect("expected error").to_string();
+        let err = parse_binary(&bin)
+            .err()
+            .expect("expected error")
+            .to_string();
         assert!(err.contains("unsupported version"), "got: {err}");
     }
 
@@ -197,13 +207,7 @@ mod tests {
             ex("s2", "two"),
             ex("s3", "three"),
         ];
-        let bin = build_binary(
-            &sentences,
-            &[
-                ("noun", vec![0, 1, 2, 3]),
-                ("verb", vec![3]),
-            ],
-        );
+        let bin = build_binary(&sentences, &[("noun", vec![0, 1, 2, 3]), ("verb", vec![3])]);
         init_from_bytes(&bin).expect("init");
         assert!(is_loaded());
 
