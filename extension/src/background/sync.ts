@@ -8,7 +8,12 @@
  * so no change is silently dropped.
  */
 
-import { getAllCards, getAllTombstones, clearTombstones, replaceAllCards } from "./idb";
+import {
+  getAllCards,
+  getAllTombstones,
+  applyRemoteDeletions,
+  applySyncResponse,
+} from "./idb";
 import { getSettings, saveSettings } from "./settings";
 import { syncCardsBackup, writeCardsBackup } from "./cards-backup";
 import type { SrsCard } from "../shared/types.ts";
@@ -78,16 +83,18 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
     return { error: "not authenticated" };
   }
   try {
+    // Captured before the reads, not after: a card written between the read and
+    // the timestamp would be missing from the payload yet still look like the
+    // server had ruled on it, and a returned tombstone would delete it.
+    const uploadedAt = Date.now();
     const allLocal = await getAllCards();
     const localTombstones = await getAllTombstones();
     // Only sequence-keyed cards can be represented server-side. Legacy
     // word-keyed rows (no numeric `sequence`) are left out of the upload so
-    // they can't 422 the request; since the server is the source of truth and
-    // its set replaces ours below, these unsyncable rows are dropped in the
-    // process rather than lingering to poison the next sync.
-    const upload = allLocal.filter(
-      (c) => typeof c.sequence === "number" && Number.isFinite(c.sequence),
-    );
+    // they can't 422 the request.
+    const syncable = (c: SrsCard) =>
+      typeof c.sequence === "number" && Number.isFinite(c.sequence);
+    const upload = allLocal.filter(syncable);
     const res = await fetch(`${settings.serverUrl}/api/sync`, {
       method: "POST",
       headers: {
@@ -102,13 +109,24 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
     });
     if (res.status === 401) return { error: "session expired — re-verify" };
     if (!res.ok) return { error: `server ${res.status}` };
-    const resp = (await res.json()) as { cards: SrsCard[] };
-    // Server wins: adopt its merged set verbatim, discarding any local row it
-    // didn't return (legacy junk, plus cards its last-write-wins merge rejected
-    // as older). The cards we just uploaded come back in resp.cards, so valid
-    // local-only cards aren't lost.
-    await replaceAllCards(resp.cards);
-    await clearTombstones(localTombstones.map((t) => t.id));
+    const resp = (await res.json()) as { cards: SrsCard[]; deletions?: string[] };
+    // Merge rather than replace. Wholesale replacement looks server-authoritative
+    // but loses every write that landed during the round trip: a card reviewed
+    // mid-flight comes back carrying the server's older copy and is overwritten,
+    // and a card *added* mid-flight was never in the upload, so it isn't in the
+    // response either, and replacement deletes it. applySyncResponse applies the
+    // same last-write-wins and re-add guards the Rust client uses.
+    await applySyncResponse(
+      resp,
+      localTombstones.map((t) => t.id),
+      uploadedAt,
+    );
+    // The one thing replacement did that merging doesn't: drop legacy
+    // word-keyed rows the server can never return, since they were never
+    // uploaded. They're local-only junk, so no tombstone — nothing else has a
+    // copy to resurrect.
+    const legacy = allLocal.filter((c) => !syncable(c)).map((c) => c.id);
+    await applyRemoteDeletions(legacy);
     await writeCardsBackup();
     return { synced: resp.cards.length };
   } catch (e) {
