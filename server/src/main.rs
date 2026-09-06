@@ -1,9 +1,8 @@
 use std::{net::IpAddr, net::SocketAddr, num::NonZeroU32, sync::Arc, time::Duration};
 
 use anyhow::Context;
-use axum::{Router, http::HeaderMap, routing::post};
+use axum::http::HeaderMap;
 use governor::{DefaultKeyedRateLimiter, Quota, RateLimiter};
-use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::{info, warn};
 use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
@@ -124,21 +123,7 @@ async fn main() -> anyhow::Result<()> {
         lookup_limiter,
     };
 
-    let app = Router::new()
-        .route("/api/auth/request", post(api::auth_request_handler))
-        .route("/api/auth/verify", post(api::auth_verify_handler))
-        .route("/api/sync", post(api::sync_handler))
-        .route("/api/lookup", post(api::lookup_handler))
-        .route(
-            "/api/lookup-by-sequence",
-            post(api::lookup_by_sequence_handler),
-        )
-        .route("/api/lookup-prefix", post(api::lookup_prefix_handler))
-        .route("/api/kanji", post(api::kanji_handler))
-        .route("/api/examples", post(api::examples_handler))
-        .layer(TraceLayer::new_for_http())
-        .layer(CorsLayer::permissive())
-        .with_state(state);
+    let app = api::router(state);
 
     let addr = format!("{}:{}", cfg.bind, cfg.port);
     info!(%addr, "listening");

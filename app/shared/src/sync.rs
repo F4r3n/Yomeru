@@ -7,8 +7,11 @@
 //! `routes/*`) source-stable.
 
 use dioxus::prelude::*;
+use serde::{Deserialize, Serialize};
 
+use crate::idb::Tombstone;
 use crate::platform::Platform;
+use crate::settings::SrsSettings;
 use crate::types::SrsCard;
 
 /// Reactive "data changed" generation, provided once at the app root by
@@ -56,6 +59,58 @@ pub fn schedule_sync() {
 /// "Sync now" button in Settings.
 pub async fn sync_now() -> Result<String, String> {
     consume_context::<Platform>().settings.sync_now().await
+}
+
+/// The exact JSON this client puts on the wire, and the JSON it parses back.
+///
+/// These live here rather than in `platform.rs` for the same reason the merge
+/// rules do: that module is wasm-only, so the shapes would be untestable on the
+/// host — and a wire format nothing pins is a wire format that drifts. The
+/// fixture tests below compare them byte-for-byte against `testdata/sync/`,
+/// which the server's own tests POST through the real router.
+///
+/// Synced scheduler settings, on the wire to/from the server. Field names are
+/// snake_case to match the server's `db::Settings`. Local-only connection
+/// fields (server_url/email/token) are deliberately absent.
+#[derive(Serialize, Deserialize, Clone)]
+pub(crate) struct SettingsPayload {
+    pub(crate) graduation_interval_days: u32,
+    pub(crate) interval_scale: f64,
+    pub(crate) max_session_cards: u32,
+    pub(crate) request_retention: f64,
+    pub(crate) updated_ms: f64,
+}
+
+impl SettingsPayload {
+    pub(crate) fn from_settings(s: &SrsSettings) -> Self {
+        Self {
+            graduation_interval_days: s.graduation_interval_days,
+            interval_scale: s.interval_scale,
+            max_session_cards: s.max_session_cards,
+            request_retention: s.request_retention,
+            updated_ms: s.settings_updated_ms,
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub(crate) struct SyncBody<'a> {
+    pub(crate) cards: &'a [SrsCard],
+    /// Tombstones with the time the user actually deleted, so a delete made
+    /// offline isn't stamped with upload time server-side. Serialized as
+    /// objects; the server also still accepts the bare-id form older clients
+    /// send, so it must be deployed before clients pick this up.
+    pub(crate) deletions: &'a [Tombstone],
+    pub(crate) settings: SettingsPayload,
+}
+
+#[derive(Deserialize, Default)]
+pub(crate) struct SyncResponse {
+    pub(crate) cards: Vec<SrsCard>,
+    #[serde(default)]
+    pub(crate) deletions: Vec<String>,
+    #[serde(default)]
+    pub(crate) settings: Option<SettingsPayload>,
 }
 
 /// Picks which server cards to write over the local copies: those whose merge
@@ -248,5 +303,117 @@ mod tests {
         assert_eq!(unreviewed.version_ms(), 1_000.0); // added_ms
         assert!(cards_to_apply(&[unreviewed.clone()], &[reviewed.clone()]).is_empty());
         assert_eq!(cards_to_apply(&[reviewed], &[unreviewed]).len(), 1);
+    }
+
+    /// The bytes this client actually puts on the wire, pinned against the
+    /// shared fixtures in `testdata/sync/` — the same files the server's HTTP
+    /// tests POST through the real router. Between the two suites, a change to
+    /// either side of the contract has to be made deliberately in both.
+    ///
+    /// The comparison is on `serde_json::Value`, which distinguishes
+    /// `Number::from_f64(0.0)` from `Number::from(0u64)`. That is the whole
+    /// point: `deleted_at` was once typed `i64` server-side, which would have
+    /// rejected every request this client sends, because Rust writes an `f64`
+    /// as `1757000000123.0`.
+    mod wire {
+        use super::*;
+        use crate::idb::Tombstone;
+        use serde_json::Value;
+
+        fn fixture(name: &str) -> Value {
+            let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../testdata/sync/").to_string()
+                + name;
+            let raw = std::fs::read_to_string(&path)
+                .unwrap_or_else(|e| panic!("read {path}: {e}"));
+            serde_json::from_str(&raw).unwrap_or_else(|e| panic!("parse {path}: {e}"))
+        }
+
+        fn fixture_card() -> SrsCard {
+            SrsCard {
+                id: "1467640::recognition".to_string(),
+                sequence: 1_467_640,
+                direction: CardDirection::Recognition,
+                due_ms: 1_757_000_000_000.0,
+                stability: 4.2,
+                difficulty: 5.5,
+                reps: 3,
+                lapses: 1,
+                state: CardState::Review,
+                last_review_ms: Some(1_756_900_000_000.0),
+                added_ms: 1_756_000_000_000.0,
+                status: CardStatus::Active,
+                priority: 0,
+                updated_ms: 1_756_900_000_000.0,
+            }
+        }
+
+        #[test]
+        fn the_request_body_matches_the_fixture_exactly() {
+            let cards = [fixture_card()];
+            let deletions = [Tombstone {
+                id: "1467640::recall".to_string(),
+                deleted_at: 1_757_000_000_123.0,
+            }];
+            let body = SyncBody {
+                cards: &cards,
+                deletions: &deletions,
+                settings: SettingsPayload {
+                    graduation_interval_days: 365,
+                    interval_scale: 1.0,
+                    max_session_cards: 20,
+                    request_retention: 0.9,
+                    updated_ms: 1_756_000_000_000.0,
+                },
+            };
+            let sent: Value = serde_json::to_value(&body).expect("serialize body");
+            assert_eq!(sent, fixture("request-app-client.json"));
+        }
+
+        #[test]
+        fn the_settings_payload_is_built_from_the_local_settings() {
+            // The connection fields are local-only and must not reach the wire.
+            let settings = SrsSettings {
+                graduation_interval_days: 365,
+                interval_scale: 1.0,
+                max_session_cards: 20,
+                request_retention: 0.9,
+                server_url: "https://example.invalid".to_string(),
+                server_email: "alice@example.com".to_string(),
+                server_token: "secret".to_string(),
+                settings_updated_ms: 1_756_000_000_000.0,
+            };
+            let sent = serde_json::to_value(SettingsPayload::from_settings(&settings))
+                .expect("serialize settings");
+            assert_eq!(sent, fixture("request-app-client.json")["settings"]);
+        }
+
+        #[test]
+        fn the_response_fixture_parses_into_what_the_merge_consumes() {
+            let resp: SyncResponse =
+                serde_json::from_value(fixture("response.json")).expect("parse response");
+            assert_eq!(resp.cards.len(), 1);
+            let c = resp.cards.first().expect("one card");
+            assert_eq!(c.id, "1467640::recognition");
+            assert_eq!(c.sequence, 1_467_640);
+            assert_eq!(c.reps, 3);
+            assert_eq!(c.last_review_ms, Some(1_756_900_000_000.0));
+            // The merge key, not the review time: a promotion carries no review.
+            assert_eq!(c.version_ms(), 1_756_900_000_000.0);
+            assert_eq!(resp.deletions, vec!["1467640::recall".to_string()]);
+            let s = resp.settings.expect("settings");
+            assert_eq!(s.graduation_interval_days, 365);
+            assert_eq!(s.updated_ms, 1_756_000_000_000.0);
+        }
+
+        #[test]
+        fn a_response_without_deletions_or_settings_still_parses() {
+            // What an older server returns. Both fields are `#[serde(default)]`
+            // precisely so a client update can ship before the server does.
+            let resp: SyncResponse =
+                serde_json::from_str(r#"{"cards":[]}"#).expect("parse minimal response");
+            assert!(resp.cards.is_empty());
+            assert!(resp.deletions.is_empty());
+            assert!(resp.settings.is_none());
+        }
     }
 }

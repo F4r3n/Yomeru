@@ -1,0 +1,28 @@
+{
+  "cards": [
+    {
+      "id": "1467640::recognition",
+      "sequence": 1467640,
+      "direction": "recognition",
+      "due_ms": 1757000000000.0,
+      "stability": 4.2,
+      "difficulty": 5.5,
+      "reps": 3,
+      "lapses": 1,
+      "state": "review",
+      "last_review_ms": 1756900000000.0,
+      "added_ms": 1756000000000.0,
+      "status": "active",
+      "priority": 0,
+      "updated_ms": 1756900000000.0
+    }
+  ],
+  "deletions": ["1467640::recall"],
+  "settings": {
+    "graduation_interval_days": 365,
+    "interval_scale": 1.0,
+    "max_session_cards": 20,
+    "request_retention": 0.9,
+    "updated_ms": 1756000000000.0
+  }
+}

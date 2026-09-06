@@ -19,7 +19,7 @@ use kanjidic_types::KanjiEntry;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen_futures::spawn_local;
 
-use crate::idb::Tombstone;
+use crate::sync::{SettingsPayload, SyncBody, SyncResponse};
 use crate::settings::{SETTINGS_KEY, SrsSettings, default_server_url};
 use crate::types::SrsCard;
 use async_trait::async_trait;
@@ -258,50 +258,6 @@ struct VerifyBody<'a> {
 #[derive(Deserialize)]
 struct VerifyResponse {
     token: String,
-}
-
-/// Synced scheduler settings, on the wire to/from the server. Field names are
-/// snake_case to match the server's `db::Settings`. Local-only connection
-/// fields (server_url/email/token) are deliberately absent.
-#[derive(Serialize, Deserialize, Clone)]
-struct SettingsPayload {
-    graduation_interval_days: u32,
-    interval_scale: f64,
-    max_session_cards: u32,
-    request_retention: f64,
-    updated_ms: f64,
-}
-
-impl SettingsPayload {
-    fn from_settings(s: &SrsSettings) -> Self {
-        Self {
-            graduation_interval_days: s.graduation_interval_days,
-            interval_scale: s.interval_scale,
-            max_session_cards: s.max_session_cards,
-            request_retention: s.request_retention,
-            updated_ms: s.settings_updated_ms,
-        }
-    }
-}
-
-#[derive(Serialize)]
-struct SyncBody<'a> {
-    cards: &'a [SrsCard],
-    /// Tombstones with the time the user actually deleted, so a delete made
-    /// offline isn't stamped with upload time server-side. Serialized as
-    /// objects; the server also still accepts the bare-id form older clients
-    /// send, so it must be deployed before clients pick this up.
-    deletions: &'a [Tombstone],
-    settings: SettingsPayload,
-}
-
-#[derive(Deserialize, Default)]
-struct SyncResponse {
-    cards: Vec<SrsCard>,
-    #[serde(default)]
-    deletions: Vec<String>,
-    #[serde(default)]
-    settings: Option<SettingsPayload>,
 }
 
 fn join_url(base: &str, path: &str) -> String {

@@ -34,5 +34,10 @@ examples-core  = { path = "../crates/examples-core" }
 sha2 = "0.11.0"
 subtle = "2.6.1"
 
+[dev-dependencies]
+# `ServiceExt::oneshot` drives the real Router in-process, so the HTTP
+# integration tests exercise production wiring without binding a port.
+tower = { version = "0.5", features = ["util"] }
+
 [lints]
 workspace = true

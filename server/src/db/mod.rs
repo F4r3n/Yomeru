@@ -19,7 +19,7 @@ mod deletions;
 mod schema;
 mod settings;
 #[cfg(test)]
-mod test_support;
+pub(crate) mod test_support;
 
 pub use auth::{create_session, prune_expired_auth, store_otp, validate_session, verify_otp};
 pub use cards::{Card, get_all_cards, upsert_cards_tx};
