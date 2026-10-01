@@ -33,14 +33,15 @@ pub fn apply_review(
         settings.request_retention,
     );
 
-    // Scale the freshly-scheduled interval (stability + due_ms) by intervalScale.
+    // Scale the freshly-scheduled interval by intervalScale. Stability stays as
+    // FSRS computed it: the next review derives its stability from this one, so
+    // scaling it here would reapply the scale on every review and compound.
     let scale = settings.interval_scale;
     let scaled = if (scale - 1.0).abs() < f64::EPSILON {
         scheduled
     } else {
         let interval_days = (scheduled.due_ms - now_ms) / MS_PER_DAY;
         srs_core::SrsCard {
-            stability: scheduled.stability * scale,
             due_ms: now_ms + interval_days * scale * MS_PER_DAY,
             ..scheduled
         }
@@ -145,5 +146,24 @@ mod tests {
         let c = fresh_card();
         let outcome = apply_review(&c, ReviewRating::Easy, 0.0, &settings);
         assert!(matches!(outcome, ReviewOutcome::Rescheduled(_)));
+    }
+
+    #[test]
+    fn interval_scale_moves_due_date_but_not_stability() {
+        // Scaling stability would compound, since FSRS builds the next review's
+        // stability from it; only the due date may carry the scale.
+        let plain = SrsSettings {
+            graduation_interval_days: 0,
+            ..Default::default()
+        };
+        let scaled = SrsSettings {
+            interval_scale: 1.5,
+            ..plain.clone()
+        };
+        let c = fresh_card();
+        let a = review_once(&c, ReviewRating::Good, 0.0, &plain);
+        let b = review_once(&c, ReviewRating::Good, 0.0, &scaled);
+        assert_eq!(a.stability, b.stability);
+        assert!((b.due_ms - a.due_ms * 1.5).abs() < 1.0);
     }
 }

@@ -33,10 +33,14 @@ export function mergeReview(original: SrsCard, reviewed: SrsSchedFields): SrsCar
 }
 
 /**
- * Scales the freshly-scheduled interval (stability + due_ms) by a constant.
- * Called immediately after `review_card`, so `due_ms` is always `now + interval`
- * — we scale that interval and the underlying stability together so the two
- * stay consistent.
+ * Scales the freshly-scheduled interval by a constant. Called immediately after
+ * `review_card`, so `due_ms` is always `now + interval`.
+ *
+ * Stability is left as FSRS computed it. FSRS derives the next stability from
+ * the current one, so scaling it here would compound: the scale would apply
+ * again on every review (1.5 → ~8× the unscaled interval by the sixth review).
+ * Only the due date moves; FSRS sees the longer gap at the next review and
+ * adjusts on its own.
  */
 export function applyIntervalScale<T extends SrsSchedFields>(
   card: T,
@@ -47,7 +51,6 @@ export function applyIntervalScale<T extends SrsSchedFields>(
   const intervalDays = (card.due_ms - nowMs) / MS_PER_DAY;
   return {
     ...card,
-    stability: card.stability * scale,
     due_ms: nowMs + intervalDays * scale * MS_PER_DAY,
   };
 }

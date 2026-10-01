@@ -36,13 +36,15 @@ describe("mergeReview", () => {
 });
 
 describe("applyIntervalScale", () => {
-  it("scales stability and recomputes due_ms from the remaining interval", () => {
+  it("scales the remaining interval but leaves stability alone", () => {
+    // Scaling stability too would compound: FSRS builds the next stability
+    // from this one, so the scale would be reapplied on every review.
     const nowMs = 1_000_000_000;
     const card = makeCard({ stability: 4, due_ms: nowMs + 4 * 86_400_000 });
 
     const result = applyIntervalScale(card, 1.5, nowMs);
 
-    expect(result.stability).toBe(6);
+    expect(result.stability).toBe(4);
     expect(result.due_ms).toBe(nowMs + 6 * 86_400_000);
   });
 
@@ -66,7 +68,7 @@ describe("applyIntervalScale", () => {
 
     const result = applyIntervalScale(card, 0.5, nowMs);
 
-    expect(result.stability).toBe(5);
+    expect(result.stability).toBe(10);
     expect(result.due_ms).toBe(5 * 86_400_000);
   });
 });
