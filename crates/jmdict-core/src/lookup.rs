@@ -194,20 +194,12 @@ pub fn find_in_text(text: &str, known: &HashSet<String>) -> Vec<[usize; 2]> {
             .take_while(|c| japanese_utils::is_japanese(*c))
             .count();
 
-        // A lookup group can hold several entries; the card may be keyed on any
-        // one of them, so check them all rather than just the first.
-        let hit = lookup_longest_match_with(&text[byte_off..], run_chars, &mut scratch).filter(
-            |(entries, _)| {
-                entries.iter().any(|e| {
-                    let hw = preferred_headword(e);
-                    !hw.is_empty() && known.contains(hw)
-                })
-            },
-        );
-
-        match hit {
-            Some((_, match_len)) => {
+        match lookup_longest_match_with(&text[byte_off..], run_chars, &mut scratch) {
+            Some((entries, match_len)) => {
                 // Walk the matched chars, summing their UTF-16 width as we go.
+                // The whole match is consumed even when it isn't a known word,
+                // mirroring hover's greedy segmentation: otherwise a known word
+                // embedded in a longer one (本 in 日本) gets underlined.
                 let mut width = 0usize;
                 for _ in 0..match_len {
                     match chars.next() {
@@ -215,7 +207,15 @@ pub fn find_in_text(text: &str, known: &HashSet<String>) -> Vec<[usize; 2]> {
                         None => break,
                     }
                 }
-                results.push([utf16_off, width]);
+                // A lookup group can hold several entries; the card may be
+                // keyed on any one of them, so check them all.
+                let is_known = entries.iter().any(|e| {
+                    let hw = preferred_headword(e);
+                    !hw.is_empty() && known.contains(hw)
+                });
+                if is_known {
+                    results.push([utf16_off, width]);
+                }
                 utf16_off += width;
             }
             None => {

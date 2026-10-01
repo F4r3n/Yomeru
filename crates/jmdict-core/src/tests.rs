@@ -81,6 +81,8 @@ fn build_test_binary() -> Vec<u8> {
             vec![PartOfSpeech::Adjective],
             "beautiful",
         ),
+        make_entry(4, "日本", "にほん", vec![PartOfSpeech::Noun], "Japan"),
+        make_entry(5, "本", "ほん", vec![PartOfSpeech::Noun], "book"),
     ];
 
     let mut entries_bytes: Vec<u8> = Vec::new();
@@ -384,4 +386,13 @@ fn find_in_text_advances_past_a_match() {
     ensure_test_dict();
     let hits = crate::find_in_text("美しい", &known(&["美しい"]));
     assert_eq!(hits, vec![[0, 3]]);
+}
+
+#[test]
+fn find_in_text_skips_known_word_inside_unknown_word() {
+    // 本 is known, but in 日本 it is part of a longer, unknown word. Scanning
+    // must step over 日本 as a unit rather than re-matching from its interior.
+    ensure_test_dict();
+    assert!(crate::find_in_text("日本で", &known(&["本"])).is_empty());
+    assert_eq!(crate::find_in_text("日本の本", &known(&["本"])), vec![[3, 1]]);
 }
