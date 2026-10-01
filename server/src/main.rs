@@ -19,8 +19,31 @@ use db::Db;
 pub struct AppState {
     pub db: Db,
     pub cfg: Arc<Config>,
+    /// OTP request/verify: strict, since it guards code guessing.
     pub limiter: Arc<DefaultKeyedRateLimiter<IpAddr>>,
+    pub sync_limiter: Arc<DefaultKeyedRateLimiter<IpAddr>>,
     pub lookup_limiter: Arc<DefaultKeyedRateLimiter<IpAddr>>,
+}
+
+// `const { ... }` evaluates at compile time, so the `unwrap`s below cannot ever
+// panic at runtime — the values are materialized when the binary builds.
+
+/// Auth endpoints: a strict per-minute quota.
+pub(crate) fn auth_quota() -> Quota {
+    Quota::per_minute(const { NonZeroU32::new(10).unwrap() })
+}
+
+/// `/api/sync`. Clients sync 2 s after every card change, so a steady review
+/// session alone can sustain one request every few seconds — and every device
+/// behind one NAT shares the key. Sharing the auth quota (10/min) 429'd those
+/// sessions, and clients don't retry a failed sync until the next change.
+pub(crate) fn sync_quota() -> Quota {
+    Quota::per_minute(const { NonZeroU32::new(60).unwrap() })
+}
+
+/// Lookups: one keystroke = one lookup, easily 30+/min.
+pub(crate) fn lookup_quota() -> Quota {
+    Quota::per_second(const { NonZeroU32::new(20).unwrap() })
 }
 
 fn now_ms() -> i64 {
@@ -107,20 +130,12 @@ async fn main() -> anyhow::Result<()> {
         .with_context(|| format!("load dict data from {}", cfg.data_dir))?;
     info!(data_dir = %cfg.data_dir, "dict data loaded");
 
-    // Auth endpoints use a strict per-minute quota; lookup uses a separate
-    // higher-rate limiter (one keystroke = one lookup, easily 30+/min).
-    // `const { ... }` evaluates at compile time, so the `unwrap` here cannot
-    // ever panic at runtime — the value is materialized when the binary builds.
-    let quota = Quota::per_minute(const { NonZeroU32::new(10).unwrap() });
-    let limiter = Arc::new(RateLimiter::keyed(quota));
-    let lookup_quota = Quota::per_second(const { NonZeroU32::new(20).unwrap() });
-    let lookup_limiter = Arc::new(RateLimiter::keyed(lookup_quota));
-
     let state = AppState {
         db,
         cfg: cfg.clone(),
-        limiter,
-        lookup_limiter,
+        limiter: Arc::new(RateLimiter::keyed(auth_quota())),
+        sync_limiter: Arc::new(RateLimiter::keyed(sync_quota())),
+        lookup_limiter: Arc::new(RateLimiter::keyed(lookup_quota())),
     };
 
     let app = api::router(state);

@@ -54,7 +54,7 @@ pub async fn sync_handler(
     Json(body): Json<SyncBody>,
 ) -> Result<Response, Response> {
     if state
-        .limiter
+        .sync_limiter
         .check_key(&state.client_ip(addr, &headers))
         .is_err()
     {

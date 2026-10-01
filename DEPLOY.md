@@ -276,8 +276,8 @@ sudo certbot --nginx -d yomeru.example.com
 
 ### Client IP & rate limiting
 
-The auth endpoints (10/min) and lookup endpoints (20/s) are rate-limited
-per client IP. Behind a proxy the TCP peer is the proxy, not the client,
+The auth endpoints (10/min), sync (60/min) and lookup endpoints (20/s) are
+rate-limited per client IP, each with its own bucket. Behind a proxy the TCP peer is the proxy, not the client,
 so the server falls back to forwarding headers — but only when the peer
 is itself trusted, otherwise anyone could spoof their way out of their
 own bucket.

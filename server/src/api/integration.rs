@@ -61,6 +61,15 @@ struct Harness {
 
 impl Harness {
     async fn new() -> Self {
+        // Production quota is 10/min on the auth routes and every simulated
+        // device shares 127.0.0.1, so a multi-round convergence test would trip
+        // the limits. Rate limiting has its own coverage; here it would only
+        // add flake.
+        let quota = Quota::per_second(const { NonZeroU32::new(10_000).unwrap() });
+        Self::with_quotas(quota, quota).await
+    }
+
+    async fn with_quotas(auth: Quota, sync: Quota) -> Self {
         let db = db::test_support::single_conn_mem().await;
         let token = "test-session-token".to_string();
         // Seeded directly rather than through the OTP flow: these tests are
@@ -85,15 +94,12 @@ impl Harness {
             dev_mode: false,
         };
 
-        // Production quota is 10/min on this route and every simulated device
-        // shares 127.0.0.1, so a multi-round convergence test would trip it.
-        // Rate limiting has its own coverage; here it would only add flake.
-        let quota = Quota::per_second(const { NonZeroU32::new(10_000).unwrap() });
         let state = AppState {
             db: db.clone(),
             cfg: Arc::new(cfg),
-            limiter: Arc::new(RateLimiter::keyed(quota)),
-            lookup_limiter: Arc::new(RateLimiter::keyed(quota)),
+            limiter: Arc::new(RateLimiter::keyed(auth)),
+            sync_limiter: Arc::new(RateLimiter::keyed(sync)),
+            lookup_limiter: Arc::new(RateLimiter::keyed(sync)),
         };
 
         Self {
@@ -638,5 +644,23 @@ mod wire {
             expected["deletions"][0].is_string(),
             "clients parse deletions as bare ids"
         );
+    }
+}
+
+mod rate_limits {
+    use super::*;
+
+    #[tokio::test]
+    async fn a_review_session_is_not_throttled_by_the_auth_quota() {
+        // One sync per reviewed card, all from one IP. Under the shared 10/min
+        // auth quota the 11th was a 429, and clients only retry on the next
+        // change — so the end of a session could stay unsynced.
+        let h = Harness::with_quotas(crate::auth_quota(), crate::sync_quota()).await;
+        for i in 0..30 {
+            let (status, body) = h
+                .post("/api/sync", Some(&h.token), &json!({ "cards": [] }))
+                .await;
+            assert_eq!(status, StatusCode::OK, "sync {i} was throttled: {body}");
+        }
     }
 }
