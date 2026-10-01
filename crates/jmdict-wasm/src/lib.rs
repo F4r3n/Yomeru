@@ -53,15 +53,19 @@ impl Dictionary {
         }
     }
 
-    /// Scan `text` for all positions matching words in `known` (a JS Array of strings).
+    /// Scan `text` for all positions matching entries in `known` (a JS Array of
+    /// JMdict sequence numbers).
     ///
     /// Returns a JS array of `[start, len]` pairs in **UTF-16 code units**, so
     /// they can be handed to `Range.setStart`/`setEnd` directly — DOM offsets
     /// into a text node are UTF-16, and a char index would drift on any text
     /// containing surrogate pairs.
     pub fn find_in_text(&self, text: &str, known: js_sys::Array) -> JsValue {
-        let known_set: std::collections::HashSet<String> =
-            known.iter().filter_map(|v| v.as_string()).collect();
+        let known_set: std::collections::HashSet<u32> = known
+            .iter()
+            .filter_map(|v| v.as_f64())
+            .map(|n| n as u32)
+            .collect();
         let results = jmdict_core::find_in_text(text, &known_set);
         serde_wasm_bindgen::to_value(&results)
             .unwrap_or_else(|_| JsValue::from(js_sys::Array::new()))

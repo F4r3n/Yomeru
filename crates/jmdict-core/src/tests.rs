@@ -83,6 +83,9 @@ fn build_test_binary() -> Vec<u8> {
         ),
         make_entry(4, "日本", "にほん", vec![PartOfSpeech::Noun], "Japan"),
         make_entry(5, "本", "ほん", vec![PartOfSpeech::Noun], "book"),
+        // Two entries sharing the reading はし, to tell entries apart by sequence.
+        make_entry(6, "橋", "はし", vec![PartOfSpeech::Noun], "bridge"),
+        make_entry(7, "箸", "はし", vec![PartOfSpeech::Noun], "chopsticks"),
     ];
 
     let mut entries_bytes: Vec<u8> = Vec::new();
@@ -321,8 +324,13 @@ fn prefix_search_respects_max_results() {
 
 // ---- find_in_text -------------------------------------------------------
 
-fn known(words: &[&str]) -> std::collections::HashSet<String> {
-    words.iter().map(|w| (*w).to_string()).collect()
+/// The sequences of the entries headed by `words`, as a card set would hold them.
+fn known(words: &[&str]) -> std::collections::HashSet<u32> {
+    words
+        .iter()
+        .flat_map(|w| crate::lookup(w))
+        .map(|e| e.sequence.to_native())
+        .collect()
 }
 
 #[test]
@@ -395,4 +403,14 @@ fn find_in_text_skips_known_word_inside_unknown_word() {
     ensure_test_dict();
     assert!(crate::find_in_text("日本で", &known(&["本"])).is_empty());
     assert_eq!(crate::find_in_text("日本の本", &known(&["本"])), vec![[3, 1]]);
+}
+
+#[test]
+fn find_in_text_matches_by_entry_not_by_string() {
+    // 橋 and 箸 share the key はし, so they land in one lookup group. Only the
+    // saved entry's own spelling may be underlined; the other entry's must not.
+    ensure_test_dict();
+    let bridge: std::collections::HashSet<u32> = [6].into_iter().collect();
+    assert_eq!(crate::find_in_text("橋を渡る", &bridge), vec![[0, 1]]);
+    assert!(crate::find_in_text("箸で", &bridge).is_empty());
 }

@@ -256,9 +256,10 @@ fn bench_find_in_text(c: &mut Criterion) {
     setup();
     let mut g = c.benchmark_group("find_in_text");
 
-    let known: HashSet<String> = ["飲む", "食べる", "美しい"]
+    let known: HashSet<u32> = ["飲む", "食べる", "美しい"]
         .iter()
-        .map(|s| (*s).to_string())
+        .flat_map(|w| lookup(w))
+        .map(|e| e.sequence.to_native())
         .collect();
 
     g.bench_function("mixed_page_text", |b| {
@@ -278,7 +279,7 @@ fn bench_find_in_text(c: &mut Criterion) {
 
     // Nothing to match: every position pays the full miss path.
     g.bench_function("no_known_words_hit", |b| {
-        let empty: HashSet<String> = ["走る".to_string()].into_iter().collect();
+        let empty: HashSet<u32> = [u32::MAX].into_iter().collect();
         b.iter(|| find_in_text(black_box(PAGE_TEXT), black_box(&empty)))
     });
 

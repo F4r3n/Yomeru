@@ -132,21 +132,11 @@ export async function handleDeleteCard({ sequence }: { sequence: number }) {
   return { success: true };
 }
 
-// Highlighting matches surface strings against page text, but cards now key on
-// `sequence`. Resolve each active card's sequence to all of its kanji + reading
-// surface forms so the content-script highlighter can keep underlining them.
-export async function handleGetSrsWords(): Promise<{ words: string[] }> {
-  const jmdict = await getJmdict();
+// The highlighter matches page text by JMdict entry, so it only needs the
+// sequence each card is keyed on — no surface strings.
+export async function handleGetSrsSequences(): Promise<{ sequences: number[] }> {
   const cards = await getAllCards();
-  const seqs = [...new Set(cards.map((c) => c.sequence))];
-  const entries = jmdict.lookup_by_sequence(seqs) as (WordEntry | null)[];
-  const words = new Set<string>();
-  for (const e of entries) {
-    if (!e) continue;
-    for (const k of e.kanji_forms) words.add(k.text);
-    for (const r of e.reading_forms) words.add(r.text);
-  }
-  return { words: [...words] };
+  return { sequences: [...new Set(cards.map((c) => c.sequence))] };
 }
 
 export async function handleLogLookup({

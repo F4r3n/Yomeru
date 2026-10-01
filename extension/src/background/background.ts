@@ -17,7 +17,7 @@ import {
   handleGetExamples,
   handleGetKanji,
   handleGetSettings,
-  handleGetSrsWords,
+  handleGetSrsSequences,
   handleGetStaging,
   handleImportCards,
   handleLogLookup,
@@ -70,8 +70,8 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
       return handleDeleteCard(msg.payload as { sequence: number });
     case "LOG_LOOKUP":
       return handleLogLookup(msg.payload as { word: string; reading: string });
-    case "GET_SRS_WORDS":
-      return handleGetSrsWords();
+    case "GET_SRS_SEQUENCES":
+      return handleGetSrsSequences();
     case "GET_STAGING":
       return handleGetStaging();
     case "PROMOTE_CARD":

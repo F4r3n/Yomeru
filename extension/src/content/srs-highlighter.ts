@@ -13,7 +13,7 @@ const SKIP_TAGS = new Set([
 ]);
 
 let dict: Dictionary | null = null;
-let srsWords: string[] = [];
+let srsSequences = new Set<number>();
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let observer: MutationObserver | null = null;
 
@@ -27,7 +27,7 @@ function injectStyle(): void {
 
 async function rebuildHighlights(): Promise<void> {
   if (typeof CSS === "undefined" || !CSS.highlights) return;
-  if (!dict || srsWords.length === 0) {
+  if (!dict || srsSequences.size === 0) {
     CSS.highlights.delete(HL_NAME);
     return;
   }
@@ -47,12 +47,13 @@ async function rebuildHighlights(): Promise<void> {
         },
       },
     );
+    const known = [...srsSequences];
     let node: Node | null;
     while ((node = walker.nextNode()) !== null) {
       const text = (node as Text).textContent;
       if (!text?.trim()) continue;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const matches = dict.find_in_text(text, srsWords as any) as [
+      const matches = dict.find_in_text(text, known as any) as [
         number,
         number,
       ][];
@@ -82,9 +83,9 @@ export async function initSrsHighlighter(
   injectStyle();
   try {
     const res = (await browser.runtime.sendMessage({
-      type: "GET_SRS_WORDS",
-    })) as { words: string[] };
-    srsWords = res?.words ?? [];
+      type: "GET_SRS_SEQUENCES",
+    })) as { sequences: number[] };
+    srsSequences = new Set(res?.sequences ?? []);
   } catch {
     return;
   }
@@ -96,14 +97,14 @@ export async function initSrsHighlighter(
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
-export function srsWordAdded(word: string): void {
-  if (srsWords.includes(word)) return;
-  srsWords.push(word);
+export function srsSequenceAdded(sequence: number): void {
+  if (srsSequences.has(sequence)) return;
+  srsSequences.add(sequence);
   rebuildHighlights();
 }
 
-export function hasSrsWord(word: string): boolean {
-  return srsWords.includes(word);
+export function hasSrsSequence(sequence: number): boolean {
+  return srsSequences.has(sequence);
 }
 
 export function disableSrsHighlighter(): void {

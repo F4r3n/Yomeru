@@ -1,8 +1,7 @@
 <script lang="ts">
     import { popupStore } from "./popup-store";
     import type { WordEntry, ExampleEntry } from "../shared/types.ts";
-    import { srsWordAdded, hasSrsWord } from "./srs-highlighter";
-    import { preferredHeadword } from "../shared/dict.ts";
+    import { srsSequenceAdded, hasSrsSequence } from "./srs-highlighter";
     import WordTab from "./WordTab.svelte";
     import KanjiTab from "./KanjiTab.svelte";
     import ExamplesTab from "./ExamplesTab.svelte";
@@ -27,8 +26,7 @@
         entriesKey;
         const initial: Record<number, "idle" | "added" | "existing"> = {};
         for (const e of $popupStore.entries) {
-            const hw = preferredHeadword(e);
-            if (hw && hasSrsWord(hw)) initial[e.sequence] = "existing";
+            if (hasSrsSequence(e.sequence)) initial[e.sequence] = "existing";
         }
         buttonStates = initial;
         activeTab = "word";
@@ -87,12 +85,7 @@
             ...buttonStates,
             [entry.sequence]: res.existing ? "existing" : "added",
         };
-        if (!res.existing) {
-            // Underline every surface form of the entry right away — the
-            // highlighter matches surface strings, not sequences.
-            for (const k of entry.kanji_forms) srsWordAdded(k.text);
-            for (const r of entry.reading_forms) srsWordAdded(r.text);
-        }
+        if (!res.existing) srsSequenceAdded(entry.sequence);
     }
 </script>
 

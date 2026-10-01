@@ -144,18 +144,12 @@ pub fn lookup_prefix(text: &str, max_results: u8) -> Vec<&'static ArchivedWordEn
 /// Longest surface form (in chars) considered when scanning running text.
 const MAX_SCAN_CHARS: usize = 20;
 
-/// The form a card is keyed on for display: first kanji form, else first
-/// reading. Mirrors what the client stores in its known-word set.
-fn preferred_headword(entry: &ArchivedWordEntry) -> &str {
-    entry
-        .kanji_forms
-        .first()
-        .map(|k| k.text.as_str())
-        .or_else(|| entry.reading_forms.first().map(|r| r.text.as_str()))
-        .unwrap_or("")
-}
-
-/// Scan `text` for all positions matching words in `known` (a set of headwords).
+/// Scan `text` for all positions matching entries in `known` (a set of JMdict
+/// `ent_seq` values — what SRS cards are keyed on).
+///
+/// Matching is by entry, not by surface string. A lookup group holds every
+/// entry sharing a key, so string matching underlines unrelated words: か's
+/// group contains a 日 entry, so a saved 日 lit up every question particle.
 ///
 /// Returns `[start, len]` pairs measured in **UTF-16 code units**, not chars or
 /// bytes. The sole consumer feeds these straight to `Range.setStart`/`setEnd`,
@@ -165,7 +159,7 @@ fn preferred_headword(entry: &ArchivedWordEntry) -> &str {
 ///
 /// Non-Japanese chars are skipped; matched segments are advanced past to avoid
 /// double-counting.
-pub fn find_in_text(text: &str, known: &HashSet<String>) -> Vec<[usize; 2]> {
+pub fn find_in_text(text: &str, known: &HashSet<u32>) -> Vec<[usize; 2]> {
     if known.is_empty() {
         return Vec::new();
     }
@@ -207,12 +201,9 @@ pub fn find_in_text(text: &str, known: &HashSet<String>) -> Vec<[usize; 2]> {
                         None => break,
                     }
                 }
-                // A lookup group can hold several entries; the card may be
-                // keyed on any one of them, so check them all.
-                let is_known = entries.iter().any(|e| {
-                    let hw = preferred_headword(e);
-                    !hw.is_empty() && known.contains(hw)
-                });
+                let is_known = entries
+                    .iter()
+                    .any(|e| known.contains(&e.sequence.to_native()));
                 if is_known {
                     results.push([utf16_off, width]);
                 }
