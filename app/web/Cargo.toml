@@ -4,7 +4,7 @@ version = "0.9.5"
 edition = "2021"
 
 [dependencies]
-dioxus = { version = "0.7.9", features = ["web"] }
+dioxus = { version = "0.7.10", features = ["web"] }
 yomeru-shared = { path = "../shared" }
 
 [lints]

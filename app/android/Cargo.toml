@@ -7,5 +7,5 @@ edition = "2021"
 crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
-dioxus = { version = "0.7.9", features = ["mobile"] }
+dioxus = { version = "0.7.10", features = ["mobile"] }
 yomeru-shared = { path = "../shared" }
