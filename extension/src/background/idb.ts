@@ -259,25 +259,6 @@ export async function promoteCard(sequence: number): Promise<void> {
   }
 }
 
-export async function promoteAll(): Promise<void> {
-  const database = await openDb();
-  return new Promise((resolve, reject) => {
-    const t = database.transaction("cards", "readwrite");
-    t.oncomplete = () => resolve();
-    t.onerror = () => reject(t.error);
-    const store = t.objectStore("cards");
-    const req = store.index("status").openCursor(IDBKeyRange.only("staging"));
-    req.onsuccess = (e) => {
-      const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
-      if (!cursor) return;
-      const card = cursor.value as SrsCard;
-      cursor.update({ ...card, status: "active" });
-      cursor.continue();
-    };
-    req.onerror = () => reject(req.error);
-  });
-}
-
 /** Deletes both direction siblings for an entry and records tombstones. */
 export async function deleteCard(sequence: number): Promise<void> {
   return deleteIdsWithTombstones([

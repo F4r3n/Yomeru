@@ -69,30 +69,6 @@ pub fn NewWordsTab() -> Element {
         });
     };
 
-    let promote_all = move |_| {
-        spawn(async move {
-            let staging = match get_staging_cards().await {
-                Ok(s) => s,
-                Err(e) => {
-                    warn!("get_staging_cards for promote_all failed: {e}");
-                    return;
-                }
-            };
-            let mut promoted = 0usize;
-            for seq in unique_by_sequence(staging).into_iter().map(|c| c.sequence) {
-                if let Err(e) = promote_card(seq).await {
-                    warn!("promote_card(seq={seq}) in promote_all failed: {e}");
-                    continue;
-                }
-                promoted += 1;
-            }
-            if promoted > 0 {
-                schedule_sync();
-            }
-            reload();
-        });
-    };
-
     let count = cards.read().len();
     let filter_s = filter.read().to_lowercase();
     let all_cards = cards.read().clone();
@@ -120,7 +96,6 @@ pub fn NewWordsTab() -> Element {
                 if count > 0 {
                     div { class: "actions",
                         span { class: "pill", "{count} staged" }
-                        button { class: "primary", onclick: promote_all, "Promote all" }
                     }
                 }
             }

@@ -12,7 +12,6 @@ import {
   getDueCards,
   getStagingCards,
   promoteCard,
-  promoteAll,
   deleteCard,
   addLookupHistory,
 } from "./idb";
@@ -112,37 +111,6 @@ export async function handlePromoteCard({ sequence }: { sequence: number }) {
   await promoteCard(sequence);
   await bumpDbVersion();
   return { success: true };
-}
-
-export async function handlePromoteAll() {
-  await promoteAll();
-  await bumpDbVersion();
-  return { success: true };
-}
-
-export async function handlePromoteBatch() {
-  const settings = await getSettings();
-  const staging = (await getStagingCards()).sort(
-    (a, b) => a.added_ms - b.added_ms,
-  );
-  const stagingSeqs: number[] = [];
-  const seen = new Set<number>();
-  for (const c of staging) {
-    if (!seen.has(c.sequence)) {
-      seen.add(c.sequence);
-      stagingSeqs.push(c.sequence);
-    }
-  }
-  const n = Math.min(stagingSeqs.length, settings.maxSessionCards);
-  for (let i = 0; i < n; i++) {
-    await promoteCard(stagingSeqs[i]);
-  }
-  if (n > 0) await bumpDbVersion();
-  const due = await getDueCards(Date.now());
-  return {
-    cards: due.slice(0, settings.maxSessionCards),
-    stagingCount: stagingSeqs.length - n,
-  };
 }
 
 export async function handleGetSettings() {

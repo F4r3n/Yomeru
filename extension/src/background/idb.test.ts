@@ -112,37 +112,6 @@ describe("idb", () => {
     });
   });
 
-  describe("promoteAll", () => {
-    it("sets all staging cards to active", async () => {
-      await idb.putCard(makeCard({ sequence: CAT, direction: "recognition", status: "staging" }));
-      await idb.putCard(makeCard({ sequence: DOG, direction: "recognition", status: "staging" }));
-
-      await idb.promoteAll();
-
-      expect(await idb.getStagingCards()).toHaveLength(0);
-      const all = await idb.getAllCards();
-      expect(all.every((c) => c.status === "active")).toBe(true);
-    });
-
-    it("does not affect already active cards", async () => {
-      await idb.putCard(makeCard({ sequence: CAT, direction: "recognition", status: "active", due_ms: 999 }));
-      await idb.putCard(makeCard({ sequence: DOG, direction: "recognition", status: "staging" }));
-
-      await idb.promoteAll();
-
-      const cat = await idb.getCard(CAT, "recognition");
-      expect(cat?.status).toBe("active");
-      expect(cat?.due_ms).toBe(999);
-    });
-
-    it("is a no-op when no staging cards exist", async () => {
-      await idb.putCard(makeCard({ sequence: CAT, direction: "recognition", status: "active" }));
-
-      await expect(idb.promoteAll()).resolves.toBeUndefined();
-      expect((await idb.getCard(CAT, "recognition"))?.status).toBe("active");
-    });
-  });
-
   describe("getCard", () => {
     it("returns only the requested direction sibling", async () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition", reps: 3 }));

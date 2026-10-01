@@ -25,8 +25,6 @@ import {
   handleLookupMany,
   handleLookupPrefix,
   handleLookupWord,
-  handlePromoteAll,
-  handlePromoteBatch,
   handlePromoteCard,
   handleReviewCard,
   handleSaveSettings,
@@ -78,10 +76,6 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
       return handleGetStaging();
     case "PROMOTE_CARD":
       return handlePromoteCard(msg.payload as { sequence: number });
-    case "PROMOTE_ALL":
-      return handlePromoteAll();
-    case "PROMOTE_BATCH":
-      return handlePromoteBatch();
     case "GET_SETTINGS":
       return handleGetSettings();
     case "SAVE_SETTINGS":
