@@ -14,7 +14,13 @@ import {
   applyRemoteDeletions,
   applySyncResponse,
 } from "./idb";
-import { getSettings, saveSettings } from "./settings";
+import {
+  adoptRemoteSettings,
+  getSettings,
+  saveSettings,
+  toSettingsPayload,
+  type SettingsPayload,
+} from "./settings";
 import { syncCardsBackup, writeCardsBackup } from "./cards-backup";
 import type { SrsCard } from "../shared/types.ts";
 
@@ -29,7 +35,8 @@ export async function bumpDbVersion(): Promise<void> {
 // ── Auto-sync scheduler ───────────────────────────────────────────────
 //
 // Every card mutation flows through bumpDbVersion(), which calls
-// scheduleSync(). We debounce 2 s and then POST cards+tombstones to the
+// scheduleSync(). We debounce 2 s and then POST cards+tombstones (and any
+// locally edited scheduler settings) to the
 // server. A separate IN_FLIGHT flag prevents overlapping requests; if a
 // new mutation arrives during a sync, we kick off another pass when it
 // finishes so no change is silently dropped.
@@ -105,11 +112,19 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
       // ordered by when it happened, not when it reached the server. The server
       // still accepts the bare-id form older clients send, so it must be
       // deployed before this client ships.
-      body: JSON.stringify({ cards: upload, deletions: localTombstones }),
+      body: JSON.stringify({
+        cards: upload,
+        deletions: localTombstones,
+        settings: toSettingsPayload(settings),
+      }),
     });
     if (res.status === 401) return { error: "session expired — re-verify" };
     if (!res.ok) return { error: `server ${res.status}` };
-    const resp = (await res.json()) as { cards: SrsCard[]; deletions?: string[] };
+    const resp = (await res.json()) as {
+      cards: SrsCard[];
+      deletions?: string[];
+      settings?: SettingsPayload;
+    };
     // Merge rather than replace. Wholesale replacement looks server-authoritative
     // but loses every write that landed during the round trip: a card reviewed
     // mid-flight comes back carrying the server's older copy and is overwritten,
@@ -127,6 +142,7 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
     // copy to resurrect.
     const legacy = allLocal.filter((c) => !syncable(c)).map((c) => c.id);
     await applyRemoteDeletions(legacy);
+    if (resp.settings) await adoptRemoteSettings(resp.settings);
     await writeCardsBackup();
     return { synced: resp.cards.length };
   } catch (e) {

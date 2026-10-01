@@ -133,6 +133,14 @@ export interface SrsSettings {
   graduationIntervalDays: number;
   intervalScale: number; // 1.0 = no scaling
   maxSessionCards: number;
+  /** FSRS desired retention (probability of recall at review time). */
+  requestRetention: number;
+  /**
+   * Wall-clock ms of the last *scheduler* edit on this device: the
+   * last-write-wins key for settings sync. 0 = never edited here. Mirrors
+   * `settings_updated_ms` in `app/shared/src/settings.rs`.
+   */
+  settingsUpdatedMs: number;
   serverUrl: string;
   serverEmail: string;
   serverToken: string; // session token after OTP verification (not shown to user)
@@ -142,6 +150,8 @@ export const DEFAULT_SETTINGS: SrsSettings = {
   graduationIntervalDays: 365,
   intervalScale: 1.0,
   maxSessionCards: 20,
+  requestRetention: 0.9,
+  settingsUpdatedMs: 0,
   serverUrl: "",
   serverEmail: "",
   serverToken: "",

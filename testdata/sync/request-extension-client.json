@@ -22,5 +22,12 @@
       "id": "1467640::recall",
       "deleted_at": 1757000000123
     }
-  ]
+  ],
+  "settings": {
+    "graduation_interval_days": 365,
+    "interval_scale": 1,
+    "max_session_cards": 20,
+    "request_retention": 0.9,
+    "updated_ms": 1756000000000
+  }
 }

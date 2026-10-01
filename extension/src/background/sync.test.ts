@@ -143,6 +143,12 @@ describe("sync", () => {
       await idb.deleteCardById(cardId(WORD, "recall"));
       clock.mockRestore();
 
+      storage.set("srs_settings", {
+        serverUrl: SERVER,
+        serverToken: TOKEN,
+        settingsUpdatedMs: 1_756_000_000_000,
+      });
+
       respondWith({ cards: [], deletions: [] });
       await sync.handleSyncCards();
 
@@ -151,7 +157,8 @@ describe("sync", () => {
       expect(sent[0]).toEqual(expected);
       // toEqual ignores nothing about keys, but say it outright: an extra field
       // (or a renamed one) is a wire change, and the server parses by name.
-      expect(keysOf(sent[0])).toEqual(["cards", "deletions"]);
+      expect(keysOf(sent[0])).toEqual(["cards", "deletions", "settings"]);
+      expect(keysOf(sent[0].settings)).toEqual(keysOf(expected.settings));
       expect(keysOf((sent[0].cards as unknown[])[0])).toEqual(
         keysOf((expected.cards as unknown[])[0]),
       );
@@ -174,6 +181,15 @@ describe("sync", () => {
         expect(typeof d.id).toBe("string");
         expect(typeof d.deleted_at).toBe("number");
       }
+    });
+
+    it("omits settings this device never edited", async () => {
+      // Untouched defaults would otherwise create a server row that another
+      // device's real edit has to be compared against.
+      respondWith({ cards: [], deletions: [] });
+      await sync.handleSyncCards();
+
+      expect(keysOf(sent[0])).toEqual(["cards", "deletions"]);
     });
 
     it("leaves legacy word-keyed rows out of the upload", async () => {
@@ -297,6 +313,27 @@ describe("sync", () => {
 
       expect(await idb.getAllCards()).toHaveLength(0);
       expect(await idb.getAllTombstones()).toHaveLength(0);
+    });
+
+    it("adopts newer settings from the server", async () => {
+      respondWith({
+        cards: [],
+        deletions: [],
+        settings: {
+          graduation_interval_days: 30,
+          interval_scale: 1.2,
+          max_session_cards: 7,
+          request_retention: 0.8,
+          updated_ms: 2_000,
+        },
+      });
+
+      await sync.handleSyncCards();
+
+      const s = storage.get("srs_settings") as Record<string, unknown>;
+      expect(s.requestRetention).toBe(0.8);
+      expect(s.settingsUpdatedMs).toBe(2_000);
+      expect(s.serverToken).toBe(TOKEN);
     });
 
     it("parses a response with no deletions key", async () => {

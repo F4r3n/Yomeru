@@ -563,8 +563,8 @@ mod wire {
 
     #[tokio::test]
     async fn the_extension_body_round_trips() {
-        // Same payload in JavaScript's dialect: integer-valued floats and no
-        // `settings` key, since the extension doesn't sync settings.
+        // Same payload in JavaScript's dialect: integer-valued floats, including
+        // inside the `settings` block.
         let h = Harness::new().await;
         let (status, body) = h
             .post(
