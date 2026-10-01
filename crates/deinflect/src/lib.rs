@@ -160,6 +160,19 @@ mod tests {
     }
 
     #[test]
+    fn iku_irregular_te_ta_forms_come_first() {
+        // The caller takes the first candidate that hits the dictionary, and
+        // 行る (via った→る) is a real headword, so 行く must be tried before it.
+        for surface in ["行った", "行って", "行っている", "行っていた"] {
+            assert_eq!(
+                deinflect(surface)[1].text,
+                "行く",
+                "{surface} should deinflect to 行く before anything else"
+            );
+        }
+    }
+
+    #[test]
     fn kuru_verb() {
         assert!(forms("来なかった").contains(&"来る".to_owned()));
     }

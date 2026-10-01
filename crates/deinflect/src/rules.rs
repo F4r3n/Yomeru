@@ -15,6 +15,16 @@ macro_rules! rule {
 }
 
 pub static RULES: &[Rule] = &[
+    // ── Irregular 行く ────────────────────────────────────────────────────
+    // Its te/ta forms take っ instead of the い every other く-verb gets, so
+    // the generic rules can't reach it — and the first candidate to hit the
+    // dictionary wins, so without these 行った resolves through った→る to
+    // 行る (an alternate spelling of やる). Kanji-only: kana いって is just as
+    // often 言って.
+    rule!("行って", "行く", "te-form"),
+    rule!("行った", "行く", "past"),
+    rule!("行っている", "行く", "progressive"),
+    rule!("行っていた", "行く", "progressive past"),
     // ── Ichidan (v1): stem + る ────────────────────────────────────────────
     rule!("ない", "る", "negative"),
     rule!("なかった", "る", "negative past"),
