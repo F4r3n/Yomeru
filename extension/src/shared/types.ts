@@ -123,6 +123,13 @@ export function versionMs(c: SrsCard): number {
     : Math.max(c.last_review_ms ?? 0, c.added_ms);
 }
 
+/**
+ * storage.local key holding a mirror of the whole cards table. Rewritten after
+ * every local mutation and every sync, which also makes it the change signal
+ * content scripts watch. Lives here so content code needn't import the IDB layer.
+ */
+export const CARDS_BACKUP_KEY = "_yomeru_cards_backup";
+
 export function cardId(sequence: number, direction: CardDirection): string {
   return `${sequence}::${direction}`;
 }

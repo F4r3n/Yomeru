@@ -1,8 +1,8 @@
 import type { SrsCard } from "../shared/types.ts";
-import { cardId } from "../shared/types.ts";
+import { CARDS_BACKUP_KEY, cardId } from "../shared/types.ts";
 import { freshRecallCard, getAllCards, getCard, putCard } from "./idb";
 
-export const CARDS_BACKUP_KEY = "_yomeru_cards_backup";
+export { CARDS_BACKUP_KEY };
 
 function num(v: unknown, fallback: number): number {
   return typeof v === "number" && Number.isFinite(v) ? v : fallback;

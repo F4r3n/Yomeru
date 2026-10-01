@@ -1,4 +1,5 @@
 import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
+import { CARDS_BACKUP_KEY } from "../shared/types.ts";
 
 type Dictionary = InstanceType<typeof JmDictWasm.Dictionary>;
 
@@ -16,6 +17,9 @@ let dict: Dictionary | null = null;
 let srsSequences = new Set<number>();
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 let observer: MutationObserver | null = null;
+let storageListenerAdded = false;
+/** False while lookups are switched off, so no rebuild repaints underlines. */
+let active = true;
 
 function injectStyle(): void {
   if (document.getElementById("jp-srs-style")) return;
@@ -27,6 +31,7 @@ function injectStyle(): void {
 
 async function rebuildHighlights(): Promise<void> {
   if (typeof CSS === "undefined" || !CSS.highlights) return;
+  if (!active) return;
   if (!dict || srsSequences.size === 0) {
     CSS.highlights.delete(HL_NAME);
     return;
@@ -90,11 +95,41 @@ export async function initSrsHighlighter(
     return;
   }
   rebuildHighlights();
+  if (!storageListenerAdded) {
+    storageListenerAdded = true;
+    browser.storage.onChanged.addListener((changes, area) => {
+      if (area !== "local" || !(CARDS_BACKUP_KEY in changes)) return;
+      if (applyCardsChange(changes[CARDS_BACKUP_KEY].newValue)) {
+        rebuildHighlights();
+      }
+    });
+  }
   observer = new MutationObserver(() => {
     if (debounceTimer !== null) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(rebuildHighlights, 500);
   });
   observer.observe(document.body, { childList: true, subtree: true });
+}
+
+/**
+ * Replaces the known-sequence set from a new cards backup — written after
+ * every add, delete and sync, including ones made in another tab or pulled
+ * from another device. Returns whether the set changed, so the caller can skip
+ * the full-page rescan on the common case (a review, which changes no entry).
+ */
+export function applyCardsChange(cards: unknown): boolean {
+  const next = new Set<number>();
+  if (Array.isArray(cards)) {
+    for (const c of cards) {
+      const seq = (c as { sequence?: unknown } | null)?.sequence;
+      if (typeof seq === "number" && Number.isFinite(seq)) next.add(seq);
+    }
+  }
+  const same =
+    next.size === srsSequences.size && [...next].every((s) => srsSequences.has(s));
+  if (same) return false;
+  srsSequences = next;
+  return true;
 }
 
 export function srsSequenceAdded(sequence: number): void {
@@ -108,6 +143,7 @@ export function hasSrsSequence(sequence: number): boolean {
 }
 
 export function disableSrsHighlighter(): void {
+  active = false;
   observer?.disconnect();
   if (debounceTimer !== null) {
     clearTimeout(debounceTimer);
@@ -119,6 +155,7 @@ export function disableSrsHighlighter(): void {
 }
 
 export function enableSrsHighlighter(): void {
+  active = true;
   if (observer && document.body) {
     observer.observe(document.body, { childList: true, subtree: true });
   }
