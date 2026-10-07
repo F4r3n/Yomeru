@@ -16,8 +16,8 @@ use super::Db;
 
 /// A spaced-repetition card as exchanged with clients and stored one field per
 /// column. The server owns this shape now: adding a field on the client means
-/// adding a column to `CARDS_DDL` and bumping the sentinel in
-/// `drop_stale_cards`, or the field is dropped on round-trip.
+/// adding a column to `CARDS_DDL` (plus an `ALTER TABLE` shim in `schema.rs`
+/// for existing databases), or the field is dropped on round-trip.
 /// Enum-typed client fields (`direction`, `state`, `status`) are kept as their
 /// lowercase string form — the server is a relay and doesn't interpret them.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,6 +39,11 @@ pub struct Card {
     pub status: String,
     #[serde(default)]
     pub priority: i64,
+    /// Every "Again" pressed on the card, learning steps included — the
+    /// client's trouble-word ranking. Defaulted so clients that predate the
+    /// field still sync (they upload 0).
+    #[serde(default)]
+    pub again_count: i64,
     /// Wall-clock ms of the last write to this card on any device, and the sync
     /// merge key. Distinct from `last_review_ms`, which only moves on a review
     /// and is reset to NULL by `reset_progression` — a status promotion or a
@@ -138,8 +143,8 @@ pub async fn upsert_cards_tx(
             "INSERT INTO cards
                  (email, id, sequence, direction, due_ms, stability, difficulty,
                   reps, lapses, state, last_review_ms, added_ms, status, priority,
-                  updated_ms)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)
+                  again_count, updated_ms)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
              ON CONFLICT(email, id) DO UPDATE SET
                  sequence = excluded.sequence,
                  direction = excluded.direction,
@@ -153,6 +158,7 @@ pub async fn upsert_cards_tx(
                  added_ms = excluded.added_ms,
                  status = excluded.status,
                  priority = excluded.priority,
+                 again_count = excluded.again_count,
                  updated_ms = excluded.updated_ms
              WHERE excluded.updated_ms >= cards.updated_ms",
         )
@@ -170,6 +176,7 @@ pub async fn upsert_cards_tx(
         .bind(c.added_ms)
         .bind(&c.status)
         .bind(c.priority)
+        .bind(c.again_count)
         .bind(normalize_version(c, now))
         .execute(&mut *conn)
         .await
@@ -194,7 +201,7 @@ where
     let rows = sqlx::query(
         "SELECT id, sequence, direction, due_ms, stability, difficulty,
                 reps, lapses, state, last_review_ms, added_ms, status, priority,
-                updated_ms
+                again_count, updated_ms
          FROM cards WHERE email = ?1",
     )
     .bind(email)
@@ -217,6 +224,7 @@ where
             added_ms: r.get("added_ms"),
             status: r.get("status"),
             priority: r.get("priority"),
+            again_count: r.get("again_count"),
             updated_ms: r.get("updated_ms"),
         })
         .collect();

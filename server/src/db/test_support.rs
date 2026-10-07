@@ -70,6 +70,7 @@ pub fn card(id: &str, last_review_ms: Option<f64>) -> Card {
         added_ms: ADDED,
         status: "active".to_string(),
         priority: 0,
+        again_count: 0,
         updated_ms: 0.0,
     }
 }

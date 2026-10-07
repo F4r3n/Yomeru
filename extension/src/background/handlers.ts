@@ -87,12 +87,14 @@ export async function handleReviewCard({
   const wasmOut = srs.review_card(card, rating, now_ms) as WasmCardShape;
   const scaled = applyIntervalScale(wasmOut, settings.intervalScale, now_ms);
   const intervalDays = (scaled.due_ms - now_ms) / MS_PER_DAY;
+  const reviewed = mergeReview(card, scaled);
+  if (rating === 1) reviewed.again_count = (card.again_count ?? 0) + 1;
   if (checkGraduation(intervalDays, settings.graduationIntervalDays)) {
-    await putCard({ ...mergeReview(card, scaled), status: "graduated" });
+    await putCard({ ...reviewed, status: "graduated" });
     await bumpDbVersion();
     return { success: true, graduated: true };
   }
-  await putCard(mergeReview(card, scaled));
+  await putCard(reviewed);
   await bumpDbVersion();
   return { success: true, graduated: false };
 }

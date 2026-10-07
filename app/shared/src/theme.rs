@@ -298,6 +298,20 @@ button.primary { background: var(--accent); color: var(--on-accent); }
 button.danger  { background: var(--red);    color: var(--on-accent); }
 button.success { background: var(--green);  color: var(--on-accent); }
 button.warning { background: var(--yellow); color: var(--on-accent); }
+/* Secondary call to action: visible on a card without competing with the
+   filled .primary button on the same screen. */
+button.outline {
+    background: transparent;
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+}
+button.link {
+    background: transparent;
+    color: var(--accent);
+    padding: 4px 8px;
+}
+button.link:hover:not(:disabled) { text-decoration: underline; }
+button.outline:hover:not(:disabled) { background: var(--accent); color: var(--on-accent); opacity: 1; }
 
 input, select, textarea {
     background: var(--card);
@@ -355,6 +369,49 @@ th { color: var(--subtext); font-weight: 500; }
 .badge.active  { background: var(--green);  color: var(--on-accent); }
 .badge.due     { background: var(--red);    color: var(--on-accent); }
 .badge.new     { background: var(--blue);   color: var(--on-accent); }
+.badge.fail    { background: var(--red);    color: var(--on-accent); }
+
+/* ── Word rows (trouble words, session recap) ────────────────────── */
+.word-rows { display: flex; flex-direction: column; }
+.word-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+    min-width: 0;
+}
+.word-row:first-child { border-top: none; }
+.word-row .w { font-size: 18px; font-weight: 600; white-space: nowrap; }
+.word-row .r { color: var(--subtext); font-size: 13px; white-space: nowrap; }
+.word-row .g {
+    color: var(--subtext);
+    font-size: 13px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.word-row .n { color: var(--subtext); font-size: 11px; white-space: nowrap; flex-shrink: 0; }
+.word-row .badge { flex-shrink: 0; }
+details.info { margin-bottom: 8px; font-size: 12px; color: var(--subtext); }
+details.info summary {
+    cursor: pointer;
+    width: fit-content;
+    list-style: none;
+    user-select: none;
+}
+details.info summary::-webkit-details-marker { display: none; }
+details.info summary:hover { color: var(--text); }
+details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column; gap: 2px; }
+.recap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+.recap-grid .card { margin-bottom: 0; }
 
 .loading { color: var(--subtext); padding: 32px; text-align: center; }
 .empty   { color: var(--subtext); padding: 32px; text-align: center; }

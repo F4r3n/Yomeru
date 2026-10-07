@@ -242,6 +242,7 @@ mod tests {
             added_ms: 1_000.0,
             status: CardStatus::Staging,
             priority: 0,
+            again_count: 0,
             updated_ms,
         }
     }
@@ -343,6 +344,7 @@ mod tests {
                 added_ms: 1_756_000_000_000.0,
                 status: CardStatus::Active,
                 priority: 0,
+                again_count: 2,
                 updated_ms: 1_756_900_000_000.0,
             }
         }

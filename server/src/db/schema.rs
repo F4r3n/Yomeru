@@ -36,6 +36,7 @@ const CARDS_DDL: &str = "CREATE TABLE IF NOT EXISTS cards (
              added_ms        REAL NOT NULL,
              status          TEXT NOT NULL,
              priority        INTEGER NOT NULL DEFAULT 0,
+             again_count     INTEGER NOT NULL DEFAULT 0,
              updated_ms      REAL NOT NULL DEFAULT 0,
              PRIMARY KEY (email, id)
          )";
@@ -84,6 +85,26 @@ pub(super) async fn init_schema(pool: &SqlitePool) -> anyhow::Result<()> {
             .context("init db schema")?;
     }
     add_otp_attempts_column(pool).await?;
+    add_cards_again_count_column(pool).await?;
+    Ok(())
+}
+
+/// Adds `cards.again_count` to a database created before failure counting
+/// existed. Added in place rather than via `drop_stale_cards`: the column has
+/// a sane default, so there is no reason to make every client re-upload.
+/// No-op once present.
+async fn add_cards_again_count_column(pool: &SqlitePool) -> anyhow::Result<()> {
+    let cols: Vec<String> = sqlx::query_scalar("SELECT name FROM pragma_table_info('cards')")
+        .fetch_all(pool)
+        .await
+        .context("inspect cards columns")?;
+    if cols.iter().any(|c| c == "again_count") {
+        return Ok(());
+    }
+    sqlx::query("ALTER TABLE cards ADD COLUMN again_count INTEGER NOT NULL DEFAULT 0")
+        .execute(pool)
+        .await
+        .context("add cards.again_count column")?;
     Ok(())
 }
 
@@ -399,6 +420,50 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(get_all_cards(&pool, ALICE).await.unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn adds_again_count_to_an_existing_cards_table_without_dropping_rows() {
+        // Unlike the breaks above, `again_count` is added in place: a card
+        // stored before the column existed keeps its row and reads back as 0.
+        let opts = SqliteConnectOptions::from_str(":memory:").unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect_with(opts)
+            .await
+            .unwrap();
+        sqlx::query(
+            "CREATE TABLE cards (
+                 email TEXT NOT NULL, id TEXT NOT NULL, sequence INTEGER NOT NULL,
+                 direction TEXT NOT NULL, due_ms REAL NOT NULL, stability REAL NOT NULL,
+                 difficulty REAL NOT NULL, reps INTEGER NOT NULL, lapses INTEGER NOT NULL,
+                 state TEXT NOT NULL, last_review_ms REAL, added_ms REAL NOT NULL,
+                 status TEXT NOT NULL, priority INTEGER NOT NULL DEFAULT 0,
+                 updated_ms REAL NOT NULL DEFAULT 0,
+                 PRIMARY KEY (email, id))",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "INSERT INTO cards
+                 (email, id, sequence, direction, due_ms, stability, difficulty,
+                  reps, lapses, state, added_ms, status, priority, updated_ms)
+             VALUES (?1, '1467640::recognition', 1467640, 'recognition', 0, 0, 0, 0, 0,
+                     'new', 0, 'active', 0, 5)",
+        )
+        .bind(ALICE)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        init_schema(&pool).await.unwrap();
+        // Idempotent: a second startup must not try to add the column again.
+        init_schema(&pool).await.unwrap();
+
+        let cards = get_all_cards(&pool, ALICE).await.unwrap();
+        assert_eq!(cards.len(), 1, "existing row must survive the upgrade");
+        assert_eq!(cards[0].again_count, 0);
     }
 
     #[tokio::test]

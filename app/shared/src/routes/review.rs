@@ -2,12 +2,16 @@ use dioxus::prelude::*;
 use jmdict_types::WordEntry;
 
 use crate::components::pos_list;
+use crate::drill_log;
 use crate::dict::{
     examples_for, kanji_for, lookup_by_sequence, preferred_headword, primary_reading,
 };
 use crate::idb::{get_all_cards, get_due_cards, get_staging_cards, promote_card, put_card};
 use crate::settings::load as load_settings;
-use crate::srs::{ReviewOutcome, apply_review, now_ms, rating_from_u8};
+use crate::srs::{
+    DRILL_BATCH, ReviewOutcome, TROUBLE_EXIT_INTERVAL_DAYS, TROUBLE_MIN_FAILS, TroubleWord,
+    apply_review, now_ms, pick_drill_batch, rating_from_u8, trouble_words,
+};
 use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::{CardDirection, CardStatus, SrsCard};
 
@@ -16,6 +20,43 @@ enum BackTab {
     Word,
     Kanji,
     Examples,
+}
+
+/// One answered card, kept for the end-of-session recap.
+#[derive(Clone, PartialEq)]
+struct SessionResult {
+    id: String,
+    sequence: u32,
+    direction: CardDirection,
+    entry: WordEntry,
+    rating: u8,
+}
+
+fn rating_label(r: u8) -> &'static str {
+    match r {
+        1 => "Again",
+        2 => "Hard",
+        4 => "Easy",
+        _ => "Good",
+    }
+}
+
+fn direction_label(d: CardDirection) -> &'static str {
+    match d {
+        CardDirection::Recognition => "Recognition",
+        CardDirection::Recall => "Recall",
+    }
+}
+
+/// First two senses' glosses, flattened — enough to jog the memory in a
+/// one-line row without crowding it.
+fn short_gloss(e: &WordEntry) -> String {
+    e.senses
+        .iter()
+        .take(2)
+        .flat_map(|s| s.glosses.iter().take(2).map(|g| g.text.as_str()))
+        .collect::<Vec<_>>()
+        .join("; ")
 }
 
 fn shuffle<T>(mut v: Vec<T>) -> Vec<T> {
@@ -86,6 +127,14 @@ pub fn ReviewTab() -> Element {
     let mut kanji = use_signal(Vec::<kanjidic_types::KanjiEntry>::new);
     let mut examples = use_signal(Vec::<examples_types::ExampleEntry>::new);
     let mut dict_ready = use_signal(|| false);
+    let mut trouble = use_signal(Vec::<(TroubleWord, Option<WordEntry>)>::new);
+    // Drill sessions replay trouble words without touching their schedule:
+    // ratings feed the recap and nothing else.
+    let mut drill = use_signal(|| false);
+    // Per-device drill counts, which rotate the batch a drill picks.
+    let mut drilled = use_signal(std::collections::HashMap::<u32, u32>::new);
+    let mut show_all_trouble = use_signal(|| false);
+    let mut results = use_signal(Vec::<SessionResult>::new);
 
     let load_session = move || {
         spawn(async move {
@@ -111,6 +160,18 @@ pub fn ReviewTab() -> Element {
             started.set(false);
             graduated_msg.set(None);
             next_due.set(None);
+            drill.set(false);
+            results.set(vec![]);
+            let all = get_all_cards().await.unwrap_or_default();
+            let words = trouble_words(&all, TROUBLE_MIN_FAILS, TROUBLE_EXIT_INTERVAL_DAYS);
+            drilled.set(drill_log::load());
+            let seqs: Vec<u32> = words.iter().map(|w| w.sequence).collect();
+            let hits = if seqs.is_empty() {
+                vec![]
+            } else {
+                lookup_by_sequence(&seqs).await.unwrap_or_default()
+            };
+            trouble.set(words.into_iter().zip(hits).collect());
             let staging = get_staging_cards().await.unwrap_or_default();
             // Unique by sequence — recognition and recall siblings count once.
             let mut seen = std::collections::HashSet::new();
@@ -131,6 +192,29 @@ pub fn ReviewTab() -> Element {
     });
 
     let start_review = move |_| started.set(true);
+
+    let start_drill = move |_| {
+        let words: Vec<TroubleWord> = trouble.read().iter().map(|(w, _)| w.clone()).collect();
+        let cards: Vec<SrsCard> = pick_drill_batch(&words, &drilled.read(), DRILL_BATCH)
+            .into_iter()
+            .flat_map(|w| w.cards.iter().cloned())
+            .collect();
+        spawn(async move {
+            let (kept, ents, skips) = attach_entries(cards).await;
+            let paired: Vec<_> = shuffle(kept.into_iter().zip(ents).collect());
+            let (kept_final, ents_final) = paired.into_iter().unzip();
+            due_cards.set(kept_final);
+            entries.set(ents_final);
+            skipped.set(skips);
+            idx.set(0);
+            show_back.set(false);
+            graduated_msg.set(None);
+            next_due.set(None);
+            results.set(vec![]);
+            drill.set(true);
+            started.set(true);
+        });
+    };
 
     let promote_and_review = move |_| {
         spawn(async move {
@@ -181,13 +265,34 @@ pub fn ReviewTab() -> Element {
         }
     };
 
-    let rate = move |r: u8| {
+    let mut rate = move |r: u8| {
         let cards = due_cards.read();
         let i = *idx.read();
         let Some(card) = cards.get(i).cloned() else {
             return;
         };
         let entry_for_label = entries.read().get(i).cloned();
+        // Count the word once per drill session, on its first answered card,
+        // so walking away mid-drill still credits what was practised.
+        if *drill.peek() && !results.peek().iter().any(|r| r.sequence == card.sequence) {
+            drill_log::record(card.sequence);
+        }
+        if let Some(entry) = entry_for_label.clone() {
+            results.with_mut(|v| {
+                v.push(SessionResult {
+                    id: card.id.clone(),
+                    sequence: card.sequence,
+                    direction: card.direction,
+                    entry,
+                    rating: r,
+                })
+            });
+        }
+        if *drill.peek() {
+            idx.with_mut(|i| *i += 1);
+            show_back.set(false);
+            return;
+        }
         spawn(async move {
             let settings = load_settings();
             let outcome = apply_review(&card, rating_from_u8(r), now_ms(), &settings);
@@ -317,13 +422,73 @@ pub fn ReviewTab() -> Element {
                         }
                     }
                 }
+
+                if !trouble.read().is_empty() {
+                    {
+                        let total = trouble.read().len();
+                        let drill_label = if total > DRILL_BATCH {
+                            format!("▶ Drill next {DRILL_BATCH}")
+                        } else {
+                            "▶ Drill these".to_string()
+                        };
+                        let shown = if *show_all_trouble.read() {
+                            total
+                        } else {
+                            total.min(DRILL_BATCH)
+                        };
+                        let rows: Vec<(TroubleWord, Option<WordEntry>, u32)> = trouble
+                            .read()
+                            .iter()
+                            .take(shown)
+                            .map(|(w, e)| {
+                                let n = drilled.read().get(&w.sequence).copied().unwrap_or(0);
+                                (w.clone(), e.clone(), n)
+                            })
+                            .collect();
+                        rsx! {
+                        div { class: "card", style: "margin-top: 16px;",
+                            div { class: "row", style: "justify-content: space-between; margin-bottom: 8px;",
+                                div { class: "section-title", style: "margin-bottom: 0;", "Trouble words · {total}" }
+                                button { class: "outline", onclick: start_drill, "{drill_label}" }
+                            }
+                            details { class: "info",
+                                summary { "ⓘ How this works" }
+                                ul {
+                                    li { "Words you keep failing." }
+                                    li { "A word leaves once a real review schedules it a month or more out." }
+                                    li { "Drills take {DRILL_BATCH} words at a time, least-drilled first." }
+                                    li { "Drilling never changes a word's schedule." }
+                                }
+                            }
+                            div { class: "word-rows",
+                                for (w, e, n) in rows {
+                                    WordRow {
+                                        key: "{w.sequence}",
+                                        sequence: w.sequence,
+                                        entry: e,
+                                        note: (n > 0).then(|| format!("drilled {n}×")),
+                                        badge: format!("failed {}×", w.fails),
+                                        badge_class: "badge fail",
+                                    }
+                                }
+                            }
+                            if total > DRILL_BATCH {
+                                div { style: "text-align: center; margin-top: 8px;",
+                                    button { class: "link",
+                                        onclick: move |_| show_all_trouble.toggle(),
+                                        if *show_all_trouble.read() { "Show less" } else { "Show all ({total})" }
+                                    }
+                                }
+                            }
+                        }
+                        }
+                    }
+                }
             } else if let Some(c) = current {
                 {
                     let entry = current_entry;
-                    let direction_label = match c.direction {
-                        CardDirection::Recognition => "Recognition",
-                        CardDirection::Recall => "Recall",
-                    };
+                    let direction_label = direction_label(c.direction);
+                    let is_drill = *drill.read();
                     let reading = entry.as_ref().map(|e| primary_reading(e).to_string()).unwrap_or_default();
                     let front_word = entry
                         .as_ref()
@@ -369,7 +534,12 @@ pub fn ReviewTab() -> Element {
                         div { class: "review-card",
                             div { class: "row", style: "justify-content: space-between;",
                                 span { class: "muted", "Card {i + 1} of {due_count}" }
-                                span { class: "badge", "{direction_label}" }
+                                span { class: "row",
+                                    if is_drill {
+                                        span { class: "badge fail", "Drill" }
+                                    }
+                                    span { class: "badge", "{direction_label}" }
+                                }
                             }
 
                             div { class: "face",
@@ -416,10 +586,10 @@ pub fn ReviewTab() -> Element {
                                     }
                                 } else {
                                     div { class: "rate-grid",
-                                        button { class: "danger",  onclick: move |_| (rate)(1), "Again" }
-                                        button { class: "warning", onclick: move |_| (rate)(2), "Hard" }
-                                        button { class: "success", onclick: move |_| (rate)(3), "Good" }
-                                        button { class: "primary", onclick: move |_| (rate)(4), "Easy" }
+                                        button { class: "danger",  onclick: move |_| rate(1), "Again" }
+                                        button { class: "warning", onclick: move |_| rate(2), "Hard" }
+                                        button { class: "success", onclick: move |_| rate(3), "Good" }
+                                        button { class: "primary", onclick: move |_| rate(4), "Easy" }
                                     }
                                 }
                             }
@@ -428,13 +598,113 @@ pub fn ReviewTab() -> Element {
                 }
 
             } else {
-                div { class: "empty-state",
-                    div { class: "glyph", "✓" }
-                    div { class: "headline", "Review complete!" }
-                    div { class: "helper",
-                        if let Some(m) = next_due.read().clone() { "{m}" } else { "Great work." }
+                {
+                    let res = results.read();
+                    let (forgot, remembered): (Vec<SessionResult>, Vec<SessionResult>) =
+                        res.iter().cloned().partition(|r| r.rating == 1);
+                    let headline = if *drill.read() { "Drill complete!" } else { "Review complete!" };
+                    rsx! {
+                        div { class: "empty-state",
+                            div { class: "glyph", "✓" }
+                            div { class: "headline", "{headline}" }
+                            div { class: "helper",
+                                "{remembered.len()} remembered · {forgot.len()} forgot"
+                                if let Some(m) = next_due.read().clone() { " · {m}" }
+                            }
+                        }
+                        if !res.is_empty() {
+                            div { class: "recap-grid",
+                                RecapList {
+                                    title: format!("Forgot · {}", forgot.len()),
+                                    title_class: "section-title error",
+                                    empty: "Nothing forgotten — clean session.",
+                                    results: forgot,
+                                }
+                                RecapList {
+                                    title: format!("Remembered · {}", remembered.len()),
+                                    title_class: "section-title ok",
+                                    empty: "Nothing remembered this time.",
+                                    results: remembered,
+                                }
+                            }
+                        }
+                        div { style: "text-align: center; margin-top: 16px;",
+                            button { class: "primary", onclick: move |_| load_session(), "Done" }
+                        }
                     }
-                    button { class: "primary", onclick: move |_| load_session(), "Done" }
+                }
+            }
+        }
+    }
+}
+
+#[component]
+fn WordRow(
+    sequence: u32,
+    entry: Option<WordEntry>,
+    /// Small muted text before the badge, e.g. "drilled 2×".
+    note: Option<String>,
+    badge: String,
+    badge_class: &'static str,
+) -> Element {
+    let (head, reading, gloss) = match &entry {
+        Some(e) => {
+            let head = preferred_headword(e).to_string();
+            let reading = primary_reading(e).to_string();
+            let reading = if reading == head { String::new() } else { reading };
+            (head, reading, short_gloss(e))
+        }
+        None => (format!("(seq {sequence})"), String::new(), String::new()),
+    };
+    rsx! {
+        div { class: "word-row",
+            span { class: "w", "{head}" }
+            if !reading.is_empty() {
+                span { class: "r", "{reading}" }
+            }
+            span { class: "g", title: "{gloss}", "{gloss}" }
+            if let Some(n) = note {
+                span { class: "n", "{n}" }
+            }
+            span { class: "{badge_class}", "{badge}" }
+        }
+    }
+}
+
+#[component]
+fn RecapList(
+    title: String,
+    title_class: &'static str,
+    empty: &'static str,
+    results: Vec<SessionResult>,
+) -> Element {
+    rsx! {
+        div { class: "card",
+            div { class: "{title_class}", "{title}" }
+            if results.is_empty() {
+                div { class: "muted", style: "font-size: 13px;", "{empty}" }
+            } else {
+                div { class: "word-rows",
+                    for r in results {
+                        {
+                            let failed = r.rating == 1;
+                            let badge = if failed {
+                                direction_label(r.direction).to_string()
+                            } else {
+                                format!("{} · {}", direction_label(r.direction), rating_label(r.rating))
+                            };
+                            let badge_class = if failed { "badge fail" } else { "badge" };
+                            rsx! {
+                                WordRow {
+                                    key: "{r.id}",
+                                    sequence: r.sequence,
+                                    entry: Some(r.entry.clone()),
+                                    badge,
+                                    badge_class,
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

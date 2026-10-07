@@ -98,6 +98,12 @@ export interface SrsCard {
   /** Bumped when the app's Lookup re-clicks "Add" on an already-staged
    * word; pushes it up the New Words queue. Not set from this extension. */
   priority: number;
+  /** Every "Again" ever pressed on this card, learning steps included —
+   * unlike `lapses`, which only counts forgetting a Review-state card. Ranks
+   * the app's trouble-word list. Optional because cards stored before the
+   * field existed lack it. Mirrors `SrsCard::again_count` in
+   * `app/shared/src/types.rs`. */
+  again_count?: number;
   /**
    * Wall-clock ms of the last write to this card on any device, and the sync
    * merge key. Stamped by `putCard`/`putCards` so every mutation advances it.

@@ -63,6 +63,14 @@ pub struct SrsCard {
     pub status: CardStatus,
     #[serde(default)]
     pub priority: u32,
+    /// Every "Again" ever pressed on this card, learning steps included.
+    /// Unlike FSRS's `lapses` — which only counts forgetting a card already
+    /// in the Review state — this also catches words that never stick in
+    /// the first place, which is what the Review tab's trouble list ranks by.
+    /// Not scheduling data: FSRS never sees it. Defaulted for cards stored
+    /// before the field existed.
+    #[serde(default)]
+    pub again_count: u32,
     /// Wall-clock ms of the last local write, and the sync merge key. Stamped
     /// by [`crate::idb::put_cards`] so every mutation advances it — including
     /// the ones `last_review_ms` misses (a Staging→Active promotion, a priority
@@ -115,6 +123,7 @@ impl SrsCardV1 {
             added_ms: self.added_ms,
             status: self.status,
             priority: 0,
+            again_count: 0,
             updated_ms: self.last_review_ms.unwrap_or(0.0).max(self.added_ms),
         }
     }
@@ -137,6 +146,7 @@ impl SrsCard {
             added_ms: now_ms,
             status: CardStatus::Staging,
             priority: 0,
+            again_count: 0,
             updated_ms: now_ms,
         }
     }
@@ -178,7 +188,8 @@ impl SrsCard {
     }
 
     /// Resets FSRS progress back to a fresh "New" card while preserving
-    /// identity/status/`added_ms`/`priority`. Destructive; callers must
+    /// identity/status/`added_ms`/`priority`, and clears the `again_count`
+    /// failure history along with it. Destructive; callers must
     /// confirm with the user first.
     pub fn reset_progression(&mut self, now_ms: f64) {
         self.due_ms = now_ms;
@@ -186,6 +197,7 @@ impl SrsCard {
         self.difficulty = 0.0;
         self.reps = 0;
         self.lapses = 0;
+        self.again_count = 0;
         self.state = CardState::New;
         self.last_review_ms = None;
     }

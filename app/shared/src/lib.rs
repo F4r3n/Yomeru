@@ -1,6 +1,7 @@
 pub mod api;
 pub mod cards_io;
 pub mod dict;
+pub mod drill_log;
 pub mod idb;
 pub mod platform;
 pub mod romaji;

@@ -256,6 +256,7 @@ fn card(id: &str, added_ms: f64, updated_ms: f64) -> db::Card {
         added_ms,
         status: "active".to_string(),
         priority: 0,
+        again_count: 0,
         updated_ms,
     }
 }
@@ -559,6 +560,7 @@ mod wire {
         let resp: SyncResp = serde_json::from_value(body).unwrap();
         assert_eq!(resp.cards.len(), 1);
         assert_eq!(resp.deletions, vec!["1467640::recall".to_string()]);
+        assert_eq!(resp.cards[0].again_count, 2, "again_count must round-trip");
         // Float `deleted_at` must survive as a real time, not collapse to
         // receipt time — that is the whole point of sending it.
         let stored = db::test_support::deleted_at(&h.db, EMAIL, "1467640::recall")
