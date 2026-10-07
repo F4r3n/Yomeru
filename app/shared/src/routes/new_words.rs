@@ -5,6 +5,7 @@ use jmdict_types::WordEntry;
 
 use crate::components::pos_list;
 use crate::dict::{frequency_label, lookup_by_sequence, preferred_headword, primary_reading};
+use crate::icons::{Icon, IconName};
 use crate::idb::{delete_card, get_staging_cards, promote_card};
 use crate::romaji::matches_query;
 use crate::sync::{schedule_sync, use_reload_on_sync};
@@ -117,13 +118,13 @@ pub fn NewWordsTab() -> Element {
                 div { class: "card error", "Failed: {e}" }
             } else if cards.read().is_empty() {
                 div { class: "empty-state",
-                    div { class: "glyph", "✦" }
+                    div { class: "glyph", Icon { name: IconName::Sparkles, size: 44 } }
                     div { class: "headline", "No staged words" }
                     div { class: "helper", "Add words from the Lookup tab to queue them here." }
                 }
             } else if filtered.is_empty() {
                 div { class: "empty-state",
-                    div { class: "glyph", "⌕" }
+                    div { class: "glyph", Icon { name: IconName::Search, size: 44 } }
                     div { class: "headline", "No matches" }
                     div { class: "helper", "Nothing staged contains 「{filter_s}」." }
                 }

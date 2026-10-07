@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use dioxus::prelude::*;
 
 use crate::dict::{lookup_by_sequence, preferred_headword, primary_reading};
+use crate::icons::{Icon, IconName};
 use crate::idb::{delete_card, get_all_cards, reset_card};
 use crate::romaji::matches_query;
 use crate::srs::now_ms;
@@ -149,13 +150,13 @@ pub fn WordListTab() -> Element {
                 div { class: "loading", "Loading…" }
             } else if total == 0 {
                 div { class: "empty-state",
-                    div { class: "glyph", "≡" }
+                    div { class: "glyph", Icon { name: IconName::List, size: 44 } }
                     div { class: "headline", "No active cards yet" }
                     div { class: "helper", "Promote staged words from the New Words tab to start reviewing." }
                 }
             } else if filtered.is_empty() {
                 div { class: "empty-state",
-                    div { class: "glyph", "⌕" }
+                    div { class: "glyph", Icon { name: IconName::Search, size: 44 } }
                     div { class: "headline", "No matches" }
                     div { class: "helper", "Nothing in your list contains 「{filter_s}」." }
                 }

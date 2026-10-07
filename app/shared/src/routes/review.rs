@@ -6,6 +6,7 @@ use crate::drill_log;
 use crate::dict::{
     examples_for, kanji_for, lookup_by_sequence, preferred_headword, primary_reading,
 };
+use crate::icons::{Icon, IconName};
 use crate::idb::{get_all_cards, get_due_cards, get_staging_cards, promote_card, put_card};
 use crate::settings::load as load_settings;
 use crate::srs::{
@@ -401,21 +402,21 @@ pub fn ReviewTab() -> Element {
             if !*started.read() {
                 if due_count > 0 {
                     div { class: "empty-state",
-                        div { class: "glyph", "▶" }
+                        div { class: "glyph", Icon { name: IconName::Play, size: 44 } }
                         div { class: "headline", "{due_ready_label}" }
                         div { class: "helper", "Start your review session." }
                         button { class: "primary", onclick: start_review, "Start Review" }
                     }
                 } else if new_count > 0 {
                     div { class: "empty-state",
-                        div { class: "glyph", "✦" }
+                        div { class: "glyph", Icon { name: IconName::Sparkles, size: 44 } }
                         div { class: "headline", "{new_label}" }
                         div { class: "helper", "Promote them into the SRS queue." }
                         button { class: "primary", onclick: promote_and_review, "Add new words" }
                     }
                 } else {
                     div { class: "empty-state",
-                        div { class: "glyph", "✓" }
+                        div { class: "glyph", Icon { name: IconName::CircleCheck, size: 44 } }
                         div { class: "headline", "All caught up" }
                         div { class: "helper",
                             if let Some(m) = next_due.read().clone() { "{m}" } else { "No cards due right now." }
@@ -427,9 +428,9 @@ pub fn ReviewTab() -> Element {
                     {
                         let total = trouble.read().len();
                         let drill_label = if total > DRILL_BATCH {
-                            format!("▶ Drill next {DRILL_BATCH}")
+                            format!("Drill next {DRILL_BATCH}")
                         } else {
-                            "▶ Drill these".to_string()
+                            "Drill these".to_string()
                         };
                         let shown = if *show_all_trouble.read() {
                             total
@@ -449,10 +450,13 @@ pub fn ReviewTab() -> Element {
                         div { class: "card", style: "margin-top: 16px;",
                             div { class: "row", style: "justify-content: space-between; margin-bottom: 8px;",
                                 div { class: "section-title", style: "margin-bottom: 0;", "Trouble words · {total}" }
-                                button { class: "outline", onclick: start_drill, "{drill_label}" }
+                                button { class: "outline", onclick: start_drill,
+                                    Icon { name: IconName::Play, size: 14 }
+                                    "{drill_label}"
+                                }
                             }
                             details { class: "info",
-                                summary { "ⓘ How this works" }
+                                summary { Icon { name: IconName::Info, size: 13 } "How this works" }
                                 ul {
                                     li { "Words you keep failing." }
                                     li { "A word leaves once a real review schedules it a month or more out." }
@@ -605,7 +609,7 @@ pub fn ReviewTab() -> Element {
                     let headline = if *drill.read() { "Drill complete!" } else { "Review complete!" };
                     rsx! {
                         div { class: "empty-state",
-                            div { class: "glyph", "✓" }
+                            div { class: "glyph", Icon { name: IconName::CircleCheck, size: 44 } }
                             div { class: "headline", "{headline}" }
                             div { class: "helper",
                                 "{remembered.len()} remembered · {forgot.len()} forgot"

@@ -8,6 +8,7 @@ use jmdict_types::WordEntry;
 use crate::app::Route;
 use crate::components::EntryCard;
 use crate::dict::{self, examples_for, kanji_for, primary_headword};
+use crate::icons::{Icon, IconName};
 use crate::idb::{bump_priority, get_cards_by_sequence, put_cards, reset_card};
 use crate::romaji::{is_romaji, romaji_to_hiragana};
 use crate::srs::now_ms;
@@ -425,7 +426,7 @@ fn LookupListPane() -> Element {
                     let label = if target.is_empty() { q_trim.clone() } else { target.clone() };
                     rsx! {
                         div { class: "empty-state",
-                            div { class: "glyph", "⌕" }
+                            div { class: "glyph", Icon { name: IconName::Search, size: 44 } }
                             div { class: "headline", "No entry found for 「{label}」" }
                             div { class: "helper", "Try a different spelling or check the romaji conversion." }
                         }

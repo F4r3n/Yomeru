@@ -6,6 +6,7 @@ use dioxus::router::components::HistoryProvider;
 use dioxus::web::WebHistory;
 use gloo_storage::{LocalStorage, Storage};
 
+use crate::icons::{Icon, IconName};
 use crate::platform::Platform;
 use crate::routes::{about, lookup, new_words, review, settings, stats, word_list};
 use crate::sync::SyncGen;
@@ -139,7 +140,7 @@ fn Shell() -> Element {
     } else {
         "Switch to light theme"
     };
-    let toggle_icon = if is_light { "☀" } else { "☾" };
+    let toggle_icon = if is_light { IconName::Sun } else { IconName::Moon };
 
     rsx! {
         div { class: "app-shell",
@@ -156,18 +157,18 @@ fn Shell() -> Element {
                         title: "{toggle_label}",
                         "aria-label": "{toggle_label}",
                         onclick: toggle_theme,
-                        "{toggle_icon}"
+                        Icon { name: toggle_icon }
                     }
                 }
             }
             nav { class: "sidebar",
-                NavTab { to: Route::Review {},   icon: "▶", label: "Review" }
-                NavTab { to: Route::New {},      icon: "✦", label: "New Words" }
-                NavTab { to: Route::Words {},    icon: "≡", label: "Word List" }
-                NavTab { to: Route::Stats {},    icon: "▦", label: "Stats" }
-                NavTab { to: Route::Lookup {},   icon: "⌕", label: "Lookup" }
-                NavTab { to: Route::Settings {}, icon: "⚙", label: "Settings" }
-                NavTab { to: Route::About {},    icon: "ⓘ", label: "About" }
+                NavTab { to: Route::Review {},   icon: IconName::Play, label: "Review" }
+                NavTab { to: Route::New {},      icon: IconName::Sparkles, label: "New Words" }
+                NavTab { to: Route::Words {},    icon: IconName::List, label: "Word List" }
+                NavTab { to: Route::Stats {},    icon: IconName::Chart, label: "Stats" }
+                NavTab { to: Route::Lookup {},   icon: IconName::Search, label: "Lookup" }
+                NavTab { to: Route::Settings {}, icon: IconName::Settings, label: "Settings" }
+                NavTab { to: Route::About {},    icon: IconName::Info, label: "About" }
             }
             main { class: "content",
                 div { class: "content-inner",
@@ -218,8 +219,8 @@ fn LookupToggle() -> Element {
     }
 
     // Until the stored value lands, render a neutral, inert button rather than
-    // guessing. Defaulting to "on" here would show ◉ and then visibly flip to
-    // ◯ for anyone who had lookups disabled, and a click landing in that window
+    // guessing. Defaulting to "on" here would show the open eye and then visibly
+    // flip to the crossed-out one for anyone who had lookups disabled, and a click landing in that window
     // would write a value derived from the guess rather than from storage.
     let Some(on) = *enabled.read() else {
         return rsx! {
@@ -228,7 +229,7 @@ fn LookupToggle() -> Element {
                 disabled: true,
                 title: "Page lookups",
                 "aria-label": "Page lookups (loading)",
-                "◌"
+                span { class: "spin", Icon { name: IconName::Loader } }
             }
         };
     };
@@ -245,9 +246,9 @@ fn LookupToggle() -> Element {
     };
 
     let (icon, label) = if on {
-        ("◉", "Disable page lookups")
+        (IconName::Eye, "Disable page lookups")
     } else {
-        ("◯", "Enable page lookups")
+        (IconName::EyeOff, "Enable page lookups")
     };
     let class = if on {
         "icon-btn lookups-on"
@@ -261,19 +262,19 @@ fn LookupToggle() -> Element {
             title: "{label}",
             "aria-label": "{label}",
             onclick: toggle,
-            "{icon}"
+            Icon { name: icon }
         }
     }
 }
 
 #[component]
-fn NavTab(to: Route, icon: &'static str, label: &'static str) -> Element {
+fn NavTab(to: Route, icon: IconName, label: &'static str) -> Element {
     let current = use_route::<Route>();
     let active = nav_active(&to, &current);
     let class = if active { "nav-tab active" } else { "nav-tab" };
     rsx! {
         Link { class: "{class}", to: to,
-            span { class: "nav-icon", "{icon}" }
+            span { class: "nav-icon", Icon { name: icon } }
             span { "{label}" }
         }
     }

@@ -134,6 +134,9 @@ button, a, input, select, textarea { touch-action: manipulation; }
 
 .topbar-actions { display: flex; align-items: center; gap: 8px; }
 .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: transparent;
     color: var(--subtext);
     border: 1px solid transparent;
@@ -173,7 +176,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
     background: var(--card);
     border-left-color: var(--accent);
 }
-.sidebar .nav-tab .nav-icon { width: 18px; text-align: center; opacity: 0.85; }
+.sidebar .nav-tab .nav-icon { width: 18px; display: inline-flex; justify-content: center; opacity: 0.85; }
 
 .content {
     grid-area: main;
@@ -279,6 +282,14 @@ button, a, input, select, textarea { touch-action: manipulation; }
                padding-bottom: max(32px, env(safe-area-inset-bottom)); }
 }
 
+/* ── Icons ───────────────────────────────────────────────────────── */
+.icon { display: block; flex-shrink: 0; }
+/* Large glyphs read heavy at the default stroke; thin them out. */
+.empty-state .glyph .icon { stroke-width: 1.5; }
+.spin { display: inline-flex; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+
 /* ── Inputs & buttons ─────────────────────────────────────────────── */
 button {
     border: none;
@@ -301,6 +312,9 @@ button.warning { background: var(--yellow); color: var(--on-accent); }
 /* Secondary call to action: visible on a card without competing with the
    filled .primary button on the same screen. */
 button.outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     background: transparent;
     color: var(--accent);
     box-shadow: inset 0 0 0 1px var(--accent);
@@ -397,6 +411,9 @@ th { color: var(--subtext); font-weight: 500; }
 .word-row .badge { flex-shrink: 0; }
 details.info { margin-bottom: 8px; font-size: 12px; color: var(--subtext); }
 details.info summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     cursor: pointer;
     width: fit-content;
     list-style: none;
@@ -703,6 +720,8 @@ tbody tr td:first-child { font-weight: 500; }
     color: var(--subtext);
 }
 .empty-state .glyph {
+    display: flex;
+    justify-content: center;
     font-size: 44px;
     color: var(--accent);
     opacity: 0.7;
