@@ -178,6 +178,16 @@ describe("cards-backup", () => {
       expect(await backup.importCards("not an array")).toMatchObject({ error: expect.any(String) });
     });
 
+    it("imports a kanji card as-is, without inventing a recall sibling", async () => {
+      const neko = makeCard({ sequence: 0x732b, direction: "kanji", reps: 4 });
+
+      expect(await backup.importCards([neko])).toEqual({ added: 1, skipped: 0 });
+
+      const all = await idb.getAllCards();
+      expect(all).toHaveLength(1);
+      expect(all[0]).toMatchObject({ id: "29483::kanji", direction: "kanji", reps: 4 });
+    });
+
     it("adds every card when none exist", async () => {
       const result = await backup.importCards([
         makeCard({ sequence: CAT }),

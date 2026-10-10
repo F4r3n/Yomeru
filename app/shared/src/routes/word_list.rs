@@ -2,13 +2,13 @@ use std::collections::HashMap;
 
 use dioxus::prelude::*;
 
-use crate::dict::{lookup_by_sequence, preferred_headword, primary_reading};
+use crate::dict::{direction_label, lookup_by_sequence, preferred_headword, primary_reading};
 use crate::icons::{Icon, IconName};
 use crate::idb::{delete_card, get_all_cards, reset_card};
 use crate::romaji::matches_query;
 use crate::srs::now_ms;
 use crate::sync::{schedule_sync, use_reload_on_sync};
-use crate::types::{CardDirection, CardStatus, SrsCard};
+use crate::types::{CardStatus, SrsCard};
 
 #[component]
 pub fn WordListTab() -> Element {
@@ -25,7 +25,9 @@ pub fn WordListTab() -> Element {
             let all = get_all_cards().await.unwrap_or_default();
             let mut active: Vec<_> = all
                 .into_iter()
-                .filter(|c| matches!(c.status, CardStatus::Active | CardStatus::Graduated))
+                .filter(|c| {
+                    !c.is_kanji() && matches!(c.status, CardStatus::Active | CardStatus::Graduated)
+                })
                 .collect();
             let mut seqs: Vec<u32> = active.iter().map(|c| c.sequence).collect();
             seqs.sort_unstable();
@@ -193,10 +195,7 @@ pub fn WordListTab() -> Element {
                                     } else {
                                         "badge"
                                     };
-                                    let direction = match c.direction {
-                                        CardDirection::Recognition => "Recognition",
-                                        CardDirection::Recall => "Recall",
-                                    };
+                                    let direction = direction_label(c.direction);
                                     let state = format!("{:?}", c.state).to_lowercase();
                                     rsx! {
                                         tr {

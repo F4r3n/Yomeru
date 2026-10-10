@@ -61,6 +61,17 @@ pub fn primary_headword(e: &WordEntry) -> &str {
         .unwrap_or_default()
 }
 
+/// A one-line reminder of what a word means: the first two glosses of its
+/// first two senses.
+pub fn short_gloss(e: &WordEntry) -> String {
+    e.senses
+        .iter()
+        .take(2)
+        .flat_map(|s| s.glosses.iter().take(2).map(|g| g.text.as_str()))
+        .collect::<Vec<_>>()
+        .join("; ")
+}
+
 pub fn primary_reading(e: &WordEntry) -> &str {
     e.reading_forms
         .first()
@@ -158,5 +169,6 @@ pub fn direction_label(d: CardDirection) -> &'static str {
     match d {
         CardDirection::Recognition => "Recognition",
         CardDirection::Recall => "Recall",
+        CardDirection::Kanji => "Kanji",
     }
 }

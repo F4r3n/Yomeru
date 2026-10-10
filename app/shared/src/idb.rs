@@ -244,9 +244,22 @@ pub async fn get_all_cards() -> Result<Vec<SrsCard>, String> {
         .collect())
 }
 
+/// Due word cards, oldest-due first. Kanji cards have their own session — see
+/// [`get_due_kanji_cards`].
 pub async fn get_due_cards(now_ms: f64) -> Result<Vec<SrsCard>, String> {
+    get_due(now_ms, false).await
+}
+
+/// Due kanji cards, oldest-due first.
+pub async fn get_due_kanji_cards(now_ms: f64) -> Result<Vec<SrsCard>, String> {
+    get_due(now_ms, true).await
+}
+
+async fn get_due(now_ms: f64, kanji: bool) -> Result<Vec<SrsCard>, String> {
     let mut all = get_all_cards().await?;
-    all.retain(|c| matches!(c.status, CardStatus::Active) && c.due_ms <= now_ms);
+    all.retain(|c| {
+        c.is_kanji() == kanji && matches!(c.status, CardStatus::Active) && c.due_ms <= now_ms
+    });
     all.sort_by(|a, b| {
         a.due_ms
             .partial_cmp(&b.due_ms)

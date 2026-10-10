@@ -362,6 +362,28 @@ async fn a_reset_survives_a_stale_copy_that_still_has_the_reps() {
 }
 
 #[tokio::test]
+async fn a_kanji_card_reaches_the_other_device_unchanged() {
+    // Kanji cards reuse the card shape with a new `direction` and the kanji's
+    // code point as `sequence`. The server relays both without interpreting
+    // them, so no schema change is needed — this pins that down.
+    const NEKO: &str = "29483::kanji";
+    let h = Harness::new().await;
+    let mut kanji = card(NEKO, T0, T0);
+    kanji.sequence = 0x732b;
+    kanji.direction = "kanji".to_string();
+    kanji.reps = 3;
+    let mut a = Device::new(&[kanji]);
+    a.sync(&h).await;
+
+    let mut b = Device::new(&[]);
+    b.sync(&h).await;
+    let got = b.get(NEKO);
+    assert_eq!(got.sequence, 0x732b);
+    assert_eq!(got.direction, "kanji");
+    assert_eq!(got.reps, 3);
+}
+
+#[tokio::test]
 async fn concurrent_offline_reviews_converge_on_the_later_one() {
     let h = Harness::new().await;
     let mut a = Device::new(&[card(X, T0, T0)]);

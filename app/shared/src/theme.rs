@@ -653,6 +653,15 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
     margin: 12px 0 16px;
 }
 .review-card .face .word { font-size: 36px; font-weight: 600; letter-spacing: 1px; }
+.review-card .face .kanji-face { font-size: 72px; font-weight: 500; line-height: 1.1; }
+.kanji-back { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; font-size: 15px; }
+.kanji-back .meanings { font-size: 18px; font-weight: 600; }
+.kanji-back .used-in { margin-top: 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; }
+.kanji-back .used-word { max-width: 100%; }
+.review-card .kanji-facts { font-size: 12px; }
+.kanji-back .used-word summary { cursor: pointer; font-size: 17px; list-style-position: inside; }
+.kanji-back .used-word-info { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--subtext); padding: 2px 0 6px; }
+.kanji-back .used-word-info .reading { color: var(--text); font-size: 14px; }
 .review-card .face .kanji-sub { color: var(--subtext); font-size: 22px; font-weight: 500; margin-top: 6px; letter-spacing: 1px; }
 .review-card .face .reading { color: var(--subtext); font-size: 16px; margin-top: 6px; }
 .review-card .face .recall-glosses { font-size: 16px; }

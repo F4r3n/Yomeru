@@ -122,7 +122,7 @@ pub fn trouble_words(
         std::collections::BTreeMap::new();
     for c in cards
         .iter()
-        .filter(|c| is_struggling(c, exit_interval_days))
+        .filter(|c| !c.is_kanji() && is_struggling(c, exit_interval_days))
     {
         let e = by_seq.entry(c.sequence).or_insert((0, 0.0, Vec::new()));
         e.0 += c.again_count;
@@ -353,6 +353,13 @@ mod tests {
         let t = trouble(&[recognition, recall]);
         assert_eq!(t[0].fails, 2);
         assert_eq!(t[0].cards.len(), 1);
+    }
+
+    #[test]
+    fn trouble_words_leave_out_kanji_cards() {
+        // Drills replay words; a struggling kanji has no word entry to show.
+        let t = trouble(&[active(u32::from('猫'), CardDirection::Kanji, 5, 5.0)]);
+        assert!(t.is_empty());
     }
 
     #[test]

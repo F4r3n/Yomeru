@@ -5,6 +5,8 @@ use crate::srs::now_ms;
 use crate::sync::use_reload_on_sync;
 use crate::types::{CardStatus, SrsCard};
 
+use super::review_common::TabButton;
+
 /// Time window for the upcoming-reviews forecast chart.
 #[derive(Clone, Copy, PartialEq)]
 enum ForecastRange {
@@ -104,6 +106,9 @@ pub fn StatsTab() -> Element {
     let mut cards = use_signal(Vec::<SrsCard>::new);
     let mut loaded = use_signal(|| false);
     let mut range = use_signal(|| ForecastRange::Day);
+    // Words and kanji are reviewed in separate sessions, so their stats are
+    // kept apart too, one tab each.
+    let mut kanji = use_signal(|| false);
 
     let load = move || {
         spawn(async move {
@@ -117,7 +122,13 @@ pub fn StatsTab() -> Element {
 
     use_reload_on_sync(load);
 
-    let all = cards.read();
+    let show_kanji = *kanji.read();
+    let all: Vec<SrsCard> = cards
+        .read()
+        .iter()
+        .filter(|c| c.is_kanji() == show_kanji)
+        .cloned()
+        .collect();
     let active = all
         .iter()
         .filter(|c| matches!(c.status, CardStatus::Active))
@@ -147,6 +158,11 @@ pub fn StatsTab() -> Element {
                 }
             }
 
+            div { class: "subtabs", style: "margin-bottom: 14px;",
+                TabButton { active: !show_kanji, onclick: move |_| kanji.set(false), label: "Words" }
+                TabButton { active: show_kanji, onclick: move |_| kanji.set(true), label: "Kanji" }
+            }
+
             div { class: "stat-grid",
                 div { class: "stat-card danger",
                     div { class: "stat-value", "{due_now}" }
@@ -156,9 +172,12 @@ pub fn StatsTab() -> Element {
                     div { class: "stat-value", "{active}" }
                     div { class: "stat-label", "Active cards" }
                 }
-                div { class: "stat-card warn",
-                    div { class: "stat-value", "{staged}" }
-                    div { class: "stat-label", "Staged" }
+                // Kanji cards skip staging: they start active.
+                if !show_kanji {
+                    div { class: "stat-card warn",
+                        div { class: "stat-value", "{staged}" }
+                        div { class: "stat-label", "Staged" }
+                    }
                 }
             }
 

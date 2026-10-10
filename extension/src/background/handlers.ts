@@ -162,10 +162,12 @@ export async function handleDeleteCard({ sequence }: { sequence: number }) {
 }
 
 // The highlighter matches page text by JMdict entry, so it only needs the
-// sequence each card is keyed on — no surface strings.
+// sequence each card is keyed on — no surface strings. Kanji cards are left
+// out: their `sequence` is a code point, not an entry.
 export async function handleGetSrsSequences(): Promise<{ sequences: number[] }> {
   const cards = await getAllCards();
-  return { sequences: [...new Set(cards.map((c) => c.sequence))] };
+  const words = cards.filter((c) => c.direction !== "kanji");
+  return { sequences: [...new Set(words.map((c) => c.sequence))] };
 }
 
 export async function handleLogLookup({

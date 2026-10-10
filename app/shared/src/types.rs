@@ -18,6 +18,11 @@ pub const MAX_PRIORITY: u32 = 10;
 pub enum CardDirection {
     Recognition,
     Recall,
+    /// A single kanji, reviewed kanji → meaning + readings. Such a card's
+    /// `sequence` is the kanji's Unicode code point rather than a JMdict
+    /// `ent_seq`; code points stay below 0x40000 and `ent_seq` starts at
+    /// 1,000,000, so the two id spaces never meet.
+    Kanji,
 }
 
 impl CardDirection {
@@ -25,6 +30,7 @@ impl CardDirection {
         match self {
             Self::Recognition => "recognition",
             Self::Recall => "recall",
+            Self::Kanji => "kanji",
         }
     }
 }
@@ -148,6 +154,29 @@ impl SrsCard {
             priority: 0,
             again_count: 0,
             updated_ms: now_ms,
+        }
+    }
+
+    /// A new kanji card for `kanji`, straight into the active deck: kanji cards
+    /// are derived from words already being reviewed, so there is no staging.
+    pub fn new_kanji(kanji: char, now_ms: f64) -> Self {
+        Self {
+            status: CardStatus::Active,
+            ..Self::new(u32::from(kanji), CardDirection::Kanji, now_ms)
+        }
+    }
+
+    /// Whether this card reviews a single kanji rather than a word.
+    pub fn is_kanji(&self) -> bool {
+        self.direction == CardDirection::Kanji
+    }
+
+    /// The kanji a kanji card reviews; `None` for word cards.
+    pub fn kanji_char(&self) -> Option<char> {
+        if self.is_kanji() {
+            char::from_u32(self.sequence)
+        } else {
+            None
         }
     }
 

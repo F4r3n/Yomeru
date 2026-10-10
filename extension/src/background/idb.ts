@@ -227,7 +227,9 @@ export async function getDueCards(nowMs: number): Promise<SrsCard[]> {
           .getAll(IDBKeyRange.upperBound(nowMs));
         req.onsuccess = () => {
           const all = req.result as SrsCard[];
-          resolve(all.filter((c) => c.status === "active"));
+          // Word cards only, like the app's `get_due_cards`: kanji cards are
+          // reviewed in their own session.
+          resolve(all.filter((c) => c.status === "active" && c.direction !== "kanji"));
         };
         req.onerror = () => reject(req.error);
       }),

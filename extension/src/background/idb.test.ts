@@ -38,6 +38,15 @@ describe("idb", () => {
       expect(due[0].sequence).toBe(CAT);
     });
 
+    it("excludes kanji cards, which have their own session", async () => {
+      const now = Date.now();
+      await idb.putCard(
+        makeCard({ sequence: 0x732b, direction: "kanji", due_ms: now - 1000, status: "active" }),
+      );
+
+      expect(await idb.getDueCards(now)).toHaveLength(0);
+    });
+
     it("excludes staging cards even when overdue", async () => {
       const now = Date.now();
       await idb.putCard(makeCard({ sequence: CAT, due_ms: now - 1000, status: "staging" }));

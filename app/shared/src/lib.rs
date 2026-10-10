@@ -4,6 +4,7 @@ pub mod dict;
 pub mod drill_log;
 pub mod icons;
 pub mod idb;
+pub mod kanji_deck;
 pub mod platform;
 pub mod romaji;
 pub mod settings;

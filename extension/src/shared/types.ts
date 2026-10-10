@@ -68,7 +68,10 @@ export interface WordEntry {
 
 export const MS_PER_DAY = 86_400_000;
 
-export type CardDirection = "recognition" | "recall";
+/** Mirrors `CardDirection` in `app/shared/src/types.rs`. A `"kanji"` card
+ * reviews one kanji, and its `sequence` is the kanji's code point, not a
+ * JMdict `ent_seq`. */
+export type CardDirection = "recognition" | "recall" | "kanji";
 
 /** Mirrors srs-core's `CardState` enum (serde rename_all = "lowercase"). */
 export type CardState = "new" | "learning" | "review" | "relearning";
