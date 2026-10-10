@@ -48,6 +48,68 @@ pub fn bump_sync_generation() {
     sync_gen.set(next);
 }
 
+/// Error both sync clients (this crate and the extension's `sync.ts`) return
+/// for a 401. Matched by [`SyncHealth`] to tell "sign in again" apart from a
+/// transient failure, so the two strings must stay identical.
+pub const SESSION_EXPIRED: &str = "session expired — re-verify";
+
+/// Error returned when no server/token is configured. Not a failure worth
+/// warning about: the user simply hasn't set sync up.
+pub const NOT_AUTHENTICATED: &str = "not authenticated";
+
+/// Outcome of the most recent sync — manual, startup or background — provided
+/// at the app root. Drives the "not synced" banner and the Settings badge.
+/// Starts as `None` (nothing attempted yet) so the banner never flashes on load.
+#[derive(Clone, Copy)]
+pub struct SyncHealth(pub Signal<Option<Result<(), String>>>);
+
+thread_local! {
+    /// The root's [`SyncHealth`], reachable from code that runs outside any
+    /// component: the web auto-sync timer and the extension's storage
+    /// listener. Writing a signal from there is fine — Dioxus queues the
+    /// re-render over a channel rather than needing the runtime on the stack.
+    static HEALTH: std::cell::Cell<Option<SyncHealth>> = const { std::cell::Cell::new(None) };
+}
+
+impl SyncHealth {
+    /// Create the signal and register it for [`record_sync_result`]. Call once,
+    /// from the app root's `use_context_provider`.
+    pub fn new_root() -> Self {
+        let health = Self(Signal::new(None));
+        HEALTH.with(|h| h.set(Some(health)));
+        health
+    }
+
+    /// The session was rejected: auto-sync is dead until the user signs in again.
+    pub fn session_expired(&self) -> bool {
+        matches!(&*self.0.read(), Some(Err(e)) if e == SESSION_EXPIRED)
+    }
+
+    /// The last sync failed for a reason worth surfacing (not "sync isn't set up").
+    pub fn failure(&self) -> Option<String> {
+        match &*self.0.read() {
+            Some(Err(e)) if e != NOT_AUTHENTICATED => Some(e.clone()),
+            _ => None,
+        }
+    }
+}
+
+/// Report the outcome of a sync attempt, from wherever it ran. A no-op before
+/// the app root has mounted.
+pub fn record_sync_result(result: Result<(), String>) {
+    if let Some(mut health) = HEALTH.with(std::cell::Cell::get) {
+        health.0.set(Some(result));
+    }
+}
+
+/// Forget the last sync outcome, e.g. after a fresh sign-in, so a stale
+/// "session expired" warning doesn't linger until the next sync lands.
+pub fn clear_sync_health() {
+    if let Some(mut health) = HEALTH.with(std::cell::Cell::get) {
+        health.0.set(None);
+    }
+}
+
 /// Arms a debounced auto-sync. No-op if the user hasn't configured a
 /// server token. Safe to call after every IDB mutation — the debounce
 /// coalesces bursts.
@@ -56,9 +118,12 @@ pub fn schedule_sync() {
 }
 
 /// Forces an immediate sync, bypassing the debounce. Used by the
-/// "Sync now" button in Settings.
+/// "Sync now" button in Settings and the startup sync. Records the outcome in
+/// [`SyncHealth`].
 pub async fn sync_now() -> Result<String, String> {
-    consume_context::<Platform>().settings.sync_now().await
+    let result = consume_context::<Platform>().settings.sync_now().await;
+    record_sync_result(result.as_ref().map(|_| ()).map_err(Clone::clone));
+    result
 }
 
 /// The exact JSON this client puts on the wire, and the JSON it parses back.

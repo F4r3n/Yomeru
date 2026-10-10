@@ -361,6 +361,18 @@ describe("sync", () => {
       expect(await idb.getAllTombstones()).toHaveLength(2);
     });
 
+    it("publishes each outcome for the options page's sync banner", async () => {
+      respondWith({}, { status: 401 });
+      await sync.handleSyncCards();
+      expect(storage.get(sync.SYNC_STATUS_KEY)).toMatchObject({
+        error: "session expired — re-verify",
+      });
+
+      respondWith({ cards: [] });
+      await sync.handleSyncCards();
+      expect(storage.get(sync.SYNC_STATUS_KEY)).toMatchObject({ error: null });
+    });
+
     it("reports a server error without touching local cards", async () => {
       await idb.putCard(makeCard({ sequence: CAT, reps: 4 }));
       respondWith({}, { status: 500 });

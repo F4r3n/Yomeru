@@ -28,6 +28,7 @@ pub enum IconName {
     EyeOff,
     Loader,
     CircleCheck,
+    TriangleAlert,
 }
 
 impl IconName {
@@ -75,6 +76,10 @@ impl IconName {
             ),
             Self::Loader => r#"<path d="M21 12a9 9 0 1 1-6.219-8.56"/>"#,
             Self::CircleCheck => r#"<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>"#,
+            Self::TriangleAlert => concat!(
+                r#"<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/>"#,
+                r#"<path d="M12 9v4"/><path d="M12 17h.01"/>"#,
+            ),
         }
     }
 }

@@ -9,7 +9,7 @@ use gloo_storage::{LocalStorage, Storage};
 use crate::icons::{Icon, IconName};
 use crate::platform::Platform;
 use crate::routes::{about, lookup, new_words, review, settings, stats, word_list};
-use crate::sync::SyncGen;
+use crate::sync::{SyncGen, SyncHealth};
 use crate::theme::global_css;
 
 const THEME_KEY: &str = "yomeru.theme";
@@ -70,6 +70,7 @@ pub fn App() -> Element {
     // Reactive generation that route load-effects subscribe to. Bumped once
     // the startup sync below lands so the mounted tab reloads from IDB.
     use_context_provider(|| SyncGen(Signal::new(0)));
+    use_context_provider(SyncHealth::new_root);
 
     // Pull remote changes once when the app opens. Previously a sync only ran
     // after a local mutation (debounced) or the manual "Sync now" button, so a
@@ -151,6 +152,7 @@ fn Shell() -> Element {
                     span { class: "tag", "Japanese reader & SRS" }
                 }
                 div { class: "topbar-actions",
+                    SyncWarning {}
                     LookupToggle {}
                     button {
                         class: "icon-btn",
@@ -175,6 +177,30 @@ fn Shell() -> Element {
                     Outlet::<Route> {}
                 }
             }
+        }
+    }
+}
+
+/// Topbar warning icon shown while sync is failing, so a dead session doesn't
+/// go unnoticed while reviews pile up on one device. The tooltip says why;
+/// clicking opens Settings, where the user can sign in again or retry.
+#[component]
+fn SyncWarning() -> Element {
+    let health = use_context::<SyncHealth>();
+    let msg = if health.session_expired() {
+        "Not syncing: your sync sign-in expired. Click to sign in again.".to_string()
+    } else if let Some(e) = health.failure() {
+        format!("Last sync failed ({e}). Changes are kept on this device.")
+    } else {
+        return rsx! {};
+    };
+    rsx! {
+        Link {
+            to: Route::Settings {},
+            class: "icon-btn sync-warning",
+            title: "{msg}",
+            "aria-label": "{msg}",
+            Icon { name: IconName::TriangleAlert }
         }
     }
 }

@@ -70,11 +70,29 @@ function scheduleSync(): void {
   });
 }
 
+/**
+ * storage.local key holding the outcome of the latest sync attempt. The
+ * options page watches it to show its "not synced" banner, which is the only
+ * way it learns that a background auto-sync failed.
+ */
+export const SYNC_STATUS_KEY = "_yomeru_sync_status";
+
+/** Runs a sync and publishes its outcome under {@link SYNC_STATUS_KEY}. */
+async function syncAndReport(): Promise<{ synced: number } | { error: string }> {
+  const result = await doSync();
+  const error = "error" in result ? result.error : null;
+  await browser.storage.local
+    .set({ [SYNC_STATUS_KEY]: { error, at: Date.now() } })
+    .catch((e) => console.error("[yomeru] write sync status failed:", e));
+  return result;
+}
+
 async function runSync(): Promise<void> {
   if (syncInFlight) return;
   syncInFlight = true;
   try {
-    await doSync();
+    const result = await syncAndReport();
+    if ("error" in result) console.warn("[yomeru] auto-sync failed:", result.error);
   } finally {
     syncInFlight = false;
     if (syncRetry) {
@@ -118,6 +136,8 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
         settings: toSettingsPayload(settings),
       }),
     });
+    // Must match `SESSION_EXPIRED` in app/shared/src/sync.rs, which keys the
+    // "sign in again" banner off this exact string.
     if (res.status === 401) return { error: "session expired — re-verify" };
     if (!res.ok) return { error: `server ${res.status}` };
     const resp = (await res.json()) as {
@@ -237,7 +257,7 @@ export async function handleSyncCards(): Promise<
   }
   syncInFlight = true;
   try {
-    return await doSync();
+    return await syncAndReport();
   } finally {
     syncInFlight = false;
     if (syncRetry) {

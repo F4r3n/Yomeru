@@ -6,7 +6,7 @@ use crate::api;
 use crate::cards_io::{format_import_result, import_cards_json, trigger_download};
 use crate::idb::get_all_cards;
 use crate::settings::{load, save};
-use crate::sync::sync_now;
+use crate::sync::{SyncHealth, bump_sync_generation, clear_sync_health, sync_now};
 use crate::types::CARDS_SCHEMA_VERSION;
 
 /// localStorage key holding the email a pending OTP was sent to. Survives a
@@ -30,6 +30,7 @@ pub fn SettingsTab() -> Element {
     let mut sync_status = use_signal(|| Option::<(String, bool)>::None);
     let mut backup_status = use_signal(|| Option::<(String, bool)>::None);
     let mut sync_busy = use_signal(|| false);
+    let health = use_context::<SyncHealth>();
 
     let save_settings = move |_| {
         let s = settings.read().clone();
@@ -87,7 +88,17 @@ pub fn SettingsTab() -> Element {
                     LocalStorage::delete(OTP_PENDING_KEY);
                     otp_sent.set(false);
                     otp_code.set(String::new());
-                    sync_status.set(Some(("Authenticated. You can now sync.".into(), false)));
+                    clear_sync_health();
+                    // Sync straight away: whatever piled up while the old
+                    // session was dead goes out now, not on the next edit.
+                    let msg = match sync_now().await {
+                        Ok(m) => {
+                            bump_sync_generation();
+                            format!("Authenticated. {m}")
+                        }
+                        Err(e) => format!("Authenticated, but sync failed: {e}"),
+                    };
+                    sync_status.set(Some((msg, false)));
                 }
                 Err(e) => sync_status.set(Some((e, true))),
             }
@@ -99,7 +110,10 @@ pub fn SettingsTab() -> Element {
         sync_busy.set(true);
         spawn(async move {
             match sync_now().await {
-                Ok(msg) => sync_status.set(Some((msg, false))),
+                Ok(msg) => {
+                    bump_sync_generation();
+                    sync_status.set(Some((msg, false)));
+                }
                 Err(e) => sync_status.set(Some((e, true))),
             }
             sync_busy.set(false);
@@ -164,7 +178,9 @@ pub fn SettingsTab() -> Element {
                 div { class: "section-title", "Sync" }
                 h3 { style: "margin-bottom: 4px;",
                     "Sync server "
-                    if has_token {
+                    if has_token && health.session_expired() {
+                        span { class: "badge fail", style: "margin-left: 8px;", "Session expired" }
+                    } else if has_token {
                         span { class: "badge active", style: "margin-left: 8px;", "Connected" }
                     } else {
                         span { class: "badge", style: "margin-left: 8px;", "Not connected" }

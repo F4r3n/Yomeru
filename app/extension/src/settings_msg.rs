@@ -22,8 +22,31 @@ pub async fn hydrate() -> Result<(), String> {
     Ok(())
 }
 
+/// Outcome of a background sync, as `sync.ts` writes it under
+/// `_yomeru_sync_status`.
+#[derive(Deserialize)]
+struct SyncStatus {
+    error: Option<String>,
+}
+
+/// Forwards background sync outcomes to the "not synced" banner. Auto-syncs
+/// run in the background script, so without this the page would only hear
+/// about the syncs it started itself.
+fn on_sync_status_change(changes: &JsValue) {
+    let Ok(entry) = Reflect::get(changes, &JsValue::from_str("_yomeru_sync_status")) else {
+        return;
+    };
+    let Ok(new_val) = Reflect::get(&entry, &JsValue::from_str("newValue")) else {
+        return;
+    };
+    if let Ok(status) = serde_wasm_bindgen::from_value::<SyncStatus>(new_val) {
+        yomeru_shared::sync::record_sync_result(status.error.map_or(Ok(()), Err));
+    }
+}
+
 pub fn register_storage_watcher() {
     let cb = Closure::<dyn Fn(JsValue)>::new(move |changes: JsValue| {
+        on_sync_status_change(&changes);
         let Ok(entry) = Reflect::get(&changes, &JsValue::from_str("srs_settings")) else {
             return;
         };

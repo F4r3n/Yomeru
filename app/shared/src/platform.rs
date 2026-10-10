@@ -270,7 +270,7 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
 
     let s: SrsSettings = LocalStorage::get(SETTINGS_KEY).unwrap_or_default();
     if s.server_url.is_empty() || s.server_token.is_empty() {
-        return Err("not authenticated".into());
+        return Err(crate::sync::NOT_AUTHENTICATED.into());
     }
     // Captured before the reads, not after: a card written between the read and
     // the timestamp would be missing from the payload yet still look like the
@@ -296,7 +296,7 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
         .await
         .map_err(|e| e.to_string())?;
     if res.status() == 401 {
-        return Err("session expired — re-verify".into());
+        return Err(crate::sync::SESSION_EXPIRED.into());
     }
     if !res.ok() {
         return Err(format!("server {}", res.status()));
@@ -411,9 +411,11 @@ impl SettingsStore for LocalSettings {
             let state = state.clone();
             spawn_local(async move {
                 state.borrow_mut().in_flight = true;
-                if let Err(e) = do_sync(state.clone()).await {
+                let result = do_sync(state.clone()).await;
+                if let Err(e) = &result {
                     warn!("[yomeru] auto-sync failed: {e}");
                 }
+                crate::sync::record_sync_result(result.map(|_| ()));
                 state.borrow_mut().in_flight = false;
                 if std::mem::replace(&mut state.borrow_mut().retry, false) {
                     // Recursively re-arm — same path as `schedule_sync`, but
@@ -424,9 +426,11 @@ impl SettingsStore for LocalSettings {
                         let st = st.clone();
                         spawn_local(async move {
                             st.borrow_mut().in_flight = true;
-                            if let Err(e) = do_sync(st.clone()).await {
+                            let result = do_sync(st.clone()).await;
+                            if let Err(e) = &result {
                                 warn!("[yomeru] auto-sync retry failed: {e}");
                             }
+                            crate::sync::record_sync_result(result.map(|_| ()));
                             st.borrow_mut().in_flight = false;
                         });
                     });
