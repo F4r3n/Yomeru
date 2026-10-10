@@ -1,16 +1,20 @@
 <script lang="ts">
-    import type { WordEntry } from "../shared/types.ts";
+    import type { WordEntry, WordStatus } from "../shared/types.ts";
     import EntryCard from "./EntryCard.svelte";
 
     let {
         entries,
-        buttonStates,
+        statuses,
         onadd,
+        onpriority,
+        onreset,
         limit = 4,
     }: {
         entries: WordEntry[];
-        buttonStates: Record<number, "idle" | "added" | "existing">;
-        onadd: (entry: WordEntry) => void;
+        statuses: Record<number, WordStatus>;
+        onadd: (entry: WordEntry) => Promise<void>;
+        onpriority: (entry: WordEntry) => Promise<void>;
+        onreset: (entry: WordEntry) => Promise<void>;
         limit?: number;
     } = $props();
 </script>
@@ -19,7 +23,9 @@
     {#if i > 0}<hr class="jp-divider" />{/if}
     <EntryCard
         {entry}
-        btnState={buttonStates[entry.sequence] ?? "idle"}
+        status={statuses[entry.sequence]}
         {onadd}
+        {onpriority}
+        {onreset}
     />
 {/each}

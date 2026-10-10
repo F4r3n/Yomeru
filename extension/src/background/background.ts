@@ -26,6 +26,9 @@ import {
   handleLookupPrefix,
   handleLookupWord,
   handlePromoteCard,
+  handleBumpPriority,
+  handleResetCard,
+  handleGetWordStatus,
   handleReviewCard,
   handleSaveSettings,
 } from "./handlers";
@@ -76,6 +79,12 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
       return handleGetStaging();
     case "PROMOTE_CARD":
       return handlePromoteCard(msg.payload as { sequence: number });
+    case "BUMP_PRIORITY":
+      return handleBumpPriority(msg.payload as { sequence: number });
+    case "RESET_CARD":
+      return handleResetCard(msg.payload as { sequence: number });
+    case "GET_WORD_STATUS":
+      return handleGetWordStatus(msg.payload as { sequences: number[] });
     case "GET_SETTINGS":
       return handleGetSettings();
     case "SAVE_SETTINGS":

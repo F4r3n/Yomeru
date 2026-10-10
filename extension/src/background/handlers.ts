@@ -12,6 +12,9 @@ import {
   getDueCards,
   getStagingCards,
   promoteCard,
+  bumpPriority,
+  resetCard,
+  getWordStatus,
   deleteCard,
   addLookupHistory,
 } from "./idb";
@@ -26,6 +29,7 @@ import type {
   SrsCard,
   SrsSettings,
   WordEntry,
+  WordStatus,
 } from "../shared/types.ts";
 import { cardId, MS_PER_DAY } from "../shared/types.ts";
 import {
@@ -113,6 +117,29 @@ export async function handlePromoteCard({ sequence }: { sequence: number }) {
   await promoteCard(sequence);
   await bumpDbVersion();
   return { success: true };
+}
+
+export async function handleBumpPriority({ sequence }: { sequence: number }) {
+  await bumpPriority(sequence);
+  await bumpDbVersion();
+  return getWordStatus(sequence);
+}
+
+export async function handleResetCard({ sequence }: { sequence: number }) {
+  await resetCard(sequence, Date.now());
+  await bumpDbVersion();
+  return getWordStatus(sequence);
+}
+
+/** SRS standing of each entry the hover popup is showing, keyed by sequence. */
+export async function handleGetWordStatus({
+  sequences,
+}: {
+  sequences: number[];
+}): Promise<{ statuses: Record<number, WordStatus> }> {
+  const statuses: Record<number, WordStatus> = {};
+  for (const seq of sequences) statuses[seq] = await getWordStatus(seq);
+  return { statuses };
 }
 
 export async function handleGetSettings() {

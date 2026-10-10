@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IDBFactory, IDBKeyRange as FakeIDBKeyRange } from "fake-indexeddb";
 import type { SrsCard } from "../shared/types.ts";
-import { cardId } from "../shared/types.ts";
+import { cardId, MAX_PRIORITY } from "../shared/types.ts";
 import { makeCard } from "./test-helpers.ts";
 
 type IdbModule = typeof import("./idb.ts");
@@ -109,6 +109,86 @@ describe("idb", () => {
       await idb.promoteCard(CAT);
 
       expect((await idb.getCard(DOG, "recognition"))?.status).toBe("staging");
+    });
+  });
+
+  describe("bumpPriority", () => {
+    it("raises both staged siblings by one", async () => {
+      await idb.putCard(makeCard({ sequence: CAT, direction: "recognition", status: "staging", priority: 2 }));
+      await idb.putCard(makeCard({ sequence: CAT, direction: "recall", status: "staging", priority: 2 }));
+
+      await idb.bumpPriority(CAT);
+
+      expect((await idb.getCard(CAT, "recognition"))?.priority).toBe(3);
+      expect((await idb.getCard(CAT, "recall"))?.priority).toBe(3);
+    });
+
+    it("stops at MAX_PRIORITY", async () => {
+      await idb.putCard(makeCard({ sequence: CAT, status: "staging", priority: MAX_PRIORITY }));
+
+      await idb.bumpPriority(CAT);
+
+      expect((await idb.getCard(CAT, "recognition"))?.priority).toBe(MAX_PRIORITY);
+    });
+
+    it("leaves active cards alone", async () => {
+      await idb.putCard(makeCard({ sequence: CAT, status: "active", priority: 0 }));
+
+      await idb.bumpPriority(CAT);
+
+      expect((await idb.getCard(CAT, "recognition"))?.priority).toBe(0);
+    });
+  });
+
+  describe("resetCard", () => {
+    it("sends a graduated card back to a fresh active one", async () => {
+      await idb.putCard(
+        makeCard({
+          sequence: CAT,
+          status: "graduated",
+          reps: 9,
+          lapses: 2,
+          again_count: 4,
+          stability: 40,
+          state: "review",
+          last_review_ms: 5,
+        }),
+      );
+
+      await idb.resetCard(CAT, 1_000);
+
+      const c = await idb.getCard(CAT, "recognition");
+      expect(c).toMatchObject({
+        status: "active",
+        due_ms: 1_000,
+        reps: 0,
+        lapses: 0,
+        again_count: 0,
+        stability: 0,
+        state: "new",
+        last_review_ms: null,
+      });
+    });
+
+    it("does not promote staged cards", async () => {
+      await idb.putCard(makeCard({ sequence: CAT, status: "staging" }));
+
+      await idb.resetCard(CAT, 1_000);
+
+      expect((await idb.getCard(CAT, "recognition"))?.status).toBe("staging");
+    });
+  });
+
+  describe("getWordStatus", () => {
+    it("is none for a word not in the deck", async () => {
+      expect(await idb.getWordStatus(CAT)).toEqual({ status: "none", priority: 0 });
+    });
+
+    it("ranks active over graduated and reports the highest priority", async () => {
+      await idb.putCard(makeCard({ sequence: CAT, direction: "recognition", status: "graduated", priority: 1 }));
+      await idb.putCard(makeCard({ sequence: CAT, direction: "recall", status: "active", priority: 3 }));
+
+      expect(await idb.getWordStatus(CAT)).toEqual({ status: "active", priority: 3 });
     });
   });
 

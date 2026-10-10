@@ -1,6 +1,6 @@
 <script lang="ts">
     import { popupStore } from "./popup-store";
-    import type { WordEntry, ExampleEntry } from "../shared/types.ts";
+    import type { WordEntry, ExampleEntry, WordStatus } from "../shared/types.ts";
     import { srsSequenceAdded, hasSrsSequence } from "./srs-highlighter";
     import WordTab from "./WordTab.svelte";
     import KanjiTab from "./KanjiTab.svelte";
@@ -8,7 +8,9 @@
 
     let activeTab = $state<"word" | "kanji" | "examples">("word");
     let useBelow = $state(true);
-    let buttonStates = $state<Record<number, "idle" | "added" | "existing">>({});
+    // SRS standing per entry. Missing = not fetched yet: the button waits
+    // rather than guessing "Add" for a word that is already in the deck.
+    let statuses = $state<Record<number, WordStatus>>({});
     let corpusExamples = $state<ExampleEntry[]>([]);
     let examplesFetched = $state(false);
 
@@ -24,11 +26,22 @@
     $effect(() => {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         entriesKey;
-        const initial: Record<number, "idle" | "added" | "existing"> = {};
-        for (const e of $popupStore.entries) {
-            if (hasSrsSequence(e.sequence)) initial[e.sequence] = "existing";
+        const sequences = $popupStore.entries.map((e: WordEntry) => e.sequence);
+        // Words the highlighter doesn't know are certainly not in the deck, so
+        // their "Add" shows at once; only known ones need the round trip.
+        const initial: Record<number, WordStatus> = {};
+        for (const seq of sequences) {
+            if (!hasSrsSequence(seq)) initial[seq] = { status: "none", priority: 0 };
         }
-        buttonStates = initial;
+        statuses = initial;
+        const key = entriesKey;
+        browser.runtime
+            .sendMessage({ type: "GET_WORD_STATUS", payload: { sequences } })
+            .then((res: { statuses: Record<number, WordStatus> }) => {
+                // The popup may have moved to another word meanwhile.
+                if (key === entriesKey && res?.statuses) statuses = { ...statuses, ...res.statuses };
+            })
+            .catch(() => {});
         activeTab = "word";
         corpusExamples = [];
         examplesFetched = false;
@@ -76,16 +89,21 @@
             .catch(() => { examplesFetched = true; });
     }
 
-    async function addToSrs(entry: WordEntry) {
-        const res = await browser.runtime.sendMessage({
-            type: "ADD_WORD",
-            payload: { sequence: entry.sequence },
-        });
-        buttonStates = {
-            ...buttonStates,
-            [entry.sequence]: res.existing ? "existing" : "added",
-        };
-        if (!res.existing) srsSequenceAdded(entry.sequence);
+    /** Runs one SRS action for an entry and adopts the standing it returns. */
+    async function act(entry: WordEntry, type: "ADD_WORD" | "BUMP_PRIORITY" | "RESET_CARD") {
+        const sequence = entry.sequence;
+        const res = await browser.runtime.sendMessage({ type, payload: { sequence } });
+        if (type === "ADD_WORD") {
+            srsSequenceAdded(sequence);
+            // Adding is a no-op for a word already in the deck, so re-read it.
+            const fresh = await browser.runtime.sendMessage({
+                type: "GET_WORD_STATUS",
+                payload: { sequences: [sequence] },
+            });
+            statuses = { ...statuses, ...fresh.statuses };
+        } else {
+            statuses = { ...statuses, [sequence]: res as WordStatus };
+        }
     }
 </script>
 
@@ -132,8 +150,10 @@
             {#if activeTab === "word"}
                 <WordTab
                     entries={$popupStore.entries}
-                    {buttonStates}
-                    onadd={addToSrs}
+                    {statuses}
+                    onadd={(e) => act(e, "ADD_WORD")}
+                    onpriority={(e) => act(e, "BUMP_PRIORITY")}
+                    onreset={(e) => act(e, "RESET_CARD")}
                 />
             {:else if activeTab === "kanji"}
                 <KanjiTab kanjiEntries={$popupStore.kanjiEntries} />

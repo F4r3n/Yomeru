@@ -1,5 +1,5 @@
-import type { CardDirection, SrsCard } from "../shared/types.ts";
-import { cardId, versionMs } from "../shared/types.ts";
+import type { CardDirection, SrsCard, WordStatus } from "../shared/types.ts";
+import { cardId, MAX_PRIORITY, versionMs } from "../shared/types.ts";
 
 const DB_NAME = "yomeru-db";
 // v7 re-runs the v6 sequence-keyed reset to self-heal any DB left half-migrated
@@ -257,6 +257,60 @@ export async function promoteCard(sequence: number): Promise<void> {
       await putCard({ ...c, status: "active" });
     }
   }
+}
+
+/**
+ * Raises the priority of an entry's staged cards by one, up to
+ * `MAX_PRIORITY`, pushing it up the New Words queue. Mirrors `bump_priority`
+ * in `app/shared/src/idb.rs`.
+ */
+export async function bumpPriority(sequence: number): Promise<void> {
+  const siblings = await getCardsBySequence(sequence);
+  await putCards(
+    siblings
+      .filter((c) => c.status === "staging")
+      .map((c) => ({ ...c, priority: Math.min(c.priority + 1, MAX_PRIORITY) })),
+  );
+}
+
+/**
+ * Sends an entry's active or graduated cards back to a fresh "new" state in
+ * the active deck — how a graduated card re-enters Review. Destructive.
+ * Mirrors `reset_card` / `SrsCard::reset_progression` in the app.
+ */
+export async function resetCard(sequence: number, nowMs: number): Promise<void> {
+  const siblings = await getCardsBySequence(sequence);
+  await putCards(
+    siblings
+      .filter((c) => c.status === "active" || c.status === "graduated")
+      .map((c) => ({
+        ...c,
+        status: "active",
+        due_ms: nowMs,
+        stability: 0,
+        difficulty: 0,
+        reps: 0,
+        lapses: 0,
+        again_count: 0,
+        state: "new",
+        last_review_ms: null,
+      })),
+  );
+}
+
+/** An entry's SRS standing, summarised over its direction cards. */
+export async function getWordStatus(sequence: number): Promise<WordStatus> {
+  const siblings = await getCardsBySequence(sequence);
+  const has = (s: SrsCard["status"]) => siblings.some((c) => c.status === s);
+  const status = has("active")
+    ? "active"
+    : has("graduated")
+      ? "graduated"
+      : has("staging")
+        ? "staging"
+        : "none";
+  const priority = Math.max(0, ...siblings.map((c) => c.priority ?? 0));
+  return { status, priority };
 }
 
 /** Deletes both direction siblings for an entry and records tombstones. */

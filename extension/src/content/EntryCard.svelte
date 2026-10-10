@@ -1,16 +1,46 @@
 <script lang="ts">
-    import type { WordEntry } from "../shared/types.ts";
+    import type { WordEntry, WordStatus } from "../shared/types.ts";
+    import { MAX_PRIORITY } from "../shared/types.ts";
     import { preferredHeadword, frequencyLabel } from "../shared/dict.ts";
 
     let {
         entry,
-        btnState,
+        status,
         onadd,
+        onpriority,
+        onreset,
     }: {
         entry: WordEntry;
-        btnState: "idle" | "added" | "existing";
-        onadd: (entry: WordEntry) => void;
+        /** Undefined while the background is still being asked. */
+        status: WordStatus | undefined;
+        onadd: (entry: WordEntry) => Promise<void>;
+        onpriority: (entry: WordEntry) => Promise<void>;
+        onreset: (entry: WordEntry) => Promise<void>;
     } = $props();
+
+    let busy = $state(false);
+    // Reset wipes the word's review history, so it takes a second click.
+    // An inline confirm rather than `window.confirm`, which some pages block
+    // and which would freeze the page the popup sits on.
+    let confirmingReset = $state(false);
+
+    async function run(action: (entry: WordEntry) => Promise<void>) {
+        busy = true;
+        try {
+            await action(entry);
+        } finally {
+            busy = false;
+        }
+    }
+
+    function onResetClick() {
+        if (!confirmingReset) {
+            confirmingReset = true;
+            return;
+        }
+        confirmingReset = false;
+        void run(onreset);
+    }
 
     let hw = $derived(preferredHeadword(entry));
     let rdg = $derived(entry.reading_forms[0]?.text ?? "");
@@ -48,13 +78,31 @@
             {/if}
         {/each}
     </div>
-    <button
-        class="jp-add-btn"
-        disabled={btnState !== "idle"}
-        onclick={() => onadd(entry)}
-    >
-        {#if btnState === "idle"}+ Add to SRS
-        {:else if btnState === "added"}Added!
-        {:else}In SRS{/if}
-    </button>
+    {#if !status}
+        <button class="jp-add-btn" disabled>…</button>
+    {:else if status.status === "none"}
+        <button class="jp-add-btn" disabled={busy} onclick={() => run(onadd)}>
+            + Add to SRS
+        </button>
+    {:else if status.status === "staging"}
+        {#if status.priority >= MAX_PRIORITY}
+            <button class="jp-add-btn" disabled>★ Staged · Priority maxed ({MAX_PRIORITY})</button>
+        {:else}
+            <button class="jp-add-btn" disabled={busy} onclick={() => run(onpriority)}>
+                ☆ Staged · +Priority (★{status.priority})
+            </button>
+        {/if}
+    {:else}
+        <button
+            class="jp-add-btn"
+            class:jp-add-btn--danger={confirmingReset}
+            disabled={busy}
+            onclick={onResetClick}
+            onmouseleave={() => (confirmingReset = false)}
+        >
+            {#if confirmingReset}Reset progress? Click again
+            {:else if status.status === "graduated"}✓ Graduated · Reset
+            {:else}✓ In SRS · Reset{/if}
+        </button>
+    {/if}
 </div>

@@ -32,6 +32,7 @@ export const POPUP_CSS = `
 }
 .jp-add-btn:hover { background: #45475a; }
 .jp-add-btn:disabled { opacity: 0.5; cursor: default; }
+.jp-add-btn--danger { border-color: #f38ba8; color: #f38ba8; }
 
 .jp-pin-ring {
   position: absolute; top: 7px; right: 7px;

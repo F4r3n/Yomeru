@@ -95,8 +95,8 @@ export interface SrsCard {
    * `SrsSettings.graduationIntervalDays`. Kept (not deleted), excluded from
    * Review, reversible — see `checkGraduation`. */
   status: "staging" | "active" | "graduated";
-  /** Bumped when the app's Lookup re-clicks "Add" on an already-staged
-   * word; pushes it up the New Words queue. Not set from this extension. */
+  /** Bumped when Lookup (in the app) or the hover popup re-clicks "+Priority"
+   * on an already-staged word; pushes it up the New Words queue. */
   priority: number;
   /** Every "Again" ever pressed on this card, learning steps included —
    * unlike `lapses`, which only counts forgetting a Review-state card. Ranks
@@ -115,6 +115,20 @@ export interface SrsCard {
    * field existed lack it — read those through `versionMs`.
    */
   updated_ms?: number;
+}
+
+/** Cap on a staged card's priority. Mirrors `MAX_PRIORITY` in
+ * `app/shared/src/types.rs`. */
+export const MAX_PRIORITY = 10;
+
+/**
+ * Where an entry stands in the SRS, summarised over its two direction cards:
+ * active outranks graduated outranks staging, and `priority` is the highest of
+ * the two. `"none"` = not in the deck at all.
+ */
+export interface WordStatus {
+  status: "none" | SrsCard["status"];
+  priority: number;
 }
 
 /**
