@@ -36,7 +36,11 @@ RUN rustup target add wasm32-unknown-unknown
 
 # Prebuilt dx binary via the official installer — seconds vs. several
 # minutes of `cargo install dioxus-cli` building from source.
-RUN curl -sSL https://dioxus.dev/install.sh | bash
+# dx refuses to bundle against a different dioxus version, so pin it to the
+# one in Cargo.lock. Pinning also invalidates this cached layer on a bump;
+# unpinned, the cache kept serving whichever dx was "latest" when first built.
+ARG DX_VERSION=0.7.10
+RUN curl -sSL https://dioxus.dev/install.sh | bash -s "v${DX_VERSION}"
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Strip DWARF debug info from the wasm. The wasm-opt dx auto-downloads
