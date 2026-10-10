@@ -38,8 +38,11 @@ web-sys = { version = "0.3", features = [
     "RequestMode",
     "Headers",
     "Response",
+    "KeyboardEvent",
+    "EventTarget",
 ] }
 gloo-net     = { version = "0.6", features = ["http"] }
+gloo-events  = "0.3"
 gloo-storage = "0.3"
 gloo-timers  = { version = "0.3", features = ["futures"] }
 idb          = "0.6"

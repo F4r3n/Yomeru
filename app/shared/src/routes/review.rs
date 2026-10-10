@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use wasm_bindgen::JsCast;
 use jmdict_types::WordEntry;
 
 use crate::components::pos_list;
@@ -113,6 +114,41 @@ fn next_due_message(cards: &[SrsCard], now: f64) -> Option<String> {
     }
 }
 
+fn event_target(e: &web_sys::KeyboardEvent) -> Option<web_sys::HtmlElement> {
+    e.target().and_then(|t| t.dyn_into::<web_sys::HtmlElement>().ok())
+}
+
+/// Whether a key event is aimed at a text field, where digits and spaces are
+/// input rather than review shortcuts. Checkboxes, radios and other non-text
+/// inputs don't count: they would otherwise switch the shortcuts off silently
+/// for as long as they keep focus.
+fn typing_in_field(e: &web_sys::KeyboardEvent) -> bool {
+    event_target(e).is_some_and(|el| match el.tag_name().as_str() {
+        "TEXTAREA" | "SELECT" => true,
+        "INPUT" => !matches!(
+            el.get_attribute("type").unwrap_or_default().to_ascii_lowercase().as_str(),
+            "checkbox" | "radio" | "button" | "submit" | "reset" | "range" | "color" | "file"
+        ),
+        _ => el.is_content_editable(),
+    })
+}
+
+/// The rating (1–4) a key press stands for, by physical key so the digit row
+/// works on any layout (AZERTY types `&é"'` there unshifted). Numpad keys only
+/// count with NumLock on — off, they are End/↓/PgDn/← and mean scrolling.
+fn rating_key(e: &web_sys::KeyboardEvent) -> Option<u8> {
+    let code = e.code();
+    let digit = if let Some(d) = code.strip_prefix("Digit") {
+        d
+    } else {
+        code.strip_prefix("Numpad").filter(|_| e.key() == code["Numpad".len()..])?
+    };
+    match digit.parse() {
+        Ok(r @ 1..=4) => Some(r),
+        _ => None,
+    }
+}
+
 #[component]
 pub fn ReviewTab() -> Element {
     let mut due_cards = use_signal(Vec::<SrsCard>::new);
@@ -136,6 +172,10 @@ pub fn ReviewTab() -> Element {
     let mut drilled = use_signal(std::collections::HashMap::<u32, u32>::new);
     let mut show_all_trouble = use_signal(|| false);
     let mut results = use_signal(Vec::<SessionResult>::new);
+    // Set while a rating is being saved: the card only advances once the write
+    // lands, and a second press in that window would rate the same card again
+    // and then skip the next one.
+    let mut rating_in_flight = use_signal(|| false);
 
     let load_session = move || {
         spawn(async move {
@@ -250,7 +290,10 @@ pub fn ReviewTab() -> Element {
         });
     };
 
-    let reveal_answer = move |_| {
+    let mut reveal_answer = move || {
+        if *show_back.peek() {
+            return;
+        }
         show_back.set(true);
         back_tab.set(BackTab::Word);
         let i = *idx.read();
@@ -267,6 +310,12 @@ pub fn ReviewTab() -> Element {
     };
 
     let mut rate = move |r: u8| {
+        // Each card is rated once, and only with its answer showing. Queued
+        // shortcut presses run after the card has moved on, so they must not
+        // land on the next card before it has been seen.
+        if *rating_in_flight.peek() || !*show_back.peek() {
+            return;
+        }
         let cards = due_cards.read();
         let i = *idx.read();
         let Some(card) = cards.get(i).cloned() else {
@@ -294,6 +343,7 @@ pub fn ReviewTab() -> Element {
             show_back.set(false);
             return;
         }
+        rating_in_flight.set(true);
         spawn(async move {
             let settings = load_settings();
             let outcome = apply_review(&card, rating_from_u8(r), now_ms(), &settings);
@@ -328,9 +378,12 @@ pub fn ReviewTab() -> Element {
             }
             idx.with_mut(|i| *i += 1);
             show_back.set(false);
-            // If session ended, compute next-due across all active cards.
-            let cards = due_cards.read();
-            if *idx.read() >= cards.len() {
+            rating_in_flight.set(false);
+            // If session ended, compute next-due across all active cards. The
+            // check is taken before the await: a read guard held across it
+            // would panic on any `due_cards` write in the meantime.
+            let session_over = *idx.peek() >= due_cards.peek().len();
+            if session_over {
                 match get_all_cards().await {
                     Ok(all) => next_due.set(next_due_message(&all, now_ms())),
                     Err(e) => warn!("get_all_cards for next-due summary failed: {e}"),
@@ -338,6 +391,67 @@ pub fn ReviewTab() -> Element {
             }
         });
     };
+
+    // Desktop shortcuts: Space/Enter reveals the answer, 1–4 rate it. Bound on
+    // the document so the keys work without focusing anything; the listeners
+    // are removed when the hook (and so the review page) is dropped.
+    use_hook(move || {
+        let document = web_sys::window().and_then(|w| w.document())?;
+        // The DOM listener runs outside Dioxus, where `spawn` (used by both
+        // actions) has no runtime. Re-entering this component's scope runs them
+        // synchronously, against the same state the checks below just read.
+        // Held weakly: the runtime owns this hook, so a strong handle would
+        // keep both alive in a cycle.
+        let runtime = std::rc::Rc::downgrade(&dioxus::core::Runtime::current());
+        let scope = dioxus::core::current_scope_id();
+        // Whether focus last moved by Tab rather than a click. A control the
+        // user tabbed to keeps its native Space/Enter; one merely left focused
+        // by a click must not swallow the reveal. Tracked by hand because
+        // `:focus-visible` turns on for mouse-focused elements as soon as any
+        // key is pressed in Chromium.
+        let tabbed = std::rc::Rc::new(std::cell::Cell::new(false));
+        let on_pointer = {
+            let tabbed = tabbed.clone();
+            gloo_events::EventListener::new(&document, "pointerdown", move |_| tabbed.set(false))
+        };
+        let on_key = gloo_events::EventListener::new(&document, "keydown", move |e| {
+            let Some(e) = e.dyn_ref::<web_sys::KeyboardEvent>() else {
+                return;
+            };
+            if e.key() == "Tab" {
+                tabbed.set(true);
+                return;
+            }
+            // Leave browser shortcuts alone, don't let a held key rate a run of
+            // cards, and never steal keys being typed into a field. Shift is
+            // allowed: AZERTY users reach the digits with it.
+            if e.ctrl_key() || e.alt_key() || e.meta_key() || e.repeat() || typing_in_field(e) {
+                return;
+            }
+            let in_session = *started.peek() && *idx.peek() < due_cards.peek().len();
+            let Some(runtime) = runtime.upgrade().filter(|_| in_session) else {
+                return;
+            };
+            if *show_back.peek() {
+                let Some(r) = rating_key(e) else {
+                    return;
+                };
+                e.prevent_default();
+                runtime.in_scope(scope, || rate(r));
+            } else {
+                let on_control = tabbed.get()
+                    && event_target(e).is_some_and(|el| el.tag_name() != "BODY");
+                if !matches!(e.key().as_str(), " " | "Enter") || on_control {
+                    return;
+                }
+                // Otherwise Space also scrolls the page, and re-clicks a button
+                // that kept focus from a mouse click.
+                e.prevent_default();
+                runtime.in_scope(scope, reveal_answer);
+            }
+        });
+        Some(std::rc::Rc::new((on_key, on_pointer)))
+    });
 
     let cards = due_cards.read();
     let i = *idx.read();
@@ -526,6 +640,7 @@ pub fn ReviewTab() -> Element {
                         })
                         .unwrap_or_default();
                     let show_back_v = *show_back.read();
+                    let in_flight = *rating_in_flight.read();
                     let is_recall = matches!(c.direction, CardDirection::Recall);
                     // Recognition cards test going from the written word to its
                     // reading, so the reading (and, for kana-preferred headwords,
@@ -586,14 +701,19 @@ pub fn ReviewTab() -> Element {
                             div { style: "margin-top: 16px;",
                                 if !show_back_v {
                                     button { class: "primary", style: "width: 100%;",
-                                        onclick: reveal_answer, "Show answer"
+                                        onclick: move |_| reveal_answer(),
+                                        "Show answer"
+                                        kbd { "aria-hidden": "true", "Space" }
                                     }
                                 } else {
                                     div { class: "rate-grid",
-                                        button { class: "danger",  onclick: move |_| rate(1), "Again" }
-                                        button { class: "warning", onclick: move |_| rate(2), "Hard" }
-                                        button { class: "success", onclick: move |_| rate(3), "Good" }
-                                        button { class: "primary", onclick: move |_| rate(4), "Easy" }
+                                        for (r, class) in [(1u8, "danger"), (2, "warning"), (3, "success"), (4, "primary")] {
+                                            button { key: "{r}", class, disabled: in_flight,
+                                                onclick: move |_| rate(r),
+                                                "{rating_label(r)}"
+                                                kbd { "aria-hidden": "true", "{r}" }
+                                            }
+                                        }
                                     }
                                 }
                             }

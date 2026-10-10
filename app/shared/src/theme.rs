@@ -682,6 +682,18 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 }
 .rate-grid button { padding: 12px 8px; font-size: 14px; font-weight: 600; }
 
+/* Keyboard-shortcut hints on the review buttons. Only shown where there is a
+   real keyboard and pointer; touch devices would just see noise. */
+.review-card kbd {
+    margin-left: 8px;
+    padding: 0 5px;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    font: 11px/16px ui-monospace, monospace;
+    opacity: 0.6;
+}
+@media (hover: none), (pointer: coarse), (max-width: 540px) { .review-card kbd { display: none; } }
+
 .kanji-row {
     display: flex;
     gap: 14px;
