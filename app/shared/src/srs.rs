@@ -413,10 +413,7 @@ mod tests {
         // drilled ones refill the batch in their original rank.
         let words: Vec<_> = (1..=12).map(word).collect();
         let drilled: Vec<_> = (1..=10).map(|s| (s, 1)).collect();
-        assert_eq!(
-            batch_seqs(&words, &drilled, 4),
-            vec![11, 12, 1, 2]
-        );
+        assert_eq!(batch_seqs(&words, &drilled, 4), vec![11, 12, 1, 2]);
     }
 
     #[test]

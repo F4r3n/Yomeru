@@ -130,7 +130,9 @@ impl Harness {
 
         let res = self.app.clone().oneshot(req).await.unwrap();
         let status = res.status();
-        let bytes = axum::body::to_bytes(res.into_body(), usize::MAX).await.unwrap();
+        let bytes = axum::body::to_bytes(res.into_body(), usize::MAX)
+            .await
+            .unwrap();
         let value = if bytes.is_empty() {
             Value::Null
         } else {
@@ -282,7 +284,10 @@ async fn a_delete_on_one_device_reaches_the_other_and_stays_gone() {
 
     // B still holds its copy and re-uploads it, as every client does.
     let resp = b.sync(&h).await;
-    assert!(resp.card(X).is_none(), "B's stale copy resurrected the card");
+    assert!(
+        resp.card(X).is_none(),
+        "B's stale copy resurrected the card"
+    );
     assert!(!b.has(X));
 
     // The fixpoint: another full round must not bring it back. This is what
@@ -460,7 +465,10 @@ async fn a_genuine_re_add_beats_the_tombstone_and_clears_it() {
     assert!(resp.deletions.is_empty(), "the tombstone should be cleared");
 
     let resp = a.sync(&h).await;
-    assert!(resp.card(X).is_some(), "A should get the re-added card back");
+    assert!(
+        resp.card(X).is_some(),
+        "A should get the re-added card back"
+    );
 }
 
 #[tokio::test]
@@ -501,8 +509,7 @@ async fn a_future_dated_delete_cannot_outrank_every_later_re_add() {
     // after it still wins.
     let h = Harness::new().await;
     let mut a = Device::new(&[]);
-    a.tombstones
-        .push((X.to_string(), T0 + 3_650.0 * DAY)); // ~10 years out
+    a.tombstones.push((X.to_string(), T0 + 3_650.0 * DAY)); // ~10 years out
     a.sync(&h).await;
 
     let stored = db::test_support::deleted_at(&h.db, EMAIL, X)
@@ -566,8 +573,8 @@ mod wire {
 
     fn fixture(name: &str) -> Value {
         let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../testdata/sync/").to_string() + name;
-        let text = std::fs::read_to_string(&path)
-            .unwrap_or_else(|e| panic!("read fixture {path}: {e}"));
+        let text =
+            std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read fixture {path}: {e}"));
         serde_json::from_str(&text).unwrap_or_else(|e| panic!("parse fixture {path}: {e}"))
     }
 
@@ -575,9 +582,17 @@ mod wire {
     async fn the_rust_client_body_round_trips() {
         let h = Harness::new().await;
         let (status, body) = h
-            .post("/api/sync", Some(&h.token), &fixture("request-app-client.json"))
+            .post(
+                "/api/sync",
+                Some(&h.token),
+                &fixture("request-app-client.json"),
+            )
             .await;
-        assert_eq!(status, StatusCode::OK, "server rejected the app client: {body}");
+        assert_eq!(
+            status,
+            StatusCode::OK,
+            "server rejected the app client: {body}"
+        );
 
         let resp: SyncResp = serde_json::from_value(body).unwrap();
         assert_eq!(resp.cards.len(), 1);
@@ -603,7 +618,11 @@ mod wire {
                 &fixture("request-extension-client.json"),
             )
             .await;
-        assert_eq!(status, StatusCode::OK, "server rejected the extension: {body}");
+        assert_eq!(
+            status,
+            StatusCode::OK,
+            "server rejected the extension: {body}"
+        );
 
         let resp: SyncResp = serde_json::from_value(body).unwrap();
         assert_eq!(resp.cards.len(), 1);
@@ -628,7 +647,11 @@ mod wire {
                 &fixture("request-legacy-client.json"),
             )
             .await;
-        assert_eq!(status, StatusCode::OK, "server rejected a legacy client: {body}");
+        assert_eq!(
+            status,
+            StatusCode::OK,
+            "server rejected a legacy client: {body}"
+        );
 
         let resp: SyncResp = serde_json::from_value(body).unwrap();
         let c = resp.card("1467640::recognition").expect("card stored");
@@ -641,24 +664,27 @@ mod wire {
     #[tokio::test]
     async fn the_response_matches_the_shape_clients_parse() {
         let h = Harness::new().await;
-        h.post("/api/sync", Some(&h.token), &fixture("request-app-client.json"))
-            .await;
+        h.post(
+            "/api/sync",
+            Some(&h.token),
+            &fixture("request-app-client.json"),
+        )
+        .await;
         let (_, body) = h
             .post("/api/sync", Some(&h.token), &json!({ "cards": [] }))
             .await;
 
         let expected = fixture("response.json");
         let keys = |v: &Value| {
-            let mut k: Vec<String> = v
-                .as_object()
-                .expect("object")
-                .keys()
-                .cloned()
-                .collect();
+            let mut k: Vec<String> = v.as_object().expect("object").keys().cloned().collect();
             k.sort();
             k
         };
-        assert_eq!(keys(&body), keys(&expected), "response top-level keys drifted");
+        assert_eq!(
+            keys(&body),
+            keys(&expected),
+            "response top-level keys drifted"
+        );
         assert_eq!(
             keys(&body["cards"][0]),
             keys(&expected["cards"][0]),

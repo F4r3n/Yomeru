@@ -3,11 +3,11 @@ use gloo_storage::{LocalStorage, Storage};
 use jmdict_types::WordEntry;
 
 use crate::components::pos_list;
-use crate::drill_log;
 use crate::dict::{
     direction_label, examples_for, kanji_for, lookup_by_sequence, preferred_headword,
     primary_reading, short_gloss,
 };
+use crate::drill_log;
 use crate::icons::{Icon, IconName};
 use crate::idb::{get_all_cards, get_due_cards, get_staging_cards, promote_card, put_card};
 use crate::settings::load as load_settings;
@@ -701,7 +701,11 @@ fn WordRow(
         Some(e) => {
             let head = preferred_headword(e).to_string();
             let reading = primary_reading(e).to_string();
-            let reading = if reading == head { String::new() } else { reading };
+            let reading = if reading == head {
+                String::new()
+            } else {
+                reading
+            };
             (head, reading, short_gloss(e))
         }
         None => (format!("(seq {sequence})"), String::new(), String::new()),

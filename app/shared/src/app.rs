@@ -141,7 +141,11 @@ fn Shell() -> Element {
     } else {
         "Switch to light theme"
     };
-    let toggle_icon = if is_light { IconName::Sun } else { IconName::Moon };
+    let toggle_icon = if is_light {
+        IconName::Sun
+    } else {
+        IconName::Moon
+    };
 
     rsx! {
         div { class: "app-shell",

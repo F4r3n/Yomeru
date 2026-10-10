@@ -402,7 +402,10 @@ fn find_in_text_skips_known_word_inside_unknown_word() {
     // must step over 日本 as a unit rather than re-matching from its interior.
     ensure_test_dict();
     assert!(crate::find_in_text("日本で", &known(&["本"])).is_empty());
-    assert_eq!(crate::find_in_text("日本の本", &known(&["本"])), vec![[3, 1]]);
+    assert_eq!(
+        crate::find_in_text("日本の本", &known(&["本"])),
+        vec![[3, 1]]
+    );
 }
 
 #[test]

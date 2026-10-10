@@ -387,10 +387,9 @@ mod tests {
         use serde_json::Value;
 
         fn fixture(name: &str) -> Value {
-            let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../testdata/sync/").to_string()
-                + name;
-            let raw = std::fs::read_to_string(&path)
-                .unwrap_or_else(|e| panic!("read {path}: {e}"));
+            let path =
+                concat!(env!("CARGO_MANIFEST_DIR"), "/../../testdata/sync/").to_string() + name;
+            let raw = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path}: {e}"));
             serde_json::from_str(&raw).unwrap_or_else(|e| panic!("parse {path}: {e}"))
         }
 

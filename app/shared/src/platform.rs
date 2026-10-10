@@ -19,8 +19,8 @@ use kanjidic_types::KanjiEntry;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen_futures::spawn_local;
 
-use crate::sync::{SettingsPayload, SyncBody, SyncResponse};
 use crate::settings::{SETTINGS_KEY, SrsSettings, default_server_url};
+use crate::sync::{SettingsPayload, SyncBody, SyncResponse};
 use crate::types::SrsCard;
 use async_trait::async_trait;
 use dioxus::prelude::*;
