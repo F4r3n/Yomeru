@@ -76,6 +76,17 @@ describe("idb", () => {
       expect(due).toHaveLength(2);
       expect(due.map((c) => c.sequence)).toEqual(expect.arrayContaining([CAT, DOG]));
     });
+
+    it("puts studied cards before new ones, oldest-due first", async () => {
+      const now = Date.now();
+      await idb.putCard(makeCard({ sequence: CAT, due_ms: now - 3000, state: "new", status: "active" }));
+      await idb.putCard(makeCard({ sequence: DOG, due_ms: now - 1000, state: "review", status: "active" }));
+      await idb.putCard(makeCard({ sequence: BIRD, due_ms: now - 2000, state: "relearning", status: "active" }));
+
+      const due = await idb.getDueCards(now);
+
+      expect(due.map((c) => c.sequence)).toEqual([BIRD, DOG, CAT]);
+    });
   });
 
   describe("getStagingCards", () => {

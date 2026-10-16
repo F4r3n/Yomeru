@@ -1,7 +1,7 @@
 //! FSRS review glue. Wraps `srs_core::review_card` with the extension's
 //! `intervalScale` and `graduationIntervalDays` overlay so behavior matches.
 
-use srs_core::ReviewRating;
+use srs_core::{CardState, ReviewRating};
 
 use crate::settings::SrsSettings;
 use crate::types::{CardStatus, MS_PER_DAY, SrsCard};
@@ -18,6 +18,18 @@ pub enum ReviewOutcome {
 
 pub fn rating_from_u8(n: u8) -> ReviewRating {
     ReviewRating::from_u8(n)
+}
+
+/// Orders due cards for a session: cards already studied first, oldest-due
+/// first, then never-reviewed cards in `due_ms` order. A new card's `due_ms`
+/// is only when it was created, so a freshly built deck would otherwise look
+/// overdue and crowd out the reviews that actually came due.
+pub fn order_due(cards: &mut [SrsCard]) {
+    cards.sort_by(|a, b| {
+        (a.state == CardState::New)
+            .cmp(&(b.state == CardState::New))
+            .then_with(|| a.due_ms.total_cmp(&b.due_ms))
+    });
 }
 
 pub fn apply_review(
@@ -181,6 +193,27 @@ mod tests {
 
     fn fresh_card() -> SrsCard {
         SrsCard::new(1_000_001, CardDirection::Recall, 0.0)
+    }
+
+    fn due_card(sequence: u32, state: CardState, due_ms: f64) -> SrsCard {
+        let mut c = SrsCard::new(sequence, CardDirection::Recall, 0.0);
+        c.state = state;
+        c.due_ms = due_ms;
+        c
+    }
+
+    #[test]
+    fn order_due_puts_studied_cards_before_new_ones() {
+        let mut cards = vec![
+            due_card(1, CardState::New, 100.0),
+            due_card(2, CardState::Relearning, 500.0),
+            due_card(3, CardState::New, 50.0),
+            due_card(4, CardState::Review, 300.0),
+            due_card(5, CardState::Learning, 400.0),
+        ];
+        order_due(&mut cards);
+        let order: Vec<u32> = cards.iter().map(|c| c.sequence).collect();
+        assert_eq!(order, vec![4, 5, 2, 3, 1]);
     }
 
     /// Reviews `card` once and unwraps the `Rescheduled` outcome, panicking

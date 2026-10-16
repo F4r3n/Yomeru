@@ -229,7 +229,15 @@ export async function getDueCards(nowMs: number): Promise<SrsCard[]> {
           const all = req.result as SrsCard[];
           // Word cards only, like the app's `get_due_cards`: kanji cards are
           // reviewed in their own session.
-          resolve(all.filter((c) => c.status === "active" && c.direction !== "kanji"));
+          const due = all.filter((c) => c.status === "active" && c.direction !== "kanji");
+          // Studied cards first, oldest-due first, then never-reviewed ones,
+          // like the app's `order_due`: a new card's due_ms is only when it
+          // was added, so it would otherwise crowd out real reviews.
+          due.sort(
+            (a, b) =>
+              Number(a.state === "new") - Number(b.state === "new") || a.due_ms - b.due_ms,
+          );
+          resolve(due);
         };
         req.onerror = () => reject(req.error);
       }),
