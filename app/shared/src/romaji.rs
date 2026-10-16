@@ -3,13 +3,15 @@
 //! List). Mirrors `extension/src/options/romaji.ts`.
 
 pub fn is_romaji(s: &str) -> bool {
-    !s.is_empty() && s.chars().all(|c| c.is_ascii_alphabetic() || c == '-')
+    !s.is_empty()
+        && s.chars().any(|c| c.is_ascii_alphabetic())
+        && s.chars().all(|c| c.is_ascii_alphabetic() || matches!(c, '-' | '\'' | '’'))
 }
 
 /// True if a word (given its headword and reading) matches a user's search
 /// `query` — substring match against the headword, plus a substring match
 /// against the reading using the query as typed and, if it looks like
-/// romaji, its hiragana conversion. `query` must already be trimmed and
+/// romaji, its hiragana and katakana conversions. `query` must already be trimmed and
 /// lowercased by the caller (`headword`/`reading` are lowercased/compared
 /// here). An empty query always matches.
 pub fn matches_query(headword: &str, reading: &str, query: &str) -> bool {
@@ -19,7 +21,25 @@ pub fn matches_query(headword: &str, reading: &str, query: &str) -> bool {
     if headword.to_lowercase().contains(query) || reading.contains(query) {
         return true;
     }
-    is_romaji(query) && reading.contains(&romaji_to_hiragana(query))
+    if !is_romaji(query) {
+        return false;
+    }
+    let hiragana = romaji_to_hiragana(query);
+    reading.contains(&hiragana) || reading.contains(&hiragana_to_katakana(&hiragana))
+}
+
+/// Hiragana → katakana, with `-` as the long-vowel mark ー, so romaji can
+/// also match katakana words ("ko-hi-" → こ-ひ- → コーヒー). Other
+/// characters pass through.
+pub fn hiragana_to_katakana(input: &str) -> String {
+    input
+        .chars()
+        .map(|c| match c {
+            'ぁ'..='ゖ' => char::from_u32(c as u32 + 0x60).unwrap_or(c),
+            '-' => 'ー',
+            _ => c,
+        })
+        .collect()
 }
 
 /// Hepburn romaji → hiragana. Mirrors `extension/src/options/romaji.ts`.
@@ -43,6 +63,24 @@ pub fn romaji_to_hiragana(input: &str) -> String {
         }
 
         // 2. Handle standalone 'n' (ん)
+        // "n'" is an explicit ん, so "nan'yo" → なんよ while "nanyo" → なにょ.
+        if let Some(rest) = remainder
+            .strip_prefix("n'")
+            .or_else(|| remainder.strip_prefix("n’"))
+        {
+            out.push('ん');
+            remainder = rest;
+            continue;
+        }
+        // IME-style "nn" at the end or before a consonant is a single ん
+        // ("honn" → ほん). Before a vowel or y it stays ん + n… ("konnichiwa").
+        if let Some(rest) = remainder.strip_prefix("nn")
+            && !matches!(rest.chars().next(), Some('a' | 'e' | 'i' | 'o' | 'u' | 'y'))
+        {
+            out.push('ん');
+            remainder = rest;
+            continue;
+        }
         if remainder.starts_with('n') {
             let next_char = remainder.chars().nth(1);
             if next_char.is_none() || !matches!(next_char, Some('a' | 'e' | 'i' | 'o' | 'u' | 'y'))
@@ -130,6 +168,28 @@ fn lookup_romaji(c: &str) -> Option<&'static str> {
         "pya" => "ぴゃ",
         "pyu" => "ぴゅ",
         "pyo" => "ぴょ",
+        // づ/ぢ and Kunrei/IME-style spellings (e.g. "tsudukeru" → つづける).
+        "dzu" => "づ",
+        "dji" => "ぢ",
+        "dya" => "ぢゃ",
+        "dyu" => "ぢゅ",
+        "dyo" => "ぢょ",
+        "sya" => "しゃ",
+        "syu" => "しゅ",
+        "syo" => "しょ",
+        "tya" => "ちゃ",
+        "tyu" => "ちゅ",
+        "tyo" => "ちょ",
+        "zya" => "じゃ",
+        "zyu" => "じゅ",
+        "zyo" => "じょ",
+        "du" => "づ",
+        "di" => "ぢ",
+        "tu" => "つ",
+        "ti" => "ち",
+        "si" => "し",
+        "zi" => "じ",
+        "hu" => "ふ",
         "ka" => "か",
         "ki" => "き",
         "ku" => "く",
@@ -292,6 +352,46 @@ mod tests {
     }
 
     #[test]
+    fn du_and_di_map_to_dakuten_tsu_and_chi() {
+        assert_eq!(romaji_to_hiragana("tsudukeru"), "つづける");
+        assert_eq!(romaji_to_hiragana("tsudzukeru"), "つづける");
+        assert_eq!(romaji_to_hiragana("hanadi"), "はなぢ");
+    }
+
+    #[test]
+    fn kunrei_spellings_map() {
+        assert_eq!(romaji_to_hiragana("tukeru"), "つける");
+        assert_eq!(romaji_to_hiragana("sinbun"), "しんぶん");
+        assert_eq!(romaji_to_hiragana("huji"), "ふじ");
+        assert_eq!(romaji_to_hiragana("tyotto"), "ちょっと");
+    }
+
+    #[test]
+    fn apostrophe_forces_standalone_n() {
+        assert_eq!(romaji_to_hiragana("nanyo"), "なにょ");
+        assert_eq!(romaji_to_hiragana("nan'yo"), "なんよ");
+        assert_eq!(romaji_to_hiragana("nan’yo"), "なんよ");
+        assert_eq!(romaji_to_hiragana("kin'en"), "きんえん");
+        assert!(is_romaji("nan'yo"));
+        assert!(!is_romaji("'"));
+    }
+
+    #[test]
+    fn double_n_before_consonant_or_end_is_single_n() {
+        assert_eq!(romaji_to_hiragana("honn"), "ほん");
+        assert_eq!(romaji_to_hiragana("sannpo"), "さんぽ");
+        assert_eq!(romaji_to_hiragana("konnichiwa"), "こんにちわ");
+    }
+
+    #[test]
+    fn hiragana_to_katakana_converts_kana_and_long_vowel() {
+        assert_eq!(hiragana_to_katakana("ねこ"), "ネコ");
+        assert_eq!(hiragana_to_katakana("ちょっと"), "チョット");
+        assert_eq!(hiragana_to_katakana(&romaji_to_hiragana("ko-hi-")), "コーヒー");
+        assert_eq!(hiragana_to_katakana("猫ab"), "猫ab");
+    }
+
+    #[test]
     fn input_is_lowercased() {
         assert_eq!(romaji_to_hiragana("Ka"), "か");
         assert_eq!(romaji_to_hiragana("KONNICHIWA"), "こんにちわ");
@@ -314,6 +414,13 @@ mod tests {
     fn matches_query_romaji_matches_via_reading() {
         assert!(matches_query("猫", "ねこ", "neko"));
         assert!(!matches_query("猫", "ねこ", "inu"));
+    }
+
+    #[test]
+    fn matches_query_romaji_matches_katakana_reading() {
+        assert!(matches_query("パン", "パン", "pan"));
+        assert!(matches_query("コーヒー", "コーヒー", "ko-hi-"));
+        assert!(!matches_query("パン", "パン", "inu"));
     }
 
     #[test]

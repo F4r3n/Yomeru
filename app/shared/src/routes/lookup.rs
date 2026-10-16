@@ -10,7 +10,7 @@ use crate::components::EntryCard;
 use crate::dict::{self, examples_for, kanji_for, primary_headword};
 use crate::icons::{Icon, IconName};
 use crate::idb::{bump_priority, get_cards_by_sequence, put_cards, reset_card};
-use crate::romaji::{is_romaji, romaji_to_hiragana};
+use crate::romaji::{hiragana_to_katakana, is_romaji, romaji_to_hiragana};
 use crate::srs::now_ms;
 use crate::sync::schedule_sync;
 use crate::types::{CardDirection, CardStatus, SrsCard};
@@ -37,6 +37,17 @@ struct LookupShared {
 
 fn load_history() -> Vec<String> {
     LocalStorage::get::<Vec<String>>(HISTORY_KEY).unwrap_or_default()
+}
+
+/// Flattens per-spelling result lists, keeping the first occurrence of each
+/// JMdict entry.
+fn dedup_by_sequence(lists: Vec<Vec<WordEntry>>) -> Vec<WordEntry> {
+    let mut seen = HashSet::new();
+    lists
+        .into_iter()
+        .flatten()
+        .filter(|e| seen.insert(e.sequence))
+        .collect()
 }
 
 fn push_history(mut h: Vec<String>, term: &str) -> Vec<String> {
@@ -218,25 +229,48 @@ fn LookupListPane() -> Element {
             searched.set(false);
             return;
         }
+        // Romaji is searched as both hiragana and katakana, hiragana hits first.
         let target = if is_romaji(q) {
             romaji_to_hiragana(q)
         } else {
             q.to_string()
         };
         last_target.set(target.clone());
+        let katakana = is_romaji(q)
+            .then(|| hiragana_to_katakana(&target))
+            .filter(|k| *k != target);
+        let targets: Vec<String> = std::iter::once(target).chain(katakana).collect();
         searching.set(true);
         let nav = nav;
         spawn(async move {
-            let mut results = dict::lookup(&target).await.unwrap_or_else(|e| {
+            let per_target = dict::lookup_many(&targets).await.unwrap_or_else(|e| {
                 load_err.set(Some(e));
                 Vec::new()
             });
+            // History and "Reading as" use the first spelling that actually matched.
+            let mut matched = targets
+                .iter()
+                .zip(&per_target)
+                .find(|(_, r)| !r.is_empty())
+                .map(|(t, _)| t.clone());
+            let mut results = dedup_by_sequence(per_target);
             if results.is_empty() {
-                results = dict::lookup_prefix(&target, 30).await.unwrap_or_default();
+                let mut prefix_hits = Vec::new();
+                for t in &targets {
+                    let r = dict::lookup_prefix(t, 30).await.unwrap_or_default();
+                    if matched.is_none() && !r.is_empty() {
+                        matched = Some(t.clone());
+                    }
+                    prefix_hits.push(r);
+                }
+                results = dedup_by_sequence(prefix_hits);
+                results.truncate(30);
             }
-            if !results.is_empty() {
-                let next = push_history(history.read().clone(), &target);
+            if let Some(t) = matched {
+                let next = push_history(history.read().clone(), &t);
                 history.set(next);
+                // "Reading as" shows the spelling that matched (パン for "pan").
+                last_target.set(t);
             }
             let mut statuses: HashMap<u32, CardStatus> = HashMap::new();
             let mut priorities: HashMap<u32, u32> = HashMap::new();
