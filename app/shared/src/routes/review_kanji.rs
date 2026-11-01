@@ -8,23 +8,42 @@ use dioxus::prelude::*;
 use kanjidic_types::KanjiEntry;
 
 use crate::dict::kanji_for;
+use crate::drill_log::{self, Deck};
 use crate::icons::{Icon, IconName};
 use crate::idb::{get_all_cards, get_due_kanji_cards, put_card};
 use crate::kanji_deck::{StudiedWord, ensure_kanji_cards};
 use crate::settings::load as load_settings;
-use crate::srs::{ReviewOutcome, apply_review, now_ms, rating_from_u8};
+use crate::srs::{
+    DRILL_BATCH, ReviewOutcome, TROUBLE_EXIT_INTERVAL_DAYS, TROUBLE_MIN_FAILS, TroubleWord,
+    apply_review, now_ms, pick_drill_batch, rating_from_u8, trouble_kanji,
+};
 use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::SrsCard;
 
-use super::review::next_due_message;
-use super::review_common::{RateButtons, ShowAnswerButton, use_review_shortcuts};
+use super::review::{next_due_message, shuffle};
+use super::review_common::{RateButtons, ShowAnswerButton, rating_label, use_review_shortcuts};
 
-/// Whether there are any kanji cards at all, and "Next card due in …" across
-/// them if anything is scheduled.
-async fn kanji_deck_state() -> (bool, Option<String>) {
-    let mut all = get_all_cards().await.unwrap_or_default();
-    all.retain(SrsCard::is_kanji);
-    (!all.is_empty(), next_due_message(&all, now_ms()))
+/// One answered kanji card, kept for the end-of-session recap.
+#[derive(Clone, PartialEq)]
+struct KanjiResult {
+    id: String,
+    kanji: char,
+    entry: Option<KanjiEntry>,
+    rating: u8,
+}
+
+/// Dictionary entries for `kanji`, keyed by literal. Missing ones are absent.
+async fn kanji_entries(kanji: impl Iterator<Item = char>) -> HashMap<char, KanjiEntry> {
+    let text: String = kanji.collect();
+    if text.is_empty() {
+        return HashMap::new();
+    }
+    kanji_for(&text)
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .map(|k| (k.literal, k))
+        .collect()
 }
 
 #[component]
@@ -41,8 +60,14 @@ pub(crate) fn KanjiReview() -> Element {
     // Kanji cards outlive their words, so the deck can hold cards even when no
     // current word has kanji.
     let mut has_deck = use_signal(|| false);
-    let mut remembered = use_signal(|| 0usize);
-    let mut forgot = use_signal(|| 0usize);
+    let mut trouble = use_signal(Vec::<(TroubleWord, Option<KanjiEntry>)>::new);
+    // Drill sessions replay trouble kanji without touching their schedule:
+    // ratings feed the recap and nothing else.
+    let mut drill = use_signal(|| false);
+    // Per-device drill counts, which rotate the batch a drill picks.
+    let mut drilled = use_signal(HashMap::<u32, u32>::new);
+    let mut show_all_trouble = use_signal(|| false);
+    let mut results = use_signal(Vec::<KanjiResult>::new);
     // Same guard as word review: the card only advances once its write lands,
     // so a second press in that window must not rate it again.
     let mut rating_in_flight = use_signal(|| false);
@@ -70,11 +95,25 @@ pub(crate) fn KanjiReview() -> Element {
             idx.set(0);
             show_back.set(false);
             started.set(false);
-            remembered.set(0);
-            forgot.set(0);
-            let (any, next) = kanji_deck_state().await;
-            has_deck.set(any);
-            next_due.set(next);
+            drill.set(false);
+            results.set(vec![]);
+            let mut all = get_all_cards().await.unwrap_or_default();
+            all.retain(SrsCard::is_kanji);
+            has_deck.set(!all.is_empty());
+            next_due.set(next_due_message(&all, now_ms()));
+            let list = trouble_kanji(&all, TROUBLE_MIN_FAILS, TROUBLE_EXIT_INTERVAL_DAYS);
+            let mut entries =
+                kanji_entries(list.iter().filter_map(|t| t.cards.first()?.kanji_char())).await;
+            trouble.set(
+                list.into_iter()
+                    .map(|t| {
+                        let e = t.cards.first().and_then(SrsCard::kanji_char);
+                        let e = e.and_then(|k| entries.remove(&k));
+                        (t, e)
+                    })
+                    .collect(),
+            );
+            drilled.set(drill_log::load(Deck::Kanji));
             loaded.set(true);
         });
     };
@@ -85,6 +124,20 @@ pub(crate) fn KanjiReview() -> Element {
             load_session();
         }
     });
+
+    let start_drill = move |_| {
+        let list: Vec<TroubleWord> = trouble.read().iter().map(|(t, _)| t.clone()).collect();
+        let cards: Vec<SrsCard> = pick_drill_batch(&list, &drilled.read(), DRILL_BATCH)
+            .into_iter()
+            .flat_map(|t| t.cards.iter().cloned())
+            .collect();
+        due.set(shuffle(cards));
+        idx.set(0);
+        show_back.set(false);
+        results.set(vec![]);
+        drill.set(true);
+        started.set(true);
+    };
 
     // Dictionary details for the card on screen, fetched as soon as it shows
     // so the back is ready when revealed.
@@ -106,10 +159,24 @@ pub(crate) fn KanjiReview() -> Element {
         let Some(card) = due.peek().get(*idx.peek()).cloned() else {
             return;
         };
-        if r == 1 {
-            forgot += 1;
-        } else {
-            remembered += 1;
+        let Some(kanji) = card.kanji_char() else {
+            return;
+        };
+        let entry = info.peek().clone().flatten().filter(|k| k.literal == kanji);
+        results.with_mut(|v| {
+            v.push(KanjiResult {
+                id: card.id.clone(),
+                kanji,
+                entry,
+                rating: r,
+            })
+        });
+        if *drill.peek() {
+            // One card per kanji, so each answer is that kanji's one drill.
+            drill_log::record(Deck::Kanji, card.sequence);
+            idx += 1;
+            show_back.set(false);
+            return;
         }
         rating_in_flight.set(true);
         spawn(async move {
@@ -124,7 +191,9 @@ pub(crate) fn KanjiReview() -> Element {
             show_back.set(false);
             rating_in_flight.set(false);
             if *idx.peek() >= due.peek().len() {
-                next_due.set(kanji_deck_state().await.1);
+                let mut all = get_all_cards().await.unwrap_or_default();
+                all.retain(SrsCard::is_kanji);
+                next_due.set(next_due_message(&all, now_ms()));
             }
         });
     };
@@ -179,19 +248,59 @@ pub(crate) fn KanjiReview() -> Element {
                     }
                 }
             }
+            if !trouble.read().is_empty() {
+                TroubleKanji {
+                    rows: trouble
+                        .read()
+                        .iter()
+                        .filter_map(|(t, e)| {
+                            let kanji = t.cards.first()?.kanji_char()?;
+                            let n = drilled.read().get(&t.sequence).copied().unwrap_or(0);
+                            Some(TroubleRow { kanji, entry: e.clone(), fails: t.fails, drilled: n })
+                        })
+                        .collect::<Vec<_>>(),
+                    show_all: *show_all_trouble.read(),
+                    on_toggle_all: move |_| show_all_trouble.toggle(),
+                    on_drill: start_drill,
+                }
+            }
         };
     }
 
     let Some(kanji) = cards.get(i).and_then(SrsCard::kanji_char) else {
-        let (ok, ko) = (*remembered.read(), *forgot.read());
+        let (forgot, remembered): (Vec<KanjiResult>, Vec<KanjiResult>) =
+            results.read().iter().cloned().partition(|r| r.rating == 1);
+        let headline = if *drill.read() {
+            "Drill complete!"
+        } else {
+            "Review complete!"
+        };
         return rsx! {
             div { class: "empty-state",
                 div { class: "glyph", Icon { name: IconName::CircleCheck, size: 44 } }
-                div { class: "headline", "Review complete!" }
+                div { class: "headline", "{headline}" }
                 div { class: "helper",
-                    "{ok} remembered · {ko} forgot"
+                    "{remembered.len()} remembered · {forgot.len()} forgot"
                     if let Some(m) = next_due.read().clone() { " · {m}" }
                 }
+            }
+            if !forgot.is_empty() || !remembered.is_empty() {
+                div { class: "recap-grid",
+                    KanjiRecapList {
+                        title: format!("Forgot · {}", forgot.len()),
+                        title_class: "section-title error",
+                        empty: "Nothing forgotten — clean session.",
+                        results: forgot,
+                    }
+                    KanjiRecapList {
+                        title: format!("Remembered · {}", remembered.len()),
+                        title_class: "section-title ok",
+                        empty: "Nothing remembered this time.",
+                        results: remembered,
+                    }
+                }
+            }
+            div { style: "text-align: center; margin-top: 16px;",
                 button { class: "primary", onclick: move |_| load_session(), "Done" }
             }
         };
@@ -199,6 +308,7 @@ pub(crate) fn KanjiReview() -> Element {
 
     let show_back_v = *show_back.read();
     let in_flight = *rating_in_flight.read();
+    let is_drill = *drill.read();
     let used_in = words.read().get(&kanji).cloned().unwrap_or_default();
     // The resource keeps its last value until the new lookup lands, so right
     // after a rating it can still hold the previous kanji's entry.
@@ -213,6 +323,9 @@ pub(crate) fn KanjiReview() -> Element {
                         if let Some(k) = &entry {
                             span { class: "muted kanji-facts", "{kanji_facts(k)}" }
                         }
+                    }
+                    if is_drill {
+                        span { class: "badge fail", "Drill" }
                     }
                     span { class: "badge", "Kanji" }
                 }
@@ -230,6 +343,156 @@ pub(crate) fn KanjiReview() -> Element {
                     RateButtons { disabled: in_flight, on_rate: rate }
                 }
             }
+        }
+    }
+}
+
+/// One line of the trouble-kanji list.
+#[derive(Clone, PartialEq)]
+struct TroubleRow {
+    kanji: char,
+    entry: Option<KanjiEntry>,
+    fails: u32,
+    /// Drill sessions this kanji was in, on this device.
+    drilled: u32,
+}
+
+/// The trouble-kanji card under the start screen: the kanji the user keeps
+/// failing, and the button that drills the next batch of them.
+#[component]
+fn TroubleKanji(
+    rows: Vec<TroubleRow>,
+    show_all: bool,
+    on_toggle_all: EventHandler<()>,
+    on_drill: EventHandler<()>,
+) -> Element {
+    let total = rows.len();
+    let drill_label = if total > DRILL_BATCH {
+        format!("Drill next {DRILL_BATCH}")
+    } else {
+        "Drill these".to_string()
+    };
+    let shown = if show_all {
+        total
+    } else {
+        total.min(DRILL_BATCH)
+    };
+    rsx! {
+        div { class: "card", style: "margin-top: 16px;",
+            div { class: "row", style: "justify-content: space-between; margin-bottom: 8px;",
+                div { class: "section-title", style: "margin-bottom: 0;", "Trouble kanji · {total}" }
+                button { class: "outline", onclick: move |_| on_drill.call(()),
+                    Icon { name: IconName::Play, size: 14 }
+                    "{drill_label}"
+                }
+            }
+            details { class: "info",
+                summary { Icon { name: IconName::Info, size: 13 } "How this works" }
+                ul {
+                    li { "Kanji you keep failing." }
+                    li { "A kanji leaves once a real review schedules it a month or more out." }
+                    li { "Drills take {DRILL_BATCH} kanji at a time, least-drilled first." }
+                    li { "Drilling never changes a kanji's schedule." }
+                }
+            }
+            div { class: "word-rows",
+                for r in rows.into_iter().take(shown) {
+                    KanjiRow {
+                        key: "{r.kanji}",
+                        kanji: r.kanji,
+                        entry: r.entry,
+                        note: (r.drilled > 0).then(|| format!("drilled {}×", r.drilled)),
+                        badge: format!("failed {}×", r.fails),
+                        badge_class: "badge fail",
+                    }
+                }
+            }
+            if total > DRILL_BATCH {
+                div { style: "text-align: center; margin-top: 8px;",
+                    button { class: "link",
+                        onclick: move |_| on_toggle_all.call(()),
+                        if show_all { "Show less" } else { "Show all ({total})" }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[component]
+fn KanjiRecapList(
+    title: String,
+    title_class: &'static str,
+    empty: &'static str,
+    results: Vec<KanjiResult>,
+) -> Element {
+    rsx! {
+        div { class: "card",
+            div { class: "{title_class}", "{title}" }
+            if results.is_empty() {
+                div { class: "muted", style: "font-size: 13px;", "{empty}" }
+            } else {
+                div { class: "word-rows",
+                    for r in results {
+                        {
+                            let badge_class = if r.rating == 1 { "badge fail" } else { "badge" };
+                            rsx! {
+                                KanjiRow {
+                                    key: "{r.id}",
+                                    kanji: r.kanji,
+                                    entry: r.entry,
+                                    badge: rating_label(r.rating).to_string(),
+                                    badge_class,
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// One-line kanji summary in the same shape as a word row: the kanji, its
+/// first readings, and its first meanings.
+#[component]
+fn KanjiRow(
+    kanji: char,
+    entry: Option<KanjiEntry>,
+    /// Small muted text before the badge, e.g. "drilled 2×".
+    note: Option<String>,
+    badge: String,
+    badge_class: &'static str,
+) -> Element {
+    let (reading, gloss) = match &entry {
+        Some(k) => (
+            k.on_readings
+                .iter()
+                .chain(&k.kun_readings)
+                .take(2)
+                .cloned()
+                .collect::<Vec<_>>()
+                .join("、"),
+            k.meanings
+                .iter()
+                .take(3)
+                .cloned()
+                .collect::<Vec<_>>()
+                .join(", "),
+        ),
+        None => (String::new(), String::new()),
+    };
+    rsx! {
+        div { class: "word-row",
+            span { class: "w", "{kanji}" }
+            if !reading.is_empty() {
+                span { class: "r", "{reading}" }
+            }
+            span { class: "g", title: "{gloss}", "{gloss}" }
+            if let Some(n) = note {
+                span { class: "n", "{n}" }
+            }
+            span { class: "{badge_class}", "{badge}" }
         }
     }
 }

@@ -124,18 +124,42 @@ fn is_struggling(c: &SrsCard, exit_interval_days: f64) -> bool {
 
 /// Rank words by how often their struggling cards have been failed,
 /// most-failed first. Ties go to the higher FSRS difficulty, then to the
-/// lower sequence so the order is stable across reloads.
+/// lower sequence so the order is stable across reloads. Kanji cards are
+/// left out; see [`trouble_kanji`].
 pub fn trouble_words(
     cards: &[SrsCard],
     min_fails: u32,
     exit_interval_days: f64,
 ) -> Vec<TroubleWord> {
+    rank_trouble(
+        cards.iter().filter(|c| !c.is_kanji()),
+        min_fails,
+        exit_interval_days,
+    )
+}
+
+/// [`trouble_words`] for the kanji deck: same ranking, kanji cards only. A
+/// kanji card's sequence is its codepoint, so each entry is one kanji.
+pub fn trouble_kanji(
+    cards: &[SrsCard],
+    min_fails: u32,
+    exit_interval_days: f64,
+) -> Vec<TroubleWord> {
+    rank_trouble(
+        cards.iter().filter(|c| c.is_kanji()),
+        min_fails,
+        exit_interval_days,
+    )
+}
+
+fn rank_trouble<'a>(
+    cards: impl Iterator<Item = &'a SrsCard>,
+    min_fails: u32,
+    exit_interval_days: f64,
+) -> Vec<TroubleWord> {
     let mut by_seq: std::collections::BTreeMap<u32, (u32, f64, Vec<SrsCard>)> =
         std::collections::BTreeMap::new();
-    for c in cards
-        .iter()
-        .filter(|c| !c.is_kanji() && is_struggling(c, exit_interval_days))
-    {
+    for c in cards.filter(|c| is_struggling(c, exit_interval_days)) {
         let e = by_seq.entry(c.sequence).or_insert((0, 0.0, Vec::new()));
         e.0 += c.again_count;
         e.1 = e.1.max(c.difficulty);
@@ -389,10 +413,25 @@ mod tests {
     }
 
     #[test]
-    fn trouble_words_leave_out_kanji_cards() {
-        // Drills replay words; a struggling kanji has no word entry to show.
-        let t = trouble(&[active(u32::from('猫'), CardDirection::Kanji, 5, 5.0)]);
-        assert!(t.is_empty());
+    fn trouble_lists_keep_words_and_kanji_apart() {
+        let cards = [
+            active(1, CardDirection::Recall, 5, 5.0),
+            active(u32::from('猫'), CardDirection::Kanji, 5, 5.0),
+        ];
+        assert_eq!(seqs(&trouble(&cards)), vec![1]);
+        let kanji = trouble_kanji(&cards, 2, TROUBLE_EXIT_INTERVAL_DAYS);
+        assert_eq!(seqs(&kanji), vec![u32::from('猫')]);
+    }
+
+    #[test]
+    fn trouble_kanji_rank_most_failed_first() {
+        let cards = [
+            active(u32::from('犬'), CardDirection::Kanji, 2, 5.0),
+            active(u32::from('猫'), CardDirection::Kanji, 4, 5.0),
+            active(u32::from('鳥'), CardDirection::Kanji, 1, 5.0),
+        ];
+        let t = trouble_kanji(&cards, 2, TROUBLE_EXIT_INTERVAL_DAYS);
+        assert_eq!(seqs(&t), vec![u32::from('猫'), u32::from('犬')]);
     }
 
     #[test]

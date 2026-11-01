@@ -42,7 +42,7 @@ struct SessionResult {
 
 /// First two senses' glosses, flattened — enough to jog the memory in a
 /// one-line row without crowding it.
-fn shuffle<T>(mut v: Vec<T>) -> Vec<T> {
+pub(crate) fn shuffle<T>(mut v: Vec<T>) -> Vec<T> {
     // Fisher-Yates with Math.random() — good enough for review-order randomness.
     for i in (1..v.len()).rev() {
         let r = (js_sys::Math::random() * (i as f64 + 1.0)) as usize;
@@ -204,7 +204,7 @@ fn WordReview() -> Element {
             results.set(vec![]);
             let all = get_all_cards().await.unwrap_or_default();
             let words = trouble_words(&all, TROUBLE_MIN_FAILS, TROUBLE_EXIT_INTERVAL_DAYS);
-            drilled.set(drill_log::load());
+            drilled.set(drill_log::load(drill_log::Deck::Words));
             let seqs: Vec<u32> = words.iter().map(|w| w.sequence).collect();
             let hits = if seqs.is_empty() {
                 vec![]
@@ -324,7 +324,7 @@ fn WordReview() -> Element {
         // Count the word once per drill session, on its first answered card,
         // so walking away mid-drill still credits what was practised.
         if *drill.peek() && !results.peek().iter().any(|r| r.sequence == card.sequence) {
-            drill_log::record(card.sequence);
+            drill_log::record(drill_log::Deck::Words, card.sequence);
         }
         if let Some(entry) = entry_for_label.clone() {
             results.with_mut(|v| {
