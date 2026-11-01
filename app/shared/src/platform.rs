@@ -291,8 +291,8 @@ fn join_url(base: &str, path: &str) -> String {
 
 async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     use crate::idb::{
-        apply_remote_deletions, clear_tombstones, get_all_cards, get_all_tombstones, get_outbox,
-        settle_outbox,
+        apply_remote_deletions, clear_dirty, clear_tombstones, get_all_cards, get_all_tombstones,
+        get_cards_by_ids, get_dirty, get_outbox, get_sync_cursor, set_sync_cursor, settle_outbox,
     };
 
     let s: SrsSettings = LocalStorage::get(SETTINGS_KEY).unwrap_or_default();
@@ -303,9 +303,23 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     // the timestamp would be missing from the payload yet still look like the
     // server had ruled on it, and a returned tombstone would delete it.
     let uploaded_at = js_sys::Date::now();
-    let local_cards = get_all_cards()
+    let cursor = get_sync_cursor()
         .await
-        .map_err(|e| format!("read cards: {e}"))?;
+        .map_err(|e| format!("read sync cursor: {e}"))?;
+    // Read before the cards, so a card changed after this snapshot either
+    // misses the upload *and* stays dirty, or is in both.
+    let dirty = get_dirty()
+        .await
+        .map_err(|e| format!("read dirty set: {e}"))?;
+    // With a cursor, only what changed since goes up. Without one (first sync,
+    // new account, wiped database) the whole deck does.
+    let local_cards = if cursor.is_some() {
+        let ids: Vec<String> = dirty.iter().map(|d| d.id.clone()).collect();
+        get_cards_by_ids(&ids).await
+    } else {
+        get_all_cards().await
+    }
+    .map_err(|e| format!("read cards: {e}"))?;
     let local_tombstones = get_all_tombstones()
         .await
         .map_err(|e| format!("read tombstones: {e}"))?;
@@ -328,6 +342,7 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
             deletions: &local_tombstones,
             settings: SettingsPayload::from_settings(&s),
             reviews: &outbox,
+            since: cursor.as_ref(),
         })
         .map_err(|e| e.to_string())?
         .send()
@@ -342,7 +357,7 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     let resp: SyncResponse = res.json().await.map_err(|e| e.to_string())?;
 
     if !resp.cards.is_empty() {
-        merge_remote_cards(&resp.cards).await?;
+        merge_remote_cards(&resp.cards, &local_cards).await?;
     }
     // Re-read the local cards: one added while the sync was in flight must be
     // visible here or the deletion filter can't tell it from a stale copy.
@@ -364,11 +379,32 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     // The server has stored the outbox and counted it, so the cached counts
     // replace the sent rows rather than add to them. A server without the
     // review log sends no counts and kept nothing: hold the rows until it does.
+    // A delta carries only the counts that changed, merged over the cache; a
+    // full answer is the complete set and replaces it.
     if let Some(counts) = &resp.drill_counts {
-        settle_outbox(&outbox, counts)
+        settle_outbox(&outbox, counts, resp.full)
             .await
             .map_err(|e| format!("settle review outbox: {e}"))?;
         settled = true;
+    }
+    clear_dirty(&dirty)
+        .await
+        .map_err(|e| format!("clear dirty set: {e}"))?;
+    // Last: if anything above failed, the old cursor stays and the next sync
+    // asks for these rows again, which merging makes harmless. A server that
+    // predates delta sync sends none, and the next sync uploads everything.
+    //
+    // A full answer to a request that carried a cursor means the server
+    // couldn't serve a delta from it: its database was restored or reset, or
+    // the cursor belongs to another account. Either way it may lack cards that
+    // only this device holds, and this request sent only the dirty ones. So
+    // keep no cursor and sync again at once, uploading the whole deck.
+    let refused = cursor.is_some() && resp.full;
+    set_sync_cursor(if refused { None } else { resp.cursor.as_ref() })
+        .await
+        .map_err(|e| format!("store sync cursor: {e}"))?;
+    if refused {
+        state.borrow_mut().retry = true;
     }
 
     // Adopt server-side settings if they're newer. Re-read from localStorage
@@ -392,11 +428,7 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     if settled && backlog {
         state.borrow_mut().retry = true;
     }
-    Ok(format!(
-        "Synced {} card{}.",
-        resp.cards.len(),
-        if resp.cards.len() == 1 { "" } else { "s" }
-    ))
+    Ok(crate::sync::sync_summary(local_cards.len(), resp.cards.len()))
 }
 
 /// Mirrors the server-side `updated_ms` last-write-wins rule on the client:
@@ -406,12 +438,12 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
 /// Writes through `put_cards_synced` so the adopted cards keep the version they
 /// arrived with — stamping them here would mark every synced card as locally
 /// modified and bounce it straight back at the server.
-async fn merge_remote_cards(remote: &[SrsCard]) -> Result<(), String> {
+async fn merge_remote_cards(remote: &[SrsCard], uploaded: &[SrsCard]) -> Result<(), String> {
     use crate::idb::{get_all_cards, put_cards_synced};
     let local = get_all_cards()
         .await
         .map_err(|e| format!("read cards for merge: {e}"))?;
-    let to_put = crate::sync::cards_to_apply(remote, &local);
+    let to_put = crate::sync::cards_to_apply(remote, &local, uploaded);
     put_cards_synced(&to_put)
         .await
         .map_err(|e| format!("put cards: {e}"))

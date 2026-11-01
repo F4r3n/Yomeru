@@ -37,6 +37,11 @@ pub struct SyncBody {
     /// older clients, which keep no log, still sync.
     #[serde(default)]
     pub reviews: Vec<db::ReviewLog>,
+    /// The cursor from the client's last successful sync. When present and
+    /// still usable, the response is a delta from it. Absent from clients
+    /// that predate delta sync, and from any client on its first sync.
+    #[serde(default)]
+    pub since: Option<db::Cursor>,
 }
 
 #[derive(Serialize)]
@@ -53,6 +58,15 @@ pub struct SyncResponse {
     /// Drill answers per card id across the user's whole log, after this
     /// request's rows were added. Older clients ignore it.
     pub drill_counts: HashMap<String, u32>,
+    /// Hand this back as `since` next time.
+    pub cursor: db::Cursor,
+    /// `true`: `cards`, `deletions` and `drill_counts` are the user's complete
+    /// state, as before delta sync. A client that sent `since` and gets `true`
+    /// must re-sync with its whole deck: the server couldn't vouch for what it
+    /// already holds, and may have lost rows only that client still has. `false`: they hold only what changed after
+    /// the client's cursor plus the server's copy of every id it sent, and
+    /// the client merges `drill_counts` into its cache instead of replacing it.
+    pub full: bool,
 }
 
 pub async fn sync_handler(
@@ -108,16 +122,21 @@ pub async fn sync_handler(
         .await
         .map_err(|e| db_err("begin sync tx", e.into()))?;
 
+    // First, so the transaction holds the write lock from its first statement.
+    let clock = db::next_rev_tx(&mut tx)
+        .await
+        .map_err(|e| db_err("next_rev", e))?;
+
     let incoming: Vec<db::Deletion> = body.deletions.iter().map(|d| d.to_deletion(now)).collect();
-    db::apply_deletions_tx(&mut tx, &email, &incoming)
+    db::apply_deletions_tx(&mut tx, &email, &incoming, clock.rev)
         .await
         .map_err(|e| db_err("apply_deletions", e))?;
 
-    db::upsert_cards_tx(&mut tx, &email, &body.cards, now)
+    db::upsert_cards_tx(&mut tx, &email, &body.cards, now, clock.rev)
         .await
         .map_err(|e| db_err("upsert_cards", e))?;
 
-    db::insert_reviews_tx(&mut tx, user_id, &body.reviews)
+    db::insert_reviews_tx(&mut tx, user_id, &body.reviews, clock.rev)
         .await
         .map_err(|e| db_err("insert_reviews", e))?;
 
@@ -127,31 +146,64 @@ pub async fn sync_handler(
             .map_err(|e| db_err("upsert_settings", e))?;
     }
 
-    let merged = db::get_all_cards(&mut *tx, &email)
-        .await
-        .map_err(|e| db_err("get_all_cards", e))?;
+    let delta_from = body
+        .since
+        .as_ref()
+        .filter(|c| clock.can_serve_delta(c, user_id))
+        .map(|c| c.rev);
 
-    let tombstones = db::get_all_deletions(&mut *tx, &email)
-        .await
-        .map_err(|e| db_err("get_all_deletions", e))?;
+    let (cards, deletions, drill_counts) = if let Some(since) = delta_from {
+        // Every id the client sent, card or tombstone: whichever the server
+        // now holds for it goes back, so the client learns how its upload was
+        // ruled on even when the ruling kept an older row. See
+        // `db::get_cards_since`.
+        let sent: Vec<&str> = body
+            .cards
+            .iter()
+            .map(|c| c.id.as_str())
+            .chain(incoming.iter().map(|d| d.id.as_str()))
+            .collect();
+        let reviewed: Vec<&str> = body.reviews.iter().map(|r| r.card_id.as_str()).collect();
+        (
+            db::get_cards_since(&mut *tx, &email, since, &sent)
+                .await
+                .map_err(|e| db_err("get_cards_since", e))?,
+            db::get_deletions_since(&mut *tx, &email, since, &sent)
+                .await
+                .map_err(|e| db_err("get_deletions_since", e))?,
+            db::get_drill_counts_since(&mut *tx, user_id, since, &reviewed)
+                .await
+                .map_err(|e| db_err("get_drill_counts_since", e))?,
+        )
+    } else {
+        (
+            db::get_all_cards(&mut *tx, &email)
+                .await
+                .map_err(|e| db_err("get_all_cards", e))?,
+            db::get_all_deletions(&mut *tx, &email)
+                .await
+                .map_err(|e| db_err("get_all_deletions", e))?,
+            db::get_drill_counts(&mut *tx, user_id)
+                .await
+                .map_err(|e| db_err("get_drill_counts", e))?,
+        )
+    };
 
     let settings = db::get_settings(&mut *tx, &email)
         .await
         .map_err(|e| db_err("get_settings", e))?;
-
-    let drill_counts = db::get_drill_counts(&mut *tx, user_id)
-        .await
-        .map_err(|e| db_err("get_drill_counts", e))?;
 
     tx.commit()
         .await
         .map_err(|e| db_err("commit sync tx", e.into()))?;
 
     Ok(Json(SyncResponse {
-        cards: merged,
-        deletions: tombstones,
+        cards,
+        deletions,
         settings,
         drill_counts,
+        cursor: clock.cursor(user_id),
+        full: delta_from.is_none(),
     })
     .into_response())
 }

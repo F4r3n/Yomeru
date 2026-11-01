@@ -48,6 +48,17 @@ pub fn bump_sync_generation() {
     sync_gen.set(next);
 }
 
+/// The status line after a manual sync. Counts what crossed the wire, not the
+/// deck size: with delta sync a quiet sync moves nothing, and "Synced 0 cards"
+/// would read as an empty deck.
+pub fn sync_summary(sent: usize, received: usize) -> String {
+    if sent == 0 && received == 0 {
+        "Synced. Nothing changed.".to_string()
+    } else {
+        format!("Synced: {sent} sent, {received} received.")
+    }
+}
+
 /// Error both sync clients (this crate and the extension's `sync.ts`) return
 /// for a 401. Matched by [`SyncHealth`] to tell "sign in again" apart from a
 /// transient failure, so the two strings must stay identical.
@@ -164,6 +175,16 @@ impl SettingsPayload {
 /// `extension/src/background/sync.ts`.
 pub(crate) const OUTBOX_BATCH: usize = 1_000;
 
+/// Where this device's view of the server ends, as the server handed it out.
+/// Opaque: stored and sent back as `since`.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct SyncCursor {
+    pub epoch: String,
+    /// An integer on the wire: the server's `i64`, which would reject the
+    /// `2.0` an `f64` serializes as.
+    pub rev: i64,
+}
+
 #[derive(Serialize)]
 pub(crate) struct SyncBody<'a> {
     pub(crate) cards: &'a [SrsCard],
@@ -175,9 +196,13 @@ pub(crate) struct SyncBody<'a> {
     pub(crate) settings: SettingsPayload,
     /// The review outbox: answers not yet acknowledged by the server.
     pub(crate) reviews: &'a [ReviewLog],
+    /// The cursor from the last successful sync; asks for a delta from it.
+    /// Absent on a first sync, which uploads every card and gets every card.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) since: Option<&'a SyncCursor>,
 }
 
-#[derive(Deserialize, Default)]
+#[derive(Deserialize)]
 pub(crate) struct SyncResponse {
     pub(crate) cards: Vec<SrsCard>,
     #[serde(default)]
@@ -189,6 +214,20 @@ pub(crate) struct SyncResponse {
     /// uploaded rows, so the outbox must be kept for a later sync.
     #[serde(default)]
     pub(crate) drill_counts: Option<std::collections::HashMap<String, u32>>,
+    /// Hand back as `since` next time. `None` from a server that predates
+    /// delta sync, whose answers are always complete.
+    #[serde(default)]
+    pub(crate) cursor: Option<SyncCursor>,
+    /// Whether `cards`, `deletions` and `drill_counts` are the complete state
+    /// (`true`) or only what changed after `since` plus the server's copy of
+    /// every id sent (`false`). Defaults to `true`: an old server sends no
+    /// flag, and its answers are complete.
+    #[serde(default = "complete")]
+    pub(crate) full: bool,
+}
+
+fn complete() -> bool {
+    true
 }
 
 /// Picks which server cards to write over the local copies: those whose merge
@@ -199,18 +238,33 @@ pub(crate) struct SyncResponse {
 /// writes at the same millisecond are almost certainly the same write, and
 /// disagreeing on the tiebreak is what would leave devices permanently apart.
 ///
+/// One exception: a card this request `uploaded` whose local copy is still the
+/// one uploaded takes the server's copy whatever its version. That copy is the
+/// server's ruling on the upload, and can carry an older stamp than the local
+/// one — the server clamps a fast device clock's stamps to its own time.
+/// Keeping the local copy there would leave it clean yet "newer" than anything
+/// the server sends, refusing other devices' edits until edited again here.
+///
 /// Lives here rather than in `platform.rs` because that module is wasm-only:
 /// keeping the decision pure is what lets it be tested on the host target.
-pub fn cards_to_apply(remote: &[SrsCard], local: &[SrsCard]) -> Vec<SrsCard> {
+pub fn cards_to_apply(remote: &[SrsCard], local: &[SrsCard], uploaded: &[SrsCard]) -> Vec<SrsCard> {
     let local_versions: std::collections::HashMap<&str, f64> = local
+        .iter()
+        .map(|c| (c.id.as_str(), c.version_ms()))
+        .collect();
+    let uploaded_versions: std::collections::HashMap<&str, f64> = uploaded
         .iter()
         .map(|c| (c.id.as_str(), c.version_ms()))
         .collect();
     remote
         .iter()
         .filter(|c| {
-            let local_version = local_versions.get(c.id.as_str()).copied().unwrap_or(0.0);
-            c.version_ms() >= local_version
+            let Some(&mine) = local_versions.get(c.id.as_str()) else {
+                return true;
+            };
+            #[allow(clippy::float_cmp)] // the same stored value, read back
+            let untouched = uploaded_versions.get(c.id.as_str()) == Some(&mine);
+            untouched || c.version_ms() >= mine
         })
         .cloned()
         .collect()
@@ -329,7 +383,7 @@ mod tests {
     fn newer_remote_card_is_applied() {
         let remote = [card("a::recognition", 2_000.0)];
         let local = [card("a::recognition", 1_000.0)];
-        let applied = cards_to_apply(&remote, &local);
+        let applied = cards_to_apply(&remote, &local, &[]);
         assert_eq!(applied.len(), 1);
         assert_eq!(applied[0].updated_ms, 2_000.0);
     }
@@ -340,14 +394,27 @@ mod tests {
         // in flight — the server's older copy must not overwrite it.
         let remote = [card("a::recognition", 1_000.0)];
         let local = [card("a::recognition", 2_000.0)];
-        assert!(cards_to_apply(&remote, &local).is_empty());
+        assert!(cards_to_apply(&remote, &local, &[]).is_empty());
+    }
+
+    #[test]
+    fn the_servers_ruling_on_an_untouched_upload_is_adopted() {
+        // This device's clock runs fast: it uploaded at 9_000, the server
+        // clamped that to its own 5_000 and echoed it back.
+        let uploaded = [card("a::recognition", 9_000.0)];
+        let remote = [card("a::recognition", 5_000.0)];
+        assert_eq!(cards_to_apply(&remote, &uploaded, &uploaded).len(), 1);
+
+        // Edited again while the sync was in flight: the local edit stands.
+        let edited = [card("a::recognition", 9_500.0)];
+        assert!(cards_to_apply(&remote, &edited, &uploaded).is_empty());
     }
 
     #[test]
     fn card_we_do_not_have_is_applied() {
         let remote = [card("a::recognition", 1_000.0)];
         let local: [SrsCard; 0] = [];
-        assert_eq!(cards_to_apply(&remote, &local).len(), 1);
+        assert_eq!(cards_to_apply(&remote, &local, &[]).len(), 1);
     }
 
     #[test]
@@ -362,8 +429,8 @@ mod tests {
         let mut stale = card("a::recognition", 3_000.0);
         stale.last_review_ms = Some(9_000.0);
 
-        assert!(cards_to_apply(&[stale.clone()], &[promoted.clone()]).is_empty());
-        let applied = cards_to_apply(&[promoted], &[stale]);
+        assert!(cards_to_apply(&[stale.clone()], &[promoted.clone()], &[]).is_empty());
+        let applied = cards_to_apply(&[promoted], &[stale], &[]);
         assert_eq!(applied.len(), 1);
         assert_eq!(applied[0].status, CardStatus::Active);
     }
@@ -380,8 +447,8 @@ mod tests {
 
         assert_eq!(reviewed.version_ms(), 8_000.0);
         assert_eq!(unreviewed.version_ms(), 1_000.0); // added_ms
-        assert!(cards_to_apply(&[unreviewed.clone()], &[reviewed.clone()]).is_empty());
-        assert_eq!(cards_to_apply(&[reviewed], &[unreviewed]).len(), 1);
+        assert!(cards_to_apply(&[unreviewed.clone()], &[reviewed.clone()], &[]).is_empty());
+        assert_eq!(cards_to_apply(&[reviewed], &[unreviewed], &[]).len(), 1);
     }
 
     /// The bytes this client actually puts on the wire, pinned against the
@@ -458,9 +525,22 @@ mod tests {
                         reviewed_ms: 1_756_960_000_000.0,
                     },
                 ],
+                since: None,
             };
             let sent: Value = serde_json::to_value(&body).expect("serialize body");
             assert_eq!(sent, fixture("request-app-client.json"));
+
+            // Once the device holds a cursor, the same payload carries it.
+            let cursor = SyncCursor {
+                epoch: "3f9c0a7d51e2b864.1".to_string(),
+                rev: 2,
+            };
+            let delta = SyncBody {
+                since: Some(&cursor),
+                ..body
+            };
+            let sent: Value = serde_json::to_value(&delta).expect("serialize delta body");
+            assert_eq!(sent, fixture("request-delta-app-client.json"));
         }
 
         #[test]
@@ -499,6 +579,28 @@ mod tests {
             assert_eq!(s.updated_ms, 1_756_000_000_000.0);
             let counts = resp.drill_counts.expect("drill counts");
             assert_eq!(counts.get("1467640::recognition"), Some(&1));
+            assert!(resp.full);
+            assert_eq!(
+                resp.cursor,
+                Some(SyncCursor {
+                    epoch: "3f9c0a7d51e2b864.1".to_string(),
+                    rev: 2,
+                })
+            );
+        }
+
+        #[test]
+        fn the_summary_counts_traffic_not_the_deck() {
+            assert_eq!(sync_summary(0, 0), "Synced. Nothing changed.");
+            assert_eq!(sync_summary(1, 3), "Synced: 1 sent, 3 received.");
+        }
+
+        #[test]
+        fn the_delta_response_fixture_parses() {
+            let resp: SyncResponse =
+                serde_json::from_value(fixture("response-delta.json")).expect("parse delta");
+            assert!(!resp.full, "a delta's drill counts must be merged, not replace");
+            assert_eq!(resp.cursor.map(|c| c.rev), Some(3));
         }
 
         #[test]
@@ -511,6 +613,10 @@ mod tests {
             assert!(resp.deletions.is_empty());
             assert!(resp.settings.is_none());
             assert!(resp.drill_counts.is_none());
+            // No cursor and no flag: a pre-delta server, whose every answer
+            // is the complete state.
+            assert!(resp.cursor.is_none());
+            assert!(resp.full);
         }
     }
 }

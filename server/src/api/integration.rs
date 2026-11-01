@@ -177,9 +177,9 @@ impl SyncResp {
 
 // ---- a simulated device -------------------------------------------------
 
-/// One client's local state. Uploads its whole deck plus pending tombstones —
-/// which is what the real clients do, and the reason the tombstone guards exist
-/// at all — then adopts the server's answer.
+/// One client's local state, as a client without a cursor behaves: uploads its
+/// whole deck plus pending tombstones — the reason the tombstone guards exist
+/// at all — then adopts the server's answer. Delta clients are [`delta`]'s.
 struct Device {
     cards: HashMap<String, db::Card>,
     /// `(id, deleted_at)` in client wall-clock ms. Held as `f64` so the request
@@ -722,6 +722,404 @@ mod wire {
             expected["deletions"][0].is_string(),
             "clients parse deletions as bare ids"
         );
+        assert_eq!(
+            keys(&body["cursor"]),
+            keys(&expected["cursor"]),
+            "cursor shape drifted"
+        );
+        assert_eq!(body["full"], json!(true), "a body without `since` gets a full sync");
+    }
+
+    #[tokio::test]
+    async fn a_delta_response_has_the_same_shape_as_a_full_one() {
+        let h = Harness::new().await;
+        let (_, first) = h
+            .post(
+                "/api/sync",
+                Some(&h.token),
+                &fixture("request-app-client.json"),
+            )
+            .await;
+        let (_, body) = h
+            .post(
+                "/api/sync",
+                Some(&h.token),
+                &json!({ "cards": [], "since": first["cursor"] }),
+            )
+            .await;
+        let expected = fixture("response-delta.json");
+        let keys = |v: &Value| {
+            let mut k: Vec<String> = v.as_object().expect("object").keys().cloned().collect();
+            k.sort();
+            k
+        };
+        assert_eq!(keys(&body), keys(&expected), "delta top-level keys drifted");
+        assert_eq!(body["full"], json!(false));
+        assert_eq!(expected["full"], json!(false));
+    }
+
+    #[tokio::test]
+    async fn both_clients_delta_bodies_are_accepted() {
+        // The fixtures' cursor names an epoch this fresh database never had,
+        // so the server must fall back to a full answer rather than trust it.
+        for name in [
+            "request-delta-app-client.json",
+            "request-delta-extension-client.json",
+        ] {
+            let h = Harness::new().await;
+            let (status, body) = h.post("/api/sync", Some(&h.token), &fixture(name)).await;
+            assert_eq!(status, StatusCode::OK, "server rejected {name}: {body}");
+            assert_eq!(body["full"], json!(true), "{name}: foreign epoch must go full");
+            let resp: SyncResp = serde_json::from_value(body).unwrap();
+            assert_eq!(resp.cards.len(), 1, "{name}");
+            assert_eq!(resp.drill_counts.get("1467640::recognition"), Some(&1), "{name}");
+        }
+    }
+}
+
+/// Delta sync: clients send only what they changed plus their cursor, and get
+/// back only what changed after it — plus the server's ruling on every id they
+/// sent. Each scenario builds the one situation where a pure "rows since the
+/// cursor" answer would leave two devices permanently apart.
+mod delta {
+    use super::*;
+    use std::collections::HashSet;
+
+    /// A client the way the real ones behave once they hold a cursor: uploads
+    /// its dirty cards and pending tombstones, and merges the answer instead
+    /// of replacing its deck with it.
+    struct DeltaDevice {
+        cards: HashMap<String, db::Card>,
+        dirty: HashSet<String>,
+        tombstones: Vec<(String, f64)>,
+        cursor: Option<Value>,
+    }
+
+    struct Answer {
+        full: bool,
+        cards: Vec<String>,
+        deletions: Vec<String>,
+        drill_counts: HashMap<String, u32>,
+    }
+
+    impl DeltaDevice {
+        fn new(cards: &[db::Card]) -> Self {
+            Self {
+                cards: cards.iter().map(|c| (c.id.clone(), c.clone())).collect(),
+                dirty: cards.iter().map(|c| c.id.clone()).collect(),
+                tombstones: Vec::new(),
+                cursor: None,
+            }
+        }
+
+        fn put(&mut self, c: db::Card) {
+            self.dirty.insert(c.id.clone());
+            self.cards.insert(c.id.clone(), c);
+        }
+
+        fn edit(&mut self, id: &str, f: impl FnOnce(&mut db::Card)) {
+            let mut c = self.cards.get(id).expect("card to edit").clone();
+            f(&mut c);
+            self.put(c);
+        }
+
+        fn delete(&mut self, id: &str, at: f64) {
+            self.cards.remove(id);
+            self.dirty.remove(id);
+            self.tombstones.push((id.to_string(), at));
+        }
+
+        fn has(&self, id: &str) -> bool {
+            self.cards.contains_key(id)
+        }
+
+        fn get(&self, id: &str) -> &db::Card {
+            self.cards.get(id).unwrap_or_else(|| panic!("no card {id}"))
+        }
+
+        /// One sync as the real clients run it: a full answer to a request
+        /// that carried a cursor means the server couldn't serve a delta, so
+        /// the device drops its cursor and syncs again with its whole deck.
+        async fn sync_with(&mut self, h: &Harness, reviews: Value) -> Answer {
+            let sent_cursor = self.cursor.is_some();
+            let answer = self.sync_once(h, reviews).await;
+            if sent_cursor && answer.full {
+                self.cursor = None;
+                return self.sync_once(h, json!([])).await;
+            }
+            answer
+        }
+
+        async fn sync_once(&mut self, h: &Harness, reviews: Value) -> Answer {
+            let mut upload: Vec<&db::Card> = match self.cursor {
+                Some(_) => self.dirty.iter().filter_map(|id| self.cards.get(id)).collect(),
+                None => self.cards.values().collect(),
+            };
+            upload.sort_by(|a, b| a.id.cmp(&b.id));
+            let mut body = json!({
+                "cards": upload,
+                "deletions": self.tombstones
+                    .iter()
+                    .map(|(id, at)| json!({ "id": id, "deleted_at": at }))
+                    .collect::<Vec<_>>(),
+                "reviews": reviews,
+            });
+            if let Some(c) = &self.cursor {
+                body["since"] = c.clone();
+            }
+            let (status, body) = h.post("/api/sync", Some(&h.token), &body).await;
+            assert_eq!(status, StatusCode::OK, "sync rejected: {body}");
+            let full = body["full"].as_bool().expect("full flag");
+            let resp: SyncResp = serde_json::from_value(body.clone()).unwrap();
+            // Merged, never replaced, as in the real clients: a full answer
+            // may come from a server that lost rows this device still holds.
+            for c in &resp.cards {
+                self.cards.insert(c.id.clone(), c.clone());
+            }
+            for id in &resp.deletions {
+                self.cards.remove(id);
+            }
+            self.dirty.clear();
+            self.tombstones.clear();
+            self.cursor = if self.cursor.is_some() && full {
+                None
+            } else {
+                Some(body["cursor"].clone())
+            };
+            let mut cards: Vec<String> = resp.cards.iter().map(|c| c.id.clone()).collect();
+            cards.sort();
+            Answer {
+                full,
+                cards,
+                deletions: resp.deletions,
+                drill_counts: resp.drill_counts,
+            }
+        }
+
+        async fn sync(&mut self, h: &Harness) -> Answer {
+            self.sync_with(h, json!([])).await
+        }
+    }
+
+    const Y: &str = "1467640::recall";
+
+    #[tokio::test]
+    async fn after_the_first_sync_only_changes_cross_the_wire() {
+        let h = Harness::new().await;
+        let mut a = DeltaDevice::new(&[card(X, T0, T0), card(Y, T0, T0)]);
+        let mut b = DeltaDevice::new(&[]);
+        assert!(a.sync(&h).await.full, "no cursor yet: full");
+        assert!(b.sync(&h).await.full);
+        assert!(b.has(X) && b.has(Y));
+
+        let quiet = b.sync(&h).await;
+        assert!(!quiet.full);
+        assert!(quiet.cards.is_empty() && quiet.deletions.is_empty());
+
+        a.edit(X, |c| {
+            c.reps = 1;
+            c.updated_ms = T0 + SECOND;
+        });
+        let own = a.sync(&h).await;
+        assert_eq!(own.cards, vec![X.to_string()], "only the edited card is echoed");
+
+        let pulled = b.sync(&h).await;
+        assert_eq!(pulled.cards, vec![X.to_string()], "only the edited card is pulled");
+        assert_eq!(b.get(X).reps, 1);
+        assert_eq!(b.get(Y).reps, 0, "untouched card kept");
+    }
+
+    #[tokio::test]
+    async fn a_delete_reaches_the_other_device_through_a_delta() {
+        let h = Harness::new().await;
+        let mut a = DeltaDevice::new(&[card(X, T0, T0)]);
+        let mut b = DeltaDevice::new(&[]);
+        a.sync(&h).await;
+        b.sync(&h).await;
+
+        a.delete(X, T0 + SECOND);
+        a.sync(&h).await;
+        let pulled = b.sync(&h).await;
+        assert!(!pulled.full);
+        assert_eq!(pulled.deletions, vec![X.to_string()]);
+        assert!(!b.has(X));
+    }
+
+    #[tokio::test]
+    async fn an_upload_that_loses_the_merge_gets_the_winner_back() {
+        // A device whose clock runs behind edits a card it already holds the
+        // newer copy of. The server keeps its row, which predates the cursor:
+        // only the echo tells the device it lost.
+        let h = Harness::new().await;
+        let mut a = DeltaDevice::new(&[card(X, T0, T0)]);
+        let mut b = DeltaDevice::new(&[]);
+        a.sync(&h).await;
+        b.sync(&h).await;
+
+        b.edit(X, |c| {
+            c.reps = 7;
+            c.updated_ms = T0 + 10.0 * SECOND;
+        });
+        b.sync(&h).await;
+        a.sync(&h).await;
+        assert_eq!(a.get(X).reps, 7);
+
+        a.edit(X, |c| {
+            c.reps = 1;
+            c.updated_ms = T0 + 5.0 * SECOND;
+        });
+        let answer = a.sync(&h).await;
+        assert!(!answer.full);
+        assert_eq!(answer.cards, vec![X.to_string()], "losing upload must be answered");
+        assert_eq!(a.get(X).reps, 7, "A must converge on the server's copy");
+        b.sync(&h).await;
+        assert_eq!(b.get(X).reps, 7);
+    }
+
+    #[tokio::test]
+    async fn a_stale_card_refused_by_an_old_tombstone_is_deleted_on_the_device() {
+        let h = Harness::new().await;
+        let mut a = DeltaDevice::new(&[card(X, T0, T0)]);
+        a.sync(&h).await;
+        a.delete(X, T0 + SECOND);
+        a.sync(&h).await;
+
+        // B is up to date (its cursor is past the tombstone) yet somehow still
+        // holds the card, and uploads an edit of it.
+        let mut b = DeltaDevice::new(&[]);
+        b.sync(&h).await;
+        b.put(card(X, T0, T0 + 2.0 * SECOND));
+        let answer = b.sync(&h).await;
+        assert!(!answer.full);
+        assert_eq!(answer.deletions, vec![X.to_string()]);
+        assert!(!b.has(X));
+        assert!(h.stored_ids().await.is_empty());
+    }
+
+    #[tokio::test]
+    async fn a_delete_refused_by_a_later_re_add_gives_the_card_back() {
+        let h = Harness::new().await;
+        let mut a = DeltaDevice::new(&[card(X, T0, T0)]);
+        let mut b = DeltaDevice::new(&[]);
+        a.sync(&h).await;
+        b.sync(&h).await;
+
+        // B deletes, then re-adds; A pulls the re-added card.
+        b.delete(X, T0 + SECOND);
+        b.sync(&h).await;
+        b.put(card(X, T0 + 3.0 * SECOND, T0 + 3.0 * SECOND));
+        b.sync(&h).await;
+        a.sync(&h).await;
+        assert_eq!(a.get(X).added_ms, T0 + 3.0 * SECOND);
+
+        // A, its clock behind, deletes "before" the re-add. The server keeps
+        // the re-add, whose revision A's cursor is already past.
+        a.delete(X, T0 + 2.0 * SECOND);
+        let answer = a.sync(&h).await;
+        assert!(!answer.full);
+        assert_eq!(answer.cards, vec![X.to_string()]);
+        assert!(a.has(X), "the refused delete must not lose A's card");
+        assert_eq!(h.stored_ids().await, vec![X.to_string()]);
+    }
+
+    #[tokio::test]
+    async fn drill_counts_in_a_delta_cover_changed_and_resent_cards() {
+        let h = Harness::new().await;
+        let mut a = DeltaDevice::new(&[card(X, T0, T0), card(Y, T0, T0)]);
+        let drill = |id: &str, at: f64| json!({ "card_id": id, "rating": 1, "kind": "drill", "reviewed_ms": at });
+        a.sync_with(&h, json!([drill(X, T0), drill(Y, T0)])).await;
+
+        let answer = a.sync_with(&h, json!([drill(X, T0 + SECOND)])).await;
+        assert!(!answer.full);
+        assert_eq!(answer.drill_counts.get(X), Some(&2), "a full total, not the increment");
+        assert_eq!(answer.drill_counts.get(Y), None, "unchanged counts are left out");
+
+        // A retried upload: the row is already stored under an old revision.
+        let answer = a.sync_with(&h, json!([drill(X, T0 + SECOND)])).await;
+        assert_eq!(answer.drill_counts.get(X), Some(&2));
+    }
+
+    #[tokio::test]
+    async fn an_unusable_cursor_falls_back_to_a_full_sync() {
+        let h = Harness::new().await;
+        let mut a = DeltaDevice::new(&[card(X, T0, T0)]);
+        a.sync(&h).await;
+        let epoch = a.cursor.as_ref().unwrap()["epoch"].clone();
+
+        for (why, cursor) in [
+            ("foreign epoch", json!({ "epoch": "not-this-db.1", "rev": 1 })),
+            ("cursor ahead of the server", json!({ "epoch": epoch, "rev": 1_000 })),
+        ] {
+            a.cursor = Some(cursor);
+            let answer = a.sync_once(&h, json!([])).await;
+            assert!(answer.full, "{why}");
+            assert_eq!(answer.cards, vec![X.to_string()], "{why}");
+            assert!(a.cursor.is_none(), "{why}: a refused cursor must not be replaced");
+        }
+    }
+
+    #[tokio::test]
+    async fn a_cursor_older_than_pruned_tombstones_falls_back_to_a_full_sync() {
+        let h = Harness::new().await;
+        let mut a = DeltaDevice::new(&[card(X, T0, T0), card(Y, T0, T0)]);
+        let mut b = DeltaDevice::new(&[]);
+        a.sync(&h).await;
+        b.sync(&h).await;
+
+        a.delete(Y, T0 + SECOND);
+        a.sync(&h).await;
+        db::prune_old_deletions(&h.db, i64::MAX).await.unwrap();
+
+        // B never saw the delete, and the tombstone that carried it is gone.
+        let answer = b.sync_once(&h, json!([])).await;
+        assert!(answer.full, "B's cursor predates a pruned tombstone");
+        assert_eq!(answer.cards, vec![X.to_string()]);
+        assert!(answer.deletions.is_empty(), "the pruned delete is gone for good");
+
+        assert!(!a.sync(&h).await.full, "A's cursor is past the prune");
+    }
+
+    #[tokio::test]
+    async fn a_server_that_lost_its_cards_is_repopulated_by_a_delta_client() {
+        // A backup restore, or a cards-table drop on a schema break: the
+        // server's rows are gone or stale and the epoch is rotated. A device
+        // that only uploaded its dirty cards would leave the rest missing for
+        // good; the full answer to its cursor is what makes it send them all.
+        let h = Harness::new().await;
+        let mut a = DeltaDevice::new(&[card(X, T0, T0), card(Y, T0, T0)]);
+        a.sync(&h).await;
+        a.sync(&h).await;
+        assert!(a.cursor.is_some());
+
+        sqlx::query("DELETE FROM cards").execute(&h.db).await.unwrap();
+        sqlx::query("UPDATE sync_meta SET epoch = 'rotated'")
+            .execute(&h.db)
+            .await
+            .unwrap();
+
+        let answer = a.sync(&h).await;
+        assert!(answer.full);
+        assert_eq!(h.stored_ids().await, vec![Y.to_string(), X.to_string()]);
+        assert!(a.has(X) && a.has(Y), "the empty full answer must not wipe the device");
+        assert!(!a.sync(&h).await.full, "back on deltas afterwards");
+    }
+
+    #[tokio::test]
+    async fn another_accounts_cursor_is_not_served_a_delta() {
+        // A sign-in raced a sync still in flight for the previous account, and
+        // that sync stored its cursor after the sign-in cleared it.
+        let h = Harness::new().await;
+        let mut a = DeltaDevice::new(&[card(X, T0, T0)]);
+        a.sync(&h).await;
+        a.sync(&h).await;
+        let mut cursor = a.cursor.clone().unwrap();
+        let epoch = cursor["epoch"].as_str().unwrap();
+        let (db_epoch, user) = epoch.rsplit_once('.').unwrap();
+        let other = user.parse::<i64>().unwrap() + 1;
+        cursor["epoch"] = json!(format!("{db_epoch}.{other}"));
+
+        a.cursor = Some(cursor);
+        assert!(a.sync_once(&h, json!([])).await.full);
     }
 }
 

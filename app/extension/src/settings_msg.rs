@@ -91,6 +91,8 @@ struct SuccessResp {
 #[derive(Deserialize)]
 struct SyncResp {
     synced: Option<u32>,
+    /// Cards uploaded. Absent from an older background script.
+    sent: Option<u32>,
     #[serde(default)]
     queued: bool,
     error: Option<String>,
@@ -154,11 +156,9 @@ impl SettingsStore for ExtensionSettings {
         if resp.queued {
             return Ok("Sync already in progress — will repeat when it finishes.".into());
         }
-        let n = resp.synced.unwrap_or(0);
-        Ok(format!(
-            "Synced {} card{}.",
-            n,
-            if n == 1 { "" } else { "s" }
+        Ok(yomeru_shared::sync::sync_summary(
+            resp.sent.unwrap_or(0) as usize,
+            resp.synced.unwrap_or(0) as usize,
         ))
     }
 

@@ -673,11 +673,53 @@ describe("idb", () => {
       await idb.putCardLogged(makeCard({ sequence: CAT, direction: "recall", reps: 2 }), row);
       expect((await idb.getCard(CAT, "recall"))?.reps).toBe(2);
       expect(await idb.getOutbox()).toEqual([row]);
+      expect((await idb.getDirty()).map((d) => d.id)).toEqual([cardId(CAT, "recall")]);
     });
   });
 
-  describe("v7 → v8 upgrade", () => {
-    it("adds the review stores without touching existing cards", async () => {
+  describe("dirty set", () => {
+    it("queues local writes and skips writes adopted from the server", async () => {
+      await idb.putCard(makeCard({ sequence: CAT }));
+      await idb.putCards([makeCard({ sequence: DOG })]);
+      await idb.putCardsSynced([makeCard({ sequence: BIRD })]);
+      const ids = (await idb.getDirty()).map((d) => d.id).sort();
+      expect(ids).toEqual([cardId(CAT, "recognition"), cardId(DOG, "recognition")].sort());
+    });
+
+    it("records the stamp the card was written with", async () => {
+      await idb.putCard(makeCard({ sequence: CAT }));
+      const [entry] = await idb.getDirty();
+      expect(entry.v).toBe((await idb.getCard(CAT, "recognition"))?.updated_ms);
+    });
+
+    it("clears only entries unchanged since the snapshot", async () => {
+      await idb.putCard(makeCard({ sequence: CAT }));
+      await idb.putCard(makeCard({ sequence: DOG }));
+      const snapshot = await idb.getDirty();
+      const dog = snapshot.find((d) => d.id === cardId(DOG, "recognition"))!;
+      // Re-stamped after the snapshot, as an edit during the sync would be.
+      const database = await idb.openDb();
+      await new Promise<void>((resolve) => {
+        const t = database.transaction("dirty", "readwrite");
+        t.objectStore("dirty").put({ id: dog.id, v: dog.v + 1 });
+        t.oncomplete = () => resolve();
+      });
+
+      await idb.clearDirty(snapshot);
+
+      expect((await idb.getDirty()).map((d) => d.id)).toEqual([dog.id]);
+    });
+
+    it("skips ids whose card is gone", async () => {
+      await idb.putCard(makeCard({ sequence: CAT }));
+      await idb.deleteCard(CAT);
+      const ids = (await idb.getDirty()).map((d) => d.id);
+      expect(await idb.getCardsByIds(ids)).toEqual([]);
+    });
+  });
+
+  describe("v7 → current upgrade", () => {
+    it("adds the review and delta-sync stores without touching existing cards", async () => {
       // A v7 database as the previous release left it, holding one card.
       await new Promise<void>((resolve, reject) => {
         const req = indexedDB.open("yomeru-db", 7);
@@ -696,10 +738,12 @@ describe("idb", () => {
 
       const database = await idb.openDb();
 
-      expect(database.version).toBe(8);
+      expect(database.version).toBe(9);
       expect([...database.objectStoreNames]).toEqual(
-        expect.arrayContaining(["cards", "tombstones", "review_outbox", "drill_counts"]),
+        expect.arrayContaining(["cards", "tombstones", "review_outbox", "drill_counts", "dirty", "meta"]),
       );
+      expect(await idb.getSyncCursor()).toBeNull();
+      expect(await idb.getDirty()).toEqual([]);
       expect((await idb.getAllCards()).map((c) => c.sequence)).toEqual([CAT]);
       const row = { card_id: cardId(CAT, "recall"), rating: 1, kind: "drill" as const, reviewed_ms: 5 };
       await idb.addReview(row);

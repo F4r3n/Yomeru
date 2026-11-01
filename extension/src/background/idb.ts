@@ -4,13 +4,23 @@ import { cardId, MAX_PRIORITY, versionMs } from "../shared/types.ts";
 const DB_NAME = "yomeru-db";
 // v7 re-runs the v6 sequence-keyed reset to self-heal any DB left half-migrated
 // by an earlier build that created the store without the `sequence` index.
-// v8 adds the review outbox and the cached drill counts. The app opens the same
+// v8 adds the review outbox and the cached drill counts. v9 adds the delta-sync
+// dirty set and the meta store holding the sync cursor. The app opens the same
 // database, so this and `DB_VERSION` in app/shared/src/idb.rs move together.
-const DB_VERSION = 8;
+const DB_VERSION = 9;
 const TOMB_STORE = "tombstones";
 const REVIEW_STORE = "review_outbox";
 /** The server's per-card drill counts as of the last sync, `{card_id, count}`. */
 const DRILL_STORE = "drill_counts";
+/**
+ * Cards changed locally since the last successful sync, `{id, v}` where `v` is
+ * the `updated_ms` the change was stamped with. Written in the same
+ * transaction as the card, so a change can't land without being queued.
+ */
+const DIRTY_STORE = "dirty";
+/** Out-of-line keyed values that must live and die with the card data. */
+const META_STORE = "meta";
+const CURSOR_KEY = "sync_cursor";
 
 let db: IDBDatabase | null = null;
 
@@ -100,6 +110,15 @@ export async function openDb(): Promise<IDBDatabase> {
       if (!database.objectStoreNames.contains(DRILL_STORE)) {
         database.createObjectStore(DRILL_STORE, { keyPath: "card_id" });
       }
+
+      // → v9: delta sync. Additive; with no cursor stored yet, the first sync
+      // after the upgrade is a full one, so the dirty set can start empty.
+      if (!database.objectStoreNames.contains(DIRTY_STORE)) {
+        database.createObjectStore(DIRTY_STORE, { keyPath: "id" });
+      }
+      if (!database.objectStoreNames.contains(META_STORE)) {
+        database.createObjectStore(META_STORE);
+      }
     };
 
     req.onsuccess = (e) => {
@@ -160,9 +179,8 @@ function stamped(card: SrsCard, now: number): SrsCard {
   return { ...card, updated_ms: now };
 }
 
-export function putCard(card: SrsCard): Promise<IDBValidKey> {
-  const c = stamped(card, Date.now());
-  return tx("cards", "readwrite", (s) => s.put(c));
+export async function putCard(card: SrsCard): Promise<void> {
+  return putAll([card], true);
 }
 
 /**
@@ -184,14 +202,27 @@ export async function putCardsSynced(cards: SrsCard[]): Promise<void> {
   return putAll(cards, false);
 }
 
+/**
+ * A local write (`stamp`) is re-stamped and queued in the dirty set for the
+ * next sync, in the same transaction. A write adopted from the server is
+ * neither: it is already the server's state.
+ */
 async function putAll(cards: SrsCard[], stamp: boolean): Promise<void> {
   if (cards.length === 0) return;
   const now = Date.now();
   const database = await openDb();
   return new Promise((resolve, reject) => {
-    const t = database.transaction("cards", "readwrite");
+    const t = database.transaction(stamp ? ["cards", DIRTY_STORE] : ["cards"], "readwrite");
     const store = t.objectStore("cards");
-    for (const c of cards) store.put(stamp ? stamped(c, now) : c);
+    if (stamp) {
+      const dirty = t.objectStore(DIRTY_STORE);
+      for (const c of cards) {
+        store.put(stamped(c, now));
+        dirty.put({ id: c.id, v: now });
+      }
+    } else {
+      for (const c of cards) store.put(c);
+    }
     t.oncomplete = () => resolve();
     t.onerror = () => reject(t.error);
     t.onabort = () => reject(t.error);
@@ -419,11 +450,13 @@ export async function clearTombstones(ids: string[]): Promise<void> {
  * the card like `putCard`. Mirrors `put_card_logged` in app/shared/src/idb.rs.
  */
 export async function putCardLogged(card: SrsCard, row: ReviewLog): Promise<void> {
-  const c = stamped(card, Date.now());
+  const now = Date.now();
+  const c = stamped(card, now);
   const database = await openDb();
   return new Promise((resolve, reject) => {
-    const t = database.transaction(["cards", REVIEW_STORE], "readwrite");
+    const t = database.transaction(["cards", DIRTY_STORE, REVIEW_STORE], "readwrite");
     t.objectStore("cards").put(c);
+    t.objectStore(DIRTY_STORE).put({ id: c.id, v: now });
     t.objectStore(REVIEW_STORE).put(row);
     t.oncomplete = () => resolve();
     t.onerror = () => reject(t.error);
@@ -442,15 +475,20 @@ export function getOutbox(): Promise<ReviewLog[]> {
 }
 
 /**
- * Settles an upload the server acknowledged: replaces the cached drill counts
- * with the server's (which already include the sent rows) and drops exactly
- * the rows that were sent. Rows logged while the request was in flight have
- * other keys and stay queued. One transaction, so the counts and the outbox
- * never disagree about whether a row was counted.
+ * Settles an upload the server acknowledged: stores the server's drill counts
+ * (which already include the sent rows) and drops exactly the rows that were
+ * sent. Rows logged while the request was in flight have other keys and stay
+ * queued. One transaction, so the counts and the outbox never disagree about
+ * whether a row was counted.
+ *
+ * `replace`: the counts are the user's complete set (a full sync), so the
+ * cache is cleared first. Otherwise they cover only the cards whose count
+ * changed (a delta) and are merged over the cache.
  */
 export async function settleOutbox(
   sent: ReviewLog[],
   drillCounts: Record<string, number>,
+  replace: boolean,
 ): Promise<void> {
   const database = await openDb();
   return new Promise((resolve, reject) => {
@@ -458,7 +496,7 @@ export async function settleOutbox(
     const outbox = t.objectStore(REVIEW_STORE);
     for (const r of sent) outbox.delete([r.card_id, r.reviewed_ms]);
     const counts = t.objectStore(DRILL_STORE);
-    counts.clear();
+    if (replace) counts.clear();
     for (const [card_id, count] of Object.entries(drillCounts)) {
       counts.put({ card_id, count });
     }
@@ -489,9 +527,10 @@ export async function applySyncResponse(
   resp: { cards: SrsCard[]; deletions?: string[] },
   sentTombstones: string[],
   uploadedAt: number,
+  uploaded: SrsCard[] = [],
 ): Promise<void> {
   if (resp.cards.length > 0) {
-    await mergeRemoteCards(resp.cards);
+    await mergeRemoteCards(resp.cards, uploaded);
   }
   if (resp.deletions && resp.deletions.length > 0) {
     const sent = new Set(sentTombstones);
@@ -517,15 +556,27 @@ export async function applySyncResponse(
  * out, so the server's copy is stale. Mirrors the server-side `updated_ms`
  * last-write-wins check, and writes through `putCardsSynced` so adopted cards
  * keep the version they arrived with.
+ *
+ * One exception: a card this request `uploaded` and nobody has touched since
+ * takes the server's copy whatever its version. That copy is the server's
+ * ruling on the upload, and can carry an older stamp than the local one — the
+ * server clamps a fast device clock's stamps to its own time. Keeping the
+ * local copy there would leave it clean yet "newer" than everything the
+ * server sends, so it would refuse other devices' edits until edited again.
  */
-async function mergeRemoteCards(remote: SrsCard[]): Promise<void> {
+async function mergeRemoteCards(remote: SrsCard[], uploaded: SrsCard[]): Promise<void> {
   if (remote.length === 0) return;
   const local = await getAllCards();
   const localVersion = new Map<string, number>();
   for (const c of local) localVersion.set(c.id, versionMs(c));
-  const toPut = remote.filter(
-    (c) => versionMs(c) >= (localVersion.get(c.id) ?? 0),
-  );
+  const uploadedVersion = new Map<string, number>();
+  for (const c of uploaded) uploadedVersion.set(c.id, versionMs(c));
+  const toPut = remote.filter((c) => {
+    const mine = localVersion.get(c.id);
+    if (mine === undefined) return true;
+    if (uploadedVersion.get(c.id) === mine) return true;
+    return versionMs(c) >= mine;
+  });
   if (toPut.length > 0) await putCardsSynced(toPut);
 }
 
@@ -555,4 +606,89 @@ export function addLookupHistory(
   return tx("lookup_history", "readwrite", (s) =>
     s.add({ word, reading, ts: Date.now() }),
   );
+}
+
+// ── Delta sync state ──────────────────────────────────────────────────
+
+/** One dirty-set entry: card `id`, changed at stamp `v`. */
+export interface DirtyEntry {
+  id: string;
+  v: number;
+}
+
+/** The dirty set as it stands, to upload and later hand to {@link clearDirty}. */
+export function getDirty(): Promise<DirtyEntry[]> {
+  return tx(DIRTY_STORE, "readonly", (s) => s.getAll() as IDBRequest<DirtyEntry[]>);
+}
+
+/** The cards behind a dirty snapshot. Ids deleted since are skipped. */
+export async function getCardsByIds(ids: string[]): Promise<SrsCard[]> {
+  if (ids.length === 0) return [];
+  const database = await openDb();
+  return new Promise((resolve, reject) => {
+    const t = database.transaction("cards", "readonly");
+    const store = t.objectStore("cards");
+    const out: SrsCard[] = [];
+    for (const id of ids) {
+      const req = store.get(id);
+      req.onsuccess = () => {
+        if (req.result) out.push(req.result as SrsCard);
+      };
+    }
+    t.oncomplete = () => resolve(out);
+    t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error);
+  });
+}
+
+/**
+ * Drops the entries of an uploaded snapshot, except any re-stamped since it
+ * was taken: that card changed while the sync was in flight, and its new
+ * state still has to go up.
+ */
+export async function clearDirty(snapshot: DirtyEntry[]): Promise<void> {
+  if (snapshot.length === 0) return;
+  const database = await openDb();
+  return new Promise((resolve, reject) => {
+    const t = database.transaction(DIRTY_STORE, "readwrite");
+    const store = t.objectStore(DIRTY_STORE);
+    for (const e of snapshot) {
+      const req = store.get(e.id);
+      req.onsuccess = () => {
+        const cur = req.result as DirtyEntry | undefined;
+        if (cur && cur.v === e.v) store.delete(e.id);
+      };
+    }
+    t.oncomplete = () => resolve();
+    t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error);
+  });
+}
+
+/**
+ * Where this device's view of the server ends. Opaque: sent back as `since`.
+ * Kept in IndexedDB beside the cards on purpose — if the database is wiped,
+ * the cursor goes with it and the next sync is a full one. A cursor that
+ * outlived its data would ask for a delta and never get the lost cards back.
+ */
+export interface SyncCursor {
+  epoch: string;
+  rev: number;
+}
+
+export async function getSyncCursor(): Promise<SyncCursor | null> {
+  const v = await tx(META_STORE, "readonly", (s) => s.get(CURSOR_KEY) as IDBRequest<unknown>);
+  const c = v as Partial<SyncCursor> | undefined;
+  return c && typeof c.epoch === "string" && typeof c.rev === "number"
+    ? { epoch: c.epoch, rev: c.rev }
+    : null;
+}
+
+export async function setSyncCursor(c: SyncCursor): Promise<void> {
+  await tx(META_STORE, "readwrite", (s) => s.put(c, CURSOR_KEY));
+}
+
+/** Forgets the cursor, so the next sync is a full one. */
+export async function clearSyncCursor(): Promise<void> {
+  await tx(META_STORE, "readwrite", (s) => s.delete(CURSOR_KEY));
 }

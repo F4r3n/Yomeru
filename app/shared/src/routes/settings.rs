@@ -52,6 +52,7 @@ pub fn SettingsTab() -> Element {
                     let mut next = s.clone();
                     next.server_token = token;
                     let _ = save(&next);
+                    forget_sync_cursor().await;
                     settings.set(next);
                     LocalStorage::delete(OTP_PENDING_KEY);
                     otp_sent.set(false);
@@ -84,6 +85,7 @@ pub fn SettingsTab() -> Element {
                     let mut next = s.clone();
                     next.server_token = token;
                     let _ = save(&next);
+                    forget_sync_cursor().await;
                     settings.set(next);
                     LocalStorage::delete(OTP_PENDING_KEY);
                     otp_sent.set(false);
@@ -335,5 +337,15 @@ pub fn SettingsTab() -> Element {
 
 
         }
+    }
+}
+
+/// Drops the delta-sync cursor after a sign-in, so the next sync is a full
+/// one: the session may belong to another account, and the cursor described
+/// what this device had seen of the old one. Best effort — a failure here only
+/// costs a delta that the server's epoch check may still turn into a full sync.
+async fn forget_sync_cursor() {
+    if let Err(e) = crate::idb::set_sync_cursor(None).await {
+        dioxus::logger::tracing::warn!("forget sync cursor: {e}");
     }
 }

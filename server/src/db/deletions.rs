@@ -82,17 +82,24 @@ fn ms_to_epoch(ms: f64, now: i64) -> i64 {
 #[cfg(test)]
 pub async fn apply_deletions(db: &Db, email: &str, deletions: &[Deletion]) -> anyhow::Result<()> {
     let mut tx = db.begin().await.context("begin deletions tx")?;
-    apply_deletions_tx(&mut tx, email, deletions).await?;
+    let clock = super::sync_meta::next_rev_tx(&mut tx).await?;
+    apply_deletions_tx(&mut tx, email, deletions, clock.rev).await?;
     tx.commit().await.context("commit deletions tx")?;
     Ok(())
 }
 
 /// [`apply_deletions`] without the surrounding transaction — see
-/// [`super::cards::upsert_cards_tx`].
+/// [`super::cards::upsert_cards_tx`]. `rev` is stamped on every new tombstone,
+/// and on an existing one only when this delete moves it earlier. A lagging
+/// device re-sending a known delete changes nothing, so it must not refresh
+/// the revision either: pruning that tombstone later would then drag
+/// `sync_meta.pruned_rev` up to the present and force every cursor into a
+/// full sync.
 pub async fn apply_deletions_tx(
     conn: &mut sqlx::SqliteConnection,
     email: &str,
     deletions: &[Deletion],
+    rev: i64,
 ) -> anyhow::Result<()> {
     if deletions.is_empty() {
         return Ok(());
@@ -125,13 +132,16 @@ pub async fn apply_deletions_tx(
             .await
             .context("delete card")?;
         sqlx::query(
-            "INSERT INTO deletions (email, id, deleted_at) VALUES (?1, ?2, ?3)
+            "INSERT INTO deletions (email, id, deleted_at, rev) VALUES (?1, ?2, ?3, ?4)
              ON CONFLICT(email, id) DO UPDATE SET
-                 deleted_at = MIN(deletions.deleted_at, excluded.deleted_at)",
+                 deleted_at = MIN(deletions.deleted_at, excluded.deleted_at),
+                 rev = CASE WHEN excluded.deleted_at < deletions.deleted_at
+                            THEN excluded.rev ELSE deletions.rev END",
         )
         .bind(email)
         .bind(&d.id)
         .bind(d.deleted_at)
+        .bind(rev)
         .execute(&mut *conn)
         .await
         .context("upsert tombstone")?;
@@ -151,14 +161,58 @@ where
     Ok(ids)
 }
 
+/// The tombstones a delta sync returns for a client whose cursor is at
+/// `since`: those written after it, plus any standing on an id in `echo` (the
+/// ids the client just sent). The echo covers a stale card the client
+/// uploaded that a tombstone refused: that tombstone may well predate the
+/// cursor, and without it the client would keep the card forever.
+pub async fn get_deletions_since<'e, E>(
+    ex: E,
+    email: &str,
+    since: i64,
+    echo: &[&str],
+) -> anyhow::Result<Vec<String>>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+{
+    let ids: Vec<String> = sqlx::query_scalar(
+        "SELECT id FROM deletions
+         WHERE email = ?1
+           AND (rev > ?2 OR id IN (SELECT value FROM json_each(?3)))",
+    )
+    .bind(email)
+    .bind(since)
+    .bind(serde_json::to_string(echo).context("encode echo ids")?)
+    .fetch_all(ex)
+    .await
+    .context("query get_deletions_since")?;
+    Ok(ids)
+}
+
 /// Prunes tombstones older than `cutoff_ms`. Called at startup to keep the
 /// table bounded; 90 days is well over any reasonable offline window.
+///
+/// Records the newest revision it removed as `sync_meta.pruned_rev`: a client
+/// whose cursor is older than that may never have seen one of these deletes,
+/// so it is sent a full snapshot instead of a delta.
 pub async fn prune_old_deletions(db: &Db, cutoff_ms: i64) -> anyhow::Result<()> {
+    let mut tx = db.begin().await.context("begin prune tx")?;
+    sqlx::query(
+        "UPDATE sync_meta SET pruned_rev = MAX(
+             pruned_rev,
+             COALESCE((SELECT MAX(rev) FROM deletions WHERE deleted_at < ?1), 0)
+         ) WHERE id = 1",
+    )
+    .bind(cutoff_ms)
+    .execute(&mut *tx)
+    .await
+    .context("record pruned rev")?;
     sqlx::query("DELETE FROM deletions WHERE deleted_at < ?1")
         .bind(cutoff_ms)
-        .execute(db)
+        .execute(&mut *tx)
         .await
         .context("prune deletions")?;
+    tx.commit().await.context("commit prune tx")?;
     Ok(())
 }
 
@@ -219,6 +273,39 @@ mod tests {
         assert_eq!(out[0].deleted_at, 9_000);
         assert_eq!(out[1].id, "b");
         assert_eq!(out[1].deleted_at, 1_000);
+    }
+
+    async fn tombstone_rev(db: &Db, id: &str) -> i64 {
+        sqlx::query_scalar("SELECT rev FROM deletions WHERE email = ?1 AND id = ?2")
+            .bind(ALICE)
+            .bind(id)
+            .fetch_one(db)
+            .await
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn a_re_sent_delete_keeps_the_tombstone_revision() {
+        let db = fresh_db().await;
+        apply_deletions(&db, ALICE, &[del("a::recognition", 5_000)])
+            .await
+            .unwrap();
+        let first = tombstone_rev(&db, "a::recognition").await;
+
+        // Same delete again, and a later restatement of it: nothing changes.
+        apply_deletions(&db, ALICE, &[del("a::recognition", 5_000)])
+            .await
+            .unwrap();
+        apply_deletions(&db, ALICE, &[del("a::recognition", 9_000)])
+            .await
+            .unwrap();
+        assert_eq!(tombstone_rev(&db, "a::recognition").await, first);
+
+        // An earlier delete time is a real change, and gets a new revision.
+        apply_deletions(&db, ALICE, &[del("a::recognition", 1_000)])
+            .await
+            .unwrap();
+        assert!(tombstone_rev(&db, "a::recognition").await > first);
     }
 
     #[tokio::test]

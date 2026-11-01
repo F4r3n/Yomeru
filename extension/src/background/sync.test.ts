@@ -113,53 +113,71 @@ describe("sync", () => {
     vi.unstubAllGlobals();
   });
 
+  /** The local state the shared request fixtures describe. */
+  async function seedFixtureState(): Promise<void> {
+    // Seeded through putCardsSynced so the card keeps the exact updated_ms
+    // the fixture names; putCard would re-stamp it with the wall clock.
+    await idb.putCardsSynced([
+      {
+        id: cardId(WORD, "recognition"),
+        sequence: WORD,
+        direction: "recognition",
+        due_ms: 1_757_000_000_000,
+        stability: 4.2,
+        difficulty: 5.5,
+        reps: 3,
+        lapses: 1,
+        state: "review",
+        last_review_ms: 1_756_900_000_000,
+        added_ms: 1_756_000_000_000,
+        status: "active",
+        priority: 0,
+        updated_ms: 1_756_900_000_000,
+      },
+    ]);
+    // The tombstone's deleted_at is the wall clock at delete time, so pin it.
+    // Stubbing `Date.now` rather than installing fake timers: fake-indexeddb
+    // drives its transactions off the real event loop and never settles
+    // under them.
+    const clock = vi.spyOn(Date, "now").mockReturnValue(1_757_000_000_123);
+    await idb.deleteCardById(cardId(WORD, "recall"));
+    clock.mockRestore();
+    await idb.addReview({
+      card_id: cardId(WORD, "recognition"),
+      rating: 1,
+      kind: "drill",
+      reviewed_ms: 1_756_950_000_000,
+    });
+    await idb.addReview({
+      card_id: cardId(WORD, "recognition"),
+      rating: 3,
+      kind: "review",
+      reviewed_ms: 1_756_960_000_000,
+    });
+
+    storage.set("srs_settings", {
+      serverUrl: SERVER,
+      serverToken: TOKEN,
+      settingsUpdatedMs: 1_756_000_000_000,
+    });
+  }
+
+  /** Writes a dirty-set entry directly, for cards seeded unstamped. */
+  async function markDirty(id: string, v: number): Promise<void> {
+    const database = await idb.openDb();
+    await new Promise<void>((resolve, reject) => {
+      const t = database.transaction("dirty", "readwrite");
+      t.objectStore("dirty").put({ id, v });
+      t.oncomplete = () => resolve();
+      t.onerror = () => reject(t.error);
+    });
+  }
+
+  const CURSOR = { epoch: "3f9c0a7d51e2b864.1", rev: 2 };
+
   describe("the request body", () => {
     it("matches the shared wire fixture", async () => {
-      // Seeded through putCardsSynced so the card keeps the exact updated_ms
-      // the fixture names; putCard would re-stamp it with the wall clock.
-      await idb.putCardsSynced([
-        {
-          id: cardId(WORD, "recognition"),
-          sequence: WORD,
-          direction: "recognition",
-          due_ms: 1_757_000_000_000,
-          stability: 4.2,
-          difficulty: 5.5,
-          reps: 3,
-          lapses: 1,
-          state: "review",
-          last_review_ms: 1_756_900_000_000,
-          added_ms: 1_756_000_000_000,
-          status: "active",
-          priority: 0,
-          updated_ms: 1_756_900_000_000,
-        },
-      ]);
-      // The tombstone's deleted_at is the wall clock at delete time, so pin it.
-      // Stubbing `Date.now` rather than installing fake timers: fake-indexeddb
-      // drives its transactions off the real event loop and never settles
-      // under them.
-      const clock = vi.spyOn(Date, "now").mockReturnValue(1_757_000_000_123);
-      await idb.deleteCardById(cardId(WORD, "recall"));
-      clock.mockRestore();
-      await idb.addReview({
-        card_id: cardId(WORD, "recognition"),
-        rating: 1,
-        kind: "drill",
-        reviewed_ms: 1_756_950_000_000,
-      });
-      await idb.addReview({
-        card_id: cardId(WORD, "recognition"),
-        rating: 3,
-        kind: "review",
-        reviewed_ms: 1_756_960_000_000,
-      });
-
-      storage.set("srs_settings", {
-        serverUrl: SERVER,
-        serverToken: TOKEN,
-        settingsUpdatedMs: 1_756_000_000_000,
-      });
+      await seedFixtureState();
 
       respondWith({ cards: [], deletions: [] });
       await sync.handleSyncCards();
@@ -178,6 +196,19 @@ describe("sync", () => {
         keysOf((expected.cards as unknown[])[0]),
       );
       expect(keysOf((sent[0].deletions as unknown[])[0])).toEqual(["deleted_at", "id"]);
+    });
+
+    it("matches the shared delta wire fixture once it holds a cursor", async () => {
+      await seedFixtureState();
+      await idb.setSyncCursor(CURSOR);
+      await markDirty(cardId(WORD, "recognition"), 1_756_900_000_000);
+
+      respondWith({ cards: [], deletions: [] });
+      await sync.handleSyncCards();
+
+      const expected = fixture("request-delta-extension-client.json") as Record<string, unknown>;
+      expect(sent[0]).toEqual(expected);
+      expect(keysOf(sent[0])).toEqual(["cards", "deletions", "reviews", "settings", "since"]);
     });
 
     it("sends tombstones as {id, deleted_at} objects, not bare ids", async () => {
@@ -227,7 +258,7 @@ describe("sync", () => {
 
       const result = await sync.handleSyncCards();
 
-      expect(result).toEqual({ synced: 1 });
+      expect(result).toEqual({ synced: 1, sent: 0 });
       const card = await idb.getCard(WORD, "recognition");
       expect(card).not.toBeNull();
       expect(card?.reps).toBe(3);
@@ -421,6 +452,177 @@ describe("sync", () => {
       await sync.handleSyncCards();
 
       expect(await idb.getOutbox()).toEqual([row(10)]);
+    });
+  });
+
+  describe("delta sync", () => {
+    const counts = async (): Promise<unknown[]> => {
+      const database = await idb.openDb();
+      return new Promise((resolve, reject) => {
+        const req = database.transaction("drill_counts").objectStore("drill_counts").getAll();
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    };
+
+    it("uploads the whole deck without a cursor, then keeps the one it gets", async () => {
+      await idb.putCardsSynced([makeCard({ sequence: CAT }), makeCard({ sequence: DOG })]);
+      respondWith({ cards: [], deletions: [], cursor: CURSOR, full: true });
+
+      await sync.handleSyncCards();
+
+      expect(sent[0]).not.toHaveProperty("since");
+      expect(sent[0].cards).toHaveLength(2);
+      expect(await idb.getSyncCursor()).toEqual(CURSOR);
+    });
+
+    it("with a cursor, uploads only what changed and sends the cursor", async () => {
+      await idb.putCardsSynced([makeCard({ sequence: CAT }), makeCard({ sequence: DOG })]);
+      await idb.setSyncCursor(CURSOR);
+      await idb.putCard(makeCard({ sequence: DOG, reps: 2 }));
+      const next = { ...CURSOR, rev: 3 };
+      respondWith({ cards: [], deletions: [], cursor: next, full: false });
+
+      await sync.handleSyncCards();
+
+      expect(sent[0].since).toEqual(CURSOR);
+      expect((sent[0].cards as SrsCard[]).map((c) => c.id)).toEqual([cardId(DOG, "recognition")]);
+      expect(await idb.getDirty()).toEqual([]);
+      expect(await idb.getSyncCursor()).toEqual(next);
+
+      // Nothing changed since: the next sync uploads nothing.
+      respondWith({ cards: [], deletions: [], cursor: { ...CURSOR, rev: 4 }, full: false });
+      await sync.handleSyncCards();
+      expect(sent[1].cards).toEqual([]);
+    });
+
+    it("keeps a card dirty when it changes while the sync is in flight", async () => {
+      await idb.setSyncCursor(CURSOR);
+      await idb.putCard(makeCard({ sequence: CAT, reps: 1 }));
+      respondWith(
+        { cards: [], deletions: [], cursor: { ...CURSOR, rev: 3 }, full: false },
+        {
+          duringFlight: async () => {
+            // A later millisecond than the first stamp, as any real edit is.
+            await new Promise((r) => setTimeout(r, 2));
+            await idb.putCard(makeCard({ sequence: CAT, reps: 2 }));
+          },
+        },
+      );
+
+      await sync.handleSyncCards();
+
+      expect((await idb.getDirty()).map((d) => d.id)).toEqual([cardId(CAT, "recognition")]);
+      respondWith({ cards: [], deletions: [], cursor: { ...CURSOR, rev: 4 }, full: false });
+      await sync.handleSyncCards();
+      expect((sent[1].cards as SrsCard[])[0].reps).toBe(2);
+    });
+
+    it("does not mark cards adopted from the server as dirty", async () => {
+      await idb.setSyncCursor(CURSOR);
+      respondWith({
+        cards: [makeCard({ sequence: CAT, updated_ms: 1_000 })],
+        deletions: [],
+        cursor: { ...CURSOR, rev: 3 },
+        full: false,
+      });
+
+      await sync.handleSyncCards();
+
+      expect(await idb.getCard(CAT, "recognition")).not.toBeNull();
+      expect(await idb.getDirty()).toEqual([]);
+    });
+
+    it("merges delta drill counts instead of replacing the cache", async () => {
+      const a = cardId(CAT, "recall");
+      const b = cardId(DOG, "recall");
+      respondWith({ cards: [], drill_counts: { [a]: 1, [b]: 5 }, cursor: CURSOR, full: true });
+      await sync.handleSyncCards();
+
+      respondWith({ cards: [], drill_counts: { [a]: 2 }, cursor: { ...CURSOR, rev: 3 }, full: false });
+      await sync.handleSyncCards();
+
+      expect(await counts()).toEqual([
+        { card_id: a, count: 2 },
+        { card_id: b, count: 5 },
+      ]);
+
+      // A full answer is the complete set again.
+      respondWith({ cards: [], drill_counts: { [a]: 2 }, cursor: { ...CURSOR, rev: 4 }, full: true });
+      await sync.handleSyncCards();
+      expect(await counts()).toEqual([{ card_id: a, count: 2 }]);
+    });
+
+    it("re-uploads the whole deck when the server refuses its cursor", async () => {
+      // A restored or reset server, or another account's cursor: the full
+      // answer may lack cards only this device holds, and the request that got
+      // it carried only the dirty ones.
+      await idb.putCardsSynced([makeCard({ sequence: CAT }), makeCard({ sequence: DOG })]);
+      await idb.setSyncCursor(CURSOR);
+      await idb.putCard(makeCard({ sequence: DOG, reps: 1 }));
+      const fresh = { epoch: "rotated.1", rev: 9 };
+      respondWith({ cards: [], deletions: [], cursor: fresh, full: true });
+      respondWith({ cards: [], deletions: [], cursor: { ...fresh, rev: 10 }, full: true });
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+
+      await sync.handleSyncCards();
+      expect(sent[0].since).toEqual(CURSOR);
+      expect(sent[0].cards).toHaveLength(1);
+      expect(await idb.getSyncCursor()).toBeNull();
+
+      // The retry is armed behind the usual debounce.
+      await vi.runAllTimersAsync();
+      vi.useRealTimers();
+      await vi.waitFor(async () => expect(await idb.getSyncCursor()).toEqual({ ...fresh, rev: 10 }));
+      expect(sent[1]).not.toHaveProperty("since");
+      expect(sent[1].cards).toHaveLength(2);
+      expect(await idb.getAllCards()).toHaveLength(2);
+    });
+
+    it("adopts the server's ruling on a card it uploaded, even with an older stamp", async () => {
+      // A fast device clock: the server clamped the upload's stamp to its own
+      // time. Keeping the local copy would refuse other devices' edits later.
+      await idb.setSyncCursor(CURSOR);
+      await idb.putCard(makeCard({ sequence: CAT, reps: 1 }));
+      const ruled = makeCard({ sequence: CAT, reps: 1, updated_ms: 1_000 });
+      respondWith({ cards: [ruled], deletions: [], cursor: { ...CURSOR, rev: 3 }, full: false });
+
+      await sync.handleSyncCards();
+
+      expect((await idb.getCard(CAT, "recognition"))?.updated_ms).toBe(1_000);
+    });
+
+    it("forgets the cursor when the server sends none", async () => {
+      // A server that predates delta sync: every answer is complete, and the
+      // next request must upload the whole deck again.
+      await idb.setSyncCursor(CURSOR);
+      respondWith({ cards: [], deletions: [] });
+
+      await sync.handleSyncCards();
+
+      expect(await idb.getSyncCursor()).toBeNull();
+    });
+
+    it("forgets the cursor on sign-in", async () => {
+      await idb.setSyncCursor(CURSOR);
+      fetchMock.mockImplementationOnce(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ token: "new-token" }),
+      }));
+
+      await sync.handleVerifyOtp({ serverUrl: SERVER, email: "a@b.c", code: "123456" });
+
+      expect(await idb.getSyncCursor()).toBeNull();
+    });
+
+    it("loses the cursor along with the cards when the database is wiped", async () => {
+      await idb.setSyncCursor(CURSOR);
+      vi.resetModules();
+      globalThis.indexedDB = new IDBFactory();
+      const fresh = await import("./idb.ts");
+
+      expect(await fresh.getSyncCursor()).toBeNull();
     });
   });
 

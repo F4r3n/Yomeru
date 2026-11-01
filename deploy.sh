@@ -10,7 +10,10 @@
 # Before the new server starts (and runs its schema migrations), the live
 # SQLite database is backed up to ./backups. Restoring that file is the only
 # clean way back from a bad server release, since old server code can't read
-# a migrated database.
+# a migrated database. After restoring one, rotate the delta-sync epoch before
+# the server takes traffic, so every client falls back to a full sync instead
+# of trusting a cursor the restored database never reached:
+#   sqlite3 yomeru.db "UPDATE sync_meta SET epoch = lower(hex(randomblob(8)))"
 #
 #   ./deploy.sh                  # backup + bundle + server
 #   FORCE_DICTS=1 ./deploy.sh    # ... and rebuild the dict bins

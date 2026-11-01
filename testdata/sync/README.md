@@ -34,10 +34,28 @@ coercing both sides, plus an exact key-set check.
   scheduler settings were never edited.
 - `request-legacy-client.json` — a client from before `updated_ms` existed:
   no version field, `deletions` as bare id strings. It must keep syncing.
+- `request-delta-app-client.json` / `request-delta-extension-client.json` — the
+  same payloads from a device that holds a cursor: they add `since`, the
+  cursor its last sync returned. With a cursor, `cards` holds only the cards
+  changed locally since that sync (the dirty set), not the whole deck.
 - `response.json` — what the server sends back, including `drill_counts`
   (card id → drill answers across the whole log). `deletions` are bare ids here
   on purpose: a tombstone the server still lists is a delete that stands, since
-  a genuine re-add would already have cleared it.
+  a genuine re-add would already have cleared it. `cursor` is what the client
+  sends back as `since`; `full: true` marks the complete state.
+- `response-delta.json` — the same shape with `full: false`: `cards`,
+  `deletions` and `drill_counts` hold only what changed after `since`, plus
+  the server's current copy of every card or tombstone id the client sent (so
+  an upload that lost the merge still learns who won). Clients merge a delta's
+  drill counts into their cache instead of replacing it.
+
+## Delta sync
+
+A request without `since` (or with one the server can't serve: another epoch,
+ahead of the server, or older than a pruned tombstone) gets a full answer, so
+clients from before delta sync keep working unchanged. A response without
+`cursor`/`full` comes from a server from before delta sync; clients treat it
+as full and keep no cursor.
 
 Changing a fixture means changing a wire contract. Both clients and the server
 have to agree, and the server must be deployed before clients that depend on it.

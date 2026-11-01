@@ -80,8 +80,8 @@ fn normalize_version(c: &Card, now: i64) -> f64 {
 /// A card whose id carries a tombstone is only accepted when it was added
 /// *after* the delete (`added_ms > deleted_at`), i.e. a genuine re-add — and
 /// only then is the tombstone cleared. This guard is what stops a delete from
-/// being undone: every client uploads its whole local card set on every sync,
-/// so a device that hasn't pulled the delete yet re-sends its stale copy, and
+/// being undone: a device that hasn't pulled the delete yet re-sends its stale
+/// copy (its whole deck on a full sync, or the card itself once it edits it), and
 /// without the check that copy would both resurrect the card and destroy the
 /// tombstone, leaving no device able to learn about the delete.
 ///
@@ -100,23 +100,26 @@ fn normalize_version(c: &Card, now: i64) -> f64 {
 #[cfg(test)]
 pub async fn upsert_cards(db: &Db, email: &str, cards: &[Card], now: i64) -> anyhow::Result<()> {
     let mut tx = db.begin().await.context("begin upsert tx")?;
-    upsert_cards_tx(&mut tx, email, cards, now).await?;
+    let clock = super::sync_meta::next_rev_tx(&mut tx).await?;
+    upsert_cards_tx(&mut tx, email, cards, now, clock.rev).await?;
     tx.commit().await.context("commit upsert tx")?;
     Ok(())
 }
 
 /// [`upsert_cards`] without the surrounding transaction, so a caller that has
 /// one open — the sync handler, which needs its writes and reads to land as a
-/// single snapshot — can enlist this in it.
+/// single snapshot — can enlist this in it. `rev` is the transaction's sync
+/// revision, stamped on every row this call writes.
 pub async fn upsert_cards_tx(
     conn: &mut sqlx::SqliteConnection,
     email: &str,
     cards: &[Card],
     now: i64,
+    rev: i64,
 ) -> anyhow::Result<()> {
-    // One read for the whole batch rather than one per card. Clients upload
-    // their entire deck on every sync, so a per-card lookup made the cost of a
-    // sync scale with deck size for the sake of a table that is usually tiny.
+    // One read for the whole batch rather than one per card. A full sync
+    // uploads the entire deck, so a per-card lookup made the cost of a sync
+    // scale with deck size for the sake of a table that is usually tiny.
     let tombstones: HashMap<String, i64> =
         sqlx::query("SELECT id, deleted_at FROM deletions WHERE email = ?1")
             .bind(email)
@@ -143,8 +146,8 @@ pub async fn upsert_cards_tx(
             "INSERT INTO cards
                  (email, id, sequence, direction, due_ms, stability, difficulty,
                   reps, lapses, state, last_review_ms, added_ms, status, priority,
-                  again_count, updated_ms)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)
+                  again_count, updated_ms, rev)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
              ON CONFLICT(email, id) DO UPDATE SET
                  sequence = excluded.sequence,
                  direction = excluded.direction,
@@ -159,7 +162,8 @@ pub async fn upsert_cards_tx(
                  status = excluded.status,
                  priority = excluded.priority,
                  again_count = excluded.again_count,
-                 updated_ms = excluded.updated_ms
+                 updated_ms = excluded.updated_ms,
+                 rev = excluded.rev
              WHERE excluded.updated_ms >= cards.updated_ms",
         )
         .bind(email)
@@ -178,6 +182,7 @@ pub async fn upsert_cards_tx(
         .bind(c.priority)
         .bind(c.again_count)
         .bind(normalize_version(c, now))
+        .bind(rev)
         .execute(&mut *conn)
         .await
         .context("upsert card")?;
@@ -194,41 +199,72 @@ pub async fn upsert_cards_tx(
     Ok(())
 }
 
+const CARD_COLUMNS: &str = "id, sequence, direction, due_ms, stability, difficulty,
+     reps, lapses, state, last_review_ms, added_ms, status, priority,
+     again_count, updated_ms";
+
+fn card_from_row(r: &sqlx::sqlite::SqliteRow) -> Card {
+    Card {
+        id: r.get("id"),
+        sequence: r.get("sequence"),
+        direction: r.get("direction"),
+        due_ms: r.get("due_ms"),
+        stability: r.get("stability"),
+        difficulty: r.get("difficulty"),
+        reps: r.get("reps"),
+        lapses: r.get("lapses"),
+        state: r.get("state"),
+        last_review_ms: r.get("last_review_ms"),
+        added_ms: r.get("added_ms"),
+        status: r.get("status"),
+        priority: r.get("priority"),
+        again_count: r.get("again_count"),
+        updated_ms: r.get("updated_ms"),
+    }
+}
+
+/// Every card `email` holds: the body of a full sync response.
 pub async fn get_all_cards<'e, E>(ex: E, email: &str) -> anyhow::Result<Vec<Card>>
 where
     E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
 {
-    let rows = sqlx::query(
-        "SELECT id, sequence, direction, due_ms, stability, difficulty,
-                reps, lapses, state, last_review_ms, added_ms, status, priority,
-                again_count, updated_ms
-         FROM cards WHERE email = ?1",
-    )
+    let rows = sqlx::query(&format!("SELECT {CARD_COLUMNS} FROM cards WHERE email = ?1"))
+        .bind(email)
+        .fetch_all(ex)
+        .await
+        .context("query get_all_cards")?;
+    Ok(rows.iter().map(card_from_row).collect())
+}
+
+/// The cards a delta sync returns for a client whose cursor is at `since`:
+/// those written after it, plus the server's copy of every id in `echo` (the
+/// ids the client just sent), whatever its revision.
+///
+/// The echo is what lets a client converge when its own upload didn't win.
+/// A card that lost the `updated_ms` merge keeps the server's older revision,
+/// and so does a re-add that outlived the tombstone the client just sent; the
+/// client holds neither, and a revision filter alone would never send them.
+pub async fn get_cards_since<'e, E>(
+    ex: E,
+    email: &str,
+    since: i64,
+    echo: &[&str],
+) -> anyhow::Result<Vec<Card>>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+{
+    let rows = sqlx::query(&format!(
+        "SELECT {CARD_COLUMNS} FROM cards
+         WHERE email = ?1
+           AND (rev > ?2 OR id IN (SELECT value FROM json_each(?3)))"
+    ))
     .bind(email)
+    .bind(since)
+    .bind(serde_json::to_string(echo).context("encode echo ids")?)
     .fetch_all(ex)
     .await
-    .context("query get_all_cards")?;
-    let cards = rows
-        .iter()
-        .map(|r| Card {
-            id: r.get("id"),
-            sequence: r.get("sequence"),
-            direction: r.get("direction"),
-            due_ms: r.get("due_ms"),
-            stability: r.get("stability"),
-            difficulty: r.get("difficulty"),
-            reps: r.get("reps"),
-            lapses: r.get("lapses"),
-            state: r.get("state"),
-            last_review_ms: r.get("last_review_ms"),
-            added_ms: r.get("added_ms"),
-            status: r.get("status"),
-            priority: r.get("priority"),
-            again_count: r.get("again_count"),
-            updated_ms: r.get("updated_ms"),
-        })
-        .collect();
-    Ok(cards)
+    .context("query get_cards_since")?;
+    Ok(rows.iter().map(card_from_row).collect())
 }
 
 #[cfg(test)]

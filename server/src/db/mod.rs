@@ -19,18 +19,21 @@ mod deletions;
 mod reviews;
 mod schema;
 mod settings;
+mod sync_meta;
 #[cfg(test)]
 pub(crate) mod test_support;
 
 pub use auth::{
     SessionUser, create_session, prune_expired_auth, store_otp, validate_session, verify_otp,
 };
-pub use cards::{Card, get_all_cards, upsert_cards_tx};
+pub use cards::{Card, get_all_cards, get_cards_since, upsert_cards_tx};
 pub use deletions::{
-    Deletion, DeletionEntry, apply_deletions_tx, get_all_deletions, prune_old_deletions,
+    Deletion, DeletionEntry, apply_deletions_tx, get_all_deletions, get_deletions_since,
+    prune_old_deletions,
 };
-pub use reviews::{ReviewLog, get_drill_counts, insert_reviews_tx};
+pub use reviews::{ReviewLog, get_drill_counts, get_drill_counts_since, insert_reviews_tx};
 pub use settings::{Settings, get_settings, upsert_settings};
+pub use sync_meta::{Cursor, next_rev_tx};
 
 pub type Db = SqlitePool;
 

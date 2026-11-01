@@ -54,7 +54,8 @@ fn is_valid(r: &ReviewLog) -> bool {
 }
 
 /// Appends `rows` to the user's log inside the caller's transaction. A row
-/// already stored (same card, same ms — a retried upload) is ignored.
+/// already stored (same card, same ms — a retried upload) is ignored and keeps
+/// the revision it was first stored with; new rows are stamped with `rev`.
 ///
 /// Times are stored exactly as sent, never clamped: they are part of the row's
 /// identity, so rewriting one would make a retried upload look new. Nothing is
@@ -65,6 +66,7 @@ pub async fn insert_reviews_tx(
     conn: &mut sqlx::SqliteConnection,
     user_id: i64,
     rows: &[ReviewLog],
+    rev: i64,
 ) -> anyhow::Result<()> {
     for r in rows.iter().filter(|r| is_valid(r)) {
         // Whole ms, as every client produces (`Date.now()`). The cast saturates
@@ -72,14 +74,15 @@ pub async fn insert_reviews_tx(
         #[allow(clippy::cast_possible_truncation)]
         let reviewed_ms = r.reviewed_ms as i64;
         sqlx::query(
-            "INSERT OR IGNORE INTO reviews (user_id, kind, card_id, reviewed_ms, rating)
-             VALUES (?1, ?2, ?3, ?4, ?5)",
+            "INSERT OR IGNORE INTO reviews (user_id, kind, card_id, reviewed_ms, rating, rev)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         )
         .bind(user_id)
         .bind(kind_code(&r.kind))
         .bind(&r.card_id)
         .bind(reviewed_ms)
         .bind(i64::from(r.rating))
+        .bind(rev)
         .execute(&mut *conn)
         .await
         .context("insert review log row")?;
@@ -111,12 +114,50 @@ where
         .collect())
 }
 
+/// Drill counts for a delta sync: the full per-card totals, but only for cards
+/// whose count may have changed since the client's cursor — those with a
+/// drill logged after `since`, and those in `echo` (the cards of the rows the
+/// client just sent; a retried row keeps its first revision, which can
+/// predate the cursor, yet the client still needs the count to settle it).
+/// The client merges these into its cache rather than replacing the cache.
+pub async fn get_drill_counts_since<'e, E>(
+    ex: E,
+    user_id: i64,
+    since: i64,
+    echo: &[&str],
+) -> anyhow::Result<HashMap<String, u32>>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+{
+    let rows = sqlx::query(
+        "SELECT card_id, COUNT(*) AS n FROM reviews
+         WHERE user_id = ?1 AND kind = ?2
+         GROUP BY card_id
+         HAVING MAX(rev) > ?3 OR card_id IN (SELECT value FROM json_each(?4))",
+    )
+    .bind(user_id)
+    .bind(DRILL)
+    .bind(since)
+    .bind(serde_json::to_string(echo).context("encode echo ids")?)
+    .fetch_all(ex)
+    .await
+    .context("count drills since")?;
+    Ok(rows
+        .iter()
+        .map(|r| {
+            let n: i64 = r.get("n");
+            (r.get("card_id"), u32::try_from(n).unwrap_or(u32::MAX))
+        })
+        .collect())
+}
+
 /// [`insert_reviews_tx`] in its own transaction. Test-only, like
 /// `upsert_cards`: production always enlists in the sync handler's.
 #[cfg(test)]
 pub async fn insert_reviews(db: &Db, user_id: i64, rows: &[ReviewLog]) -> anyhow::Result<()> {
     let mut tx = db.begin().await.context("begin reviews tx")?;
-    insert_reviews_tx(&mut tx, user_id, rows).await?;
+    let clock = super::sync_meta::next_rev_tx(&mut tx).await?;
+    insert_reviews_tx(&mut tx, user_id, rows, clock.rev).await?;
     tx.commit().await.context("commit reviews tx")?;
     Ok(())
 }

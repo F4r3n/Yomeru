@@ -1,7 +1,12 @@
 /**
  * Auto-sync: the debounced push of cards, tombstones and the review outbox to
- * the server, plus the
- * account handshake that authorises it.
+ * the server, plus the account handshake that authorises it.
+ *
+ * Syncs are deltas once the device holds a cursor: only cards in the dirty set
+ * go up, and only what changed after the cursor (plus the server's ruling on
+ * each id sent) comes back. Without a cursor — first sync, new account, wiped
+ * database, or an old server that sends none — the whole deck goes up and the
+ * server answers with everything.
  *
  * Every card mutation calls `bumpDbVersion`, which schedules a sync. A single
  * in-flight flag keeps requests from overlapping, and a retry flag makes sure a
@@ -14,8 +19,15 @@ import {
   getAllTombstones,
   applyRemoteDeletions,
   applySyncResponse,
+  clearDirty,
+  clearSyncCursor,
+  getCardsByIds,
+  getDirty,
   getOutbox,
+  getSyncCursor,
+  setSyncCursor,
   settleOutbox,
+  type SyncCursor,
 } from "./idb";
 import {
   adoptRemoteSettings,
@@ -87,7 +99,7 @@ function scheduleSync(): void {
 export const SYNC_STATUS_KEY = "_yomeru_sync_status";
 
 /** Runs a sync and publishes its outcome under {@link SYNC_STATUS_KEY}. */
-async function syncAndReport(): Promise<{ synced: number } | { error: string }> {
+async function syncAndReport(): Promise<{ synced: number; sent: number } | { error: string }> {
   const result = await doSync();
   const error = "error" in result ? result.error : null;
   await browser.storage.local
@@ -111,7 +123,7 @@ async function runSync(): Promise<void> {
   }
 }
 
-async function doSync(): Promise<{ synced: number } | { error: string }> {
+async function doSync(): Promise<{ synced: number; sent: number } | { error: string }> {
   const settings = await getSettings();
   if (!settings.serverUrl || !settings.serverToken) {
     return { error: "not authenticated" };
@@ -121,7 +133,13 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
     // the timestamp would be missing from the payload yet still look like the
     // server had ruled on it, and a returned tombstone would delete it.
     const uploadedAt = Date.now();
-    const allLocal = await getAllCards();
+    const cursor = await getSyncCursor();
+    // Read before the cards, so a card changed after this snapshot either
+    // misses the upload *and* stays dirty, or is in both.
+    const dirty = await getDirty();
+    const allLocal = cursor
+      ? await getCardsByIds(dirty.map((d) => d.id))
+      : await getAllCards();
     const localTombstones = await getAllTombstones();
     // Oldest first: the store's key order is by card id, not by time.
     const pending = (await getOutbox()).sort((a, b) => a.reviewed_ms - b.reviewed_ms);
@@ -147,6 +165,7 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
         deletions: localTombstones,
         settings: toSettingsPayload(settings),
         reviews: outbox,
+        ...(cursor ? { since: cursor } : {}),
       }),
     });
     // Must match `SESSION_EXPIRED` in app/shared/src/sync.rs, which keys the
@@ -158,7 +177,12 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
       deletions?: string[];
       settings?: SettingsPayload;
       drill_counts?: Record<string, number>;
+      cursor?: SyncCursor;
+      full?: boolean;
     };
+    // A server that predates delta sync sends neither field, and its answer is
+    // always the complete state.
+    const full = resp.full ?? true;
     // Merge rather than replace. Wholesale replacement looks server-authoritative
     // but loses every write that landed during the round trip: a card reviewed
     // mid-flight comes back carrying the server's older copy and is overwritten,
@@ -169,6 +193,7 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
       resp,
       localTombstones.map((t) => t.id),
       uploadedAt,
+      upload,
     );
     // The one thing replacement did that merging doesn't: drop legacy
     // word-keyed rows the server can never return, since they were never
@@ -180,12 +205,27 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
     // A server without the review log sends no counts and kept none of the
     // rows, so the outbox waits for one that does.
     const settled = resp.drill_counts !== undefined;
-    if (resp.drill_counts) await settleOutbox(outbox, resp.drill_counts);
+    if (resp.drill_counts) await settleOutbox(outbox, resp.drill_counts, full);
+    await clearDirty(dirty);
+    // Last: if anything above failed, the old cursor stays and the next sync
+    // asks for these rows again, which merging makes harmless.
+    //
+    // A full answer to a request that carried a cursor means the server
+    // couldn't serve a delta from it: its database was restored or reset, or
+    // the cursor belongs to another account. Either way it may lack cards that
+    // only this device holds, and this request sent only the dirty ones. So
+    // keep no cursor and sync again at once, uploading the whole deck.
+    const refused = cursor !== null && full;
+    if (refused || !resp.cursor) await clearSyncCursor();
+    else await setSyncCursor(resp.cursor);
+    if (refused) syncRetry = true;
     await writeCardsBackup();
     // Drain a backlog on the next pass (runSync re-arms on this flag) — only
     // from a sync that fully succeeded, so a failing one can't loop.
     if (settled && pending.length > outbox.length) syncRetry = true;
-    return { synced: resp.cards.length };
+    // `synced` counts cards received, `sent` cards uploaded: what crossed the
+    // wire, not the deck size.
+    return { synced: resp.cards.length, sent: upload.length };
   } catch (e) {
     return { error: e instanceof Error ? e.message : String(e) };
   }
@@ -224,6 +264,7 @@ export async function handleRequestOtp({
       const { token } = (await res.json()) as { token: string };
       const settings = await getSettings();
       await saveSettings({ ...settings, serverEmail: email, serverToken: token });
+      await clearSyncCursor();
       return { success: true, token };
     }
     return { success: true };
@@ -251,6 +292,9 @@ export async function handleVerifyOtp({
     const { token } = (await res.json()) as { token: string };
     const settings = await getSettings();
     await saveSettings({ ...settings, serverToken: token });
+    // Possibly another account, or another server: the cursor described what
+    // this device had seen of the old one.
+    await clearSyncCursor();
     // Return the token so popup callers can update their local state without
     // waiting for the storage.onChanged event to propagate.
     return { success: true, token };
@@ -260,7 +304,7 @@ export async function handleVerifyOtp({
 }
 
 export async function handleSyncCards(): Promise<
-  { synced: number } | { queued: true } | { error: string }
+  { synced: number; sent: number } | { queued: true } | { error: string }
 > {
   // Manual "Sync now" button: cancel any pending debounce and run
   // immediately. Mutations during the request are handled by the same

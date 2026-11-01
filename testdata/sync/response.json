@@ -28,5 +28,10 @@
   },
   "drill_counts": {
     "1467640::recognition": 1
-  }
+  },
+  "cursor": {
+    "epoch": "3f9c0a7d51e2b864.1",
+    "rev": 2
+  },
+  "full": true
 }

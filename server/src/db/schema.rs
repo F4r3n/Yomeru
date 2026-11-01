@@ -38,6 +38,7 @@ const CARDS_DDL: &str = "CREATE TABLE IF NOT EXISTS cards (
              priority        INTEGER NOT NULL DEFAULT 0,
              again_count     INTEGER NOT NULL DEFAULT 0,
              updated_ms      REAL NOT NULL DEFAULT 0,
+             rev             INTEGER NOT NULL DEFAULT 0,
              PRIMARY KEY (email, id)
          )";
 
@@ -60,6 +61,7 @@ const REVIEWS_DDL: &str = "CREATE TABLE IF NOT EXISTS reviews (
              card_id      TEXT NOT NULL,
              reviewed_ms  INTEGER NOT NULL,
              rating       INTEGER NOT NULL,
+             rev          INTEGER NOT NULL DEFAULT 0,
              PRIMARY KEY (user_id, kind, card_id, reviewed_ms)
          ) WITHOUT ROWID";
 
@@ -96,7 +98,18 @@ const DELETIONS_DDL: &str = "CREATE TABLE IF NOT EXISTS deletions (
              email       TEXT NOT NULL,
              id          TEXT NOT NULL,
              deleted_at  INTEGER NOT NULL,
+             rev         INTEGER NOT NULL DEFAULT 0,
              PRIMARY KEY (email, id)
+         )";
+
+/// The delta-sync clock; see `db::sync_meta`. A single row: `epoch` names this
+/// database's `rev` sequence, `rev` is the last revision handed out, and
+/// `pruned_rev` the newest revision a pruned tombstone carried.
+const SYNC_META_DDL: &str = "CREATE TABLE IF NOT EXISTS sync_meta (
+             id          INTEGER PRIMARY KEY CHECK (id = 1),
+             epoch       TEXT NOT NULL,
+             rev         INTEGER NOT NULL,
+             pruned_rev  INTEGER NOT NULL
          )";
 
 pub(super) async fn init_schema(pool: &SqlitePool) -> anyhow::Result<()> {
@@ -117,6 +130,7 @@ pub(super) async fn init_schema(pool: &SqlitePool) -> anyhow::Result<()> {
         SESSIONS_DDL,
         DELETIONS_DDL,
         REVIEWS_DDL,
+        SYNC_META_DDL,
     ] {
         sqlx::query(s)
             .execute(pool)
@@ -125,6 +139,36 @@ pub(super) async fn init_schema(pool: &SqlitePool) -> anyhow::Result<()> {
     }
     add_otp_attempts_column(pool).await?;
     add_cards_again_count_column(pool).await?;
+    for table in ["cards", "deletions", "reviews"] {
+        add_rev_column(pool, table).await?;
+    }
+    for ddl in [
+        "CREATE INDEX IF NOT EXISTS cards_by_rev ON cards (email, rev)",
+        "CREATE INDEX IF NOT EXISTS deletions_by_rev ON deletions (email, rev)",
+    ] {
+        sqlx::query(ddl)
+            .execute(pool)
+            .await
+            .context("create rev index")?;
+    }
+    super::sync_meta::seed(pool).await?;
+    Ok(())
+}
+
+/// Adds the delta-sync `rev` column to a table created before delta sync.
+/// Existing rows read as revision 0. That loses nothing: no client holds a
+/// cursor yet, so each one's first sync after the upgrade is a full one.
+/// No-op once present.
+async fn add_rev_column(pool: &SqlitePool, table: &str) -> anyhow::Result<()> {
+    if columns(pool, table).await?.iter().any(|c| c == "rev") {
+        return Ok(());
+    }
+    sqlx::query(&format!(
+        "ALTER TABLE {table} ADD COLUMN rev INTEGER NOT NULL DEFAULT 0"
+    ))
+    .execute(pool)
+    .await
+    .with_context(|| format!("add {table}.rev column"))?;
     Ok(())
 }
 
@@ -278,8 +322,10 @@ async fn drop_plaintext_sessions(pool: &SqlitePool) -> anyhow::Result<()> {
 /// `priority`, and now the addition of the `updated_ms` merge key — and will
 /// cover future ones the same way: no data migration, users re-import via
 /// export/import. Dropping costs nothing here beyond one re-upload: the table
-/// is only a mirror of what clients hold locally, and every client pushes its
-/// full card set on each sync. Checking for the newest known column
+/// is only a mirror of what clients hold locally, and a client pushes its full
+/// card set on a full sync. Delta clients only upload what they changed, so
+/// the drop also rotates the sync epoch, which turns every client's next sync
+/// back into a full one. Checking for the newest known column
 /// (`updated_ms`) is sufficient on its own, since a table missing it is also
 /// missing everything older (`sequence` included). No-op on a fresh DB or one
 /// already on the current layout.
@@ -295,6 +341,12 @@ async fn drop_stale_cards(pool: &SqlitePool) -> anyhow::Result<()> {
         .execute(pool)
         .await
         .context("drop stale cards table")?;
+    if !columns(pool, "sync_meta").await?.is_empty() {
+        sqlx::query("UPDATE sync_meta SET epoch = lower(hex(randomblob(8)))")
+            .execute(pool)
+            .await
+            .context("rotate sync epoch after dropping cards")?;
+    }
     Ok(())
 }
 
@@ -641,6 +693,44 @@ mod tests {
         let cards = get_all_cards(&pool, ALICE).await.unwrap();
         assert_eq!(cards.len(), 1, "existing row must survive the upgrade");
         assert_eq!(cards[0].again_count, 0);
+    }
+
+    #[tokio::test]
+    async fn adds_rev_to_tables_from_before_delta_sync_without_dropping_rows() {
+        let opts = SqliteConnectOptions::from_str(":memory:").unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect_with(opts)
+            .await
+            .unwrap();
+        sqlx::query(
+            "CREATE TABLE deletions (
+                 email TEXT NOT NULL, id TEXT NOT NULL, deleted_at INTEGER NOT NULL,
+                 PRIMARY KEY (email, id))",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query("INSERT INTO deletions VALUES (?1, 'a::recognition', 5)")
+            .bind(ALICE)
+            .execute(&pool)
+            .await
+            .unwrap();
+
+        init_schema(&pool).await.unwrap();
+        init_schema(&pool).await.unwrap();
+
+        for table in ["cards", "deletions", "reviews"] {
+            assert!(
+                columns(&pool, table).await.unwrap().iter().any(|c| c == "rev"),
+                "{table} has no rev column"
+            );
+        }
+        let rev: i64 = sqlx::query_scalar("SELECT rev FROM deletions WHERE id = 'a::recognition'")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(rev, 0, "existing rows survive at revision 0");
     }
 
     #[tokio::test]
