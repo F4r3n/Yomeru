@@ -7,8 +7,15 @@
 # server with empty volumes. Publishing the bundle to the web root is
 # done afterwards by deploy-web.sh, which is the part that needs sudo.
 #
-#   ./deploy.sh                  # bundle + server
+# Before the new server starts (and runs its schema migrations), the live
+# SQLite database is backed up to ./backups. Restoring that file is the only
+# clean way back from a bad server release, since old server code can't read
+# a migrated database.
+#
+#   ./deploy.sh                  # backup + bundle + server
 #   FORCE_DICTS=1 ./deploy.sh    # ... and rebuild the dict bins
+#   SKIP_DB_BACKUP=1 ./deploy.sh # deploy without a backup (not recommended)
+#   KEEP_BACKUPS=20 ./deploy.sh  # how many backups to keep (default 10)
 
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -21,22 +28,78 @@ fi
 REPO_ROOT="$(pwd)"
 WEB_DIST_DIR="${WEB_DIST_DIR:-$REPO_ROOT/web-dist}"
 COMPOSE=(podman-compose -f server/docker-compose.yml)
+BACKUP_DIR="${BACKUP_DIR:-$REPO_ROOT/backups}"
+KEEP_BACKUPS="${KEEP_BACKUPS:-10}"
+CONTAINER=yomeru-server
+DB_PATH=/data/yomeru.db
+
+# Online backup of the live database through SQLite's backup API, run inside
+# the server container (its image ships sqlite3). Safe while the server is
+# writing, unlike copying the file, and it folds in the WAL. The copy is
+# integrity-checked before it's kept.
+backup_db() {
+    if [[ "${SKIP_DB_BACKUP:-0}" == "1" ]]; then
+        echo "    SKIP_DB_BACKUP=1 — not backing up the database"
+        return
+    fi
+    if ! podman container exists "$CONTAINER"; then
+        echo "    no $CONTAINER container yet (first deploy?) — nothing to back up"
+        return
+    fi
+    if [[ "$(podman inspect -f '{{.State.Running}}' "$CONTAINER")" != "true" ]]; then
+        echo "deploy.sh: $CONTAINER exists but isn't running, so its database can't be backed up." >&2
+        echo "  Start it (${COMPOSE[*]} up -d $CONTAINER) and retry, or rerun with SKIP_DB_BACKUP=1." >&2
+        exit 1
+    fi
+
+    local stamp tmp dest
+    stamp="$(date +%Y%m%d-%H%M%S)"
+    tmp="/tmp/yomeru-backup-$stamp.db"
+    dest="$BACKUP_DIR/yomeru-$stamp.db"
+    mkdir -p "$BACKUP_DIR"
+
+    podman exec "$CONTAINER" sqlite3 "$DB_PATH" ".backup '$tmp'"
+    local check
+    check="$(podman exec "$CONTAINER" sqlite3 "$tmp" 'PRAGMA integrity_check')"
+    if [[ "$check" != "ok" ]]; then
+        podman exec "$CONTAINER" rm -f "$tmp" || true
+        echo "deploy.sh: backup failed its integrity check, aborting: $check" >&2
+        exit 1
+    fi
+    podman cp "$CONTAINER:$tmp" "$dest"
+    podman exec "$CONTAINER" rm -f "$tmp"
+    chmod 600 "$dest" # holds every user's email and session hashes
+    echo "    saved $dest ($(du -h "$dest" | cut -f1))"
+
+    # Keep the newest $KEEP_BACKUPS; the timestamped names sort by age.
+    local old
+    old="$(ls -1 "$BACKUP_DIR"/yomeru-*.db 2>/dev/null | sort | head -n -"$KEEP_BACKUPS")"
+    if [[ -n "$old" ]]; then
+        echo "$old" | xargs rm -f
+        echo "    pruned $(echo "$old" | wc -l) old backup(s), keeping $KEEP_BACKUPS"
+    fi
+}
 
 mkdir -p "$WEB_DIST_DIR"
 
-echo "==> [1/3] building yomeru-web bundle via podman"
+echo "==> [1/4] building yomeru-web bundle via podman"
 TMP_BUNDLE="$(mktemp -d)"
 trap 'rm -rf "$TMP_BUNDLE"' EXIT
 
 podman build -f app/web/Dockerfile --target export \
     --output "type=local,dest=$TMP_BUNDLE" .
 
-echo "==> [2/3] syncing bundle to $WEB_DIST_DIR (pruning stale assets)"
+echo "==> [2/4] syncing bundle to $WEB_DIST_DIR (pruning stale assets)"
 # Trailing slash copies the contents, not the folder; --delete drops old
 # hashed chunks.
 rsync -a --delete "$TMP_BUNDLE/" "$WEB_DIST_DIR/"
 
-echo "==> [3/3] building & launching yomeru-server via podman compose"
+echo "==> [3/4] backing up the database to $BACKUP_DIR"
+# Right before the swap, so the backup misses as few writes as possible.
+# The new server may migrate the schema on startup; this is the way back.
+backup_db
+
+echo "==> [4/4] building & launching yomeru-server via podman compose"
 # Builds both images. --force-recreate because podman-compose only
 # recreates a container when docker-compose.yml changed, not its image:
 # without it the old server keeps running. Volumes are kept. The dict
@@ -60,3 +123,4 @@ echo "Useful follow-ups:"
 echo "  Logs:    ${COMPOSE[*]} logs -f yomeru-server"
 echo "  Stop:    ${COMPOSE[*]} down"
 echo "  Status:  ${COMPOSE[*]} ps"
+echo "  Backups: ls $BACKUP_DIR"

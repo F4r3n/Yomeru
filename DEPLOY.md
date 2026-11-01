@@ -388,6 +388,45 @@ image and writes the old format again.
 └── yomeru.db           # SQLite — sync state
 ```
 
+## Database backups
+
+`./deploy.sh` backs up the live SQLite database before it swaps in the new
+server, because a new server may migrate the schema on startup and old server
+code can't read a migrated database. Restoring the backup is the way back from
+a bad server release; redeploying the old server alone is not.
+
+- Backups land in `./backups/yomeru-YYYYMMDD-HHMMSS.db` (git-ignored, mode
+  600: they hold every user's email). The newest 10 are kept; set
+  `KEEP_BACKUPS` to change that.
+- They are taken online with SQLite's backup API inside the running
+  `yomeru-server` container and integrity-checked before being kept. The
+  deploy aborts if the container exists but is stopped; start it, or rerun
+  with `SKIP_DB_BACKUP=1` to deploy without a backup.
+- Copy them off the host now and then: they live on the same disk as the
+  database.
+
+To restore one (this replaces the current database, so take a fresh backup
+first if it matters):
+
+```bash
+B=backups/yomeru-20261101-120000.db         # the backup to restore
+podman-compose -f server/docker-compose.yml stop yomeru-server
+# Drop the WAL files too: replaying the newer database's WAL onto the
+# restored file would corrupt it. Runs as root (your user, under rootless
+# Podman) to read the 600 backup, then hands the file back to the server user.
+podman run --rm --volumes-from yomeru-server -v "$PWD/$B:/restore.db:ro,Z" \
+    --user root --entrypoint sh localhost/yomeru-server:latest -c \
+    'rm -f /data/yomeru.db-wal /data/yomeru.db-shm &&
+     cp /restore.db /data/yomeru.db &&
+     chown yomeru:yomeru /data/yomeru.db && chmod 600 /data/yomeru.db'
+podman-compose -f server/docker-compose.yml start yomeru-server
+```
+
+To roll back a server release, redeploy the old version first (check out its
+commit and run `./deploy.sh`), then restore the backup taken just before the
+bad deploy. A backup also works under any newer server, which migrates it
+again on startup.
+
 ## Troubleshooting
 
 - **Server exits immediately with `failed to load dict data from …`**
