@@ -326,10 +326,12 @@ unsynced data:
 
 1. On every device that uses the site/extension: Settings → Export, save
    the JSON somewhere safe.
-2. Update, using the commands below (or run `./deploy.sh` from the repo
-   root, which does both the website rebuild and
-   `podman-compose -f server/docker-compose.yml up -d --build` for the
-   server in one shot).
+2. Update, using the commands below, or from the repo root run
+   `./deploy.sh` (as your user: builds the website bundle into
+   `web-dist/` and runs `podman-compose -f server/docker-compose.yml up -d
+   --build --force-recreate`; add `FORCE_DICTS=1` to also rebuild the dicts in the right
+   order) and then `sudo ./deploy-web.sh [web root]` (copies `web-dist/`
+   to the web root, `/var/www/html/yomeru` by default).
 3. Open the site/extension on each device again — auto-sync (or Settings
    → Sync now) repopulates the fresh server table from local IndexedDB.
 4. Only if a device's local IndexedDB was itself lost: Settings → Import
@@ -337,7 +339,7 @@ unsynced data:
 
 ```bash
 # new server binary (Podman — only rebuilds the server stage, dict volume untouched)
-podman-compose -f server/docker-compose.yml up -d --build yomeru-server
+podman-compose -f server/docker-compose.yml up -d --build --force-recreate yomeru-server
 # or, for systemd:
 cargo build --release -p server && sudo install -m 0755 target/release/yomeru-server /usr/local/bin/ && sudo systemctl restart yomeru-server
 
@@ -362,15 +364,16 @@ servers from that release on, so update in this order:
 
 ```bash
 # 1. new server, still on the old dict volume (it reads version 1, minus parts)
-podman-compose -f server/docker-compose.yml up -d --build yomeru-server
+podman-compose -f server/docker-compose.yml up -d --build --force-recreate yomeru-server
 # 2. rebuild the builder image, then the dicts, then pick them up
 podman-compose -f server/docker-compose.yml build yomeru-dicts
 podman-compose -f server/docker-compose.yml run --rm -e FORCE=1 yomeru-dicts
 podman-compose -f server/docker-compose.yml restart yomeru-server
 ```
 
-Rebuilding the dicts first leaves the old server unable to start until
-step 1 is done. Without `build yomeru-dicts`, the builder runs its old
+`FORCE_DICTS=1 ./deploy.sh` runs these steps in this order. Rebuilding
+the dicts first leaves the old server unable to start until step 1 is
+done. Without `build yomeru-dicts`, the builder runs its old
 image and writes the old format again.
 
 ## Layout on the deploy host
