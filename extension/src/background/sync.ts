@@ -1,5 +1,6 @@
 /**
- * Auto-sync: the debounced push of cards and tombstones to the server, plus the
+ * Auto-sync: the debounced push of cards, tombstones and the review outbox to
+ * the server, plus the
  * account handshake that authorises it.
  *
  * Every card mutation calls `bumpDbVersion`, which schedules a sync. A single
@@ -13,6 +14,8 @@ import {
   getAllTombstones,
   applyRemoteDeletions,
   applySyncResponse,
+  getOutbox,
+  settleOutbox,
 } from "./idb";
 import {
   adoptRemoteSettings,
@@ -42,6 +45,12 @@ export async function bumpDbVersion(): Promise<void> {
 // finishes so no change is silently dropped.
 
 const SYNC_DEBOUNCE_MS = 2_000;
+/**
+ * Most review-log rows one sync uploads, so a backlog never outgrows the
+ * server's request body limit; the rest go up on the following syncs. Mirrors
+ * `OUTBOX_BATCH` in app/shared/src/sync.rs.
+ */
+export const OUTBOX_BATCH = 1_000;
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
 let syncInFlight = false;
 let syncRetry = false;
@@ -114,6 +123,9 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
     const uploadedAt = Date.now();
     const allLocal = await getAllCards();
     const localTombstones = await getAllTombstones();
+    // Oldest first: the store's key order is by card id, not by time.
+    const pending = (await getOutbox()).sort((a, b) => a.reviewed_ms - b.reviewed_ms);
+    const outbox = pending.slice(0, OUTBOX_BATCH);
     // Only sequence-keyed cards can be represented server-side. Legacy
     // word-keyed rows (no numeric `sequence`) are left out of the upload so
     // they can't 422 the request.
@@ -134,6 +146,7 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
         cards: upload,
         deletions: localTombstones,
         settings: toSettingsPayload(settings),
+        reviews: outbox,
       }),
     });
     // Must match `SESSION_EXPIRED` in app/shared/src/sync.rs, which keys the
@@ -144,6 +157,7 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
       cards: SrsCard[];
       deletions?: string[];
       settings?: SettingsPayload;
+      drill_counts?: Record<string, number>;
     };
     // Merge rather than replace. Wholesale replacement looks server-authoritative
     // but loses every write that landed during the round trip: a card reviewed
@@ -163,7 +177,14 @@ async function doSync(): Promise<{ synced: number } | { error: string }> {
     const legacy = allLocal.filter((c) => !syncable(c)).map((c) => c.id);
     await applyRemoteDeletions(legacy);
     if (resp.settings) await adoptRemoteSettings(resp.settings);
+    // A server without the review log sends no counts and kept none of the
+    // rows, so the outbox waits for one that does.
+    const settled = resp.drill_counts !== undefined;
+    if (resp.drill_counts) await settleOutbox(outbox, resp.drill_counts);
     await writeCardsBackup();
+    // Drain a backlog on the next pass (runSync re-arms on this flag) — only
+    // from a sync that fully succeeded, so a failing one can't loop.
+    if (settled && pending.length > outbox.length) syncRetry = true;
     return { synced: resp.cards.length };
   } catch (e) {
     return { error: e instanceof Error ? e.message : String(e) };

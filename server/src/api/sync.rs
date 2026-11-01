@@ -5,6 +5,7 @@
 //! [`crate::db::deletions`]; this module is the transport and the transaction
 //! boundary.
 
+use std::collections::HashMap;
 use std::net::SocketAddr;
 
 use axum::{
@@ -32,6 +33,10 @@ pub struct SyncBody {
     /// don't send settings keep working (cards-only sync).
     #[serde(default)]
     pub settings: Option<db::Settings>,
+    /// Answers logged since the client's last successful sync. Optional so
+    /// older clients, which keep no log, still sync.
+    #[serde(default)]
+    pub reviews: Vec<db::ReviewLog>,
 }
 
 #[derive(Serialize)]
@@ -45,6 +50,9 @@ pub struct SyncResponse {
     /// synced any. Omitted from the JSON when absent.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub settings: Option<db::Settings>,
+    /// Drill answers per card id across the user's whole log, after this
+    /// request's rows were added. Older clients ignore it.
+    pub drill_counts: HashMap<String, u32>,
 }
 
 pub async fn sync_handler(
@@ -76,11 +84,11 @@ pub async fn sync_handler(
     };
 
     let now = now_ms();
-    let email = match db::validate_session(&state.db, &token, now)
+    let db::SessionUser { id: user_id, email } = match db::validate_session(&state.db, &token, now)
         .await
         .map_err(|e| db_err("validate_session", e))?
     {
-        Some(e) => e,
+        Some(u) => u,
         None => {
             return Err((
                 StatusCode::UNAUTHORIZED,
@@ -109,6 +117,10 @@ pub async fn sync_handler(
         .await
         .map_err(|e| db_err("upsert_cards", e))?;
 
+    db::insert_reviews_tx(&mut tx, user_id, &body.reviews)
+        .await
+        .map_err(|e| db_err("insert_reviews", e))?;
+
     if let Some(ref s) = body.settings {
         db::upsert_settings(&mut *tx, &email, s)
             .await
@@ -127,6 +139,10 @@ pub async fn sync_handler(
         .await
         .map_err(|e| db_err("get_settings", e))?;
 
+    let drill_counts = db::get_drill_counts(&mut *tx, user_id)
+        .await
+        .map_err(|e| db_err("get_drill_counts", e))?;
+
     tx.commit()
         .await
         .map_err(|e| db_err("commit sync tx", e.into()))?;
@@ -135,6 +151,7 @@ pub async fn sync_handler(
         cards: merged,
         deletions: tombstones,
         settings,
+        drill_counts,
     })
     .into_response())
 }

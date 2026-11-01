@@ -41,6 +41,28 @@ const CARDS_DDL: &str = "CREATE TABLE IF NOT EXISTS cards (
              PRIMARY KEY (email, id)
          )";
 
+/// Append-only answer log; see `db::reviews`. The largest table by far, so it
+/// is laid out to stay small:
+/// - `WITHOUT ROWID` stores rows in primary-key order, so the key isn't kept a
+///   second time in a separate index.
+/// - `kind` is `0` = review, `1` = drill, and `reviewed_ms` an integer, which
+///   SQLite packs tighter than text and 8-byte floats.
+/// - `user_id` instead of the email: an integer of a byte or two, not ~25
+///   bytes of text on every row.
+/// - `kind` leads the key after `user_id`, so counting a user's drills is a range
+///   scan over just their drill rows; no extra index needed.
+///
+/// A row is identified by the card and the client's answer time (a card is
+/// never answered as both kinds in the same ms), so a re-sent upload is ignored.
+const REVIEWS_DDL: &str = "CREATE TABLE IF NOT EXISTS reviews (
+             user_id      INTEGER NOT NULL REFERENCES users (id),
+             kind         INTEGER NOT NULL,
+             card_id      TEXT NOT NULL,
+             reviewed_ms  INTEGER NOT NULL,
+             rating       INTEGER NOT NULL,
+             PRIMARY KEY (user_id, kind, card_id, reviewed_ms)
+         ) WITHOUT ROWID";
+
 /// Pending one-time codes, one row per email. `attempts` counts failed guesses
 /// so a code can be burned before its TTL runs out.
 const OTPS_DDL: &str = "CREATE TABLE IF NOT EXISTS otps (
@@ -51,11 +73,20 @@ const OTPS_DDL: &str = "CREATE TABLE IF NOT EXISTS otps (
              attempts        INTEGER NOT NULL DEFAULT 0
          )";
 
+/// One row per account, created on first sign-in. The integer id keys the
+/// tables that hold many rows per user, where repeating the email would be
+/// most of the row. `cards`, `settings` and `deletions` still key on email;
+/// `otps` always will, since a code is requested before the account exists.
+const USERS_DDL: &str = "CREATE TABLE IF NOT EXISTS users (
+             id     INTEGER PRIMARY KEY,
+             email  TEXT NOT NULL UNIQUE
+         )";
+
 /// Live sessions, keyed on the token's hash so a leaked database copy yields no
 /// usable bearer tokens.
 const SESSIONS_DDL: &str = "CREATE TABLE IF NOT EXISTS sessions (
              token_hash  TEXT PRIMARY KEY,
-             email       TEXT NOT NULL,
+             user_id     INTEGER NOT NULL REFERENCES users (id),
              expires_at  INTEGER NOT NULL
          )";
 
@@ -72,12 +103,20 @@ pub(super) async fn init_schema(pool: &SqlitePool) -> anyhow::Result<()> {
     drop_stale_cards(pool).await?;
     drop_stale_settings(pool).await?;
     drop_plaintext_sessions(pool).await?;
+    drop_email_keyed_reviews(pool).await?;
+    sqlx::query(USERS_DDL)
+        .execute(pool)
+        .await
+        .context("create users table")?;
+    backfill_users(pool).await?;
+    move_sessions_to_user_id(pool).await?;
     for s in [
         CARDS_DDL,
         SETTINGS_DDL,
         OTPS_DDL,
         SESSIONS_DDL,
         DELETIONS_DDL,
+        REVIEWS_DDL,
     ] {
         sqlx::query(s)
             .execute(pool)
@@ -123,6 +162,91 @@ async fn add_otp_attempts_column(pool: &SqlitePool) -> anyhow::Result<()> {
         .execute(pool)
         .await
         .context("add otps.attempts column")?;
+    Ok(())
+}
+
+/// Column names of `table`; empty if it doesn't exist.
+async fn columns(pool: &SqlitePool, table: &str) -> anyhow::Result<Vec<String>> {
+    sqlx::query_scalar("SELECT name FROM pragma_table_info(?1)")
+        .bind(table)
+        .fetch_all(pool)
+        .await
+        .with_context(|| format!("inspect {table} columns"))
+}
+
+/// Drops a `reviews` table from the short-lived build that keyed it on email.
+/// That build was never deployed, so this only clears dev databases; the rows
+/// are expendable test data. No-op on a fresh DB or the current layout.
+async fn drop_email_keyed_reviews(pool: &SqlitePool) -> anyhow::Result<()> {
+    if columns(pool, "reviews").await?.iter().any(|c| c == "email") {
+        sqlx::query("DROP TABLE reviews")
+            .execute(pool)
+            .await
+            .context("drop email-keyed reviews table")?;
+    }
+    Ok(())
+}
+
+/// Gives every account that predates the `users` table an id: anyone with a
+/// session, cards or settings. Runs on every startup and is a no-op once they
+/// all exist, which also covers a database restored from an older backup.
+async fn backfill_users(pool: &SqlitePool) -> anyhow::Result<()> {
+    let sessions_have_email = columns(pool, "sessions")
+        .await?
+        .iter()
+        .any(|c| c == "email");
+    let mut sources = vec!["cards", "settings"];
+    if sessions_have_email {
+        sources.push("sessions");
+    }
+    for table in sources {
+        if columns(pool, table).await?.is_empty() {
+            continue;
+        }
+        sqlx::query(&format!(
+            "INSERT OR IGNORE INTO users (email) SELECT DISTINCT email FROM {table}"
+        ))
+        .execute(pool)
+        .await
+        .with_context(|| format!("backfill users from {table}"))?;
+    }
+    Ok(())
+}
+
+/// Rewrites an email-keyed `sessions` table onto `user_id`, keeping every live
+/// session so nobody is signed out by the upgrade. Runs after
+/// [`backfill_users`], so every session's email has an id to join on. No-op on
+/// a fresh DB or one already on the current layout.
+async fn move_sessions_to_user_id(pool: &SqlitePool) -> anyhow::Result<()> {
+    if !columns(pool, "sessions")
+        .await?
+        .iter()
+        .any(|c| c == "email")
+    {
+        return Ok(());
+    }
+    let mut tx = pool.begin().await.context("begin sessions migration")?;
+    sqlx::query("ALTER TABLE sessions RENAME TO sessions_by_email")
+        .execute(&mut *tx)
+        .await
+        .context("rename email-keyed sessions")?;
+    sqlx::query(SESSIONS_DDL)
+        .execute(&mut *tx)
+        .await
+        .context("create user-keyed sessions")?;
+    sqlx::query(
+        "INSERT INTO sessions (token_hash, user_id, expires_at)
+         SELECT s.token_hash, u.id, s.expires_at
+         FROM sessions_by_email s JOIN users u ON u.email = s.email",
+    )
+    .execute(&mut *tx)
+    .await
+    .context("copy sessions onto user ids")?;
+    sqlx::query("DROP TABLE sessions_by_email")
+        .execute(&mut *tx)
+        .await
+        .context("drop email-keyed sessions")?;
+    tx.commit().await.context("commit sessions migration")?;
     Ok(())
 }
 
@@ -238,6 +362,59 @@ mod tests {
         assert!(cols.iter().any(|c| c == "token_hash"));
         assert!(!cols.iter().any(|c| c == "token"));
         assert!(validate_session(&pool, "raw", 0).await.unwrap().is_none());
+    }
+
+    #[tokio::test]
+    async fn moves_email_keyed_sessions_onto_user_ids_without_signing_anyone_out() {
+        let opts = SqliteConnectOptions::from_str(":memory:").unwrap();
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect_with(opts)
+            .await
+            .unwrap();
+        // The layout before `users` existed: sessions and cards keyed on email.
+        sqlx::query(
+            "CREATE TABLE sessions (
+                 token_hash TEXT PRIMARY KEY, email TEXT NOT NULL, expires_at INTEGER NOT NULL)",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query("INSERT INTO sessions VALUES (?1, ?2, 9999)")
+            .bind(crate::db::auth::token_hash("alice-token"))
+            .bind(ALICE)
+            .execute(&pool)
+            .await
+            .unwrap();
+        init_schema(&pool).await.unwrap(); // creates cards on the current layout
+        upsert_cards(
+            &pool,
+            BOB,
+            &[card("1467640::recognition", Some(100.0))],
+            NOW,
+        )
+        .await
+        .unwrap();
+        // Idempotent, and picks up Bob, who has cards but no session.
+        init_schema(&pool).await.unwrap();
+
+        let alice = validate_session(&pool, "alice-token", 0)
+            .await
+            .unwrap()
+            .expect("session survives the upgrade");
+        assert_eq!(alice.email, ALICE);
+        let users: Vec<String> = sqlx::query_scalar("SELECT email FROM users ORDER BY email")
+            .fetch_all(&pool)
+            .await
+            .unwrap();
+        assert_eq!(users, vec![ALICE.to_string(), BOB.to_string()]);
+        let cols: Vec<String> =
+            sqlx::query_scalar("SELECT name FROM pragma_table_info('sessions')")
+                .fetch_all(&pool)
+                .await
+                .unwrap();
+        assert!(cols.iter().any(|c| c == "user_id"));
+        assert!(!cols.iter().any(|c| c == "email"));
     }
 
     #[tokio::test]

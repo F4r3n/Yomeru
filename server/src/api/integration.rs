@@ -165,6 +165,8 @@ struct SyncResp {
     cards: Vec<db::Card>,
     #[serde(default)]
     deletions: Vec<String>,
+    #[serde(default)]
+    drill_counts: HashMap<String, u32>,
 }
 
 impl SyncResp {
@@ -598,6 +600,8 @@ mod wire {
         assert_eq!(resp.cards.len(), 1);
         assert_eq!(resp.deletions, vec!["1467640::recall".to_string()]);
         assert_eq!(resp.cards[0].again_count, 2, "again_count must round-trip");
+        // One drill row and one review row: only the drill counts.
+        assert_eq!(resp.drill_counts.get("1467640::recognition"), Some(&1));
         // Float `deleted_at` must survive as a real time, not collapse to
         // receipt time — that is the whole point of sending it.
         let stored = db::test_support::deleted_at(&h.db, EMAIL, "1467640::recall")
@@ -626,6 +630,11 @@ mod wire {
 
         let resp: SyncResp = serde_json::from_value(body).unwrap();
         assert_eq!(resp.cards.len(), 1);
+        assert_eq!(
+            resp.drill_counts.get("1467640::recognition"),
+            Some(&1),
+            "an integer reviewed_ms must be accepted like a float one"
+        );
         let stored = db::test_support::deleted_at(&h.db, EMAIL, "1467640::recall")
             .await
             .expect("tombstone recorded");
@@ -659,6 +668,25 @@ mod wire {
         // client does send, so the card can still win or lose a merge.
         assert_eq!(c.updated_ms, 1_756_000_000_000.0);
         assert_eq!(resp.deletions, vec!["1467640::recall".to_string()]);
+    }
+
+    #[tokio::test]
+    async fn a_resent_review_log_is_counted_once() {
+        // A client whose sync response was lost re-sends the same outbox.
+        let h = Harness::new().await;
+        for _ in 0..2 {
+            h.post(
+                "/api/sync",
+                Some(&h.token),
+                &fixture("request-app-client.json"),
+            )
+            .await;
+        }
+        let (_, body) = h
+            .post("/api/sync", Some(&h.token), &json!({ "cards": [] }))
+            .await;
+        let resp: SyncResp = serde_json::from_value(body).unwrap();
+        assert_eq!(resp.drill_counts.get("1467640::recognition"), Some(&1));
     }
 
     #[tokio::test]

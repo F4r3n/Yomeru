@@ -236,6 +236,30 @@ struct SyncState {
 
 const DEBOUNCE_MS: u32 = 2_000;
 
+/// Runs a sync after the debounce. When it finishes with `retry` set — a
+/// change landed mid-flight, or the review outbox still has a backlog — it
+/// re-arms itself, so every pending change eventually goes up.
+fn arm_sync(state: Rc<RefCell<SyncState>>) {
+    let st = state.clone();
+    let t = Timeout::new(DEBOUNCE_MS, move || {
+        st.borrow_mut().pending = None;
+        let st = st.clone();
+        spawn_local(async move {
+            st.borrow_mut().in_flight = true;
+            let result = do_sync(st.clone()).await;
+            if let Err(e) = &result {
+                warn!("[yomeru] auto-sync failed: {e}");
+            }
+            crate::sync::record_sync_result(result.map(|_| ()));
+            st.borrow_mut().in_flight = false;
+            if std::mem::replace(&mut st.borrow_mut().retry, false) {
+                arm_sync(st);
+            }
+        });
+    });
+    state.borrow_mut().pending = Some(t);
+}
+
 impl LocalSettings {
     fn new() -> Self {
         Self {
@@ -266,7 +290,10 @@ fn join_url(base: &str, path: &str) -> String {
 }
 
 async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
-    use crate::idb::{apply_remote_deletions, clear_tombstones, get_all_cards, get_all_tombstones};
+    use crate::idb::{
+        apply_remote_deletions, clear_tombstones, get_all_cards, get_all_tombstones, get_outbox,
+        settle_outbox,
+    };
 
     let s: SrsSettings = LocalStorage::get(SETTINGS_KEY).unwrap_or_default();
     if s.server_url.is_empty() || s.server_token.is_empty() {
@@ -283,6 +310,16 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
         .await
         .map_err(|e| format!("read tombstones: {e}"))?;
     let sent_ids: Vec<String> = local_tombstones.iter().map(|t| t.id.clone()).collect();
+    let mut outbox = get_outbox()
+        .await
+        .map_err(|e| format!("read review outbox: {e}"))?;
+    // A backlog (months of answers logged before signing in) goes up in
+    // batches, so one request never outgrows the server's body limit.
+    // Oldest first: the store's key order is by card id, not by time.
+    outbox.sort_by(|a, b| a.reviewed_ms.total_cmp(&b.reviewed_ms));
+    let backlog = outbox.len() > crate::sync::OUTBOX_BATCH;
+    outbox.truncate(crate::sync::OUTBOX_BATCH);
+    let mut settled = false;
 
     let res = Request::post(&join_url(s.server_url.trim(), "/api/sync"))
         .header("Authorization", &format!("Bearer {}", s.server_token))
@@ -290,6 +327,7 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
             cards: &local_cards,
             deletions: &local_tombstones,
             settings: SettingsPayload::from_settings(&s),
+            reviews: &outbox,
         })
         .map_err(|e| e.to_string())?
         .send()
@@ -323,6 +361,15 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     clear_tombstones(&sent_ids)
         .await
         .map_err(|e| format!("clear tombstones: {e}"))?;
+    // The server has stored the outbox and counted it, so the cached counts
+    // replace the sent rows rather than add to them. A server without the
+    // review log sends no counts and kept nothing: hold the rows until it does.
+    if let Some(counts) = &resp.drill_counts {
+        settle_outbox(&outbox, counts)
+            .await
+            .map_err(|e| format!("settle review outbox: {e}"))?;
+        settled = true;
+    }
 
     // Adopt server-side settings if they're newer. Re-read from localStorage
     // (not the start-of-sync snapshot) so a scheduler edit made while the sync
@@ -340,7 +387,11 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
         }
     }
 
-    let _ = state; // borrowed by the runner above; nothing more to do here
+    // Drain a backlog on the next pass — only from a sync that fully
+    // succeeded, so a failing one can't keep re-arming itself every 2 s.
+    if settled && backlog {
+        state.borrow_mut().retry = true;
+    }
     Ok(format!(
         "Synced {} card{}.",
         resp.cards.len(),
@@ -405,40 +456,7 @@ impl SettingsStore for LocalSettings {
             self.state.borrow_mut().retry = true;
             return;
         }
-        let state = self.state.clone();
-        let t = Timeout::new(DEBOUNCE_MS, move || {
-            state.borrow_mut().pending = None;
-            let state = state.clone();
-            spawn_local(async move {
-                state.borrow_mut().in_flight = true;
-                let result = do_sync(state.clone()).await;
-                if let Err(e) = &result {
-                    warn!("[yomeru] auto-sync failed: {e}");
-                }
-                crate::sync::record_sync_result(result.map(|_| ()));
-                state.borrow_mut().in_flight = false;
-                if std::mem::replace(&mut state.borrow_mut().retry, false) {
-                    // Recursively re-arm — same path as `schedule_sync`, but
-                    // we can't call &self from inside spawn_local, so inline.
-                    let st = state.clone();
-                    let t = Timeout::new(DEBOUNCE_MS, move || {
-                        st.borrow_mut().pending = None;
-                        let st = st.clone();
-                        spawn_local(async move {
-                            st.borrow_mut().in_flight = true;
-                            let result = do_sync(st.clone()).await;
-                            if let Err(e) = &result {
-                                warn!("[yomeru] auto-sync retry failed: {e}");
-                            }
-                            crate::sync::record_sync_result(result.map(|_| ()));
-                            st.borrow_mut().in_flight = false;
-                        });
-                    });
-                    state.borrow_mut().pending = Some(t);
-                }
-            });
-        });
-        self.state.borrow_mut().pending = Some(t);
+        arm_sync(self.state.clone());
     }
 
     async fn sync_now(&self) -> Result<String, String> {

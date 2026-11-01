@@ -25,5 +25,8 @@
     "max_session_cards": 20,
     "request_retention": 0.9,
     "updated_ms": 1756000000000.0
+  },
+  "drill_counts": {
+    "1467640::recognition": 1
   }
 }

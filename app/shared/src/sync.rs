@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use crate::idb::Tombstone;
 use crate::platform::Platform;
 use crate::settings::SrsSettings;
-use crate::types::SrsCard;
+use crate::types::{ReviewLog, SrsCard};
 
 /// Reactive "data changed" generation, provided once at the app root by
 /// [`crate::App`]. A successful sync bumps it; route load-effects read it
@@ -158,6 +158,12 @@ impl SettingsPayload {
     }
 }
 
+/// Most review-log rows one sync uploads. Rows are ~100 bytes on the wire,
+/// so a batch stays far below the server's request body limit; a longer
+/// outbox drains over consecutive syncs. Mirrors `OUTBOX_BATCH` in
+/// `extension/src/background/sync.ts`.
+pub(crate) const OUTBOX_BATCH: usize = 1_000;
+
 #[derive(Serialize)]
 pub(crate) struct SyncBody<'a> {
     pub(crate) cards: &'a [SrsCard],
@@ -167,6 +173,8 @@ pub(crate) struct SyncBody<'a> {
     /// send, so it must be deployed before clients pick this up.
     pub(crate) deletions: &'a [Tombstone],
     pub(crate) settings: SettingsPayload,
+    /// The review outbox: answers not yet acknowledged by the server.
+    pub(crate) reviews: &'a [ReviewLog],
 }
 
 #[derive(Deserialize, Default)]
@@ -176,6 +184,11 @@ pub(crate) struct SyncResponse {
     pub(crate) deletions: Vec<String>,
     #[serde(default)]
     pub(crate) settings: Option<SettingsPayload>,
+    /// Drill answers per card id across the user's whole log. `None` from a
+    /// server that predates the review log — which also means it dropped the
+    /// uploaded rows, so the outbox must be kept for a later sync.
+    #[serde(default)]
+    pub(crate) drill_counts: Option<std::collections::HashMap<String, u32>>,
 }
 
 /// Picks which server cards to write over the local copies: those whose merge
@@ -384,6 +397,7 @@ mod tests {
     mod wire {
         use super::*;
         use crate::idb::Tombstone;
+        use crate::types::ReviewKind;
         use serde_json::Value;
 
         fn fixture(name: &str) -> Value {
@@ -430,6 +444,20 @@ mod tests {
                     request_retention: 0.9,
                     updated_ms: 1_756_000_000_000.0,
                 },
+                reviews: &[
+                    ReviewLog {
+                        card_id: "1467640::recognition".to_string(),
+                        rating: 1,
+                        kind: ReviewKind::Drill,
+                        reviewed_ms: 1_756_950_000_000.0,
+                    },
+                    ReviewLog {
+                        card_id: "1467640::recognition".to_string(),
+                        rating: 3,
+                        kind: ReviewKind::Review,
+                        reviewed_ms: 1_756_960_000_000.0,
+                    },
+                ],
             };
             let sent: Value = serde_json::to_value(&body).expect("serialize body");
             assert_eq!(sent, fixture("request-app-client.json"));
@@ -469,6 +497,8 @@ mod tests {
             let s = resp.settings.expect("settings");
             assert_eq!(s.graduation_interval_days, 365);
             assert_eq!(s.updated_ms, 1_756_000_000_000.0);
+            let counts = resp.drill_counts.expect("drill counts");
+            assert_eq!(counts.get("1467640::recognition"), Some(&1));
         }
 
         #[test]
@@ -480,6 +510,7 @@ mod tests {
             assert!(resp.cards.is_empty());
             assert!(resp.deletions.is_empty());
             assert!(resp.settings.is_none());
+            assert!(resp.drill_counts.is_none());
         }
     }
 }

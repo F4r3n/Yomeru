@@ -142,6 +142,18 @@ describe("sync", () => {
       const clock = vi.spyOn(Date, "now").mockReturnValue(1_757_000_000_123);
       await idb.deleteCardById(cardId(WORD, "recall"));
       clock.mockRestore();
+      await idb.addReview({
+        card_id: cardId(WORD, "recognition"),
+        rating: 1,
+        kind: "drill",
+        reviewed_ms: 1_756_950_000_000,
+      });
+      await idb.addReview({
+        card_id: cardId(WORD, "recognition"),
+        rating: 3,
+        kind: "review",
+        reviewed_ms: 1_756_960_000_000,
+      });
 
       storage.set("srs_settings", {
         serverUrl: SERVER,
@@ -157,7 +169,10 @@ describe("sync", () => {
       expect(sent[0]).toEqual(expected);
       // toEqual ignores nothing about keys, but say it outright: an extra field
       // (or a renamed one) is a wire change, and the server parses by name.
-      expect(keysOf(sent[0])).toEqual(["cards", "deletions", "settings"]);
+      expect(keysOf(sent[0])).toEqual(["cards", "deletions", "reviews", "settings"]);
+      expect(keysOf((sent[0].reviews as unknown[])[0])).toEqual(
+        keysOf((expected.reviews as unknown[])[0]),
+      );
       expect(keysOf(sent[0].settings)).toEqual(keysOf(expected.settings));
       expect(keysOf((sent[0].cards as unknown[])[0])).toEqual(
         keysOf((expected.cards as unknown[])[0]),
@@ -189,7 +204,7 @@ describe("sync", () => {
       respondWith({ cards: [], deletions: [] });
       await sync.handleSyncCards();
 
-      expect(keysOf(sent[0])).toEqual(["cards", "deletions"]);
+      expect(keysOf(sent[0])).toEqual(["cards", "deletions", "reviews"]);
     });
 
     it("leaves legacy word-keyed rows out of the upload", async () => {
@@ -345,6 +360,67 @@ describe("sync", () => {
       await sync.handleSyncCards();
 
       expect(await idb.getCard(CAT, "recognition")).not.toBeNull();
+    });
+  });
+
+  describe("the review outbox", () => {
+    const row = (reviewed_ms: number, kind: "review" | "drill" = "drill") => ({
+      card_id: cardId(CAT, "recall"),
+      rating: 3,
+      kind,
+      reviewed_ms,
+    });
+
+    async function cachedCounts(): Promise<unknown[]> {
+      const database = await idb.openDb();
+      return new Promise((resolve, reject) => {
+        const req = database.transaction("drill_counts").objectStore("drill_counts").getAll();
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    it("clears what it sent and caches the server's drill counts", async () => {
+      await idb.addReview(row(10));
+      respondWith({ cards: [], deletions: [], drill_counts: { [cardId(CAT, "recall")]: 4 } });
+
+      await sync.handleSyncCards();
+
+      expect(sent[0].reviews).toEqual([row(10)]);
+      expect(await idb.getOutbox()).toEqual([]);
+      expect(await cachedCounts()).toEqual([{ card_id: cardId(CAT, "recall"), count: 4 }]);
+    });
+
+    it("keeps a row logged while the sync was in flight", async () => {
+      await idb.addReview(row(10));
+      respondWith(
+        { cards: [], deletions: [], drill_counts: {} },
+        { duringFlight: async () => void (await idb.addReview(row(20))) },
+      );
+
+      await sync.handleSyncCards();
+
+      expect(await idb.getOutbox()).toEqual([row(20)]);
+    });
+
+    it("uploads a backlog in batches", async () => {
+      for (let i = 0; i < sync.OUTBOX_BATCH + 5; i++) await idb.addReview(row(i + 1));
+      respondWith({ cards: [], deletions: [], drill_counts: {} });
+
+      await sync.handleSyncCards();
+
+      expect(sent[0].reviews).toHaveLength(sync.OUTBOX_BATCH);
+      expect(await idb.getOutbox()).toHaveLength(5);
+    });
+
+    it("keeps the outbox when the server predates the review log", async () => {
+      // No `drill_counts` means the server ignored `reviews` too.
+      await idb.addReview(row(10));
+      respondWith({ cards: [], deletions: [] });
+
+      await sync.handleSyncCards();
+
+      expect(await idb.getOutbox()).toEqual([row(10)]);
     });
   });
 

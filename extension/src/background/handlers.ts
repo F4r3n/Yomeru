@@ -17,6 +17,7 @@ import {
   getWordStatus,
   deleteCard,
   addLookupHistory,
+  putCardLogged,
 } from "./idb";
 import { getSettings, saveSettings } from "./settings";
 import { importCards } from "./cards-backup";
@@ -93,12 +94,15 @@ export async function handleReviewCard({
   const intervalDays = (scaled.due_ms - now_ms) / MS_PER_DAY;
   const reviewed = mergeReview(card, scaled);
   if (rating === 1) reviewed.again_count = (card.again_count ?? 0) + 1;
+  // The card and its log row are written together, so the log can neither
+  // record a review that didn't apply nor miss one that did.
+  const row = { card_id: card.id, rating, kind: "review" as const, reviewed_ms: now_ms };
   if (checkGraduation(intervalDays, settings.graduationIntervalDays)) {
-    await putCard({ ...reviewed, status: "graduated" });
+    await putCardLogged({ ...reviewed, status: "graduated" }, row);
     await bumpDbVersion();
     return { success: true, graduated: true };
   }
-  await putCard(reviewed);
+  await putCardLogged(reviewed, row);
   await bumpDbVersion();
   return { success: true, graduated: false };
 }

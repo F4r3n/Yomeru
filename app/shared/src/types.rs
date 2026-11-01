@@ -87,6 +87,29 @@ pub struct SrsCard {
     pub updated_ms: f64,
 }
 
+/// Whether a logged answer was a scheduled review or a drill, which replays
+/// trouble cards without touching their schedule.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ReviewKind {
+    Review,
+    Drill,
+}
+
+/// One answer, as kept in the IndexedDB outbox until a sync uploads it. The
+/// server keeps the whole log; devices only ever hold what they haven't sent.
+/// Identified by `(card_id, reviewed_ms)`, which is also the outbox key, so a
+/// re-sent row is ignored server-side. Mirrors `db::ReviewLog` on the server
+/// and `ReviewLog` in `extension/src/shared/types.ts`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ReviewLog {
+    pub card_id: String,
+    /// The button pressed: 1 = Again … 4 = Easy.
+    pub rating: u8,
+    pub kind: ReviewKind,
+    pub reviewed_ms: f64,
+}
+
 pub fn card_id(sequence: u32, direction: CardDirection) -> String {
     format!("{sequence}::{}", direction.as_str())
 }

@@ -9,14 +9,14 @@ use crate::dict::{
 };
 use crate::drill_log;
 use crate::icons::{Icon, IconName};
-use crate::idb::{get_all_cards, get_due_cards, get_staging_cards, promote_card, put_card};
+use crate::idb::{get_all_cards, get_due_cards, get_staging_cards, promote_card, put_card_logged};
 use crate::settings::load as load_settings;
 use crate::srs::{
     DRILL_BATCH, ReviewOutcome, TROUBLE_EXIT_INTERVAL_DAYS, TROUBLE_MIN_FAILS, TroubleWord,
     apply_review, now_ms, pick_drill_batch, rating_from_u8, trouble_words,
 };
 use crate::sync::{schedule_sync, use_reload_on_sync};
-use crate::types::{CardDirection, CardStatus, SrsCard};
+use crate::types::{CardDirection, CardStatus, ReviewKind as LogKind, SrsCard};
 
 use super::review_common::{
     RateButtons, ShowAnswerButton, TabButton, rating_label, use_review_shortcuts,
@@ -167,7 +167,7 @@ fn WordReview() -> Element {
     // Drill sessions replay trouble words without touching their schedule:
     // ratings feed the recap and nothing else.
     let mut drill = use_signal(|| false);
-    // Per-device drill counts, which rotate the batch a drill picks.
+    // Drill counts from the answer log, which rotate the batch a drill picks.
     let mut drilled = use_signal(std::collections::HashMap::<u32, u32>::new);
     let mut show_all_trouble = use_signal(|| false);
     let mut results = use_signal(Vec::<SessionResult>::new);
@@ -204,7 +204,7 @@ fn WordReview() -> Element {
             results.set(vec![]);
             let all = get_all_cards().await.unwrap_or_default();
             let words = trouble_words(&all, TROUBLE_MIN_FAILS, TROUBLE_EXIT_INTERVAL_DAYS);
-            drilled.set(drill_log::load(drill_log::Deck::Words));
+            drilled.set(drill_log::load().await);
             let seqs: Vec<u32> = words.iter().map(|w| w.sequence).collect();
             let hits = if seqs.is_empty() {
                 vec![]
@@ -321,11 +321,6 @@ fn WordReview() -> Element {
             return;
         };
         let entry_for_label = entries.read().get(i).cloned();
-        // Count the word once per drill session, on its first answered card,
-        // so walking away mid-drill still credits what was practised.
-        if *drill.peek() && !results.peek().iter().any(|r| r.sequence == card.sequence) {
-            drill_log::record(drill_log::Deck::Words, card.sequence);
-        }
         if let Some(entry) = entry_for_label.clone() {
             results.with_mut(|v| {
                 v.push(SessionResult {
@@ -338,6 +333,9 @@ fn WordReview() -> Element {
             });
         }
         if *drill.peek() {
+            // A drill counts per card and a word takes its best card's count,
+            // so walking away mid-drill still credits what was practised.
+            drill_log::record_drill(&card, r);
             idx.with_mut(|i| *i += 1);
             show_back.set(false);
             return;
@@ -346,17 +344,18 @@ fn WordReview() -> Element {
         spawn(async move {
             let settings = load_settings();
             let outcome = apply_review(&card, rating_from_u8(r), now_ms(), &settings);
+            let row = drill_log::answer(&card, r, LogKind::Review);
             let card_id = card.id.clone();
             match outcome {
                 ReviewOutcome::Rescheduled(c) => {
-                    if let Err(e) = put_card(&c).await {
+                    if let Err(e) = put_card_logged(&c, &row).await {
                         warn!("put_card({card_id}) after review failed: {e}");
                     } else {
                         schedule_sync();
                     }
                 }
                 ReviewOutcome::Graduated(c) => {
-                    if let Err(e) = put_card(&c).await {
+                    if let Err(e) = put_card_logged(&c, &row).await {
                         warn!("put_card({card_id}) on graduation failed: {e}");
                     } else {
                         schedule_sync();

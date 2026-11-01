@@ -23,7 +23,7 @@ const OTP_MAX_ATTEMPTS: i64 = 5;
 /// recoverable form. The token itself is 256 bits of CSPRNG output, so a plain
 /// digest is enough — there is no low-entropy input here to make brute-forcing
 /// a stolen hash worthwhile, and no salt/KDF is needed.
-fn token_hash(token: &str) -> String {
+pub(crate) fn token_hash(token: &str) -> String {
     use sha2::{Digest, Sha256};
     let digest = Sha256::digest(token.as_bytes());
     digest.iter().map(|b| format!("{b:02x}")).collect()
@@ -119,38 +119,72 @@ pub async fn verify_otp(db: &Db, email: &str, code: &str, now_ms: i64) -> anyhow
     Ok(ok)
 }
 
+/// The account behind a live session. `id` keys the tables that store many
+/// rows per user (`reviews`, `sessions`); `email` still keys the rest.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SessionUser {
+    pub id: i64,
+    pub email: String,
+}
+
+/// The user id for `email`, creating the account on first sign-in.
+pub async fn get_or_create_user(
+    conn: &mut sqlx::SqliteConnection,
+    email: &str,
+) -> anyhow::Result<i64> {
+    sqlx::query("INSERT OR IGNORE INTO users (email) VALUES (?1)")
+        .bind(email)
+        .execute(&mut *conn)
+        .await
+        .context("create user")?;
+    sqlx::query_scalar("SELECT id FROM users WHERE email = ?1")
+        .bind(email)
+        .fetch_one(&mut *conn)
+        .await
+        .context("read user id")
+}
+
 /// Stores a session keyed on the token's hash. The raw token is returned to the
 /// client and never written down, so a leaked database copy yields no usable
-/// bearer tokens.
+/// bearer tokens. Signing in is what creates the account.
 pub async fn create_session(
     db: &Db,
     token: &str,
     email: &str,
     expires_at: i64,
 ) -> anyhow::Result<()> {
+    let mut tx = db.begin().await.context("begin create_session tx")?;
+    let user_id = get_or_create_user(&mut tx, email).await?;
     sqlx::query(
-        "INSERT OR REPLACE INTO sessions (token_hash, email, expires_at) VALUES (?1, ?2, ?3)",
+        "INSERT OR REPLACE INTO sessions (token_hash, user_id, expires_at) VALUES (?1, ?2, ?3)",
     )
     .bind(token_hash(token))
-    .bind(email)
+    .bind(user_id)
     .bind(expires_at)
-    .execute(db)
+    .execute(&mut *tx)
     .await
     .context("insert session")?;
+    tx.commit().await.context("commit create_session tx")?;
     Ok(())
 }
 
-/// Returns the email associated with a valid (non-expired) session token, or
+/// Returns the account behind a valid (non-expired) session token, or
 /// `Ok(None)` if there is no matching live session.
-pub async fn validate_session(db: &Db, token: &str, now_ms: i64) -> anyhow::Result<Option<String>> {
-    let email: Option<String> =
-        sqlx::query_scalar("SELECT email FROM sessions WHERE token_hash = ?1 AND expires_at > ?2")
-            .bind(token_hash(token))
-            .bind(now_ms)
-            .fetch_optional(db)
-            .await
-            .context("validate session")?;
-    Ok(email)
+pub async fn validate_session(
+    db: &Db,
+    token: &str,
+    now_ms: i64,
+) -> anyhow::Result<Option<SessionUser>> {
+    let row: Option<(i64, String)> = sqlx::query_as(
+        "SELECT u.id, u.email FROM sessions s JOIN users u ON u.id = s.user_id
+         WHERE s.token_hash = ?1 AND s.expires_at > ?2",
+    )
+    .bind(token_hash(token))
+    .bind(now_ms)
+    .fetch_optional(db)
+    .await
+    .context("validate session")?;
+    Ok(row.map(|(id, email)| SessionUser { id, email }))
 }
 
 /// Deletes expired sessions and OTPs. Both tables are append-mostly — nothing
@@ -280,9 +314,24 @@ mod tests {
             validate_session(&db, "supersecrettoken", 1_000)
                 .await
                 .unwrap()
+                .map(|u| u.email)
                 .as_deref(),
             Some(ALICE)
         );
+    }
+
+    #[tokio::test]
+    async fn sessions_of_one_email_share_a_user_id() {
+        let db = fresh_db().await;
+        create_session(&db, "phone", ALICE, 9_000).await.unwrap();
+        create_session(&db, "laptop", ALICE, 9_000).await.unwrap();
+        create_session(&db, "other", BOB, 9_000).await.unwrap();
+        let id = |t: &'static str| {
+            let db = db.clone();
+            async move { validate_session(&db, t, 0).await.unwrap().unwrap().id }
+        };
+        assert_eq!(id("phone").await, id("laptop").await);
+        assert_ne!(id("phone").await, id("other").await);
     }
 
     #[tokio::test]

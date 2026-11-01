@@ -666,4 +666,44 @@ describe("idb", () => {
       expect(await idb.getAllCards()).toEqual([]);
     });
   });
+
+  describe("putCardLogged", () => {
+    it("saves the card and queues its answer together", async () => {
+      const row = { card_id: cardId(CAT, "recall"), rating: 3, kind: "review" as const, reviewed_ms: 7 };
+      await idb.putCardLogged(makeCard({ sequence: CAT, direction: "recall", reps: 2 }), row);
+      expect((await idb.getCard(CAT, "recall"))?.reps).toBe(2);
+      expect(await idb.getOutbox()).toEqual([row]);
+    });
+  });
+
+  describe("v7 → v8 upgrade", () => {
+    it("adds the review stores without touching existing cards", async () => {
+      // A v7 database as the previous release left it, holding one card.
+      await new Promise<void>((resolve, reject) => {
+        const req = indexedDB.open("yomeru-db", 7);
+        req.onupgradeneeded = () => {
+          const database = req.result;
+          database.createObjectStore("cards", { keyPath: "id" }).createIndex("sequence", "sequence");
+          database.createObjectStore("tombstones", { keyPath: "id" });
+          req.transaction!.objectStore("cards").put(makeCard({ sequence: CAT }));
+        };
+        req.onsuccess = () => {
+          req.result.close();
+          resolve();
+        };
+        req.onerror = () => reject(req.error);
+      });
+
+      const database = await idb.openDb();
+
+      expect(database.version).toBe(8);
+      expect([...database.objectStoreNames]).toEqual(
+        expect.arrayContaining(["cards", "tombstones", "review_outbox", "drill_counts"]),
+      );
+      expect((await idb.getAllCards()).map((c) => c.sequence)).toEqual([CAT]);
+      const row = { card_id: cardId(CAT, "recall"), rating: 1, kind: "drill" as const, reviewed_ms: 5 };
+      await idb.addReview(row);
+      expect(await idb.getOutbox()).toEqual([row]);
+    });
+  });
 });

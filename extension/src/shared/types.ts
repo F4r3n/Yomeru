@@ -120,6 +120,21 @@ export interface SrsCard {
   updated_ms?: number;
 }
 
+/**
+ * One answer, held in IndexedDB's review outbox until a sync uploads it. The
+ * server keeps the whole log; devices only hold what they haven't sent.
+ * Identified by `[card_id, reviewed_ms]`, which is also the outbox key, so a
+ * re-sent row is ignored server-side. Mirrors `ReviewLog` in
+ * `app/shared/src/types.rs`.
+ */
+export interface ReviewLog {
+  card_id: string;
+  /** The button pressed: 1 = Again … 4 = Easy. */
+  rating: number;
+  kind: "review" | "drill";
+  reviewed_ms: number;
+}
+
 /** Cap on a staged card's priority. Mirrors `MAX_PRIORITY` in
  * `app/shared/src/types.rs`. */
 export const MAX_PRIORITY = 10;

@@ -1,11 +1,16 @@
-import type { CardDirection, SrsCard, WordStatus } from "../shared/types.ts";
+import type { CardDirection, ReviewLog, SrsCard, WordStatus } from "../shared/types.ts";
 import { cardId, MAX_PRIORITY, versionMs } from "../shared/types.ts";
 
 const DB_NAME = "yomeru-db";
 // v7 re-runs the v6 sequence-keyed reset to self-heal any DB left half-migrated
 // by an earlier build that created the store without the `sequence` index.
-const DB_VERSION = 7;
+// v8 adds the review outbox and the cached drill counts. The app opens the same
+// database, so this and `DB_VERSION` in app/shared/src/idb.rs move together.
+const DB_VERSION = 8;
 const TOMB_STORE = "tombstones";
+const REVIEW_STORE = "review_outbox";
+/** The server's per-card drill counts as of the last sync, `{card_id, count}`. */
+const DRILL_STORE = "drill_counts";
 
 let db: IDBDatabase | null = null;
 
@@ -85,6 +90,15 @@ export async function openDb(): Promise<IDBDatabase> {
       // Ensure the tombstone store exists (new DBs and the v6 reset above).
       if (!database.objectStoreNames.contains(TOMB_STORE)) {
         database.createObjectStore(TOMB_STORE, { keyPath: "id" });
+      }
+
+      // → v8: answer log outbox and cached drill counts. Additive, so no data
+      // is touched. Must match the Rust upgrade in app/shared/src/idb.rs.
+      if (!database.objectStoreNames.contains(REVIEW_STORE)) {
+        database.createObjectStore(REVIEW_STORE, { keyPath: ["card_id", "reviewed_ms"] });
+      }
+      if (!database.objectStoreNames.contains(DRILL_STORE)) {
+        database.createObjectStore(DRILL_STORE, { keyPath: "card_id" });
       }
     };
 
@@ -392,6 +406,62 @@ export async function clearTombstones(ids: string[]): Promise<void> {
     const t = database.transaction(TOMB_STORE, "readwrite");
     const store = t.objectStore(TOMB_STORE);
     for (const id of ids) store.delete(id);
+    t.oncomplete = () => resolve();
+    t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error);
+  });
+}
+
+/**
+ * Saves a reviewed card and queues its answer for the next sync in one
+ * transaction, so the log can neither record a review that didn't apply nor
+ * miss one that did — even if the service worker is suspended mid-way. Stamps
+ * the card like `putCard`. Mirrors `put_card_logged` in app/shared/src/idb.rs.
+ */
+export async function putCardLogged(card: SrsCard, row: ReviewLog): Promise<void> {
+  const c = stamped(card, Date.now());
+  const database = await openDb();
+  return new Promise((resolve, reject) => {
+    const t = database.transaction(["cards", REVIEW_STORE], "readwrite");
+    t.objectStore("cards").put(c);
+    t.objectStore(REVIEW_STORE).put(row);
+    t.oncomplete = () => resolve();
+    t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error);
+  });
+}
+
+/** Queues one answer for the next sync. */
+export function addReview(row: ReviewLog): Promise<IDBValidKey> {
+  return tx(REVIEW_STORE, "readwrite", (s) => s.put(row));
+}
+
+/** Every answer not yet acknowledged by the server. */
+export function getOutbox(): Promise<ReviewLog[]> {
+  return tx(REVIEW_STORE, "readonly", (s) => s.getAll() as IDBRequest<ReviewLog[]>);
+}
+
+/**
+ * Settles an upload the server acknowledged: replaces the cached drill counts
+ * with the server's (which already include the sent rows) and drops exactly
+ * the rows that were sent. Rows logged while the request was in flight have
+ * other keys and stay queued. One transaction, so the counts and the outbox
+ * never disagree about whether a row was counted.
+ */
+export async function settleOutbox(
+  sent: ReviewLog[],
+  drillCounts: Record<string, number>,
+): Promise<void> {
+  const database = await openDb();
+  return new Promise((resolve, reject) => {
+    const t = database.transaction([REVIEW_STORE, DRILL_STORE], "readwrite");
+    const outbox = t.objectStore(REVIEW_STORE);
+    for (const r of sent) outbox.delete([r.card_id, r.reviewed_ms]);
+    const counts = t.objectStore(DRILL_STORE);
+    counts.clear();
+    for (const [card_id, count] of Object.entries(drillCounts)) {
+      counts.put({ card_id, count });
+    }
     t.oncomplete = () => resolve();
     t.onerror = () => reject(t.error);
     t.onabort = () => reject(t.error);

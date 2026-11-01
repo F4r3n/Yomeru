@@ -8,9 +8,9 @@ use dioxus::prelude::*;
 use kanjidic_types::{KanjiEntry, KanjiPart};
 
 use crate::dict::kanji_for;
-use crate::drill_log::{self, Deck};
+use crate::drill_log;
 use crate::icons::{Icon, IconName};
-use crate::idb::{get_all_cards, get_due_kanji_cards, put_card};
+use crate::idb::{get_all_cards, get_due_kanji_cards, put_card_logged};
 use crate::kanji_deck::{StudiedWord, ensure_kanji_cards};
 use crate::settings::load as load_settings;
 use crate::srs::{
@@ -18,7 +18,7 @@ use crate::srs::{
     apply_review, now_ms, pick_drill_batch, rating_from_u8, trouble_kanji,
 };
 use crate::sync::{schedule_sync, use_reload_on_sync};
-use crate::types::SrsCard;
+use crate::types::{ReviewKind, SrsCard};
 
 use super::review::{next_due_message, shuffle};
 use super::review_common::{RateButtons, ShowAnswerButton, rating_label, use_review_shortcuts};
@@ -64,7 +64,7 @@ pub(crate) fn KanjiReview() -> Element {
     // Drill sessions replay trouble kanji without touching their schedule:
     // ratings feed the recap and nothing else.
     let mut drill = use_signal(|| false);
-    // Per-device drill counts, which rotate the batch a drill picks.
+    // Drill counts from the answer log, which rotate the batch a drill picks.
     let mut drilled = use_signal(HashMap::<u32, u32>::new);
     let mut show_all_trouble = use_signal(|| false);
     let mut results = use_signal(Vec::<KanjiResult>::new);
@@ -113,7 +113,7 @@ pub(crate) fn KanjiReview() -> Element {
                     })
                     .collect(),
             );
-            drilled.set(drill_log::load(Deck::Kanji));
+            drilled.set(drill_log::load().await);
             loaded.set(true);
         });
     };
@@ -172,8 +172,8 @@ pub(crate) fn KanjiReview() -> Element {
             })
         });
         if *drill.peek() {
-            // One card per kanji, so each answer is that kanji's one drill.
-            drill_log::record(Deck::Kanji, card.sequence);
+            // One card per kanji, so each drill answer is that kanji's one drill.
+            drill_log::record_drill(&card, r);
             idx += 1;
             show_back.set(false);
             return;
@@ -183,7 +183,8 @@ pub(crate) fn KanjiReview() -> Element {
             let settings = load_settings();
             let (ReviewOutcome::Rescheduled(c) | ReviewOutcome::Graduated(c)) =
                 apply_review(&card, rating_from_u8(r), now_ms(), &settings);
-            match put_card(&c).await {
+            let row = drill_log::answer(&card, r, ReviewKind::Review);
+            match put_card_logged(&c, &row).await {
                 Ok(()) => schedule_sync(),
                 Err(e) => warn!("put_card({}) after kanji review failed: {e}", card.id),
             }

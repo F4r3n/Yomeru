@@ -29,5 +29,19 @@
     "max_session_cards": 20,
     "request_retention": 0.9,
     "updated_ms": 1756000000000
-  }
+  },
+  "reviews": [
+    {
+      "card_id": "1467640::recognition",
+      "rating": 1,
+      "kind": "drill",
+      "reviewed_ms": 1756950000000
+    },
+    {
+      "card_id": "1467640::recognition",
+      "rating": 3,
+      "kind": "review",
+      "reviewed_ms": 1756960000000
+    }
+  ]
 }

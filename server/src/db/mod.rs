@@ -16,16 +16,20 @@ use std::time::Duration;
 mod auth;
 mod cards;
 mod deletions;
+mod reviews;
 mod schema;
 mod settings;
 #[cfg(test)]
 pub(crate) mod test_support;
 
-pub use auth::{create_session, prune_expired_auth, store_otp, validate_session, verify_otp};
+pub use auth::{
+    SessionUser, create_session, prune_expired_auth, store_otp, validate_session, verify_otp,
+};
 pub use cards::{Card, get_all_cards, upsert_cards_tx};
 pub use deletions::{
     Deletion, DeletionEntry, apply_deletions_tx, get_all_deletions, prune_old_deletions,
 };
+pub use reviews::{ReviewLog, get_drill_counts, insert_reviews_tx};
 pub use settings::{Settings, get_settings, upsert_settings};
 
 pub type Db = SqlitePool;

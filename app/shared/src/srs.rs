@@ -198,6 +198,25 @@ pub fn pick_drill_batch<'a>(
     order
 }
 
+/// Folds per-card drill counts into per-sequence ones: a word's count is the
+/// highest of its cards'. A drill session answers each card at most once, so a
+/// word drilled on both recognition and recall in one session counts once —
+/// and a word drilled on only one of them still counts. Ids that don't start
+/// with a numeric sequence are skipped.
+pub fn drill_counts_by_sequence<'a>(
+    per_card: impl IntoIterator<Item = (&'a str, u32)>,
+) -> std::collections::HashMap<u32, u32> {
+    let mut out = std::collections::HashMap::new();
+    for (id, n) in per_card {
+        let Some(seq) = id.split("::").next().and_then(|s| s.parse::<u32>().ok()) else {
+            continue;
+        };
+        let e = out.entry(seq).or_insert(0);
+        *e = (*e).max(n);
+    }
+    out
+}
+
 pub fn now_ms() -> f64 {
     js_sys::Date::now()
 }
@@ -486,6 +505,22 @@ mod tests {
         let words: Vec<_> = (1..=12).map(word).collect();
         let drilled: Vec<_> = (1..=10).map(|s| (s, 1)).collect();
         assert_eq!(batch_seqs(&words, &drilled, 4), vec![11, 12, 1, 2]);
+    }
+
+    #[test]
+    fn drill_counts_take_the_max_over_a_words_cards() {
+        let counts = drill_counts_by_sequence([
+            ("1000001::recognition", 2),
+            ("1000001::recall", 3),
+            ("1000002::recall", 1),
+            ("29483::kanji", 4),
+            ("garbage", 9),
+        ]);
+        assert_eq!(counts.len(), 3);
+        assert_eq!(counts[&1_000_001], 3);
+        assert_eq!(counts[&1_000_002], 1);
+        // Kanji cards key on their codepoint, which never meets an ent_seq.
+        assert_eq!(counts[&29_483], 4);
     }
 
     #[test]

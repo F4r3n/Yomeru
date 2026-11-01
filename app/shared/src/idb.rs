@@ -1,9 +1,9 @@
 //! IndexedDB wrapper for cards. Mirrors `extension/src/background/idb.ts` at
-//! schema v6 (cards keyed on JMdict ent_seq + tombstones store for sync).
-//! v6 replaces the old `word` secondary index with `sequence`; users carrying
-//! v5 data are expected to export and re-import.
+//! schema v8 (cards keyed on JMdict ent_seq, a tombstones store and a review
+//! outbox for sync). v6 replaced the old `word` secondary index with
+//! `sequence`; users carrying v5 data are expected to export and re-import.
 
-use crate::types::{CardDirection, CardStatus, SrsCard, card_id};
+use crate::types::{CardDirection, CardStatus, ReviewLog, SrsCard, card_id};
 use dioxus::logger::tracing;
 use idb::{
     Database, DatabaseEvent, Factory, IndexParams, KeyPath, ObjectStoreParams, Query,
@@ -15,9 +15,16 @@ use wasm_bindgen::JsValue;
 const DB_NAME: &str = "yomeru-db";
 // v7 re-runs the v6 sequence-keyed reset to self-heal any DB left half-migrated
 // by an earlier build that created the store without the `sequence` index.
-const DB_VERSION: u32 = 7;
+// v8 adds the review outbox. The extension opens the same database, so this
+// and `DB_VERSION` in idb.ts must move together.
+const DB_VERSION: u32 = 8;
 const STORE: &str = "cards";
 const TOMB_STORE: &str = "tombstones";
+const REVIEW_STORE: &str = "review_outbox";
+/// The server's per-card drill counts as of the last sync, `{card_id, count}`.
+/// Replaced wholesale by whichever sync loop runs (Rust here, `sync.ts` in the
+/// extension), so both builds read the counts the same way.
+const DRILL_STORE: &str = "drill_counts";
 
 async fn open() -> Result<Database, idb::Error> {
     let factory = Factory::new()?;
@@ -88,6 +95,20 @@ async fn open() -> Result<Database, idb::Error> {
             params.key_path(Some(KeyPath::new_single("id")));
             if let Err(e) = db.create_object_store(TOMB_STORE, params) {
                 tracing::error!("idb upgrade: create_object_store({TOMB_STORE}) failed: {e:?}");
+            }
+        }
+        if !db.store_names().iter().any(|n| n == REVIEW_STORE) {
+            let mut params = ObjectStoreParams::new();
+            params.key_path(Some(KeyPath::new_array(["card_id", "reviewed_ms"])));
+            if let Err(e) = db.create_object_store(REVIEW_STORE, params) {
+                tracing::error!("idb upgrade: create_object_store({REVIEW_STORE}) failed: {e:?}");
+            }
+        }
+        if !db.store_names().iter().any(|n| n == DRILL_STORE) {
+            let mut params = ObjectStoreParams::new();
+            params.key_path(Some(KeyPath::new_single("card_id")));
+            if let Err(e) = db.create_object_store(DRILL_STORE, params) {
+                tracing::error!("idb upgrade: create_object_store({DRILL_STORE}) failed: {e:?}");
             }
         }
     });
@@ -437,6 +458,161 @@ pub async fn apply_remote_deletions(ids: &[String]) -> Result<(), String> {
     for id in ids {
         store
             .delete(Query::Key(JsValue::from_str(id)))
+            .map_err(|e| e.to_string())?
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+    tx.commit()
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Saves a reviewed card and queues its answer for the next sync, in one
+/// transaction: the log can't record a review that didn't apply, nor miss one
+/// that did. Both requests are issued before anything is awaited, so even if
+/// the calling task is cancelled mid-way, IndexedDB commits the pair on its own
+/// once they complete. Stamps `updated_ms` like [`put_card`].
+pub async fn put_card_logged(card: &SrsCard, row: &ReviewLog) -> Result<(), String> {
+    let mut card = card.clone();
+    card.updated_ms = js_sys::Date::now();
+    let card_val = to_value(&card).map_err(|e| e.to_string())?;
+    let row_val = to_value(row).map_err(|e| e.to_string())?;
+    let db = open().await.map_err(|e| e.to_string())?;
+    let tx = db
+        .transaction(&[STORE, REVIEW_STORE], TransactionMode::ReadWrite)
+        .map_err(|e| e.to_string())?;
+    let cards = tx.object_store(STORE).map_err(|e| e.to_string())?;
+    let reviews = tx.object_store(REVIEW_STORE).map_err(|e| e.to_string())?;
+    let put_card = cards.put(&card_val, None).map_err(|e| e.to_string())?;
+    let put_row = reviews.put(&row_val, None).map_err(|e| e.to_string())?;
+    put_card.await.map_err(|e| e.to_string())?;
+    put_row.await.map_err(|e| e.to_string())?;
+    tx.commit()
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Queues one answer for the next sync.
+pub async fn add_review(row: &ReviewLog) -> Result<(), String> {
+    let db = open().await.map_err(|e| e.to_string())?;
+    let tx = db
+        .transaction(&[REVIEW_STORE], TransactionMode::ReadWrite)
+        .map_err(|e| e.to_string())?;
+    let store = tx.object_store(REVIEW_STORE).map_err(|e| e.to_string())?;
+    store
+        .put(&to_value(row).map_err(|e| e.to_string())?, None)
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+    tx.commit()
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Every answer not yet acknowledged by the server.
+pub async fn get_outbox() -> Result<Vec<ReviewLog>, String> {
+    let db = open().await.map_err(|e| e.to_string())?;
+    let tx = db
+        .transaction(&[REVIEW_STORE], TransactionMode::ReadOnly)
+        .map_err(|e| e.to_string())?;
+    let store = tx.object_store(REVIEW_STORE).map_err(|e| e.to_string())?;
+    let arr = store
+        .get_all(None, None)
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(arr
+        .into_iter()
+        .filter_map(|v| from_value::<ReviewLog>(v).ok())
+        .collect())
+}
+
+#[derive(Serialize, Deserialize)]
+struct DrillCount {
+    card_id: String,
+    count: u32,
+}
+
+/// What drill rotation needs: the server's per-card drill counts from the last
+/// sync, and the rows still waiting to be uploaded. Read in one transaction so
+/// a sync settling in between can't make a row look both counted and pending.
+pub async fn get_drill_state()
+-> Result<(std::collections::HashMap<String, u32>, Vec<ReviewLog>), String> {
+    let db = open().await.map_err(|e| e.to_string())?;
+    let tx = db
+        .transaction(&[DRILL_STORE, REVIEW_STORE], TransactionMode::ReadOnly)
+        .map_err(|e| e.to_string())?;
+    let counts = tx
+        .object_store(DRILL_STORE)
+        .map_err(|e| e.to_string())?
+        .get_all(None, None)
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+    let outbox = tx
+        .object_store(REVIEW_STORE)
+        .map_err(|e| e.to_string())?
+        .get_all(None, None)
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+    let counts = counts
+        .into_iter()
+        .filter_map(|v| from_value::<DrillCount>(v).ok())
+        .map(|d| (d.card_id, d.count))
+        .collect();
+    let outbox = outbox
+        .into_iter()
+        .filter_map(|v| from_value::<ReviewLog>(v).ok())
+        .collect();
+    Ok((counts, outbox))
+}
+
+/// Settles an upload the server acknowledged: replaces the cached drill counts
+/// with the server's (which already include the sent rows) and drops exactly
+/// the rows that were sent. Rows logged while the request was in flight have
+/// other keys and stay queued. One transaction, so the counts and the outbox
+/// never disagree about whether a row was counted. Mirrors `settleOutbox` in
+/// `extension/src/background/idb.ts`.
+pub async fn settle_outbox(
+    sent: &[ReviewLog],
+    counts: &std::collections::HashMap<String, u32>,
+) -> Result<(), String> {
+    let db = open().await.map_err(|e| e.to_string())?;
+    let tx = db
+        .transaction(&[REVIEW_STORE, DRILL_STORE], TransactionMode::ReadWrite)
+        .map_err(|e| e.to_string())?;
+    let outbox = tx.object_store(REVIEW_STORE).map_err(|e| e.to_string())?;
+    for r in sent {
+        let key = js_sys::Array::of2(
+            &JsValue::from_str(&r.card_id),
+            &JsValue::from_f64(r.reviewed_ms),
+        );
+        outbox
+            .delete(Query::Key(key.into()))
+            .map_err(|e| e.to_string())?
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+    let store = tx.object_store(DRILL_STORE).map_err(|e| e.to_string())?;
+    store
+        .clear()
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+    for (card_id, count) in counts {
+        let row = DrillCount {
+            card_id: card_id.clone(),
+            count: *count,
+        };
+        store
+            .put(&to_value(&row).map_err(|e| e.to_string())?, None)
             .map_err(|e| e.to_string())?
             .await
             .map_err(|e| e.to_string())?;

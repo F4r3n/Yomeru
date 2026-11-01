@@ -27,13 +27,15 @@ coercing both sides, plus an exact key-set check.
 ## Files
 
 - `request-app-client.json` — the Dioxus app: cards carrying `updated_ms`,
-  `deletions` as `{id, deleted_at}` objects, and a `settings` block.
+  `deletions` as `{id, deleted_at}` objects, a `settings` block, and the
+  `reviews` outbox (one drill and one review row).
 - `request-extension-client.json` — the browser extension: same payload in
   JavaScript's dialect. It omits `settings` entirely on a device whose
   scheduler settings were never edited.
 - `request-legacy-client.json` — a client from before `updated_ms` existed:
   no version field, `deletions` as bare id strings. It must keep syncing.
-- `response.json` — what the server sends back. `deletions` are bare ids here
+- `response.json` — what the server sends back, including `drill_counts`
+  (card id → drill answers across the whole log). `deletions` are bare ids here
   on purpose: a tombstone the server still lists is a delete that stands, since
   a genuine re-add would already have cleared it.
 
