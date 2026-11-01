@@ -34,8 +34,10 @@ jobs:
         with:
           path: |
             JMdict_e
-            kanjidic2.xml
-          key: dict-v1
+            kanjidic2
+            examples.utf
+            kanjivg.xml
+          key: dict-v2
 
       - name: Build
         run: cargo xtask build-all

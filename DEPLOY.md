@@ -354,6 +354,25 @@ The hashed asset filenames mean browsers will fetch the new `.wasm`
 the first time someone hits the site after the rsync — no cache
 busting needed.
 
+### Dict format changes: server first, then dicts
+
+A server reads the `kanjidic.bin` versions it knows and refuses newer
+ones at startup. Version 2 (kanji parts from KanjiVG) is read only by
+servers from that release on, so update in this order:
+
+```bash
+# 1. new server, still on the old dict volume (it reads version 1, minus parts)
+podman-compose -f server/docker-compose.yml up -d --build yomeru-server
+# 2. rebuild the builder image, then the dicts, then pick them up
+podman-compose -f server/docker-compose.yml build yomeru-dicts
+podman-compose -f server/docker-compose.yml run --rm -e FORCE=1 yomeru-dicts
+podman-compose -f server/docker-compose.yml restart yomeru-server
+```
+
+Rebuilding the dicts first leaves the old server unable to start until
+step 1 is done. Without `build yomeru-dicts`, the builder runs its old
+image and writes the old format again.
+
 ## Layout on the deploy host
 
 ```

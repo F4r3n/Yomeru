@@ -1,6 +1,7 @@
 // Offline build CLI: progress/diagnostic output to stderr is intentional.
 #![allow(clippy::print_stderr)]
 
+mod kanjivg;
 mod parser;
 mod serializer;
 
@@ -18,13 +19,28 @@ struct Args {
     input: PathBuf,
     #[arg(short, long, default_value = "extension/data/kanjidic.bin")]
     output: PathBuf,
+    /// KanjiVG XML (the single-file release) to take each kanji's parts from.
+    #[arg(long)]
+    kanjivg: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
     let args = Args::parse();
     eprintln!("Parsing KANJIDIC2 XML from {:?}...", args.input);
-    let entries = parser::parse_kanjidic(&args.input)?;
+    let mut entries = parser::parse_kanjidic(&args.input)?;
     eprintln!("Parsed {} entries.", entries.len());
+    if let Some(path) = &args.kanjivg {
+        eprintln!("Parsing KanjiVG from {:?}...", path);
+        let mut parts = kanjivg::parse_kanjivg(path)?;
+        let mut with_parts = 0usize;
+        for e in &mut entries {
+            if let Some(p) = parts.remove(&e.literal) {
+                e.parts = p;
+                with_parts += 1;
+            }
+        }
+        eprintln!("Added parts to {with_parts} entries.");
+    }
     eprintln!("Serializing to {:?}...", args.output);
     serializer::write_index(&entries, &args.output)?;
     let size = std::fs::metadata(&args.output)?.len();

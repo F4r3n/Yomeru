@@ -5,7 +5,7 @@
 use std::collections::HashMap;
 
 use dioxus::prelude::*;
-use kanjidic_types::KanjiEntry;
+use kanjidic_types::{KanjiEntry, KanjiPart};
 
 use crate::dict::kanji_for;
 use crate::drill_log::{self, Deck};
@@ -527,6 +527,9 @@ fn KanjiBack(info: Option<KanjiEntry>, used_in: Vec<StudiedWord>) -> Element {
             if !k.kun_readings.is_empty() {
                 div { span { class: "muted", "Kun: " } "{k.kun_readings.join(\"、\")}" }
             }
+            if !k.parts.is_empty() {
+                KanjiParts { key: "{k.literal}", parts: k.parts.clone() }
+            }
             if !used_in.is_empty() {
                 div { class: "used-in",
                     div { class: "muted", "Your words" }
@@ -543,6 +546,77 @@ fn KanjiBack(info: Option<KanjiEntry>, used_in: Vec<StudiedWord>) -> Element {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+/// The parts a kanji is built from, one level deep. A part that splits
+/// further opens its own parts underneath when tapped.
+#[component]
+fn KanjiParts(parts: Vec<KanjiPart>) -> Element {
+    // Each part's own entry, plus its original's (水 for 氵) as a fallback
+    // for the meaning. Keyed by the kanji above, so fetched once per mount.
+    let wanted: Vec<char> = parts
+        .iter()
+        .flat_map(|p| std::iter::once(p.element).chain(p.original))
+        .collect();
+    let entries = use_resource(move || {
+        let wanted = wanted.clone();
+        async move { kanji_entries(wanted.into_iter()).await }
+    });
+    let map = entries.read().clone().unwrap_or_default();
+    rsx! {
+        div { class: "kanji-parts",
+            for (i, p) in parts.into_iter().enumerate() {
+                PartChip {
+                    // The same part can appear twice (木 in 林).
+                    key: "{i}",
+                    entry: map.get(&p.element).cloned(),
+                    original: p.original.and_then(|o| map.get(&o).cloned()),
+                    part: p,
+                }
+            }
+        }
+    }
+}
+
+#[component]
+fn PartChip(part: KanjiPart, entry: Option<KanjiEntry>, original: Option<KanjiEntry>) -> Element {
+    let mut open = use_signal(|| false);
+    // A variant's own entry can exist without meanings; 水 still has one.
+    let meaning = [&entry, &original]
+        .into_iter()
+        .find_map(|e| e.as_ref()?.meanings.first())
+        .cloned()
+        .unwrap_or_default();
+    let sub = entry.map(|e| e.parts).unwrap_or_default();
+    let body = rsx! {
+        span { class: "el", "{part.element}" }
+        if !meaning.is_empty() {
+            span { class: "m", title: "{meaning}", "{meaning}" }
+        }
+        if part.radical {
+            span { class: "tag", "radical" }
+        }
+        if part.phonetic {
+            span { class: "tag", "sound" }
+        }
+    };
+    rsx! {
+        div { class: "kanji-part",
+            if sub.is_empty() {
+                div { class: "part", {body} }
+            } else {
+                button {
+                    class: if open() { "part open" } else { "part" },
+                    title: "Show its parts",
+                    onclick: move |_| open.toggle(),
+                    {body}
+                }
+                if open() {
+                    KanjiParts { parts: sub }
                 }
             }
         }

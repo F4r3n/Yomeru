@@ -3571,6 +3571,7 @@ dependencies = [
  "kanjidic-types",
  "once_cell",
  "postcard",
+ "serde",
 ]
 
 [[package]]

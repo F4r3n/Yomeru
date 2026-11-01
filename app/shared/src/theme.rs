@@ -656,6 +656,14 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 .review-card .face .kanji-face { font-size: 72px; font-weight: 500; line-height: 1.1; }
 .kanji-back { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; font-size: 15px; }
 .kanji-back .meanings { font-size: 18px; font-weight: 600; }
+.kanji-back .kanji-parts { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 8px; margin-top: 6px; }
+.kanji-back .kanji-part { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.kanji-back .part { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text); font-weight: 400; }
+.kanji-back button.part { border-style: dashed; }
+.kanji-back button.part.open { border-style: solid; border-color: var(--accent); }
+.kanji-back .part .el { font-size: 24px; line-height: 1.1; }
+.kanji-back .part .m { max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--subtext); }
+.kanji-back .part .tag { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--accent); }
 .kanji-back .used-in { margin-top: 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; }
 .kanji-back .used-word { max-width: 100%; }
 .review-card .kanji-facts { font-size: 12px; }

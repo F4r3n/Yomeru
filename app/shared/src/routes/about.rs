@@ -40,6 +40,15 @@ pub fn AboutTab() -> Element {
                     hr { class: "divider" }
                     div { class: "row", style: "justify-content: space-between; align-items: baseline;",
                         div {
+                            div { style: "font-weight: 600;", "KanjiVG" }
+                            div { class: "muted", style: "font-size: 13px;", "Kanji parts" }
+                        }
+                        a { href: "https://kanjivg.tagaini.net", target: "_blank",
+                            class: "link", "kanjivg.tagaini.net ↗" }
+                    }
+                    hr { class: "divider" }
+                    div { class: "row", style: "justify-content: space-between; align-items: baseline;",
+                        div {
                             div { style: "font-weight: 600;", "Tatoeba" }
                             div { class: "muted", style: "font-size: 13px;", "Example sentences" }
                         }
@@ -48,7 +57,7 @@ pub fn AboutTab() -> Element {
                     }
                 }
                 p { class: "muted", style: "margin-top: 14px; font-size: 12px;",
-                    "EDRDG files are licensed under CC BY-SA 4.0."
+                    "EDRDG files are licensed under CC BY-SA 4.0. KanjiVG is © Ulrich Apel, licensed under CC BY-SA 3.0."
                 }
             }
 

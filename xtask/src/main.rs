@@ -62,6 +62,13 @@ enum Cmd {
         input: PathBuf,
         #[arg(short, long)]
         output: Option<PathBuf>,
+        /// KanjiVG XML for kanji parts (default: ./kanjivg.xml, downloaded
+        /// if missing)
+        #[arg(long, conflicts_with = "no_parts")]
+        kanjivg: Option<PathBuf>,
+        /// Build without kanji parts, skipping KanjiVG (e.g. offline).
+        #[arg(long)]
+        no_parts: bool,
     },
     /// Download examples.utf.gz from EDRDG and decompress it.
     DownloadExamples {
@@ -127,9 +134,19 @@ fn main() -> Result<()> {
             eprintln!("KANJIDIC2 ready at {}", out.display());
         }
 
-        Cmd::BuildKanjidic { input, output } => {
+        Cmd::BuildKanjidic {
+            input,
+            output,
+            kanjivg,
+            no_parts,
+        } => {
             let output = output.unwrap_or_else(|| root.join("extension/data/kanjidic.bin"));
-            build_kanjidic(&root, &input, &output)?;
+            let kanjivg = match kanjivg {
+                Some(p) => Some(p),
+                None if no_parts => None,
+                None => Some(download_kanjivg(&root)?),
+            };
+            build_kanjidic(&root, &input, kanjivg.as_deref(), &output)?;
         }
 
         Cmd::DownloadExamples { output_dir } => {
@@ -483,6 +500,10 @@ fn download_kanjidic(dir: &Path) -> Result<PathBuf> {
     download_source(dir, "KANJIDIC")
 }
 
+fn download_kanjivg(dir: &Path) -> Result<PathBuf> {
+    download_source(dir, "KANJIVG")
+}
+
 /// Build all three binary dict indexes into `extension/data/`.
 /// Downloads missing inputs first.
 fn build_dicts(root: &Path, input: Option<PathBuf>) -> Result<()> {
@@ -496,9 +517,12 @@ fn build_dicts(root: &Path, input: Option<PathBuf>) -> Result<()> {
     build_dict(root, &xml_path, &root.join("extension/data/jmdict.bin"))?;
     eprintln!("Downloading KANJIDIC2...");
     let kanjidic_xml = download_kanjidic(root)?;
+    eprintln!("Downloading KanjiVG...");
+    let kanjivg_xml = download_kanjivg(root)?;
     build_kanjidic(
         root,
         &kanjidic_xml,
+        Some(&kanjivg_xml),
         &root.join("extension/data/kanjidic.bin"),
     )?;
     eprintln!("Downloading example sentences...");
@@ -532,20 +556,23 @@ fn build_examples(root: &Path, input: &Path, output: &Path) -> Result<()> {
     Ok(())
 }
 
-fn build_kanjidic(root: &Path, input: &Path, output: &Path) -> Result<()> {
-    run(Command::new("cargo")
-        .args([
-            "run",
-            "--package",
-            "kanjidic-build",
-            "--release",
-            "--",
-            "--input",
-            input.to_str().unwrap(),
-            "--output",
-            output.to_str().unwrap(),
-        ])
-        .current_dir(root))?;
+fn build_kanjidic(root: &Path, input: &Path, kanjivg: Option<&Path>, output: &Path) -> Result<()> {
+    let mut cmd = Command::new("cargo");
+    cmd.args([
+        "run",
+        "--package",
+        "kanjidic-build",
+        "--release",
+        "--",
+        "--input",
+        input.to_str().unwrap(),
+        "--output",
+        output.to_str().unwrap(),
+    ]);
+    if let Some(kanjivg) = kanjivg {
+        cmd.args(["--kanjivg", kanjivg.to_str().unwrap()]);
+    }
+    run(cmd.current_dir(root))?;
     Ok(())
 }
 
