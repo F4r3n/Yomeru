@@ -9,6 +9,10 @@ use std::process::Command;
 const DICT_SOURCES_ENV: &str = include_str!("../dict-sources.env");
 
 fn source(key: &str) -> &'static str {
+    source_opt(key).unwrap_or_else(|| panic!("dict-sources.env missing key `{key}`"))
+}
+
+fn source_opt(key: &str) -> Option<&'static str> {
     DICT_SOURCES_ENV
         .lines()
         .filter_map(|line| {
@@ -19,7 +23,6 @@ fn source(key: &str) -> &'static str {
             line.split_once('=').map(|(k, v)| (k.trim(), v.trim()))
         })
         .find_map(|(k, v)| (k == key).then_some(v))
-        .unwrap_or_else(|| panic!("dict-sources.env missing key `{key}`"))
 }
 
 #[derive(Parser)]
@@ -225,13 +228,20 @@ fn download_jmdict(dir: &Path) -> Result<PathBuf> {
 }
 
 /// Fetch a gzipped upstream input named by the `<NAME>_URL` /
-/// `<NAME>_OUT` keys in `dict-sources.env`. Skips the network call
+/// `<NAME>_OUT` keys in `dict-sources.env`, falling back to the optional
+/// `<NAME>_FALLBACK_URL`. Skips the network call
 /// if the decompressed file already exists at `<dir>/<OUT>`.
 fn download_source(dir: &Path, name: &str) -> Result<PathBuf> {
     use flate2::read::GzDecoder;
     use std::io::{Read, Write};
 
-    let url = source(&format!("{name}_URL"));
+    let urls: Vec<&str> = [
+        Some(source(&format!("{name}_URL"))),
+        source_opt(&format!("{name}_FALLBACK_URL")),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
     let out_name = source(&format!("{name}_OUT"));
 
     std::fs::create_dir_all(dir)?;
@@ -248,8 +258,8 @@ fn download_source(dir: &Path, name: &str) -> Result<PathBuf> {
         }
     }
 
-    eprintln!("Downloading {} ...", url);
-    let gz_bytes = fetch_with_retry(url)?;
+    eprintln!("Downloading {} ...", urls[0]);
+    let gz_bytes = fetch_with_retry(&urls)?;
 
     eprintln!(
         "Downloaded {:.1} MB compressed.",
@@ -280,18 +290,20 @@ fn download_source(dir: &Path, name: &str) -> Result<PathBuf> {
 /// later, so a few spaced attempts beat failing the whole release.
 const DOWNLOAD_RETRY_DELAYS: [u64; 3] = [5, 15, 45];
 
-/// GETs `url` and reads the whole body, retrying on any failure: connect,
-/// HTTP error status, or a body cut off mid-read. Explicit timeouts make a
-/// stalled connection fail (and get retried) instead of hanging the build.
-fn fetch_with_retry(url: &str) -> Result<Vec<u8>> {
+/// GETs the first of `urls` that answers and reads the whole body, retrying
+/// on any failure: connect, HTTP error status, or a body cut off mid-read.
+/// Each attempt tries every URL in order before waiting. Explicit timeouts
+/// make a stalled connection fail (and get retried) instead of hanging the
+/// build.
+fn fetch_with_retry(urls: &[&str]) -> Result<Vec<u8>> {
     use std::io::Read;
     use std::time::Duration;
 
     let agent = ureq::AgentBuilder::new()
-        .timeout_connect(Duration::from_secs(30))
+        .timeout_connect(Duration::from_secs(20))
         .timeout_read(Duration::from_secs(120))
         .build();
-    let attempt = || -> Result<Vec<u8>> {
+    let get = |url: &str| -> Result<Vec<u8>> {
         let response = agent
             .get(url)
             .call()
@@ -300,8 +312,26 @@ fn fetch_with_retry(url: &str) -> Result<Vec<u8>> {
         response
             .into_reader()
             .read_to_end(&mut body)
-            .context("Failed to read response body")?;
+            .with_context(|| format!("Failed to read response body from {url}"))?;
         Ok(body)
+    };
+    let attempt = || -> Result<Vec<u8>> {
+        let mut last = None;
+        for (i, url) in urls.iter().enumerate() {
+            if i > 0 {
+                eprintln!("Trying fallback {url} ...");
+            }
+            match get(url) {
+                Ok(body) => return Ok(body),
+                Err(e) => {
+                    if i + 1 < urls.len() {
+                        eprintln!("{e:#}");
+                    }
+                    last = Some(e);
+                }
+            }
+        }
+        Err(last.expect("at least one URL"))
     };
 
     let mut delays = DOWNLOAD_RETRY_DELAYS.iter();
