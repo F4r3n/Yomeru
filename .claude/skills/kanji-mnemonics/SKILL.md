@@ -47,6 +47,7 @@ Each kanji card shows a short memory phrase that links its parts' meanings to th
 - **One line, at most 15 words**, ending on the kanji's main meaning, after a colon when it reads well: `A person leaning against a tree: rest.`
 - **Build it from the part meanings as listed**, so the learner sees the chip words in the phrase. Pick whichever meaning makes it click, not necessarily the first: 或 is "some", but "or" gives 惑.
 - **Concrete scenes beat abstract wording.** A small action (grabs, leans, cuts, pierces) beats "X and Y together".
+- **Let the scene explain the meaning**, not just put the parts side by side: give the reason the parts lead to it. `質 Shellfish so fine it takes two axes to crack them: quality.` works because the quality is *why* two axes are needed; "Two axes weighed against shellfish: quality" only lists the parts. The reason can be invented; it doesn't have to follow etymology.
 - **Parts that are only a sound hint** can still be used for their meaning, or left out when they add nothing.
 - **Kanji with no parts:** describe the shape (`A crescent moon with two lines of shadow: moon.`) or a gesture.
 - **No puns on Japanese readings**, no quotes around the phrase, no tabs or line breaks inside it.

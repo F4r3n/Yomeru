@@ -601,25 +601,35 @@ fn PartChip(part: KanjiPart, entry: Option<KanjiEntry>, original: Option<KanjiEn
         .map(|m| m.into_iter().take(3).collect::<Vec<_>>().join(", "))
         .unwrap_or_default();
     let sub = entry.map(|e| e.parts).unwrap_or_default();
+    // Radical and sound are marked on the chip's edges (see theme.rs), not
+    // spelled out; the glyph's tooltip names them.
+    let roles = [(part.radical, "radical"), (part.phonetic, "sound")];
+    let role_title = roles
+        .iter()
+        .filter(|(on, _)| *on)
+        .map(|(_, name)| *name)
+        .collect::<Vec<_>>()
+        .join(" · ");
+    let mut class = String::from("part");
+    for (on, name) in roles {
+        if on {
+            class.push(' ');
+            class.push_str(name);
+        }
+    }
     let body = rsx! {
-        span { class: "el", "{part.element}" }
+        span { class: "el", title: "{role_title}", "{part.element}" }
         if !meaning.is_empty() {
             span { class: "m", title: "{meaning}", "{meaning}" }
-        }
-        if part.radical {
-            span { class: "tag", "radical" }
-        }
-        if part.phonetic {
-            span { class: "tag", "sound" }
         }
     };
     rsx! {
         div { class: "kanji-part",
             if sub.is_empty() {
-                div { class: "part", {body} }
+                div { class: "{class}", {body} }
             } else {
                 button {
-                    class: if open() { "part open" } else { "part" },
+                    class: if open() { "{class} open" } else { "{class}" },
                     title: "Show its parts",
                     onclick: move |_| open.toggle(),
                     {body}

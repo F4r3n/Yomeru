@@ -664,7 +664,12 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 .kanji-back .part .el { font-size: 24px; line-height: 1.1; }
 .kanji-back .part .m { max-width: 10em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-align: center; font-size: 12px; color: var(--subtext); }
 .kanji-back .mnemonic { margin-top: 8px; max-width: 32em; text-align: center; font-style: italic; color: var(--subtext); }
-.kanji-back .part .tag { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--accent); }
+/* Part roles as inset edge bars, so they combine with each other and with the
+   dashed (expandable) / accent (open) border: radical = left, sound = bottom. */
+.kanji-back .part { --radical-mark: color-mix(in srgb, var(--blue) 45%, transparent); --sound-mark: color-mix(in srgb, var(--yellow) 45%, transparent); }
+.kanji-back .part.radical { box-shadow: inset 2px 0 0 var(--radical-mark); }
+.kanji-back .part.sound { box-shadow: inset 0 -2px 0 var(--sound-mark); }
+.kanji-back .part.radical.sound { box-shadow: inset 2px 0 0 var(--radical-mark), inset 0 -2px 0 var(--sound-mark); }
 .kanji-back .used-in { margin-top: 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; }
 .kanji-back .used-word { max-width: 100%; }
 .review-card .kanji-facts { font-size: 12px; }
