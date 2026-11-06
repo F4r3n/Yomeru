@@ -110,6 +110,19 @@ echo "==> [4/4] building & launching yomeru-server via podman compose"
 # so the new server starts on the old ones.
 "${COMPOSE[@]}" up -d --build --force-recreate
 
+# podman-compose can leave the server in "Created" without ever starting it:
+# it mishandles `depends_on: condition: service_completed_successfully` once
+# the one-shot dict builder has exited. The builder has finished by now
+# (`up -d` waits for it), so start the server explicitly. A no-op if it's
+# already running.
+podman start "$CONTAINER" >/dev/null
+sleep 2
+if [[ "$(podman inspect -f '{{.State.Running}}' "$CONTAINER")" != "true" ]]; then
+    echo "deploy.sh: $CONTAINER failed to start. Last log lines:" >&2
+    podman logs --tail 30 "$CONTAINER" >&2
+    exit 1
+fi
+
 if [[ "${FORCE_DICTS:-0}" == "1" ]]; then
     # Done after the server update on purpose: a server only reads dict
     # formats it knows, so new dicts under an old server would stop it.
