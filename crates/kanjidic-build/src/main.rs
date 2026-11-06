@@ -22,6 +22,10 @@ struct Args {
     /// KanjiVG XML (the single-file release) to take each kanji's parts from.
     #[arg(long)]
     kanjivg: Option<PathBuf>,
+    /// Also write the merged entries as JSON, for offline tools such as
+    /// the kanji-mnemonics skill's `next_kanji.py`.
+    #[arg(long)]
+    dump_json: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -40,6 +44,11 @@ fn main() -> Result<()> {
             }
         }
         eprintln!("Added parts to {with_parts} entries.");
+    }
+    if let Some(path) = &args.dump_json {
+        eprintln!("Dumping JSON to {:?}...", path);
+        let file = std::io::BufWriter::new(std::fs::File::create(path)?);
+        serde_json::to_writer(file, &entries)?;
     }
     eprintln!("Serializing to {:?}...", args.output);
     serializer::write_index(&entries, &args.output)?;

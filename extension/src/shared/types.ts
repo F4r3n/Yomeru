@@ -216,4 +216,6 @@ export interface KanjiEntry {
   on_readings: string[];
   kun_readings: string[];
   meanings: string[];
+  /** From the separate mnemonic file; absent when it has none. */
+  mnemonic?: string;
 }

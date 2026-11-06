@@ -5,7 +5,7 @@
 use std::collections::HashMap;
 
 use dioxus::prelude::*;
-use kanjidic_types::{KanjiEntry, KanjiPart};
+use kanjidic_types::{KanjiEntry, KanjiPart, part_meanings};
 
 use crate::dict::kanji_for;
 use crate::drill_log;
@@ -531,6 +531,9 @@ fn KanjiBack(info: Option<KanjiEntry>, used_in: Vec<StudiedWord>) -> Element {
             if !k.parts.is_empty() {
                 KanjiParts { key: "{k.literal}", parts: k.parts.clone() }
             }
+            if let Some(m) = &k.mnemonic {
+                div { class: "mnemonic", "💡 {m}" }
+            }
             if !used_in.is_empty() {
                 div { class: "used-in",
                     div { class: "muted", "Your words" }
@@ -586,11 +589,16 @@ fn KanjiParts(parts: Vec<KanjiPart>) -> Element {
 #[component]
 fn PartChip(part: KanjiPart, entry: Option<KanjiEntry>, original: Option<KanjiEntry>) -> Element {
     let mut open = use_signal(|| false);
-    // A variant's own entry can exist without meanings; 水 still has one.
+    // A variant's own entry can be empty or only say "radical number 9"
+    // (亻); its original (人) has the real meaning. A few meanings, not just
+    // the first: the link is often in a later one (或 is "some", but also
+    // "or", which is what makes 惑 click).
     let meaning = [&entry, &original]
         .into_iter()
-        .find_map(|e| e.as_ref()?.meanings.first())
-        .cloned()
+        .flatten()
+        .map(|e| part_meanings(&e.meanings))
+        .find(|m| !m.is_empty())
+        .map(|m| m.into_iter().take(3).collect::<Vec<_>>().join(", "))
         .unwrap_or_default();
     let sub = entry.map(|e| e.parts).unwrap_or_default();
     let body = rsx! {

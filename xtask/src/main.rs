@@ -115,6 +115,7 @@ fn main() -> Result<()> {
             build_wasm(&root, "srs-wasm", &profile)?;
             build_wasm(&root, "kanjidic-wasm", &profile)?;
             build_extension_wasm(&root, &profile)?;
+            copy_overlays(&root)?;
         }
 
         Cmd::DownloadDict { output_dir } => {
@@ -147,6 +148,7 @@ fn main() -> Result<()> {
                 None => Some(download_kanjivg(&root)?),
             };
             build_kanjidic(&root, &input, kanjivg.as_deref(), &output)?;
+            copy_overlays(&root)?;
         }
 
         Cmd::DownloadExamples { output_dir } => {
@@ -323,6 +325,16 @@ fn package(root: &Path) -> Result<()> {
         std::fs::create_dir_all(dest.parent().unwrap())?;
         std::fs::copy(&src, &dest)?;
         eprintln!("  {rel}");
+    }
+
+    // Optional: copied straight from the source so a stale
+    // `extension/data` copy can't ship.
+    for name in OVERLAY_FILES {
+        let src = root.join("data").join(name);
+        if src.exists() {
+            std::fs::copy(&src, release.join("data").join(name))?;
+            eprintln!("  data/{name}");
+        }
     }
 
     // The Dioxus app's wasm-bindgen JS statically imports inline snippets from
@@ -532,6 +544,28 @@ fn build_dicts(root: &Path, input: Option<PathBuf>) -> Result<()> {
         &examples_utf,
         &root.join("extension/data/examples.bin"),
     )?;
+    copy_overlays(root)?;
+    Ok(())
+}
+
+/// Checked-in files laid over KANJIDIC at lookup time: mnemonics and plain
+/// part names. No build step, and each is optional.
+const OVERLAY_FILES: [&str; 2] = ["kanji-mnemonics.tsv", "part-names.tsv"];
+
+/// Copy the overlay files from `data/` next to the dictionaries in
+/// `extension/data/`.
+fn copy_overlays(root: &Path) -> Result<()> {
+    for name in OVERLAY_FILES {
+        let src = root.join("data").join(name);
+        if !src.exists() {
+            eprintln!("No data/{name}; kanji go without it.");
+            continue;
+        }
+        let dest = root.join("extension/data").join(name);
+        std::fs::create_dir_all(dest.parent().unwrap())?;
+        std::fs::copy(&src, &dest)?;
+        eprintln!("Copied data/{name} to {}", dest.display());
+    }
     Ok(())
 }
 

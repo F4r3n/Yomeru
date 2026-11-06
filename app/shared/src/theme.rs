@@ -662,7 +662,8 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 .kanji-back button.part { border-style: dashed; }
 .kanji-back button.part.open { border-style: solid; border-color: var(--accent); }
 .kanji-back .part .el { font-size: 24px; line-height: 1.1; }
-.kanji-back .part .m { max-width: 9em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--subtext); }
+.kanji-back .part .m { max-width: 10em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-align: center; font-size: 12px; color: var(--subtext); }
+.kanji-back .mnemonic { margin-top: 8px; max-width: 32em; text-align: center; font-style: italic; color: var(--subtext); }
 .kanji-back .part .tag { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--accent); }
 .kanji-back .used-in { margin-top: 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; }
 .kanji-back .used-word { max-width: 100%; }

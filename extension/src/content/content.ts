@@ -15,6 +15,7 @@ import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
 import type * as KanjidicWasm from "../../_generated/kanjidic-wasm/kanjidic_wasm.js";
 import type { WordEntry } from "../shared/types.ts";
 import { preferredHeadword } from "../shared/dict.ts";
+import { loadKanjiOverlays } from "../shared/kanji-overlays.ts";
 
 type Dictionary = InstanceType<typeof JmDictWasm.Dictionary>;
 type KanjiDictionary = InstanceType<typeof KanjidicWasm.KanjiDictionary>;
@@ -85,7 +86,9 @@ async function initKanjiDictionary(): Promise<void> {
     if (!resp.ok) throw new Error(`fetch kanjidic.bin: ${resp.status}`);
     const bytes = new Uint8Array(await resp.arrayBuffer());
 
-    kanjiDictionary = new wasm.KanjiDictionary(bytes);
+    const dict = new wasm.KanjiDictionary(bytes);
+    await loadKanjiOverlays(dict);
+    kanjiDictionary = dict;
   } catch (e) {
     console.error("[yomeru] KanjiDictionary init failed:", e);
     throw e;

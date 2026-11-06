@@ -38,6 +38,9 @@
             {#if k.meanings.length > 0}
                 <div class="jp-kanji-meanings">{k.meanings.join("; ")}</div>
             {/if}
+            {#if k.mnemonic}
+                <div class="jp-kanji-mnemonic">💡 {k.mnemonic}</div>
+            {/if}
         </div>
     {/each}
 </div>

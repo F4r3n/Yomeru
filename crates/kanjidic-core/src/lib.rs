@@ -3,12 +3,22 @@
 
 use anyhow::{anyhow, bail, Context};
 use japanese_utils::is_kanji;
-use kanjidic_types::KanjiEntry;
+use kanjidic_types::{KanjiEntry, KanjiRecord};
 use once_cell::sync::OnceCell;
 use postcard::from_bytes;
 use serde::Deserialize;
+use std::collections::HashMap;
 
 static KDICT: OnceCell<KanjiDictInner> = OnceCell::new();
+
+/// Mnemonic phrases by kanji, from `kanji-mnemonics.tsv`. A separate file so
+/// rebuilding `kanjidic.bin` from a newer KANJIDIC never touches them.
+static MNEMONICS: OnceCell<HashMap<char, String>> = OnceCell::new();
+
+/// Plain names for kanji parts, from `part-names.tsv` ("roof" for 宀, where
+/// KANJIDIC says "katakana u radical (no. 40)"). Same separate-file reasoning
+/// as [`MNEMONICS`].
+static PART_NAMES: OnceCell<HashMap<char, String>> = OnceCell::new();
 
 struct KanjiDictInner {
     version: u8,
@@ -43,6 +53,7 @@ impl From<KanjiEntryV1> for KanjiEntry {
             kun_readings: e.kun_readings,
             meanings: e.meanings,
             parts: vec![],
+            mnemonic: None,
         }
     }
 }
@@ -62,6 +73,51 @@ pub fn is_loaded() -> bool {
     KDICT.get().is_some()
 }
 
+/// Load the mnemonic file into the process-global overlay. Idempotent like
+/// [`init_from_bytes`]. Lookups work without it, just with no mnemonics.
+pub fn init_mnemonics(tsv: &str) -> anyhow::Result<()> {
+    if MNEMONICS.get().is_some() {
+        return Ok(());
+    }
+    MNEMONICS
+        .set(parse_tsv(tsv))
+        .map_err(|_| anyhow!("MNEMONICS already set"))?;
+    Ok(())
+}
+
+/// Load the part-name file. Idempotent like [`init_from_bytes`]. A named
+/// part's lookup gets the name as its first meaning; a part KANJIDIC has no
+/// entry for (⺍) gets a minimal entry holding just the name.
+pub fn init_part_names(tsv: &str) -> anyhow::Result<()> {
+    if PART_NAMES.get().is_some() {
+        return Ok(());
+    }
+    PART_NAMES
+        .set(parse_tsv(tsv))
+        .map_err(|_| anyhow!("PART_NAMES already set"))?;
+    Ok(())
+}
+
+fn part_name(c: char) -> Option<&'static String> {
+    PART_NAMES.get()?.get(&c)
+}
+
+/// `<kanji>\t<text>` per line, the format of both overlay files. Blank lines and `#` comments are skipped,
+/// as is any line that doesn't start with a single char and a tab, so one
+/// bad hand edit doesn't lose the rest of the file.
+fn parse_tsv(tsv: &str) -> HashMap<char, String> {
+    tsv.lines()
+        .filter(|l| !l.trim_start().starts_with('#'))
+        .filter_map(|l| {
+            let (k, phrase) = l.split_once('\t')?;
+            let mut chars = k.trim().chars();
+            let c = chars.next()?;
+            let phrase = phrase.trim();
+            (chars.next().is_none() && !phrase.is_empty()).then(|| (c, phrase.to_string()))
+        })
+        .collect()
+}
+
 /// Lookup one kanji character.
 pub fn lookup_one(ch: char) -> Option<KanjiEntry> {
     get_entry(ch as u32)
@@ -70,13 +126,37 @@ pub fn lookup_one(ch: char) -> Option<KanjiEntry> {
 /// Extract kanji chars from `word`, return entries for each.
 pub fn lookup_many(word: &str) -> Vec<KanjiEntry> {
     word.chars()
-        .filter(|&c| is_kanji(c))
+        .filter(|&c| is_kanji(c) || part_name(c).is_some())
         .filter_map(|c| get_entry(c as u32))
         .collect()
 }
 
 fn get_entry(codepoint: u32) -> Option<KanjiEntry> {
-    KDICT.get()?.entry(codepoint)
+    let found = KDICT.get()?.entry(codepoint);
+    let c = char::from_u32(codepoint)?;
+    let name = part_name(c);
+    let mut e = match (found, name) {
+        (Some(e), _) => e,
+        (None, Some(_)) => KanjiEntry {
+            literal: c,
+            stroke_count: 0,
+            grade: None,
+            freq: None,
+            jlpt: None,
+            on_readings: vec![],
+            kun_readings: vec![],
+            meanings: vec![],
+            parts: vec![],
+            mnemonic: None,
+        },
+        (None, None) => return None,
+    };
+    if let Some(name) = name {
+        e.meanings.retain(|m| m != name);
+        e.meanings.insert(0, name.clone());
+    }
+    e.mnemonic = MNEMONICS.get().and_then(|m| m.get(&e.literal).cloned());
+    Some(e)
 }
 
 impl KanjiDictInner {
@@ -94,7 +174,7 @@ impl KanjiDictInner {
         if self.version == 1 {
             from_bytes::<KanjiEntryV1>(raw).ok().map(KanjiEntry::from)
         } else {
-            from_bytes(raw).ok()
+            from_bytes::<KanjiRecord>(raw).ok().map(KanjiEntry::from)
         }
     }
 }
@@ -168,6 +248,7 @@ mod tests {
             kun_readings: kun.iter().map(|s| s.to_string()).collect(),
             meanings: meanings.iter().map(|s| s.to_string()).collect(),
             parts: vec![],
+            mnemonic: None,
         }
     }
 
@@ -177,7 +258,7 @@ mod tests {
     fn build_binary(entries: &[KanjiEntry]) -> Vec<u8> {
         let encoded = entries
             .iter()
-            .map(|e| (e.literal, to_allocvec(e).unwrap()))
+            .map(|e| (e.literal, to_allocvec(&KanjiRecord::from(e)).unwrap()))
             .collect();
         build_raw(2, encoded)
     }
@@ -254,6 +335,16 @@ mod tests {
     }
 
     #[test]
+    fn mnemonics_parse_skips_comments_blanks_and_bad_lines() {
+        let m = parse_tsv(
+            "# header\n\n惑\tA heart torn between this or that.\n論 no tab here\n漢字\ttwo chars\n字\t  \n語\t Words, spoken. \n",
+        );
+        assert_eq!(m.len(), 2);
+        assert_eq!(m[&'惑'], "A heart torn between this or that.");
+        assert_eq!(m[&'語'], "Words, spoken.");
+    }
+
+    #[test]
     fn parse_binary_rejects_short_input() {
         let err = parse_binary(&[0u8; 4])
             .err()
@@ -309,8 +400,31 @@ mod tests {
         init_from_bytes(&bin).expect("init");
         assert!(is_loaded());
 
+        // No mnemonic file loaded yet: lookups still work.
+        assert_eq!(lookup_one('字').expect("字 present").mnemonic, None);
+        init_mnemonics("漢\tHan people, written.\n").expect("mnemonics");
+
         let kan = lookup_one('漢').expect("漢 present");
         assert_eq!(kan.literal, '漢');
+        assert_eq!(kan.mnemonic.as_deref(), Some("Han people, written."));
+        assert_eq!(lookup_one('字').expect("字 present").mnemonic, None);
+
+        // Part names: listed first, and an entry appears for a part
+        // KANJIDIC doesn't have.
+        init_part_names("字\tletter\n⺍\tsparkle\n").expect("part names");
+        assert_eq!(
+            lookup_one('字').expect("字 present").meanings,
+            vec!["letter".to_string(), "character".to_string()]
+        );
+        let sparkle = lookup_one('⺍').expect("named part gets an entry");
+        assert_eq!(sparkle.meanings, vec!["sparkle".to_string()]);
+        assert_eq!(
+            lookup_many("⺍字")
+                .iter()
+                .map(|e| e.literal)
+                .collect::<Vec<_>>(),
+            vec!['⺍', '字']
+        );
         assert_eq!(kan.stroke_count, 13);
         assert_eq!(kan.on_readings, vec!["カン".to_string()]);
 

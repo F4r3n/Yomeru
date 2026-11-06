@@ -31,6 +31,8 @@ COPY xtask ./xtask
 COPY crates ./crates
 COPY server ./server
 COPY app ./app
+# Not a build input: copied to /dicts on every start (see the entrypoint).
+COPY data ./data
 
 # Warm the build cache so runtime startup is fast: pre-compile xtask
 # and the three -build crates it shells out to. The build itself

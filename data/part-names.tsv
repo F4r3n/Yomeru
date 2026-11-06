@@ -1,0 +1,32 @@
+# Plain names for kanji parts, shown first wherever the part is looked up
+# (part chips, popup, mnemonic generation). Laid over KANJIDIC at lookup time,
+# so a dictionary update never touches it. <part><TAB><name>.
+宀	roof
+冖	cover
+亠	lid
+广	shelter
+厂	cliff
+疒	sickbed
+彳	step
+丿	slash
+丶	drop
+冂	frame
+匚	box
+匸	box
+冫	ice
+卩	kneel
+禾	grain
+礻	altar
+衤	clothing
+癶	footsteps
+夂	walking legs
+殳	weapon
+歹	death
+彡	hair
+⺍	sparkle
+⺌	little
+业	rack
+𡗗	many
+艹	grass
+⺮	bamboo
+亻	person

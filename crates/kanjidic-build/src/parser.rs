@@ -158,6 +158,7 @@ impl CharBuilder {
             kun_readings: std::mem::take(&mut self.kun_readings),
             meanings: std::mem::take(&mut self.meanings),
             parts: vec![],
+            mnemonic: None,
         })
     }
 }

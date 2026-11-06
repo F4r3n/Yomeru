@@ -12,6 +12,14 @@ set -eu
 
 mkdir -p /dicts /build/extension/data
 
+# The overlay files (mnemonics, part names) ship in the image, not the dict
+# build, so a new image updates them even when the dictionaries are kept.
+for f in kanji-mnemonics.tsv part-names.tsv; do
+    if [ -f "/build/data/$f" ]; then
+        cp "/build/data/$f" "/dicts/$f"
+    fi
+done
+
 if [ "${FORCE:-0}" != "1" ] \
     && [ -s /dicts/jmdict.bin ] \
     && [ -s /dicts/kanjidic.bin ] \

@@ -1,5 +1,5 @@
 use anyhow::{bail, Result};
-use kanjidic_types::KanjiEntry;
+use kanjidic_types::{KanjiEntry, KanjiRecord};
 use std::io::Write;
 use std::path::Path;
 
@@ -10,7 +10,7 @@ use std::path::Path;
 //  [4]  count       u32 LE — number of index entries
 //  [N×8] index      sorted (codepoint: u32 LE, byte_offset: u32 LE) pairs
 //  [4]  data_len    u32 LE
-//  […]  data_blob   length-prefixed postcard entries (u32 LE len + bytes)
+//  […]  data_blob   length-prefixed postcard `KanjiRecord`s (u32 LE len + bytes)
 
 pub fn write_index(entries: &[KanjiEntry], output: &Path) -> Result<()> {
     if let Some(parent) = output.parent() {
@@ -32,7 +32,7 @@ pub fn write_index(entries: &[KanjiEntry], output: &Path) -> Result<()> {
         }
         index.push((entry.literal as u32, offset as u32));
 
-        let serialized = postcard::to_allocvec(entry)?;
+        let serialized = postcard::to_allocvec(&KanjiRecord::from(*entry))?;
         let len = serialized.len() as u32;
         data_blob.extend_from_slice(&len.to_le_bytes());
         data_blob.extend_from_slice(&serialized);

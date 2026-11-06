@@ -20,6 +20,20 @@ impl KanjiDictionary {
         Ok(KanjiDictionary {})
     }
 
+    /// Lay the mnemonic file (`kanji-mnemonics.tsv`) over lookups.
+    #[wasm_bindgen(js_name = withMnemonics)]
+    pub fn with_mnemonics(&self, tsv: &str) -> Result<(), JsError> {
+        kanjidic_core::init_mnemonics(tsv)
+            .map_err(|e| JsError::new(&format!("Failed to load mnemonics: {e}")))
+    }
+
+    /// Lay the part-name file (`part-names.tsv`) over lookups.
+    #[wasm_bindgen(js_name = withPartNames)]
+    pub fn with_part_names(&self, tsv: &str) -> Result<(), JsError> {
+        kanjidic_core::init_part_names(tsv)
+            .map_err(|e| JsError::new(&format!("Failed to load part names: {e}")))
+    }
+
     /// Single-char string → KanjiEntry | null
     pub fn lookup(&self, ch: &str) -> Result<JsValue, JsError> {
         let c = ch

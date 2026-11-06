@@ -15,6 +15,7 @@ import type * as SrsWasm from "../../_generated/srs-wasm/srs_wasm.js";
 import type * as KanjiWasm from "../../_generated/kanjidic-wasm/kanjidic_wasm.js";
 import type * as ExamplesWasm from "../../_generated/examples-wasm/examples_wasm.js";
 import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
+import { loadKanjiOverlays } from "../shared/kanji-overlays.ts";
 
 export type SrsEngine = InstanceType<typeof SrsWasm.SrsEngine>;
 export type KanjiDictionary = InstanceType<typeof KanjiWasm.KanjiDictionary>;
@@ -63,7 +64,9 @@ export async function getKanji(): Promise<KanjiDictionary> {
       "kanjidic-wasm",
       "kanjidic_wasm",
     );
-    kanji = new mod.KanjiDictionary(await loadData("kanjidic.bin"));
+    const dict = new mod.KanjiDictionary(await loadData("kanjidic.bin"));
+    await loadKanjiOverlays(dict);
+    kanji = dict;
   }
   return kanji;
 }
