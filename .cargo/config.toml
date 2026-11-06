@@ -1,5 +1,14 @@
 [target.wasm32-unknown-unknown]
 rustflags = ["-C", "target-feature=+bulk-memory,+mutable-globals"]
 
+# Android 15+ devices can run with 16 KB memory pages, and Play requires
+# native libraries whose LOAD segments are 16 KB-aligned. NDK r27 still links
+# with 4 KB alignment by default (r28+ switches to 16 KB).
+[target.aarch64-linux-android]
+rustflags = ["-C", "link-arg=-Wl,-z,max-page-size=16384"]
+
+[target.x86_64-linux-android]
+rustflags = ["-C", "link-arg=-Wl,-z,max-page-size=16384"]
+
 [alias]
 xtask = "run --package xtask --"

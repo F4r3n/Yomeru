@@ -1,5 +1,4 @@
 use dioxus::prelude::*;
-use gloo_storage::{LocalStorage, Storage};
 use serde_json::json;
 
 use crate::api;
@@ -23,7 +22,7 @@ pub fn SettingsTab() -> Element {
     // closed — but only for the email still configured, so a stale flag from a
     // different account can't strand the user on a dead code field.
     let mut otp_sent = use_signal(|| {
-        let pending: String = LocalStorage::get(OTP_PENDING_KEY).unwrap_or_default();
+        let pending: String = crate::rt::kv_get(OTP_PENDING_KEY).unwrap_or_default();
         !pending.is_empty() && pending == load().server_email.trim()
     });
     let mut otp_code = use_signal(String::new);
@@ -54,7 +53,7 @@ pub fn SettingsTab() -> Element {
                     let _ = save(&next);
                     forget_sync_cursor().await;
                     settings.set(next);
-                    LocalStorage::delete(OTP_PENDING_KEY);
+                    crate::rt::kv_delete(OTP_PENDING_KEY);
                     otp_sent.set(false);
                     sync_status.set(Some((
                         "Authenticated (dev mode — no code required).".into(),
@@ -62,7 +61,7 @@ pub fn SettingsTab() -> Element {
                     )));
                 }
                 Ok(None) => {
-                    let _ = LocalStorage::set(OTP_PENDING_KEY, s.server_email.trim());
+                    let _ = crate::rt::kv_set(OTP_PENDING_KEY, &s.server_email.trim());
                     otp_sent.set(true);
                 }
                 Err(e) => sync_status.set(Some((e, true))),
@@ -87,7 +86,7 @@ pub fn SettingsTab() -> Element {
                     let _ = save(&next);
                     forget_sync_cursor().await;
                     settings.set(next);
-                    LocalStorage::delete(OTP_PENDING_KEY);
+                    crate::rt::kv_delete(OTP_PENDING_KEY);
                     otp_sent.set(false);
                     otp_code.set(String::new());
                     clear_sync_health();
@@ -129,13 +128,19 @@ pub fn SettingsTab() -> Element {
             let payload = json!({
                 "schema": CARDS_SCHEMA_VERSION,
                 "version": env!("CARGO_PKG_VERSION"),
-                "exportedAt": js_sys::Date::now(),
+                "exportedAt": crate::rt::now_ms(),
                 "cards": cards,
             });
             let text = serde_json::to_string_pretty(&payload).unwrap_or_default();
             match trigger_download(&text, "yomeru-cards.json") {
-                Ok(()) => backup_status.set(Some((
-                    format!("Exported {n} card{}.", if n == 1 { "" } else { "s" }),
+                Ok(saved_to) => backup_status.set(Some((
+                    format!(
+                        "Exported {n} card{}.{}",
+                        if n == 1 { "" } else { "s" },
+                        saved_to
+                            .map(|p| format!(" Saved to {p}."))
+                            .unwrap_or_default()
+                    ),
                     false,
                 ))),
                 Err(e) => backup_status.set(Some((format!("Export failed: {e}"), true))),
@@ -246,7 +251,7 @@ pub fn SettingsTab() -> Element {
                             button {
                                 class: "link",
                                 onclick: move |_| {
-                                    LocalStorage::delete(OTP_PENDING_KEY);
+                                    crate::rt::kv_delete(OTP_PENDING_KEY);
                                     otp_code.set(String::new());
                                     otp_sent.set(false);
                                 },

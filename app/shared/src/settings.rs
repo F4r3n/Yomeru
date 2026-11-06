@@ -8,9 +8,7 @@
 use crate::platform::Platform;
 use dioxus::prelude::consume_context;
 use dioxus::prelude::*;
-use gloo_storage::errors::StorageError;
 use serde::{Deserialize, Serialize};
-use wasm_bindgen_futures::spawn_local;
 
 /// localStorage / browser.storage.local key under which settings serialize.
 pub const SETTINGS_KEY: &str = "srs_settings";
@@ -70,15 +68,13 @@ pub fn load() -> SrsSettings {
     consume_context::<Platform>().settings.load()
 }
 
-/// Saves settings. Returns a [`StorageError`] shape to keep the existing
-/// call-site signatures unchanged; the inner error message comes from
-/// whichever store the platform installed. The save is fire-and-forget on
+/// Saves settings. The save is fire-and-forget on
 /// the underlying async store — callers that want backpressure should use
 /// the trait directly.
-pub fn save(s: &SrsSettings) -> Result<(), StorageError> {
+pub fn save(s: &SrsSettings) -> Result<(), String> {
     let platform = consume_context::<Platform>();
     let s_owned = s.clone();
-    spawn_local(async move {
+    crate::rt::spawn_detached(async move {
         if let Err(e) = platform.settings.save(s_owned).await {
             warn!("settings save failed: {e}");
         }
@@ -87,18 +83,39 @@ pub fn save(s: &SrsSettings) -> Result<(), StorageError> {
 }
 
 /// Default sync server URL.
-/// * Debug builds (`dx serve`): point at the local backend on :4500 so the
-///   dev loop doesn't need any manual config in Settings.
-/// * Release builds (`dx bundle --release`): use the page origin, which is
-///   correct for self-hosters who proxy /api/* through the same nginx that
-///   serves the SPA.
+/// * `YOMERU_SERVER_URL` at build time, when set, wins everywhere.
+/// * Debug builds (`dx serve`): the local backend on :4500, so the dev loop
+///   needs no manual config. The Android emulator reaches the host's loopback
+///   as 10.0.2.2.
+/// * Release web builds: the page origin, which is correct for self-hosters
+///   who proxy /api/* through the same nginx that serves the SPA.
+/// * Release native builds have no origin: empty, so the user enters a
+///   server in Settings.
 pub fn default_server_url() -> String {
-    if cfg!(debug_assertions) {
-        return "http://127.0.0.1:4500".to_string();
+    if let Some(url) = option_env!("YOMERU_SERVER_URL") {
+        return url.to_string();
     }
+    if cfg!(debug_assertions) {
+        let host = if cfg!(target_os = "android") {
+            "10.0.2.2"
+        } else {
+            "127.0.0.1"
+        };
+        return format!("http://{host}:4500");
+    }
+    page_origin()
+}
+
+#[cfg(target_arch = "wasm32")]
+fn page_origin() -> String {
     web_sys::window()
         .and_then(|w| w.location().origin().ok())
         .unwrap_or_default()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn page_origin() -> String {
+    String::new()
 }
 
 #[cfg(test)]

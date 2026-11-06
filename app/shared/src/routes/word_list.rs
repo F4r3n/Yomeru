@@ -70,12 +70,8 @@ pub fn WordListTab() -> Element {
 
     let on_reset = move |seq: u32| {
         spawn(async move {
-            let confirmed = web_sys::window()
-                .and_then(|w| {
-                    w.confirm_with_message("Reset this word's SRS progress? This can't be undone.")
-                        .ok()
-                })
-                .unwrap_or(false);
+            let confirmed =
+                crate::rt::confirm("Reset this word's SRS progress? This can't be undone.").await;
             if !confirmed {
                 return;
             }

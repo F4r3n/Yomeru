@@ -3,12 +3,19 @@ pub mod cards_io;
 pub mod dict;
 pub mod drill_log;
 pub mod icons;
+/// The card store: IndexedDB in the browser, SQLite natively. Same API.
+#[cfg(target_arch = "wasm32")]
+pub mod idb;
+#[cfg(not(target_arch = "wasm32"))]
+#[path = "native/store.rs"]
 pub mod idb;
 pub mod kanji_deck;
 pub mod platform;
 pub mod romaji;
+pub mod rt;
 pub mod settings;
 pub mod srs;
+mod store_common;
 pub mod sync;
 pub mod theme;
 pub mod types;

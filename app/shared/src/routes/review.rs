@@ -1,5 +1,4 @@
 use dioxus::prelude::*;
-use gloo_storage::{LocalStorage, Storage};
 use jmdict_types::WordEntry;
 
 use crate::components::pos_list;
@@ -45,7 +44,7 @@ struct SessionResult {
 pub(crate) fn shuffle<T>(mut v: Vec<T>) -> Vec<T> {
     // Fisher-Yates with Math.random() — good enough for review-order randomness.
     for i in (1..v.len()).rev() {
-        let r = (js_sys::Math::random() * (i as f64 + 1.0)) as usize;
+        let r = (crate::rt::random() * (i as f64 + 1.0)) as usize;
         v.swap(i, r);
     }
     v
@@ -111,16 +110,16 @@ enum ReviewKind {
 #[component]
 pub fn ReviewTab() -> Element {
     let mut kind = use_signal(
-        || match LocalStorage::get::<String>(REVIEW_TAB_KEY).as_deref() {
-            Ok("kanji") => ReviewKind::Kanji,
+        || match crate::rt::kv_get::<String>(REVIEW_TAB_KEY).as_deref() {
+            Some("kanji") => ReviewKind::Kanji,
             _ => ReviewKind::Words,
         },
     );
     let mut select = move |k: ReviewKind| {
         kind.set(k);
-        let _ = LocalStorage::set(
+        let _ = crate::rt::kv_set(
             REVIEW_TAB_KEY,
-            if k == ReviewKind::Kanji {
+            &if k == ReviewKind::Kanji {
                 "kanji"
             } else {
                 "words"

@@ -3,8 +3,9 @@
 //! outbox, and the delta-sync dirty set and cursor). v6 replaced the old `word` secondary index with
 //! `sequence`; users carrying v5 data are expected to export and re-import.
 
+pub use crate::store_common::*;
 use crate::sync::SyncCursor;
-use crate::types::{CardDirection, CardStatus, ReviewLog, SrsCard, card_id};
+use crate::types::{CardDirection, ReviewLog, SrsCard, card_id};
 use dioxus::logger::tracing;
 use idb::{
     Database, DatabaseEvent, Factory, IndexParams, KeyPath, ObjectStoreParams, Query,
@@ -147,23 +148,6 @@ fn from_value<D: DeserializeOwned>(v: JsValue) -> Result<D, serde_wasm_bindgen::
     serde_wasm_bindgen::from_value(v)
 }
 
-async fn run_rw<F, R>(f: F) -> Result<R, String>
-where
-    F: FnOnce(&idb::ObjectStore) -> Result<R, String>,
-{
-    let db = open().await.map_err(|e| e.to_string())?;
-    let tx = db
-        .transaction(&[STORE], TransactionMode::ReadWrite)
-        .map_err(|e| e.to_string())?;
-    let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
-    let out = f(&store)?;
-    tx.commit()
-        .map_err(|e| e.to_string())?
-        .await
-        .map_err(|e| e.to_string())?;
-    Ok(out)
-}
-
 /// Writes `cards`, optionally stamping each with a fresh `updated_ms`.
 ///
 /// `stamp` is the whole reason the card writes funnel through here: every local
@@ -173,13 +157,17 @@ where
 /// sent would make them look locally-modified and ping-pong between devices.
 /// A stamped write is also queued in the dirty set for the next delta sync,
 /// in the same transaction.
-async fn put_all(cards: &[SrsCard], stamp: bool) -> Result<(), String> {
+pub(crate) async fn put_all(cards: &[SrsCard], stamp: bool) -> Result<(), String> {
     if cards.is_empty() {
         return Ok(());
     }
-    let now = js_sys::Date::now();
+    let now = crate::rt::now_ms();
     let db = open().await.map_err(|e| e.to_string())?;
-    let stores: &[&str] = if stamp { &[STORE, DIRTY_STORE] } else { &[STORE] };
+    let stores: &[&str] = if stamp {
+        &[STORE, DIRTY_STORE]
+    } else {
+        &[STORE]
+    };
     let tx = db
         .transaction(stores, TransactionMode::ReadWrite)
         .map_err(|e| e.to_string())?;
@@ -219,20 +207,6 @@ async fn put_all(cards: &[SrsCard], stamp: bool) -> Result<(), String> {
         .await
         .map_err(|e| e.to_string())?;
     Ok(())
-}
-
-pub async fn put_card(card: &SrsCard) -> Result<(), String> {
-    put_all(std::slice::from_ref(card), true).await
-}
-
-pub async fn put_cards(cards: &[SrsCard]) -> Result<(), String> {
-    put_all(cards, true).await
-}
-
-/// Writes cards adopted from the server verbatim, keeping the `updated_ms` they
-/// arrived with. Only the sync merge should use this — see [`put_all`].
-pub async fn put_cards_synced(cards: &[SrsCard]) -> Result<(), String> {
-    put_all(cards, false).await
 }
 
 pub async fn get_card(sequence: u32, direction: CardDirection) -> Result<Option<SrsCard>, String> {
@@ -307,117 +281,17 @@ pub async fn get_all_cards() -> Result<Vec<SrsCard>, String> {
         .collect())
 }
 
-/// Due word cards, ordered by [`crate::srs::order_due`]. Kanji cards have their own session — see
-/// [`get_due_kanji_cards`].
-pub async fn get_due_cards(now_ms: f64) -> Result<Vec<SrsCard>, String> {
-    get_due(now_ms, false).await
-}
-
-/// Due kanji cards, ordered by [`crate::srs::order_due`].
-pub async fn get_due_kanji_cards(now_ms: f64) -> Result<Vec<SrsCard>, String> {
-    get_due(now_ms, true).await
-}
-
-async fn get_due(now_ms: f64, kanji: bool) -> Result<Vec<SrsCard>, String> {
-    let mut all = get_all_cards().await?;
-    all.retain(|c| {
-        c.is_kanji() == kanji && matches!(c.status, CardStatus::Active) && c.due_ms <= now_ms
-    });
-    crate::srs::order_due(&mut all);
-    Ok(all)
-}
-
-pub async fn get_staging_cards() -> Result<Vec<SrsCard>, String> {
-    let mut all = get_all_cards().await?;
-    all.retain(|c| matches!(c.status, CardStatus::Staging));
-    all.sort_by(|a, b| {
-        b.priority.cmp(&a.priority).then_with(|| {
-            b.added_ms
-                .partial_cmp(&a.added_ms)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        })
-    });
-    Ok(all)
-}
-
-/// Bumps the priority score of every staging sibling of `sequence` by 1, up
-/// to [`crate::types::MAX_PRIORITY`]. Called when the user re-clicks "Add"
-/// on an already-staged word.
-pub async fn bump_priority(sequence: u32) -> Result<(), String> {
-    let siblings = get_cards_by_sequence(sequence).await?;
-    let to_put: Vec<SrsCard> = siblings
-        .into_iter()
-        .filter(|c| matches!(c.status, CardStatus::Staging))
-        .map(|mut c| {
-            c.priority = c.priority.saturating_add(1).min(crate::types::MAX_PRIORITY);
-            c
-        })
-        .collect();
-    put_cards(&to_put).await
-}
-
-/// Resets every active or graduated sibling of `sequence` back to a fresh
-/// "New" FSRS state in the active word list — the mechanism by which a
-/// graduated card can re-enter Review. Destructive.
-pub async fn reset_card(sequence: u32, now_ms: f64) -> Result<(), String> {
-    let siblings = get_cards_by_sequence(sequence).await?;
-    let to_put: Vec<SrsCard> = siblings
-        .into_iter()
-        .filter(|c| matches!(c.status, CardStatus::Active | CardStatus::Graduated))
-        .map(|mut c| {
-            c.reset_progression(now_ms);
-            c.status = CardStatus::Active;
-            c
-        })
-        .collect();
-    put_cards(&to_put).await
-}
-
-pub async fn promote_card(sequence: u32) -> Result<(), String> {
-    let siblings = get_cards_by_sequence(sequence).await?;
-    let to_put: Vec<SrsCard> = siblings
-        .into_iter()
-        .filter(|c| matches!(c.status, CardStatus::Staging))
-        .map(|mut c| {
-            c.status = CardStatus::Active;
-            c
-        })
-        .collect();
-    put_cards(&to_put).await
-}
-
-pub async fn delete_card(sequence: u32) -> Result<(), String> {
-    let ids = [
-        card_id(sequence, CardDirection::Recognition),
-        card_id(sequence, CardDirection::Recall),
-    ];
-    delete_ids_with_tombstones(&ids).await
-}
-
-/// A local record that the user deleted a card, and when. The time travels to
-/// the server on the next sync so a delete made while offline is ordered by
-/// when it actually happened rather than when it was finally uploaded.
-#[derive(Serialize, Deserialize, Clone)]
-pub struct Tombstone {
-    pub id: String,
-    pub deleted_at: f64,
-}
-
-pub async fn delete_card_by_id(id: &str) -> Result<(), String> {
-    delete_ids_with_tombstones(std::slice::from_ref(&id.to_string())).await
-}
-
 /// Atomically deletes the given card ids and writes tombstones for each, in
 /// a single transaction across both stores so a crash mid-delete can't lose
 /// the tombstone (which would cause the next sync to resurrect the card).
-async fn delete_ids_with_tombstones(ids: &[String]) -> Result<(), String> {
+pub(crate) async fn delete_ids_with_tombstones(ids: &[String]) -> Result<(), String> {
     let db = open().await.map_err(|e| e.to_string())?;
     let tx = db
         .transaction(&[STORE, TOMB_STORE], TransactionMode::ReadWrite)
         .map_err(|e| e.to_string())?;
     let cards = tx.object_store(STORE).map_err(|e| e.to_string())?;
     let tombs = tx.object_store(TOMB_STORE).map_err(|e| e.to_string())?;
-    let now = js_sys::Date::now();
+    let now = crate::rt::now_ms();
     for id in ids {
         let tomb_val = to_value(&Tombstone {
             deleted_at: now,
@@ -518,7 +392,7 @@ pub async fn apply_remote_deletions(ids: &[String]) -> Result<(), String> {
 /// once they complete. Stamps `updated_ms` like [`put_card`].
 pub async fn put_card_logged(card: &SrsCard, row: &ReviewLog) -> Result<(), String> {
     let mut card = card.clone();
-    card.updated_ms = js_sys::Date::now();
+    card.updated_ms = crate::rt::now_ms();
     let card_val = to_value(&card).map_err(|e| e.to_string())?;
     let dirty_val = to_value(&DirtyEntry {
         id: card.id.clone(),
@@ -686,13 +560,6 @@ pub async fn settle_outbox(
 
 // ── Delta sync state ─────────────────────────────────────────────────
 
-/// One dirty-set entry: card `id`, changed at stamp `v`.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct DirtyEntry {
-    pub id: String,
-    pub v: f64,
-}
-
 /// The dirty set as it stands, to upload and later hand to [`clear_dirty`].
 pub async fn get_dirty() -> Result<Vec<DirtyEntry>, String> {
     let db = open().await.map_err(|e| e.to_string())?;
@@ -819,9 +686,4 @@ pub async fn set_sync_cursor(cursor: Option<&SyncCursor>) -> Result<(), String> 
         .await
         .map_err(|e| e.to_string())?;
     Ok(())
-}
-
-#[allow(dead_code)]
-async fn _unused_run_rw() {
-    let _ = run_rw::<_, ()>(|_| Ok(())).await;
 }

@@ -10,17 +10,19 @@
 //! rather than JMdict `sequence`, so it has to resolve each word through the
 //! dictionary first.
 
-use wasm_bindgen::JsCast;
-
 use crate::dict::lookup_many;
 use crate::idb::{get_all_cards, put_cards};
 use crate::sync::schedule_sync;
 use crate::types::{CARDS_SCHEMA_VERSION, SrsCard, SrsCardV1};
 
-/// Triggers a download by creating a Blob URL on a transient <a>. Same pattern
-/// the extension uses for JSON export.
-pub fn trigger_download(content: &str, filename: &str) -> Result<(), String> {
-    use wasm_bindgen::JsValue;
+/// Hands `content` to the user as a file. Returns where it went, for the
+/// status line, when that isn't obvious.
+///
+/// In the browser: a Blob URL on a transient <a>, the same pattern the
+/// extension uses for JSON export; the browser shows its own download UI.
+#[cfg(target_arch = "wasm32")]
+pub fn trigger_download(content: &str, filename: &str) -> Result<Option<String>, String> {
+    use wasm_bindgen::{JsCast, JsValue};
     let window = web_sys::window().ok_or("no window")?;
     let document = window.document().ok_or("no document")?;
     let blob_parts = js_sys::Array::new();
@@ -40,7 +42,30 @@ pub fn trigger_download(content: &str, filename: &str) -> Result<(), String> {
     a.set_download(filename);
     a.click();
     web_sys::Url::revoke_object_url(&url).ok();
-    Ok(())
+    Ok(None)
+}
+
+/// Natively: written to the shared Download folder, which Android 11+ lets an
+/// app add its own files to without a storage permission; failing that (older
+/// Android, desktop), into the app's data dir.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn trigger_download(content: &str, filename: &str) -> Result<Option<String>, String> {
+    let candidates = [
+        std::path::PathBuf::from("/storage/emulated/0/Download"),
+        crate::rt::data_dir().to_path_buf(),
+    ];
+    let mut last_err = String::from("no writable folder");
+    for dir in candidates {
+        if !dir.is_dir() {
+            continue;
+        }
+        let path = dir.join(filename);
+        match std::fs::write(&path, content) {
+            Ok(()) => return Ok(Some(path.display().to_string())),
+            Err(e) => last_err = format!("{}: {e}", path.display()),
+        }
+    }
+    Err(last_err)
 }
 
 /// Breakdown of cards that were not imported, by reason.
@@ -114,7 +139,7 @@ pub async fn import_cards_json(text: &str) -> Result<(usize, Skips), String> {
     // would appear and silently vanish. `added_ms` is also FSRS's last-review
     // fallback, so this resets the scheduling baseline for never-reviewed
     // cards; reviewed ones carry `last_review_ms` and are unaffected.
-    let now = js_sys::Date::now();
+    let now = crate::rt::now_ms();
     let to_put: Vec<SrsCard> = to_put
         .into_iter()
         .map(|mut c| {

@@ -218,7 +218,7 @@ pub fn drill_counts_by_sequence<'a>(
 }
 
 pub fn now_ms() -> f64 {
-    js_sys::Date::now()
+    crate::rt::now_ms()
 }
 
 #[cfg(test)]

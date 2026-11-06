@@ -1,8 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
 use dioxus::prelude::*;
-use gloo_storage::{LocalStorage, Storage};
-use gloo_timers::future::TimeoutFuture;
 use jmdict_types::WordEntry;
 
 use crate::app::Route;
@@ -36,7 +34,7 @@ struct LookupShared {
 // ── helpers ──────────────────────────────────────────────────────────
 
 fn load_history() -> Vec<String> {
-    LocalStorage::get::<Vec<String>>(HISTORY_KEY).unwrap_or_default()
+    crate::rt::kv_get::<Vec<String>>(HISTORY_KEY).unwrap_or_default()
 }
 
 /// Flattens per-spelling result lists, keeping the first occurrence of each
@@ -54,7 +52,7 @@ fn push_history(mut h: Vec<String>, term: &str) -> Vec<String> {
     h.retain(|x| x != term);
     h.insert(0, term.to_owned());
     h.truncate(HISTORY_MAX);
-    let _ = LocalStorage::set(HISTORY_KEY, &h);
+    let _ = crate::rt::kv_set(HISTORY_KEY, &h);
     h
 }
 
@@ -312,7 +310,7 @@ fn LookupListPane() -> Element {
         let q = query.read().clone();
         let mut run_lookup = run_lookup;
         async move {
-            TimeoutFuture::new(300).await;
+            crate::rt::sleep_ms(300).await;
             run_lookup(q);
         }
     });
@@ -334,7 +332,7 @@ fn LookupListPane() -> Element {
     };
 
     let on_clear_history = move |_| {
-        LocalStorage::delete(HISTORY_KEY);
+        crate::rt::kv_delete(HISTORY_KEY);
         history.set(Vec::new());
     };
 
@@ -347,12 +345,8 @@ fn LookupListPane() -> Element {
 
     let on_reset = move |sequence: u32| {
         spawn(async move {
-            let confirmed = web_sys::window()
-                .and_then(|w| {
-                    w.confirm_with_message("Reset this word's SRS progress? This can't be undone.")
-                        .ok()
-                })
-                .unwrap_or(false);
+            let confirmed =
+                crate::rt::confirm("Reset this word's SRS progress? This can't be undone.").await;
             if !confirmed {
                 return;
             }

@@ -11,14 +11,11 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use examples_types::ExampleEntry;
-use gloo_net::http::Request;
-use gloo_storage::{LocalStorage, Storage};
-use gloo_timers::callback::Timeout;
 use jmdict_types::WordEntry;
 use kanjidic_types::KanjiEntry;
 use serde::{Deserialize, Serialize};
-use wasm_bindgen_futures::spawn_local;
 
+use crate::rt;
 use crate::settings::{SETTINGS_KEY, SrsSettings, default_server_url};
 use crate::sync::{SettingsPayload, SyncBody, SyncResponse};
 use crate::types::SrsCard;
@@ -97,8 +94,9 @@ pub struct Platform {
 
 // ── Default (HTTP) implementation ─────────────────────────────────────
 
-/// The web + android flavor: dict and settings via HTTP / localStorage,
-/// auto-sync via an in-process [`gloo_timers`] debouncer.
+/// The web + android flavor: dict and settings via HTTP and [`rt`]'s
+/// key-value store (localStorage in the browser), auto-sync via an
+/// in-process debouncer.
 pub fn default_http_platform() -> Platform {
     Platform {
         dict: Rc::new(HttpDict),
@@ -165,16 +163,11 @@ async fn post_json<B: Serialize, R: for<'de> Deserialize<'de>>(
     path: &str,
     body: &B,
 ) -> Result<R, String> {
-    let res = Request::post(&api_url(path))
-        .json(body)
-        .map_err(|e| e.to_string())?
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
+    let res = rt::post_json(&api_url(path), body, None).await?;
     if !res.ok() {
-        return Err(format!("server {}", res.status()));
+        return Err(format!("server {}", res.status));
     }
-    res.json().await.map_err(|e| e.to_string())
+    res.json()
 }
 
 #[async_trait(?Send)]
@@ -221,15 +214,18 @@ impl DictClient for HttpDict {
 
 // ---------- LocalSettings ----------
 
-/// Settings backed by `window.localStorage`, sync scheduling by an in-
-/// process [`gloo_timers::callback::Timeout`].
+/// Settings backed by [`rt::kv_get`] / [`rt::kv_set`], sync scheduling by an
+/// in-process debounce task.
 struct LocalSettings {
     state: Rc<RefCell<SyncState>>,
 }
 
 #[derive(Default)]
 struct SyncState {
-    pending: Option<Timeout>,
+    /// Bumped by every (re-)arm and by `sync_now`; a sleeping debounce task
+    /// only syncs if the generation it was armed with is still current, so
+    /// re-arming restarts the wait and `sync_now` cancels it.
+    generation: u32,
     in_flight: bool,
     retry: bool,
 }
@@ -240,24 +236,27 @@ const DEBOUNCE_MS: u32 = 2_000;
 /// change landed mid-flight, or the review outbox still has a backlog — it
 /// re-arms itself, so every pending change eventually goes up.
 fn arm_sync(state: Rc<RefCell<SyncState>>) {
-    let st = state.clone();
-    let t = Timeout::new(DEBOUNCE_MS, move || {
-        st.borrow_mut().pending = None;
-        let st = st.clone();
-        spawn_local(async move {
-            st.borrow_mut().in_flight = true;
-            let result = do_sync(st.clone()).await;
-            if let Err(e) = &result {
-                warn!("[yomeru] auto-sync failed: {e}");
-            }
-            crate::sync::record_sync_result(result.map(|_| ()));
-            st.borrow_mut().in_flight = false;
-            if std::mem::replace(&mut st.borrow_mut().retry, false) {
-                arm_sync(st);
-            }
-        });
+    let armed = {
+        let mut st = state.borrow_mut();
+        st.generation = st.generation.wrapping_add(1);
+        st.generation
+    };
+    rt::spawn_detached(async move {
+        rt::sleep_ms(DEBOUNCE_MS).await;
+        if state.borrow().generation != armed || state.borrow().in_flight {
+            return;
+        }
+        state.borrow_mut().in_flight = true;
+        let result = do_sync(state.clone()).await;
+        if let Err(e) = &result {
+            warn!("[yomeru] auto-sync failed: {e}");
+        }
+        crate::sync::record_sync_result(result.map(|_| ()));
+        state.borrow_mut().in_flight = false;
+        if std::mem::replace(&mut state.borrow_mut().retry, false) {
+            arm_sync(state);
+        }
     });
-    state.borrow_mut().pending = Some(t);
 }
 
 impl LocalSettings {
@@ -295,14 +294,14 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
         get_cards_by_ids, get_dirty, get_outbox, get_sync_cursor, set_sync_cursor, settle_outbox,
     };
 
-    let s: SrsSettings = LocalStorage::get(SETTINGS_KEY).unwrap_or_default();
+    let s: SrsSettings = rt::kv_get(SETTINGS_KEY).unwrap_or_default();
     if s.server_url.is_empty() || s.server_token.is_empty() {
         return Err(crate::sync::NOT_AUTHENTICATED.into());
     }
     // Captured before the reads, not after: a card written between the read and
     // the timestamp would be missing from the payload yet still look like the
     // server had ruled on it, and a returned tombstone would delete it.
-    let uploaded_at = js_sys::Date::now();
+    let uploaded_at = rt::now_ms();
     let cursor = get_sync_cursor()
         .await
         .map_err(|e| format!("read sync cursor: {e}"))?;
@@ -335,26 +334,25 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     outbox.truncate(crate::sync::OUTBOX_BATCH);
     let mut settled = false;
 
-    let res = Request::post(&join_url(s.server_url.trim(), "/api/sync"))
-        .header("Authorization", &format!("Bearer {}", s.server_token))
-        .json(&SyncBody {
+    let res = rt::post_json(
+        &join_url(s.server_url.trim(), "/api/sync"),
+        &SyncBody {
             cards: &local_cards,
             deletions: &local_tombstones,
             settings: SettingsPayload::from_settings(&s),
             reviews: &outbox,
             since: cursor.as_ref(),
-        })
-        .map_err(|e| e.to_string())?
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
-    if res.status() == 401 {
+        },
+        Some(&s.server_token),
+    )
+    .await?;
+    if res.status == 401 {
         return Err(crate::sync::SESSION_EXPIRED.into());
     }
     if !res.ok() {
-        return Err(format!("server {}", res.status()));
+        return Err(format!("server {}", res.status));
     }
-    let resp: SyncResponse = res.json().await.map_err(|e| e.to_string())?;
+    let resp: SyncResponse = res.json()?;
 
     if !resp.cards.is_empty() {
         merge_remote_cards(&resp.cards, &local_cards).await?;
@@ -412,14 +410,14 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     // was in flight isn't clobbered, and preserve the device-local connection
     // fields the server never sees.
     if let Some(remote) = resp.settings {
-        let mut merged: SrsSettings = LocalStorage::get(SETTINGS_KEY).unwrap_or_default();
+        let mut merged: SrsSettings = rt::kv_get(SETTINGS_KEY).unwrap_or_default();
         if remote.updated_ms > merged.settings_updated_ms {
             merged.graduation_interval_days = remote.graduation_interval_days;
             merged.interval_scale = remote.interval_scale;
             merged.max_session_cards = remote.max_session_cards;
             merged.request_retention = remote.request_retention;
             merged.settings_updated_ms = remote.updated_ms;
-            LocalStorage::set(SETTINGS_KEY, merged).map_err(|e| e.to_string())?;
+            rt::kv_set(SETTINGS_KEY, &merged)?;
         }
     }
 
@@ -428,7 +426,10 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     if settled && backlog {
         state.borrow_mut().retry = true;
     }
-    Ok(crate::sync::sync_summary(local_cards.len(), resp.cards.len()))
+    Ok(crate::sync::sync_summary(
+        local_cards.len(),
+        resp.cards.len(),
+    ))
 }
 
 /// Mirrors the server-side `updated_ms` last-write-wins rule on the client:
@@ -452,7 +453,7 @@ async fn merge_remote_cards(remote: &[SrsCard], uploaded: &[SrsCard]) -> Result<
 #[async_trait(?Send)]
 impl SettingsStore for LocalSettings {
     fn load(&self) -> SrsSettings {
-        let mut s: SrsSettings = LocalStorage::get(SETTINGS_KEY).unwrap_or_default();
+        let mut s: SrsSettings = rt::kv_get(SETTINGS_KEY).unwrap_or_default();
         if s.server_url.is_empty() {
             s.server_url = default_server_url();
         }
@@ -467,15 +468,15 @@ impl SettingsStore for LocalSettings {
         // Bump the LWW merge key only when a *synced* scheduler field actually
         // changed. Saving the server URL/email/token (a different, device-local
         // concern) must not let a stale scheduler config win a later sync.
-        let prev: SrsSettings = LocalStorage::get(SETTINGS_KEY).unwrap_or_default();
+        let prev: SrsSettings = rt::kv_get(SETTINGS_KEY).unwrap_or_default();
         let scheduler_changed = prev.graduation_interval_days != s.graduation_interval_days
             || prev.interval_scale != s.interval_scale
             || prev.max_session_cards != s.max_session_cards
             || prev.request_retention != s.request_retention;
         if scheduler_changed {
-            s.settings_updated_ms = js_sys::Date::now();
+            s.settings_updated_ms = rt::now_ms();
         }
-        LocalStorage::set(SETTINGS_KEY, s).map_err(|e| e.to_string())
+        rt::kv_set(SETTINGS_KEY, &s)
     }
 
     fn schedule_sync(&self) {
@@ -493,8 +494,9 @@ impl SettingsStore for LocalSettings {
 
     async fn sync_now(&self) -> Result<String, String> {
         // Cancel any pending debounce — we're about to do the work now.
-        if let Some(t) = self.state.borrow_mut().pending.take() {
-            t.cancel();
+        {
+            let mut st = self.state.borrow_mut();
+            st.generation = st.generation.wrapping_add(1);
         }
         if self.state.borrow().in_flight {
             self.state.borrow_mut().retry = true;
@@ -510,19 +512,19 @@ impl SettingsStore for LocalSettings {
     }
 
     async fn request_otp(&self, server_url: &str, email: &str) -> Result<Option<String>, String> {
-        let res = Request::post(&join_url(server_url, "/api/auth/request"))
-            .json(&AuthRequestBody { email })
-            .map_err(|e| e.to_string())?
-            .send()
-            .await
-            .map_err(|e| e.to_string())?;
+        let res = rt::post_json(
+            &join_url(server_url, "/api/auth/request"),
+            &AuthRequestBody { email },
+            None,
+        )
+        .await?;
         if !res.ok() {
-            return Err(format!("server {}", res.status()));
+            return Err(format!("server {}", res.status));
         }
-        if res.status() == 204 {
+        if res.status == 204 {
             return Ok(None);
         }
-        let parsed: VerifyResponse = res.json().await.map_err(|e| e.to_string())?;
+        let parsed: VerifyResponse = res.json()?;
         Ok(Some(parsed.token))
     }
 
@@ -532,18 +534,16 @@ impl SettingsStore for LocalSettings {
         email: &str,
         code: &str,
     ) -> Result<String, String> {
-        let res = Request::post(&join_url(server_url, "/api/auth/verify"))
-            .json(&VerifyBody { email, code })
-            .map_err(|e| e.to_string())?
-            .send()
-            .await
-            .map_err(|e| e.to_string())?;
+        let res = rt::post_json(
+            &join_url(server_url, "/api/auth/verify"),
+            &VerifyBody { email, code },
+            None,
+        )
+        .await?;
         if !res.ok() {
-            let status = res.status();
-            let text = res.text().await.unwrap_or_default();
-            return Err(format!("server {status}: {text}"));
+            return Err(format!("server {}: {}", res.status, res.body));
         }
-        let parsed: VerifyResponse = res.json().await.map_err(|e| e.to_string())?;
+        let parsed: VerifyResponse = res.json()?;
         Ok(parsed.token)
     }
 }

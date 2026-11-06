@@ -1,10 +1,13 @@
 //! Pieces shared by the word and kanji review tabs: the answer/rating buttons
 //! and the keyboard shortcuts that drive them.
 
+#[cfg(target_arch = "wasm32")]
 use std::cell::Cell;
+#[cfg(target_arch = "wasm32")]
 use std::rc::Rc;
 
 use dioxus::prelude::*;
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
 pub(crate) fn rating_label(r: u8) -> &'static str {
@@ -16,11 +19,13 @@ pub(crate) fn rating_label(r: u8) -> &'static str {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
 fn event_target(e: &web_sys::KeyboardEvent) -> Option<web_sys::HtmlElement> {
     e.target()
         .and_then(|t| t.dyn_into::<web_sys::HtmlElement>().ok())
 }
 
+#[cfg(target_arch = "wasm32")]
 /// Whether a key event is aimed at a text field, where digits and spaces are
 /// input rather than review shortcuts. Checkboxes, radios and other non-text
 /// inputs don't count: they would otherwise switch the shortcuts off silently
@@ -39,6 +44,7 @@ fn typing_in_field(e: &web_sys::KeyboardEvent) -> bool {
     })
 }
 
+#[cfg(target_arch = "wasm32")]
 /// The rating (1–4) a key press stands for, by physical key so the digit row
 /// works on any layout (AZERTY types `&é"'` there unshifted). Numpad keys only
 /// count with NumLock on — off, they are End/↓/PgDn/← and mean scrolling.
@@ -56,6 +62,7 @@ fn rating_key(e: &web_sys::KeyboardEvent) -> Option<u8> {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
 /// Desktop shortcuts for a review session: Space/Enter reveals the answer,
 /// 1–4 rate it. `in_session` says whether a card is on screen; `show_back`
 /// whether its answer is showing.
@@ -125,6 +132,18 @@ pub(crate) fn use_review_shortcuts(
         });
         Some(Rc::new((on_key, on_pointer)))
     });
+}
+
+/// Natively (Android) there's no keyboard to bind: touch drives the buttons.
+/// Still a hook, so call sites keep the same hook order on every target.
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) fn use_review_shortcuts(
+    _in_session: impl Fn() -> bool + 'static,
+    _show_back: Signal<bool>,
+    _reveal: impl FnMut() + 'static,
+    _rate: impl FnMut(u8) + 'static,
+) {
+    use_hook(|| ());
 }
 
 /// The full-width "Show answer" button, with its shortcut hint.

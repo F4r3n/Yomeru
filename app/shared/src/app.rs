@@ -1,10 +1,4 @@
-use std::rc::Rc;
-
-use dioxus::history::History;
 use dioxus::prelude::*;
-use dioxus::router::components::HistoryProvider;
-use dioxus::web::WebHistory;
-use gloo_storage::{LocalStorage, Storage};
 
 use crate::icons::{Icon, IconName};
 use crate::platform::Platform;
@@ -17,6 +11,7 @@ const THEME_KEY: &str = "yomeru.theme";
 /// Sets the document title and injects the global stylesheet directly into
 /// `<head>`, idempotently. Used instead of Dioxus' `document::*` components,
 /// which rely on JS `eval` (blocked by the browser-extension CSP).
+#[cfg(target_arch = "wasm32")]
 fn install_head() {
     let Some(doc) = web_sys::window().and_then(|w| w.document()) else {
         return;
@@ -37,6 +32,24 @@ fn install_head() {
             error!("Cannot append child: {:?}", e);
         }
     }
+}
+
+/// Natively the page is our own WebView, with no CSP in the way, so the same
+/// DOM work goes through `eval`.
+#[cfg(not(target_arch = "wasm32"))]
+fn install_head() {
+    let Ok(css) = serde_json::to_string(&global_css()) else {
+        return;
+    };
+    document::eval(&format!(
+        "document.title = 'Yomeru';
+         if (!document.getElementById('yomeru-global-css')) {{
+             const s = document.createElement('style');
+             s.id = 'yomeru-global-css';
+             s.textContent = {css};
+             document.head.appendChild(s);
+         }}"
+    ));
 }
 
 #[derive(Clone, Routable, PartialEq, Debug)]
@@ -98,6 +111,18 @@ pub fn App() -> Element {
         // expanding a result card in /lookup doesn't yank the page to the
         // top. Manual scroll restoration on browser back is sacrificed —
         // acceptable trade-off for the SPA flow we have today.
+        Routes {}
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[component]
+fn Routes() -> Element {
+    use dioxus::history::History;
+    use dioxus::router::components::HistoryProvider;
+    use dioxus::web::WebHistory;
+    use std::rc::Rc;
+    rsx! {
         HistoryProvider {
             history: |_| Rc::new(WebHistory::new(None, false)) as Rc<dyn History>,
             Router::<Route> {}
@@ -105,15 +130,32 @@ pub fn App() -> Element {
     }
 }
 
-fn load_theme() -> String {
-    LocalStorage::get::<String>(THEME_KEY).unwrap_or_else(|_| "dark".to_string())
+/// Dioxus mobile installs an in-memory history itself; there's no URL bar.
+#[cfg(not(target_arch = "wasm32"))]
+#[component]
+fn Routes() -> Element {
+    rsx! { Router::<Route> {} }
 }
 
+fn load_theme() -> String {
+    crate::rt::kv_get::<String>(THEME_KEY).unwrap_or_else(|| "dark".to_string())
+}
+
+#[cfg(target_arch = "wasm32")]
 fn apply_theme_to_dom(theme: &str) {
     if let Some(doc) = web_sys::window().and_then(|w| w.document())
         && let Some(root) = doc.document_element()
     {
         let _ = root.set_attribute("data-theme", theme);
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn apply_theme_to_dom(theme: &str) {
+    if let Ok(theme) = serde_json::to_string(theme) {
+        document::eval(&format!(
+            "document.documentElement.setAttribute('data-theme', {theme});"
+        ));
     }
 }
 
@@ -123,7 +165,7 @@ fn Shell() -> Element {
 
     use_effect(move || {
         apply_theme_to_dom(&theme.read());
-        let _ = LocalStorage::set(THEME_KEY, theme.read().clone());
+        let _ = crate::rt::kv_set(THEME_KEY, &*theme.read());
     });
 
     let toggle_theme = move |_| {

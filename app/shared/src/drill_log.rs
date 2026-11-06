@@ -12,8 +12,6 @@ use std::collections::HashMap;
 
 use dioxus::logger::tracing;
 use dioxus::prelude::consume_context;
-use gloo_storage::{LocalStorage, Storage};
-use wasm_bindgen_futures::spawn_local;
 
 use crate::idb::{add_review, get_drill_state};
 use crate::platform::Platform;
@@ -30,7 +28,7 @@ const LEGACY_KEYS: [&str; 2] = ["drill_counts", "kanji_drill_counts"];
 /// Empty when nothing is stored or storage is unavailable.
 pub async fn load() -> HashMap<u32, u32> {
     for key in LEGACY_KEYS {
-        LocalStorage::delete(key);
+        crate::rt::kv_delete(key);
     }
     let (mut per_card, outbox) = get_drill_state().await.unwrap_or_else(|e| {
         tracing::warn!("drill_log: reading drill counts failed: {e}");
@@ -63,7 +61,7 @@ pub fn answer(card: &SrsCard, rating: u8, kind: ReviewKind) -> ReviewLog {
 pub fn record_drill(card: &SrsCard, rating: u8) {
     let row = answer(card, rating, ReviewKind::Drill);
     let platform = consume_context::<Platform>();
-    spawn_local(async move {
+    crate::rt::spawn_detached(async move {
         match add_review(&row).await {
             Ok(()) => platform.settings.schedule_sync(),
             Err(e) => tracing::warn!("drill_log: logging answer to {} failed: {e}", row.card_id),
