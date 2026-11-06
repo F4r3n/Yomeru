@@ -4,6 +4,11 @@
 //! components; groups without one only position strokes (left half, top…) and
 //! are looked through. A component split around another one (門 around 口)
 //! appears as several groups tagged `kvg:part`, and counts once.
+//!
+//! Some components have no Unicode character and are named by a CDP glyph
+//! code (`CDP-8BC4`). The ones whose meaning is known map to the character
+//! they stand for (see [`CDP_COMPONENTS`]); any other is looked through like a
+//! positional group, so its own sub-components are listed instead.
 
 use anyhow::{Context, Result};
 use kanjidic_types::KanjiPart;
@@ -11,6 +16,27 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use std::collections::HashMap;
 use std::path::Path;
+
+/// CDP glyph codes KanjiVG uses for components with no Unicode character,
+/// mapped to the character they derive from.
+const CDP_COMPONENTS: &[(&str, char)] = &[
+    ("CDP-8BC4", '泉'), // lower part of 原: a spring under the cliff
+    ("CDP-8CB8", '戈'), // 武: a halberd around 止
+    ("CDP-8BD0", '叀'), // top of 專: a spindle
+];
+
+/// The component a `kvg:element` value names: a single character, or a known
+/// CDP code. None for anything else, which is then looked through.
+fn component(element: &str) -> Option<char> {
+    let mut chars = element.chars();
+    match (chars.next(), chars.next()) {
+        (Some(c), None) => Some(c),
+        _ => CDP_COMPONENTS
+            .iter()
+            .find(|(code, _)| *code == element)
+            .map(|&(_, c)| c),
+    }
+}
 
 pub fn parse_kanjivg(path: &Path) -> Result<HashMap<char, Vec<KanjiPart>>> {
     let raw = std::fs::read(path).with_context(|| format!("Failed to open {:?}", path))?;
@@ -79,7 +105,7 @@ fn visit_group(
     if groups.last().copied().unwrap_or(false) {
         return true;
     }
-    let Some(element) = attr(g, b"kvg:element").and_then(|s| s.chars().next()) else {
+    let Some(element) = attr(g, b"kvg:element").and_then(|s| component(&s)) else {
         return false;
     };
     let split = attr(g, b"kvg:part").is_some();
@@ -159,6 +185,24 @@ mod tests {
 	<g id="kvg:08a00-g1" kvg:element="口"/>
 </g>
 </kanji>
+<kanji id="kvg:kanji_0539f">
+<g id="kvg:0539f" kvg:element="原">
+	<g id="kvg:0539f-g1" kvg:element="厂" kvg:position="tare" kvg:radical="general"/>
+	<g id="kvg:0539f-g2" kvg:element="CDP-8BC4" kvg:position="tarec">
+		<g id="kvg:0539f-g3" kvg:element="白"/>
+		<g id="kvg:0539f-g4" kvg:element="小"/>
+	</g>
+</g>
+</kanji>
+<kanji id="kvg:kanji_06c38">
+<g id="kvg:06c38" kvg:element="X">
+	<g id="kvg:06c38-g1" kvg:element="CDP-0000">
+		<g id="kvg:06c38-g2" kvg:element="白"/>
+		<g id="kvg:06c38-g3" kvg:element="小"/>
+	</g>
+	<g id="kvg:06c38-g4" kvg:element="口"/>
+</g>
+</kanji>
 <kanji id="kvg:kanji_04e00">
 <g id="kvg:04e00" kvg:element="一">
 	<path id="kvg:04e00-s1" d="M0,0"/>
@@ -200,6 +244,18 @@ mod tests {
     fn kanji_without_components_are_left_out() {
         let map = parse_kanjivg_bytes(SAMPLE.as_bytes()).unwrap();
         assert!(!map.contains_key(&'一'));
+    }
+
+    #[test]
+    fn known_cdp_codes_map_to_their_character() {
+        let map = parse_kanjivg_bytes(SAMPLE.as_bytes()).unwrap();
+        assert_eq!(elements(&map[&'原']), vec!['厂', '泉']);
+    }
+
+    #[test]
+    fn unknown_cdp_codes_are_looked_through() {
+        let map = parse_kanjivg_bytes(SAMPLE.as_bytes()).unwrap();
+        assert_eq!(elements(&map[&'\u{6c38}']), vec!['白', '小', '口']);
     }
 
     #[test]

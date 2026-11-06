@@ -4,15 +4,6 @@ Phrases in `data/kanji-mnemonics.tsv` still worth a better idea after the review
 
 Part names follow the real etymology (see `data/part-names.tsv`). A better phrase can also come from a better part name, but the name becomes the first meaning on that part's own kanji card.
 
-## Placeholder part
-
-KanjiVG gives the part `C`, so the chip is meaningless and the phrase can't use it. Needs a fix in the decomposition, not the phrase.
-
-| Kanji | Parts | Current phrase |
-|---|---|---|
-| 原 | 厂 cliff, C ? | A spring gushing from under a cliff: meadow, original. |
-| 武 | C ?, 止 stop | Stopping the enemy with a raised halberd: warrior. |
-
 ## Built from the origin, not the chips
 
 The phrase describes what the kanji depicts; its listed parts don't help.
