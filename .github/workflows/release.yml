@@ -45,6 +45,20 @@ jobs:
       - name: Package
         run: cargo xtask package
 
+      # The Android job bundles the same dictionaries; hand them over rather
+      # than building them twice.
+      - name: Share dictionaries with the Android job
+        uses: actions/upload-artifact@v4
+        with:
+          name: dict-data
+          path: |
+            extension/data/jmdict.bin
+            extension/data/kanjidic.bin
+            extension/data/examples.bin
+            extension/data/kanji-mnemonics.tsv
+            extension/data/part-names.tsv
+          retention-days: 1
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
@@ -67,5 +81,36 @@ jobs:
             '{"addons":{"{7ed2e7e9-a883-42ef-b811-2f069d8b612c}":{"updates":[{"version":$v,"update_link":$url}]}}}' \
             > updates.json
           gh release upload "${{ github.ref_name }}" "$XPI" updates.json --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  android:
+    name: Android APK
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dict-data
+          path: extension/data
+
+      # Same toolchain image as local builds (app/android/Dockerfile), so a
+      # release APK is built exactly like the one tested on a phone.
+      - name: Build and sign
+        run: |
+          echo "$ANDROID_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          app/android/podman-build.sh --release
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          YOMERU_KEYSTORE: ${{ runner.temp }}/release.jks
+          YOMERU_KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          YOMERU_SERVER_URL: ${{ secrets.YOMERU_SERVER_URL }}
+
+      - name: Upload APK to release
+        run: gh release upload "${{ github.ref_name }}" dist/android/*.apk --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

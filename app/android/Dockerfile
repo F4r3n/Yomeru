@@ -61,6 +61,12 @@ RUN mkdir -p ${ANDROID_HOME}/cmdline-tools \
         "build-tools;${BUILD_TOOLS}" \
         "ndk;${NDK_VERSION}" > /dev/null
 
+# bundletool turns the release .aab (Gradle's release build type: not
+# debuggable, minified) into a universal APK, signed with the release key.
+ARG BUNDLETOOL_VERSION=1.17.2
+RUN curl -sSL -o /opt/bundletool.jar \
+        "https://github.com/google/bundletool/releases/download/${BUNDLETOOL_VERSION}/bundletool-all-${BUNDLETOOL_VERSION}.jar"
+
 # Separate from the host's target/ so host and container builds (different
 # rustc/glibc) don't keep invalidating each other's artifacts.
 ENV CARGO_TARGET_DIR=/src/target/podman

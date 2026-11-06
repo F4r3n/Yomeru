@@ -15,6 +15,8 @@ extension/data
 app/android/assets/dict/
 examples.utf
 web-dist/
+# Signed Android release APKs (app/android/podman-build.sh --release).
+dist/
 backups/
 
 # Secrets. server/.env holds live SMTP credentials — it was untracked but not

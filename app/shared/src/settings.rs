@@ -83,7 +83,8 @@ pub fn save(s: &SrsSettings) -> Result<(), String> {
 }
 
 /// Default sync server URL.
-/// * `YOMERU_SERVER_URL` at build time, when set, wins everywhere.
+/// * `YOMERU_SERVER_URL` at build time, when set and non-empty, wins
+///   everywhere.
 /// * Debug builds (`dx serve`): the local backend on :4500, so the dev loop
 ///   needs no manual config. The Android emulator reaches the host's loopback
 ///   as 10.0.2.2.
@@ -92,7 +93,8 @@ pub fn save(s: &SrsSettings) -> Result<(), String> {
 /// * Release native builds have no origin: empty, so the user enters a
 ///   server in Settings.
 pub fn default_server_url() -> String {
-    if let Some(url) = option_env!("YOMERU_SERVER_URL") {
+    // Empty counts as unset: CI passes "" for a secret that isn't defined.
+    if let Some(url) = option_env!("YOMERU_SERVER_URL").filter(|u| !u.is_empty()) {
         return url.to_string();
     }
     if cfg!(debug_assertions) {
