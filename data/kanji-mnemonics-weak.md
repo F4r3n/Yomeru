@@ -23,9 +23,9 @@ KanjiVG gives the part `C`, so the chip is meaningless and the phrase can't use 
 | 組 | 糸 thread, 且 moreover | Thread, and moreover more thread, braided as one: braid, group. |
 | 査 | 木 tree, 且 moreover | A tree, and moreover another, each one checked: investigate. |
 | 助 | 且 moreover, 力 power | Moreover, lend your strength to lift it: help. |
-| 狙 | ⺨ ?, 且 moreover | A dog, moreover aiming: aim at. |
+| 狙 | ⺨ dog, 且 moreover | A dog, moreover aiming: aim at. |
 | 祖 | 礻 altar, 且 moreover | An altar stacked for the ancestors: ancestor. |
-| 阻 | ⻖ ?, 且 moreover | Hills stacked in the way: obstruct. |
+| 阻 | ⻖ hill, 且 moreover | Hills stacked in the way: obstruct. |
 | 畳 | 田 rice field, 冖 cover, 且 moreover | Fields of straw covered and stacked in layers: tatami mat, fold. |
 | 粗 | 米 rice, 且 moreover | Rice heaped up roughly: coarse. |
 | 宜 | 宀 roof, 且 moreover | A roof over a stacked offering, all is well: good. |
@@ -56,7 +56,7 @@ The phrase describes what the kanji depicts, not its listed parts.
 | Kanji | Parts | Current phrase |
 |---|---|---|
 | 黄 | 龷 ?, 由 wherefore, 八 eight | A jade pendant yellow with age: yellow. |
-| 兆 | 儿 legs radical (no. 10), 冫 ice | Cracks spreading on a heated shell: portent, trillion. |
+| 兆 | 儿 legs, 冫 ice | Cracks spreading on a heated shell: portent, trillion. |
 
 ## Weak scene
 
@@ -68,11 +68,11 @@ Valid but unlikely to stick; worth a better idea.
 | 丘 | 斤 axe, 一 one | An axe resting on flat ground, a small rise: hill. |
 | 亜 | 二 two, 口 mouth | Two mouths waiting just behind the first: next, Asia. |
 | 卸 | 午 noon, 正 correct, 卩 kneel | At noon, the correct goods knelt down for sale: wholesale. |
-| 獄 | ⺨ ?, 言 say, 犬 dog | Two dogs barking words at each other: prison. |
+| 獄 | ⺨ dog, 言 say, 犬 dog | Two dogs barking words at each other: prison. |
 | 尚 | ⺌ little, 冋 desert | Little rays rising over the border: esteem, still. |
 | 准 | 冫 ice, 隹 bird | An icy bird almost ready to fly: quasi-, semi-. |
 | 勲 | 動 move, 灬 fire | Moving deeds forged in fire: merit. |
-| 那 | 二 two, ⻏ ? | Two in the village asking what: what? |
+| 那 | 二 two, ⻏ village | Two in the village asking what: what? |
 | 辰 | — | A clam shell opened, the dragon sign: dragon sign. |
 | 寸 | — | A hand with a finger on the pulse: inch, a little. |
 | 乏 | 丿 slash, 之 of | A slash cuts away even this: scarce. |
@@ -93,7 +93,7 @@ Valid but unlikely to stick; worth a better idea.
 | 丑 | — | A twisted hand: ox sign. |
 | 卯 | 丿 slash, 卩 kneel | Two halves of a door opening, kneeling: rabbit sign. |
 | 但 | 亻 person, 旦 daybreak | A person at dawn, however: however. |
-| 允 | 厶 private, 儿 legs radical (no. 10) | Private legs given permission: permit. |
+| 允 | 厶 private, 儿 legs | Private legs given permission: permit. |
 | 壱 | 士 gentleman, 冖 cover, 匕 spoon | A samurai with a spoon under a cover: one (formal). |
 | 冥 | 冖 cover, 日 day, 六 six | A cover over the sun, six feet down: dark. |
 | 戴 | 𢦏 to cut, 異 uncommon | Hurt and different, raising it overhead: receive, be crowned. |
@@ -102,7 +102,7 @@ Valid but unlikely to stick; worth a better idea.
 | 亦 | 亠 lid, 丿 slash, 亅 hook | A lid over a person with arms spread, again: also. |
 | 麿 | 麻 hemp, 呂 spine | Hemp over a spine: I, you (archaic). |
 | 匁 | 勹 wrapping enclosure, 乂 mow | A cross wrapped up as a weight: monme. |
-| 耶 | 耳 ear, ⻏ ? | An ear in the village asking: question mark. |
+| 耶 | 耳 ear, ⻏ village | An ear in the village asking: question mark. |
 | 椋 | 木 tree, 京 capital | A tree in the capital: starling tree. |
 | 弐 | 一 one, 弋 stake, 二 two | One stake set beside two: two (formal). |
 | 爾 | 一 one, 八 eight, 冂 frame, 爻 to mix with, 爻 to mix with | A frame strung with crossed threads: you, thou. |
@@ -170,8 +170,8 @@ Four words or fewer; often fine for simple kanji, but some are thin.
 | 貪 | 今 now, 貝 shellfish | Shellfish wanted now: covet. |
 | 賜 | 貝 shellfish, 易 easy | Shellfish given easily: grant. |
 | 賭 | 貝 shellfish, 者 someone | Shellfish someone stakes: gamble. |
-| 週 | 周 circumference, ⻌ ? | Walking one lap: week. |
-| 郡 | 君 mister, ⻏ ? | A ruler's villages: county. |
+| 週 | 周 circumference, ⻌ walk | Walking one lap: week. |
+| 郡 | 君 mister, ⻏ village | A ruler's villages: county. |
 | 釜 | 父 father, 金 gold | Father's metal pot: cauldron. |
 | 鉄 | 金 gold, 失 lose | Gold's lost cousin: iron. |
 | 錮 | 金 gold, 固 harden | Metal hardened shut: confine. |
