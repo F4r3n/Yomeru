@@ -5,14 +5,15 @@ on:
     tags:
       - 'v*'
 
-# dicts ──┬──> extension ──> (GitHub release, AMO, updates.json) ──┐
-#         │                                                       ├──> android-upload
-#         └──> android (build + sign APK) ────────────────────────┘
+# dicts ──┬──> extension (unsigned zip) ──┐
+#         │                               ├──> publish (AMO sign, updates.json,
+#         └──> android (signed APK) ──────┘              GitHub release)
 #
-# The extension and the Android APK build in parallel from the same dict
-# indexes. The release itself only waits for the extension, so a broken
-# Android build never holds up the Firefox one; the APK is attached once
-# both exist.
+# The build jobs only produce artifacts; nothing leaves GitHub until both
+# have succeeded. That matters for AMO, which signs a given version only
+# once: if a build fails, fix it and move the tag to re-run from scratch,
+# with no version bump. "Re-run failed jobs" reuses the tagged commit, so it
+# only helps with transient failures (network, secrets).
 
 jobs:
   dicts:
@@ -55,11 +56,9 @@ jobs:
           retention-days: 1
 
   extension:
-    name: Extension & release
+    name: Extension
     needs: dicts
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v6
 
@@ -89,30 +88,15 @@ jobs:
       - name: Package
         run: cargo xtask package
 
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v3
+      # release/ is the unpacked extension that publish sends to AMO;
+      # yomeru.zip is the same files, attached to the GitHub release.
+      - uses: actions/upload-artifact@v4
         with:
-          files: yomeru.zip
-
-      - name: Publish to AMO
-        run: npx web-ext sign --channel=unlisted --source-dir=release/ --amo-metadata=amo-metadata.json
-        env:
-          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
-          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
-
-      - name: Upload signed XPI and updates.json to release
-        run: |
-          XPI=$(ls web-ext-artifacts/*.xpi | head -1)
-          XPI_NAME=$(basename "$XPI")
-          VERSION="${{ github.ref_name }}"
-          VERSION="${VERSION#v}"
-          XPI_URL="https://github.com/F4r3n/Yomeru/releases/download/${{ github.ref_name }}/${XPI_NAME}"
-          jq -n --arg v "$VERSION" --arg url "$XPI_URL" \
-            '{"addons":{"{7ed2e7e9-a883-42ef-b811-2f069d8b612c}":{"updates":[{"version":$v,"update_link":$url}]}}}' \
-            > updates.json
-          gh release upload "${{ github.ref_name }}" "$XPI" updates.json --clobber
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: extension
+          path: |
+            release/
+            yomeru.zip
+          retention-days: 7
 
   # Built directly on the runner, which already ships the Android SDK and
   # Java. Versions match app/android/Dockerfile (the local podman build):
@@ -180,21 +164,69 @@ jobs:
         with:
           name: android-apk
           path: dist/android/*.apk
-          retention-days: 1
+          retention-days: 7
 
-  android-upload:
-    name: Attach APK to release
+  publish:
+    name: Sign & publish release
     needs: [extension, android]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: extension
+
       - uses: actions/download-artifact@v4
         with:
           name: android-apk
           path: apk
 
-      - name: Upload APK to release
-        run: gh release upload "${{ github.ref_name }}" apk/*.apk --clobber -R "${{ github.repository }}"
+      # AMO refuses to sign a version twice. If an earlier attempt of this
+      # run already signed it (and then failed further on), reuse that XPI.
+      - name: Reuse XPI signed by an earlier attempt
+        id: signed
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: signed-xpi
+          path: web-ext-artifacts
+
+      - name: Sign on AMO
+        if: steps.signed.outcome != 'success'
+        run: npx web-ext sign --channel=unlisted --source-dir=release/ --amo-metadata=amo-metadata.json
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+
+      - name: Keep signed XPI for re-runs
+        if: steps.signed.outcome != 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-xpi
+          path: web-ext-artifacts/*.xpi
+          retention-days: 7
+
+      - name: Write updates.json
+        run: |
+          XPI_NAME=$(basename "$(ls web-ext-artifacts/*.xpi | head -1)")
+          VERSION="${GITHUB_REF_NAME#v}"
+          XPI_URL="https://github.com/${{ github.repository }}/releases/download/${GITHUB_REF_NAME}/${XPI_NAME}"
+          jq -n --arg v "$VERSION" --arg url "$XPI_URL" \
+            '{"addons":{"{7ed2e7e9-a883-42ef-b811-2f069d8b612c}":{"updates":[{"version":$v,"update_link":$url}]}}}' \
+            > updates.json
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            yomeru.zip
+            web-ext-artifacts/*.xpi
+            updates.json
+            apk/*.apk
