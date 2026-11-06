@@ -97,6 +97,9 @@ enum Cmd {
         #[arg(short, long)]
         input: Option<PathBuf>,
     },
+    /// Everything `build-all` builds except the dict indexes: the release
+    /// workflow builds those once in their own job and hands them over.
+    BuildExtension,
     /// Build the extension TypeScript/Svelte sources via npm.
     BuildJs,
     /// Package the extension into release/ and japanese-reader.zip.
@@ -164,12 +167,11 @@ fn main() -> Result<()> {
 
         Cmd::BuildAll { input } => {
             build_dicts(&root, input)?;
-            build_wasm(&root, "jmdict-wasm", "release")?;
-            build_wasm(&root, "srs-wasm", "release")?;
-            build_wasm(&root, "kanjidic-wasm", "release")?;
-            build_wasm(&root, "examples-wasm", "release")?;
-            build_extension_wasm(&root, "release")?;
-            build_js(&root)?;
+            build_extension(&root)?;
+        }
+
+        Cmd::BuildExtension => {
+            build_extension(&root)?;
         }
 
         Cmd::BuildDicts { input } => {
@@ -247,15 +249,7 @@ fn download_source(dir: &Path, name: &str) -> Result<PathBuf> {
     }
 
     eprintln!("Downloading {} ...", url);
-    let response = ureq::get(url)
-        .call()
-        .with_context(|| format!("Failed to GET {url}"))?;
-
-    let mut gz_bytes: Vec<u8> = Vec::new();
-    response
-        .into_reader()
-        .read_to_end(&mut gz_bytes)
-        .context("Failed to read response body")?;
+    let gz_bytes = fetch_with_retry(url)?;
 
     eprintln!(
         "Downloaded {:.1} MB compressed.",
@@ -279,6 +273,55 @@ fn download_source(dir: &Path, name: &str) -> Result<PathBuf> {
     );
 
     Ok(out_path)
+}
+
+/// Delays before each retry of a failed download. EDRDG occasionally times
+/// out from CI runners; a connection that fails once usually works seconds
+/// later, so a few spaced attempts beat failing the whole release.
+const DOWNLOAD_RETRY_DELAYS: [u64; 3] = [5, 15, 45];
+
+/// GETs `url` and reads the whole body, retrying on any failure: connect,
+/// HTTP error status, or a body cut off mid-read. Explicit timeouts make a
+/// stalled connection fail (and get retried) instead of hanging the build.
+fn fetch_with_retry(url: &str) -> Result<Vec<u8>> {
+    use std::io::Read;
+    use std::time::Duration;
+
+    let agent = ureq::AgentBuilder::new()
+        .timeout_connect(Duration::from_secs(30))
+        .timeout_read(Duration::from_secs(120))
+        .build();
+    let attempt = || -> Result<Vec<u8>> {
+        let response = agent
+            .get(url)
+            .call()
+            .with_context(|| format!("Failed to GET {url}"))?;
+        let mut body = Vec::new();
+        response
+            .into_reader()
+            .read_to_end(&mut body)
+            .context("Failed to read response body")?;
+        Ok(body)
+    };
+
+    let mut delays = DOWNLOAD_RETRY_DELAYS.iter();
+    loop {
+        match attempt() {
+            Ok(body) => return Ok(body),
+            Err(e) => match delays.next() {
+                Some(&secs) => {
+                    eprintln!("{e:#}\nRetrying in {secs} s...");
+                    std::thread::sleep(Duration::from_secs(secs));
+                }
+                None => {
+                    return Err(e.context(format!(
+                        "giving up after {} attempts",
+                        DOWNLOAD_RETRY_DELAYS.len() + 1
+                    )));
+                }
+            },
+        }
+    }
 }
 
 fn package(root: &Path) -> Result<()> {
@@ -518,6 +561,17 @@ fn download_kanjivg(dir: &Path) -> Result<PathBuf> {
 
 /// Build all three binary dict indexes into `extension/data/`.
 /// Downloads missing inputs first.
+/// The release build of the extension's wasm modules and JS, given the dict
+/// indexes are already in `extension/data/`.
+fn build_extension(root: &Path) -> Result<()> {
+    build_wasm(root, "jmdict-wasm", "release")?;
+    build_wasm(root, "srs-wasm", "release")?;
+    build_wasm(root, "kanjidic-wasm", "release")?;
+    build_wasm(root, "examples-wasm", "release")?;
+    build_extension_wasm(root, "release")?;
+    build_js(root)
+}
+
 fn build_dicts(root: &Path, input: Option<PathBuf>) -> Result<()> {
     let xml_path = match input {
         Some(p) => p,

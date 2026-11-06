@@ -66,6 +66,7 @@ RUN mkdir -p ${ANDROID_HOME}/cmdline-tools \
 ARG BUNDLETOOL_VERSION=1.17.2
 RUN curl -sSL -o /opt/bundletool.jar \
         "https://github.com/google/bundletool/releases/download/${BUNDLETOOL_VERSION}/bundletool-all-${BUNDLETOOL_VERSION}.jar"
+ENV BUNDLETOOL=/opt/bundletool.jar
 
 # Separate from the host's target/ so host and container builds (different
 # rustc/glibc) don't keep invalidating each other's artifacts.

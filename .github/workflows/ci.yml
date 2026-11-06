@@ -52,3 +52,33 @@ jobs:
       - run: cargo ndk -t arm64-v8a build -p yomeru-android
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+
+  # Keeps the upstream dictionary sources cached on main. Release runs are on
+  # tags, and a tag run can only restore caches from its own ref or the
+  # default branch, so this is what lets release.yml skip the EDRDG download.
+  # Only downloads on a cache miss: when dict-sources.env changes, or after
+  # GitHub evicts the cache.
+  dict-cache:
+    name: Dictionary source cache
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - id: cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            JMdict_e
+            kanjidic2
+            examples.utf
+            kanjivg.xml
+          key: dict-sources-${{ hashFiles('xtask/dict-sources.env') }}
+      - if: steps.cache.outputs.cache-hit != 'true'
+        uses: dtolnay/rust-toolchain@stable
+      - if: steps.cache.outputs.cache-hit != 'true'
+        uses: Swatinem/rust-cache@v2
+      # build-dicts downloads all four sources (with retries); building the
+      # indexes too is the price of not having a download-only command for
+      # KanjiVG, and only paid on a miss.
+      - if: steps.cache.outputs.cache-hit != 'true'
+        run: cargo xtask build-dicts

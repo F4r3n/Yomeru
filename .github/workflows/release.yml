@@ -5,9 +5,58 @@ on:
     tags:
       - 'v*'
 
+# dicts ──┬──> extension ──> (GitHub release, AMO, updates.json) ──┐
+#         │                                                       ├──> android-upload
+#         └──> android (build + sign APK) ────────────────────────┘
+#
+# The extension and the Android APK build in parallel from the same dict
+# indexes. The release itself only waits for the extension, so a broken
+# Android build never holds up the Firefox one; the APK is attached once
+# both exist.
+
 jobs:
-  release:
-    name: Build & publish
+  dicts:
+    name: Dictionaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: dicts
+
+      # Upstream sources. Saved by CI on main (see ci.yml): a tag run can only
+      # restore caches from its own ref or the default branch, so a cache
+      # saved by an earlier tag would never be found here.
+      - name: Cache dictionary sources
+        uses: actions/cache/restore@v5
+        with:
+          path: |
+            JMdict_e
+            kanjidic2
+            examples.utf
+            kanjivg.xml
+          key: dict-sources-${{ hashFiles('xtask/dict-sources.env') }}
+
+      - name: Build dictionary indexes
+        run: cargo xtask build-dicts
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dict-data
+          path: |
+            extension/data/jmdict.bin
+            extension/data/kanjidic.bin
+            extension/data/examples.bin
+            extension/data/kanji-mnemonics.tsv
+            extension/data/part-names.tsv
+          retention-days: 1
+
+  extension:
+    name: Extension & release
+    needs: dicts
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -29,35 +78,16 @@ jobs:
           cache: npm
           cache-dependency-path: extension/package-lock.json
 
-      - name: Cache dictionary files
-        uses: actions/cache@v5
+      - uses: actions/download-artifact@v4
         with:
-          path: |
-            JMdict_e
-            kanjidic2
-            examples.utf
-            kanjivg.xml
-          key: dict-v2
+          name: dict-data
+          path: extension/data
 
       - name: Build
-        run: cargo xtask build-all
+        run: cargo xtask build-extension
 
       - name: Package
         run: cargo xtask package
-
-      # The Android job bundles the same dictionaries; hand them over rather
-      # than building them twice.
-      - name: Share dictionaries with the Android job
-        uses: actions/upload-artifact@v4
-        with:
-          name: dict-data
-          path: |
-            extension/data/jmdict.bin
-            extension/data/kanjidic.bin
-            extension/data/examples.bin
-            extension/data/kanji-mnemonics.tsv
-            extension/data/part-names.tsv
-          retention-days: 1
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
@@ -84,33 +114,83 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # Built directly on the runner, which already ships the Android SDK and
+  # Java. Versions match app/android/Dockerfile (the local podman build):
+  # NDK r27c, dx 0.7.10, bundletool 1.17.2. Both paths sign with
+  # app/android/sign-release.sh.
   android:
     name: Android APK
-    needs: release
+    needs: dicts
+    runs-on: ubuntu-latest
+    env:
+      DX_VERSION: 0.7.10
+      BUNDLETOOL_VERSION: 1.17.2
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: r27c
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: android-release
+
+      # The bundled offline dictionaries (see app/android/src/main.rs).
+      - uses: actions/download-artifact@v4
+        with:
+          name: dict-data
+          path: app/android/assets/dict
+
+      - name: Install dx and bundletool
+        run: |
+          curl -sSL https://dioxus.dev/install.sh | bash -s "v$DX_VERSION"
+          curl -sSL -o "$RUNNER_TEMP/bundletool.jar" \
+            "https://github.com/google/bundletool/releases/download/$BUNDLETOOL_VERSION/bundletool-all-$BUNDLETOOL_VERSION.jar"
+
+      - name: Build
+        run: dx bundle --package yomeru-android --platform android --target aarch64-linux-android --release
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+          NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+          YOMERU_SERVER_URL: ${{ secrets.YOMERU_SERVER_URL }}
+
+      - name: Sign
+        run: |
+          echo "$ANDROID_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          trap 'rm -f "$RUNNER_TEMP/release.jks"' EXIT
+          aab=$(find target/dx/yomeru/release/android -name '*.aab' -path '*outputs/bundle/release/*' | head -1)
+          app/android/sign-release.sh "$aab" "$RUNNER_TEMP/release.jks" yomeru \
+            "dist/android/yomeru-${GITHUB_REF_NAME#v}.apk"
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          YOMERU_KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          BUNDLETOOL: ${{ runner.temp }}/bundletool.jar
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: dist/android/*.apk
+          retention-days: 1
+
+  android-upload:
+    name: Attach APK to release
+    needs: [extension, android]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
-
       - uses: actions/download-artifact@v4
         with:
-          name: dict-data
-          path: extension/data
-
-      # Same toolchain image as local builds (app/android/Dockerfile), so a
-      # release APK is built exactly like the one tested on a phone.
-      - name: Build and sign
-        run: |
-          echo "$ANDROID_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
-          app/android/podman-build.sh --release
-        env:
-          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
-          YOMERU_KEYSTORE: ${{ runner.temp }}/release.jks
-          YOMERU_KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          YOMERU_SERVER_URL: ${{ secrets.YOMERU_SERVER_URL }}
+          name: android-apk
+          path: apk
 
       - name: Upload APK to release
-        run: gh release upload "${{ github.ref_name }}" dist/android/*.apk --clobber
+        run: gh release upload "${{ github.ref_name }}" apk/*.apk --clobber -R "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
