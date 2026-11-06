@@ -532,7 +532,7 @@ fn KanjiBack(info: Option<KanjiEntry>, used_in: Vec<StudiedWord>) -> Element {
                 KanjiParts { key: "{k.literal}", parts: k.parts.clone() }
             }
             if let Some(m) = &k.mnemonic {
-                div { class: "mnemonic", "💡 {m}" }
+                div { class: "mnemonic", "{m}" }
             }
             if !used_in.is_empty() {
                 div { class: "used-in",

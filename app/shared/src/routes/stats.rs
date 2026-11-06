@@ -151,13 +151,6 @@ pub fn StatsTab() -> Element {
 
     rsx! {
         div {
-            div { class: "page-header",
-                div {
-                    h2 { "Stats" }
-                    div { class: "subtitle", "Your review queue at a glance." }
-                }
-            }
-
             div { class: "subtabs", style: "margin-bottom: 14px;",
                 TabButton { active: !show_kanji, onclick: move |_| kanji.set(false), label: "Words" }
                 TabButton { active: show_kanji, onclick: move |_| kanji.set(true), label: "Kanji" }

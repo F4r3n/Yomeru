@@ -374,10 +374,6 @@ fn LookupListPane() -> Element {
     rsx! {
         div {
             div { class: "page-header",
-                div {
-                    h2 { "Lookup" }
-                    div { class: "subtitle", "Search JMdict by kanji, kana, or romaji." }
-                }
                 if result_count > 0 {
                     span { class: "pill", "{result_label}" }
                 }

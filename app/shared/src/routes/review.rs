@@ -129,12 +129,6 @@ pub fn ReviewTab() -> Element {
     let current = *kind.read();
     rsx! {
         div {
-            div { class: "page-header",
-                div {
-                    h2 { "Review" }
-                    div { class: "subtitle", "Spaced-repetition review session." }
-                }
-            }
             div { class: "subtabs", style: "margin-bottom: 14px;",
                 TabButton { active: current == ReviewKind::Words, onclick: move |_| select(ReviewKind::Words), label: "Words" }
                 TabButton { active: current == ReviewKind::Kanji, onclick: move |_| select(ReviewKind::Kanji), label: "Kanji" }

@@ -118,10 +118,6 @@ pub fn WordListTab() -> Element {
     rsx! {
         div {
             div { class: "page-header",
-                div {
-                    h2 { "Word List" }
-                    div { class: "subtitle", "Active SRS cards across both review directions." }
-                }
                 div { class: "actions",
                     span { class: "pill", "{active_count} active" }
                     span { class: "pill", "{graduated_count} graduated" }

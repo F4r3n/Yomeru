@@ -1,6 +1,6 @@
 ---
 name: kanji-mnemonics
-description: Write kanji mnemonic phrases into data/kanji-mnemonics.tsv (the 💡 line on kanji cards) and fix plain part names in data/part-names.tsv. Trigger when the user asks to fill, add, continue, write, rewrite or review mnemonics or phrases for kanji, asks for a phrase for a specific kanji, says a kanji has no phrase, or wants the kanji of their deck covered.
+description: Write kanji mnemonic phrases into data/kanji-mnemonics.tsv (the mnemonic line on kanji cards) and fix plain part names in data/part-names.tsv. Trigger when the user asks to fill, add, continue, write, rewrite or review mnemonics or phrases for kanji, asks for a phrase for a specific kanji, says a kanji has no phrase, or wants the kanji of their deck covered.
 ---
 
 # Kanji mnemonics

@@ -7,10 +7,6 @@ pub fn AboutTab() -> Element {
     rsx! {
         div {
             div { class: "page-header",
-                div {
-                    h2 { "About Yomeru" }
-                    div { class: "subtitle", "A Japanese reader with spaced-repetition vocabulary memory." }
-                }
                 div { class: "actions",
                     span { class: "pill", "v{version}" }
                 }

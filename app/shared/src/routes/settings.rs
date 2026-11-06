@@ -173,13 +173,6 @@ pub fn SettingsTab() -> Element {
 
     rsx! {
         div {
-            div { class: "page-header",
-                div {
-                    h2 { "Settings" }
-                    div { class: "subtitle", "Tune the scheduler, back up cards, and configure sync." }
-                }
-            }
-
             // Sync
             div { class: "card",
                 div { class: "section-title", "Sync" }

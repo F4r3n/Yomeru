@@ -39,7 +39,7 @@
                 <div class="jp-kanji-meanings">{k.meanings.join("; ")}</div>
             {/if}
             {#if k.mnemonic}
-                <div class="jp-kanji-mnemonic">💡 {k.mnemonic}</div>
+                <div class="jp-kanji-mnemonic">{k.mnemonic}</div>
             {/if}
         </div>
     {/each}

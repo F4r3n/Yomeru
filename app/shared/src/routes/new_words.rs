@@ -90,10 +90,6 @@ pub fn NewWordsTab() -> Element {
     rsx! {
         div {
             div { class: "page-header",
-                div {
-                    h2 { "New Words" }
-                    div { class: "subtitle", "Review staged words before they enter the SRS queue." }
-                }
                 if count > 0 {
                     div { class: "actions",
                         span { class: "pill", "{count} staged" }

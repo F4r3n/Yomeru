@@ -172,11 +172,13 @@ button, a, input, select, textarea { touch-action: manipulation; }
     transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
 .sidebar .nav-tab:hover { color: var(--text); background: var(--card); }
-.sidebar .nav-tab.active {
-    color: var(--text);
-    background: var(--card);
+.sidebar .nav-tab.active,
+.sidebar .nav-tab.active:hover {
+    color: var(--on-accent);
+    background: var(--accent);
     border-left-color: var(--accent);
 }
+.sidebar .nav-tab.active .nav-icon { opacity: 1; }
 .sidebar .nav-tab .nav-icon { width: 18px; display: inline-flex; justify-content: center; opacity: 0.85; }
 
 .content {
@@ -216,11 +218,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
         flex-shrink: 0;
     }
     .sidebar .nav-tab .nav-icon { display: none; }
-    .sidebar .nav-tab.active {
-        border-left: none;
-        border-bottom-color: var(--accent);
-        background: transparent;
-    }
+    .sidebar .nav-tab.active { border-left: none; }
     .content { padding: 16px 14px 32px; }
     .content-inner { max-width: 100%; }
     .brand .tag { display: none; }
