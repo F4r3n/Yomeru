@@ -209,7 +209,7 @@ pub fn SettingsTab() -> Element {
 
                 if !*otp_sent.read() {
                     div { class: "row", style: "gap: 8px;",
-                        button {
+                        button { class: "outline",
                             onclick: request_otp,
                             disabled: *sync_busy.read(),
                             if *sync_busy.read() { "Sending…" } else { "Send code" }

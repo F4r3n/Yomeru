@@ -373,8 +373,8 @@ fn LookupListPane() -> Element {
 
     rsx! {
         div {
-            div { class: "page-header",
-                if result_count > 0 {
+            if result_count > 0 {
+                div { class: "page-header",
                     span { class: "pill", "{result_label}" }
                 }
             }

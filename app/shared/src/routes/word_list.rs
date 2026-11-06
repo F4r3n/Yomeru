@@ -19,6 +19,9 @@ pub fn WordListTab() -> Element {
     let mut readings = use_signal(HashMap::<u32, String>::new);
     let mut filter = use_signal(String::new);
     let mut loading = use_signal(|| true);
+    // The word whose Reset/Delete buttons are showing (phone layout only;
+    // on wide screens they're always visible).
+    let mut open = use_signal(|| None::<u32>);
 
     let reload = move || {
         spawn(async move {
@@ -59,6 +62,12 @@ pub fn WordListTab() -> Element {
 
     let on_delete = move |seq: u32| {
         spawn(async move {
+            let confirmed =
+                crate::rt::confirm("Delete this word and its SRS progress? This can't be undone.")
+                    .await;
+            if !confirmed {
+                return;
+            }
             if let Err(e) = delete_card(seq).await {
                 warn!("delete_card(seq={seq}) failed: {e}");
                 return;
@@ -86,34 +95,41 @@ pub fn WordListTab() -> Element {
 
     let now = now_ms();
     let rows = cards.read().clone();
-    let total = rows.len();
-    let active_count = rows
-        .iter()
-        .filter(|c| matches!(c.status, CardStatus::Active))
-        .count();
-    let graduated_count = rows
-        .iter()
-        .filter(|c| matches!(c.status, CardStatus::Graduated))
-        .count();
+    // One entry per word, both directions together, in the load order
+    // (sorted by headword).
+    let mut words: Vec<(u32, Vec<SrsCard>)> = Vec::new();
+    for c in rows {
+        match words.last_mut() {
+            Some((seq, cs)) if *seq == c.sequence => cs.push(c),
+            _ => words.push((c.sequence, vec![c])),
+        }
+    }
+    let total = words.len();
+    let is_graduated = |cs: &[SrsCard]| cs.iter().all(|c| matches!(c.status, CardStatus::Graduated));
+    let graduated_count = words.iter().filter(|(_, cs)| is_graduated(cs)).count();
+    let active_count = total - graduated_count;
     let filter_s = filter.read().to_lowercase();
     let heads = headwords.read().clone();
     let reads = readings.read().clone();
-    let filtered: Vec<_> = rows
+    let filtered: Vec<_> = words
         .into_iter()
-        .filter(|c| {
+        .filter(|(seq, _)| {
             if filter_s.is_empty() {
                 return true;
             }
-            let head = heads.get(&c.sequence).map(String::as_str).unwrap_or("");
-            let reading = reads.get(&c.sequence).map(String::as_str).unwrap_or("");
+            let head = heads.get(seq).map(String::as_str).unwrap_or("");
+            let reading = reads.get(seq).map(String::as_str).unwrap_or("");
             matches_query(head, reading, &filter_s)
         })
         .collect();
+    // Due *reviews* (cards), as on the Review tab.
     let due_count = filtered
         .iter()
+        .flat_map(|(_, cs)| cs)
         .filter(|c| matches!(c.status, CardStatus::Active) && c.due_ms <= now)
         .count();
     let visible = filtered.len();
+    let open_seq = *open.read();
 
     rsx! {
         div {
@@ -155,58 +171,61 @@ pub fn WordListTab() -> Element {
                     div { class: "helper", "Nothing in your list contains 「{filter_s}」." }
                 }
             } else {
-                div { class: "card table-card",
-                    table {
-                        thead {
-                            tr {
-                                th { style: "padding-left: 16px;", "Word" }
-                                th { "Direction" }
-                                th { "State" }
-                                th { "Due" }
-                                th { style: "text-align: right; padding-right: 16px;", "" }
-                            }
-                        }
-                        tbody {
-                            for c in filtered {
-                                {
-                                    let seq = c.sequence;
-                                    let label = heads
-                                        .get(&seq)
-                                        .cloned()
-                                        .unwrap_or_else(|| format!("(seq {seq})"));
-                                    let graduated = matches!(c.status, CardStatus::Graduated);
-                                    let due_label = if graduated {
-                                        "graduated".to_string()
-                                    } else {
-                                        format_due(c.due_ms, now)
-                                    };
-                                    let due_class = if graduated {
-                                        "badge"
-                                    } else if c.due_ms <= now {
-                                        "badge due"
-                                    } else {
-                                        "badge"
-                                    };
-                                    let direction = direction_label(c.direction);
-                                    let state = format!("{:?}", c.state).to_lowercase();
-                                    rsx! {
-                                        tr {
-                                            td { style: "padding-left: 16px; font-size: 15px;", "{label}" }
-                                            td { span { class: "badge", "{direction}" } }
-                                            td { class: "muted", "{state}" }
-                                            td { span { class: "{due_class}", "{due_label}" } }
-                                            td { style: "text-align: right; padding-right: 16px;",
-                                                button {
-                                                    class: "secondary",
-                                                    onclick: move |_| on_reset(seq),
-                                                    "Reset"
-                                                }
-                                                button {
-                                                    class: "danger",
-                                                    onclick: move |_| on_delete(seq),
-                                                    "Delete"
+                div { class: "card word-list",
+                    for (seq, cs) in filtered {
+                        {
+                            let label = heads
+                                .get(&seq)
+                                .cloned()
+                                .unwrap_or_else(|| format!("(seq {seq})"));
+                            let reading = reads.get(&seq).cloned().unwrap_or_default();
+                            let show_reading = !reading.is_empty() && reading != label;
+                            let row_class = if open_seq == Some(seq) { "word-item open" } else { "word-item" };
+                            rsx! {
+                                div { key: "{seq}", class: "{row_class}",
+                                    onclick: move |_| {
+                                        let next = if open_seq == Some(seq) { None } else { Some(seq) };
+                                        open.set(next);
+                                    },
+                                    div { class: "wi-word",
+                                        span { class: "wi-head", "{label}" }
+                                        if show_reading {
+                                            span { class: "wi-reading", "{reading}" }
+                                        }
+                                    }
+                                    div { class: "wi-dirs",
+                                        for c in cs {
+                                            {
+                                                let graduated = matches!(c.status, CardStatus::Graduated);
+                                                let due_label = if graduated {
+                                                    "graduated".to_string()
+                                                } else {
+                                                    format_due(c.due_ms, now)
+                                                };
+                                                let due_class = if !graduated && c.due_ms <= now {
+                                                    "badge due"
+                                                } else {
+                                                    "badge"
+                                                };
+                                                let state = format!("{:?}", c.state).to_lowercase();
+                                                rsx! {
+                                                    div { class: "wi-dir",
+                                                        span { class: "wi-dir-name", "{direction_label(c.direction)}" }
+                                                        span { class: "wi-state", "{state}" }
+                                                        span { class: "{due_class}", "{due_label}" }
+                                                    }
                                                 }
                                             }
+                                        }
+                                    }
+                                    div { class: "wi-actions",
+                                        button { class: "outline",
+                                            onclick: move |e| { e.stop_propagation(); on_reset(seq) },
+                                            "Reset"
+                                        }
+                                        button { class: "danger",
+                                            onclick: move |e| { e.stop_propagation(); on_delete(seq) },
+                                            "Delete"
                                         }
                                     }
                                 }

@@ -157,11 +157,11 @@ pub fn StatsTab() -> Element {
             }
 
             div { class: "stat-grid",
-                div { class: "stat-card danger",
+                div { class: "stat-card accent",
                     div { class: "stat-value", "{due_now}" }
                     div { class: "stat-label", "Due now" }
                 }
-                div { class: "stat-card accent",
+                div { class: "stat-card",
                     div { class: "stat-value", "{active}" }
                     div { class: "stat-label", "Active cards" }
                 }

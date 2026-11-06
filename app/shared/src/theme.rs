@@ -245,9 +245,12 @@ button, a, input, select, textarea { touch-action: manipulation; }
         gap: 8px;
     }
     .page-header h2 { font-size: 20px; }
-    .stat-grid { gap: 8px; }
-    .stat-card { padding: 12px 14px; }
+    /* All stat cards on one row: three in a two-column wrap left one
+       stranded on its own line. */
+    .content .stat-grid { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); grid-template-columns: none; gap: 8px; }
+    .stat-card { padding: 10px 12px; min-width: 0; }
     .stat-card .stat-value { font-size: 22px; }
+    .stat-card .stat-label { font-size: 10px; letter-spacing: 0.04em; }
     .card { padding: 14px 14px; border-radius: 8px; }
     .review-card { padding: 14px 14px; }
     .review-card .face { padding: 24px 8px; }
@@ -264,13 +267,58 @@ button, a, input, select, textarea { touch-action: manipulation; }
     .toolbar .count { width: 100%; }
 }
 
-/* ── Tables in their own card: clip + on narrow screens scroll ─────── */
-.table-card { padding: 0; overflow: hidden; }
-@media (max-width: 700px) {
-    .table-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .table-card table { min-width: 520px; }
-    th, td { padding: 10px 8px; font-size: 13px; }
+/* ── New Words: staged word cards ─────────────────────────────────── */
+.staged-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "head actions" "detail detail";
+    align-items: center;
+    column-gap: 12px;
+    cursor: pointer;
 }
+.si-head { grid-area: head; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; min-width: 0; }
+.si-actions { grid-area: actions; display: flex; gap: 8px; }
+.staged-item .entry-detail { grid-area: detail; }
+
+/* Small screens: Accept/Reject only on the tapped word, under its meaning. */
+@media (max-width: 700px) {
+    .staged-item { grid-template-columns: 1fr; grid-template-areas: "head" "detail" "actions"; }
+    .si-actions { display: none; padding-top: 10px; }
+    .staged-item.open .si-actions { display: flex; }
+    .si-actions button { flex: 1; min-height: 40px; }
+}
+
+/* ── Word list: one row per word, its directions side by side ─────── */
+.card.word-list { padding: 0; }
+.word-item {
+    display: grid;
+    /* Fixed middle column so directions line up from row to row. */
+    grid-template-columns: minmax(120px, 1fr) 270px auto;
+    align-items: center;
+    gap: 6px 16px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+}
+.word-item:last-child { border-bottom: none; }
+.wi-word { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.wi-head { font-size: 16px; color: var(--text); }
+.wi-reading { font-size: 12px; color: var(--subtext); }
+.wi-dirs { display: flex; flex-direction: column; gap: 4px; }
+.wi-dir { display: grid; grid-template-columns: 84px 1fr auto; align-items: center; gap: 8px; font-size: 12px; }
+.wi-dir-name { color: var(--subtext); }
+.wi-state { color: var(--subtext); opacity: 0.8; }
+.wi-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+/* Phone: word on top, directions below; Reset/Delete only for the row
+   that was tapped, so a stray tap can't hit Delete. */
+@media (max-width: 700px) {
+    .word-item { grid-template-columns: 1fr; padding: 10px 14px; cursor: pointer; }
+    .wi-actions { display: none; padding-top: 4px; }
+    .word-item.open { background: var(--card); }
+    .word-item.open .wi-actions { display: flex; }
+    .wi-actions button { flex: 1; min-height: 40px; }
+}
+
 
 /* ── Safe areas (notches, gesture bars) ───────────────────────────── */
 @supports (padding: max(0px)) {
@@ -325,6 +373,8 @@ button.link {
 }
 button.link:hover:not(:disabled) { text-decoration: underline; }
 button.outline:hover:not(:disabled) { background: var(--accent); color: var(--on-accent); opacity: 1; }
+
+input[type="range"] { accent-color: var(--accent); }
 
 input, select, textarea {
     background: var(--card);
@@ -437,9 +487,7 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
     display: flex;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 22px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
 }
 .page-header h2 {
     font-size: 22px;

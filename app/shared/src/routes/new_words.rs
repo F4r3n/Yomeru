@@ -89,8 +89,8 @@ pub fn NewWordsTab() -> Element {
 
     rsx! {
         div {
-            div { class: "page-header",
-                if count > 0 {
+            if count > 0 {
+                div { class: "page-header",
                     div { class: "actions",
                         span { class: "pill", "{count} staged" }
                     }
@@ -140,41 +140,37 @@ pub fn NewWordsTab() -> Element {
                                 .unwrap_or_default();
                             let show_reading = !reading.is_empty() && reading != label;
                             let freq = entry.as_ref().and_then(frequency_label);
-                            let has_detail = entry.is_some();
                             let is_open = expanded.read().contains(&seq);
+                            let item_class = if is_open { "card staged-item open" } else { "card staged-item" };
                             rsx! {
-                                div { class: "card",
-                                    div { class: "row", style: "justify-content: space-between; align-items: center;",
-                                        div {
-                                            class: if has_detail { "row clickable" } else { "row" },
-                                            style: "align-items: baseline; gap: 8px;",
-                                            onclick: move |_| {
-                                                if has_detail {
-                                                    expanded.with_mut(|s| if !s.remove(&seq) { s.insert(seq); });
-                                                }
-                                            },
-                                            div { class: "headword", "{label}" }
-                                            if show_reading {
-                                                div { class: "reading", "{reading}" }
-                                            }
-                                            if let Some(f) = freq {
-                                                span { class: "freq-badge", "{f}" }
-                                            }
-                                            if card.priority > 0 {
-                                                span { class: "freq-badge", "★ {card.priority}" }
-                                            }
+                                // Tap toggles the meaning; on phones it also
+                                // reveals Accept/Reject (see .staged-item CSS).
+                                div { class: "{item_class}",
+                                    onclick: move |_| {
+                                        expanded.with_mut(|s| if !s.remove(&seq) { s.insert(seq); });
+                                    },
+                                    div { class: "si-head",
+                                        div { class: "headword", "{label}" }
+                                        if show_reading {
+                                            div { class: "reading", "{reading}" }
                                         }
-                                        div { class: "row",
-                                            button {
-                                                class: "success",
-                                                onclick: move |_| (promote_one)(seq),
-                                                "Accept"
-                                            }
-                                            button {
-                                                class: "danger",
-                                                onclick: move |_| (reject_one)(seq),
-                                                "Reject"
-                                            }
+                                        if let Some(f) = freq {
+                                            span { class: "freq-badge", "{f}" }
+                                        }
+                                        if card.priority > 0 {
+                                            span { class: "freq-badge", "★ {card.priority}" }
+                                        }
+                                    }
+                                    div { class: "si-actions",
+                                        button {
+                                            class: "success",
+                                            onclick: move |e| { e.stop_propagation(); (promote_one)(seq) },
+                                            "Accept"
+                                        }
+                                        button {
+                                            class: "danger",
+                                            onclick: move |e| { e.stop_propagation(); (reject_one)(seq) },
+                                            "Reject"
                                         }
                                     }
                                     if is_open && let Some(e) = entry {
