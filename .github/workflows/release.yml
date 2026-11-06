@@ -160,6 +160,10 @@ jobs:
           NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
           YOMERU_SERVER_URL: ${{ secrets.YOMERU_SERVER_URL }}
 
+      # dx always writes its default icon; swap ours in and repackage.
+      - name: Launcher icon
+        run: app/android/icon/apply.sh target/dx/yomeru/release/android/app bundleRelease
+
       - name: Sign
         run: |
           echo "$ANDROID_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"

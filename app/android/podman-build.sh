@@ -72,6 +72,15 @@ fi
 "${run[@]}" "$image" \
     dx bundle --package yomeru-android --platform android "${target[@]}" "$@"
 
+# Our launcher icon over dx's default one (see icon/apply.sh).
+if [[ $release == 1 ]]; then
+    profile=release task=bundleRelease
+else
+    profile=debug task=assembleDebug
+fi
+"${run[@]}" "$image" /src/app/android/icon/apply.sh \
+    "/src/target/podman/dx/yomeru/$profile/android/app" "$task"
+
 [[ $release == 1 ]] || exit 0
 
 # ── Sign the release APK ─────────────────────────────────────────────
