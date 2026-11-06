@@ -6,6 +6,12 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "staticlib", "rlib"]
 
+# dx names the Android app after the binary target (PascalCased), so this is
+# what the launcher shows: "Yomeru" rather than "YomeruAndroid".
+[[bin]]
+name = "yomeru"
+path = "src/main.rs"
+
 [dependencies]
 dioxus = { version = "0.7.10", features = ["mobile"] }
 yomeru-shared = { path = "../shared" }

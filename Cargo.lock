@@ -8043,9 +8043,11 @@ dependencies = [
 name = "yomeru-shared"
 version = "0.14.0"
 dependencies = [
+ "anyhow",
  "async-trait",
  "console_error_panic_hook",
  "dioxus",
+ "examples-core",
  "examples-types",
  "fastrand",
  "gloo-events",
@@ -8054,12 +8056,15 @@ dependencies = [
  "gloo-timers",
  "idb",
  "japanese-utils",
+ "jmdict-core",
  "jmdict-types",
  "js-sys",
+ "kanjidic-core",
  "kanjidic-types",
  "log",
  "manganis",
  "reqwest",
+ "rkyv",
  "rusqlite",
  "serde",
  "serde-wasm-bindgen",

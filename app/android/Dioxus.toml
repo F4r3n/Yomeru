@@ -1,0 +1,10 @@
+[application]
+name = "Yomeru"
+
+[bundle]
+# Reverse of yomeru.faren.ovh. Never change it once the app is installed
+# anywhere: Android treats a different id as a different app, so users would
+# get a second copy and lose their local data on the update.
+identifier = "ovh.faren.yomeru"
+publisher = "F4r3n"
+short_description = "Japanese dictionary and SRS vocabulary trainer"

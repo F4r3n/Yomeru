@@ -11,6 +11,8 @@ yomeru.zip
 kanjidic2
 kanjivg.xml
 extension/data
+# Offline dictionaries for the Android build, linked from extension/data.
+app/android/assets/dict/
 examples.utf
 web-dist/
 backups/

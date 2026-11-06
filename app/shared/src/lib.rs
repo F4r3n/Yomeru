@@ -9,6 +9,10 @@ pub mod idb;
 #[cfg(not(target_arch = "wasm32"))]
 #[path = "native/store.rs"]
 pub mod idb;
+/// Offline dictionary for native builds that bundle the data.
+#[cfg(not(target_arch = "wasm32"))]
+#[path = "native/dict.rs"]
+pub mod local_dict;
 pub mod kanji_deck;
 pub mod platform;
 pub mod romaji;
@@ -25,7 +29,7 @@ mod components;
 mod routes;
 
 pub use app::App;
-pub use platform::{Platform, default_http_platform};
+pub use platform::{Platform, default_http_platform, platform_with_dict};
 
 use std::cell::RefCell;
 

@@ -91,6 +91,10 @@ pub fn App() -> Element {
     // `sync_now` is a no-op error ("not authenticated") when no server token
     // is configured, so this is safe to fire unconditionally. No reactive
     // reads in the future (bump uses `peek`), so this runs exactly once.
+    // Offline dictionaries take a moment to load; start now rather than on
+    // the first lookup. A no-op for the HTTP-backed dictionary.
+    use_hook(|| consume_context::<Platform>().dict.warm_up());
+
     use_future(move || async move {
         match crate::sync::sync_now().await {
             Ok(_) => crate::sync::bump_sync_generation(),

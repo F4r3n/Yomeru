@@ -7,6 +7,20 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 image=yomeru-android-build
 
+# The offline dictionaries, bundled as assets (see src/main.rs). Hard links,
+# so the ~70 MB isn't stored twice; `asset!` rejects symlinks that leave the
+# crate. Produced by `cargo xtask build-all`.
+dict_src="$root/extension/data"
+dict_dst="$root/app/android/assets/dict"
+mkdir -p "$dict_dst"
+for f in jmdict.bin kanjidic.bin examples.bin kanji-mnemonics.tsv part-names.tsv; do
+    if [[ ! -f "$dict_src/$f" ]]; then
+        echo "missing $dict_src/$f — run: cargo xtask build-all" >&2
+        exit 1
+    fi
+    ln -f "$dict_src/$f" "$dict_dst/$f" 2>/dev/null || cp -f "$dict_src/$f" "$dict_dst/$f"
+done
+
 if ! podman image exists "$image"; then
     podman build -f "$root/app/android/Dockerfile" -t "$image" "$root/app/android"
 fi

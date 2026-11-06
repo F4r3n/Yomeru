@@ -26,6 +26,9 @@ use dioxus::prelude::*;
 /// `browser.runtime.sendMessage` so its in-WASM dicts service the request.
 #[async_trait(?Send)]
 pub trait DictClient {
+    /// Start any expensive one-time setup in the background, so the first
+    /// lookup doesn't pay for it. Called once at app start.
+    fn warm_up(&self) {}
     async fn lookup(&self, word: &str) -> Result<Vec<WordEntry>, String>;
     async fn lookup_many(&self, words: &[String]) -> Result<Vec<Vec<WordEntry>>, String>;
     async fn lookup_by_sequence(&self, sequences: &[u32])
@@ -100,6 +103,16 @@ pub struct Platform {
 pub fn default_http_platform() -> Platform {
     Platform {
         dict: Rc::new(HttpDict),
+        settings: Rc::new(LocalSettings::new()),
+    }
+}
+
+/// The default settings/sync store with a different dictionary — the
+/// Android app's offline [`crate::local_dict::LocalDict`]. Sync still goes
+/// to the configured server.
+pub fn platform_with_dict(dict: Rc<dyn DictClient>) -> Platform {
+    Platform {
+        dict,
         settings: Rc::new(LocalSettings::new()),
     }
 }

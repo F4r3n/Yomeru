@@ -148,7 +148,7 @@ mod imp {
         DIR.get_or_init(|| {
             let dir = find_data_dir();
             if let Err(e) = std::fs::create_dir_all(&dir) {
-                log::warn!("[yomeru] creating {}: {e}", dir.display());
+                dioxus::logger::tracing::warn!("[yomeru] creating {}: {e}", dir.display());
             }
             dir
         })
@@ -227,7 +227,7 @@ mod imp {
         if map.remove(key).is_some()
             && let Err(e) = persist(&map)
         {
-            log::warn!("[yomeru] deleting pref {key}: {e}");
+            dioxus::logger::tracing::warn!("[yomeru] deleting pref {key}: {e}");
         }
     }
 
