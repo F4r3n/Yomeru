@@ -14,18 +14,54 @@ pub fn is_romaji(s: &str) -> bool {
 /// romaji, its hiragana and katakana conversions. `query` must already be trimmed and
 /// lowercased by the caller (`headword`/`reading` are lowercased/compared
 /// here). An empty query always matches.
+///
+/// Converts the query on every call; when filtering a list, build a
+/// [`PreparedQuery`] once and call [`PreparedQuery::matches`] per item.
 pub fn matches_query(headword: &str, reading: &str, query: &str) -> bool {
-    if query.is_empty() {
-        return true;
+    PreparedQuery::new(query).matches(headword, reading)
+}
+
+/// A search query with its romaji → kana conversions done up front, so
+/// matching it against many words doesn't redo them per word. Same matching
+/// rules as [`matches_query`]; `query` must already be trimmed and lowercased.
+pub struct PreparedQuery<'a> {
+    query: &'a str,
+    /// `(hiragana, katakana)` when the query looks like romaji.
+    kana: Option<(String, String)>,
+}
+
+impl<'a> PreparedQuery<'a> {
+    pub fn new(query: &'a str) -> Self {
+        let kana = is_romaji(query).then(|| {
+            let hiragana = romaji_to_hiragana(query);
+            let katakana = hiragana_to_katakana(&hiragana);
+            (hiragana, katakana)
+        });
+        Self { query, kana }
     }
-    if headword.to_lowercase().contains(query) || reading.contains(query) {
-        return true;
+
+    pub fn is_empty(&self) -> bool {
+        self.query.is_empty()
     }
-    if !is_romaji(query) {
-        return false;
+
+    pub fn matches(&self, headword: &str, reading: &str) -> bool {
+        if self.query.is_empty() {
+            return true;
+        }
+        // Only allocate a lowercased copy when there's something to lower.
+        let headword_hit = if headword.chars().any(char::is_uppercase) {
+            headword.to_lowercase().contains(self.query)
+        } else {
+            headword.contains(self.query)
+        };
+        if headword_hit || reading.contains(self.query) {
+            return true;
+        }
+        match &self.kana {
+            Some((hira, kata)) => reading.contains(hira.as_str()) || reading.contains(kata.as_str()),
+            None => false,
+        }
     }
-    let hiragana = romaji_to_hiragana(query);
-    reading.contains(&hiragana) || reading.contains(&hiragana_to_katakana(&hiragana))
 }
 
 /// Hiragana → katakana, with `-` as the long-vowel mark ー, so romaji can

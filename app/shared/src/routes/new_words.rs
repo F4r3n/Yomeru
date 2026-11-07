@@ -7,7 +7,7 @@ use crate::components::pos_list;
 use crate::dict::{frequency_label, lookup_by_sequence, preferred_headword, primary_reading};
 use crate::icons::{Icon, IconName};
 use crate::idb::{delete_card, get_staging_cards, promote_card};
-use crate::romaji::matches_query;
+use crate::romaji::PreparedQuery;
 use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::SrsCard;
 
@@ -19,34 +19,75 @@ pub fn NewWordsTab() -> Element {
     let mut loading = use_signal(|| true);
     let mut err = use_signal(|| Option::<String>::None);
     let mut filter = use_signal(String::new);
+    // Generation of the last reload started / last reload whose result was
+    // applied. A reload only applies its result if no newer one started in
+    // the meantime, so overlapping reloads can't resurrect stale data.
+    // Read with `peek` only: these must never trigger a re-render.
+    let load_gen = use_signal(|| 0u64);
+    let applied_gen = use_signal(|| 0u64);
 
     let reload = move || {
+        let mut load_gen = load_gen;
+        let mut applied_gen = applied_gen;
+        let my_gen = *load_gen.peek() + 1;
+        load_gen.set(my_gen);
         spawn(async move {
-            match get_staging_cards().await {
+            let result = get_staging_cards().await;
+            let result = match result {
                 Ok(c) => {
                     let deduped = unique_by_sequence(c);
                     let seqs: Vec<u32> = deduped.iter().map(|c| c.sequence).collect();
-                    let looked_up = lookup_by_sequence(&seqs).await.unwrap_or_default();
-                    let mut map = HashMap::with_capacity(deduped.len());
-                    for (card, entry) in deduped.iter().zip(looked_up.iter()) {
-                        if let Some(e) = entry {
-                            map.insert(card.sequence, e.clone());
+                    let looked_up = match lookup_by_sequence(&seqs).await {
+                        Ok(v) => v,
+                        Err(e) => {
+                            warn!("lookup_by_sequence({} staged cards) failed: {e}", seqs.len());
+                            Vec::new()
                         }
-                    }
+                    };
+                    Ok((deduped, looked_up))
+                }
+                Err(e) => Err(e),
+            };
+            if *load_gen.peek() != my_gen {
+                return; // superseded by a newer reload
+            }
+            applied_gen.set(my_gen);
+            match result {
+                Ok((deduped, looked_up)) => {
+                    let map: HashMap<u32, WordEntry> = deduped
+                        .iter()
+                        .zip(looked_up)
+                        .filter_map(|(card, entry)| Some((card.sequence, entry?)))
+                        .collect();
                     entries.set(map);
                     cards.set(deduped);
-                    loading.set(false);
+                    err.set(None);
                 }
-                Err(e) => {
-                    err.set(Some(e));
-                    loading.set(false);
-                }
+                Err(e) => err.set(Some(e)),
             }
+            loading.set(false);
         });
     };
 
     // Reload on mount and whenever a sync lands.
     use_reload_on_sync(reload);
+
+    // Drop a promoted/rejected card from the local list instead of
+    // re-fetching everything. If a reload is still in flight it may have read
+    // the store before our write, so restart it to get a fresh snapshot.
+    let remove_local = move |seq: u32| {
+        let (mut cards, mut entries, mut expanded) = (cards, entries, expanded);
+        cards.with_mut(|c| c.retain(|c| c.sequence != seq));
+        entries.with_mut(|m| {
+            m.remove(&seq);
+        });
+        expanded.with_mut(|s| {
+            s.remove(&seq);
+        });
+        if *load_gen.peek() != *applied_gen.peek() {
+            reload();
+        }
+    };
 
     let promote_one = move |seq: u32| {
         spawn(async move {
@@ -55,7 +96,7 @@ pub fn NewWordsTab() -> Element {
                 return;
             }
             schedule_sync();
-            reload();
+            remove_local(seq);
         });
     };
 
@@ -66,24 +107,22 @@ pub fn NewWordsTab() -> Element {
                 return;
             }
             schedule_sync();
-            reload();
+            remove_local(seq);
         });
     };
 
-    let count = cards.read().len();
+    let cards_r = cards.read();
+    let entries_r = entries.read();
+    let count = cards_r.len();
     let filter_s = filter.read().to_lowercase();
-    let all_cards = cards.read().clone();
-    let filtered: Vec<SrsCard> = all_cards
-        .into_iter()
+    let query = PreparedQuery::new(&filter_s);
+    let filtered: Vec<&SrsCard> = cards_r
+        .iter()
         .filter(|c| {
-            if filter_s.is_empty() {
-                return true;
-            }
-            entries
-                .read()
-                .get(&c.sequence)
-                .map(|e| matches_query(preferred_headword(e), primary_reading(e), &filter_s))
-                .unwrap_or(false)
+            query.is_empty()
+                || entries_r
+                    .get(&c.sequence)
+                    .is_some_and(|e| query.matches(preferred_headword(e), primary_reading(e)))
         })
         .collect();
 
@@ -112,7 +151,7 @@ pub fn NewWordsTab() -> Element {
                 div { class: "loading", "Loading…" }
             } else if let Some(e) = err.read().clone() {
                 div { class: "card error", "Failed: {e}" }
-            } else if cards.read().is_empty() {
+            } else if cards_r.is_empty() {
                 div { class: "empty-state",
                     div { class: "glyph", Icon { name: IconName::Sparkles, size: 44 } }
                     div { class: "headline", "No staged words" }
@@ -126,20 +165,17 @@ pub fn NewWordsTab() -> Element {
                 }
             } else {
                 div { class: "col",
-                    for card in filtered.iter().cloned() {
+                    for card in filtered.iter().copied() {
                         {
                             let seq = card.sequence;
-                            let entry = entries.read().get(&seq).cloned();
+                            let priority = card.priority;
+                            let entry = entries_r.get(&seq);
                             let label = entry
-                                .as_ref()
                                 .map(|e| preferred_headword(e).to_string())
                                 .unwrap_or_else(|| format!("(seq {seq})"));
-                            let reading = entry
-                                .as_ref()
-                                .map(|e| primary_reading(e).to_string())
-                                .unwrap_or_default();
+                            let reading = entry.map(primary_reading).unwrap_or_default();
                             let show_reading = !reading.is_empty() && reading != label;
-                            let freq = entry.as_ref().and_then(frequency_label);
+                            let freq = entry.and_then(frequency_label);
                             let is_open = expanded.read().contains(&seq);
                             let item_class = if is_open { "card staged-item open" } else { "card staged-item" };
                             rsx! {
@@ -157,8 +193,8 @@ pub fn NewWordsTab() -> Element {
                                         if let Some(f) = freq {
                                             span { class: "freq-badge", "{f}" }
                                         }
-                                        if card.priority > 0 {
-                                            span { class: "freq-badge", "★ {card.priority}" }
+                                        if priority > 0 {
+                                            span { class: "freq-badge", "★ {priority}" }
                                         }
                                     }
                                     div { class: "si-actions",
@@ -174,7 +210,7 @@ pub fn NewWordsTab() -> Element {
                                         }
                                     }
                                     if is_open && let Some(e) = entry {
-                                        EntryDetail { entry: e }
+                                        EntryDetail { entry: e.clone() }
                                     }
                                 }
                             }
@@ -221,7 +257,7 @@ fn EntryDetail(entry: WordEntry) -> Element {
 }
 
 fn unique_by_sequence(mut cards: Vec<SrsCard>) -> Vec<SrsCard> {
-    let mut seen = std::collections::HashSet::new();
+    let mut seen = HashSet::with_capacity(cards.len());
     cards.retain(|c| seen.insert(c.sequence));
     cards
 }

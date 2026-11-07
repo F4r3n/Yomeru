@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 use crate::dict::{direction_label, lookup_by_sequence, preferred_headword, primary_reading};
 use crate::icons::{Icon, IconName};
 use crate::idb::{delete_card, get_all_cards, reset_card};
-use crate::romaji::matches_query;
+use crate::romaji::PreparedQuery;
 use crate::srs::now_ms;
 use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::{CardStatus, SrsCard};
@@ -111,15 +111,16 @@ pub fn WordListTab() -> Element {
     let filter_s = filter.read().to_lowercase();
     let heads = headwords.read().clone();
     let reads = readings.read().clone();
+    let query = PreparedQuery::new(&filter_s);
     let filtered: Vec<_> = words
         .into_iter()
         .filter(|(seq, _)| {
-            if filter_s.is_empty() {
+            if query.is_empty() {
                 return true;
             }
             let head = heads.get(seq).map(String::as_str).unwrap_or("");
             let reading = reads.get(seq).map(String::as_str).unwrap_or("");
-            matches_query(head, reading, &filter_s)
+            query.matches(head, reading)
         })
         .collect();
     // Due *reviews* (cards), as on the Review tab.
