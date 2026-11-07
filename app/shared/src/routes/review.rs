@@ -1,6 +1,7 @@
 use dioxus::prelude::*;
 use jmdict_types::WordEntry;
 
+use crate::app::Route;
 use crate::components::pos_list;
 use crate::dict::{
     direction_label, examples_for, kanji_for, lookup_by_sequence, preferred_headword,
@@ -8,7 +9,7 @@ use crate::dict::{
 };
 use crate::drill_log;
 use crate::icons::{Icon, IconName};
-use crate::idb::{get_all_cards, get_due_cards, get_staging_cards, promote_card, put_card_logged};
+use crate::idb::{get_all_cards, get_due_cards, get_staging_cards, put_card_logged};
 use crate::settings::load as load_settings;
 use crate::srs::{
     DRILL_BATCH, ReviewOutcome, TROUBLE_EXIT_INTERVAL_DAYS, TROUBLE_MIN_FAILS, TroubleWord,
@@ -249,39 +250,6 @@ fn WordReview() -> Element {
         });
     };
 
-    let promote_and_review = move |_| {
-        spawn(async move {
-            let settings = load_settings();
-            let staging = match get_staging_cards().await {
-                Ok(s) => s,
-                Err(e) => {
-                    warn!("get_staging_cards in promote_and_review failed: {e}");
-                    return;
-                }
-            };
-            let mut seen = std::collections::HashSet::new();
-            let seqs: Vec<u32> = staging
-                .into_iter()
-                .filter(|c| seen.insert(c.sequence))
-                .map(|c| c.sequence)
-                .collect();
-            let n = (seqs.len()).min(settings.max_session_cards as usize);
-            let mut promoted = 0usize;
-            for seq in seqs.iter().take(n).copied() {
-                if let Err(e) = promote_card(seq).await {
-                    warn!("promote_card(seq={seq}) in promote_and_review failed: {e}");
-                    continue;
-                }
-                promoted += 1;
-            }
-            if promoted > 0 {
-                schedule_sync();
-            }
-            started.set(true);
-            load_session();
-        });
-    };
-
     let mut reveal_answer = move || {
         if *show_back.peek() {
             return;
@@ -455,8 +423,8 @@ fn WordReview() -> Element {
                     div { class: "empty-state",
                         div { class: "glyph", Icon { name: IconName::Sparkles, size: 44 } }
                         div { class: "headline", "{new_label}" }
-                        div { class: "helper", "Promote them into the SRS queue." }
-                        button { class: "primary", onclick: promote_and_review, "Add new words" }
+                        div { class: "helper", "Pick which ones to start learning." }
+                        button { class: "primary", onclick: move |_| { navigator().push(Route::New {}); }, "Go to New Words" }
                     }
                 } else {
                     div { class: "empty-state",
