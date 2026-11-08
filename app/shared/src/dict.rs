@@ -82,7 +82,9 @@ pub fn primary_reading(e: &WordEntry) -> &str {
 /// Headword to display as the title of the entry card.
 ///
 /// Returns the first kana reading instead of the kanji form when:
-///   1. any sense carries the `uk` misc tag (usually written in kana), or
+///   1. the first (main) sense carries the `uk` misc tag (usually written in
+///      kana) — a `uk` on a later, minor sense doesn't count: 猫 has one on
+///      "shamisen", 行く on its auxiliary uses, yet both are written in kanji, or
 ///   2. the only kanji form is tagged `rK`/`sK` (rare/search-only), or
 ///   3. the highest-priority reading outranks the highest-priority kanji form
 ///      under `priority_score`.
@@ -96,7 +98,10 @@ pub fn preferred_headword(e: &WordEntry) -> &str {
         return kanji.text.as_str();
     };
 
-    let usually_kana = e.senses.iter().any(|s| s.misc.contains(&Misc::UsuallyKana));
+    let usually_kana = e
+        .senses
+        .first()
+        .is_some_and(|s| s.misc.contains(&Misc::UsuallyKana));
     let only_rare_kanji = e.kanji_forms.iter().all(|k| {
         k.info
             .iter()

@@ -25,7 +25,9 @@ export function preferredHeadword(e: WordEntry): string {
   if (!kanji) return reading?.text ?? "";
   if (!reading) return kanji.text;
 
-  const usuallyKana = e.senses.some((s) => (s.misc ?? []).includes(Misc.UsuallyKana));
+  // Only the main (first) sense decides: a `uk` on a minor later sense
+  // (猫 "shamisen", 行く's auxiliary uses) doesn't make the word kana.
+  const usuallyKana = (e.senses[0]?.misc ?? []).includes(Misc.UsuallyKana);
   const onlyRareKanji = e.kanji_forms.every((k) =>
     (k.info ?? []).some((i) => i === KanjiInf.RareKanji || i === KanjiInf.SearchOnlyKanji),
   );
