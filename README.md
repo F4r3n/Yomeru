@@ -150,6 +150,8 @@ cd app/android && dx serve --platform android   # run on a device or emulator
 2. Click **Load Temporary Add-on**
 3. Select `extension/manifest.json`
 
+A temporary add-on shares the installed Yomeru's storage and sync login. To test without touching your real cards, run `cargo xtask dev`: it starts a dev-mode `yomeru-server` on `127.0.0.1:8081` with its own `yomeru-dev.db`, and opens Firefox on a separate profile (`extension/dev-profile`) with the extension loaded and already signed in to that server as `dev@yomeru.local`. Closing Firefox stops the server. A server URL already set in the profile is kept; delete `extension/dev-profile` to start over.
+
 ## Dictionary data
 
 Word entries come from [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html), kanji details from [KANJIDIC2](https://www.edrdg.org/kanjidic/kanjidic_doc.html), and example sentences from the EDRDG examples file (Tatoeba), all from the Electronic Dictionary Research and Development Group. Kanji parts come from [KanjiVG](https://kanjivg.tagaini.net/). Each source is compiled into a compact binary index: an FST for fast key lookup plus postcard-encoded entries.

@@ -109,6 +109,19 @@ enum Cmd {
     Package,
     /// Run `cargo test` for host crates only (not WASM).
     Test,
+    /// Isolated test setup: a dev-mode yomeru-server on its own database plus
+    /// Firefox on the throwaway `extension/dev-profile`, already signed in to
+    /// that server, so testing never touches your real cards, login or sync
+    /// server. Stops the server when Firefox closes. Run `cargo xtask build` /
+    /// `build-js` first for fresh code.
+    Dev {
+        /// Port for the dev server.
+        #[arg(long, default_value_t = 8081)]
+        port: u16,
+        /// SQLite file for the dev server (default: ./yomeru-dev.db).
+        #[arg(long)]
+        db: Option<PathBuf>,
+    },
 }
 
 fn main() -> Result<()> {
@@ -187,6 +200,11 @@ fn main() -> Result<()> {
 
         Cmd::Package => {
             package(&root)?;
+        }
+
+        Cmd::Dev { port, db } => {
+            let db = db.unwrap_or_else(|| root.join("yomeru-dev.db"));
+            dev(&root, port, &db)?;
         }
 
         Cmd::Test => {
@@ -505,17 +523,104 @@ fn zip_add_dir(
     Ok(())
 }
 
-fn find_npm() -> Result<PathBuf> {
-    // Prefer npm already on PATH.
-    if let Ok(out) = Command::new("which").arg("npm").output() {
-        if out.status.success() {
-            let p = PathBuf::from(String::from_utf8_lossy(&out.stdout).trim());
-            if p.exists() {
-                return Ok(p);
-            }
+/// Account the dev build signs in with (dev mode accepts any address).
+const DEV_EMAIL: &str = "dev@yomeru.local";
+
+/// Runs the dev server and a web-ext Firefox side by side; see `Cmd::Dev`.
+fn dev(root: &Path, port: u16, db: &Path) -> Result<()> {
+    use std::net::TcpStream;
+    use std::time::{Duration, Instant};
+
+    // Resolve npx before starting anything, so a shell without Node on PATH
+    // (e.g. nvm not activated in this terminal) fails up front with a clear
+    // message instead of after the server is already running.
+    let npx = find_tool("npx").context(
+        "npx not found on PATH — activate Node in this shell (e.g. `nvm use`) and retry",
+    )?;
+
+    run(Command::new("cargo")
+        .args(["build", "-p", "server"])
+        .current_dir(root))?;
+
+    // Spawn the binary itself rather than `cargo run`, so killing it below
+    // actually stops the server instead of orphaning it under a dead cargo.
+    // Every setting is passed as a flag: flags win over the env vars that
+    // server/.env may hold (real DB path, SMTP), and --dev-mode also binds
+    // to loopback only and logs in any email without an OTP.
+    let server_bin = root.join("target/debug/yomeru-server");
+    let mut server = Command::new(&server_bin)
+        .args(["--dev-mode", "--port", &port.to_string(), "--db"])
+        .arg(db)
+        .arg("--data-dir")
+        .arg(root.join("extension/data"))
+        .current_dir(root)
+        .spawn()
+        .with_context(|| format!("start {}", server_bin.display()))?;
+
+    let addr = format!("127.0.0.1:{port}");
+    let deadline = Instant::now() + Duration::from_secs(60);
+    loop {
+        if let Some(status) = server.try_wait()? {
+            bail!("dev server exited before listening ({status})");
         }
+        if TcpStream::connect(&addr).is_ok() {
+            break;
+        }
+        if Instant::now() > deadline {
+            let _ = server.kill();
+            bail!("dev server not listening on {addr} after 60s");
+        }
+        std::thread::sleep(Duration::from_millis(200));
     }
-    bail!("npm not found — make sure Node.js is installed and npm is on PATH");
+
+    // Read by the dev build's background script (src/background/dev-config.ts)
+    // to point itself at this server and sign in. Not in `package`'s file
+    // list, and deleted again below once Firefox closes.
+    let dev_config = root.join("extension/dev-config.json");
+    let server_url = format!("http://{addr}");
+    std::fs::write(
+        &dev_config,
+        format!("{{\n  \"serverUrl\": \"{server_url}\",\n  \"email\": \"{DEV_EMAIL}\"\n}}\n"),
+    )
+    .with_context(|| format!("write {}", dev_config.display()))?;
+
+    eprintln!();
+    eprintln!("Dev server: {server_url}  (db: {})", db.display());
+    eprintln!("A fresh dev profile signs in to it automatically as {DEV_EMAIL}.");
+    eprintln!("The profile is kept in extension/dev-profile between runs; it never");
+    eprintln!("overwrites a server URL already set there (delete the profile to reset).");
+    eprintln!();
+
+    // web-ext picks up extension/web-ext-config.cjs (the dev-profile setup)
+    // and reloads the extension when files in extension/ change.
+    let firefox = Command::new(&npx)
+        .args(["--yes", "web-ext", "run"])
+        .current_dir(root.join("extension"))
+        .status();
+
+    let _ = server.kill();
+    let _ = server.wait();
+    let _ = std::fs::remove_file(&dev_config);
+    let status = firefox.with_context(|| format!("run {} web-ext run", npx.display()))?;
+    if !status.success() {
+        bail!("web-ext exited with {status}");
+    }
+    Ok(())
+}
+
+/// Absolute path of `name` as found on PATH, if any.
+fn find_tool(name: &str) -> Option<PathBuf> {
+    let out = Command::new("which").arg(name).output().ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    let p = PathBuf::from(String::from_utf8_lossy(&out.stdout).trim());
+    p.exists().then_some(p)
+}
+
+fn find_npm() -> Result<PathBuf> {
+    find_tool("npm")
+        .context("npm not found — make sure Node.js is installed and npm is on PATH")
 }
 
 fn build_js(root: &Path) -> Result<()> {

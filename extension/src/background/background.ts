@@ -7,6 +7,7 @@
  * is the wiring.
  */
 
+import { applyDevConfig } from "./dev-config";
 import { warmUp } from "./engines";
 import { bumpDbVersion, storageReady, handleRequestOtp, handleSyncCards, handleVerifyOtp } from "./sync";
 import {
@@ -35,6 +36,7 @@ import {
 import type { CardDirection, SrsSettings } from "../shared/types.ts";
 
 warmUp();
+void applyDevConfig();
 
 function syncIcon(enabled: boolean) {
   browser.action.setIcon({

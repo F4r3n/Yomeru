@@ -2,6 +2,8 @@ target/
 extension/_generated/
 extension/dist
 extension/dev-profile/
+# Written by `cargo xtask dev` for the dev build's auto sign-in.
+extension/dev-config.json
 node_modules/
 *.wasm
 pkg/
