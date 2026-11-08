@@ -9,11 +9,11 @@ pub mod idb;
 #[cfg(not(target_arch = "wasm32"))]
 #[path = "native/store.rs"]
 pub mod idb;
+pub mod kanji_deck;
 /// Offline dictionary for native builds that bundle the data.
 #[cfg(not(target_arch = "wasm32"))]
 #[path = "native/dict.rs"]
 pub mod local_dict;
-pub mod kanji_deck;
 pub mod platform;
 pub mod romaji;
 pub mod rt;

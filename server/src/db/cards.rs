@@ -228,11 +228,13 @@ pub async fn get_all_cards<'e, E>(ex: E, email: &str) -> anyhow::Result<Vec<Card
 where
     E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
 {
-    let rows = sqlx::query(&format!("SELECT {CARD_COLUMNS} FROM cards WHERE email = ?1"))
-        .bind(email)
-        .fetch_all(ex)
-        .await
-        .context("query get_all_cards")?;
+    let rows = sqlx::query(&format!(
+        "SELECT {CARD_COLUMNS} FROM cards WHERE email = ?1"
+    ))
+    .bind(email)
+    .fetch_all(ex)
+    .await
+    .context("query get_all_cards")?;
     Ok(rows.iter().map(card_from_row).collect())
 }
 

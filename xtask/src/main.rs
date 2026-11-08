@@ -619,8 +619,7 @@ fn find_tool(name: &str) -> Option<PathBuf> {
 }
 
 fn find_npm() -> Result<PathBuf> {
-    find_tool("npm")
-        .context("npm not found — make sure Node.js is installed and npm is on PATH")
+    find_tool("npm").context("npm not found — make sure Node.js is installed and npm is on PATH")
 }
 
 fn build_js(root: &Path) -> Result<()> {

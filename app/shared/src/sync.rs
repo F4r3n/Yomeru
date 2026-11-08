@@ -650,7 +650,10 @@ mod tests {
         fn the_delta_response_fixture_parses() {
             let resp: SyncResponse =
                 serde_json::from_value(fixture("response-delta.json")).expect("parse delta");
-            assert!(!resp.full, "a delta's drill counts must be merged, not replace");
+            assert!(
+                !resp.full,
+                "a delta's drill counts must be merged, not replace"
+            );
             assert_eq!(resp.cursor.map(|c| c.rev), Some(3));
         }
 

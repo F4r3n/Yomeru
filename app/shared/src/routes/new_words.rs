@@ -40,7 +40,10 @@ pub fn NewWordsTab() -> Element {
                     let looked_up = match lookup_by_sequence(&seqs).await {
                         Ok(v) => v,
                         Err(e) => {
-                            warn!("lookup_by_sequence({} staged cards) failed: {e}", seqs.len());
+                            warn!(
+                                "lookup_by_sequence({} staged cards) failed: {e}",
+                                seqs.len()
+                            );
                             Vec::new()
                         }
                     };

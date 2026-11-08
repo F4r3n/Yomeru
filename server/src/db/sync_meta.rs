@@ -127,12 +127,30 @@ mod tests {
     fn delta_needs_same_epoch_and_user_a_past_cursor_and_no_pruned_gap() {
         assert!(clock(10, 0).can_serve_delta(&at("e.1", 9), 1));
         assert!(clock(10, 5).can_serve_delta(&at("e.1", 5), 1));
-        assert!(!clock(10, 0).can_serve_delta(&at("other.1", 9), 1), "foreign epoch");
-        assert!(!clock(10, 0).can_serve_delta(&at("e.2", 9), 1), "another user's cursor");
-        assert!(!clock(10, 0).can_serve_delta(&at("e", 9), 1), "no user part");
-        assert!(!clock(10, 0).can_serve_delta(&at("e.1", 10), 1), "cursor not behind");
-        assert!(!clock(10, 0).can_serve_delta(&at("e.1", 42), 1), "cursor ahead");
-        assert!(!clock(10, 6).can_serve_delta(&at("e.1", 5), 1), "pruned past cursor");
+        assert!(
+            !clock(10, 0).can_serve_delta(&at("other.1", 9), 1),
+            "foreign epoch"
+        );
+        assert!(
+            !clock(10, 0).can_serve_delta(&at("e.2", 9), 1),
+            "another user's cursor"
+        );
+        assert!(
+            !clock(10, 0).can_serve_delta(&at("e", 9), 1),
+            "no user part"
+        );
+        assert!(
+            !clock(10, 0).can_serve_delta(&at("e.1", 10), 1),
+            "cursor not behind"
+        );
+        assert!(
+            !clock(10, 0).can_serve_delta(&at("e.1", 42), 1),
+            "cursor ahead"
+        );
+        assert!(
+            !clock(10, 6).can_serve_delta(&at("e.1", 5), 1),
+            "pruned past cursor"
+        );
         assert_eq!(clock(10, 0).cursor(7), at("e.7", 10));
     }
 

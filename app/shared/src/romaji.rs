@@ -5,7 +5,8 @@
 pub fn is_romaji(s: &str) -> bool {
     !s.is_empty()
         && s.chars().any(|c| c.is_ascii_alphabetic())
-        && s.chars().all(|c| c.is_ascii_alphabetic() || matches!(c, '-' | '\'' | '’'))
+        && s.chars()
+            .all(|c| c.is_ascii_alphabetic() || matches!(c, '-' | '\'' | '’'))
 }
 
 /// True if a word (given its headword and reading) matches a user's search
@@ -58,7 +59,9 @@ impl<'a> PreparedQuery<'a> {
             return true;
         }
         match &self.kana {
-            Some((hira, kata)) => reading.contains(hira.as_str()) || reading.contains(kata.as_str()),
+            Some((hira, kata)) => {
+                reading.contains(hira.as_str()) || reading.contains(kata.as_str())
+            }
             None => false,
         }
     }
@@ -423,7 +426,10 @@ mod tests {
     fn hiragana_to_katakana_converts_kana_and_long_vowel() {
         assert_eq!(hiragana_to_katakana("ねこ"), "ネコ");
         assert_eq!(hiragana_to_katakana("ちょっと"), "チョット");
-        assert_eq!(hiragana_to_katakana(&romaji_to_hiragana("ko-hi-")), "コーヒー");
+        assert_eq!(
+            hiragana_to_katakana(&romaji_to_hiragana("ko-hi-")),
+            "コーヒー"
+        );
         assert_eq!(hiragana_to_katakana("猫ab"), "猫ab");
     }
 

@@ -11,7 +11,10 @@ pub fn init_all(data_dir: &str) -> Result<()> {
     let dir = PathBuf::from(data_dir);
     init_jmdict(&dir.join("jmdict.bin"))?;
     init_kanjidic(&dir.join("kanjidic.bin"))?;
-    init_overlay(&dir.join("kanji-mnemonics.tsv"), kanjidic_core::init_mnemonics)?;
+    init_overlay(
+        &dir.join("kanji-mnemonics.tsv"),
+        kanjidic_core::init_mnemonics,
+    )?;
     init_overlay(&dir.join("part-names.tsv"), kanjidic_core::init_part_names)?;
     init_examples(&dir.join("examples.bin"))?;
     Ok(())

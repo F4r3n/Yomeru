@@ -42,7 +42,12 @@ enum Sort {
 }
 
 impl Sort {
-    const ALL: [Sort; 4] = [Sort::Alpha, Sort::AddedNewest, Sort::AddedOldest, Sort::NextDue];
+    const ALL: [Sort; 4] = [
+        Sort::Alpha,
+        Sort::AddedNewest,
+        Sort::AddedOldest,
+        Sort::NextDue,
+    ];
 
     fn key(self) -> &'static str {
         match self {
@@ -63,7 +68,10 @@ impl Sort {
     }
 
     fn from_key(k: &str) -> Sort {
-        Sort::ALL.into_iter().find(|s| s.key() == k).unwrap_or(Sort::Alpha)
+        Sort::ALL
+            .into_iter()
+            .find(|s| s.key() == k)
+            .unwrap_or(Sort::Alpha)
     }
 }
 
@@ -167,10 +175,9 @@ pub fn WordListTab() -> Element {
 
     let on_demote = move |seq: u32| {
         spawn(async move {
-            let confirmed = crate::rt::confirm(
-                "Move this word back to New Words? Its SRS progress is reset.",
-            )
-            .await;
+            let confirmed =
+                crate::rt::confirm("Move this word back to New Words? Its SRS progress is reset.")
+                    .await;
             if !confirmed {
                 return;
             }
@@ -195,7 +202,8 @@ pub fn WordListTab() -> Element {
         }
     }
     let total = words.len();
-    let is_graduated = |cs: &[SrsCard]| cs.iter().all(|c| matches!(c.status, CardStatus::Graduated));
+    let is_graduated =
+        |cs: &[SrsCard]| cs.iter().all(|c| matches!(c.status, CardStatus::Graduated));
     let graduated_count = words.iter().filter(|(_, cs)| is_graduated(cs)).count();
     let active_count = total - graduated_count;
     let filter_s = filter.read().to_lowercase();
@@ -221,7 +229,9 @@ pub fn WordListTab() -> Element {
         Sort::Alpha => {}
         Sort::AddedNewest => filtered.sort_by(|a, b| word_added(&b.1).total_cmp(&word_added(&a.1))),
         Sort::AddedOldest => filtered.sort_by(|a, b| word_added(&a.1).total_cmp(&word_added(&b.1))),
-        Sort::NextDue => filtered.sort_by(|a, b| word_next_due(&a.1).total_cmp(&word_next_due(&b.1))),
+        Sort::NextDue => {
+            filtered.sort_by(|a, b| word_next_due(&a.1).total_cmp(&word_next_due(&b.1)))
+        }
     }
     let narrowed = !filter_s.is_empty() || state_f != Filter::All;
     // Due *reviews* (cards), as on the Review tab.

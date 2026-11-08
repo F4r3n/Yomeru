@@ -722,7 +722,11 @@ mod tests {
 
         for table in ["cards", "deletions", "reviews"] {
             assert!(
-                columns(&pool, table).await.unwrap().iter().any(|c| c == "rev"),
+                columns(&pool, table)
+                    .await
+                    .unwrap()
+                    .iter()
+                    .any(|c| c == "rev"),
                 "{table} has no rev column"
             );
         }

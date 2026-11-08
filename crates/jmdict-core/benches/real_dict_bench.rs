@@ -126,11 +126,48 @@ const ARTICLE_TEXT: &str = "\
 /// Words a learner plausibly knows that occur in the texts above (some in
 /// conjugated form, so deinflection is exercised on hits).
 const KNOWN_WORDS: &[&str] = &[
-    "今日", "美しい", "友達", "一緒", "飲む", "食べる", "天気", "明日", "週末", "駅",
-    "近く", "新しい", "喫茶店", "行く", "店", "広い", "窓", "公園", "木", "見る",
-    "私", "温かい", "本", "読む", "甘い", "仕事", "話", "毎朝", "起きる", "電車",
-    "会社", "大変", "勉強", "楽しい", "散歩", "子供", "遊ぶ", "空", "景色", "雨",
-    "映画", "約束",
+    "今日",
+    "美しい",
+    "友達",
+    "一緒",
+    "飲む",
+    "食べる",
+    "天気",
+    "明日",
+    "週末",
+    "駅",
+    "近く",
+    "新しい",
+    "喫茶店",
+    "行く",
+    "店",
+    "広い",
+    "窓",
+    "公園",
+    "木",
+    "見る",
+    "私",
+    "温かい",
+    "本",
+    "読む",
+    "甘い",
+    "仕事",
+    "話",
+    "毎朝",
+    "起きる",
+    "電車",
+    "会社",
+    "大変",
+    "勉強",
+    "楽しい",
+    "散歩",
+    "子供",
+    "遊ぶ",
+    "空",
+    "景色",
+    "雨",
+    "映画",
+    "約束",
 ];
 
 fn bench_real_find_in_text(c: &mut Criterion) {
@@ -144,7 +181,11 @@ fn bench_real_find_in_text(c: &mut Criterion) {
     let mut known: HashSet<u32> = seqs.iter().copied().collect();
     let before = known.len();
     for w in KNOWN_WORDS {
-        known.extend(jmdict_core::lookup(w).iter().map(|e| e.sequence.to_native()));
+        known.extend(
+            jmdict_core::lookup(w)
+                .iter()
+                .map(|e| e.sequence.to_native()),
+        );
     }
     eprintln!(
         "real find_in_text: {} known seqs ({} from text words)",
