@@ -3,7 +3,7 @@ use dioxus::prelude::*;
 use crate::icons::{Icon, IconName};
 use crate::platform::Platform;
 use crate::routes::{about, lookup, new_words, privacy, review, settings, stats, word_list};
-use crate::sync::{SyncGen, SyncHealth};
+use crate::sync::{SyncActivity, SyncGen, SyncHealth};
 use crate::theme::global_css;
 
 const THEME_KEY: &str = "yomeru.theme";
@@ -86,6 +86,7 @@ pub fn App() -> Element {
     // the startup sync below lands so the mounted tab reloads from IDB.
     use_context_provider(|| SyncGen(Signal::new(0)));
     use_context_provider(SyncHealth::new_root);
+    use_context_provider(SyncActivity::new_root);
 
     // Pull remote changes once when the app opens. Previously a sync only ran
     // after a local mutation (debounced) or the manual "Sync now" button, so a
@@ -204,6 +205,7 @@ fn Shell() -> Element {
                     span { class: "tag", "Japanese reader & SRS" }
                 }
                 div { class: "topbar-actions",
+                    SyncSpinner {}
                     SyncWarning {}
                     LookupToggle {}
                     button {
@@ -229,6 +231,25 @@ fn Shell() -> Element {
                     Outlet::<Route> {}
                 }
             }
+        }
+    }
+}
+
+/// Topbar spinner while a sync runs: until it lands, the numbers on screen
+/// are this device's and may still change.
+#[component]
+fn SyncSpinner() -> Element {
+    let activity = use_context::<SyncActivity>();
+    if !activity.active() {
+        return rsx! {};
+    }
+    rsx! {
+        span {
+            class: "icon-btn sync-spinner",
+            role: "status",
+            title: "Syncing…",
+            "aria-label": "Syncing",
+            span { class: "spin", Icon { name: IconName::Loader } }
         }
     }
 }

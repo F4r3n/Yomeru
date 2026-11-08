@@ -148,6 +148,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .icon-btn:hover { color: var(--text); background: var(--card); }
 .icon-btn.lookups-on { color: var(--accent); }
 .icon-btn.sync-warning, .icon-btn.sync-warning:hover { color: var(--yellow); }
+.icon-btn.sync-spinner { cursor: default; color: var(--subtext); }
 
 .sidebar {
     grid-area: sidebar;

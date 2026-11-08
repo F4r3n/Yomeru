@@ -113,6 +113,54 @@ pub fn record_sync_result(result: Result<(), String>) {
     }
 }
 
+/// How many syncs are running right now — startup, "Sync now" or the
+/// debounced auto-sync — provided at the app root. Drives the topbar spinner,
+/// so the user knows the numbers on screen may be about to change.
+#[derive(Clone, Copy)]
+pub struct SyncActivity(pub Signal<u32>);
+
+thread_local! {
+    /// Same arrangement as [`HEALTH`]: the auto-sync timer runs outside any
+    /// component.
+    static ACTIVITY: std::cell::Cell<Option<SyncActivity>> = const { std::cell::Cell::new(None) };
+}
+
+impl SyncActivity {
+    /// Create the counter and register it for [`SyncRunning`]. Call once, from
+    /// the app root's `use_context_provider`.
+    pub fn new_root() -> Self {
+        let activity = Self(Signal::new(0));
+        ACTIVITY.with(|a| a.set(Some(activity)));
+        activity
+    }
+
+    pub fn active(&self) -> bool {
+        *self.0.read() > 0
+    }
+}
+
+/// Marks a sync as running for as long as it lives. Held across the request,
+/// so every way out of it — success, error, `?` — ends the activity.
+pub struct SyncRunning(());
+
+impl SyncRunning {
+    pub fn start() -> Self {
+        if let Some(mut a) = ACTIVITY.with(std::cell::Cell::get) {
+            *a.0.write() += 1;
+        }
+        Self(())
+    }
+}
+
+impl Drop for SyncRunning {
+    fn drop(&mut self) {
+        if let Some(mut a) = ACTIVITY.with(std::cell::Cell::get) {
+            let n = *a.0.peek();
+            a.0.set(n.saturating_sub(1));
+        }
+    }
+}
+
 /// Forget the last sync outcome, e.g. after a fresh sign-in, so a stale
 /// "session expired" warning doesn't linger until the next sync lands.
 pub fn clear_sync_health() {
@@ -132,7 +180,10 @@ pub fn schedule_sync() {
 /// "Sync now" button in Settings and the startup sync. Records the outcome in
 /// [`SyncHealth`].
 pub async fn sync_now() -> Result<String, String> {
-    let result = consume_context::<Platform>().settings.sync_now().await;
+    let settings = consume_context::<Platform>().settings;
+    // Signed out, the call returns at once: no point flashing the spinner.
+    let _running = (!settings.load().server_token.is_empty()).then(SyncRunning::start);
+    let result = settings.sync_now().await;
     record_sync_result(result.as_ref().map(|_| ()).map_err(Clone::clone));
     result
 }

@@ -274,7 +274,9 @@ fn arm_sync(state: Rc<RefCell<SyncState>>) {
             return;
         }
         state.borrow_mut().in_flight = true;
+        let running = crate::sync::SyncRunning::start();
         let result = do_sync(state.clone()).await;
+        drop(running);
         if let Err(e) = &result {
             warn!("[yomeru] auto-sync failed: {e}");
         }
