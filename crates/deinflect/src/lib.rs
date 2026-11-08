@@ -173,6 +173,32 @@ mod tests {
     }
 
     #[test]
+    fn literary_negative_zu() {
+        for (surface, base) in [
+            ("足りず", "足りる"),
+            ("食べず", "食べる"),
+            ("行かず", "行く"),
+            ("分からず", "分かる"),
+            ("言わず", "言う"),
+            ("飲まず", "飲む"),
+            ("こず", "くる"),
+            ("来ず", "来る"),
+            ("勉強せず", "勉強する"),
+        ] {
+            assert!(
+                forms(surface).contains(&base.to_owned()),
+                "{surface} should deinflect to {base}"
+            );
+        }
+    }
+
+    #[test]
+    fn without_doing_zuni_chains_through_zu() {
+        assert!(forms("食べずに").contains(&"食べる".to_owned()));
+        assert!(forms("言わずに").contains(&"言う".to_owned()));
+    }
+
+    #[test]
     fn kuru_verb() {
         assert!(forms("来なかった").contains(&"来る".to_owned()));
     }

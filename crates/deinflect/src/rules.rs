@@ -64,6 +64,10 @@ pub static RULES: &[Rule] = &[
     rule!("ていく", "る", "going to do"),
     rule!("てある", "る", "resultant state"),
     rule!("てほしい", "る", "want someone to"),
+    // Literary negative 〜ず (headlines, set phrases: 足りず, 食べず). ずに
+    // ("without doing") chains through ず so every verb class gets it.
+    rule!("ず", "る", "negative (literary)"),
+    rule!("ずに", "ず", "without doing"),
     // ── Godan: negative (a-stem) ──────────────────────────────────────────
     rule!("かない", "く", "negative"),
     rule!("がない", "ぐ", "negative"),
@@ -84,6 +88,16 @@ pub static RULES: &[Rule] = &[
     rule!("まなかった", "む", "negative past"),
     rule!("らなかった", "る", "negative past"),
     rule!("わなかった", "う", "negative past"),
+    // ── Godan: literary negative 〜ず (a-stem) ─────────────────────────────
+    rule!("かず", "く", "negative (literary)"),
+    rule!("がず", "ぐ", "negative (literary)"),
+    rule!("さず", "す", "negative (literary)"),
+    rule!("たず", "つ", "negative (literary)"),
+    rule!("なず", "ぬ", "negative (literary)"),
+    rule!("ばず", "ぶ", "negative (literary)"),
+    rule!("まず", "む", "negative (literary)"),
+    rule!("らず", "る", "negative (literary)"),
+    rule!("わず", "う", "negative (literary)"),
     // ── Godan: te-form ────────────────────────────────────────────────────
     rule!("いて", "く", "te-form"),
     rule!("いで", "ぐ", "te-form"),
@@ -244,6 +258,7 @@ pub static RULES: &[Rule] = &[
     // ── Kuru (来る) ───────────────────────────────────────────────────────
     rule!("こない", "くる", "negative"),
     rule!("こなかった", "くる", "negative past"),
+    rule!("こず", "くる", "negative (literary)"),
     rule!("きて", "くる", "te-form"),
     rule!("きた", "くる", "past"),
     rule!("きます", "くる", "polite"),
