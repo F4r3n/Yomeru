@@ -1,6 +1,7 @@
 import type { SrsCard } from "../shared/types.ts";
 import { CARDS_BACKUP_KEY, cardId } from "../shared/types.ts";
 import { freshRecallCard, getAllCards, getCard, putCard } from "./idb";
+import { debug } from "../shared/debug.ts";
 
 export { CARDS_BACKUP_KEY };
 
@@ -57,7 +58,7 @@ export async function writeCardsBackup(): Promise<void> {
 // authoritative against a live IDB.
 export async function syncCardsBackup(): Promise<{ restored: number; backedUp: number }> {
   const idbCards = await getAllCards();
-  console.log(`[yomeru] syncCardsBackup: ${idbCards.length} card(s) in IDB`);
+  debug(`syncCardsBackup: ${idbCards.length} card(s) in IDB`);
   if (idbCards.length > 0) {
     await browser.storage.local.set({ [CARDS_BACKUP_KEY]: idbCards });
     return { restored: 0, backedUp: idbCards.length };
@@ -65,7 +66,7 @@ export async function syncCardsBackup(): Promise<{ restored: number; backedUp: n
   const stored = await browser.storage.local.get(CARDS_BACKUP_KEY);
   const backup = (stored as { [k: string]: SrsCard[] | undefined })[CARDS_BACKUP_KEY];
   if (!backup || backup.length === 0) {
-    console.log("[yomeru] syncCardsBackup: no storage.local backup to restore");
+    debug("syncCardsBackup: no storage.local backup to restore");
     return { restored: 0, backedUp: 0 };
   }
   console.warn(
@@ -79,7 +80,7 @@ export async function syncCardsBackup(): Promise<{ restored: number; backedUp: n
       restored++;
     }
   }
-  console.log(`[yomeru] syncCardsBackup: restored ${restored} sibling(s) from backup`);
+  debug(`syncCardsBackup: restored ${restored} sibling(s) from backup`);
   return { restored, backedUp: 0 };
 }
 

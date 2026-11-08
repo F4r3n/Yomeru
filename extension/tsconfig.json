@@ -5,7 +5,7 @@
     "moduleResolution": "bundler",
     "lib": ["ES2022", "DOM"],
     "strict": true,
-    "types": ["firefox-webext-browser", "node"],
+    "types": ["firefox-webext-browser", "node", "vite/client"],
     "verbatimModuleSyntax": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,

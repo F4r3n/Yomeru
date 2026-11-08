@@ -9,6 +9,7 @@ import {
   disableSrsHighlighter,
   enableSrsHighlighter,
 } from "./srs-highlighter";
+import { debug } from "../shared/debug.ts";
 
 // ── Types from wasm-pack generated declarations ───────────────────────────────
 import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
@@ -57,8 +58,8 @@ async function initDictionary(): Promise<void> {
     dictionary = new wasm.Dictionary(bytes);
     const t4 = performance.now();
 
-    console.log(
-      `[yomeru] init: wasm=${(t1 - t0).toFixed(1)}ms fetch=${(t2 - t1).toFixed(1)}ms buffer=${(t3 - t2).toFixed(1)}ms parse=${(t4 - t3).toFixed(1)}ms total=${(t4 - t0).toFixed(1)}ms`,
+    debug(
+      `init: wasm=${(t1 - t0).toFixed(1)}ms fetch=${(t2 - t1).toFixed(1)}ms buffer=${(t3 - t2).toFixed(1)}ms parse=${(t4 - t3).toFixed(1)}ms total=${(t4 - t0).toFixed(1)}ms`,
     );
 
     initSrsHighlighter(dictionary);

@@ -6,8 +6,9 @@
     "build": "npm run build:content && npm run build:app",
     "build:content": "vite build --config vite.content.config.ts",
     "build:app": "vite build",
-    "dev:content": "vite build --config vite.content.config.ts --watch",
-    "dev:app": "vite build --watch",
+    "build:dev": "vite build --mode development --config vite.content.config.ts && vite build --mode development",
+    "dev:content": "vite build --mode development --config vite.content.config.ts --watch",
+    "dev:app": "vite build --mode development --watch",
     "dev:run": "web-ext run",
     "test": "vitest run"
   },

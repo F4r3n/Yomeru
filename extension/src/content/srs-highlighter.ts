@@ -1,5 +1,6 @@
 import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
 import { CARDS_BACKUP_KEY } from "../shared/types.ts";
+import { debug } from "../shared/debug.ts";
 
 type Dictionary = InstanceType<typeof JmDictWasm.Dictionary>;
 
@@ -194,8 +195,8 @@ async function rebuildHighlights(): Promise<void> {
     } else {
       CSS.highlights.delete(HL_NAME);
     }
-    console.debug(
-      `[yomeru] SRS highlight rebuild: ${allRanges.length} matches, ${deferred} text nodes waiting for the viewport, ${(performance.now() - t0).toFixed(1)}ms`,
+    debug(
+      `SRS highlight rebuild: ${allRanges.length} matches, ${deferred} text nodes waiting for the viewport, ${(performance.now() - t0).toFixed(1)}ms`,
     );
   } catch (e) {
     console.warn("[yomeru] SRS highlight error:", e);

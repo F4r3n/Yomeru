@@ -1,5 +1,6 @@
 import type { CardDirection, ReviewLog, SrsCard, WordStatus } from "../shared/types.ts";
 import { cardId, MAX_PRIORITY, versionMs } from "../shared/types.ts";
+import { debug } from "../shared/debug.ts";
 
 const DB_NAME = "yomeru-db";
 // v7 re-runs the v6 sequence-keyed reset to self-heal any DB left half-migrated
@@ -51,7 +52,7 @@ export async function openDb(): Promise<IDBDatabase> {
     req.onupgradeneeded = (e) => {
       const database = (e.target as IDBOpenDBRequest).result;
       const upgradeTx = (e.target as IDBOpenDBRequest).transaction!;
-      console.log(`[yomeru] idb upgrade ${e.oldVersion} → ${e.newVersion}`);
+      debug(`idb upgrade ${e.oldVersion} → ${e.newVersion}`);
 
       upgradeTx.onerror = () => {
         console.error("[yomeru] idb upgrade tx error:", upgradeTx.error);
@@ -123,7 +124,7 @@ export async function openDb(): Promise<IDBDatabase> {
 
     req.onsuccess = (e) => {
       const opened = (e.target as IDBOpenDBRequest).result;
-      console.log(`[yomeru] idb opened at version ${opened.version}`);
+      debug(`idb opened at version ${opened.version}`);
       opened.onversionchange = () => {
         opened.close();
         if (db === opened) db = null;
