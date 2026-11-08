@@ -10,6 +10,80 @@ export interface HitResult {
   utf16Offset: number;
 }
 
+/** Slack, in px, around a character's box when deciding the mouse is over it. */
+const MARGIN = 2;
+
+/** Longest text node the invisible-overlay fallback will scan char by char. */
+const MAX_FALLBACK_SCAN = 2000;
+
+function charContains(node: Text, offset: number, x: number, y: number): boolean {
+  const range = document.createRange();
+  range.setStart(node, offset);
+  range.setEnd(node, offset + 1);
+  const rect = range.getBoundingClientRect();
+  return (
+    x >= rect.left - MARGIN &&
+    x <= rect.right + MARGIN &&
+    y >= rect.top - MARGIN &&
+    y <= rect.bottom + MARGIN
+  );
+}
+
+/**
+ * True when `el` doesn't paint: it or an ancestor has `opacity: 0`, or it is
+ * `visibility: hidden` (which inherits, so the element's own value suffices).
+ */
+function isInvisible(el: Element | null): boolean {
+  if (!el) return false;
+  if (getComputedStyle(el).visibility === "hidden") return true;
+  for (let e: Element | null = el; e; e = e.parentElement) {
+    if (getComputedStyle(e).opacity === "0") return true;
+  }
+  return false;
+}
+
+/**
+ * Finds the character under (x, y) among the text nodes that are direct
+ * children of the visible elements stacked at that point, topmost first.
+ *
+ * Used when the caret lands in invisible text. News sites (Nikkei, …) make a
+ * whole card clickable with a transparent `<a>` stretched over it
+ * (`position:absolute; inset:0; opacity:0`) that holds its own copy of the
+ * headline. That copy is laid out differently from the visible headline, so
+ * the caret it yields points at the wrong characters — or none at all.
+ */
+function hitBeneathInvisible(x: number, y: number): HitResult | null {
+  for (const el of document.elementsFromPoint(x, y)) {
+    if (isInvisible(el)) continue;
+    for (const child of el.childNodes) {
+      if (child.nodeType !== Node.TEXT_NODE) continue;
+      const node = child as Text;
+      const text = node.textContent ?? "";
+      if (!text.trim() || text.length > MAX_FALLBACK_SCAN) continue;
+
+      // Skip nodes whose line boxes don't reach the point before measuring
+      // each character.
+      const whole = document.createRange();
+      whole.selectNodeContents(node);
+      const reaches = [...whole.getClientRects()].some(
+        (r) =>
+          x >= r.left - MARGIN &&
+          x <= r.right + MARGIN &&
+          y >= r.top - MARGIN &&
+          y <= r.bottom + MARGIN,
+      );
+      if (!reaches) continue;
+
+      for (let i = 0; i < text.length; i++) {
+        if (charContains(node, i, x, y)) {
+          return { node, nodeText: text, utf16Offset: i };
+        }
+      }
+    }
+  }
+  return null;
+}
+
 export function getJapaneseAtPoint(x: number, y: number): HitResult | null {
   const pos = document.caretPositionFromPoint(x, y);
   if (!pos || pos.offsetNode.nodeType !== Node.TEXT_NODE) return null;
@@ -18,6 +92,10 @@ export function getJapaneseAtPoint(x: number, y: number): HitResult | null {
   const textLen = node.textContent?.length ?? 0;
   if (textLen === 0) return null;
 
+  // The caret came from text nobody can see: look through it to what is
+  // actually painted under the mouse.
+  if (isInvisible(node.parentElement)) return hitBeneathInvisible(x, y);
+
   // caretPositionFromPoint snaps to the nearest caret position even when the
   // mouse is far from the text. Verify the mouse is actually over the character
   // by checking the bounding rect of the character at the caret position.
@@ -25,23 +103,13 @@ export function getJapaneseAtPoint(x: number, y: number): HitResult | null {
   // The caret lands on the LEADING edge of char[n], so when the mouse is over
   // the TRAILING edge of char[n-1] the primary check (char[n]) fails. We fall
   // back to char[n-1] to handle that case.
-  const MARGIN = 2;
   const candidates = [...new Set([
     Math.min(pos.offset, textLen - 1),
     pos.offset - 1,
   ])].filter((o) => o >= 0);
 
   for (const offset of candidates) {
-    const range = document.createRange();
-    range.setStart(node, offset);
-    range.setEnd(node, offset + 1);
-    const rect = range.getBoundingClientRect();
-    if (
-      x >= rect.left - MARGIN &&
-      x <= rect.right + MARGIN &&
-      y >= rect.top - MARGIN &&
-      y <= rect.bottom + MARGIN
-    ) {
+    if (charContains(node, offset, x, y)) {
       return { node, nodeText: node.textContent ?? "", utf16Offset: offset };
     }
   }
