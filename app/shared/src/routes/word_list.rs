@@ -4,11 +4,81 @@ use dioxus::prelude::*;
 
 use crate::dict::{direction_label, lookup_by_sequence, preferred_headword, primary_reading};
 use crate::icons::{Icon, IconName};
-use crate::idb::{delete_card, get_all_cards, reset_card};
+use crate::idb::{delete_card, demote_card, get_all_cards, reset_card};
 use crate::romaji::PreparedQuery;
 use crate::srs::now_ms;
 use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::{CardStatus, SrsCard};
+use srs_core::CardState;
+
+/// Which words the list shows. A word matches when any of its direction
+/// cards does; graduated cards never match Due/New/Review.
+#[derive(Clone, Copy, PartialEq)]
+enum Filter {
+    All,
+    Due,
+    New,
+    Review,
+}
+
+impl Filter {
+    fn matches(self, c: &SrsCard, now: f64) -> bool {
+        let active = matches!(c.status, CardStatus::Active);
+        match self {
+            Filter::All => true,
+            Filter::Due => active && c.due_ms <= now,
+            Filter::New => active && c.state == CardState::New,
+            Filter::Review => active && c.state == CardState::Review,
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum Sort {
+    Alpha,
+    AddedNewest,
+    AddedOldest,
+    NextDue,
+}
+
+impl Sort {
+    const ALL: [Sort; 4] = [Sort::Alpha, Sort::AddedNewest, Sort::AddedOldest, Sort::NextDue];
+
+    fn key(self) -> &'static str {
+        match self {
+            Sort::Alpha => "alpha",
+            Sort::AddedNewest => "added-new",
+            Sort::AddedOldest => "added-old",
+            Sort::NextDue => "due",
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Sort::Alpha => "A–Z",
+            Sort::AddedNewest => "Newest added",
+            Sort::AddedOldest => "Oldest added",
+            Sort::NextDue => "Next due",
+        }
+    }
+
+    fn from_key(k: &str) -> Sort {
+        Sort::ALL.into_iter().find(|s| s.key() == k).unwrap_or(Sort::Alpha)
+    }
+}
+
+/// When the word entered the list: its earliest-added direction.
+fn word_added(cs: &[SrsCard]) -> f64 {
+    cs.iter().map(|c| c.added_ms).fold(f64::INFINITY, f64::min)
+}
+
+/// Its soonest active review; graduated-only words sort last.
+fn word_next_due(cs: &[SrsCard]) -> f64 {
+    cs.iter()
+        .filter(|c| matches!(c.status, CardStatus::Active))
+        .map(|c| c.due_ms)
+        .fold(f64::INFINITY, f64::min)
+}
 
 #[component]
 pub fn WordListTab() -> Element {
@@ -18,6 +88,8 @@ pub fn WordListTab() -> Element {
     let mut headwords = use_signal(HashMap::<u32, String>::new);
     let mut readings = use_signal(HashMap::<u32, String>::new);
     let mut filter = use_signal(String::new);
+    let mut state_filter = use_signal(|| Filter::All);
+    let mut sort = use_signal(|| Sort::Alpha);
     let mut loading = use_signal(|| true);
     // The word whose Reset/Delete buttons are showing (phone layout only;
     // on wide screens they're always visible).
@@ -93,6 +165,24 @@ pub fn WordListTab() -> Element {
         });
     };
 
+    let on_demote = move |seq: u32| {
+        spawn(async move {
+            let confirmed = crate::rt::confirm(
+                "Move this word back to New Words? Its SRS progress is reset.",
+            )
+            .await;
+            if !confirmed {
+                return;
+            }
+            if let Err(e) = demote_card(seq, now_ms()).await {
+                warn!("demote_card(seq={seq}) failed: {e}");
+                return;
+            }
+            schedule_sync();
+            reload();
+        });
+    };
+
     let now = now_ms();
     let rows = cards.read().clone();
     // One entry per word, both directions together, in the load order
@@ -112,8 +202,11 @@ pub fn WordListTab() -> Element {
     let heads = headwords.read().clone();
     let reads = readings.read().clone();
     let query = PreparedQuery::new(&filter_s);
-    let filtered: Vec<_> = words
+    let state_f = *state_filter.read();
+    let sort_by = *sort.read();
+    let mut filtered: Vec<_> = words
         .into_iter()
+        .filter(|(_, cs)| cs.iter().any(|c| state_f.matches(c, now)))
         .filter(|(seq, _)| {
             if query.is_empty() {
                 return true;
@@ -123,6 +216,14 @@ pub fn WordListTab() -> Element {
             query.matches(head, reading)
         })
         .collect();
+    // Stable sorts: ties keep the headword order the list was loaded in.
+    match sort_by {
+        Sort::Alpha => {}
+        Sort::AddedNewest => filtered.sort_by(|a, b| word_added(&b.1).total_cmp(&word_added(&a.1))),
+        Sort::AddedOldest => filtered.sort_by(|a, b| word_added(&a.1).total_cmp(&word_added(&b.1))),
+        Sort::NextDue => filtered.sort_by(|a, b| word_next_due(&a.1).total_cmp(&word_next_due(&b.1))),
+    }
+    let narrowed = !filter_s.is_empty() || state_f != Filter::All;
     // Due *reviews* (cards), as on the Review tab.
     let due_count = filtered
         .iter()
@@ -138,6 +239,11 @@ pub fn WordListTab() -> Element {
                 div { class: "actions",
                     span { class: "pill", "{active_count} active" }
                     span { class: "pill", "{graduated_count} graduated" }
+                    if narrowed {
+                        span { class: "pill", "{visible} match · {due_count} due" }
+                    } else {
+                        span { class: "pill", "{due_count} due" }
+                    }
                 }
             }
 
@@ -148,11 +254,25 @@ pub fn WordListTab() -> Element {
                     value: "{filter}",
                     oninput: move |e| filter.set(e.value()),
                 }
-                span { class: "count",
-                    if filter_s.is_empty() {
-                        "{due_count} due now"
-                    } else {
-                        "{visible} match · {due_count} due"
+            }
+
+            div { class: "toolbar list-controls",
+                div { class: "seg-tabs",
+                    for (f, label) in [(Filter::All, "All"), (Filter::Due, "Due"), (Filter::New, "New"), (Filter::Review, "Review")] {
+                        button {
+                            class: if state_f == f { "active" } else { "" },
+                            onclick: move |_| state_filter.set(f),
+                            "{label}"
+                        }
+                    }
+                }
+                select {
+                    class: "sort-select",
+                    "aria-label": "Sort",
+                    value: "{sort_by.key()}",
+                    onchange: move |e| sort.set(Sort::from_key(&e.value())),
+                    for s in Sort::ALL {
+                        option { value: "{s.key()}", selected: s == sort_by, "{s.label()}" }
                     }
                 }
             }
@@ -169,7 +289,11 @@ pub fn WordListTab() -> Element {
                 div { class: "empty-state",
                     div { class: "glyph", Icon { name: IconName::Search, size: 44 } }
                     div { class: "headline", "No matches" }
-                    div { class: "helper", "Nothing in your list contains 「{filter_s}」." }
+                    if filter_s.is_empty() {
+                        div { class: "helper", "No words match this filter." }
+                    } else {
+                        div { class: "helper", "Nothing here contains 「{filter_s}」." }
+                    }
                 }
             } else {
                 div { class: "card word-list",
@@ -220,6 +344,11 @@ pub fn WordListTab() -> Element {
                                         }
                                     }
                                     div { class: "wi-actions",
+                                        button { class: "outline",
+                                            title: "Back to New Words",
+                                            onclick: move |e| { e.stop_propagation(); on_demote(seq) },
+                                            "To New Words"
+                                        }
                                         button { class: "outline",
                                             onclick: move |e| { e.stop_propagation(); on_reset(seq) },
                                             "Reset"

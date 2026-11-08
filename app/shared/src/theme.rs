@@ -316,7 +316,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
     .wi-actions { display: none; padding-top: 4px; }
     .word-item.open { background: var(--card); }
     .word-item.open .wi-actions { display: flex; }
-    .wi-actions button { flex: 1; min-height: 40px; }
+    .wi-actions button { flex: 1 1 auto; min-height: 40px; padding-inline: 10px; white-space: nowrap; }
 }
 
 
@@ -554,8 +554,8 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
     margin-bottom: 14px;
 }
 .forecast-head .section-title { margin-bottom: 0; }
-.forecast-tabs { display: flex; gap: 4px; }
-.forecast-tabs button {
+.forecast-tabs, .seg-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
+.forecast-tabs button, .seg-tabs button {
     font-size: 12px;
     font-weight: 500;
     padding: 4px 11px;
@@ -565,8 +565,8 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
     color: var(--subtext);
     cursor: pointer;
 }
-.forecast-tabs button:hover { color: var(--text); }
-.forecast-tabs button.active {
+.forecast-tabs button:hover, .seg-tabs button:hover { color: var(--text); }
+.forecast-tabs button.active, .seg-tabs button.active {
     background: var(--accent);
     color: var(--on-accent);
     border-color: var(--accent);
@@ -663,6 +663,15 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 }
 .toolbar input[type="search"] { flex: 1; min-width: 200px; }
 .toolbar .count { color: var(--subtext); font-size: 13px; white-space: nowrap; }
+/* Word List: filter buttons and the sort menu share one row, phone included. */
+.list-controls { flex-wrap: nowrap; }
+.list-controls .seg-tabs { flex: 1; flex-wrap: nowrap; }
+.list-controls .sort-select {
+    width: auto;
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    font-size: 13px;
+}
 
 /* ── Forms ───────────────────────────────────────────────────────── */
 .form-row {

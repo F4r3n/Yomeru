@@ -104,6 +104,23 @@ pub async fn reset_card(sequence: u32, now_ms: f64) -> Result<(), String> {
     put_cards(&to_put).await
 }
 
+/// Sends every active or graduated sibling of `sequence` back to the New
+/// Words tab: progress reset, status back to Staging. The inverse of
+/// [`promote_card`]; `added_ms` and `priority` are kept. Destructive.
+pub async fn demote_card(sequence: u32, now_ms: f64) -> Result<(), String> {
+    let siblings = get_cards_by_sequence(sequence).await?;
+    let to_put: Vec<SrsCard> = siblings
+        .into_iter()
+        .filter(|c| matches!(c.status, CardStatus::Active | CardStatus::Graduated))
+        .map(|mut c| {
+            c.reset_progression(now_ms);
+            c.status = CardStatus::Staging;
+            c
+        })
+        .collect();
+    put_cards(&to_put).await
+}
+
 pub async fn promote_card(sequence: u32) -> Result<(), String> {
     let siblings = get_cards_by_sequence(sequence).await?;
     let to_put: Vec<SrsCard> = siblings
