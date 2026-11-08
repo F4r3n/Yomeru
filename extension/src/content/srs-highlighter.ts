@@ -21,6 +21,39 @@ let storageListenerAdded = false;
 /** False while lookups are switched off, so no rebuild repaints underlines. */
 let active = true;
 
+/**
+ * Matches any character `japanese_utils::is_japanese` accepts. Text nodes
+ * without one can never contain a known word, so they skip the WASM call.
+ */
+const JAPANESE_RE =
+  /[\u3000-\u30FF\u31F0-\u31FF\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\uFF01-\uFF9F\uFFE0-\uFFEF\u{20000}-\u{2B81F}]/u;
+
+type Match = [start: number, len: number];
+
+/**
+ * `find_in_text` results per text node, keyed on the text they were computed
+ * for, so a rebuild after a DOM mutation only scans new or changed nodes.
+ * Replaced wholesale when the known set changes, since every match depends on
+ * it.
+ */
+let matchCache = new WeakMap<Text, { text: string; matches: Match[] }>();
+
+/** Hand the current known set to WASM and drop matches computed for the old one. */
+function pushKnown(): void {
+  matchCache = new WeakMap();
+  dict?.set_known(Uint32Array.from(srsSequences));
+}
+
+function matchesFor(node: Text, text: string): Match[] {
+  const cached = matchCache.get(node);
+  if (cached && cached.text === text) return cached.matches;
+  const matches = JAPANESE_RE.test(text)
+    ? ((dict!.find_in_text(text) as Match[] | null) ?? [])
+    : [];
+  matchCache.set(node, { text, matches });
+  return matches;
+}
+
 function injectStyle(): void {
   if (document.getElementById("jp-srs-style")) return;
   const s = document.createElement("style");
@@ -37,6 +70,7 @@ async function rebuildHighlights(): Promise<void> {
     return;
   }
   try {
+    const t0 = performance.now();
     const allRanges: Range[] = [];
     const walker = document.createTreeWalker(
       document.body,
@@ -52,19 +86,13 @@ async function rebuildHighlights(): Promise<void> {
         },
       },
     );
-    const known = [...srsSequences];
     let node: Node | null;
     while ((node = walker.nextNode()) !== null) {
       const text = (node as Text).textContent;
       if (!text?.trim()) continue;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const matches = dict.find_in_text(text, known as any) as [
-        number,
-        number,
-      ][];
       // find_in_text returns UTF-16 code-unit offsets, which is exactly what
       // Range wants for a text node — do not convert these to char indices.
-      for (const [start, len] of matches ?? []) {
+      for (const [start, len] of matchesFor(node as Text, text)) {
         const r = new Range();
         r.setStart(node, start);
         r.setEnd(node, start + len);
@@ -76,6 +104,9 @@ async function rebuildHighlights(): Promise<void> {
     } else {
       CSS.highlights.delete(HL_NAME);
     }
+    console.debug(
+      `[yomeru] SRS highlight rebuild: ${allRanges.length} matches in ${(performance.now() - t0).toFixed(1)}ms`,
+    );
   } catch (e) {
     console.warn("[yomeru] SRS highlight error:", e);
   }
@@ -94,6 +125,7 @@ export async function initSrsHighlighter(
   } catch {
     return;
   }
+  pushKnown();
   rebuildHighlights();
   if (!storageListenerAdded) {
     storageListenerAdded = true;
@@ -129,12 +161,14 @@ export function applyCardsChange(cards: unknown): boolean {
     next.size === srsSequences.size && [...next].every((s) => srsSequences.has(s));
   if (same) return false;
   srsSequences = next;
+  pushKnown();
   return true;
 }
 
 export function srsSequenceAdded(sequence: number): void {
   if (srsSequences.has(sequence)) return;
   srsSequences.add(sequence);
+  pushKnown();
   rebuildHighlights();
 }
 

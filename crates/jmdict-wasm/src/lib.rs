@@ -3,6 +3,7 @@
 
 use jmdict_types::ArchivedWordEntry;
 use serde::Serialize;
+use std::collections::HashSet;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(start)]
@@ -19,11 +20,14 @@ struct LookupAtResult {
     match_len: usize,
 }
 
-/// JS-facing dictionary handle. State is held in a process-global in
-/// `jmdict-core`; this struct is a zero-sized handle so the JS side has
-/// something to call methods on.
+/// JS-facing dictionary handle. Dictionary state is held in a process-global
+/// in `jmdict-core`; the handle itself only carries the known-word set that
+/// `find_in_text` matches against, so it is built once per change to the
+/// user's cards instead of once per scanned text node.
 #[wasm_bindgen]
-pub struct Dictionary {}
+pub struct Dictionary {
+    known: HashSet<u32>,
+}
 
 #[wasm_bindgen]
 impl Dictionary {
@@ -31,7 +35,9 @@ impl Dictionary {
     pub fn new(dict_bytes: &[u8]) -> Result<Dictionary, JsError> {
         jmdict_core::init(dict_bytes)
             .map_err(|e| JsError::new(&format!("Failed to load dictionary: {e}")))?;
-        Ok(Dictionary {})
+        Ok(Dictionary {
+            known: HashSet::new(),
+        })
     }
 
     /// Exact lookup by headword or reading.
@@ -53,20 +59,21 @@ impl Dictionary {
         }
     }
 
-    /// Scan `text` for all positions matching entries in `known` (a JS Array of
-    /// JMdict sequence numbers).
+    /// Replace the set of JMdict sequence numbers `find_in_text` underlines.
+    /// Call again whenever the user's cards gain or lose an entry.
+    pub fn set_known(&mut self, sequences: Vec<u32>) {
+        self.known = sequences.into_iter().collect();
+    }
+
+    /// Scan `text` for all positions matching entries in the known set (see
+    /// `set_known`).
     ///
     /// Returns a JS array of `[start, len]` pairs in **UTF-16 code units**, so
     /// they can be handed to `Range.setStart`/`setEnd` directly — DOM offsets
     /// into a text node are UTF-16, and a char index would drift on any text
     /// containing surrogate pairs.
-    pub fn find_in_text(&self, text: &str, known: js_sys::Array) -> JsValue {
-        let known_set: std::collections::HashSet<u32> = known
-            .iter()
-            .filter_map(|v| v.as_f64())
-            .map(|n| n as u32)
-            .collect();
-        let results = jmdict_core::find_in_text(text, &known_set);
+    pub fn find_in_text(&self, text: &str) -> JsValue {
+        let results = jmdict_core::find_in_text(text, &self.known);
         serde_wasm_bindgen::to_value(&results)
             .unwrap_or_else(|_| JsValue::from(js_sys::Array::new()))
     }
