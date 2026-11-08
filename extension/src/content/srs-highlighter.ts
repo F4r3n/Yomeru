@@ -44,12 +44,91 @@ function pushKnown(): void {
   dict?.set_known(Uint32Array.from(srsSequences));
 }
 
-function matchesFor(node: Text, text: string): Match[] {
+/**
+ * Text far from the viewport isn't scanned until it gets close: each rebuild
+ * only runs `find_in_text` on nodes whose parent element is in `nearElements`,
+ * and `viewport` watches the parents of the rest. Once scanned, a node's
+ * matches stay cached and painted, so scrolling away never drops underlines.
+ */
+const VIEWPORT_MARGIN = "100% 0px";
+/** Delay before scanning text that just scrolled near the viewport. */
+const NEAR_SCAN_DELAY_MS = 50;
+
+let viewport: IntersectionObserver | null = null;
+/** Elements `viewport` is watching: parents of unscanned Japanese text. */
+const watched = new Set<Element>();
+/** Watched elements that came near the viewport since the last rebuild. */
+const nearElements = new Set<Element>();
+let nearTimer: ReturnType<typeof setTimeout> | null = null;
+
+function createViewportObserver(): IntersectionObserver | null {
+  if (typeof IntersectionObserver === "undefined") return null;
+  return new IntersectionObserver(
+    (entries) => {
+      let anyNear = false;
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        // One scan per approach: unwatch now, and re-watch only if its text
+        // changes later while away from the viewport.
+        nearElements.add(e.target);
+        viewport?.unobserve(e.target);
+        watched.delete(e.target);
+        anyNear = true;
+      }
+      if (anyNear && nearTimer === null) {
+        nearTimer = setTimeout(() => {
+          nearTimer = null;
+          rebuildHighlights();
+        }, NEAR_SCAN_DELAY_MS);
+      }
+    },
+    { rootMargin: VIEWPORT_MARGIN },
+  );
+}
+
+function watch(el: Element): void {
+  if (!viewport || watched.has(el)) return;
+  watched.add(el);
+  viewport.observe(el);
+}
+
+/** Stop watching elements the page removed, so they can be collected. */
+function sweepWatched(): void {
+  for (const el of watched) {
+    if (!el.isConnected) {
+      viewport?.unobserve(el);
+      watched.delete(el);
+    }
+  }
+}
+
+function stopViewportTracking(): void {
+  viewport?.disconnect();
+  watched.clear();
+  nearElements.clear();
+  if (nearTimer !== null) {
+    clearTimeout(nearTimer);
+    nearTimer = null;
+  }
+}
+
+/**
+ * Matches for `node`, or `null` when it is Japanese text that hasn't been
+ * scanned and isn't near the viewport yet (its parent is then watched).
+ */
+function matchesFor(node: Text, text: string): Match[] | null {
   const cached = matchCache.get(node);
   if (cached && cached.text === text) return cached.matches;
-  const matches = JAPANESE_RE.test(text)
-    ? ((dict!.find_in_text(text) as Match[] | null) ?? [])
-    : [];
+  if (!JAPANESE_RE.test(text)) {
+    matchCache.set(node, { text, matches: [] });
+    return [];
+  }
+  const parent = node.parentElement!;
+  if (viewport && !nearElements.has(parent)) {
+    watch(parent);
+    return null;
+  }
+  const matches = (dict!.find_in_text(text) as Match[] | null) ?? [];
   matchCache.set(node, { text, matches });
   return matches;
 }
@@ -71,7 +150,10 @@ async function rebuildHighlights(): Promise<void> {
   }
   try {
     const t0 = performance.now();
+    viewport ??= createViewportObserver();
+    sweepWatched();
     const allRanges: Range[] = [];
+    let deferred = 0;
     const walker = document.createTreeWalker(
       document.body,
       NodeFilter.SHOW_TEXT,
@@ -92,20 +174,28 @@ async function rebuildHighlights(): Promise<void> {
       if (!text?.trim()) continue;
       // find_in_text returns UTF-16 code-unit offsets, which is exactly what
       // Range wants for a text node — do not convert these to char indices.
-      for (const [start, len] of matchesFor(node as Text, text)) {
+      const matches = matchesFor(node as Text, text);
+      if (matches === null) {
+        deferred++;
+        continue;
+      }
+      for (const [start, len] of matches) {
         const r = new Range();
         r.setStart(node, start);
         r.setEnd(node, start + len);
         allRanges.push(r);
       }
     }
+    // Every near element's text was just visited; anything still near later
+    // will be reported again by `viewport` once it is re-watched.
+    nearElements.clear();
     if (allRanges.length > 0) {
       CSS.highlights.set(HL_NAME, new Highlight(...allRanges));
     } else {
       CSS.highlights.delete(HL_NAME);
     }
     console.debug(
-      `[yomeru] SRS highlight rebuild: ${allRanges.length} matches in ${(performance.now() - t0).toFixed(1)}ms`,
+      `[yomeru] SRS highlight rebuild: ${allRanges.length} matches, ${deferred} text nodes waiting for the viewport, ${(performance.now() - t0).toFixed(1)}ms`,
     );
   } catch (e) {
     console.warn("[yomeru] SRS highlight error:", e);
@@ -179,6 +269,7 @@ export function hasSrsSequence(sequence: number): boolean {
 export function disableSrsHighlighter(): void {
   active = false;
   observer?.disconnect();
+  stopViewportTracking();
   if (debounceTimer !== null) {
     clearTimeout(debounceTimer);
     debounceTimer = null;
