@@ -1,14 +1,15 @@
 ---
 name: bump-version
-description: Bump the project version. Uses the bump-version.sh script (which updates manifest.json, package.json and all Cargo.toml files), commits the bump with jj, and tags the commit with git as vX.Y.Z. Trigger when the user asks to "bump version", "release X.Y.Z", or similar.
+description: Bump the project version. Uses the bump-version.sh script (which updates manifest.json, package.json, package-lock.json, every workspace Cargo.toml and Cargo.lock), commits the bump with jj, and tags the commit with git as vX.Y.Z. Trigger when the user asks to "bump version", "release X.Y.Z", or similar.
 ---
 
 # Bump version
 
-This repo's version lives in three places:
+This repo's version lives in:
 - `extension/manifest.json`
-- `extension/package.json`
-- All `crates/*/Cargo.toml` and `xtask/Cargo.toml`
+- `extension/package.json` and `extension/package-lock.json`
+- The `Cargo.toml` of every workspace member (crates, server, app/*, xtask; the script asks `cargo metadata`, so new crates are covered automatically)
+- `Cargo.lock`, refreshed by the script so the bump commit is complete
 
 Do **not** edit those files by hand. The repo ships `bump-version.sh` which keeps them all in sync.
 
