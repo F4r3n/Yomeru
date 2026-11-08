@@ -14,6 +14,7 @@
  */
 
 import { getSettings, saveSettings } from "./settings";
+import { allowSyncWithoutConsent } from "./consent";
 import { handleRequestOtp, handleSyncCards } from "./sync";
 
 interface DevConfig {
@@ -44,6 +45,9 @@ export async function applyDevConfig(): Promise<void> {
 
     const cfg = await readDevConfig();
     if (!cfg) return;
+    // No click to ask from, and the server is a throwaway local one. Set on
+    // every startup, so it holds for an already-configured dev profile too.
+    allowSyncWithoutConsent();
 
     const settings = await getSettings();
     if (settings.serverUrl) return;

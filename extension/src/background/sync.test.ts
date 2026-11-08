@@ -48,6 +48,9 @@ describe("sync", () => {
   let idb: IdbModule;
   let sync: SyncModule;
   let storage: Map<string, unknown>;
+  // Firefox data consent the stubbed browser reports; granted unless a test
+  // takes it away.
+  let dataCollection: string[];
   let fetchMock: ReturnType<typeof vi.fn>;
 
   /** The bodies `doSync` posted, parsed, most recent last. */
@@ -81,7 +84,11 @@ describe("sync", () => {
     (globalThis as unknown as Record<string, unknown>).IDBKeyRange = FakeIDBKeyRange;
     storage = new Map();
     storage.set("srs_settings", { serverUrl: SERVER, serverToken: TOKEN });
+    dataCollection = ["personallyIdentifyingInfo", "authenticationInfo"];
     vi.stubGlobal("browser", {
+      permissions: {
+        getAll: async () => ({ data_collection: dataCollection }),
+      },
       storage: {
         local: {
           get: async (key: string) => {
@@ -623,6 +630,35 @@ describe("sync", () => {
       const fresh = await import("./idb.ts");
 
       expect(await fresh.getSyncCursor()).toBeNull();
+    });
+  });
+
+  describe("data consent", () => {
+    it("sends nothing to the server without it", async () => {
+      await idb.putCard(makeCard({ sequence: CAT }));
+      dataCollection = ["personallyIdentifyingInfo"]; // one category withdrawn
+      const result = await sync.handleSyncCards();
+      expect(result).toHaveProperty("error");
+      expect((result as { error: string }).error).toMatch(/paused/);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("refuses to request or verify a sign-in code without it", async () => {
+      dataCollection = [];
+      const req = await sync.handleRequestOtp({ serverUrl: SERVER, email: "a@b.c" });
+      const ver = await sync.handleVerifyOtp({ serverUrl: SERVER, email: "a@b.c", code: "123456" });
+      expect(req).toHaveProperty("error");
+      expect(ver).toHaveProperty("error");
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("syncs again once it is granted", async () => {
+      dataCollection = [];
+      await sync.handleSyncCards();
+      dataCollection = ["personallyIdentifyingInfo", "authenticationInfo"];
+      respondWith({ cards: [] });
+      expect(await sync.handleSyncCards()).not.toHaveProperty("error");
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -66,6 +66,20 @@ pub trait SettingsStore {
     async fn verify_otp(&self, server_url: &str, email: &str, code: &str)
     -> Result<String, String>;
 
+    /// Whether sync may send the email and sign-in data off the device. Only
+    /// the extension has a separate grant (Firefox's built-in data consent);
+    /// elsewhere, signing in is the user's choice to sync.
+    async fn sync_consent(&self) -> bool {
+        true
+    }
+
+    /// Shows the platform's consent prompt for sync, returning whether it was
+    /// granted. Firefox only shows it during a click: call it from a click
+    /// handler's task with nothing awaited before it.
+    async fn request_sync_consent(&self) -> bool {
+        true
+    }
+
     /// Whether this platform has a page-lookup on/off switch. Only the
     /// extension (which injects a content script) does; web/android have no
     /// page to enable lookups on, so the toggle UI is hidden there.
@@ -294,6 +308,76 @@ struct VerifyBody<'a> {
 #[derive(Deserialize)]
 struct VerifyResponse {
     token: String,
+}
+
+/// Step 1 of account deletion: the server emails a one-time code to the
+/// account's address. `Ok(Some(code))` from a dev-mode server, which emails
+/// nothing and returns the code instead.
+///
+/// Plain HTTP on every platform, the extension included: its pages can reach
+/// any host, and nothing here needs the background's sync state — clearing
+/// the token afterwards is what stops syncing, wherever sync runs.
+pub async fn request_account_deletion(
+    server_url: &str,
+    token: &str,
+) -> Result<Option<String>, String> {
+    #[derive(Deserialize)]
+    struct DevCode {
+        dev_code: String,
+    }
+    let res = rt::post_json(
+        &join_url(server_url, "/api/account/delete/request"),
+        &serde_json::json!({}),
+        Some(token),
+    )
+    .await?;
+    match res.status {
+        204 => Ok(None),
+        200 => Ok(Some(res.json::<DevCode>()?.dev_code)),
+        401 => Err("your session has expired. Sign in again first.".into()),
+        429 => Err(
+            "a code was sent less than a minute ago. Check your email, or wait and retry.".into(),
+        ),
+        s => Err(format!("server {s}")),
+    }
+}
+
+/// Step 2: erases the account and all its data on the server, given the
+/// emailed code.
+pub async fn delete_account(server_url: &str, token: &str, code: &str) -> Result<(), String> {
+    let res = rt::post_json(
+        &join_url(server_url, "/api/account/delete"),
+        &serde_json::json!({ "code": code }),
+        Some(token),
+    )
+    .await?;
+    match res.status {
+        204 | 200 => Ok(()),
+        401 => Err("your session has expired. Sign in again first.".into()),
+        403 => Err("wrong or expired code.".into()),
+        s => Err(format!("server {s}")),
+    }
+}
+
+/// Who runs a sync server and how to reach them, as set by its operator at
+/// deploy time. Either may be missing.
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+pub struct PrivacyInfo {
+    pub controller: Option<String>,
+    pub contact: Option<String>,
+}
+
+pub async fn privacy_info(server_url: &str) -> Result<PrivacyInfo, String> {
+    let res = rt::post_json(
+        &join_url(server_url, "/api/privacy"),
+        &serde_json::json!({}),
+        None,
+    )
+    .await?;
+    if !res.ok() {
+        return Err(format!("server {}", res.status));
+    }
+    res.json()
 }
 
 fn join_url(base: &str, path: &str) -> String {

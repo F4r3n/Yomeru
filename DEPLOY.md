@@ -149,6 +149,10 @@ Environment=YOMERU_DATA_DIR=/srv/yomeru/dicts
 Environment=YOMERU_SMTP_HOST=smtp.example.com
 Environment=YOMERU_SMTP_PORT=587
 Environment=YOMERU_SMTP_FROM=noreply@example.com
+# Shown on the privacy page (/privacy). Required by the GDPR once other
+# people sync to your server: who runs it, and where to send data requests.
+Environment="YOMERU_PRIVACY_CONTROLLER=Your Name"
+Environment=YOMERU_PRIVACY_CONTACT=privacy@example.com
 # Rate limiting keys on the client IP. Behind nginx the peer address is
 # always loopback, so the server reads X-Real-IP / X-Forwarded-For — but
 # only from a trusted peer. See "Client IP & rate limiting" below.

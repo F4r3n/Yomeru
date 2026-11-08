@@ -25,6 +25,13 @@ pub struct Config {
     /// Dev mode: skip SMTP (print OTP to stdout) and skip Bearer-token
     /// check on /api/sync. Toggle with `YOMERU_DEV_MODE=1` or `--dev-mode`.
     pub dev_mode: bool,
+    /// Who runs this server, as shown on the privacy page (the GDPR "data
+    /// controller"): a name, or a name and postal address. Unset → the page
+    /// says the operator hasn't filled it in. `YOMERU_PRIVACY_CONTROLLER`.
+    pub privacy_controller: Option<String>,
+    /// Where users send data requests (access, deletion…), shown on the
+    /// privacy page. `YOMERU_PRIVACY_CONTACT`.
+    pub privacy_contact: Option<String>,
 }
 
 impl Config {
@@ -112,6 +119,8 @@ impl Config {
             smtp_user: resolve(&args, "--smtp-user", "YOMERU_SMTP_USER"),
             smtp_pass: resolve(&args, "--smtp-pass", "YOMERU_SMTP_PASS"),
             dev_mode,
+            privacy_controller: resolve(&args, "--privacy-controller", "YOMERU_PRIVACY_CONTROLLER"),
+            privacy_contact: resolve(&args, "--privacy-contact", "YOMERU_PRIVACY_CONTACT"),
         })
     }
 }

@@ -92,6 +92,8 @@ impl Harness {
             smtp_pass: None,
             // Off, so the Bearer check is genuinely exercised.
             dev_mode: false,
+            privacy_controller: None,
+            privacy_contact: None,
         };
 
         let state = AppState {
@@ -545,6 +547,175 @@ async fn sync_without_a_token_is_rejected_and_writes_nothing() {
     assert!(h.tombstone_ids().await.is_empty());
 }
 
+/// Rows any table still holds for `email` / its user id — every table the
+/// account lives in.
+async fn rows_for(db: &db::Db, email: &str, user_id: Option<i64>) -> i64 {
+    let mut n = 0;
+    for table in ["cards", "settings", "deletions", "otps", "users"] {
+        let q = format!("SELECT COUNT(*) FROM {table} WHERE email = ?1");
+        let (c,): (i64,) = sqlx::query_as(&q).bind(email).fetch_one(db).await.unwrap();
+        n += c;
+    }
+    if let Some(id) = user_id {
+        for table in ["reviews", "sessions"] {
+            let q = format!("SELECT COUNT(*) FROM {table} WHERE user_id = ?1");
+            let (c,): (i64,) = sqlx::query_as(&q).bind(id).fetch_one(db).await.unwrap();
+            n += c;
+        }
+    }
+    n
+}
+
+async fn user_id(db: &db::Db, email: &str) -> Option<i64> {
+    sqlx::query_as::<_, (i64,)>("SELECT id FROM users WHERE email = ?1")
+        .bind(email)
+        .fetch_optional(db)
+        .await
+        .unwrap()
+        .map(|(id,)| id)
+}
+
+#[tokio::test]
+async fn deleting_the_account_erases_every_trace_and_only_that_account() {
+    const BOB: &str = "bob@example.com";
+    let h = Harness::new().await;
+    // Alice: a card, a tombstone, a review, settings, a second session.
+    let body = json!({
+        "cards": [card(X, T0, T0)],
+        "deletions": [{ "id": "1358280::recall", "deleted_at": T0 }],
+        "reviews": [{ "card_id": X, "rating": 3, "kind": "review", "reviewed_ms": T0 }],
+        "settings": {
+            "graduation_interval_days": 30, "interval_scale": 1.0,
+            "max_session_cards": 20, "request_retention": 0.9, "updated_ms": T0,
+        },
+    });
+    let (status, resp) = h.post("/api/sync", Some(&h.token), &body).await;
+    assert_eq!(status, StatusCode::OK, "{resp}");
+    db::create_session(&h.db, "alice-phone", EMAIL, i64::MAX)
+        .await
+        .unwrap();
+    // Bob must come through untouched.
+    db::create_session(&h.db, "bob-token", BOB, i64::MAX)
+        .await
+        .unwrap();
+    let (status, _) = h
+        .post(
+            "/api/sync",
+            Some("bob-token"),
+            &json!({ "cards": [card(X, T0, T0)] }),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK);
+
+    let alice = user_id(&h.db, EMAIL).await;
+    assert!(rows_for(&h.db, EMAIL, alice).await > 0);
+    let bob = user_id(&h.db, BOB).await;
+    let bob_rows = rows_for(&h.db, BOB, bob).await;
+
+    // Stands in for the emailed code: /api/account/delete/request would need
+    // SMTP outside dev mode.
+    db::store_otp(&h.db, EMAIL, "424242", wall_ms())
+        .await
+        .unwrap();
+    let (status, _) = h
+        .post(
+            "/api/account/delete",
+            Some(&h.token),
+            &json!({ "code": "424242" }),
+        )
+        .await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+
+    assert_eq!(
+        rows_for(&h.db, EMAIL, alice).await,
+        0,
+        "something of Alice's survived"
+    );
+    assert_eq!(
+        rows_for(&h.db, BOB, bob).await,
+        bob_rows,
+        "Bob's data was touched"
+    );
+    // Every session of hers is gone, not just the one that asked.
+    for token in [h.token.as_str(), "alice-phone"] {
+        let (status, _) = h
+            .post("/api/sync", Some(token), &json!({ "cards": [] }))
+            .await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+}
+
+fn wall_ms() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as i64
+}
+
+#[tokio::test]
+async fn deleting_an_account_needs_a_live_session() {
+    let h = Harness::new().await;
+    db::store_otp(&h.db, EMAIL, "424242", wall_ms())
+        .await
+        .unwrap();
+    let body = json!({ "code": "424242" });
+    for token in [None, Some("nope")] {
+        let (status, _) = h.post("/api/account/delete", token, &body).await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+        let (status, _) = h
+            .post("/api/account/delete/request", token, &json!({}))
+            .await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED);
+    }
+    assert!(user_id(&h.db, EMAIL).await.is_some());
+}
+
+#[tokio::test]
+async fn deleting_an_account_needs_the_emailed_code() {
+    let h = Harness::new().await;
+    let mut a = Device::new(&[card(X, T0, T0)]);
+    a.sync(&h).await;
+
+    // A live session alone is not enough: no code was ever sent.
+    let (status, _) = h
+        .post(
+            "/api/account/delete",
+            Some(&h.token),
+            &json!({ "code": "000000" }),
+        )
+        .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+
+    // Nor is a wrong guess at a code that was sent.
+    db::store_otp(&h.db, EMAIL, "424242", wall_ms())
+        .await
+        .unwrap();
+    let (status, _) = h
+        .post(
+            "/api/account/delete",
+            Some(&h.token),
+            &json!({ "code": "111111" }),
+        )
+        .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+    assert_eq!(
+        h.stored_ids().await,
+        vec![X.to_string()],
+        "deleted without the code"
+    );
+
+    // The real one still works after the miss.
+    let (status, _) = h
+        .post(
+            "/api/account/delete",
+            Some(&h.token),
+            &json!({ "code": "424242" }),
+        )
+        .await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    assert!(h.stored_ids().await.is_empty());
+}
+
 #[tokio::test]
 async fn sync_with_an_expired_session_is_rejected() {
     let h = Harness::new().await;
@@ -727,7 +898,11 @@ mod wire {
             keys(&expected["cursor"]),
             "cursor shape drifted"
         );
-        assert_eq!(body["full"], json!(true), "a body without `since` gets a full sync");
+        assert_eq!(
+            body["full"],
+            json!(true),
+            "a body without `since` gets a full sync"
+        );
     }
 
     #[tokio::test]
@@ -769,10 +944,18 @@ mod wire {
             let h = Harness::new().await;
             let (status, body) = h.post("/api/sync", Some(&h.token), &fixture(name)).await;
             assert_eq!(status, StatusCode::OK, "server rejected {name}: {body}");
-            assert_eq!(body["full"], json!(true), "{name}: foreign epoch must go full");
+            assert_eq!(
+                body["full"],
+                json!(true),
+                "{name}: foreign epoch must go full"
+            );
             let resp: SyncResp = serde_json::from_value(body).unwrap();
             assert_eq!(resp.cards.len(), 1, "{name}");
-            assert_eq!(resp.drill_counts.get("1467640::recognition"), Some(&1), "{name}");
+            assert_eq!(
+                resp.drill_counts.get("1467640::recognition"),
+                Some(&1),
+                "{name}"
+            );
         }
     }
 }
@@ -852,7 +1035,11 @@ mod delta {
 
         async fn sync_once(&mut self, h: &Harness, reviews: Value) -> Answer {
             let mut upload: Vec<&db::Card> = match self.cursor {
-                Some(_) => self.dirty.iter().filter_map(|id| self.cards.get(id)).collect(),
+                Some(_) => self
+                    .dirty
+                    .iter()
+                    .filter_map(|id| self.cards.get(id))
+                    .collect(),
                 None => self.cards.values().collect(),
             };
             upload.sort_by(|a, b| a.id.cmp(&b.id));
@@ -921,10 +1108,18 @@ mod delta {
             c.updated_ms = T0 + SECOND;
         });
         let own = a.sync(&h).await;
-        assert_eq!(own.cards, vec![X.to_string()], "only the edited card is echoed");
+        assert_eq!(
+            own.cards,
+            vec![X.to_string()],
+            "only the edited card is echoed"
+        );
 
         let pulled = b.sync(&h).await;
-        assert_eq!(pulled.cards, vec![X.to_string()], "only the edited card is pulled");
+        assert_eq!(
+            pulled.cards,
+            vec![X.to_string()],
+            "only the edited card is pulled"
+        );
         assert_eq!(b.get(X).reps, 1);
         assert_eq!(b.get(Y).reps, 0, "untouched card kept");
     }
@@ -970,7 +1165,11 @@ mod delta {
         });
         let answer = a.sync(&h).await;
         assert!(!answer.full);
-        assert_eq!(answer.cards, vec![X.to_string()], "losing upload must be answered");
+        assert_eq!(
+            answer.cards,
+            vec![X.to_string()],
+            "losing upload must be answered"
+        );
         assert_eq!(a.get(X).reps, 7, "A must converge on the server's copy");
         b.sync(&h).await;
         assert_eq!(b.get(X).reps, 7);
@@ -1031,8 +1230,16 @@ mod delta {
 
         let answer = a.sync_with(&h, json!([drill(X, T0 + SECOND)])).await;
         assert!(!answer.full);
-        assert_eq!(answer.drill_counts.get(X), Some(&2), "a full total, not the increment");
-        assert_eq!(answer.drill_counts.get(Y), None, "unchanged counts are left out");
+        assert_eq!(
+            answer.drill_counts.get(X),
+            Some(&2),
+            "a full total, not the increment"
+        );
+        assert_eq!(
+            answer.drill_counts.get(Y),
+            None,
+            "unchanged counts are left out"
+        );
 
         // A retried upload: the row is already stored under an old revision.
         let answer = a.sync_with(&h, json!([drill(X, T0 + SECOND)])).await;
@@ -1047,14 +1254,23 @@ mod delta {
         let epoch = a.cursor.as_ref().unwrap()["epoch"].clone();
 
         for (why, cursor) in [
-            ("foreign epoch", json!({ "epoch": "not-this-db.1", "rev": 1 })),
-            ("cursor ahead of the server", json!({ "epoch": epoch, "rev": 1_000 })),
+            (
+                "foreign epoch",
+                json!({ "epoch": "not-this-db.1", "rev": 1 }),
+            ),
+            (
+                "cursor ahead of the server",
+                json!({ "epoch": epoch, "rev": 1_000 }),
+            ),
         ] {
             a.cursor = Some(cursor);
             let answer = a.sync_once(&h, json!([])).await;
             assert!(answer.full, "{why}");
             assert_eq!(answer.cards, vec![X.to_string()], "{why}");
-            assert!(a.cursor.is_none(), "{why}: a refused cursor must not be replaced");
+            assert!(
+                a.cursor.is_none(),
+                "{why}: a refused cursor must not be replaced"
+            );
         }
     }
 
@@ -1074,7 +1290,10 @@ mod delta {
         let answer = b.sync_once(&h, json!([])).await;
         assert!(answer.full, "B's cursor predates a pruned tombstone");
         assert_eq!(answer.cards, vec![X.to_string()]);
-        assert!(answer.deletions.is_empty(), "the pruned delete is gone for good");
+        assert!(
+            answer.deletions.is_empty(),
+            "the pruned delete is gone for good"
+        );
 
         assert!(!a.sync(&h).await.full, "A's cursor is past the prune");
     }
@@ -1091,7 +1310,10 @@ mod delta {
         a.sync(&h).await;
         assert!(a.cursor.is_some());
 
-        sqlx::query("DELETE FROM cards").execute(&h.db).await.unwrap();
+        sqlx::query("DELETE FROM cards")
+            .execute(&h.db)
+            .await
+            .unwrap();
         sqlx::query("UPDATE sync_meta SET epoch = 'rotated'")
             .execute(&h.db)
             .await
@@ -1100,7 +1322,10 @@ mod delta {
         let answer = a.sync(&h).await;
         assert!(answer.full);
         assert_eq!(h.stored_ids().await, vec![Y.to_string(), X.to_string()]);
-        assert!(a.has(X) && a.has(Y), "the empty full answer must not wipe the device");
+        assert!(
+            a.has(X) && a.has(Y),
+            "the empty full answer must not wipe the device"
+        );
         assert!(!a.sync(&h).await.full, "back on deltas afterwards");
     }
 

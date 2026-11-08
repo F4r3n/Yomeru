@@ -320,6 +320,14 @@ button, a, input, select, textarea { touch-action: manipulation; }
 }
 
 
+/* ── Privacy policy ───────────────────────────────────────────────── */
+.privacy h4 { font-size: 15px; margin: 22px 0 6px; color: var(--text); }
+.privacy p, .privacy li { font-size: 14px; line-height: 1.6; }
+.privacy p { margin: 0 0 8px; }
+.privacy ul { margin: 0 0 8px; padding-left: 20px; }
+.privacy li { margin-bottom: 4px; }
+.privacy code { font-size: 13px; overflow-wrap: anywhere; }
+
 /* ── Safe areas (notches, gesture bars) ───────────────────────────── */
 @supports (padding: max(0px)) {
     .topbar  { padding-left:  max(20px, env(safe-area-inset-left));

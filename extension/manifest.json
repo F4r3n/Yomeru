@@ -12,7 +12,10 @@
         "required": [
           "none"
         ],
-        "optional": []
+        "optional": [
+          "personallyIdentifyingInfo",
+          "authenticationInfo"
+        ]
       }
     }
   },

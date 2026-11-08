@@ -1,5 +1,7 @@
 use dioxus::prelude::*;
 
+use crate::app::Route;
+
 #[component]
 pub fn AboutTab() -> Element {
     let version = env!("CARGO_PKG_VERSION");
@@ -65,6 +67,15 @@ pub fn AboutTab() -> Element {
                     a { href: "https://github.com/open-spaced-repetition/rs-fsrs", target: "_blank",
                         class: "link", "rs-fsrs ↗" }
                     ". Tune the parameters from the Settings tab."
+                }
+            }
+
+            div { class: "card",
+                div { class: "section-title", "Privacy" }
+                p { class: "muted", style: "font-size: 13px;",
+                    "No ads, no analytics, no tracking. What a sync server stores, and how to delete it: "
+                    Link { to: Route::Privacy {}, class: "link", "privacy policy" }
+                    "."
                 }
             }
         }

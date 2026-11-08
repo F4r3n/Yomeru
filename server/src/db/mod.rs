@@ -24,7 +24,8 @@ mod sync_meta;
 pub(crate) mod test_support;
 
 pub use auth::{
-    SessionUser, create_session, prune_expired_auth, store_otp, validate_session, verify_otp,
+    SessionUser, create_session, delete_account, prune_expired_auth, store_otp, validate_session,
+    verify_otp,
 };
 pub use cards::{Card, get_all_cards, get_cards_since, upsert_cards_tx};
 pub use deletions::{

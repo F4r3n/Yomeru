@@ -162,7 +162,37 @@ impl SettingsStore for ExtensionSettings {
         ))
     }
 
+    async fn sync_consent(&self) -> bool {
+        #[derive(Deserialize)]
+        struct Granted {
+            granted: bool,
+        }
+        // Asked of the background, whose answer also covers `cargo xtask dev`.
+        crate::send_bg_message::<_, Granted>("GET_SYNC_CONSENT", ())
+            .await
+            .map(|r| r.granted)
+            .unwrap_or(false)
+    }
+
+    async fn request_sync_consent(&self) -> bool {
+        // Called on the first poll, still inside the click (see bridge.rs).
+        JsFuture::from(bridge::request_sync_consent())
+            .await
+            .ok()
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
+    }
+
     async fn request_otp(&self, server_url: &str, email: &str) -> Result<Option<String>, String> {
+        // Firefox data consent first: signing in sends the email to the
+        // server. Nothing may be awaited before this, or the prompt is refused.
+        // Already granted → resolves at once, no prompt.
+        if !self.request_sync_consent().await {
+            return Err(
+                "Sync needs your permission to send your email and sign-in data to the server."
+                    .into(),
+            );
+        }
         #[derive(Serialize)]
         struct Payload<'a> {
             #[serde(rename = "serverUrl")]

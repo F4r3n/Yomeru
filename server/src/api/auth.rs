@@ -125,6 +125,22 @@ pub async fn auth_verify_handler(
 }
 
 async fn send_otp_email(cfg: &Config, to: &str, code: &str) -> anyhow::Result<()> {
+    send_code_email(
+        cfg,
+        to,
+        "Yomeru sync code",
+        format!("Your Yomeru verification code: {code}\n\nValid for 10 minutes."),
+    )
+    .await
+}
+
+/// Sends a one-time code (sign-in or account deletion) over SMTP.
+pub(super) async fn send_code_email(
+    cfg: &Config,
+    to: &str,
+    subject: &str,
+    text: String,
+) -> anyhow::Result<()> {
     use lettre::{
         AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
         transport::smtp::authentication::Credentials,
@@ -136,10 +152,8 @@ async fn send_otp_email(cfg: &Config, to: &str, code: &str) -> anyhow::Result<()
     let email = Message::builder()
         .from(from_mailbox)
         .to(to_mailbox)
-        .subject("Yomeru sync code")
-        .body(format!(
-            "Your Yomeru verification code: {code}\n\nValid for 10 minutes."
-        ))?;
+        .subject(subject)
+        .body(text)?;
 
     // Port 465 = SMTPS (implicit TLS); 587 (and others) use STARTTLS.
     let mut builder = if cfg.smtp_port == 465 {
@@ -217,6 +231,8 @@ mod tests {
             smtp_user: get("YOMERU_SMTP_USER"),
             smtp_pass: get("YOMERU_SMTP_PASS"),
             dev_mode: false,
+            privacy_controller: None,
+            privacy_contact: None,
         };
 
         let to = get("SMTP_TEST_TO").expect("SMTP_TEST_TO missing in server/.env");

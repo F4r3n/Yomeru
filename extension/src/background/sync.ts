@@ -37,6 +37,7 @@ import {
   type SettingsPayload,
 } from "./settings";
 import { syncCardsBackup, writeCardsBackup } from "./cards-backup";
+import { hasSyncConsent, NO_CONSENT_ERROR } from "./consent";
 import type { SrsCard } from "../shared/types.ts";
 
 export async function bumpDbVersion(): Promise<void> {
@@ -77,8 +78,8 @@ function scheduleSync(): void {
   // We snapshot the token check via fire-and-forget; if the user
   // configures a server after this returns, the next mutation will
   // schedule properly.
-  void getSettings().then((s) => {
-    if (!s.serverUrl || !s.serverToken) return;
+  void Promise.all([getSettings(), hasSyncConsent()]).then(([s, consent]) => {
+    if (!s.serverUrl || !s.serverToken || !consent) return;
     if (syncInFlight) {
       syncRetry = true;
       return;
@@ -128,6 +129,7 @@ async function doSync(): Promise<{ synced: number; sent: number } | { error: str
   if (!settings.serverUrl || !settings.serverToken) {
     return { error: "not authenticated" };
   }
+  if (!(await hasSyncConsent())) return { error: NO_CONSENT_ERROR };
   try {
     // Captured before the reads, not after: a card written between the read and
     // the timestamp would be missing from the payload yet still look like the
@@ -251,6 +253,7 @@ export async function handleRequestOtp({
   serverUrl: string;
   email: string;
 }) {
+  if (!(await hasSyncConsent())) return { error: NO_CONSENT_ERROR };
   try {
     const res = await fetch(`${serverUrl}/api/auth/request`, {
       method: "POST",
@@ -282,6 +285,7 @@ export async function handleVerifyOtp({
   email: string;
   code: string;
 }) {
+  if (!(await hasSyncConsent())) return { error: NO_CONSENT_ERROR };
   try {
     const res = await fetch(`${serverUrl}/api/auth/verify`, {
       method: "POST",

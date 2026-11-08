@@ -10,6 +10,8 @@ use dioxus::prelude::consume_context;
 
 use crate::platform::Platform;
 
+pub use crate::platform::{PrivacyInfo, delete_account, privacy_info, request_account_deletion};
+
 /// In dev mode the server auto-issues a session and returns the token
 /// directly in the response body — callers should treat `Ok(Some(token))`
 /// as "already authenticated, skip the OTP step".
@@ -17,6 +19,20 @@ pub async fn request_otp(server_url: &str, email: &str) -> Result<Option<String>
     consume_context::<Platform>()
         .settings
         .request_otp(server_url, email)
+        .await
+}
+
+/// See [`crate::platform::SettingsStore::sync_consent`].
+pub async fn sync_consent() -> bool {
+    consume_context::<Platform>().settings.sync_consent().await
+}
+
+/// See [`crate::platform::SettingsStore::request_sync_consent`]: only from a
+/// click, with nothing awaited before it.
+pub async fn request_sync_consent() -> bool {
+    consume_context::<Platform>()
+        .settings
+        .request_sync_consent()
         .await
 }
 

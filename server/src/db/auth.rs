@@ -187,6 +187,40 @@ pub async fn validate_session(
     Ok(row.map(|(id, email)| SessionUser { id, email }))
 }
 
+/// Erases an account and everything stored for it, in one transaction:
+/// cards, review history, settings, tombstones, sessions, any pending code
+/// and the `users` row itself. Signing in again with the same address starts
+/// a brand-new, empty account.
+pub async fn delete_account(db: &Db, user_id: i64, email: &str) -> anyhow::Result<()> {
+    let mut tx = db.begin().await.context("begin delete_account tx")?;
+    for (table, sql) in [
+        ("cards", "DELETE FROM cards WHERE email = ?1"),
+        ("settings", "DELETE FROM settings WHERE email = ?1"),
+        ("deletions", "DELETE FROM deletions WHERE email = ?1"),
+        ("otps", "DELETE FROM otps WHERE email = ?1"),
+    ] {
+        sqlx::query(sql)
+            .bind(email)
+            .execute(&mut *tx)
+            .await
+            .with_context(|| format!("delete account {table}"))?;
+    }
+    // `users` last: `reviews` and `sessions` reference it.
+    for (table, sql) in [
+        ("reviews", "DELETE FROM reviews WHERE user_id = ?1"),
+        ("sessions", "DELETE FROM sessions WHERE user_id = ?1"),
+        ("users", "DELETE FROM users WHERE id = ?1"),
+    ] {
+        sqlx::query(sql)
+            .bind(user_id)
+            .execute(&mut *tx)
+            .await
+            .with_context(|| format!("delete account {table}"))?;
+    }
+    tx.commit().await.context("commit delete_account tx")?;
+    Ok(())
+}
+
 /// Deletes expired sessions and OTPs. Both tables are append-mostly — nothing
 /// removed them before, so they grew without bound for the life of the server.
 pub async fn prune_expired_auth(db: &Db, now_ms: i64) -> anyhow::Result<()> {

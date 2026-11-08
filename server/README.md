@@ -4,6 +4,10 @@ Small Axum + SQLite service that backs the Yomeru extension and website:
 
 - Email + OTP login (`/api/auth/request`, `/api/auth/verify`)
 - Card sync (`/api/sync`) — merges incoming cards into a SQLite store, returning the merged set
+- Account deletion (`/api/account/delete`, Bearer token) — erases the account and all its
+  server-side data, every device's session included
+- Privacy details (`/api/privacy`) — the operator's `YOMERU_PRIVACY_*` settings, shown on
+  the apps' privacy page
 - Dict lookup (`/api/lookup`, `/api/lookup-prefix`, `/api/kanji`, `/api/examples`) — reads
   JMdict / KANJIDIC / Tatoeba blobs into memory at startup; no auth required
 
@@ -27,6 +31,8 @@ cp .env.example .env
 | `YOMERU_SMTP_FROM` | —                  | **Required.** Address OTP emails are sent from.          |
 | `YOMERU_SMTP_USER` | —                  | Optional. Blank → unauthenticated relay.                 |
 | `YOMERU_SMTP_PASS` | —                  | Optional.                                                |
+| `YOMERU_PRIVACY_CONTROLLER` | —         | Who runs the server, shown on the privacy page (GDPR data controller). |
+| `YOMERU_PRIVACY_CONTACT` | —            | Where users send data requests; an email becomes a mailto link. |
 
 Each setting also accepts an equivalent CLI flag (`--port`, `--db`, `--smtp-host`, …), which takes priority over the env var when both are set.
 

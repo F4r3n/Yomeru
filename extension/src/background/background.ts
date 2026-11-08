@@ -7,6 +7,7 @@
  * is the wiring.
  */
 
+import { hasSyncConsent } from "./consent";
 import { applyDevConfig } from "./dev-config";
 import { warmUp } from "./engines";
 import { bumpDbVersion, storageReady, handleRequestOtp, handleSyncCards, handleVerifyOtp } from "./sync";
@@ -113,6 +114,8 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
       return handleVerifyOtp(
         msg.payload as { serverUrl: string; email: string; code: string },
       );
+    case "GET_SYNC_CONSENT":
+      return hasSyncConsent().then((granted) => ({ granted }));
     case "SYNC_CARDS":
       return handleSyncCards();
     default:

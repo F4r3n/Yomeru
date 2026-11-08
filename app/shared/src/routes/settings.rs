@@ -2,6 +2,7 @@ use dioxus::prelude::*;
 use serde_json::json;
 
 use crate::api;
+use crate::app::Route;
 use crate::cards_io::{format_import_result, import_cards_json, trigger_download};
 use crate::idb::get_all_cards;
 use crate::settings::{load, save};
@@ -29,6 +30,13 @@ pub fn SettingsTab() -> Element {
     let mut sync_status = use_signal(|| Option::<(String, bool)>::None);
     let mut backup_status = use_signal(|| Option::<(String, bool)>::None);
     let mut sync_busy = use_signal(|| false);
+    // Account deletion: a code has been emailed, and the code typed so far.
+    let mut delete_pending = use_signal(|| false);
+    let mut delete_code = use_signal(String::new);
+    let mut delete_busy = use_signal(|| false);
+    let mut delete_status = use_signal(|| Option::<(String, bool)>::None);
+    // Extension only: Firefox's data consent for sync. Elsewhere always true.
+    let mut consent = use_resource(|| async { api::sync_consent().await });
     let health = use_context::<SyncHealth>();
 
     let save_settings = move |_| {
@@ -121,6 +129,87 @@ pub fn SettingsTab() -> Element {
         });
     };
 
+    // Account deletion, step 1: confirm, then have a code emailed. The
+    // session alone can't delete — it might be a stolen token or someone
+    // else at an unlocked device — so step 2 needs that code.
+    let on_delete_account = move |_| {
+        let s = settings.read().clone();
+        spawn(async move {
+            let confirmed = crate::rt::confirm(
+                "Delete your account on this server?\n\nYour cards, review history and settings will be erased from the server, for every device. The cards on this device are kept.\n\nA confirmation code will be emailed to you first.",
+            )
+            .await;
+            if !confirmed {
+                return;
+            }
+            delete_busy.set(true);
+            match api::request_account_deletion(s.server_url.trim(), &s.server_token).await {
+                Ok(dev_code) => {
+                    delete_code.set(dev_code.clone().unwrap_or_default());
+                    delete_pending.set(true);
+                    let msg = if dev_code.is_some() {
+                        "Dev server: code filled in, no email sent.".to_string()
+                    } else {
+                        format!(
+                            "Code sent to {}. Enter it below to delete.",
+                            s.server_email.trim()
+                        )
+                    };
+                    delete_status.set(Some((msg, false)));
+                }
+                Err(e) => delete_status.set(Some((format!("Couldn't start deletion: {e}"), true))),
+            }
+            delete_busy.set(false);
+        });
+    };
+
+    // Step 2: the code erases the account.
+    let on_confirm_delete = move |_| {
+        let s = settings.read().clone();
+        let code = delete_code.read().trim().to_string();
+        spawn(async move {
+            delete_busy.set(true);
+            match api::delete_account(s.server_url.trim(), &s.server_token, &code).await {
+                Ok(()) => {
+                    // Signed out: without a token nothing syncs, here or in
+                    // the extension's background. The email stays filled in.
+                    let mut next = s.clone();
+                    next.server_token.clear();
+                    let _ = save(&next);
+                    forget_sync_cursor().await;
+                    clear_sync_health();
+                    settings.set(next);
+                    delete_pending.set(false);
+                    delete_code.set(String::new());
+                    delete_status.set(Some((
+                        "Account deleted. This device keeps its cards and no longer syncs.".into(),
+                        false,
+                    )));
+                }
+                Err(e) => delete_status.set(Some((format!("Delete failed: {e}"), true))),
+            }
+            delete_busy.set(false);
+        });
+    };
+
+    // Re-grants sync's data consent (extension). The prompt call must be the
+    // first thing the task does, while Firefox still sees the click.
+    let on_allow_sync = move |_| {
+        spawn(async move {
+            if !api::request_sync_consent().await {
+                return;
+            }
+            consent.restart();
+            match sync_now().await {
+                Ok(msg) => {
+                    bump_sync_generation();
+                    sync_status.set(Some((msg, false)));
+                }
+                Err(e) => sync_status.set(Some((e, true))),
+            }
+        });
+    };
+
     let export_json = move |_| {
         spawn(async move {
             let cards = get_all_cards().await.unwrap_or_default();
@@ -168,6 +257,7 @@ pub fn SettingsTab() -> Element {
 
     let cur = settings.read().clone();
     let has_token = !cur.server_token.is_empty();
+    let consent_missing = has_token && matches!(*consent.read(), Some(false));
     let saved_flag = *saved.read();
     let retention_pct = (cur.request_retention * 100.0).round() as i64;
 
@@ -187,7 +277,8 @@ pub fn SettingsTab() -> Element {
                     }
                 }
                 p { class: "muted", style: "font-size: 13px; margin-bottom: 14px;",
-                    "Enter the server URL and email. A one-time code is emailed for auth."
+                    "Enter the server URL and email. A one-time code is emailed for auth. "
+                    Link { to: Route::Privacy {}, class: "link", "Privacy policy" }
                 }
 
                 div { class: "form-row",
@@ -256,6 +347,15 @@ pub fn SettingsTab() -> Element {
                 if let Some((msg, err)) = sync_status.read().clone() {
                     div { style: "margin-top: 10px;",
                         span { class: if err { "error" } else { "ok" }, "{msg}" }
+                    }
+                }
+                if consent_missing {
+                    hr { class: "divider" }
+                    div { class: "row", style: "gap: 12px; align-items: center; flex-wrap: wrap;",
+                        span { class: "error",
+                            "Sync is paused: Yomeru needs your permission to send your email and sign-in data to the server."
+                        }
+                        button { class: "primary", onclick: on_allow_sync, "Allow" }
                     }
                 }
             }
@@ -333,7 +433,57 @@ pub fn SettingsTab() -> Element {
                 }
             }
 
-
+            // Account: last, away from everyday settings.
+            if has_token || delete_status.read().is_some() {
+                div { class: "card",
+                    div { class: "section-title", "Account" }
+                    h3 { style: "margin-bottom: 4px;", "Delete account" }
+                    p { class: "muted", style: "font-size: 13px; margin-bottom: 14px;",
+                        "Erases your cards, review history and settings from the sync server, for every device, after a code sent by email. The cards on this device are kept."
+                    }
+                    if has_token {
+                        if *delete_pending.read() {
+                            div { class: "form-row",
+                                label { "Deletion code" }
+                                div { class: "row", style: "gap: 8px; flex-wrap: wrap;",
+                                    input {
+                                        r#type: "text", inputmode: "numeric", maxlength: "6",
+                                        placeholder: "000000",
+                                        value: "{delete_code}",
+                                        oninput: move |e| delete_code.set(e.value()),
+                                        style: "max-width: 160px; letter-spacing: 0.3em; text-align: center;",
+                                    }
+                                    button { class: "danger",
+                                        onclick: on_confirm_delete,
+                                        disabled: *delete_busy.read() || delete_code.read().trim().len() != 6,
+                                        if *delete_busy.read() { "Deleting…" } else { "Delete permanently" }
+                                    }
+                                    button { class: "outline",
+                                        onclick: move |_| {
+                                            delete_pending.set(false);
+                                            delete_code.set(String::new());
+                                            delete_status.set(None);
+                                        },
+                                        "Cancel"
+                                    }
+                                }
+                                span { class: "hint", "This can't be undone." }
+                            }
+                        } else {
+                            button { class: "danger",
+                                onclick: on_delete_account,
+                                disabled: *delete_busy.read(),
+                                "Delete account"
+                            }
+                        }
+                    }
+                    if let Some((msg, err)) = delete_status.read().clone() {
+                        div { style: "margin-top: 10px;",
+                            span { class: if err { "error" } else { "ok" }, "{msg}" }
+                        }
+                    }
+                }
+            }
         }
     }
 }

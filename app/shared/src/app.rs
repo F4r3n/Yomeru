@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 
 use crate::icons::{Icon, IconName};
 use crate::platform::Platform;
-use crate::routes::{about, lookup, new_words, review, settings, stats, word_list};
+use crate::routes::{about, lookup, new_words, privacy, review, settings, stats, word_list};
 use crate::sync::{SyncGen, SyncHealth};
 use crate::theme::global_css;
 
@@ -76,6 +76,8 @@ pub enum Route {
         Settings {},
         #[route("/about")]
         About {},
+        #[route("/privacy")]
+        Privacy {},
 }
 
 #[component]
@@ -402,4 +404,8 @@ fn Settings() -> Element {
 #[component]
 fn About() -> Element {
     rsx! { about::AboutTab {} }
+}
+#[component]
+fn Privacy() -> Element {
+    rsx! { privacy::PrivacyPage {} }
 }
