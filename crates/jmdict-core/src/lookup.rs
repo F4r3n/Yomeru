@@ -80,6 +80,12 @@ fn lookup_longest_match_with(
         // The deinflector lists the surface itself first. A form can come up
         // again from a shorter prefix; looking it up twice costs less than
         // remembering every miss in a set.
+        // With no rule for its ending, the surface is the only form; past
+        // the walk's reach it can't be a word either. Most long prefixes
+        // end here, before paying for a deinflection.
+        if !walk.reaches(end_byte) && !deinflect::can_deinflect(surface) {
+            continue;
+        }
         for form in deinflector.run(surface) {
             if let Some(entries) = walk.get(window, form).and_then(entries_of) {
                 return Some((entries, char_count));

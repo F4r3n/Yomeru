@@ -72,6 +72,11 @@ impl FstWalk {
         }
     }
 
+    /// Whether some key starts with the walked text's first `len` bytes.
+    pub(crate) fn reaches(&self, len: usize) -> bool {
+        len < self.states.len()
+    }
+
     /// `fst_get(key)`, for a `key` tried against the walked `text`.
     pub(crate) fn get(&self, text: &str, key: &str) -> Option<u64> {
         let dict = DICT.get()?;

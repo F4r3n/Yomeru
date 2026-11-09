@@ -64,6 +64,22 @@ impl SuffixTrie {
             .map(|&(_, next)| next as usize)
     }
 
+    /// Whether any rule's suffix ends `word`: [`SuffixTrie::matches`] without
+    /// collecting.
+    pub(crate) fn any_match(&self, word: &str) -> bool {
+        let mut at = 0usize;
+        for c in word.chars().rev() {
+            let Some(next) = self.child(at, c) else {
+                return false;
+            };
+            at = next;
+            if self.nodes.get(at).is_some_and(|n| !n.rules.is_empty()) {
+                return true;
+            }
+        }
+        false
+    }
+
     /// The rules whose suffix `word` ends with, in rule-list order, into
     /// `out` (cleared first).
     pub(crate) fn matches(&self, word: &str, out: &mut Vec<u16>) {
@@ -122,6 +138,7 @@ mod tests {
                 .map(|(i, _)| i as u16)
                 .collect();
             assert_eq!(found, scanned, "rules for {w:?}");
+            assert_eq!(trie.any_match(w), !scanned.is_empty(), "any rule for {w:?}");
         }
     }
 }

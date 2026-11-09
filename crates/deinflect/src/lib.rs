@@ -23,6 +23,13 @@ pub fn deinflect(text: &str) -> Vec<Deinflected> {
         .collect()
 }
 
+/// Whether some rule applies to `text`. When none does, [`deinflect`] gives
+/// back only `text` itself: a caller that already knows `text` isn't a word
+/// can skip deinflecting it.
+pub fn can_deinflect(text: &str) -> bool {
+    suffix_trie::rules_trie().any_match(text)
+}
+
 /// Reusable deinflection buffers: [`Deinflector::run`] gives the same forms
 /// as [`deinflect`], in the same order, but keeps its memory between calls.
 ///
