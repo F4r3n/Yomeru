@@ -2,7 +2,6 @@ mod rules;
 mod suffix_trie;
 
 use rules::RULES;
-use std::collections::VecDeque;
 
 /// Result of deinflecting a word.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -14,58 +13,96 @@ pub struct Deinflected {
 /// Return every plausible dictionary form of `text` by repeatedly applying
 /// deinflection rules. The original form is always included first.
 /// Results are deduplicated and ordered from least to most transformed.
+///
+/// Allocates its result; a caller deinflecting many words in a row should
+/// keep a [`Deinflector`] instead.
 pub fn deinflect(text: &str) -> Vec<Deinflected> {
-    // (candidate, depth)
-    let mut queue: VecDeque<(String, u8)> = VecDeque::new();
-    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
-    let mut results: Vec<Deinflected> = Vec::new();
+    Deinflector::default()
+        .run(text)
+        .map(|t| Deinflected { text: t.to_owned() })
+        .collect()
+}
 
-    // The filter below compares the *input* length against each candidate's
-    // length — the original input never changes inside this function, so
-    // count it once instead of recounting per (rule × candidate).
-    let input_char_count = text.chars().count();
+/// Reusable deinflection buffers: [`Deinflector::run`] gives the same forms
+/// as [`deinflect`], in the same order, but keeps its memory between calls.
+///
+/// Every candidate is written into one shared string, and the list of their
+/// ranges is also the breadth-first queue: a candidate's own rules are tried
+/// when the walk through the list reaches it. A word has a few dozen
+/// candidates at most, so a duplicate is found by comparing against them
+/// rather than hashing.
+#[derive(Debug, Default)]
+pub struct Deinflector {
+    /// Every candidate, end to end.
+    buf: String,
+    /// (start, end, depth) of each candidate in `buf`, in the order found.
+    forms: Vec<(u32, u32, u8)>,
+    /// The rules matching the candidate being expanded.
+    matched: Vec<u16>,
+}
 
-    queue.push_back((text.to_owned(), 0));
-    let trie = suffix_trie::rules_trie();
-    let mut matched: Vec<u16> = Vec::new();
+/// Rules are applied at most this many times in a row.
+const MAX_DEPTH: u8 = 3;
 
-    while let Some((candidate, depth)) = queue.pop_front() {
-        if !seen.insert(candidate.clone()) {
-            continue;
-        }
+impl Deinflector {
+    /// The forms of `text`, itself first, then each new form in the order
+    /// found (least transformed first).
+    pub fn run(&mut self, text: &str) -> impl Iterator<Item = &str> + '_ {
+        self.buf.clear();
+        self.forms.clear();
+        // Don't produce single-kana candidates from multi-char input (avoids
+        // garbage like "い" matching half a word).
+        let min_chars = if text.chars().count() > 2 { 2 } else { 1 };
+        self.buf.push_str(text);
+        self.forms.push((0, text.len() as u32, 0));
 
-        results.push(Deinflected {
-            text: candidate.clone(),
-        });
-
-        if depth >= 3 {
-            continue;
-        }
-
-        // Only the rules whose suffix the candidate ends with.
-        trie.matches(&candidate, &mut matched);
-        for rule in matched.iter().filter_map(|&i| RULES.get(usize::from(i))) {
-            let Some(stem) = candidate.strip_suffix(rule.suffix_in) else {
-                continue;
-            };
-
-            // Don't produce single-kana candidates from multi-char input
-            // (avoids garbage like "" or "い" matching half a word).
-            let new_text = format!("{}{}", stem, rule.suffix_out);
-            let char_count = new_text.chars().count();
-            if char_count < 1 || (input_char_count > 2 && char_count < 2) {
+        let trie = suffix_trie::rules_trie();
+        let mut next = 0;
+        while let Some(&(start, end, depth)) = self.forms.get(next) {
+            next += 1;
+            if depth >= MAX_DEPTH {
                 continue;
             }
-
-            if seen.contains(&new_text) {
-                continue;
+            let candidate = slice(&self.buf, start, end);
+            trie.matches(candidate, &mut self.matched);
+            for &r in &self.matched {
+                let Some(rule) = RULES.get(usize::from(r)) else {
+                    continue;
+                };
+                let Some(stem_len) = slice(&self.buf, start, end)
+                    .strip_suffix(rule.suffix_in)
+                    .map(str::len)
+                else {
+                    continue;
+                };
+                // Write the new form at the end of the buffer, and take it
+                // back off if it's too short or already known.
+                let new_start = self.buf.len();
+                let stem_start = start as usize;
+                self.buf
+                    .extend_from_within(stem_start..stem_start + stem_len);
+                self.buf.push_str(rule.suffix_out);
+                let new_end = self.buf.len() as u32;
+                let new = slice(&self.buf, new_start as u32, new_end);
+                let known = self
+                    .forms
+                    .iter()
+                    .any(|&(s, e, _)| slice(&self.buf, s, e) == new);
+                if known || new.chars().count() < min_chars {
+                    self.buf.truncate(new_start);
+                    continue;
+                }
+                self.forms.push((new_start as u32, new_end, depth + 1));
             }
-
-            queue.push_back((new_text, depth + 1));
         }
+        self.forms.iter().map(|&(s, e, _)| slice(&self.buf, s, e))
     }
+}
 
-    results
+/// `buf[start..end]`, or "" for a range that isn't one (never, by
+/// construction).
+fn slice(buf: &str, start: u32, end: u32) -> &str {
+    buf.get(start as usize..end as usize).unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -197,5 +234,72 @@ mod tests {
     #[test]
     fn kuru_verb() {
         assert!(forms("来なかった").contains(&"来る".to_owned()));
+    }
+
+    /// The breadth-first search as it was before [`Deinflector`]: a queue of
+    /// owned strings, a hash set, and every rule tested. Kept to check the
+    /// faster one against.
+    fn reference(text: &str) -> Vec<String> {
+        use std::collections::{HashSet, VecDeque};
+        let mut queue: VecDeque<(String, u8)> = VecDeque::new();
+        let mut seen: HashSet<String> = HashSet::new();
+        let mut results = Vec::new();
+        let input_char_count = text.chars().count();
+        queue.push_back((text.to_owned(), 0));
+        while let Some((candidate, depth)) = queue.pop_front() {
+            if !seen.insert(candidate.clone()) {
+                continue;
+            }
+            results.push(candidate.clone());
+            if depth >= 3 {
+                continue;
+            }
+            for rule in RULES {
+                let Some(stem) = candidate.strip_suffix(rule.suffix_in) else {
+                    continue;
+                };
+                let new_text = format!("{}{}", stem, rule.suffix_out);
+                let n = new_text.chars().count();
+                if n < 1 || (input_char_count > 2 && n < 2) || seen.contains(&new_text) {
+                    continue;
+                }
+                queue.push_back((new_text, depth + 1));
+            }
+        }
+        results
+    }
+
+    #[test]
+    fn same_forms_in_the_same_order_as_the_reference() {
+        let mut words: Vec<String> = [
+            "食べさせられなかった",
+            "書いていなかった",
+            "飲んでいなかった",
+            "勉強しました",
+            "来なかった",
+            "行かなければならない",
+            "美しくなかった",
+            "静かでした",
+            "テスト",
+            "hello",
+            "",
+            "た",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+        // Every rule's own suffix, alone and after a stem, reaches every
+        // rule and the chains it starts.
+        for r in RULES {
+            words.push(r.suffix_in.to_string());
+            words.push(format!("食べ{}", r.suffix_in));
+            words.push(format!("書{}", r.suffix_in));
+        }
+        // One deinflector for every word: reuse must not leak between runs.
+        let mut d = Deinflector::default();
+        for w in &words {
+            let fast: Vec<String> = d.run(w).map(str::to_owned).collect();
+            assert_eq!(fast, reference(w), "forms of {w:?}");
+        }
     }
 }

@@ -31,14 +31,14 @@ pub fn lookup_longest_match(
 
 /// Reusable buffers for [`lookup_longest_match_with`].
 ///
-/// Both collections are rebuilt from scratch on every call, so a caller that
-/// scans a whole document — one call per character position — would otherwise
-/// pay two allocations per character. Hoisting them into a scratch struct lets
+/// Their contents are rebuilt on every call, so a caller that scans a whole
+/// document — one call per character position — would otherwise pay their
+/// allocations at every character. Hoisting them into a scratch struct lets
 /// that caller keep the capacity across positions.
 #[derive(Default)]
 struct Scratch {
-    seen: HashSet<String>,
     boundaries: Vec<usize>,
+    deinflector: deinflect::Deinflector,
 }
 
 /// Body of [`lookup_longest_match`], with the scratch buffers passed in.
@@ -48,8 +48,10 @@ fn lookup_longest_match_with(
     max_chars: usize,
     scratch: &mut Scratch,
 ) -> Option<(Vec<&'static ArchivedWordEntry>, usize)> {
-    let Scratch { seen, boundaries } = scratch;
-    seen.clear();
+    let Scratch {
+        boundaries,
+        deinflector,
+    } = scratch;
     boundaries.clear();
 
     // boundaries[k] is the byte offset just past the k-char prefix, so an
@@ -70,18 +72,12 @@ fn lookup_longest_match_with(
 
         // `contains` borrows, so the miss path costs no allocation; only a
         // candidate we're about to move past gets copied into the set.
-        if !seen.contains(surface) {
-            if let Some(entries) = try_get_entries(surface) {
+        // The deinflector lists the surface itself first. A form can come up
+        // again from a shorter prefix; looking it up twice costs less than
+        // remembering every miss in a set.
+        for form in deinflector.run(surface) {
+            if let Some(entries) = try_get_entries(form) {
                 return Some((entries, char_count));
-            }
-            seen.insert(surface.to_owned());
-        }
-        for d in deinflect::deinflect(surface) {
-            if !seen.contains(&d.text) {
-                if let Some(entries) = try_get_entries(&d.text) {
-                    return Some((entries, char_count));
-                }
-                seen.insert(d.text);
             }
         }
     }
