@@ -1,4 +1,5 @@
 mod rules;
+mod suffix_trie;
 
 use rules::RULES;
 use std::collections::VecDeque;
@@ -25,6 +26,8 @@ pub fn deinflect(text: &str) -> Vec<Deinflected> {
     let input_char_count = text.chars().count();
 
     queue.push_back((text.to_owned(), 0));
+    let trie = suffix_trie::rules_trie();
+    let mut matched: Vec<u16> = Vec::new();
 
     while let Some((candidate, depth)) = queue.pop_front() {
         if !seen.insert(candidate.clone()) {
@@ -39,7 +42,9 @@ pub fn deinflect(text: &str) -> Vec<Deinflected> {
             continue;
         }
 
-        for rule in RULES {
+        // Only the rules whose suffix the candidate ends with.
+        trie.matches(&candidate, &mut matched);
+        for rule in matched.iter().filter_map(|&i| RULES.get(usize::from(i))) {
             let Some(stem) = candidate.strip_suffix(rule.suffix_in) else {
                 continue;
             };
