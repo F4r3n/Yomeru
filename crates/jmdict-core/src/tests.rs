@@ -417,3 +417,28 @@ fn find_in_text_matches_by_entry_not_by_string() {
     assert_eq!(crate::find_in_text("橋を渡る", &bridge), vec![[0, 1]]);
     assert!(crate::find_in_text("箸で", &bridge).is_empty());
 }
+
+// ── FstWalk ───────────────────────────────────────────────────────────────────
+
+#[test]
+fn walk_answers_like_a_plain_fst_get() {
+    use crate::dictionary::{FstWalk, fst_get};
+    ensure_test_dict();
+    let mut walk = FstWalk::default();
+    for text in ["食べさせられなかった", "飲んでいた", "のむ", "美しくない話", "abc", ""] {
+        walk.walk(text);
+        // Every prefix of the text, and each with its tail swapped for
+        // something else: keys that share the text's start, then part from it.
+        let mut keys: Vec<String> = Vec::new();
+        for (i, _) in text.char_indices().chain(std::iter::once((text.len(), ' '))) {
+            let head = &text[..i];
+            keys.push(head.to_owned());
+            for tail in ["る", "む", "い", "ない", "x"] {
+                keys.push(format!("{head}{tail}"));
+            }
+        }
+        for key in &keys {
+            assert_eq!(walk.get(text, key), fst_get(key), "{key:?} against {text:?}");
+        }
+    }
+}

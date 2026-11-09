@@ -36,6 +36,62 @@ pub(crate) fn fst_get(key: &str) -> Option<u64> {
     DICT.get()?.fst.get(key.as_bytes())
 }
 
+/// The FST walked once along a text, so the keys tried against that text
+/// don't each start again from the root.
+///
+/// `states[i]` is where the walk stands after the text's first `i` bytes.
+/// The walk stops at the first byte no key continues with, so a key sharing
+/// more than `reach()` bytes with the text can't exist: [`FstWalk::get`]
+/// answers it without touching the FST. Any other key resumes from the
+/// state where it parts from the text.
+#[derive(Default)]
+pub(crate) struct FstWalk {
+    states: Vec<(fst::raw::Node<'static>, fst::raw::Output)>,
+}
+
+impl FstWalk {
+    /// Walk the dictionary's FST along `text`. Without a dictionary, every
+    /// later [`FstWalk::get`] misses.
+    pub(crate) fn walk(&mut self, text: &str) {
+        self.states.clear();
+        let Some(dict) = DICT.get() else {
+            return;
+        };
+        let fst = dict.fst.as_fst();
+        let mut node = fst.root();
+        let mut out = fst::raw::Output::zero();
+        self.states.push((node, out));
+        for &b in text.as_bytes() {
+            let Some(i) = node.find_input(b) else {
+                break;
+            };
+            let t = node.transition(i);
+            out = out.cat(t.out);
+            node = fst.node(t.addr);
+            self.states.push((node, out));
+        }
+    }
+
+    /// `fst_get(key)`, for a `key` tried against the walked `text`.
+    pub(crate) fn get(&self, text: &str, key: &str) -> Option<u64> {
+        let dict = DICT.get()?;
+        let shared = text
+            .bytes()
+            .zip(key.bytes())
+            .take_while(|(a, b)| a == b)
+            .count();
+        // Past the reach, the walk proved no key starts this way.
+        let &(mut node, mut out) = self.states.get(shared)?;
+        let fst = dict.fst.as_fst();
+        for &b in key.as_bytes().get(shared..)? {
+            let t = node.transition(node.find_input(b)?);
+            out = out.cat(t.out);
+            node = fst.node(t.addr);
+        }
+        node.is_final().then(|| out.cat(node.final_output()).value())
+    }
+}
+
 pub(crate) fn get_entry_group(group_idx: u64) -> Option<Vec<u32>> {
     DICT.get()
         .and_then(|d| d.lookup_table.get(group_idx as usize).cloned())

@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use jmdict_types::ArchivedWordEntry;
 
-use crate::dictionary::{fst_get, fst_prefix_search, get_entry, get_entry_group};
+use crate::dictionary::{FstWalk, fst_get, fst_prefix_search, get_entry, get_entry_group};
 
 /// Exact lookup by headword or reading.
 ///
@@ -39,6 +39,7 @@ pub fn lookup_longest_match(
 struct Scratch {
     boundaries: Vec<usize>,
     deinflector: deinflect::Deinflector,
+    walk: FstWalk,
 }
 
 /// Body of [`lookup_longest_match`], with the scratch buffers passed in.
@@ -51,6 +52,7 @@ fn lookup_longest_match_with(
     let Scratch {
         boundaries,
         deinflector,
+        walk,
     } = scratch;
     boundaries.clear();
 
@@ -63,6 +65,11 @@ fn lookup_longest_match_with(
             .chain(std::iter::once(text.len()))
             .take(max_chars + 1),
     );
+    // One walk of the FST along the window serves every form tried below:
+    // they all start like the text, and most part from it within a few
+    // bytes or are dismissed for sharing more than any key does.
+    let window = &text[..boundaries.last().copied().unwrap_or(0)];
+    walk.walk(window);
 
     for (char_count, &end_byte) in boundaries.iter().enumerate().rev() {
         if end_byte == 0 {
@@ -70,13 +77,11 @@ fn lookup_longest_match_with(
         }
         let surface = &text[..end_byte];
 
-        // `contains` borrows, so the miss path costs no allocation; only a
-        // candidate we're about to move past gets copied into the set.
         // The deinflector lists the surface itself first. A form can come up
         // again from a shorter prefix; looking it up twice costs less than
         // remembering every miss in a set.
         for form in deinflector.run(surface) {
-            if let Some(entries) = try_get_entries(form) {
+            if let Some(entries) = walk.get(window, form).and_then(entries_of) {
                 return Some((entries, char_count));
             }
         }
@@ -85,18 +90,12 @@ fn lookup_longest_match_with(
     None
 }
 
-fn try_get_entries(candidate: &str) -> Option<Vec<&'static ArchivedWordEntry>> {
-    if let Some(group_idx) = fst_get(candidate)
-        && let Some(indices) = get_entry_group(group_idx)
-    {
-        let entries: Vec<&'static ArchivedWordEntry> =
-            indices.iter().filter_map(|&i| get_entry(i)).collect();
-
-        if !entries.is_empty() {
-            return Some(entries);
-        }
-    }
-    None
+/// The entries of a lookup group, or `None` when it has none.
+fn entries_of(group_idx: u64) -> Option<Vec<&'static ArchivedWordEntry>> {
+    let indices = get_entry_group(group_idx)?;
+    let entries: Vec<&'static ArchivedWordEntry> =
+        indices.iter().filter_map(|&i| get_entry(i)).collect();
+    (!entries.is_empty()).then_some(entries)
 }
 
 /// Prefix search: find entries whose headword *starts with* `text`.
