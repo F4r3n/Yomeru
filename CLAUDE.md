@@ -23,6 +23,10 @@ cargo xtask test
 # Run tests for a single crate
 cargo test -p deinflect
 
+# After changing the lookup: compare it with its plain reference on the full
+# dictionary (JMDICT_BIN built with jmdict-types/full) and examples.utf
+JMDICT_BIN=path/to/jmdict.bin cargo test --release -p jmdict-core --test real_dict -- --ignored
+
 # Run all benchmarks (deinflect + japanese-utils)
 cargo bench -p deinflect -p japanese-utils
 

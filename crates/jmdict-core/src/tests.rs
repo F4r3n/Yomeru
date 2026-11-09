@@ -8,6 +8,9 @@ use postcard::to_allocvec;
 use crate::dictionary::init_for_testing;
 use crate::lookup::{lookup, lookup_longest_match, lookup_prefix};
 
+#[path = "../tests/reference/mod.rs"]
+mod reference;
+
 static INIT: OnceCell<()> = OnceCell::new();
 
 fn ensure_test_dict() {
@@ -86,6 +89,25 @@ fn build_test_binary() -> Vec<u8> {
         // Two entries sharing the reading はし, to tell entries apart by sequence.
         make_entry(6, "橋", "はし", vec![PartOfSpeech::Noun], "bridge"),
         make_entry(7, "箸", "はし", vec![PartOfSpeech::Noun], "chopsticks"),
+        // Longer keys, and keys inside keys, so a walk of the FST along a
+        // text goes deep before parting from it (see `same_answers_as_the_reference`).
+        make_entry(
+            8,
+            "食べさせる",
+            "たべさせる",
+            vec![PartOfSpeech::VerbIchidan],
+            "to feed",
+        ),
+        make_entry(9, "勉強", "べんきょう", vec![PartOfSpeech::Noun], "study"),
+        make_entry(
+            10,
+            "勉強する",
+            "べんきょうする",
+            vec![PartOfSpeech::VerbSuru],
+            "to study",
+        ),
+        make_entry(11, "書く", "かく", vec![PartOfSpeech::VerbGodanKu], "to write"),
+        make_entry(12, "喫茶店", "きっさてん", vec![PartOfSpeech::Noun], "café"),
     ];
 
     let mut entries_bytes: Vec<u8> = Vec::new();
@@ -440,5 +462,91 @@ fn walk_answers_like_a_plain_fst_get() {
         for key in &keys {
             assert_eq!(walk.get(text, key), fst_get(key), "{key:?} against {text:?}");
         }
+    }
+}
+
+// ── Against the plain lookup ──────────────────────────────────────────────────
+
+fn sequences(key: &str) -> Vec<u32> {
+    lookup(key).iter().map(|e| e.sequence.to_native()).collect()
+}
+
+/// Texts around every key: inflected the ways the rules undo, cut short,
+/// run into each other, and inside other text.
+fn generated_texts() -> Vec<String> {
+    let keys = [
+        "飲む", "のむ", "食べる", "たべる", "美しい", "うつくしい", "日本", "にほん", "本",
+        "ほん", "橋", "箸", "はし", "食べさせる", "たべさせる", "勉強", "べんきょう",
+        "勉強する", "べんきょうする", "書く", "かく", "喫茶店", "きっさてん",
+    ];
+    let endings = [
+        "", "た", "て", "ない", "なかった", "ている", "ていた", "られる", "られなかった",
+        "させられなかった", "ます", "ました", "ませんでした", "ず", "ずに", "んで", "んだ",
+        "まない", "いた", "かない", "くない", "かった", "した", "しない", "せず", "る",
+    ];
+    let mut words: Vec<String> = Vec::new();
+    for k in keys {
+        words.push(k.to_owned());
+        // The key itself followed by an ending, and its stem (last kana off).
+        let stem: String = {
+            let mut cs: Vec<char> = k.chars().collect();
+            cs.pop();
+            cs.into_iter().collect()
+        };
+        for e in endings {
+            words.push(format!("{k}{e}"));
+            words.push(format!("{stem}{e}"));
+        }
+        // Cut short: every proper prefix.
+        for (i, _) in k.char_indices().skip(1) {
+            words.push(k[..i].to_owned());
+        }
+    }
+    let mut texts: Vec<String> = Vec::new();
+    for w in &words {
+        for (before, after) in [("", ""), ("私は", "話"), ("x", "。"), ("", "ですね"), ("の", "本")] {
+            texts.push(format!("{before}{w}{after}"));
+        }
+    }
+    // Two keys run together, which a longest match must split right.
+    for a in keys {
+        for b in keys {
+            texts.push(format!("{a}{b}"));
+        }
+    }
+    texts
+}
+
+#[test]
+fn same_answers_as_the_reference() {
+    ensure_test_dict();
+    let texts = generated_texts();
+    assert!(texts.len() > 5000, "{} texts", texts.len());
+    for text in &texts {
+        // The smallest window, one that cuts most keys short, and the scan's.
+        for max_chars in [1, 3, 20] {
+            let fast = lookup_longest_match(text, max_chars)
+                .map(|(es, n)| (es.iter().map(|e| e.sequence.to_native()).collect(), n));
+            assert_eq!(
+                fast,
+                reference::longest_match(text, max_chars, &sequences),
+                "lookup_longest_match({text:?}, {max_chars})"
+            );
+        }
+    }
+    // find_in_text keeps its buffers across positions: run it per text, and
+    // over a page of them (a sample: a debug build scans ~30 µs a position).
+    let all: std::collections::HashSet<u32> = (1..=12).collect();
+    let page = texts.iter().step_by(7).map(String::as_str).collect::<Vec<_>>().join("、");
+    assert_eq!(
+        crate::find_in_text(&page, &all),
+        reference::find_in_text(&page, &all, &sequences)
+    );
+    for text in &texts {
+        assert_eq!(
+            crate::find_in_text(text, &all),
+            reference::find_in_text(text, &all, &sequences),
+            "find_in_text({text:?})"
+        );
     }
 }
