@@ -48,6 +48,57 @@ fn dedup_by_sequence(lists: Vec<Vec<WordEntry>>) -> Vec<WordEntry> {
         .collect()
 }
 
+/// Whether an entry can be the dictionary form of an inflected word. The
+/// deinflector only swaps suffixes and knows nothing about word classes, so
+/// its candidates can land on unrelated nouns; a search list shows every
+/// hit, so those are dropped here.
+fn is_inflectable(e: &WordEntry) -> bool {
+    use jmdict_types::PartOfSpeech as P;
+    e.senses.iter().flat_map(|s| &s.pos).any(|p| {
+        matches!(
+            p,
+            P::Adjective
+                | P::AuxiliaryAdjective
+                | P::AuxiliaryVerb
+                | P::VerbIchidan
+                | P::VerbIchidanS
+                | P::VerbGodanBu
+                | P::VerbGodanGu
+                | P::VerbGodanKu
+                | P::VerbGodanKuS
+                | P::VerbGodanMu
+                | P::VerbGodanNu
+                | P::VerbGodanRu
+                | P::VerbGodanRuIrr
+                | P::VerbGodanSu
+                | P::VerbGodanTsu
+                | P::VerbGodanU
+                | P::VerbGodanUS
+                | P::VerbGodanUru
+                | P::VerbSuru
+                | P::VerbSuruS
+                | P::VerbSuruC
+                | P::VerbKuru
+                | P::VerbNu
+                | P::VerbRu
+                | P::VerbUnclassified
+        )
+    })
+}
+
+/// Dictionary-form candidates for `targets` (the inputs themselves
+/// excluded). The deinflector's する→"" rule takes 勉強した down to the
+/// `vs` noun 勉強.
+fn deinflect_candidates(targets: &[String]) -> Vec<String> {
+    let mut seen: HashSet<String> = targets.iter().cloned().collect();
+    targets
+        .iter()
+        .flat_map(|t| deinflect::deinflect(t))
+        .filter(|d| seen.insert(d.text.clone()))
+        .map(|d| d.text)
+        .collect()
+}
+
 fn push_history(mut h: Vec<String>, term: &str) -> Vec<String> {
     h.retain(|x| x != term);
     h.insert(0, term.to_owned());
@@ -238,32 +289,48 @@ fn LookupListPane() -> Element {
             .then(|| hiragana_to_katakana(&target))
             .filter(|k| *k != target);
         let targets: Vec<String> = std::iter::once(target).chain(katakana).collect();
+        let candidates = deinflect_candidates(&targets);
         searching.set(true);
         let nav = nav;
         spawn(async move {
-            let per_target = dict::lookup_many(&targets).await.unwrap_or_else(|e| {
+            // One batch: the typed spellings, then every deinflected candidate.
+            let words: Vec<String> = targets
+                .iter()
+                .cloned()
+                .chain(candidates.iter().cloned())
+                .collect();
+            let mut per_target = dict::lookup_many(&words).await.unwrap_or_else(|e| {
                 load_err.set(Some(e));
                 Vec::new()
             });
+            let per_candidate = per_target.split_off(per_target.len().min(targets.len()));
             // History and "Reading as" use the first spelling that actually matched.
             let mut matched = targets
                 .iter()
                 .zip(&per_target)
                 .find(|(_, r)| !r.is_empty())
                 .map(|(t, _)| t.clone());
-            let mut results = dedup_by_sequence(per_target);
-            if results.is_empty() {
-                let mut prefix_hits = Vec::new();
-                for t in &targets {
-                    let r = dict::lookup_prefix(t, 30).await.unwrap_or_default();
-                    if matched.is_none() && !r.is_empty() {
-                        matched = Some(t.clone());
-                    }
-                    prefix_hits.push(r);
-                }
-                results = dedup_by_sequence(prefix_hits);
-                results.truncate(30);
+            // Exact hits first, then deinflected hits, then prefix hits —
+            // prefix always, since a partial reading can itself be a word
+            // (ちぢ → 千々 must not hide 縮む).
+            let deinflected: Vec<Vec<WordEntry>> = per_candidate
+                .into_iter()
+                .map(|hits| hits.into_iter().filter(is_inflectable).collect())
+                .collect();
+            if matched.is_none() && deinflected.iter().any(|h| !h.is_empty()) {
+                matched = targets.first().cloned();
             }
+            let mut groups = per_target;
+            groups.extend(deinflected);
+            for t in &targets {
+                let r = dict::lookup_prefix(t, 30).await.unwrap_or_default();
+                if matched.is_none() && !r.is_empty() {
+                    matched = Some(t.clone());
+                }
+                groups.push(r);
+            }
+            let mut results = dedup_by_sequence(groups);
+            results.truncate(30);
             if let Some(t) = matched {
                 let next = push_history(history.read().clone(), &t);
                 history.set(next);

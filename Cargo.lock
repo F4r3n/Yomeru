@@ -8046,6 +8046,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "console_error_panic_hook",
+ "deinflect",
  "dioxus",
  "examples-core",
  "examples-types",
