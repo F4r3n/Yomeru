@@ -27,6 +27,8 @@ import type {
   CardDirection,
   ExampleEntry,
   KanjiEntry,
+  PartInfo,
+  PartSearch,
   SrsCard,
   SrsSettings,
   WordEntry,
@@ -189,6 +191,22 @@ export async function handleGetKanji({ word }: { word: string }) {
   const kanji = await getKanji();
   const entries = kanji.lookup_many(word) as KanjiEntry[];
   return { entries: entries ?? [] };
+}
+
+export async function handleGetKanjiParts() {
+  const kanji = await getKanji();
+  return { parts: (kanji.parts() as PartInfo[]) ?? [] };
+}
+
+export async function handleKanjiByParts({
+  parts,
+  max,
+}: {
+  parts: string;
+  max: number;
+}) {
+  const kanji = await getKanji();
+  return kanji.withParts(parts, max) as PartSearch;
 }
 
 export async function handleGetExamples({ word }: { word: string }) {

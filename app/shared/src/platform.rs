@@ -12,7 +12,7 @@ use std::rc::Rc;
 
 use examples_types::ExampleEntry;
 use jmdict_types::WordEntry;
-use kanjidic_types::KanjiEntry;
+use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
 use serde::{Deserialize, Serialize};
 
 use crate::rt;
@@ -36,6 +36,10 @@ pub trait DictClient {
     async fn lookup_prefix(&self, text: &str, max: u8) -> Result<Vec<WordEntry>, String>;
     async fn kanji_for(&self, word: &str) -> Result<Vec<KanjiEntry>, String>;
     async fn examples_for(&self, word: &str, max: u8) -> Result<Vec<ExampleEntry>, String>;
+    /// Every part the kanji finder offers (see `kanjidic_core::parts`).
+    async fn kanji_parts(&self) -> Result<Vec<PartInfo>, String>;
+    /// The kanji holding all of `parts`, at most `max` of them.
+    async fn kanji_with_parts(&self, parts: &str, max: u8) -> Result<PartSearch, String>;
 }
 
 /// Settings persistence + sync orchestration. `load()` is intentionally
@@ -185,6 +189,15 @@ struct KanjiResponse {
 struct ExamplesResponse {
     entries: Vec<ExampleEntry>,
 }
+#[derive(Deserialize)]
+struct KanjiPartsResponse {
+    parts: Vec<PartInfo>,
+}
+#[derive(Serialize)]
+struct KanjiByPartsBody<'a> {
+    parts: &'a str,
+    max: u8,
+}
 
 async fn post_json<B: Serialize, R: for<'de> Deserialize<'de>>(
     path: &str,
@@ -236,6 +249,15 @@ impl DictClient for HttpDict {
         let parsed: ExamplesResponse =
             post_json("/api/examples", &WordMaxBody { word, max }).await?;
         Ok(parsed.entries)
+    }
+
+    async fn kanji_parts(&self) -> Result<Vec<PartInfo>, String> {
+        let parsed: KanjiPartsResponse = post_json("/api/kanji-parts", &()).await?;
+        Ok(parsed.parts)
+    }
+
+    async fn kanji_with_parts(&self, parts: &str, max: u8) -> Result<PartSearch, String> {
+        post_json("/api/kanji-by-parts", &KanjiByPartsBody { parts, max }).await
     }
 }
 

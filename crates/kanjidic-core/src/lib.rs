@@ -3,11 +3,14 @@
 
 use anyhow::{anyhow, bail, Context};
 use japanese_utils::is_kanji;
-use kanjidic_types::{KanjiEntry, KanjiRecord};
+use kanjidic_types::{KanjiEntry, KanjiRecord, PartIndexRecord, PartInfo, PartSearch};
 use once_cell::sync::OnceCell;
 use postcard::from_bytes;
 use serde::Deserialize;
 use std::collections::HashMap;
+
+pub mod parts;
+use parts::PartIndex;
 
 static KDICT: OnceCell<KanjiDictInner> = OnceCell::new();
 
@@ -24,6 +27,9 @@ struct KanjiDictInner {
     version: u8,
     index: Vec<(u32, u32)>,
     data: Vec<u8>,
+    /// The postcard [`PartIndexRecord`], decoded on first use. Empty before
+    /// version 3.
+    parts: Vec<u8>,
 }
 
 /// Entry layout of version-1 binaries, from before KanjiVG parts. Still read
@@ -131,6 +137,64 @@ pub fn lookup_many(word: &str) -> Vec<KanjiEntry> {
         .collect()
 }
 
+/// Every part the kanji finder can offer, by stroke count then by how many
+/// kanji use it. A plain name from `part-names.tsv` leads its part's names.
+pub fn parts() -> Vec<PartInfo> {
+    let Some(index) = part_index() else {
+        return vec![];
+    };
+    index
+        .listed()
+        .iter()
+        .cloned()
+        .map(|mut p| {
+            if let Some(name) = part_name(p.element) {
+                p.names.retain(|n| n != name);
+                p.names.insert(0, name.clone());
+            }
+            p
+        })
+        .collect()
+}
+
+/// The kanji containing all of `selected`, at any depth: 言 finds 語 through
+/// its part 言, 口 finds it through 吾. A kanji counts as containing itself,
+/// so picking 青 lists 青 too. Best known first (KANJIDIC frequency, then
+/// fewer strokes); at most `max` entries come back.
+pub fn kanji_with_parts(selected: &[char], max: usize) -> PartSearch {
+    let (matches, open_parts) = part_index().map(|i| i.search(selected)).unwrap_or_default();
+    PartSearch {
+        kanji: matches
+            .iter()
+            .take(max)
+            .filter_map(|&k| lookup_one(k))
+            .collect(),
+        total: matches.len() as u32,
+        open_parts,
+    }
+}
+
+static PART_INDEX: OnceCell<PartIndex> = OnceCell::new();
+
+/// The finder's index: read from the binary, or for a binary from before
+/// version 3, built from every entry on first use.
+fn part_index() -> Option<&'static PartIndex> {
+    let dict = KDICT.get()?;
+    Some(PART_INDEX.get_or_init(|| {
+        let stored = (!dict.parts.is_empty())
+            .then(|| from_bytes::<PartIndexRecord>(&dict.parts).ok())
+            .flatten();
+        PartIndex::new(stored.unwrap_or_else(|| {
+            let entries: Vec<KanjiEntry> = dict
+                .index
+                .iter()
+                .filter_map(|&(cp, _)| dict.entry(cp))
+                .collect();
+            parts::build_index(&entries)
+        }))
+    }))
+}
+
 fn get_entry(codepoint: u32) -> Option<KanjiEntry> {
     let found = KDICT.get()?.entry(codepoint);
     let c = char::from_u32(codepoint)?;
@@ -187,7 +251,7 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<KanjiDictInner> {
         bail!("invalid magic bytes");
     }
     let version = bytes.get(4).copied().unwrap_or(0);
-    if !matches!(version, 1 | 2) {
+    if !matches!(version, 1..=3) {
         bail!("unsupported version {version}");
     }
 
@@ -217,11 +281,24 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<KanjiDictInner> {
         .get(pos..pos + data_len)
         .context("data blob truncated")?
         .to_vec();
+    pos += data_len;
+
+    let parts = if version >= 3 {
+        let len = read_u32(bytes, pos)? as usize;
+        pos += 4;
+        bytes
+            .get(pos..pos + len)
+            .context("parts index truncated")?
+            .to_vec()
+    } else {
+        vec![]
+    };
 
     Ok(KanjiDictInner {
         version,
         index,
         data,
+        parts,
     })
 }
 
@@ -335,6 +412,30 @@ mod tests {
     }
 
     #[test]
+    fn version_3_reads_the_stored_parts_index() {
+        let rec = parts::build_index(&[entry('口', 3, &[], &[], &["mouth"])]);
+        let mut bin = build_raw(
+            3,
+            vec![(
+                '口',
+                to_allocvec(&KanjiRecord::from(&entry('口', 3, &[], &[], &["mouth"]))).unwrap(),
+            )],
+        );
+        let stored = to_allocvec(&rec).unwrap();
+        bin.extend_from_slice(&(stored.len() as u32).to_le_bytes());
+        bin.extend_from_slice(&stored);
+        let dict = parse_binary(&bin).expect("parse");
+        assert_eq!(from_bytes::<PartIndexRecord>(&dict.parts).unwrap(), rec);
+        assert!(dict.entry('口' as u32).is_some());
+
+        // A version 3 file cut short in its index section is refused.
+        let err = parse_binary(&bin[..bin.len() - 2])
+            .err()
+            .expect("truncated");
+        assert!(err.to_string().contains("truncated"), "got: {err}");
+    }
+
+    #[test]
     fn mnemonics_parse_skips_comments_blanks_and_bad_lines() {
         let m = parse_tsv(
             "# header\n\n惑\tA heart torn between this or that.\n論 no tab here\n漢字\ttwo chars\n字\t  \n語\t Words, spoken. \n",
@@ -427,6 +528,15 @@ mod tests {
         );
         assert_eq!(kan.stroke_count, 13);
         assert_eq!(kan.on_readings, vec!["カン".to_string()]);
+
+        // A version 2 binary has no stored parts index: it's built from the
+        // entries on first use.
+        let found = kanji_with_parts(&['字'], 10);
+        assert_eq!(
+            found.kanji.iter().map(|e| e.literal).collect::<Vec<_>>(),
+            vec!['字']
+        );
+        assert!(parts().is_empty(), "no kanji here has parts");
 
         // ASCII char is not kanji → not present, returns None.
         assert!(lookup_one('a').is_none());

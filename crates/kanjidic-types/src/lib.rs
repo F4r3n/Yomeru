@@ -85,6 +85,57 @@ pub struct KanjiPart {
     pub phonetic: bool,
 }
 
+/// A part as the kanji finder's grid lists it: something seen inside other
+/// kanji, with what to call it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PartInfo {
+    pub element: char,
+    /// Plain name first (`part-names.tsv`), then KANJIDIC's meanings cleaned
+    /// by [`part_meanings`]. The finder's filter box matches any of them.
+    /// Empty when nothing names the part.
+    pub names: Vec<String>,
+    /// 0 when KANJIDIC has no entry for the part (⺍).
+    pub strokes: u8,
+    /// How many kanji contain it, at any depth.
+    pub kanji_count: u32,
+}
+
+/// The kanji finder's index, computed by `kanjidic-build` and stored at the
+/// end of `kanjidic.bin` (version 3), so loading it decodes a few flat lists
+/// rather than every entry.
+///
+/// Both maps are laid out flat: the values for `keys[i]` are
+/// `values[at[i]..at[i + 1]]`, and `at` has one more element than `keys`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PartIndexRecord {
+    /// Every kanji, sorted.
+    pub kanji: Vec<char>,
+    pub kanji_parts_at: Vec<u32>,
+    /// Each kanji's parts at any depth, itself included, sorted.
+    pub kanji_parts: Vec<char>,
+    /// Every part, each kanji's own literal included, sorted.
+    pub parts: Vec<char>,
+    pub part_kanji_at: Vec<u32>,
+    /// Each part's kanji, best known first.
+    pub part_kanji: Vec<char>,
+    /// The parts some other kanji contains, in grid order. Their names are
+    /// KANJIDIC's: the plain names of `part-names.tsv` are laid over them
+    /// when served.
+    pub listed: Vec<PartInfo>,
+}
+
+/// The kanji containing every selected part, best known first.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PartSearch {
+    /// The first matches, cut at the caller's limit.
+    pub kanji: Vec<KanjiEntry>,
+    /// Every match, before the cut.
+    pub total: u32,
+    /// Parts some match contains besides the selected ones: picking one of
+    /// these still leaves a result. Every other part can be greyed out.
+    pub open_parts: Vec<char>,
+}
+
 /// `meanings` as labels for a part chip: KANJIDIC's radical bookkeeping is
 /// trimmed ("dotted cliff radical (no. 53)" → "dotted cliff") or dropped when
 /// that leaves nothing ("radical number 9"), and duplicates go. Empty means

@@ -187,6 +187,9 @@ button, a, input, select, textarea { touch-action: manipulation; }
     padding: 28px 32px 48px;
     overflow-x: hidden;
 }
+/* `clip` cuts the same overflow without making .content a scroll box, so
+   `position: sticky` inside it follows the page scroll (kanji finder). */
+@supports (overflow: clip) { .content { overflow-x: clip; } }
 .content-inner { max-width: 880px; }
 
 /* ── Responsive: collapse to top tab bar on narrow screens ────────── */
@@ -662,6 +665,117 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 }
 .chip:hover { border-color: var(--accent); color: var(--accent); }
 .chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ── Lookup modes + kanji finder ─────────────────────────────────── */
+.lookup-modes { margin-bottom: 12px; }
+.lookup-modes a {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    color: var(--subtext);
+    text-decoration: none;
+}
+.lookup-modes a:hover { color: var(--text); }
+.lookup-modes a.active { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+/* The word being built: one box per kanji. */
+.finder-word {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+}
+.word-slots { display: flex; align-items: center; gap: 6px; flex: 1; flex-wrap: wrap; min-width: 0; }
+.word-slots .slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    height: 48px;
+    padding: 0 4px;
+    border-bottom: 2px solid var(--accent);
+    font-size: 30px;
+    line-height: 1;
+}
+.word-slots .slot.empty { color: var(--border); border-bottom-color: var(--border); }
+.word-actions { display: flex; gap: 6px; align-items: center; margin-left: auto; }
+.word-actions button.primary { display: inline-flex; align-items: center; gap: 6px; }
+/* Selected parts and their kanji stay in view under the top bar while
+   more parts are picked further down. */
+.finder-matches {
+    position: sticky;
+    top: 56px;
+    z-index: 5;
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--bg) 70%, transparent);
+}
+.matches-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.matches-head .count { font-size: 12px; margin-left: 4px; }
+.matches-head .clear { margin-left: auto; }
+.matches-error { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--red); }
+.kanji-results {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+    max-height: 30vh;
+    overflow-y: auto;
+}
+.kanji-hit {
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    font-size: 30px;
+    font-weight: 400;
+    line-height: 1;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+.kanji-hit:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); opacity: 1; }
+.part-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+    gap: 6px;
+}
+.part-btn {
+    height: 44px;
+    padding: 0;
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+.part-btn:hover:not(:disabled) { border-color: var(--accent); opacity: 1; }
+.part-btn.selected { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.part-btn.small { width: 36px; height: 36px; min-height: 0; font-size: 18px; }
+.part-btn:disabled { opacity: 0.2; }
+.all-parts .part-tiles { margin-bottom: 14px; }
+.stroke-head {
+    margin: 0 0 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--subtext);
+}
+@media (max-width: 540px) {
+    .part-tiles { grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); }
+    .part-btn { height: 40px; min-height: 0; font-size: 20px; }
+    .kanji-hit { width: 46px; height: 46px; min-height: 0; font-size: 26px; }
+}
 
 .toolbar {
     display: flex;

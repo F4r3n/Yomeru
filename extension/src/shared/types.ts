@@ -219,3 +219,19 @@ export interface KanjiEntry {
   /** From the separate mnemonic file; absent when it has none. */
   mnemonic?: string;
 }
+
+/** Mirrors `PartInfo` in `kanjidic-types`: one part of the kanji finder's grid. */
+export interface PartInfo {
+  element: string;
+  names: string[];
+  /** 0 when unknown. */
+  strokes: number;
+  kanji_count: number;
+}
+
+/** Mirrors `PartSearch` in `kanjidic-types`. */
+export interface PartSearch {
+  kanji: KanjiEntry[];
+  total: number;
+  open_parts: string[];
+}

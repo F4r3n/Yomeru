@@ -2,7 +2,9 @@ use dioxus::prelude::*;
 
 use crate::icons::{Icon, IconName};
 use crate::platform::Platform;
-use crate::routes::{about, lookup, new_words, privacy, review, settings, stats, word_list};
+use crate::routes::{
+    about, kanji_finder, lookup, new_words, privacy, review, settings, stats, word_list,
+};
 use crate::sync::{SyncActivity, SyncGen, SyncHealth};
 use crate::theme::global_css;
 
@@ -72,6 +74,8 @@ pub enum Route {
                 LookupDetail { word: String },
             #[end_layout]
         #[end_nest]
+        #[route("/kanji-finder")]
+        KanjiFinder {},
         #[route("/settings")]
         Settings {},
         #[route("/about")]
@@ -383,10 +387,13 @@ fn nav_active(to: &Route, current: &Route) -> bool {
     if std::mem::discriminant(to) == std::mem::discriminant(current) {
         return true;
     }
-    // The Lookup tab should stay highlighted on the LookupDetail sub-route.
+    // The Lookup tab stays highlighted on a word's card and in the finder.
     matches!(
         (to, current),
-        (Route::Lookup {}, Route::LookupDetail { .. })
+        (
+            Route::Lookup {},
+            Route::LookupDetail { .. } | Route::KanjiFinder {}
+        )
     )
 }
 
@@ -417,6 +424,10 @@ fn Lookup() -> Element {
 #[component]
 fn LookupDetail(word: String) -> Element {
     rsx! { lookup::LookupDetailPane { word } }
+}
+#[component]
+fn KanjiFinder() -> Element {
+    rsx! { kanji_finder::KanjiFinder {} }
 }
 #[component]
 fn Settings() -> Element {

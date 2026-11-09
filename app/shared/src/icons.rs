@@ -29,6 +29,7 @@ pub enum IconName {
     Loader,
     CircleCheck,
     TriangleAlert,
+    X,
 }
 
 impl IconName {
@@ -75,6 +76,7 @@ impl IconName {
                 r#"<path d="m2 2 20 20"/>"#,
             ),
             Self::Loader => r#"<path d="M21 12a9 9 0 1 1-6.219-8.56"/>"#,
+            Self::X => r#"<path d="M18 6 6 18"/><path d="m6 6 12 12"/>"#,
             Self::CircleCheck => r#"<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>"#,
             Self::TriangleAlert => concat!(
                 r#"<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/>"#,

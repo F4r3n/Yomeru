@@ -15,7 +15,7 @@ use axum::{
 };
 use examples_types::ExampleEntry;
 use jmdict_types::ArchivedWordEntry;
-use kanjidic_types::KanjiEntry;
+use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
 use serde::{Deserialize, Serialize};
 
 use super::run_blocking;
@@ -36,6 +36,9 @@ const MAX_LOOKUP_WORDS: usize = 1_000;
 const MAX_LOOKUP_SEQUENCES: usize = 20_000;
 
 const MAX_QUERY_CHARS: usize = 256;
+
+/// More parts than any kanji holds: past this the answer is empty anyway.
+const MAX_PARTS: usize = 16;
 
 fn too_large(what: &str, got: usize, max: usize) -> Response {
     (
@@ -91,6 +94,23 @@ pub struct KanjiBody {
 #[derive(Serialize)]
 pub struct KanjiResponse {
     pub entries: Vec<KanjiEntry>,
+}
+
+#[derive(Serialize)]
+pub struct KanjiPartsResponse {
+    pub parts: Vec<PartInfo>,
+}
+
+#[derive(Deserialize)]
+pub struct KanjiByPartsBody {
+    /// The selected parts, one char each.
+    pub parts: String,
+    #[serde(default = "default_by_parts_max")]
+    pub max: u8,
+}
+
+fn default_by_parts_max() -> u8 {
+    100
 }
 
 #[derive(Deserialize)]
@@ -211,6 +231,47 @@ pub async fn kanji_handler(
     })
     .await?;
     Ok(Json(KanjiResponse { entries }).into_response())
+}
+
+pub async fn kanji_parts_handler(
+    State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+) -> Result<Response, Response> {
+    if state
+        .lookup_limiter
+        .check_key(&state.client_ip(addr, &headers))
+        .is_err()
+    {
+        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
+    }
+    let parts = run_blocking("kanji_parts", || Ok(kanjidic_core::parts())).await?;
+    Ok(Json(KanjiPartsResponse { parts }).into_response())
+}
+
+pub async fn kanji_by_parts_handler(
+    State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Json(body): Json<KanjiByPartsBody>,
+) -> Result<Response, Response> {
+    if state
+        .lookup_limiter
+        .check_key(&state.client_ip(addr, &headers))
+        .is_err()
+    {
+        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
+    }
+    let parts: Vec<char> = body.parts.chars().collect();
+    if parts.len() > MAX_PARTS {
+        return Err(too_large("parts", parts.len(), MAX_PARTS));
+    }
+    let max = usize::from(body.max);
+    let result: PartSearch = run_blocking("kanji_by_parts", move || {
+        Ok(kanjidic_core::kanji_with_parts(&parts, max))
+    })
+    .await?;
+    Ok(Json(result).into_response())
 }
 
 pub async fn examples_handler(

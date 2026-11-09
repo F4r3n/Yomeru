@@ -51,4 +51,18 @@ impl KanjiDictionary {
         let entries: Vec<KanjiEntry> = kanjidic_core::lookup_many(word);
         serde_wasm_bindgen::to_value(&entries).map_err(|e| JsError::new(&e.to_string()))
     }
+
+    /// Every part the kanji finder offers → PartInfo[]
+    pub fn parts(&self) -> Result<JsValue, JsError> {
+        serde_wasm_bindgen::to_value(&kanjidic_core::parts())
+            .map_err(|e| JsError::new(&e.to_string()))
+    }
+
+    /// The kanji holding every char of `parts` → PartSearch
+    #[wasm_bindgen(js_name = withParts)]
+    pub fn with_parts(&self, parts: &str, max: u8) -> Result<JsValue, JsError> {
+        let parts: Vec<char> = parts.chars().collect();
+        let found = kanjidic_core::kanji_with_parts(&parts, usize::from(max));
+        serde_wasm_bindgen::to_value(&found).map_err(|e| JsError::new(&e.to_string()))
+    }
 }

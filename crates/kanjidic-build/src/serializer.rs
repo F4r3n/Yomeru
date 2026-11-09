@@ -6,11 +6,14 @@ use std::path::Path;
 // Binary format: kanjidic.bin
 //
 //  [4]  magic       b"KDIC"
-//  [1]  version     2u8 (1 = entries without `parts`, still readable)
+//  [1]  version     3u8 (1 = entries without `parts`, 2 = no parts index;
+//                   both still readable)
 //  [4]  count       u32 LE — number of index entries
 //  [N×8] index      sorted (codepoint: u32 LE, byte_offset: u32 LE) pairs
 //  [4]  data_len    u32 LE
 //  […]  data_blob   length-prefixed postcard `KanjiRecord`s (u32 LE len + bytes)
+//  [4]  parts_len   u32 LE
+//  […]  parts       postcard `PartIndexRecord`: the kanji finder's index
 
 pub fn write_index(entries: &[KanjiEntry], output: &Path) -> Result<()> {
     if let Some(parent) = output.parent() {
@@ -44,7 +47,7 @@ pub fn write_index(entries: &[KanjiEntry], output: &Path) -> Result<()> {
 
     // Header
     w.write_all(b"KDIC")?;
-    w.write_all(&[2u8])?;
+    w.write_all(&[3u8])?;
 
     // Index
     w.write_all(&(index.len() as u32).to_le_bytes())?;
@@ -56,6 +59,12 @@ pub fn write_index(entries: &[KanjiEntry], output: &Path) -> Result<()> {
     // Data blob
     w.write_all(&(data_blob.len() as u32).to_le_bytes())?;
     w.write_all(&data_blob)?;
+
+    // Kanji finder index
+    let parts = postcard::to_allocvec(&kanjidic_core::parts::build_index(entries))?;
+    w.write_all(&(parts.len() as u32).to_le_bytes())?;
+    w.write_all(&parts)?;
+    w.flush()?;
 
     Ok(())
 }

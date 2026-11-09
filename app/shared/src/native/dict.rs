@@ -10,7 +10,7 @@
 
 use examples_types::ExampleEntry;
 use jmdict_types::{ArchivedWordEntry, WordEntry};
-use kanjidic_types::KanjiEntry;
+use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
 use manganis::Asset;
 use tokio::sync::OnceCell;
 
@@ -159,5 +159,16 @@ impl DictClient for LocalDict {
     async fn examples_for(&self, word: &str, max: u8) -> Result<Vec<ExampleEntry>, String> {
         self.ensure().await?;
         Ok(examples_core::lookup(word, usize::from(max)))
+    }
+
+    async fn kanji_parts(&self) -> Result<Vec<PartInfo>, String> {
+        self.ensure().await?;
+        Ok(kanjidic_core::parts())
+    }
+
+    async fn kanji_with_parts(&self, parts: &str, max: u8) -> Result<PartSearch, String> {
+        self.ensure().await?;
+        let parts: Vec<char> = parts.chars().collect();
+        Ok(kanjidic_core::kanji_with_parts(&parts, usize::from(max)))
     }
 }

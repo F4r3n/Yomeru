@@ -10,7 +10,7 @@
 use dioxus::prelude::consume_context;
 use examples_types::ExampleEntry;
 use jmdict_types::{Freq, KanjiInf, Misc, WordEntry};
-use kanjidic_types::KanjiEntry;
+use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
 
 use crate::platform::Platform;
 use crate::types::CardDirection;
@@ -44,6 +44,19 @@ pub async fn lookup_prefix(text: &str, max: u8) -> Result<Vec<WordEntry>, String
 
 pub async fn kanji_for(word: &str) -> Result<Vec<KanjiEntry>, String> {
     consume_context::<Platform>().dict.kanji_for(word).await
+}
+
+/// Every part the kanji finder offers.
+pub async fn kanji_parts() -> Result<Vec<PartInfo>, String> {
+    consume_context::<Platform>().dict.kanji_parts().await
+}
+
+/// The kanji holding every char of `parts`, at most `max` of them.
+pub async fn kanji_with_parts(parts: &str, max: u8) -> Result<PartSearch, String> {
+    consume_context::<Platform>()
+        .dict
+        .kanji_with_parts(parts, max)
+        .await
 }
 
 pub async fn examples_for(word: &str, max: u8) -> Result<Vec<ExampleEntry>, String> {

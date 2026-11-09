@@ -4,7 +4,7 @@ use serde::Serialize;
 use async_trait::async_trait;
 use examples_types::ExampleEntry;
 use jmdict_types::WordEntry;
-use kanjidic_types::KanjiEntry;
+use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
 use yomeru_shared::platform::DictClient;
 pub struct ExtensionDict;
 
@@ -60,6 +60,17 @@ struct KanjiResp {
     entries: Vec<KanjiEntry>,
 }
 
+#[derive(Serialize)]
+struct KanjiByPartsPayload<'a> {
+    parts: &'a str,
+    max: u8,
+}
+
+#[derive(Deserialize)]
+struct KanjiPartsResp {
+    parts: Vec<PartInfo>,
+}
+
 #[derive(Deserialize)]
 struct ExamplesResp {
     entries: Vec<ExampleEntry>,
@@ -104,5 +115,14 @@ impl DictClient for ExtensionDict {
         let r: ExamplesResp =
             crate::send_bg_message("GET_EXAMPLES", WordMaxPayload { word, max }).await?;
         Ok(r.entries)
+    }
+
+    async fn kanji_parts(&self) -> Result<Vec<PartInfo>, String> {
+        let r: KanjiPartsResp = crate::send_bg_message("GET_KANJI_PARTS", ()).await?;
+        Ok(r.parts)
+    }
+
+    async fn kanji_with_parts(&self, parts: &str, max: u8) -> Result<PartSearch, String> {
+        crate::send_bg_message("KANJI_BY_PARTS", KanjiByPartsPayload { parts, max }).await
     }
 }

@@ -14,6 +14,17 @@ use crate::sync::schedule_sync;
 use crate::types::{CardDirection, CardStatus, SrsCard};
 
 const HISTORY_KEY: &str = "lookup_history";
+
+thread_local! {
+    /// A word another page wants searched as the lookup page opens (the
+    /// kanji finder's tray). Taken once, on mount.
+    static SEARCH_ON_OPEN: std::cell::RefCell<Option<String>> = const { std::cell::RefCell::new(None) };
+}
+
+/// Have the next lookup page that opens search `word`.
+pub fn search_on_open(word: String) {
+    SEARCH_ON_OPEN.with(|w| *w.borrow_mut() = Some(word));
+}
 const HISTORY_MAX: usize = 10;
 
 #[derive(Clone, Copy, PartialEq)]
@@ -217,7 +228,11 @@ fn LookupListPane() -> Element {
     };
     let on_detail_at_render = selected_word.is_some();
 
-    let query = use_signal(String::new);
+    let query = use_signal(|| {
+        SEARCH_ON_OPEN
+            .with(|w| w.borrow_mut().take())
+            .unwrap_or_default()
+    });
     let mut last_target = use_signal(String::new);
     let mut entries = use_signal(Vec::<WordEntry>::new);
     let mut searching = use_signal(|| false);
@@ -440,6 +455,7 @@ fn LookupListPane() -> Element {
 
     rsx! {
         div {
+            crate::routes::kanji_finder::LookupModeTabs { kanji: false }
             if result_count > 0 {
                 div { class: "page-header",
                     span { class: "pill", "{result_label}" }

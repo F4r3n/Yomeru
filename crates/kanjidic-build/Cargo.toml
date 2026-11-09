@@ -9,6 +9,7 @@ path = "src/main.rs"
 
 [dependencies]
 kanjidic-types = { path = "../kanjidic-types" }
+kanjidic-core  = { path = "../kanjidic-core" }
 quick-xml      = { version = "0.37", features = ["encoding"] }
 postcard       = { version = "1", features = ["alloc"] }
 anyhow         = "1"

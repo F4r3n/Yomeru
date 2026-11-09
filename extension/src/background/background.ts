@@ -18,6 +18,8 @@ import {
   handleGetDue,
   handleGetExamples,
   handleGetKanji,
+  handleGetKanjiParts,
+  handleKanjiByParts,
   handleGetSettings,
   handleGetSrsSequences,
   handleGetStaging,
@@ -94,6 +96,10 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
       return handleSaveSettings(msg.payload as SrsSettings);
     case "GET_KANJI":
       return handleGetKanji(msg.payload as { word: string });
+    case "GET_KANJI_PARTS":
+      return handleGetKanjiParts();
+    case "KANJI_BY_PARTS":
+      return handleKanjiByParts(msg.payload as { parts: string; max: number });
     case "GET_EXAMPLES":
       return handleGetExamples(msg.payload as { word: string });
     case "LOOKUP_WORD":
