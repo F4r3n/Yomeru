@@ -228,8 +228,6 @@ server {
     # in the filename keeps the browser from re-downloading the heavy bits.
     location ~* \.(?:wasm|js|css)$ {
         add_header Cache-Control "public, max-age=31536000, immutable";
-        gzip_static on;
-        brotli_static on;     # only if nginx-brotli is installed
         try_files $uri =404;
     }
 
@@ -258,10 +256,32 @@ server {
     add_header X-Content-Type-Options nosniff;
     add_header Referrer-Policy strict-origin-when-cross-origin;
 
-    # Compress the .wasm on the fly if `gzip_static` isn't available.
+    # Compress on the fly: `dx bundle` writes no `.gz` files, so
+    # `gzip_static` would find nothing to serve. The wasm is the big win
+    # (~1.3 MB, cached for a year so compressed about once per visitor per
+    # release); `gzip_proxied any` is what covers the JSON from /api/.
     gzip on;
-    gzip_types application/wasm application/javascript application/json text/css;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 5;
+    gzip_min_length 256;
+    gzip_types text/plain text/css application/json application/javascript application/wasm image/svg+xml;
 }
+```
+
+Debian's stock `/etc/nginx/nginx.conf` turns on `gzip` but leaves
+`gzip_types` commented out, so on its own it compresses only HTML; the
+lines above (here, or in its `http { }` block) are what compress the
+rest. nginx matches `gzip_types` on the content type, so `.wasm` must be
+served as `application/wasm`: `grep wasm /etc/nginx/mime.types` should
+print it (older versions need `types { application/wasm wasm; }`).
+
+Check it after a reload:
+
+```bash
+curl -s -o /dev/null -D - -H 'Accept-Encoding: gzip' -H 'content-type: application/json' \
+  -d '{}' https://yomeru.example.com/api/kanji-parts | grep -i content-encoding
+# → content-encoding: gzip
 ```
 
 Enable + reload:
