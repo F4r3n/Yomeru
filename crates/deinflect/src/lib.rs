@@ -8,16 +8,14 @@ use std::collections::VecDeque;
 pub struct Deinflected {
     /// Candidate dictionary form (e.g. "食べる").
     pub text: String,
-    /// Human-readable description of how it was transformed (e.g. "negative past").
-    pub reason: String,
 }
 
 /// Return every plausible dictionary form of `text` by repeatedly applying
 /// deinflection rules. The original form is always included first.
 /// Results are deduplicated and ordered from least to most transformed.
 pub fn deinflect(text: &str) -> Vec<Deinflected> {
-    // (candidate, reason, depth)
-    let mut queue: VecDeque<(String, String, u8)> = VecDeque::new();
+    // (candidate, depth)
+    let mut queue: VecDeque<(String, u8)> = VecDeque::new();
     let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
     let mut results: Vec<Deinflected> = Vec::new();
 
@@ -26,16 +24,15 @@ pub fn deinflect(text: &str) -> Vec<Deinflected> {
     // count it once instead of recounting per (rule × candidate).
     let input_char_count = text.chars().count();
 
-    queue.push_back((text.to_owned(), String::new(), 0));
+    queue.push_back((text.to_owned(), 0));
 
-    while let Some((candidate, reason, depth)) = queue.pop_front() {
+    while let Some((candidate, depth)) = queue.pop_front() {
         if !seen.insert(candidate.clone()) {
             continue;
         }
 
         results.push(Deinflected {
             text: candidate.clone(),
-            reason: reason.clone(),
         });
 
         if depth >= 3 {
@@ -59,13 +56,7 @@ pub fn deinflect(text: &str) -> Vec<Deinflected> {
                 continue;
             }
 
-            let new_reason = if reason.is_empty() {
-                rule.reason.to_owned()
-            } else {
-                format!("{} < {}", reason, rule.reason)
-            };
-
-            queue.push_back((new_text, new_reason, depth + 1));
+            queue.push_back((new_text, depth + 1));
         }
     }
 

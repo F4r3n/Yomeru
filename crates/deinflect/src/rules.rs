@@ -1,6 +1,10 @@
 pub struct Rule {
     pub suffix_in: &'static str,
     pub suffix_out: &'static str,
+    /// What the suffix means ("past", "negative"). Not read today: it
+    /// documents the rule, and is there for a popup that shows how a word
+    /// was reached.
+    #[allow(dead_code)]
     pub reason: &'static str,
 }
 
