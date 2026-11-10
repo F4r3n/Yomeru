@@ -3,6 +3,11 @@ name = "kanjidic-core"
 version = "0.19.1"
 edition = "2021"
 
+[features]
+# Builders for in-memory test binaries (`test_utils`), for this crate's
+# tests and the server's endpoint tests. Off in production builds.
+test-utils = []
+
 [dependencies]
 kanjidic-types = { path = "../kanjidic-types" }
 japanese-utils = { path = "../japanese-utils" }

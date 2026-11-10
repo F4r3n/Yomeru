@@ -8,6 +8,8 @@ mod auth;
 #[cfg(test)]
 mod integration;
 mod lookup;
+#[cfg(test)]
+mod lookup_integration;
 mod shared;
 mod sync;
 

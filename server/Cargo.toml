@@ -38,6 +38,10 @@ subtle = "2.6.1"
 # `ServiceExt::oneshot` drives the real Router in-process, so the HTTP
 # integration tests exercise production wiring without binding a port.
 tower = { version = "0.5", features = ["util"] }
+# Builders for the small in-memory dictionaries the lookup endpoint tests load.
+jmdict-core   = { path = "../crates/jmdict-core", features = ["test-utils"] }
+kanjidic-core = { path = "../crates/kanjidic-core", features = ["test-utils"] }
+examples-core = { path = "../crates/examples-core", features = ["test-utils"] }
 
 [lints]
 workspace = true

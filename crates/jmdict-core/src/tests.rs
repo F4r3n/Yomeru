@@ -1,12 +1,9 @@
-use std::collections::BTreeMap;
-
-use fst::MapBuilder;
-use jmdict_types::{Gloss, KanjiElement, PartOfSpeech, ReadingElement, Sense, WordEntry};
+use jmdict_types::PartOfSpeech;
 use once_cell::sync::OnceCell;
-use postcard::to_allocvec;
 
 use crate::dictionary::init_for_testing;
 use crate::lookup::{lookup, lookup_longest_match, lookup_prefix};
+use crate::test_utils::{build_binary, word as make_entry};
 
 #[path = "../tests/reference/mod.rs"]
 mod reference;
@@ -18,47 +15,6 @@ fn ensure_test_dict() {
         let bytes = build_test_binary();
         init_for_testing(&bytes).expect("failed to init test dict");
     });
-}
-
-fn make_entry(
-    seq: u32,
-    kanji: &str,
-    reading: &str,
-    pos: Vec<PartOfSpeech>,
-    gloss: &str,
-) -> WordEntry {
-    WordEntry {
-        sequence: seq,
-        kanji_forms: if kanji.is_empty() {
-            vec![]
-        } else {
-            vec![KanjiElement {
-                text: kanji.into(),
-                info: vec![],
-                priorities: vec![],
-            }]
-        },
-        reading_forms: vec![ReadingElement {
-            text: reading.into(),
-            no_kanji: false,
-            restricted_to: vec![],
-            info: vec![],
-            priorities: vec![],
-        }],
-        senses: vec![Sense {
-            pos,
-            glosses: vec![Gloss {
-                text: gloss.into(),
-                gloss_type: None,
-            }],
-            xrefs: vec![],
-            antonyms: vec![],
-            fields: vec![],
-            misc: vec![],
-            info: vec![],
-            dialects: vec![],
-        }],
-    }
 }
 
 fn build_test_binary() -> Vec<u8> {
@@ -109,75 +65,7 @@ fn build_test_binary() -> Vec<u8> {
         make_entry(11, "書く", "かく", vec![PartOfSpeech::VerbGodanKu], "to write"),
         make_entry(12, "喫茶店", "きっさてん", vec![PartOfSpeech::Noun], "café"),
     ];
-
-    let mut entries_bytes: Vec<u8> = Vec::new();
-    let mut entry_offsets: Vec<u32> = Vec::with_capacity(entries.len());
-    let mut seq_pairs: Vec<(u32, u32)> = Vec::with_capacity(entries.len());
-    for entry in &entries {
-        let serialized = rkyv::to_bytes::<rkyv::rancor::Error>(entry).unwrap();
-        let offset = entries_bytes.len() as u32;
-        entry_offsets.push(offset);
-        seq_pairs.push((entry.sequence, offset));
-        entries_bytes.extend_from_slice(&(serialized.len() as u32).to_le_bytes());
-        entries_bytes.extend_from_slice(&serialized);
-    }
-    seq_pairs.sort_unstable_by_key(|(s, _)| *s);
-
-    // Build key → group mapping (same logic as jmdict-build indexer)
-    let mut key_to_indices: BTreeMap<String, Vec<u32>> = BTreeMap::new();
-    for (idx, entry) in entries.iter().enumerate() {
-        let byte_offset = entry_offsets[idx];
-        for k in &entry.kanji_forms {
-            key_to_indices
-                .entry(k.text.to_string())
-                .or_default()
-                .push(byte_offset);
-        }
-        for r in &entry.reading_forms {
-            key_to_indices
-                .entry(r.text.to_string())
-                .or_default()
-                .push(byte_offset);
-        }
-    }
-
-    let mut lookup_table: Vec<Vec<u32>> = Vec::new();
-    let mut group_dedup: BTreeMap<Vec<u32>, u32> = BTreeMap::new();
-    let mut fst_map: BTreeMap<Vec<u8>, u64> = BTreeMap::new();
-    for (key, mut indices) in key_to_indices {
-        indices.sort_unstable();
-        indices.dedup();
-        let group_idx = if let Some(&g) = group_dedup.get(&indices) {
-            g
-        } else {
-            let g = lookup_table.len() as u32;
-            group_dedup.insert(indices.clone(), g);
-            lookup_table.push(indices);
-            g
-        };
-        fst_map.insert(key.into_bytes(), u64::from(group_idx));
-    }
-
-    let mut builder = MapBuilder::memory();
-    for (k, v) in &fst_map {
-        builder.insert(k, *v).unwrap();
-    }
-    let fst_bytes = builder.into_inner().unwrap();
-    let lt_bytes = to_allocvec(&lookup_table).unwrap();
-    let seq_bytes = to_allocvec(&seq_pairs).unwrap();
-
-    let mut out = Vec::new();
-    out.extend_from_slice(b"JMDI");
-    out.push(5u8);
-    out.extend_from_slice(&(fst_bytes.len() as u32).to_le_bytes());
-    out.extend_from_slice(&fst_bytes);
-    out.extend_from_slice(&(lt_bytes.len() as u32).to_le_bytes());
-    out.extend_from_slice(&lt_bytes);
-    out.extend_from_slice(&(entries_bytes.len() as u32).to_le_bytes());
-    out.extend_from_slice(&entries_bytes);
-    out.extend_from_slice(&(seq_bytes.len() as u32).to_le_bytes());
-    out.extend_from_slice(&seq_bytes);
-    out
+    build_binary(&entries)
 }
 
 // ── lookup (exact) ────────────────────────────────────────────────────────────

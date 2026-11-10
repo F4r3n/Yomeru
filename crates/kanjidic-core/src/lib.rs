@@ -10,6 +10,8 @@ use serde::Deserialize;
 use std::collections::HashMap;
 
 pub mod parts;
+#[cfg(any(test, feature = "test-utils"))]
+pub mod test_utils;
 use parts::PartIndex;
 
 static KDICT: OnceCell<KanjiDictInner> = OnceCell::new();
@@ -305,66 +307,8 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<KanjiDictInner> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use kanjidic_types::KanjiEntry;
+    use crate::test_utils::{build_binary, build_raw, entry};
     use postcard::to_allocvec;
-
-    fn entry(
-        literal: char,
-        strokes: u8,
-        on: &[&str],
-        kun: &[&str],
-        meanings: &[&str],
-    ) -> KanjiEntry {
-        KanjiEntry {
-            literal,
-            stroke_count: strokes,
-            grade: None,
-            freq: None,
-            jlpt: None,
-            on_readings: on.iter().map(|s| s.to_string()).collect(),
-            kun_readings: kun.iter().map(|s| s.to_string()).collect(),
-            meanings: meanings.iter().map(|s| s.to_string()).collect(),
-            parts: vec![],
-            mnemonic: None,
-        }
-    }
-
-    /// Serialize a small in-memory KDIC binary matching the format documented
-    /// in `parse_binary`. The index is sorted by codepoint to match the real
-    /// builder's invariant (`get_entry` does a binary search).
-    fn build_binary(entries: &[KanjiEntry]) -> Vec<u8> {
-        let encoded = entries
-            .iter()
-            .map(|e| (e.literal, to_allocvec(&KanjiRecord::from(e)).unwrap()))
-            .collect();
-        build_raw(2, encoded)
-    }
-
-    /// The binary for already-encoded `(literal, entry bytes)` pairs, so a
-    /// test can lay out entries the way an older version did.
-    fn build_raw(version: u8, mut entries: Vec<(char, Vec<u8>)>) -> Vec<u8> {
-        entries.sort_by_key(|(c, _)| *c as u32);
-
-        let mut out = Vec::new();
-        out.extend_from_slice(b"KDIC");
-        out.push(version);
-        out.extend_from_slice(&(entries.len() as u32).to_le_bytes());
-
-        let mut data = Vec::new();
-        let mut offsets = Vec::with_capacity(entries.len());
-        for (_, ser) in &entries {
-            offsets.push(data.len() as u32);
-            data.extend_from_slice(&(ser.len() as u32).to_le_bytes());
-            data.extend_from_slice(ser);
-        }
-        for ((c, _), off) in entries.iter().zip(offsets.iter()) {
-            out.extend_from_slice(&(*c as u32).to_le_bytes());
-            out.extend_from_slice(&off.to_le_bytes());
-        }
-        out.extend_from_slice(&(data.len() as u32).to_le_bytes());
-        out.extend_from_slice(&data);
-        out
-    }
 
     #[test]
     fn parse_binary_roundtrip() {

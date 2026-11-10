@@ -100,50 +100,13 @@ fn parse_binary<'a>(bytes: &'a [u8]) -> anyhow::Result<ExamplesDictInner> {
     })
 }
 
+#[cfg(any(test, feature = "test-utils"))]
+pub mod test_utils;
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use examples_types::ExampleEntry;
-    use postcard::to_allocvec;
-
-    /// Build a small EXPL binary in-memory. `index` is (headword → ordered list
-    /// of sentence indices into `sentences`), so the test can control which
-    /// example offsets each headword resolves to.
-    fn build_binary(sentences: &[ExampleEntry], index: &[(&str, Vec<usize>)]) -> Vec<u8> {
-        let mut sentences_bytes = Vec::new();
-        let mut offsets = Vec::with_capacity(sentences.len());
-        for s in sentences {
-            offsets.push(sentences_bytes.len() as u32);
-            let ser = to_allocvec(s).unwrap();
-            sentences_bytes.extend_from_slice(&(ser.len() as u32).to_le_bytes());
-            sentences_bytes.extend_from_slice(&ser);
-        }
-
-        // Lookup uses `binary_search_by`, so the index must be sorted by key.
-        let mut idx: Vec<(String, Vec<u32>)> = index
-            .iter()
-            .map(|(k, ids)| (k.to_string(), ids.iter().map(|&i| offsets[i]).collect()))
-            .collect();
-        idx.sort_by(|a, b| a.0.cmp(&b.0));
-
-        let index_bytes = to_allocvec(&idx).unwrap();
-
-        let mut out = Vec::new();
-        out.extend_from_slice(b"EXPL");
-        out.push(1u8);
-        out.extend_from_slice(&(index_bytes.len() as u32).to_le_bytes());
-        out.extend_from_slice(&index_bytes);
-        out.extend_from_slice(&(sentences_bytes.len() as u32).to_le_bytes());
-        out.extend_from_slice(&sentences_bytes);
-        out
-    }
-
-    fn ex(j: &str, e: &str) -> ExampleEntry {
-        ExampleEntry {
-            japanese: j.into(),
-            english: e.into(),
-        }
-    }
+    use crate::test_utils::{build_binary, ex};
 
     #[test]
     fn parse_binary_roundtrip() {
