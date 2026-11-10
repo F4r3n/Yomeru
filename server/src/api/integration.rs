@@ -1361,8 +1361,12 @@ mod rate_limits {
         // One sync per reviewed card, all from one IP. Under the shared 10/min
         // auth quota the 11th was a 429, and clients only retry on the next
         // change — so the end of a session could stay unsynced.
-        let h = Harness::with_quotas(crate::auth_quota(), crate::sync_quota(), crate::lookup_quota())
-            .await;
+        let h = Harness::with_quotas(
+            crate::auth_quota(),
+            crate::sync_quota(),
+            crate::lookup_quota(),
+        )
+        .await;
         for i in 0..30 {
             let (status, body) = h
                 .post("/api/sync", Some(&h.token), &json!({ "cards": [] }))

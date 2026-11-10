@@ -1,6 +1,8 @@
 //! Builders for small in-memory dictionaries, for tests and benches here and
 //! in crates that call the lookup (the server's endpoint tests). Behind the
 //! `test-utils` feature so production builds don't carry them.
+// Fixtures: a malformed one is a bug in the test, so failing loudly is right.
+#![allow(clippy::unwrap_used, clippy::indexing_slicing)]
 
 use std::collections::BTreeMap;
 

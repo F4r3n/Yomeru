@@ -1,3 +1,6 @@
+// A bench that can't load its dictionary has nothing to measure.
+#![allow(clippy::expect_used)]
+
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use jmdict_core::lookup::{lookup, lookup_longest_match, lookup_prefix};
 use jmdict_core::lookup_by_sequence;

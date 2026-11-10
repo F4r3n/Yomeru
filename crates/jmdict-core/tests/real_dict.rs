@@ -46,7 +46,11 @@ fn same_answers_as_the_reference_on_real_text() {
     jmdict_core::init(&bytes).expect("init: is JMDICT_BIN a `full` build?");
 
     let sentences = sentences(10);
-    assert!(sentences.len() > 10_000, "only {} sentences", sentences.len());
+    assert!(
+        sentences.len() > 10_000,
+        "only {} sentences",
+        sentences.len()
+    );
     let mut positions = 0;
     for s in &sentences {
         for (i, _) in s.char_indices() {

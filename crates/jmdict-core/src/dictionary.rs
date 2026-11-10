@@ -93,7 +93,8 @@ impl FstWalk {
             out = out.cat(t.out);
             node = fst.node(t.addr);
         }
-        node.is_final().then(|| out.cat(node.final_output()).value())
+        node.is_final()
+            .then(|| out.cat(node.final_output()).value())
     }
 }
 

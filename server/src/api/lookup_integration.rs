@@ -32,8 +32,20 @@ fn ensure_dicts() {
     DICTS.call_once(|| {
         use jmdict_core::test_utils::{build_binary, word};
         let mut words = vec![
-            word(1, "食べる", "たべる", vec![PartOfSpeech::VerbIchidan], "to eat"),
-            word(2, "飲む", "のむ", vec![PartOfSpeech::VerbGodanMu], "to drink"),
+            word(
+                1,
+                "食べる",
+                "たべる",
+                vec![PartOfSpeech::VerbIchidan],
+                "to eat",
+            ),
+            word(
+                2,
+                "飲む",
+                "のむ",
+                vec![PartOfSpeech::VerbGodanMu],
+                "to drink",
+            ),
             word(3, "橋", "はし", vec![PartOfSpeech::Noun], "bridge"),
             word(4, "箸", "はし", vec![PartOfSpeech::Noun], "chopsticks"),
             word(5, "食べ物", "たべもの", vec![PartOfSpeech::Noun], "food"),
@@ -49,8 +61,14 @@ fn ensure_dicts() {
             e
         };
         let kanji = [
-            with_parts(entry('食', 9, &["ショク"], &["た.べる"], &["eat"]), &['人', '良']),
-            with_parts(entry('飲', 12, &["イン"], &["の.む"], &["drink"]), &['食', '欠']),
+            with_parts(
+                entry('食', 9, &["ショク"], &["た.べる"], &["eat"]),
+                &['人', '良'],
+            ),
+            with_parts(
+                entry('飲', 12, &["イン"], &["の.む"], &["drink"]),
+                &['食', '欠'],
+            ),
             entry('人', 2, &["ジン"], &["ひと"], &["person"]),
             entry('良', 7, &["リョウ"], &["よ.い"], &["good"]),
             entry('欠', 4, &["ケツ"], &["か.ける"], &["lack"]),
@@ -62,8 +80,7 @@ fn ensure_dicts() {
             .map(|i| ex(&format!("例文{i}を食べる。"), &format!("Example {i}.")))
             .collect();
         let index = [(EXAMPLE_WORD, (0..EXAMPLE_COUNT).collect())];
-        examples_core::init_from_bytes(&examples_bin(&sentences, &index))
-            .expect("init examples");
+        examples_core::init_from_bytes(&examples_bin(&sentences, &index)).expect("init examples");
     });
 }
 
@@ -116,7 +133,11 @@ async fn lookup_answers_each_word_in_request_order() {
     assert_eq!(results.len(), 4, "one result per word, misses included");
     assert_eq!(sequences(&results[0]), [2]);
     assert_eq!(sequences(&results[1]), Vec::<u64>::new(), "a miss is []");
-    assert_eq!(sequences(&results[2]), [3, 4], "every entry for a shared reading");
+    assert_eq!(
+        sequences(&results[2]),
+        [3, 4],
+        "every entry for a shared reading"
+    );
     assert_eq!(sequences(&results[3]), [1]);
     assert_eq!(results[3][0]["senses"][0]["glosses"][0]["text"], "to eat");
 }
@@ -202,7 +223,11 @@ async fn kanji_by_parts_finds_kanji_containing_the_part_at_any_depth() {
 async fn kanji_by_parts_caps_the_list_but_still_counts_every_match() {
     let h = harness().await;
     let (_, body) = h
-        .post("/api/kanji-by-parts", None, &json!({ "parts": "良", "max": 1 }))
+        .post(
+            "/api/kanji-by-parts",
+            None,
+            &json!({ "parts": "良", "max": 1 }),
+        )
         .await;
     assert_eq!(body["kanji"].as_array().expect("kanji").len(), 1);
     assert_eq!(body["total"], 3);
@@ -212,7 +237,11 @@ async fn kanji_by_parts_caps_the_list_but_still_counts_every_match() {
 async fn examples_returns_sentences_for_the_word() {
     let h = harness().await;
     let (status, body) = h
-        .post("/api/examples", None, &json!({ "word": EXAMPLE_WORD, "max": 2 }))
+        .post(
+            "/api/examples",
+            None,
+            &json!({ "word": EXAMPLE_WORD, "max": 2 }),
+        )
         .await;
     assert_eq!(status, StatusCode::OK, "{body}");
     let entries = body["entries"].as_array().expect("entries");

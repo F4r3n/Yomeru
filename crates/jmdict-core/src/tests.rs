@@ -62,7 +62,13 @@ fn build_test_binary() -> Vec<u8> {
             vec![PartOfSpeech::VerbSuru],
             "to study",
         ),
-        make_entry(11, "書く", "かく", vec![PartOfSpeech::VerbGodanKu], "to write"),
+        make_entry(
+            11,
+            "書く",
+            "かく",
+            vec![PartOfSpeech::VerbGodanKu],
+            "to write",
+        ),
         make_entry(12, "喫茶店", "きっさてん", vec![PartOfSpeech::Noun], "café"),
     ];
     build_binary(&entries)
@@ -335,12 +341,22 @@ fn walk_answers_like_a_plain_fst_get() {
     use crate::dictionary::{FstWalk, fst_get};
     ensure_test_dict();
     let mut walk = FstWalk::default();
-    for text in ["食べさせられなかった", "飲んでいた", "のむ", "美しくない話", "abc", ""] {
+    for text in [
+        "食べさせられなかった",
+        "飲んでいた",
+        "のむ",
+        "美しくない話",
+        "abc",
+        "",
+    ] {
         walk.walk(text);
         // Every prefix of the text, and each with its tail swapped for
         // something else: keys that share the text's start, then part from it.
         let mut keys: Vec<String> = Vec::new();
-        for (i, _) in text.char_indices().chain(std::iter::once((text.len(), ' '))) {
+        for (i, _) in text
+            .char_indices()
+            .chain(std::iter::once((text.len(), ' ')))
+        {
             let head = &text[..i];
             keys.push(head.to_owned());
             for tail in ["る", "む", "い", "ない", "x"] {
@@ -348,7 +364,11 @@ fn walk_answers_like_a_plain_fst_get() {
             }
         }
         for key in &keys {
-            assert_eq!(walk.get(text, key), fst_get(key), "{key:?} against {text:?}");
+            assert_eq!(
+                walk.get(text, key),
+                fst_get(key),
+                "{key:?} against {text:?}"
+            );
         }
     }
 }
@@ -363,14 +383,57 @@ fn sequences(key: &str) -> Vec<u32> {
 /// run into each other, and inside other text.
 fn generated_texts() -> Vec<String> {
     let keys = [
-        "飲む", "のむ", "食べる", "たべる", "美しい", "うつくしい", "日本", "にほん", "本",
-        "ほん", "橋", "箸", "はし", "食べさせる", "たべさせる", "勉強", "べんきょう",
-        "勉強する", "べんきょうする", "書く", "かく", "喫茶店", "きっさてん",
+        "飲む",
+        "のむ",
+        "食べる",
+        "たべる",
+        "美しい",
+        "うつくしい",
+        "日本",
+        "にほん",
+        "本",
+        "ほん",
+        "橋",
+        "箸",
+        "はし",
+        "食べさせる",
+        "たべさせる",
+        "勉強",
+        "べんきょう",
+        "勉強する",
+        "べんきょうする",
+        "書く",
+        "かく",
+        "喫茶店",
+        "きっさてん",
     ];
     let endings = [
-        "", "た", "て", "ない", "なかった", "ている", "ていた", "られる", "られなかった",
-        "させられなかった", "ます", "ました", "ませんでした", "ず", "ずに", "んで", "んだ",
-        "まない", "いた", "かない", "くない", "かった", "した", "しない", "せず", "る",
+        "",
+        "た",
+        "て",
+        "ない",
+        "なかった",
+        "ている",
+        "ていた",
+        "られる",
+        "られなかった",
+        "させられなかった",
+        "ます",
+        "ました",
+        "ませんでした",
+        "ず",
+        "ずに",
+        "んで",
+        "んだ",
+        "まない",
+        "いた",
+        "かない",
+        "くない",
+        "かった",
+        "した",
+        "しない",
+        "せず",
+        "る",
     ];
     let mut words: Vec<String> = Vec::new();
     for k in keys {
@@ -392,7 +455,13 @@ fn generated_texts() -> Vec<String> {
     }
     let mut texts: Vec<String> = Vec::new();
     for w in &words {
-        for (before, after) in [("", ""), ("私は", "話"), ("x", "。"), ("", "ですね"), ("の", "本")] {
+        for (before, after) in [
+            ("", ""),
+            ("私は", "話"),
+            ("x", "。"),
+            ("", "ですね"),
+            ("の", "本"),
+        ] {
             texts.push(format!("{before}{w}{after}"));
         }
     }
@@ -425,7 +494,12 @@ fn same_answers_as_the_reference() {
     // find_in_text keeps its buffers across positions: run it per text, and
     // over a page of them (a sample: a debug build scans ~30 µs a position).
     let all: std::collections::HashSet<u32> = (1..=12).collect();
-    let page = texts.iter().step_by(7).map(String::as_str).collect::<Vec<_>>().join("、");
+    let page = texts
+        .iter()
+        .step_by(7)
+        .map(String::as_str)
+        .collect::<Vec<_>>()
+        .join("、");
     assert_eq!(
         crate::find_in_text(&page, &all),
         reference::find_in_text(&page, &all, &sequences)

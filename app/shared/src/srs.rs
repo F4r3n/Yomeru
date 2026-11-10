@@ -71,7 +71,7 @@ pub fn apply_review(
     // its own, so "Again" doesn't need special-casing here.
     let interval_days = (scaled.due_ms - now_ms) / MS_PER_DAY;
     if settings.graduation_interval_days > 0
-        && interval_days >= settings.graduation_interval_days as f64
+        && interval_days >= f64::from(settings.graduation_interval_days)
     {
         next.status = CardStatus::Graduated;
         return ReviewOutcome::Graduated(next);
