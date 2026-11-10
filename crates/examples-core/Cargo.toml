@@ -1,6 +1,6 @@
 [package]
 name = "examples-core"
-version = "0.19.2"
+version = "0.19.3"
 license.workspace = true
 edition = "2024"
 
