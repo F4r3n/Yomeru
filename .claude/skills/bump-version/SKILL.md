@@ -11,13 +11,13 @@ This repo's version lives in:
 - The `Cargo.toml` of every workspace member (crates, server, app/*, xtask; the script asks `cargo metadata`, so new crates are covered automatically)
 - `Cargo.lock`, refreshed by the script so the bump commit is complete
 
-Do **not** edit those files by hand. The repo ships `bump-version.sh` which keeps them all in sync.
+Do **not** edit those files by hand. The repo ships `./scripts/bump-version.sh` which keeps them all in sync.
 
 ## Steps
 
 1. **Run the script** from the repo root:
    ```bash
-   ./bump-version.sh <X.Y.Z>
+   ./scripts/bump-version.sh <X.Y.Z>
    ```
    It validates semver and updates every file.
 

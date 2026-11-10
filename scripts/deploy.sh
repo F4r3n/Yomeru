@@ -15,16 +15,16 @@
 # of trusting a cursor the restored database never reached:
 #   sqlite3 yomeru.db "UPDATE sync_meta SET epoch = lower(hex(randomblob(8)))"
 #
-#   ./deploy.sh                  # backup + bundle + server
-#   FORCE_DICTS=1 ./deploy.sh    # ... and rebuild the dict bins
-#   SKIP_DB_BACKUP=1 ./deploy.sh # deploy without a backup (not recommended)
-#   KEEP_BACKUPS=20 ./deploy.sh  # how many backups to keep (default 10)
+#   ./scripts/deploy.sh                  # backup + bundle + server
+#   FORCE_DICTS=1 ./scripts/deploy.sh    # ... and rebuild the dict bins
+#   SKIP_DB_BACKUP=1 ./scripts/deploy.sh # deploy without a backup (not recommended)
+#   KEEP_BACKUPS=20 ./scripts/deploy.sh  # how many backups to keep (default 10)
 
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 if [[ $EUID -eq 0 ]]; then
-    echo "deploy.sh: run without sudo (rootless Podman is per user); then: sudo ./deploy-web.sh" >&2
+    echo "deploy.sh: run without sudo (rootless Podman is per user); then: sudo ./scripts/deploy-web.sh" >&2
     exit 1
 fi
 
@@ -133,7 +133,7 @@ fi
 
 echo
 echo "Server is up. Now publish the website:"
-echo "  sudo ./deploy-web.sh"
+echo "  sudo ./scripts/deploy-web.sh"
 echo
 echo "Useful follow-ups:"
 echo "  Logs:    ${COMPOSE[*]} logs -f yomeru-server"

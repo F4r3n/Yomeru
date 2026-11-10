@@ -351,10 +351,10 @@ unsynced data:
 1. On every device that uses the site/extension: Settings → Export, save
    the JSON somewhere safe.
 2. Update, using the commands below, or from the repo root run
-   `./deploy.sh` (as your user: builds the website bundle into
+   `./scripts/deploy.sh` (as your user: builds the website bundle into
    `web-dist/` and runs `podman-compose -f server/docker-compose.yml up -d
    --build --force-recreate`; add `FORCE_DICTS=1` to also rebuild the dicts in the right
-   order) and then `sudo ./deploy-web.sh [web root]` (copies `web-dist/`
+   order) and then `sudo ./scripts/deploy-web.sh [web root]` (copies `web-dist/`
    to the web root, `/var/www/html/yomeru` by default).
 3. Open the site/extension on each device again — auto-sync (or Settings
    → Sync now) repopulates the fresh server table from local IndexedDB.
@@ -395,7 +395,7 @@ podman-compose -f server/docker-compose.yml run --rm -e FORCE=1 yomeru-dicts
 podman-compose -f server/docker-compose.yml restart yomeru-server
 ```
 
-`FORCE_DICTS=1 ./deploy.sh` runs these steps in this order. Rebuilding
+`FORCE_DICTS=1 ./scripts/deploy.sh` runs these steps in this order. Rebuilding
 the dicts first leaves the old server unable to start until step 1 is
 done. Without `build yomeru-dicts`, the builder runs its old
 image and writes the old format again.
@@ -414,7 +414,7 @@ image and writes the old format again.
 
 ## Database backups
 
-`./deploy.sh` backs up the live SQLite database before it swaps in the new
+`./scripts/deploy.sh` backs up the live SQLite database before it swaps in the new
 server, because a new server may migrate the schema on startup and old server
 code can't read a migrated database. Restoring the backup is the way back from
 a bad server release; redeploying the old server alone is not.
@@ -447,7 +447,7 @@ podman-compose -f server/docker-compose.yml start yomeru-server
 ```
 
 To roll back a server release, redeploy the old version first (check out its
-commit and run `./deploy.sh`), then restore the backup taken just before the
+commit and run `./scripts/deploy.sh`), then restore the backup taken just before the
 bad deploy. A backup also works under any newer server, which migrates it
 again on startup.
 

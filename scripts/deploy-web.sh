@@ -3,20 +3,20 @@
 # directory nginx serves. Usually run with sudo, since the web root is
 # not writable by the deploying user.
 #
-#   sudo ./deploy-web.sh                    # → /var/www/html/yomeru
-#   sudo ./deploy-web.sh /srv/yomeru/web    # another web root
+#   sudo ./scripts/deploy-web.sh                    # → /var/www/html/yomeru
+#   sudo ./scripts/deploy-web.sh /srv/yomeru/web    # another web root
 #
 # Takes the destination as an argument rather than an env var because
 # sudo drops the caller's environment.
 
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 SRC="$(pwd)/web-dist"
 DEST="${1:-/var/www/html/yomeru}"
 
 if [[ ! -f "$SRC/index.html" ]]; then
-    echo "deploy-web.sh: no bundle at $SRC — run ./deploy.sh first (without sudo)" >&2
+    echo "deploy-web.sh: no bundle at $SRC — run ./scripts/deploy.sh first (without sudo)" >&2
     exit 1
 fi
 

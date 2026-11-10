@@ -11,7 +11,7 @@ if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     exit 1
 fi
 
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 # ── extension/manifest.json ───────────────────────────────────────────────────
 jq --arg v "$VERSION" '.version = $v' extension/manifest.json > extension/manifest.json.tmp

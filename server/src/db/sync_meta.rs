@@ -17,7 +17,7 @@
 //!
 //! Restoring a backup rolls `rev` back behind what clients have seen, and a
 //! cursor that lands between the restored `rev` and later writes would miss
-//! those writes. So a restore must rotate the epoch (see `deploy.sh`):
+//! those writes. So a restore must rotate the epoch (see `scripts/deploy.sh`):
 //! `UPDATE sync_meta SET epoch = lower(hex(randomblob(8)))`.
 
 use anyhow::Context;
