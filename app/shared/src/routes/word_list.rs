@@ -261,7 +261,8 @@ pub fn WordListTab() -> Element {
                 input {
                     r#type: "search",
                     placeholder: "Filter by word, reading, or romaji…",
-                    value: "{filter}",
+                    // No `value`: echoing it back breaks Japanese IME composition on
+                    // Android (see the lookup search box). The filter starts empty.
                     oninput: move |e| filter.set(e.value()),
                 }
             }

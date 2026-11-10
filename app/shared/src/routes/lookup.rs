@@ -235,6 +235,13 @@ fn LookupListPane() -> Element {
             .take()
             .unwrap_or_default()
     });
+    // What the search box shows when it mounts. The box is uncontrolled
+    // (`initial_value`, no `value`): echoing `query` back into it on every
+    // keystroke lands mid-composition on Android, where `oninput` arrives a
+    // keystroke late, and the Japanese IME resets and hides the keyboard.
+    // Setting the text from code (a history chip) bumps the generation, which
+    // remounts the box with the new seed.
+    let mut input_seed = use_signal(|| (0u32, query.peek().clone()));
     let mut last_target = use_signal(String::new);
     let mut entries = use_signal(Vec::<WordEntry>::new);
     let mut searching = use_signal(|| false);
@@ -411,6 +418,10 @@ fn LookupListPane() -> Element {
         let mut run_lookup = run_lookup;
         move |term: String| {
             query.set(term.clone());
+            input_seed.with_mut(|(generation, seed)| {
+                *generation += 1;
+                *seed = term.clone();
+            });
             run_lookup(term);
         }
     };
@@ -469,12 +480,15 @@ fn LookupListPane() -> Element {
             }
 
             div { class: "hero-search", style: "margin-bottom: 10px;",
-                input {
-                    r#type: "search",
-                    placeholder: "Type a Japanese word… (kanji, kana, or romaji)",
-                    value: "{query}",
-                    autofocus: true,
-                    oninput: on_input,
+                for (generation, seed) in std::iter::once(input_seed.read().clone()) {
+                    input {
+                        key: "{generation}",
+                        r#type: "search",
+                        placeholder: "Type a Japanese word… (kanji, kana, or romaji)",
+                        initial_value: "{seed}",
+                        autofocus: true,
+                        oninput: on_input,
+                    }
                 }
             }
             if show_converted {
