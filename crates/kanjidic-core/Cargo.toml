@@ -1,6 +1,7 @@
 [package]
 name = "kanjidic-core"
 version = "0.19.1"
+license.workspace = true
 edition = "2021"
 
 [features]

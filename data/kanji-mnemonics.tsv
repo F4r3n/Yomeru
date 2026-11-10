@@ -1,6 +1,8 @@
 # Kanji mnemonic phrases, laid over KANJIDIC at lookup time.
 # <kanji><TAB><phrase>. Written with Claude Code (kanji-mnemonics skill), then
 # reviewed and edited by hand. Delete a line to regenerate it.
+# Copyright 2026 F4r3n. Licensed under CC BY-SA 4.0:
+# https://creativecommons.org/licenses/by-sa/4.0/
 惑	A heart torn between this or that: perplexed.
 日	A window with the sun framed inside: sun, day.
 一	A single flat stroke, one finger held sideways: one.

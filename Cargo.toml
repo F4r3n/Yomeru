@@ -47,6 +47,9 @@ default-members = [
     "xtask",
 ]
 
+[workspace.package]
+license = "Apache-2.0"
+
 [workspace.lints.rust]
 trivial_numeric_casts = "warn"
 improper_ctypes = "warn"

@@ -1,0 +1,30 @@
+Yomeru
+Copyright 2026 F4r3n
+https://github.com/F4r3n/Yomeru
+
+This product includes software developed by F4r3n as part of Yomeru,
+licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Kanji mnemonics and part names
+------------------------------
+data/kanji-mnemonics.tsv and data/part-names.tsv are Copyright 2026 F4r3n,
+licensed under the Creative Commons Attribution-ShareAlike 4.0 International
+License (CC BY-SA 4.0): https://creativecommons.org/licenses/by-sa/4.0/
+
+Dictionary data
+---------------
+The dictionary files built by this project (jmdict.bin, kanjidic.bin,
+examples.bin) are adapted from the following sources and are distributed
+under their licenses, not the Apache License:
+
+- JMdict and KANJIDIC2, property of the Electronic Dictionary Research and
+  Development Group (EDRDG), used in conformance with the Group's licence:
+  https://www.edrdg.org/edrdg/licence.html
+  Licensed under CC BY-SA 4.0: https://creativecommons.org/licenses/by-sa/4.0/
+
+- KanjiVG, Copyright (C) Ulrich Apel, https://kanjivg.tagaini.net
+  Licensed under CC BY-SA 3.0: https://creativecommons.org/licenses/by-sa/3.0/
+
+- Example sentences from the Tatoeba project, https://tatoeba.org,
+  distributed through the EDRDG examples file.
+  Licensed under CC BY 2.0 FR: https://creativecommons.org/licenses/by/2.0/fr/

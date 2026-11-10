@@ -157,3 +157,17 @@ A temporary add-on shares the installed Yomeru's storage and sync login. To test
 Word entries come from [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html), kanji details from [KANJIDIC2](https://www.edrdg.org/kanjidic/kanjidic_doc.html), and example sentences from the EDRDG examples file (Tatoeba), all from the Electronic Dictionary Research and Development Group. Kanji parts come from [KanjiVG](https://kanjivg.tagaini.net/). Each source is compiled into a compact binary index: an FST for fast key lookup plus postcard-encoded entries.
 
 **Data flow (extension):** `mousemove` (debounced 60 ms) → `extract_japanese_run(text, offset)` → `Dictionary.lookup_at(run)` (longest-match + deinflection via FST) → shadow DOM popup + CSS highlight → "+ Add to SRS" → background script → IndexedDB → sync to `yomeru-server` when signed in.
+
+## License
+
+Yomeru's code is licensed under the [Apache License 2.0](LICENSE). If you redistribute it or build on it, keep the [NOTICE](NOTICE) file with your copy, as the license asks.
+
+The kanji mnemonics and part names (`data/kanji-mnemonics.tsv`, `data/part-names.tsv`) are © F4r3n, licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+
+The dictionary files the build produces are adapted from third-party data and keep that data's licenses:
+
+| Source | Used for | License |
+|---|---|---|
+| [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html), [KANJIDIC2](https://www.edrdg.org/kanjidic/kanjidic_doc.html) (EDRDG) | Words, kanji | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), used in conformance with the [EDRDG licence](https://www.edrdg.org/edrdg/licence.html) |
+| [KanjiVG](https://kanjivg.tagaini.net/) © Ulrich Apel | Kanji parts | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) |
+| [Tatoeba](https://tatoeba.org/), via the EDRDG examples file | Example sentences | [CC BY 2.0 FR](https://creativecommons.org/licenses/by/2.0/fr/) |

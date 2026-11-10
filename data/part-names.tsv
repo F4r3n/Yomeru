@@ -1,6 +1,8 @@
 # Plain names for kanji parts, shown first wherever the part is looked up
 # (part chips, popup, mnemonic generation). Laid over KANJIDIC at lookup time,
 # so a dictionary update never touches it. <part><TAB><name>.
+# Copyright 2026 F4r3n. Licensed under CC BY-SA 4.0:
+# https://creativecommons.org/licenses/by-sa/4.0/
 宀	roof
 冖	cover
 亠	lid

@@ -1,6 +1,7 @@
 {
   "name": "yomeru-ext",
   "private": true,
+  "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "build": "npm run build:content && npm run build:app",

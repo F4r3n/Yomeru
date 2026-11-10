@@ -55,7 +55,19 @@ pub fn AboutTab() -> Element {
                     }
                 }
                 p { class: "muted", style: "margin-top: 14px; font-size: 12px;",
-                    "EDRDG files are licensed under CC BY-SA 4.0. KanjiVG is © Ulrich Apel, licensed under CC BY-SA 3.0."
+                    "EDRDG files are used in conformance with the "
+                    a { href: "https://www.edrdg.org/edrdg/licence.html", target: "_blank",
+                        class: "link", "EDRDG licence" }
+                    " and licensed under CC BY-SA 4.0. KanjiVG is © Ulrich Apel, licensed under CC BY-SA 3.0. Tatoeba sentences are licensed under CC BY 2.0 FR."
+                }
+            }
+
+            div { class: "card",
+                div { class: "section-title", "License" }
+                p { class: "muted", style: "font-size: 13px;",
+                    "Yomeru is © F4r3n, licensed under the Apache License 2.0. Its kanji mnemonics and part names are licensed under CC BY-SA 4.0. "
+                    a { href: "https://github.com/F4r3n/Yomeru", target: "_blank",
+                        class: "link", "Source code ↗" }
                 }
             }
 
