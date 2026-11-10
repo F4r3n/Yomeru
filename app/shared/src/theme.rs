@@ -186,6 +186,10 @@ button, a, input, select, textarea { touch-action: manipulation; }
     grid-area: main;
     padding: 28px 32px 48px;
     overflow-x: hidden;
+    /* Without this, a `clip`ped .content can't shrink below its widest
+       unbreakable child (a long trouble-word gloss), so the grid column
+       grows past the screen and the page scrolls sideways. */
+    min-width: 0;
 }
 /* `clip` cuts the same overflow without making .content a scroll box, so
    `position: sticky` inside it follows the page scroll (kanji finder). */
