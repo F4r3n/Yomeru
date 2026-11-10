@@ -15,15 +15,15 @@ use crate::types::{CardDirection, CardStatus, SrsCard};
 
 const HISTORY_KEY: &str = "lookup_history";
 
-thread_local! {
-    /// A word another page wants searched as the lookup page opens (the
-    /// kanji finder's tray). Taken once, on mount.
-    static SEARCH_ON_OPEN: std::cell::RefCell<Option<String>> = const { std::cell::RefCell::new(None) };
-}
+/// A word another page wants searched as the lookup page opens (the
+/// kanji finder's tray). Taken once, on mount. A process-wide static, not a
+/// thread-local: on Android, Dioxus runs the app from more than one thread,
+/// so the page that sets it and the one that takes it may not share one.
+static SEARCH_ON_OPEN: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
 
 /// Have the next lookup page that opens search `word`.
 pub fn search_on_open(word: String) {
-    SEARCH_ON_OPEN.with(|w| *w.borrow_mut() = Some(word));
+    *SEARCH_ON_OPEN.lock().unwrap_or_else(|e| e.into_inner()) = Some(word);
 }
 const HISTORY_MAX: usize = 10;
 
@@ -230,7 +230,9 @@ fn LookupListPane() -> Element {
 
     let query = use_signal(|| {
         SEARCH_ON_OPEN
-            .with(|w| w.borrow_mut().take())
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .take()
             .unwrap_or_default()
     });
     let mut last_target = use_signal(String::new);
