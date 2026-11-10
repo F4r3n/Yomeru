@@ -167,9 +167,16 @@ fn apply_theme_to_dom(theme: &str) {
 
 #[cfg(not(target_arch = "wasm32"))]
 fn apply_theme_to_dom(theme: &str) {
+    // On Android, the activity paints behind the WebView in the page's
+    // background colour (`YomeruShell`, see app/android/MainActivity.kt), so
+    // the strip the keyboard uncovers while the page resizes isn't white.
     if let Ok(theme) = serde_json::to_string(theme) {
         document::eval(&format!(
-            "document.documentElement.setAttribute('data-theme', {theme});"
+            "document.documentElement.setAttribute('data-theme', {theme});
+             if (window.YomeruShell) {{
+               YomeruShell.setBackground(
+                 getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
+             }}"
         ));
     }
 }

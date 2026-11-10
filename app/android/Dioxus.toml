@@ -1,5 +1,10 @@
 [application]
 name = "Yomeru"
+# Our own manifest and activity instead of the generated ones, so the
+# keyboard stays open (see the comments in each file). Copies of dx 0.7.10's
+# templates: keep them in step when bumping dx.
+android_manifest = "AndroidManifest.xml"
+android_main_activity = "MainActivity.kt"
 
 [bundle]
 # Reverse of yomeru.faren.ovh. Never change it once the app is installed

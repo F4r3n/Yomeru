@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Replaces the manifest dx generates (Dioxus.toml `android_manifest`). It is a
+  copy of dx 0.7.10's AndroidManifest.xml.hbs output; keep it in step when
+  bumping dx, since template changes (new permissions, attributes) no longer
+  reach the app on their own.
+
+  Only change from the template: `android:windowSoftInputMode` on the
+  activity, so the page resizes above the keyboard and focus changes leave
+  the keyboard as it is. (The keyboard closing with its "Change keyboard"
+  picker is fixed in MainActivity.kt.)
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application android:hasCode="true" android:icon="@mipmap/ic_launcher"
+        android:extractNativeLibs="true"
+        android:allowNativeHeapPointerTagging="false"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"
+        android:networkSecurityConfig="@xml/network_security_config">
+        <activity android:configChanges="orientation|screenLayout|screenSize|keyboardHidden" android:exported="true"
+            android:windowSoftInputMode="adjustResize|stateUnchanged"
+            android:label="@string/app_name" android:name="dev.dioxus.main.MainActivity">
+            <meta-data android:name="android.app.lib_name" android:value="main" />
+            <meta-data android:name="android.app.func_name" android:value="ANativeActivity_onCreate" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
