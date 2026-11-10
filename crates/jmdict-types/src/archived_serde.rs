@@ -88,9 +88,15 @@ impl Serialize for ArchivedKanjiInf {
 
 impl Serialize for ArchivedGloss {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        let mut st = s.serialize_struct("Gloss", 2)?;
+        // `gloss_type` is left out when absent, matching the owned type's
+        // `skip_serializing_if`: the default dictionary never fills it.
+        let gloss_type = self.gloss_type.as_ref().map(|g| g.as_str());
+        let mut st = s.serialize_struct("Gloss", 1 + usize::from(gloss_type.is_some()))?;
         st.serialize_field("text", self.text.as_str())?;
-        st.serialize_field("gloss_type", &self.gloss_type.as_ref().map(|g| g.as_str()))?;
+        match gloss_type {
+            Some(g) => st.serialize_field("gloss_type", g)?,
+            None => st.skip_field("gloss_type")?,
+        }
         st.end()
     }
 }

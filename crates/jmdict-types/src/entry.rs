@@ -614,6 +614,8 @@ pub struct Sense {
 pub struct Gloss {
     pub text: String,
     /// Gloss type ("lit", "fig", "expl", etc.).
+    /// Left out of JSON when absent (always, unless built with `full`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub gloss_type: Option<String>,
 }
 
