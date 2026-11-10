@@ -19,6 +19,9 @@ fn install_head() {
         return;
     };
     doc.set_title("Yomeru");
+    if let Some(root) = doc.document_element() {
+        let _ = root.set_attribute("lang", "en");
+    }
     // Inject once — keyed by id so re-renders/remounts don't duplicate it.
     if doc.get_element_by_id("yomeru-global-css").is_some() {
         return;
@@ -45,6 +48,7 @@ fn install_head() {
     };
     document::eval(&format!(
         "document.title = 'Yomeru';
+         document.documentElement.lang = 'en';
          if (!document.getElementById('yomeru-global-css')) {{
              const s = document.createElement('style');
              s.id = 'yomeru-global-css';
