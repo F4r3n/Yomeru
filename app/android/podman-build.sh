@@ -69,15 +69,21 @@ if [[ $release == 1 ]]; then
     export YOMERU_KS_PASS
 fi
 
-"${run[@]}" "$image" \
-    dx bundle --package yomeru-android --platform android "${target[@]}" "$@"
-
-# Our launcher icon over dx's default one (see icon/apply.sh).
 if [[ $release == 1 ]]; then
     profile=release task=bundleRelease
 else
     profile=debug task=assembleDebug
 fi
+
+# Drop the icons a previous apply.sh left behind: when dx regenerates its
+# project (e.g. after a Dioxus.toml change) it writes its .webp icons back
+# next to them, and two files for one resource fail the Gradle build.
+rm -f "$root/target/podman/dx/yomeru/$profile/android/app/app/src/main/res"/mipmap-*/ic_launcher.png
+
+"${run[@]}" "$image" \
+    dx bundle --package yomeru-android --platform android "${target[@]}" "$@"
+
+# Our launcher icon over dx's default one (see icon/apply.sh).
 "${run[@]}" "$image" /src/app/android/icon/apply.sh \
     "/src/target/podman/dx/yomeru/$profile/android/app" "$task"
 
