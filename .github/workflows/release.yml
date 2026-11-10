@@ -107,6 +107,8 @@ jobs:
     needs: dicts
     runs-on: ubuntu-latest
     env:
+      # Keep in step with app/android/Dockerfile; see "Upgrading dx" in
+      # app/README.md before bumping.
       DX_VERSION: 0.7.10
       BUNDLETOOL_VERSION: 1.17.2
     steps:

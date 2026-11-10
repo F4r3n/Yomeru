@@ -51,3 +51,34 @@ cd app/android
 dx serve --platform android    # run on connected device / emulator
 dx bundle --platform android   # produce an APK
 ```
+
+### Upgrading dx (Dioxus CLI)
+
+dx is pinned in `app/android/Dockerfile` (`DX_VERSION`) and
+`.github/workflows/release.yml` (`DX_VERSION`), and must match the `dioxus`
+version in `Cargo.lock`. Bump all three together.
+
+`app/android/MainActivity.kt` and `app/android/AndroidManifest.xml` replace
+the files dx generates (`android_main_activity` / `android_manifest` in
+`app/android/Dioxus.toml`). Both are copies of **dx 0.7.10**'s templates plus
+our changes, so template updates from dx no longer reach the app on their
+own. On each dx bump:
+
+1. Build once, then diff our files against what the new dx would generate.
+   The templates live in the dioxus repo under
+   `packages/cli/assets/android/` (`MainActivity.kt.hbs`,
+   `gen/app/src/main/AndroidManifest.xml.hbs`) for the new tag.
+2. Port any template changes (permissions, attributes, activity code) into
+   our copies, keeping our additions:
+   - `AndroidManifest.xml`: `android:windowSoftInputMode="adjustResize|stateUnchanged"`
+     on the activity.
+   - `MainActivity.kt`: `FocusShield` (keeps the keyboard open when its
+     "Change keyboard" picker opens) and the `YomeruShell` background bridge.
+3. Check that wry still attaches the WebView with
+   `activity.setContentView(view)` (`wry/src/android/main_pipe.rs`). The
+   shield is installed by overriding that method: if wry attaches it another
+   way, the shield is silently skipped and the keyboard bug comes back.
+4. Update the "dx 0.7.10" mentions in both files and in this section.
+5. Test on a phone: long-press the keyboard's globe key in a text box — the
+   picker must stay open — and open/close the keyboard in both themes with no
+   white strip.

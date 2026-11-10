@@ -31,7 +31,8 @@ RUN apt-get update \
 RUN rustup target add aarch64-linux-android x86_64-linux-android
 
 # dx refuses to bundle against a different dioxus version: keep in step
-# with the dioxus version in Cargo.lock.
+# with the dioxus version in Cargo.lock. On a bump, also re-check our copies
+# of dx's Android templates (see "Upgrading dx" in app/README.md).
 ARG DX_VERSION=0.7.10
 RUN curl -sSL https://dioxus.dev/install.sh | bash -s "v${DX_VERSION}"
 
