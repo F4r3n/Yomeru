@@ -1,12 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
     <head>
         <title></title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="description" content="Yomeru is a Japanese dictionary with spaced-repetition review for vocabulary and kanji.">
+        <script>
+            // Apply the saved theme before first paint (same key the app uses).
+            try { if (JSON.parse(localStorage.getItem("yomeru.theme")) === "light") document.documentElement.dataset.theme = "light"; } catch (e) {}
+        </script>
+        <style>
+            /* Loading shell: painted while the wasm downloads, hidden as soon
+               as Dioxus renders into #main. Colours match theme.rs. */
+            html { background: #181825; color: #cdd6f4; }
+            html[data-theme="light"] { background: #eff1f5; color: #4c4f69; }
+            body { margin: 0; }
+            #loading {
+                position: fixed; inset: 0;
+                display: flex; align-items: center; justify-content: center;
+                font: 600 2rem "Segoe UI", system-ui, sans-serif;
+                letter-spacing: 0.02em;
+            }
+            #main:not(:empty) + #loading { display: none; }
+        </style>
     </head>
     <body>
         <div id="main"></div>
+        <div id="loading">Yomeru</div>
     </body>
 </html>
