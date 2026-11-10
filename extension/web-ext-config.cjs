@@ -15,6 +15,7 @@ module.exports = {
     "vite.content.config.ts",
     "package.json",
     "package-lock.json",
+    "amo-metadata.json",
   ],
   run: {
     firefoxProfile: "./dev-profile",

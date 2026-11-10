@@ -200,7 +200,7 @@ jobs:
 
       - name: Sign on AMO
         if: steps.signed.outcome != 'success'
-        run: npx web-ext sign --channel=unlisted --source-dir=release/ --amo-metadata=amo-metadata.json
+        run: npx web-ext sign --channel=unlisted --source-dir=release/ --amo-metadata=extension/amo-metadata.json
         env:
           WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
           WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
