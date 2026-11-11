@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# Put the Yomeru launcher icon into the Gradle project dx generated, then
-# re-run the given Gradle task(s) so the APK / .aab carries it.
+# Put the Yomeru launcher icon and window theme (res/values*/styles.xml: a
+# dark background from the first frame, no white flash on a cold start) into
+# the Gradle project dx generated, then re-run the given Gradle task(s) so the
+# APK / .aab carries them.
 #
 #   apply.sh <gradle-project-dir> <gradle-task>...
 #   e.g. apply.sh target/dx/yomeru/release/android/app bundleRelease
 #
-# Why a second Gradle pass: dx 0.7 writes its own default icons into res/ on
+# Why a second Gradle pass: dx 0.7 writes its own default icons and styles.xml into res/ on
 # every build (embedded in the CLI, no config for it), so ours can only go in
 # after `dx bundle`. The Rust library is already in jniLibs/, so this pass
 # only repackages: seconds, not a rebuild.

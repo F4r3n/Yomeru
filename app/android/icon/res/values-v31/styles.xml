@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ shows a system splash screen (the launcher icon on a plain
+  background) before the activity draws. AppTheme gives it the dark
+  background; on Android 13+, MainActivity.kt switches the next launches to
+  AppTheme.Light when the user's theme is light (setSplashScreenTheme).
+-->
+<resources>
+    <style name="AppTheme" parent="@style/Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@color/yomeru_window_background</item>
+        <item name="android:windowSplashScreenBackground">@color/yomeru_window_background</item>
+    </style>
+
+    <style name="AppTheme.Light">
+        <item name="android:windowBackground">@color/yomeru_window_background_light</item>
+        <item name="android:windowSplashScreenBackground">@color/yomeru_window_background_light</item>
+    </style>
+</resources>

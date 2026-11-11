@@ -74,7 +74,9 @@ own. On each dx bump:
    - `AndroidManifest.xml`: `android:windowSoftInputMode="adjustResize|stateUnchanged"`
      on the activity.
    - `MainActivity.kt`: `FocusShield` (keeps the keyboard open when its
-     "Change keyboard" picker opens) and the `YomeruShell` background bridge.
+     "Change keyboard" picker opens), the `YomeruShell` background bridge, and
+     the saved window background (`onCreate`, `rememberBackground`), so a cold
+     start paints the user's theme before the page loads.
 3. Check that wry still attaches the WebView with
    `activity.setContentView(view)` (`wry/src/android/main_pipe.rs`). The
    shield is installed by overriding that method: if wry attaches it another
@@ -82,4 +84,5 @@ own. On each dx bump:
 4. Update the "dx 0.7.10" mentions in both files and in this section.
 5. Test on a phone: long-press the keyboard's globe key in a text box — the
    picker must stay open — and open/close the keyboard in both themes with no
-   white strip.
+   white strip. Cold-start the app in both themes: no flash of the other
+   theme's colour (or white).

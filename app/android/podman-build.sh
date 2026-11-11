@@ -75,10 +75,16 @@ else
     profile=debug task=assembleDebug
 fi
 
-# Drop the icons a previous apply.sh left behind: when dx regenerates its
-# project (e.g. after a Dioxus.toml change) it writes its .webp icons back
-# next to them, and two files for one resource fail the Gradle build.
-rm -f "$root/target/podman/dx/yomeru/$profile/android/app/app/src/main/res"/mipmap-*/ic_launcher.png
+# Drop what a previous apply.sh left behind, so `dx bundle` builds dx's own
+# resources only. The icons: when dx regenerates its project (e.g. after a
+# Dioxus.toml change) it writes its .webp icons back next to them, and two
+# files for one resource fail the Gradle build. The Android 12+ theme: dx
+# rewrites values/styles.xml (dropping the colours it uses) but leaves
+# values-v31/ in place, and its dangling colour references fail resource
+# linking. apply.sh puts both back after.
+res_dir="$root/target/podman/dx/yomeru/$profile/android/app/app/src/main/res"
+rm -f "$res_dir"/mipmap-*/ic_launcher.png
+rm -rf "$res_dir/values-v31"
 
 "${run[@]}" "$image" \
     dx bundle --package yomeru-android --platform android "${target[@]}" "$@"

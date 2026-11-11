@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Replaces the styles.xml dx generates (copied over it by apply.sh). AppTheme
+  is painted in the app's dark background from the first frame: the window
+  shows before the WebView exists, and dx's light parent theme made every
+  cold start flash white. MainActivity.kt then repaints the window in the
+  colour the page last reported, so a light-theme user gets light from there
+  on. Keep the colours in step with MainActivity.kt (DEFAULT_BACKGROUND) and
+  the two themes' background variable (bg) in app/shared/src/theme.rs.
+-->
+<resources>
+    <color name="yomeru_window_background">#181825</color>
+    <color name="yomeru_window_background_light">#eff1f5</color>
+
+    <style name="AppTheme" parent="@style/Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@color/yomeru_window_background</item>
+    </style>
+
+    <!-- The splash theme MainActivity.kt picks for light-theme users on
+         Android 13+ (see values-v31). -->
+    <style name="AppTheme.Light">
+        <item name="android:windowBackground">@color/yomeru_window_background_light</item>
+    </style>
+</resources>
