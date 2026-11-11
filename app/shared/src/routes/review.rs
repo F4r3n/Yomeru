@@ -156,7 +156,16 @@ fn WordReview() -> Element {
     let mut back_tab = use_signal(|| BackTab::Word);
     let mut kanji = use_signal(Vec::<kanjidic_types::KanjiEntry>::new);
     let mut examples = use_signal(Vec::<examples_types::ExampleEntry>::new);
-    let mut dict_ready = use_signal(|| false);
+    // The session loads in two stages so the start screen doesn't wait for
+    // the dictionary (a cold start on Android loads it in the background):
+    // `cards_loaded` once the due cards are read from the store,
+    // `entries_ready` once their words are looked up. A session can only
+    // start after the second.
+    let mut cards_loaded = use_signal(|| false);
+    let mut entries_ready = use_signal(|| false);
+    // Bumped by every load. A sync can start a new load while an older one
+    // is still awaiting; the older one then drops its results.
+    let load_gen = use_signal(|| 0u32);
     let mut trouble = use_signal(Vec::<(TroubleWord, Option<WordEntry>)>::new);
     // Drill sessions replay trouble words without touching their schedule:
     // ratings feed the recap and nothing else.
@@ -171,42 +180,25 @@ fn WordReview() -> Element {
     let mut rating_in_flight = use_signal(|| false);
 
     let load_session = move || {
+        let generation = *load_gen.peek() + 1;
+        // A copy of the handle, so this closure stays `Fn`.
+        let mut gen_signal = load_gen;
+        gen_signal.set(generation);
+        let current = move || *load_gen.peek() == generation;
         spawn(async move {
-            dict_ready.set(true);
+            // Stage 1: the cards alone, enough for the start screen.
             let settings = load_settings();
             let now = now_ms();
             let due = get_due_cards(now).await.unwrap_or_default();
-            let limited: Vec<_> = due
-                .into_iter()
-                .take(settings.max_session_cards as usize)
-                .collect();
-            let (kept, ents, skips) = attach_entries(limited).await;
-            // Pair, shuffle as a single permutation, then split back so cards
-            // and entries stay aligned.
-            let mut paired: Vec<_> = kept.into_iter().zip(ents.into_iter()).collect();
-            paired = shuffle(paired);
-            let (kept_final, ents_final) = paired.into_iter().unzip();
-            due_cards.set(kept_final);
-            entries.set(ents_final);
-            skipped.set(skips);
-            idx.set(0);
-            show_back.set(false);
-            started.set(false);
-            graduated_msg.set(None);
-            next_due.set(None);
-            drill.set(false);
-            results.set(vec![]);
-            let all = get_all_cards().await.unwrap_or_default();
-            let words = trouble_words(&all, TROUBLE_MIN_FAILS, TROUBLE_EXIT_INTERVAL_DAYS);
-            drilled.set(drill_log::load().await);
-            let seqs: Vec<u32> = words.iter().map(|w| w.sequence).collect();
-            let hits = if seqs.is_empty() {
-                vec![]
-            } else {
-                lookup_by_sequence(&seqs).await.unwrap_or_default()
-            };
-            trouble.set(words.into_iter().zip(hits).collect());
+            let limited: Vec<SrsCard> = shuffle(
+                due.into_iter()
+                    .take(settings.max_session_cards as usize)
+                    .collect(),
+            );
             let staging = get_staging_cards().await.unwrap_or_default();
+            if !current() {
+                return;
+            }
             // Unique by sequence — recognition and recall siblings count once.
             let mut seen = std::collections::HashSet::new();
             let n = staging
@@ -214,6 +206,46 @@ fn WordReview() -> Element {
                 .filter(|c| seen.insert(c.sequence))
                 .count();
             staging_count.set(n);
+            due_cards.set(limited.clone());
+            entries.set(vec![]);
+            entries_ready.set(false);
+            skipped.set(vec![]);
+            idx.set(0);
+            show_back.set(false);
+            started.set(false);
+            graduated_msg.set(None);
+            next_due.set(None);
+            drill.set(false);
+            results.set(vec![]);
+            cards_loaded.set(true);
+
+            // Stage 2: their words. Waits for the dictionary on a cold start.
+            // `attach_entries` keeps the cards' (shuffled) order and drops the
+            // ones it can't show, so cards and entries stay aligned.
+            let (kept, ents, skips) = attach_entries(limited).await;
+            if !current() {
+                return;
+            }
+            due_cards.set(kept);
+            entries.set(ents);
+            skipped.set(skips);
+            entries_ready.set(true);
+
+            // The trouble list under the start screen, which shows words too.
+            let all = get_all_cards().await.unwrap_or_default();
+            let words = trouble_words(&all, TROUBLE_MIN_FAILS, TROUBLE_EXIT_INTERVAL_DAYS);
+            let counts = drill_log::load().await;
+            let seqs: Vec<u32> = words.iter().map(|w| w.sequence).collect();
+            let hits = if seqs.is_empty() {
+                vec![]
+            } else {
+                lookup_by_sequence(&seqs).await.unwrap_or_default()
+            };
+            if !current() {
+                return;
+            }
+            drilled.set(counts);
+            trouble.set(words.into_iter().zip(hits).collect());
         });
     };
 
@@ -225,7 +257,12 @@ fn WordReview() -> Element {
         }
     });
 
-    let start_review = move |_| started.set(true);
+    let start_review = move |_| {
+        // The button is disabled until then; this also covers a queued click.
+        if *entries_ready.peek() {
+            started.set(true);
+        }
+    };
 
     let start_drill = move |_| {
         let words: Vec<TroubleWord> = trouble.read().iter().map(|(w, _)| w.clone()).collect();
@@ -365,9 +402,10 @@ fn WordReview() -> Element {
     let current_entry = entries_r.get(i).cloned();
     let due_count = cards.len();
 
-    if !*dict_ready.read() {
-        return rsx! { div { class: "loading", "Loading dictionary…" } };
+    if !*cards_loaded.read() {
+        return rsx! { div { class: "loading", "Loading…" } };
     }
+    let ready = *entries_ready.read();
 
     let new_count = *staging_count.read();
     let due_ready_label = if due_count == 1 {
@@ -417,7 +455,9 @@ fn WordReview() -> Element {
                         div { class: "glyph", Icon { name: IconName::Play, size: 44 } }
                         div { class: "headline", "{due_ready_label}" }
                         div { class: "helper", "Start your review session." }
-                        button { class: "primary", onclick: start_review, "Start Review" }
+                        button { class: "primary", disabled: !ready, onclick: start_review,
+                            if ready { "Start Review" } else { "Loading dictionary…" }
+                        }
                     }
                 } else if new_count > 0 {
                     div { class: "empty-state",
