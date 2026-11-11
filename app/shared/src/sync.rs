@@ -4,6 +4,8 @@
 //! These free functions keep existing call sites (every mutation site in
 //! `routes/*`) source-stable.
 
+use std::sync::Mutex;
+
 use dioxus::prelude::*;
 
 pub use yomeru_core::sync::*;
@@ -47,23 +49,32 @@ pub fn bump_sync_generation() {
 /// Outcome of the most recent sync — manual, startup or background — provided
 /// at the app root. Drives the "not synced" banner and the Settings badge.
 /// Starts as `None` (nothing attempted yet) so the banner never flashes on load.
+///
+/// A [`SyncSignal`], so it can be written from whichever thread a sync
+/// finishes on: on Android, Dioxus drives the app from more than one thread.
 #[derive(Clone, Copy)]
-pub struct SyncHealth(pub Signal<Option<Result<(), String>>>);
+pub struct SyncHealth(pub SyncSignal<Option<Result<(), String>>>);
 
-thread_local! {
-    /// The root's [`SyncHealth`], reachable from code that runs outside any
-    /// component: the web auto-sync timer and the extension's storage
-    /// listener. Writing a signal from there is fine — Dioxus queues the
-    /// re-render over a channel rather than needing the runtime on the stack.
-    static HEALTH: std::cell::Cell<Option<SyncHealth>> = const { std::cell::Cell::new(None) };
+/// The root's [`SyncHealth`], reachable from code that runs outside any
+/// component: the auto-sync timer and the extension's storage listener.
+/// Writing a signal from there is fine — Dioxus queues the re-render over a
+/// channel rather than needing the runtime on the stack. A `static`, not a
+/// `thread_local!`: the writer may be on another thread than the one that
+/// mounted the root.
+static HEALTH: Mutex<Option<SyncHealth>> = Mutex::new(None);
+
+fn health() -> Option<SyncHealth> {
+    *HEALTH.lock().ok()?
 }
 
 impl SyncHealth {
     /// Create the signal and register it for [`record_sync_result`]. Call once,
     /// from the app root's `use_context_provider`.
     pub fn new_root() -> Self {
-        let health = Self(Signal::new(None));
-        HEALTH.with(|h| h.set(Some(health)));
+        let health = Self(Signal::new_maybe_sync(None));
+        if let Ok(mut h) = HEALTH.lock() {
+            *h = Some(health);
+        }
         health
     }
 
@@ -85,20 +96,24 @@ impl SyncHealth {
 /// debounced auto-sync — provided at the app root. Drives the topbar spinner,
 /// so the user knows the numbers on screen may be about to change.
 #[derive(Clone, Copy)]
-pub struct SyncActivity(pub Signal<u32>);
+pub struct SyncActivity(pub SyncSignal<u32>);
 
-thread_local! {
-    /// Same arrangement as [`HEALTH`]: the auto-sync timer runs outside any
-    /// component.
-    static ACTIVITY: std::cell::Cell<Option<SyncActivity>> = const { std::cell::Cell::new(None) };
+/// Same arrangement as [`HEALTH`]: the auto-sync timer runs outside any
+/// component.
+static ACTIVITY: Mutex<Option<SyncActivity>> = Mutex::new(None);
+
+fn activity() -> Option<SyncActivity> {
+    *ACTIVITY.lock().ok()?
 }
 
 impl SyncActivity {
     /// Create the counter and register it for [`SyncRunning`]. Call once, from
     /// the app root's `use_context_provider`.
     pub fn new_root() -> Self {
-        let activity = Self(Signal::new(0));
-        ACTIVITY.with(|a| a.set(Some(activity)));
+        let activity = Self(Signal::new_maybe_sync(0));
+        if let Ok(mut a) = ACTIVITY.lock() {
+            *a = Some(activity);
+        }
         activity
     }
 
@@ -113,21 +128,22 @@ pub(crate) struct SignalObserver;
 
 impl SyncObserver for SignalObserver {
     fn started(&self) {
-        if let Some(mut a) = ACTIVITY.with(std::cell::Cell::get) {
+        if let Some(mut a) = activity() {
             *a.0.write() += 1;
         }
     }
 
     fn finished(&self) {
-        if let Some(mut a) = ACTIVITY.with(std::cell::Cell::get) {
+        if let Some(mut a) = activity() {
             let n = *a.0.peek();
             a.0.set(n.saturating_sub(1));
         }
     }
 
     fn result(&self, result: Result<(), String>) {
-        if let Some(mut health) = HEALTH.with(std::cell::Cell::get) {
-            health.0.set(Some(result));
+        match health() {
+            Some(mut health) => health.0.set(Some(result)),
+            None => warn!("[yomeru] sync result before the app root mounted: {result:?}"),
         }
     }
 }
@@ -135,7 +151,7 @@ impl SyncObserver for SignalObserver {
 /// Forget the last sync outcome, e.g. after a fresh sign-in, so a stale
 /// "session expired" warning doesn't linger until the next sync lands.
 pub fn clear_sync_health() {
-    if let Some(mut health) = HEALTH.with(std::cell::Cell::get) {
+    if let Some(mut health) = health() {
         health.0.set(None);
     }
 }
