@@ -85,41 +85,69 @@ async fn load(source: Arc<dyn DictSource>) -> Result<(), String> {
     // Reading ~70 MB, then validating every entry (bytecheck) and building the
     // indexes: a second or so of I/O and CPU on a phone, kept off the UI
     // thread.
-    tokio::task::spawn_blocking(move || -> Result<(), String> {
+    let steps = tokio::task::spawn_blocking(move || -> Result<Steps, String> {
         let source = &*source;
-        let jmdict = read(source, DictFile::Jmdict)?;
-        let kanjidic = read(source, DictFile::Kanjidic)?;
-        let examples = read(source, DictFile::Examples)?;
-        let mnemonics = read_text(source, DictFile::Mnemonics)?;
-        let part_names = read_text(source, DictFile::PartNames)?;
-        init_cores(&jmdict, &kanjidic, &examples, mnemonics, part_names)
-            .map_err(|e| format!("load dictionary: {e:#}"))
+        let mut steps = Steps::default();
+        let jmdict = steps.time("read jmdict", || read(source, DictFile::Jmdict))?;
+        let kanjidic = steps.time("read kanjidic", || read(source, DictFile::Kanjidic))?;
+        let examples = steps.time("read examples", || read(source, DictFile::Examples))?;
+        let mnemonics = steps.time("read mnemonics", || read_text(source, DictFile::Mnemonics))?;
+        let part_names =
+            steps.time("read part names", || read_text(source, DictFile::PartNames))?;
+        init_cores(
+            &mut steps, &jmdict, &kanjidic, &examples, mnemonics, part_names,
+        )
+        .map_err(|e| format!("load dictionary: {e:#}"))?;
+        Ok(steps)
     })
     .await
     .map_err(|e| format!("dictionary loader: {e}"))??;
     tracing::info!(
-        "[yomeru] dictionaries loaded in {:.0} ms",
-        crate::rt::now_ms() - started
+        "[yomeru] dictionaries loaded in {:.0} ms ({})",
+        crate::rt::now_ms() - started,
+        steps.summary()
     );
     Ok(())
 }
 
+/// How long each loading step took, for the "dictionaries loaded" log line.
+#[derive(Default)]
+struct Steps(Vec<(&'static str, f64)>);
+
+impl Steps {
+    fn time<T>(&mut self, name: &'static str, step: impl FnOnce() -> T) -> T {
+        let started = crate::rt::now_ms();
+        let out = step();
+        self.0.push((name, crate::rt::now_ms() - started));
+        out
+    }
+
+    fn summary(&self) -> String {
+        self.0
+            .iter()
+            .map(|(name, ms)| format!("{name} {ms:.0}"))
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
+}
+
 fn init_cores(
+    steps: &mut Steps,
     jmdict: &[u8],
     kanjidic: &[u8],
     examples: &[u8],
     mnemonics: Option<String>,
     part_names: Option<String>,
 ) -> anyhow::Result<()> {
-    jmdict_core::init(jmdict)?;
-    kanjidic_core::init_from_bytes(kanjidic)?;
+    steps.time("init jmdict", || jmdict_core::init(jmdict))?;
+    steps.time("init kanjidic", || kanjidic_core::init_from_bytes(kanjidic))?;
     if let Some(tsv) = &mnemonics {
-        kanjidic_core::init_mnemonics(tsv)?;
+        steps.time("init mnemonics", || kanjidic_core::init_mnemonics(tsv))?;
     }
     if let Some(tsv) = &part_names {
-        kanjidic_core::init_part_names(tsv)?;
+        steps.time("init part names", || kanjidic_core::init_part_names(tsv))?;
     }
-    examples_core::init_from_bytes(examples)?;
+    steps.time("init examples", || examples_core::init_from_bytes(examples))?;
     Ok(())
 }
 
