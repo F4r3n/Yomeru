@@ -12,7 +12,7 @@
 use examples_types::ExampleEntry;
 use jmdict_types::{ArchivedWordEntry, WordEntry};
 use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
-use std::rc::Rc;
+use std::sync::Arc;
 
 use tokio::sync::OnceCell;
 
@@ -33,23 +33,24 @@ pub enum DictFile {
 }
 
 /// Where the bundled files come from.
-#[async_trait(?Send)]
-pub trait DictSource {
+pub trait DictSource: Send + Sync {
     /// The file's bytes, or `Ok(None)` when this build doesn't bundle it.
-    async fn read(&self, file: DictFile) -> Result<Option<Vec<u8>>, String>;
+    /// Called on a blocking thread (tokio's `spawn_blocking` pool), so it
+    /// may block on I/O.
+    fn read(&self, file: DictFile) -> Result<Option<Vec<u8>>, String>;
 }
 
 pub struct LocalDict {
-    source: Rc<dyn DictSource>,
+    source: Arc<dyn DictSource>,
 }
 
 impl LocalDict {
-    pub fn new(source: Rc<dyn DictSource>) -> Self {
+    pub fn new(source: Arc<dyn DictSource>) -> Self {
         Self { source }
     }
 
     async fn ensure(&self) -> Result<(), String> {
-        ensure(&*self.source).await
+        ensure(self.source.clone()).await
     }
 }
 
@@ -60,19 +61,18 @@ static READY: OnceCell<Result<(), String>> = OnceCell::const_new();
 /// Loads every core once; concurrent callers wait on the same load. A
 /// failure is remembered rather than retried: the assets are part of the app,
 /// so a second attempt would fail the same way and pay the read again.
-async fn ensure(source: &dyn DictSource) -> Result<(), String> {
+async fn ensure(source: Arc<dyn DictSource>) -> Result<(), String> {
     READY.get_or_init(|| load(source)).await.clone()
 }
 
-async fn read(source: &dyn DictSource, file: DictFile) -> Result<Vec<u8>, String> {
+fn read(source: &dyn DictSource, file: DictFile) -> Result<Vec<u8>, String> {
     source
-        .read(file)
-        .await?
+        .read(file)?
         .ok_or_else(|| format!("{file:?} isn't bundled"))
 }
 
-async fn read_text(source: &dyn DictSource, file: DictFile) -> Result<Option<String>, String> {
-    let Some(bytes) = source.read(file).await? else {
+fn read_text(source: &dyn DictSource, file: DictFile) -> Result<Option<String>, String> {
+    let Some(bytes) = source.read(file)? else {
         return Ok(None);
     };
     String::from_utf8(bytes)
@@ -80,34 +80,46 @@ async fn read_text(source: &dyn DictSource, file: DictFile) -> Result<Option<Str
         .map_err(|e| format!("{file:?}: {e}"))
 }
 
-async fn load(source: &dyn DictSource) -> Result<(), String> {
+async fn load(source: Arc<dyn DictSource>) -> Result<(), String> {
     let started = crate::rt::now_ms();
-    let jmdict = read(source, DictFile::Jmdict).await?;
-    let kanjidic = read(source, DictFile::Kanjidic).await?;
-    let examples = read(source, DictFile::Examples).await?;
-    let mnemonics = read_text(source, DictFile::Mnemonics).await?;
-    let part_names = read_text(source, DictFile::PartNames).await?;
-    // Parsing validates every entry (bytecheck) and builds the indexes: a
-    // second or so of CPU on a phone, kept off the UI thread.
-    tokio::task::spawn_blocking(move || -> anyhow::Result<()> {
-        jmdict_core::init(&jmdict)?;
-        kanjidic_core::init_from_bytes(&kanjidic)?;
-        if let Some(tsv) = &mnemonics {
-            kanjidic_core::init_mnemonics(tsv)?;
-        }
-        if let Some(tsv) = &part_names {
-            kanjidic_core::init_part_names(tsv)?;
-        }
-        examples_core::init_from_bytes(&examples)?;
-        Ok(())
+    // Reading ~70 MB, then validating every entry (bytecheck) and building the
+    // indexes: a second or so of I/O and CPU on a phone, kept off the UI
+    // thread.
+    tokio::task::spawn_blocking(move || -> Result<(), String> {
+        let source = &*source;
+        let jmdict = read(source, DictFile::Jmdict)?;
+        let kanjidic = read(source, DictFile::Kanjidic)?;
+        let examples = read(source, DictFile::Examples)?;
+        let mnemonics = read_text(source, DictFile::Mnemonics)?;
+        let part_names = read_text(source, DictFile::PartNames)?;
+        init_cores(&jmdict, &kanjidic, &examples, mnemonics, part_names)
+            .map_err(|e| format!("load dictionary: {e:#}"))
     })
     .await
-    .map_err(|e| format!("dictionary loader: {e}"))?
-    .map_err(|e| format!("load dictionary: {e:#}"))?;
+    .map_err(|e| format!("dictionary loader: {e}"))??;
     tracing::info!(
         "[yomeru] dictionaries loaded in {:.0} ms",
         crate::rt::now_ms() - started
     );
+    Ok(())
+}
+
+fn init_cores(
+    jmdict: &[u8],
+    kanjidic: &[u8],
+    examples: &[u8],
+    mnemonics: Option<String>,
+    part_names: Option<String>,
+) -> anyhow::Result<()> {
+    jmdict_core::init(jmdict)?;
+    kanjidic_core::init_from_bytes(kanjidic)?;
+    if let Some(tsv) = &mnemonics {
+        kanjidic_core::init_mnemonics(tsv)?;
+    }
+    if let Some(tsv) = &part_names {
+        kanjidic_core::init_part_names(tsv)?;
+    }
+    examples_core::init_from_bytes(examples)?;
     Ok(())
 }
 
@@ -123,12 +135,12 @@ fn owned_all(entries: Vec<&ArchivedWordEntry>) -> Vec<WordEntry> {
     entries.into_iter().filter_map(owned).collect()
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl DictClient for LocalDict {
     fn warm_up(&self) {
         let source = self.source.clone();
         crate::rt::spawn_detached(async move {
-            if let Err(e) = ensure(&*source).await {
+            if let Err(e) = ensure(source).await {
                 tracing::error!("[yomeru] {e}");
             }
         });

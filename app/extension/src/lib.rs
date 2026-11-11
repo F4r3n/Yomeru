@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -19,8 +19,8 @@ pub async fn main() {
     }
     settings_msg::register_storage_watcher();
     let platform = yomeru_shared::Platform {
-        dict: Rc::new(dict_msg::ExtensionDict),
-        settings: Rc::new(settings_msg::ExtensionSettings),
+        dict: Arc::new(dict_msg::ExtensionDict),
+        settings: Arc::new(settings_msg::ExtensionSettings),
     };
     yomeru_shared::launch_with(platform);
 }

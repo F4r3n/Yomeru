@@ -1,7 +1,6 @@
 //! The offline dictionary's files as Dioxus assets, for
 //! [`yomeru_core::local_dict::LocalDict`].
 
-use async_trait::async_trait;
 use manganis::Asset;
 
 pub use yomeru_core::local_dict::*;
@@ -18,9 +17,8 @@ pub struct DictAssets {
     pub part_names: Option<Asset>,
 }
 
-#[async_trait(?Send)]
 impl DictSource for DictAssets {
-    async fn read(&self, file: DictFile) -> Result<Option<Vec<u8>>, String> {
+    fn read(&self, file: DictFile) -> Result<Option<Vec<u8>>, String> {
         let asset = match file {
             DictFile::Jmdict => Some(self.jmdict),
             DictFile::Kanjidic => Some(self.kanjidic),
@@ -31,8 +29,12 @@ impl DictSource for DictAssets {
         let Some(asset) = asset else {
             return Ok(None);
         };
-        dioxus::asset_resolver::read_asset_bytes(asset)
-            .await
+        // Dioxus only offers an async reader. We're on a `spawn_blocking`
+        // thread (see `DictSource::read`), which has the runtime's context
+        // but isn't inside a task, so blocking on it here is allowed.
+        let runtime = tokio::runtime::Handle::try_current().map_err(|e| e.to_string())?;
+        runtime
+            .block_on(dioxus::asset_resolver::read_asset_bytes(asset))
             .map(Some)
             .map_err(|e| format!("read {asset}: {e}"))
     }

@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::sync::{LazyLock, Mutex, PoisonError};
 
 use js_sys::Reflect;
 use serde::{Deserialize, Serialize};
@@ -10,15 +10,24 @@ use async_trait::async_trait;
 use yomeru_shared::platform::SettingsStore;
 use yomeru_shared::settings::SrsSettings;
 
-thread_local! {
-    static CACHE: RefCell<SrsSettings> = RefCell::new(SrsSettings::default());
+/// The settings `load()` answers from, refreshed from `storage.local`. A
+/// panic can't leave a half-written `SrsSettings` here (it's replaced whole),
+/// so a poisoned lock is still safe to read.
+static CACHE: LazyLock<Mutex<SrsSettings>> = LazyLock::new(Mutex::default);
+
+fn cached() -> SrsSettings {
+    CACHE.lock().unwrap_or_else(PoisonError::into_inner).clone()
+}
+
+fn set_cache(s: SrsSettings) {
+    *CACHE.lock().unwrap_or_else(PoisonError::into_inner) = s;
 }
 
 // ── Public init helpers ────────────────────────────────────────────────
 
 pub async fn hydrate() -> Result<(), String> {
     let s = read_from_storage().await?;
-    CACHE.with(|c| *c.borrow_mut() = s);
+    set_cache(s);
     Ok(())
 }
 
@@ -60,7 +69,7 @@ pub fn register_storage_watcher() {
             return;
         }
         if let Ok(s) = serde_wasm_bindgen::from_value::<SrsSettings>(new_val) {
-            CACHE.with(|c| *c.borrow_mut() = s);
+            set_cache(s);
         }
     });
     bridge::add_storage_listener(cb.as_ref().unchecked_ref());
@@ -118,21 +127,22 @@ struct OkResp {}
 
 pub struct ExtensionSettings;
 
-#[async_trait(?Send)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl SettingsStore for ExtensionSettings {
     fn load(&self) -> SrsSettings {
-        CACHE.with(|c| c.borrow().clone())
+        cached()
     }
 
     async fn load_async(&self) -> Result<SrsSettings, String> {
         let s = read_from_storage().await?;
-        CACHE.with(|c| *c.borrow_mut() = s.clone());
+        set_cache(s.clone());
         Ok(s)
     }
 
     async fn save(&self, s: SrsSettings) -> Result<(), String> {
         // Optimistically update the local cache before the round-trip.
-        CACHE.with(|c| *c.borrow_mut() = s.clone());
+        set_cache(s.clone());
         let resp: SuccessResp = crate::send_bg_message("SAVE_SETTINGS", &s).await?;
         if let Some(e) = resp.error {
             return Err(e);

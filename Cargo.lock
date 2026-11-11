@@ -8077,7 +8077,6 @@ dependencies = [
 name = "yomeru-shared"
 version = "0.19.3"
 dependencies = [
- "async-trait",
  "console_error_panic_hook",
  "deinflect",
  "dioxus",
@@ -8090,6 +8089,7 @@ dependencies = [
  "manganis",
  "serde_json",
  "srs-core",
+ "tokio",
  "wasm-bindgen",
  "web-sys",
  "yomeru-core",

@@ -7,8 +7,7 @@
 //! thin shims (`yomeru_shared::dict`, `yomeru_shared::settings`, …), so its
 //! routes still see `dict::lookup(word)` etc.
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use examples_types::ExampleEntry;
 use jmdict_types::WordEntry;
@@ -21,11 +20,18 @@ use crate::sync::{SettingsPayload, SyncBody, SyncResponse};
 use crate::types::SrsCard;
 use async_trait::async_trait;
 use tracing::warn;
-/// Read-only dictionary surface. Web/android use [`DefaultPlatform`] which
-/// posts JSON to the yomeru-server; the extension implements this against
+// Threads: the platform objects are `Send + Sync` on every target, so
+// a `Platform` can be shared across threads (and handed to Dioxus' launch
+// context). Their futures are `Send` natively, where a host may poll them on
+// any thread; in the browser they can't be (they wrap JS promises), and
+// there's only one thread anyway.
+
+/// Read-only dictionary surface. Web/android use `HttpDict`, which posts
+/// JSON to the yomeru-server; the extension implements this against
 /// `browser.runtime.sendMessage` so its in-WASM dicts service the request.
-#[async_trait(?Send)]
-pub trait DictClient {
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+pub trait DictClient: Send + Sync {
     /// Start any expensive one-time setup in the background, so the first
     /// lookup doesn't pay for it. Called once at app start.
     fn warm_up(&self) {}
@@ -45,12 +51,13 @@ pub trait DictClient {
 /// Settings persistence + sync orchestration. `load()` is intentionally
 /// synchronous so existing call sites (event handlers, derive-during-render
 /// snippets) stay tight; implementations back it with a cached snapshot of
-/// the actual store. Async [`load_async`] is for one-shot hydration at
+/// the actual store. Async [`Self::load_async`] is for one-shot hydration at
 /// startup.
 ///
 
-#[async_trait(?Send)]
-pub trait SettingsStore {
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+pub trait SettingsStore: Send + Sync {
     /// Synchronous read off the in-process cache.
     fn load(&self) -> SrsSettings;
     /// Async refresh from the underlying store. Web/android tail this on
@@ -106,11 +113,11 @@ pub trait SettingsStore {
 }
 
 /// The host services a UI hands to core. Cheap to clone — both fields
-/// are `Rc`-counted trait objects.
+/// are `Arc`-counted trait objects.
 #[derive(Clone)]
 pub struct Platform {
-    pub dict: Rc<dyn DictClient>,
-    pub settings: Rc<dyn SettingsStore>,
+    pub dict: Arc<dyn DictClient>,
+    pub settings: Arc<dyn SettingsStore>,
 }
 
 // ── Default (HTTP) implementation ─────────────────────────────────────
@@ -120,18 +127,18 @@ pub struct Platform {
 /// in-process debouncer.
 pub fn default_http_platform() -> Platform {
     Platform {
-        dict: Rc::new(HttpDict),
-        settings: Rc::new(LocalSettings::new()),
+        dict: Arc::new(HttpDict),
+        settings: Arc::new(LocalSettings::new()),
     }
 }
 
 /// The default settings/sync store with a different dictionary — the
 /// Android app's offline [`crate::local_dict::LocalDict`]. Sync still goes
 /// to the configured server.
-pub fn platform_with_dict(dict: Rc<dyn DictClient>) -> Platform {
+pub fn platform_with_dict(dict: Arc<dyn DictClient>) -> Platform {
     Platform {
         dict,
-        settings: Rc::new(LocalSettings::new()),
+        settings: Arc::new(LocalSettings::new()),
     }
 }
 
@@ -210,7 +217,8 @@ async fn post_json<B: Serialize, R: for<'de> Deserialize<'de>>(
     res.json()
 }
 
-#[async_trait(?Send)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl DictClient for HttpDict {
     async fn lookup(&self, word: &str) -> Result<Vec<WordEntry>, String> {
         let mut results = self.lookup_many(&[word.to_owned()]).await?;
@@ -266,7 +274,20 @@ impl DictClient for HttpDict {
 /// Settings backed by [`rt::kv_get`] / [`rt::kv_set`], sync scheduling by an
 /// in-process debounce task.
 struct LocalSettings {
-    state: Rc<RefCell<SyncState>>,
+    state: SharedSyncState,
+}
+
+/// Shared between the store and its debounce task, which may run on another
+/// thread. Every read-then-write happens under one lock, so two syncs can't
+/// both see "not in flight" and start; the lock is never held across an
+/// `.await` (a held `MutexGuard` would make the future non-`Send`, which the
+/// compiler rejects natively).
+type SharedSyncState = Arc<Mutex<SyncState>>;
+
+/// A panic elsewhere can't leave these three fields inconsistent with each
+/// other, so a poisoned lock is still safe to use.
+fn lock(state: &Mutex<SyncState>) -> MutexGuard<'_, SyncState> {
+    state.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
 #[derive(Default)]
@@ -284,36 +305,46 @@ const DEBOUNCE_MS: u32 = 2_000;
 /// Runs a sync after the debounce. When it finishes with `retry` set — a
 /// change landed mid-flight, or the review outbox still has a backlog — it
 /// re-arms itself, so every pending change eventually goes up.
-fn arm_sync(state: Rc<RefCell<SyncState>>) {
+fn arm_sync(state: SharedSyncState) {
     let armed = {
-        let mut st = state.borrow_mut();
+        let mut st = lock(&state);
         st.generation = st.generation.wrapping_add(1);
         st.generation
     };
     rt::spawn_detached(async move {
         rt::sleep_ms(DEBOUNCE_MS).await;
-        if state.borrow().generation != armed || state.borrow().in_flight {
-            return;
+        {
+            let mut st = lock(&state);
+            if st.generation != armed || st.in_flight {
+                return;
+            }
+            st.in_flight = true;
         }
-        state.borrow_mut().in_flight = true;
         let running = crate::sync::SyncRunning::start();
-        let result = do_sync(state.clone()).await;
+        let result = do_sync(&state).await;
         drop(running);
         if let Err(e) = &result {
             warn!("[yomeru] auto-sync failed: {e}");
         }
         crate::sync::record_sync_result(result.map(|_| ()));
-        state.borrow_mut().in_flight = false;
-        if std::mem::replace(&mut state.borrow_mut().retry, false) {
+        if finish_sync(&state) {
             arm_sync(state);
         }
     });
 }
 
+/// Clears `in_flight` and returns whether a change asked for another sync
+/// while this one ran.
+fn finish_sync(state: &Mutex<SyncState>) -> bool {
+    let mut st = lock(state);
+    st.in_flight = false;
+    std::mem::replace(&mut st.retry, false)
+}
+
 impl LocalSettings {
     fn new() -> Self {
         Self {
-            state: Rc::new(RefCell::new(SyncState::default())),
+            state: Arc::new(Mutex::new(SyncState::default())),
         }
     }
 }
@@ -409,7 +440,7 @@ fn join_url(base: &str, path: &str) -> String {
     format!("{trimmed}{path}")
 }
 
-async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
+async fn do_sync(state: &Mutex<SyncState>) -> Result<String, String> {
     use crate::idb::{
         apply_remote_deletions, clear_dirty, clear_tombstones, get_all_cards, get_all_tombstones,
         get_cards_by_ids, get_dirty, get_outbox, get_sync_cursor, set_sync_cursor, settle_outbox,
@@ -523,7 +554,7 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
         .await
         .map_err(|e| format!("store sync cursor: {e}"))?;
     if refused {
-        state.borrow_mut().retry = true;
+        lock(state).retry = true;
     }
 
     // Adopt server-side settings if they're newer. Re-read from localStorage
@@ -545,7 +576,7 @@ async fn do_sync(state: Rc<RefCell<SyncState>>) -> Result<String, String> {
     // Drain a backlog on the next pass — only from a sync that fully
     // succeeded, so a failing one can't keep re-arming itself every 2 s.
     if settled && backlog {
-        state.borrow_mut().retry = true;
+        lock(state).retry = true;
     }
     Ok(crate::sync::sync_summary(
         local_cards.len(),
@@ -571,7 +602,8 @@ async fn merge_remote_cards(remote: &[SrsCard], uploaded: &[SrsCard]) -> Result<
         .map_err(|e| format!("put cards: {e}"))
 }
 
-#[async_trait(?Send)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl SettingsStore for LocalSettings {
     fn load(&self) -> SrsSettings {
         let mut s: SrsSettings = rt::kv_get(SETTINGS_KEY).unwrap_or_default();
@@ -606,9 +638,12 @@ impl SettingsStore for LocalSettings {
         if s.server_url.is_empty() || s.server_token.is_empty() {
             return;
         }
-        if self.state.borrow().in_flight {
-            self.state.borrow_mut().retry = true;
-            return;
+        {
+            let mut st = lock(&self.state);
+            if st.in_flight {
+                st.retry = true;
+                return;
+            }
         }
         arm_sync(self.state.clone());
     }
@@ -616,17 +651,16 @@ impl SettingsStore for LocalSettings {
     async fn sync_now(&self) -> Result<String, String> {
         // Cancel any pending debounce — we're about to do the work now.
         {
-            let mut st = self.state.borrow_mut();
+            let mut st = lock(&self.state);
             st.generation = st.generation.wrapping_add(1);
+            if st.in_flight {
+                st.retry = true;
+                return Ok("Sync already in progress — will repeat when it finishes.".into());
+            }
+            st.in_flight = true;
         }
-        if self.state.borrow().in_flight {
-            self.state.borrow_mut().retry = true;
-            return Ok("Sync already in progress — will repeat when it finishes.".into());
-        }
-        self.state.borrow_mut().in_flight = true;
-        let result = do_sync(self.state.clone()).await;
-        self.state.borrow_mut().in_flight = false;
-        if std::mem::replace(&mut self.state.borrow_mut().retry, false) {
+        let result = do_sync(&self.state).await;
+        if finish_sync(&self.state) {
             self.schedule_sync();
         }
         result

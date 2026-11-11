@@ -124,10 +124,10 @@ mod imp {
         fastrand::f64()
     }
 
-    /// A task runner for futures that aren't `Send` (the app's state is
-    /// `Rc`-shared). Natively there's no ambient one, so the UI installs its
-    /// own with [`set_spawner`] before anything spawns.
-    pub type Spawner = fn(Pin<Box<dyn Future<Output = ()>>>);
+    /// A task runner. Natively there's no ambient one, so the host installs
+    /// its own with [`set_spawner`] before anything spawns: Dioxus' root
+    /// scope for the Dioxus app, a tokio runtime for another host.
+    pub type Spawner = fn(Pin<Box<dyn Future<Output = ()> + Send>>);
 
     static SPAWNER: OnceLock<Spawner> = OnceLock::new();
 
@@ -140,7 +140,7 @@ mod imp {
     /// Runs `fut` on the installed [`Spawner`], so it outlives the calling
     /// screen. Under Dioxus that's the root scope, which means this must be
     /// called from inside its runtime (event handlers, tasks).
-    pub fn spawn_detached(fut: impl Future<Output = ()> + 'static) {
+    pub fn spawn_detached(fut: impl Future<Output = ()> + Send + 'static) {
         match SPAWNER.get() {
             Some(spawn) => spawn(Box::pin(fut)),
             None => tracing::error!("[yomeru] spawn_detached before set_spawner: task dropped"),

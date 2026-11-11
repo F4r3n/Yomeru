@@ -76,7 +76,8 @@ struct ExamplesResp {
     entries: Vec<ExampleEntry>,
 }
 
-#[async_trait(?Send)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl DictClient for ExtensionDict {
     async fn lookup(&self, word: &str) -> Result<Vec<WordEntry>, String> {
         let r: WordEntriesResp =
