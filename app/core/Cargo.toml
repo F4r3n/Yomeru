@@ -1,0 +1,54 @@
+[package]
+name = "yomeru-core"
+version = "0.19.3"
+license.workspace = true
+edition = "2024"
+
+# The app's logic with no UI: card store, SRS, sync, settings, dictionary
+# clients, card import. No Dioxus dependency, so a UI other than
+# `yomeru-shared` (e.g. a native one) can sit on top of it.
+
+[dependencies]
+jmdict-types     = { path = "../../crates/jmdict-types" }
+kanjidic-types   = { path = "../../crates/kanjidic-types" }
+examples-types   = { path = "../../crates/examples-types" }
+srs-core         = { path = "../../crates/srs-core" }
+japanese-utils   = { path = "../../crates/japanese-utils" }
+
+serde         = { version = "1", features = ["derive"] }
+serde_json    = "1"
+async-trait   = "0.1.89"
+# The same crate Dioxus re-exports as `dioxus::logger::tracing`, so the
+# app's logger picks these events up unchanged.
+tracing       = "0.1"
+
+
+# Browser glue: the website and the extension (wasm32).
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen          = "0.2"
+wasm-bindgen-futures  = "0.4"
+js-sys                = "0.3"
+web-sys = { version = "0.3", features = ["Window", "Location"] }
+gloo-net     = { version = "0.6", features = ["http"] }
+gloo-storage = "0.3"
+gloo-timers  = { version = "0.3", features = ["futures"] }
+idb          = "0.6"
+serde-wasm-bindgen = "0.6"
+
+# Native glue: Android and host tests. See `src/rt.rs` and `src/native/`.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rusqlite = { version = "0.32", features = ["bundled"] }
+reqwest  = { version = "0.12", default-features = false, features = ["rustls-tls-webpki-roots"] }
+tokio    = { version = "1", features = ["time", "rt", "sync"] }
+fastrand = "2"
+# Offline dictionary (see src/native/dict.rs). rkyv with jmdict-core's
+# layout features, unified with it, to decode archived entries.
+jmdict-core   = { path = "../../crates/jmdict-core" }
+kanjidic-core = { path = "../../crates/kanjidic-core" }
+examples-core = { path = "../../crates/examples-core" }
+rkyv          = { version = "0.8", default-features = false, features = ["alloc"] }
+anyhow        = "1"
+
+
+[lints]
+workspace = true

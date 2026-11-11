@@ -8,18 +8,16 @@ edition = "2024"
 dioxus = { version = "0.7.10", features = ["router"] }
 manganis = "0.7.9"
 
-# Yomeru types — shared serde shapes for server JSON. Dict lookup itself
-# lives on the server, so the heavy *-wasm crates are intentionally not
-# pulled in here.
+# The app's logic (card store, SRS, sync, dictionary clients). Dict lookup
+# itself lives on the server (or in core's offline `local_dict` on Android).
+yomeru-core      = { path = "../core" }
 jmdict-types     = { path = "../../crates/jmdict-types" }
 kanjidic-types   = { path = "../../crates/kanjidic-types" }
 examples-types   = { path = "../../crates/examples-types" }
 srs-core         = { path = "../../crates/srs-core" }
-japanese-utils   = { path = "../../crates/japanese-utils" }
 # Pure suffix rules, no deps — runs client-side for the search toggle.
 deinflect        = { path = "../../crates/deinflect" }
 
-serde         = { version = "1", features = ["derive"] }
 serde_json    = "1"
 log           = "0.4"
 async-trait = "0.1.89"
@@ -29,7 +27,6 @@ async-trait = "0.1.89"
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 dioxus = { version = "0.7.10", features = ["router", "web"] }
 wasm-bindgen          = "0.2"
-wasm-bindgen-futures  = "0.4"
 js-sys                = "0.3"
 web-sys = { version = "0.3", features = [
     "Window",
@@ -39,41 +36,14 @@ web-sys = { version = "0.3", features = [
     "HtmlElement",
     "HtmlHeadElement",
     "HtmlAnchorElement",
-    "Location",
     "Url",
     "Blob",
     "BlobPropertyBag",
-    "Storage",
-    "Request",
-    "RequestInit",
-    "RequestMode",
-    "Headers",
-    "Response",
     "KeyboardEvent",
     "EventTarget",
 ] }
-gloo-net     = { version = "0.6", features = ["http"] }
 gloo-events  = "0.3"
-gloo-storage = "0.3"
-gloo-timers  = { version = "0.3", features = ["futures"] }
-idb          = "0.6"
-serde-wasm-bindgen = "0.6"
 console_error_panic_hook = "0.1"
-
-# Native glue: Android (Dioxus mobile runs Rust natively behind a WebView)
-# and host tests. See `src/rt.rs` and `src/native/`.
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rusqlite = { version = "0.32", features = ["bundled"] }
-reqwest  = { version = "0.12", default-features = false, features = ["rustls-tls-webpki-roots"] }
-tokio    = { version = "1", features = ["time", "rt", "sync"] }
-fastrand = "2"
-# Offline dictionary (see src/native/dict.rs). rkyv with jmdict-core's
-# layout features, unified with it, to decode archived entries.
-jmdict-core   = { path = "../../crates/jmdict-core" }
-kanjidic-core = { path = "../../crates/kanjidic-core" }
-examples-core = { path = "../../crates/examples-core" }
-rkyv          = { version = "0.8", default-features = false, features = ["alloc"] }
-anyhow        = "1"
 
 
 [lints]

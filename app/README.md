@@ -4,7 +4,8 @@ Cross-platform Yomeru client built with Dioxus.
 
 ```
 app/
-├── shared/   # Shared UI + storage + dict glue (yomeru-shared)
+├── core/     # App logic, no UI or Dioxus: storage, SRS, sync, dict clients (yomeru-core)
+├── shared/   # Shared Dioxus UI on top of core (yomeru-shared)
 ├── web/      # Web entry point (yomeru-web)
 └── android/  # Android entry point (yomeru-android)
 ```

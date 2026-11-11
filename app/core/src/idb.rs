@@ -6,7 +6,6 @@
 pub use crate::store_common::*;
 use crate::sync::SyncCursor;
 use crate::types::{CardDirection, ReviewLog, SrsCard, card_id};
-use dioxus::logger::tracing;
 use idb::{
     Database, DatabaseEvent, Factory, IndexParams, KeyPath, ObjectStoreParams, Query,
     TransactionMode,
@@ -47,7 +46,7 @@ async fn open() -> Result<Database, idb::Error> {
         let db = match event.database() {
             Ok(db) => db,
             Err(e) => {
-                dioxus::logger::tracing::error!("idb upgrade: event.database() failed: {e:?}");
+                tracing::error!("idb upgrade: event.database() failed: {e:?}");
                 return;
             }
         };

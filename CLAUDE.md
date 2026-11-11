@@ -53,6 +53,8 @@ cd extension && npm install && npm run build
 | `examples-core` / `examples-wasm` | Same split for example sentences |
 | `srs-core` | Stateless SM-2: `new_card`, `review_card`, `filter_due` |
 | `srs-wasm` | WASM wrapper for srs-core |
+| `yomeru-core` (`app/core`) | The app's logic with no UI and no Dioxus: card store (IndexedDB/SQLite), SRS, sync, settings, `Platform` (dict + settings traits), offline `LocalDict`. Functions needing the dictionary/settings take `&Platform` |
+| `yomeru-shared` (`app/shared`) | Dioxus UI over `yomeru-core`; re-exports its modules and wraps `&Platform` functions with versions reading it from Dioxus context |
 
 Native consumers (server, app, benches) depend on the `-core` crates. The `-wasm` crates exist only to expose those cores to JavaScript. Cargo crate names match the `extension/_generated/<crate>/<crate>_module.js` paths in the manifest — renaming a `-wasm` crate would also break extension JS imports.
 

@@ -15,12 +15,12 @@ static MNEMONICS: Asset = asset!("/assets/dict/kanji-mnemonics.tsv");
 static PART_NAMES: Asset = asset!("/assets/dict/part-names.tsv");
 
 fn main() {
-    let dict = LocalDict::new(DictAssets {
+    let dict = LocalDict::new(Rc::new(DictAssets {
         jmdict: JMDICT,
         kanjidic: KANJIDIC,
         examples: EXAMPLES,
         mnemonics: Some(MNEMONICS),
         part_names: Some(PART_NAMES),
-    });
+    }));
     launch_with(platform_with_dict(Rc::new(dict)));
 }

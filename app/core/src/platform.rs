@@ -2,10 +2,10 @@
 //! backed) flavor of dict lookup + settings storage and an extension flavor
 //! that messages a background script.
 //!
-//! The traits live here; routes call them through thin shims in
-//! [`crate::dict`] and [`crate::settings`] that read a [`Platform`] out of
-//! Dioxus context. Existing call sites in `routes/*` are unchanged — they
-//! still see `dict::lookup(word)` etc.; only the implementations move.
+//! Core functions that need the dictionary or the settings store take a
+//! [`Platform`]. The Dioxus UI keeps one in context and calls them through
+//! thin shims (`yomeru_shared::dict`, `yomeru_shared::settings`, …), so its
+//! routes still see `dict::lookup(word)` etc.
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -20,7 +20,7 @@ use crate::settings::{SETTINGS_KEY, SrsSettings, default_server_url};
 use crate::sync::{SettingsPayload, SyncBody, SyncResponse};
 use crate::types::SrsCard;
 use async_trait::async_trait;
-use dioxus::prelude::*;
+use tracing::warn;
 /// Read-only dictionary surface. Web/android use [`DefaultPlatform`] which
 /// posts JSON to the yomeru-server; the extension implements this against
 /// `browser.runtime.sendMessage` so its in-WASM dicts service the request.
@@ -105,7 +105,7 @@ pub trait SettingsStore {
     }
 }
 
-/// What `routes/*` read out of Dioxus context. Cheap to clone — both fields
+/// The host services a UI hands to core. Cheap to clone — both fields
 /// are `Rc`-counted trait objects.
 #[derive(Clone)]
 pub struct Platform {

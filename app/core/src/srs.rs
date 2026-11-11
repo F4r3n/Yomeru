@@ -131,11 +131,7 @@ pub fn trouble_words(
     min_fails: u32,
     exit_interval_days: f64,
 ) -> Vec<TroubleWord> {
-    rank_trouble(
-        cards.iter().filter(|c| !c.is_kanji()),
-        min_fails,
-        exit_interval_days,
-    )
+    rank_trouble(cards, |c| !c.is_kanji(), min_fails, exit_interval_days)
 }
 
 /// [`trouble_words`] for the kanji deck: same ranking, kanji cards only. A
@@ -145,21 +141,21 @@ pub fn trouble_kanji(
     min_fails: u32,
     exit_interval_days: f64,
 ) -> Vec<TroubleWord> {
-    rank_trouble(
-        cards.iter().filter(|c| c.is_kanji()),
-        min_fails,
-        exit_interval_days,
-    )
+    rank_trouble(cards, SrsCard::is_kanji, min_fails, exit_interval_days)
 }
 
-fn rank_trouble<'a>(
-    cards: impl Iterator<Item = &'a SrsCard>,
+fn rank_trouble(
+    cards: &[SrsCard],
+    deck: impl Fn(&SrsCard) -> bool,
     min_fails: u32,
     exit_interval_days: f64,
 ) -> Vec<TroubleWord> {
     let mut by_seq: std::collections::BTreeMap<u32, (u32, f64, Vec<SrsCard>)> =
         std::collections::BTreeMap::new();
-    for c in cards.filter(|c| is_struggling(c, exit_interval_days)) {
+    for c in cards
+        .iter()
+        .filter(|c| deck(c) && is_struggling(c, exit_interval_days))
+    {
         let e = by_seq.entry(c.sequence).or_insert((0, 0.0, Vec::new()));
         e.0 += c.again_count;
         e.1 = e.1.max(c.difficulty);
@@ -203,12 +199,17 @@ pub fn pick_drill_batch<'a>(
 /// word drilled on both recognition and recall in one session counts once —
 /// and a word drilled on only one of them still counts. Ids that don't start
 /// with a numeric sequence are skipped.
-pub fn drill_counts_by_sequence<'a>(
-    per_card: impl IntoIterator<Item = (&'a str, u32)>,
+pub fn drill_counts_by_sequence<S: AsRef<str>>(
+    per_card: impl IntoIterator<Item = (S, u32)>,
 ) -> std::collections::HashMap<u32, u32> {
     let mut out = std::collections::HashMap::new();
     for (id, n) in per_card {
-        let Some(seq) = id.split("::").next().and_then(|s| s.parse::<u32>().ok()) else {
+        let Some(seq) = id
+            .as_ref()
+            .split("::")
+            .next()
+            .and_then(|s| s.parse::<u32>().ok())
+        else {
             continue;
         };
         let e = out.entry(seq).or_insert(0);

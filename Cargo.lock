@@ -8022,6 +8022,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "yomeru-core"
+version = "0.19.3"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "examples-core",
+ "examples-types",
+ "fastrand",
+ "gloo-net",
+ "gloo-storage",
+ "gloo-timers",
+ "idb",
+ "japanese-utils",
+ "jmdict-core",
+ "jmdict-types",
+ "js-sys",
+ "kanjidic-core",
+ "kanjidic-types",
+ "reqwest",
+ "rkyv",
+ "rusqlite",
+ "serde",
+ "serde-wasm-bindgen",
+ "serde_json",
+ "srs-core",
+ "tokio",
+ "tracing",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
 name = "yomeru-extension"
 version = "0.19.3"
 dependencies = [
@@ -8044,38 +8077,22 @@ dependencies = [
 name = "yomeru-shared"
 version = "0.19.3"
 dependencies = [
- "anyhow",
  "async-trait",
  "console_error_panic_hook",
  "deinflect",
  "dioxus",
- "examples-core",
  "examples-types",
- "fastrand",
  "gloo-events",
- "gloo-net",
- "gloo-storage",
- "gloo-timers",
- "idb",
- "japanese-utils",
- "jmdict-core",
  "jmdict-types",
  "js-sys",
- "kanjidic-core",
  "kanjidic-types",
  "log",
  "manganis",
- "reqwest",
- "rkyv",
- "rusqlite",
- "serde",
- "serde-wasm-bindgen",
  "serde_json",
  "srs-core",
- "tokio",
  "wasm-bindgen",
- "wasm-bindgen-futures",
  "web-sys",
+ "yomeru-core",
 ]
 
 [[package]]
