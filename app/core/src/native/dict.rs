@@ -49,20 +49,88 @@ impl LocalDict {
         Self { source }
     }
 
-    async fn ensure(&self) -> Result<(), String> {
-        ensure(self.source.clone()).await
+    /// Waits until `part` is loaded, loading it now if nothing has started it.
+    async fn ensure(&self, part: Part) -> Result<(), String> {
+        ensure(part, self.source.clone()).await
     }
 }
 
-/// Process-global like the cores it guards: they live in `OnceCell`s of
-/// their own and can only be initialized once anyway.
-static READY: OnceCell<Result<(), String>> = OnceCell::const_new();
+/// The three dictionaries, loaded independently so a screen only waits for
+/// the one it reads: Review needs the words at once, the example sentences
+/// can arrive later.
+#[derive(Clone, Copy, Debug)]
+enum Part {
+    /// JMdict: headwords, readings, glosses.
+    Words,
+    /// KANJIDIC, plus the mnemonic and part-name overlays.
+    Kanji,
+    /// Example sentences.
+    Examples,
+}
 
-/// Loads every core once; concurrent callers wait on the same load. A
-/// failure is remembered rather than retried: the assets are part of the app,
-/// so a second attempt would fail the same way and pay the read again.
-async fn ensure(source: Arc<dyn DictSource>) -> Result<(), String> {
-    READY.get_or_init(|| load(source)).await.clone()
+/// Process-global like the cores they guard: those live in `OnceCell`s of
+/// their own and can only be initialized once anyway.
+static WORDS: OnceCell<Result<(), String>> = OnceCell::const_new();
+static KANJI: OnceCell<Result<(), String>> = OnceCell::const_new();
+static EXAMPLES: OnceCell<Result<(), String>> = OnceCell::const_new();
+
+impl Part {
+    fn ready(self) -> &'static OnceCell<Result<(), String>> {
+        match self {
+            Self::Words => &WORDS,
+            Self::Kanji => &KANJI,
+            Self::Examples => &EXAMPLES,
+        }
+    }
+
+    /// Reads this part's files and initializes its cores. Blocking: run on
+    /// a `spawn_blocking` thread.
+    fn load_blocking(self, source: &dyn DictSource, steps: &mut Steps) -> Result<(), String> {
+        let init_err = |e: anyhow::Error| format!("load {self:?} dictionary: {e:#}");
+        match self {
+            Self::Words => {
+                let bytes = steps.time("read", || read(source, DictFile::Jmdict))?;
+                steps
+                    .time("init", || jmdict_core::init(&bytes))
+                    .map_err(init_err)
+            }
+            Self::Kanji => {
+                let bytes = steps.time("read", || read(source, DictFile::Kanjidic))?;
+                let mnemonics =
+                    steps.time("read mnemonics", || read_text(source, DictFile::Mnemonics))?;
+                let part_names =
+                    steps.time("read part names", || read_text(source, DictFile::PartNames))?;
+                steps
+                    .time("init", || -> anyhow::Result<()> {
+                        kanjidic_core::init_from_bytes(&bytes)?;
+                        if let Some(tsv) = &mnemonics {
+                            kanjidic_core::init_mnemonics(tsv)?;
+                        }
+                        if let Some(tsv) = &part_names {
+                            kanjidic_core::init_part_names(tsv)?;
+                        }
+                        Ok(())
+                    })
+                    .map_err(init_err)
+            }
+            Self::Examples => {
+                let bytes = steps.time("read", || read(source, DictFile::Examples))?;
+                steps
+                    .time("init", || examples_core::init_from_bytes(&bytes))
+                    .map_err(init_err)
+            }
+        }
+    }
+}
+
+/// Loads `part` once; concurrent callers wait on the same load. A failure is
+/// remembered rather than retried: the assets are part of the app, so a
+/// second attempt would fail the same way and pay the read again.
+async fn ensure(part: Part, source: Arc<dyn DictSource>) -> Result<(), String> {
+    part.ready()
+        .get_or_init(|| load(part, source))
+        .await
+        .clone()
 }
 
 fn read(source: &dyn DictSource, file: DictFile) -> Result<Vec<u8>, String> {
@@ -80,37 +148,27 @@ fn read_text(source: &dyn DictSource, file: DictFile) -> Result<Option<String>, 
         .map_err(|e| format!("{file:?}: {e}"))
 }
 
-async fn load(source: Arc<dyn DictSource>) -> Result<(), String> {
+async fn load(part: Part, source: Arc<dyn DictSource>) -> Result<(), String> {
     let started = crate::rt::now_ms();
-    // Reading ~70 MB, then validating every entry (bytecheck) and building the
-    // indexes: a second or so of I/O and CPU on a phone, kept off the UI
-    // thread.
+    // Reading the file out of the APK (which decompresses it), then
+    // validating every entry (bytecheck) and building the indexes: up to a
+    // second or so on a phone for the words, kept off the UI thread.
     let steps = tokio::task::spawn_blocking(move || -> Result<Steps, String> {
-        let source = &*source;
         let mut steps = Steps::default();
-        let jmdict = steps.time("read jmdict", || read(source, DictFile::Jmdict))?;
-        let kanjidic = steps.time("read kanjidic", || read(source, DictFile::Kanjidic))?;
-        let examples = steps.time("read examples", || read(source, DictFile::Examples))?;
-        let mnemonics = steps.time("read mnemonics", || read_text(source, DictFile::Mnemonics))?;
-        let part_names =
-            steps.time("read part names", || read_text(source, DictFile::PartNames))?;
-        init_cores(
-            &mut steps, &jmdict, &kanjidic, &examples, mnemonics, part_names,
-        )
-        .map_err(|e| format!("load dictionary: {e:#}"))?;
+        part.load_blocking(&*source, &mut steps)?;
         Ok(steps)
     })
     .await
     .map_err(|e| format!("dictionary loader: {e}"))??;
     tracing::info!(
-        "[yomeru] dictionaries loaded in {:.0} ms ({})",
+        "[yomeru] {part:?} dictionary loaded in {:.0} ms ({})",
         crate::rt::now_ms() - started,
         steps.summary()
     );
     Ok(())
 }
 
-/// How long each loading step took, for the "dictionaries loaded" log line.
+/// How long each loading step took, for the "dictionary loaded" log line.
 #[derive(Default)]
 struct Steps(Vec<(&'static str, f64)>);
 
@@ -131,26 +189,6 @@ impl Steps {
     }
 }
 
-fn init_cores(
-    steps: &mut Steps,
-    jmdict: &[u8],
-    kanjidic: &[u8],
-    examples: &[u8],
-    mnemonics: Option<String>,
-    part_names: Option<String>,
-) -> anyhow::Result<()> {
-    steps.time("init jmdict", || jmdict_core::init(jmdict))?;
-    steps.time("init kanjidic", || kanjidic_core::init_from_bytes(kanjidic))?;
-    if let Some(tsv) = &mnemonics {
-        steps.time("init mnemonics", || kanjidic_core::init_mnemonics(tsv))?;
-    }
-    if let Some(tsv) = &part_names {
-        steps.time("init part names", || kanjidic_core::init_part_names(tsv))?;
-    }
-    steps.time("init examples", || examples_core::init_from_bytes(examples))?;
-    Ok(())
-}
-
 /// The owned entry the UI works with, decoded straight from the archived
 /// buffer. Same data the server's JSON carries, without the round trip.
 fn owned(e: &ArchivedWordEntry) -> Option<WordEntry> {
@@ -166,21 +204,25 @@ fn owned_all(entries: Vec<&ArchivedWordEntry>) -> Vec<WordEntry> {
 #[async_trait]
 impl DictClient for LocalDict {
     fn warm_up(&self) {
+        // One after the other, words first: they're what the start screen
+        // (Review) waits for, so they get the disk and CPU to themselves.
         let source = self.source.clone();
         crate::rt::spawn_detached(async move {
-            if let Err(e) = ensure(source).await {
-                tracing::error!("[yomeru] {e}");
+            for part in [Part::Words, Part::Kanji, Part::Examples] {
+                if let Err(e) = ensure(part, source.clone()).await {
+                    tracing::error!("[yomeru] {e}");
+                }
             }
         });
     }
 
     async fn lookup(&self, word: &str) -> Result<Vec<WordEntry>, String> {
-        self.ensure().await?;
+        self.ensure(Part::Words).await?;
         Ok(owned_all(jmdict_core::lookup(word)))
     }
 
     async fn lookup_many(&self, words: &[String]) -> Result<Vec<Vec<WordEntry>>, String> {
-        self.ensure().await?;
+        self.ensure(Part::Words).await?;
         Ok(words
             .iter()
             .map(|w| owned_all(jmdict_core::lookup(w)))
@@ -191,7 +233,7 @@ impl DictClient for LocalDict {
         &self,
         sequences: &[u32],
     ) -> Result<Vec<Option<WordEntry>>, String> {
-        self.ensure().await?;
+        self.ensure(Part::Words).await?;
         Ok(sequences
             .iter()
             .map(|s| jmdict_core::lookup_by_sequence(*s).and_then(owned))
@@ -199,27 +241,27 @@ impl DictClient for LocalDict {
     }
 
     async fn lookup_prefix(&self, text: &str, max: u8) -> Result<Vec<WordEntry>, String> {
-        self.ensure().await?;
+        self.ensure(Part::Words).await?;
         Ok(owned_all(jmdict_core::lookup_prefix(text, max)))
     }
 
     async fn kanji_for(&self, word: &str) -> Result<Vec<KanjiEntry>, String> {
-        self.ensure().await?;
+        self.ensure(Part::Kanji).await?;
         Ok(kanjidic_core::lookup_many(word))
     }
 
     async fn examples_for(&self, word: &str, max: u8) -> Result<Vec<ExampleEntry>, String> {
-        self.ensure().await?;
+        self.ensure(Part::Examples).await?;
         Ok(examples_core::lookup(word, usize::from(max)))
     }
 
     async fn kanji_parts(&self) -> Result<Vec<PartInfo>, String> {
-        self.ensure().await?;
+        self.ensure(Part::Kanji).await?;
         Ok(kanjidic_core::parts())
     }
 
     async fn kanji_with_parts(&self, parts: &str, max: u8) -> Result<PartSearch, String> {
-        self.ensure().await?;
+        self.ensure(Part::Kanji).await?;
         let parts: Vec<char> = parts.chars().collect();
         Ok(kanjidic_core::kanji_with_parts(&parts, usize::from(max)))
     }
