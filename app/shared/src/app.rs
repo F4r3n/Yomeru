@@ -156,6 +156,25 @@ fn load_theme() -> String {
     crate::rt::kv_get::<String>(THEME_KEY).unwrap_or_else(|| "dark".to_string())
 }
 
+/// What `install_head` and the first `apply_theme_to_dom` do, as HTML for the
+/// page's `<head>`, for a host that can put it there before the page loads
+/// (Android: Dioxus mobile's `with_custom_head`). The first frame is then
+/// styled and in the saved theme. Without it, the stylesheet and the theme
+/// only arrive from effects after the first render, and the buttons' colour
+/// transitions fade them in from the browser's default white.
+///
+/// `install_head` and `apply_theme_to_dom` still run afterwards: the first
+/// skips the stylesheet it finds already there, the second sets the same
+/// theme again.
+pub fn startup_head() -> String {
+    let theme = serde_json::to_string(&load_theme()).unwrap_or_else(|_| "\"dark\"".into());
+    format!(
+        "<style id=\"yomeru-global-css\">{}</style>\
+         <script>document.documentElement.setAttribute('data-theme', {theme});</script>",
+        global_css()
+    )
+}
+
 #[cfg(target_arch = "wasm32")]
 fn apply_theme_to_dom(theme: &str) {
     if let Some(doc) = web_sys::window().and_then(|w| w.document())

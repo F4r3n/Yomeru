@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use dioxus::prelude::*;
 use yomeru_shared::local_dict::{DictAssets, LocalDict};
-use yomeru_shared::{launch_with, platform_with_dict};
+use yomeru_shared::{launch_with_config, platform_with_dict, startup_head};
 
 // The dictionaries ship inside the APK, so lookups work offline. The files
 // are hard-linked into assets/dict/ from extension/data/ by
@@ -22,5 +22,8 @@ fn main() {
         mnemonics: Some(MNEMONICS),
         part_names: Some(PART_NAMES),
     }));
-    launch_with(platform_with_dict(Arc::new(dict)));
+    // The stylesheet and the saved theme go into the page's <head>, so its
+    // first frame is already styled: no white buttons fading in at start-up.
+    let config = dioxus::mobile::Config::new().with_custom_head(startup_head());
+    launch_with_config(platform_with_dict(Arc::new(dict)), config);
 }

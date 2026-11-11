@@ -33,10 +33,22 @@ pub use platform::{Platform, default_http_platform, platform_with_dict};
 /// inside their `dict::lookup` / `settings::load` / `sync::schedule_sync`
 /// call sites.
 ///
-/// Used by `app/web/src/main.rs`, `app/android/src/main.rs`, and
-/// `app/extension/src/lib.rs` — each builds a `Platform` appropriate for
-/// its target.
+/// Used by `app/web/src/main.rs` and `app/extension/src/lib.rs`; the Android
+/// app goes through [`launch_with_config`]. Each builds a `Platform`
+/// appropriate for its target.
 pub fn launch_with(platform: Platform) {
+    launch_builder(platform).launch(App);
+}
+
+/// [`launch_with`], plus a platform-specific Dioxus config: the Android app
+/// passes its mobile `Config`, carrying [`startup_head`].
+pub fn launch_with_config(platform: Platform, config: impl dioxus::core::LaunchConfig) {
+    launch_builder(platform).with_cfg(config).launch(App);
+}
+
+pub use app::startup_head;
+
+fn launch_builder(platform: Platform) -> dioxus::LaunchBuilder {
     // Natively, core has no task runner of its own: detached tasks (auto-sync,
     // settings saves) run on the root scope so leaving a page can't cancel
     // them.
@@ -45,7 +57,5 @@ pub fn launch_with(platform: Platform) {
         dioxus::core::spawn_forever(fut);
     });
     yomeru_core::sync::set_observer(Box::new(sync::SignalObserver));
-    dioxus::LaunchBuilder::new()
-        .with_context(platform)
-        .launch(App);
+    dioxus::LaunchBuilder::new().with_context(platform)
 }
