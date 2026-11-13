@@ -15,7 +15,7 @@
 #
 # Build context is the workspace root.
 
-FROM rust:1-slim-bookworm
+FROM rust:1-slim-trixie
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \

@@ -9,7 +9,7 @@
 #   podman build -f server/Dockerfile -t yomeru-server .
 
 # ---------- Build stage ----------
-FROM rust:1-slim-bookworm AS builder
+FROM rust:1-slim-trixie AS builder
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends pkg-config build-essential \
@@ -33,7 +33,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
  && cp /build/target/release/yomeru-server /usr/local/bin/yomeru-server
 
 # ---------- Runtime stage ----------
-FROM debian:bookworm-slim AS runtime
+FROM debian:trixie-slim AS runtime
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates sqlite3 \
