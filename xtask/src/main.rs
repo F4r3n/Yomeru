@@ -1,4 +1,7 @@
-use anyhow::{bail, Context, Result};
+// Progress output on stderr is the point of this CLI.
+#![allow(clippy::print_stderr)]
+
+use anyhow::{anyhow, bail, Context, Result};
 use clap::{Parser, Subcommand};
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -8,8 +11,8 @@ use std::process::Command;
 // layer (it sources the same file as a shell env file).
 const DICT_SOURCES_ENV: &str = include_str!("../dict-sources.env");
 
-fn source(key: &str) -> &'static str {
-    source_opt(key).unwrap_or_else(|| panic!("dict-sources.env missing key `{key}`"))
+fn source(key: &str) -> Result<&'static str> {
+    source_opt(key).with_context(|| format!("dict-sources.env missing key `{key}`"))
 }
 
 fn source_opt(key: &str) -> Option<&'static str> {
@@ -126,7 +129,7 @@ enum Cmd {
 
 fn main() -> Result<()> {
     let args = Args::parse();
-    let root = project_root();
+    let root = project_root()?;
 
     match args.cmd {
         Cmd::Build { profile } => {
@@ -253,14 +256,11 @@ fn download_source(dir: &Path, name: &str) -> Result<PathBuf> {
     use flate2::read::GzDecoder;
     use std::io::{Read, Write};
 
-    let urls: Vec<&str> = [
-        Some(source(&format!("{name}_URL"))),
-        source_opt(&format!("{name}_FALLBACK_URL")),
-    ]
-    .into_iter()
-    .flatten()
-    .collect();
-    let out_name = source(&format!("{name}_OUT"));
+    let primary_url = source(&format!("{name}_URL"))?;
+    let urls: Vec<&str> = std::iter::once(primary_url)
+        .chain(source_opt(&format!("{name}_FALLBACK_URL")))
+        .collect();
+    let out_name = source(&format!("{name}_OUT"))?;
 
     std::fs::create_dir_all(dir)?;
     let out_path = dir.join(out_name);
@@ -276,7 +276,7 @@ fn download_source(dir: &Path, name: &str) -> Result<PathBuf> {
         }
     }
 
-    eprintln!("Downloading {} ...", urls[0]);
+    eprintln!("Downloading {primary_url} ...");
     let gz_bytes = fetch_with_retry(&urls)?;
 
     eprintln!(
@@ -349,7 +349,7 @@ fn fetch_with_retry(urls: &[&str]) -> Result<Vec<u8>> {
                 }
             }
         }
-        Err(last.expect("at least one URL"))
+        Err(last.unwrap_or_else(|| anyhow!("no URL to fetch")))
     };
 
     let mut delays = DOWNLOAD_RETRY_DELAYS.iter();
@@ -413,7 +413,9 @@ fn package(root: &Path) -> Result<()> {
             );
         }
         let dest = release.join(rel);
-        std::fs::create_dir_all(dest.parent().unwrap())?;
+        if let Some(parent) = dest.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
         std::fs::copy(&src, &dest)?;
         eprintln!("  {rel}");
     }
@@ -511,7 +513,7 @@ fn zip_add_dir(
         let rel = path
             .strip_prefix(base)?
             .to_str()
-            .unwrap()
+            .with_context(|| format!("non-UTF-8 path {}", path.display()))?
             .replace('\\', "/");
         if path.is_file() {
             zip.start_file(&rel, opts)?;
@@ -645,15 +647,11 @@ fn build_extension_wasm(root: &Path, profile: &str) -> Result<()> {
         "--dev"
     };
     run(Command::new("wasm-pack")
-        .args([
-            "build",
-            crate_dir.to_str().unwrap(),
-            "--target",
-            "web",
-            "--out-dir",
-            out_dir.to_str().unwrap(),
-            profile_flag,
-        ])
+        .arg("build")
+        .arg(&crate_dir)
+        .args(["--target", "web", "--out-dir"])
+        .arg(&out_dir)
+        .arg(profile_flag)
         .current_dir(root))?;
     eprintln!("Built yomeru-extension → {}", out_dir.display());
     Ok(())
@@ -670,15 +668,11 @@ fn build_wasm(root: &Path, crate_name: &str, profile: &str) -> Result<()> {
     };
 
     run(Command::new("wasm-pack")
-        .args([
-            "build",
-            crate_dir.to_str().unwrap(),
-            "--target",
-            "web",
-            "--out-dir",
-            out_dir.to_str().unwrap(),
-            profile_flag,
-        ])
+        .arg("build")
+        .arg(&crate_dir)
+        .args(["--target", "web", "--out-dir"])
+        .arg(&out_dir)
+        .arg(profile_flag)
         .current_dir(root))?;
 
     eprintln!("Built {crate_name} → {}", out_dir.display());
@@ -743,14 +737,15 @@ const OVERLAY_FILES: [&str; 2] = ["kanji-mnemonics.tsv", "part-names.tsv"];
 /// Copy the overlay files from `data/` next to the dictionaries in
 /// `extension/data/`.
 fn copy_overlays(root: &Path) -> Result<()> {
+    let dest_dir = root.join("extension/data");
+    std::fs::create_dir_all(&dest_dir)?;
     for name in OVERLAY_FILES {
         let src = root.join("data").join(name);
         if !src.exists() {
             eprintln!("No data/{name}; kanji go without it.");
             continue;
         }
-        let dest = root.join("extension/data").join(name);
-        std::fs::create_dir_all(dest.parent().unwrap())?;
+        let dest = dest_dir.join(name);
         std::fs::copy(&src, &dest)?;
         eprintln!("Copied data/{name} to {}", dest.display());
     }
@@ -770,10 +765,10 @@ fn build_examples(root: &Path, input: &Path, output: &Path) -> Result<()> {
             "--release",
             "--",
             "--input",
-            input.to_str().unwrap(),
-            "--output",
-            output.to_str().unwrap(),
         ])
+        .arg(input)
+        .arg("--output")
+        .arg(output)
         .current_dir(root))?;
     Ok(())
 }
@@ -787,12 +782,12 @@ fn build_kanjidic(root: &Path, input: &Path, kanjivg: Option<&Path>, output: &Pa
         "--release",
         "--",
         "--input",
-        input.to_str().unwrap(),
-        "--output",
-        output.to_str().unwrap(),
-    ]);
+    ])
+    .arg(input)
+    .arg("--output")
+    .arg(output);
     if let Some(kanjivg) = kanjivg {
-        cmd.args(["--kanjivg", kanjivg.to_str().unwrap()]);
+        cmd.arg("--kanjivg").arg(kanjivg);
     }
     run(cmd.current_dir(root))?;
     Ok(())
@@ -807,10 +802,10 @@ fn build_dict(root: &Path, input: &Path, output: &Path) -> Result<()> {
             "--release",
             "--",
             "--input",
-            input.to_str().unwrap(),
-            "--output",
-            output.to_str().unwrap(),
         ])
+        .arg(input)
+        .arg("--output")
+        .arg(output)
         .current_dir(root))?;
     Ok(())
 }
@@ -823,9 +818,9 @@ fn run(cmd: &mut Command) -> Result<()> {
     Ok(())
 }
 
-fn project_root() -> PathBuf {
+fn project_root() -> Result<PathBuf> {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
-        .expect("xtask should be inside the workspace")
-        .to_owned()
+        .map(Path::to_owned)
+        .context("xtask should be inside the workspace")
 }
