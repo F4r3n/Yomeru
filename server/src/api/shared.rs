@@ -47,6 +47,9 @@ pub(super) fn rate_limit(
     addr: SocketAddr,
     headers: &HeaderMap,
 ) -> Result<(), ApiError> {
+    if state.cfg.no_rate_limit {
+        return Ok(());
+    }
     limiter
         .check_key(&state.client_ip(addr, headers))
         .map_err(|_| ApiError::TooManyRequests)

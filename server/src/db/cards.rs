@@ -8,7 +8,7 @@
 
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
-use sqlx::Row;
+use sqlx::{QueryBuilder, Row, Sqlite};
 use std::collections::HashMap;
 
 #[cfg(test)]
@@ -130,6 +130,10 @@ pub async fn upsert_cards_tx(
             .map(|r| (r.get("id"), r.get("deleted_at")))
             .collect();
 
+    // Same filter as before, then a few multi-row statements instead of one per
+    // card. Duplicate ids within a batch still apply in order, as the loop did.
+    let mut accepted: Vec<&Card> = Vec::with_capacity(cards.len());
+    let mut cleared: Vec<&str> = Vec::new();
     for c in cards {
         if c.id.is_empty() {
             continue;
@@ -141,14 +145,40 @@ pub async fn upsert_cards_tx(
         if deleted_at.is_some_and(|d| d as f64 >= c.added_ms) {
             continue; // stale replica of a deleted card, not a re-add
         }
+        if deleted_at.is_some() {
+            cleared.push(&c.id);
+        }
+        accepted.push(c);
+    }
 
-        sqlx::query(
+    for chunk in accepted.chunks(UPSERT_CHUNK) {
+        let mut q = QueryBuilder::<Sqlite>::new(
             "INSERT INTO cards
                  (email, id, sequence, direction, due_ms, stability, difficulty,
                   reps, lapses, state, last_review_ms, added_ms, status, priority,
-                  again_count, updated_ms, rev)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
-             ON CONFLICT(email, id) DO UPDATE SET
+                  again_count, updated_ms, rev) ",
+        );
+        q.push_values(chunk, |mut b, c| {
+            b.push_bind(email)
+                .push_bind(&c.id)
+                .push_bind(c.sequence)
+                .push_bind(&c.direction)
+                .push_bind(c.due_ms)
+                .push_bind(c.stability)
+                .push_bind(c.difficulty)
+                .push_bind(c.reps)
+                .push_bind(c.lapses)
+                .push_bind(&c.state)
+                .push_bind(c.last_review_ms)
+                .push_bind(c.added_ms)
+                .push_bind(&c.status)
+                .push_bind(c.priority)
+                .push_bind(c.again_count)
+                .push_bind(normalize_version(c, now))
+                .push_bind(rev);
+        });
+        q.push(
+            " ON CONFLICT(email, id) DO UPDATE SET
                  sequence = excluded.sequence,
                  direction = excluded.direction,
                  due_ms = excluded.due_ms,
@@ -165,39 +195,32 @@ pub async fn upsert_cards_tx(
                  updated_ms = excluded.updated_ms,
                  rev = excluded.rev
              WHERE excluded.updated_ms >= cards.updated_ms",
-        )
-        .bind(email)
-        .bind(&c.id)
-        .bind(c.sequence)
-        .bind(&c.direction)
-        .bind(c.due_ms)
-        .bind(c.stability)
-        .bind(c.difficulty)
-        .bind(c.reps)
-        .bind(c.lapses)
-        .bind(&c.state)
-        .bind(c.last_review_ms)
-        .bind(c.added_ms)
-        .bind(&c.status)
-        .bind(c.priority)
-        .bind(c.again_count)
-        .bind(normalize_version(c, now))
-        .bind(rev)
-        .execute(&mut *conn)
-        .await
-        .context("upsert card")?;
+        );
+        q.build()
+            .execute(&mut *conn)
+            .await
+            .context("upsert cards")?;
+    }
 
-        if deleted_at.is_some() {
-            sqlx::query("DELETE FROM deletions WHERE email = ?1 AND id = ?2")
-                .bind(email)
-                .bind(&c.id)
-                .execute(&mut *conn)
-                .await
-                .context("clear matching tombstone")?;
+    for chunk in cleared.chunks(UPSERT_CHUNK) {
+        let mut q = QueryBuilder::<Sqlite>::new("DELETE FROM deletions WHERE email = ");
+        q.push_bind(email).push(" AND id IN (");
+        let mut ids = q.separated(", ");
+        for id in chunk {
+            ids.push_bind(*id);
         }
+        q.push(")");
+        q.build()
+            .execute(&mut *conn)
+            .await
+            .context("clear matching tombstones")?;
     }
     Ok(())
 }
+
+/// Rows per multi-row upsert: 17 binds each keeps a statement well under
+/// SQLite's 32766-parameter limit.
+const UPSERT_CHUNK: usize = 500;
 
 const CARD_COLUMNS: &str = "id, sequence, direction, due_ms, stability, difficulty,
      reps, lapses, state, last_review_ms, added_ms, status, priority,

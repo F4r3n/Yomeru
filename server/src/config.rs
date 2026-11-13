@@ -25,6 +25,9 @@ pub struct Config {
     /// Dev mode: skip SMTP (print OTP to stdout) and skip Bearer-token
     /// check on /api/sync. Toggle with `YOMERU_DEV_MODE=1` or `--dev-mode`.
     pub dev_mode: bool,
+    /// Skip all rate limiting, for load testing. Only honored in dev mode.
+    /// `YOMERU_NO_RATE_LIMIT=1` or `--no-rate-limit`.
+    pub no_rate_limit: bool,
     /// Who runs this server, as shown on the privacy page (the GDPR "data
     /// controller"): a name, or a name and postal address. Unset → the page
     /// says the operator hasn't filled it in. `YOMERU_PRIVACY_CONTROLLER`.
@@ -56,6 +59,13 @@ impl Config {
                 std::env::var("YOMERU_DEV_MODE").as_deref(),
                 Ok("1" | "true" | "TRUE" | "yes")
             );
+
+        let no_rate_limit = dev_mode
+            && (args.iter().any(|a| a == "--no-rate-limit")
+                || matches!(
+                    std::env::var("YOMERU_NO_RATE_LIMIT").as_deref(),
+                    Ok("1" | "true" | "TRUE" | "yes")
+                ));
 
         // SMTP is only required when dev_mode is off — in dev we short-circuit
         // OTP delivery and never reach lettre.
@@ -119,6 +129,7 @@ impl Config {
             smtp_user: resolve(&args, "--smtp-user", "YOMERU_SMTP_USER"),
             smtp_pass: resolve(&args, "--smtp-pass", "YOMERU_SMTP_PASS"),
             dev_mode,
+            no_rate_limit,
             privacy_controller: resolve(&args, "--privacy-controller", "YOMERU_PRIVACY_CONTROLLER"),
             privacy_contact: resolve(&args, "--privacy-contact", "YOMERU_PRIVACY_CONTACT"),
         })

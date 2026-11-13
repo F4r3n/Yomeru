@@ -95,7 +95,7 @@ pub async fn sync_handler(
     // at once can interleave and each be handed a merged snapshot that never
     // existed, which is how a client ends up adopting a half-applied merge.
     let mut tx = state
-        .db
+        .sync_db
         .begin()
         .await
         .map_err(|e| db_err("begin sync tx", e.into()))?;

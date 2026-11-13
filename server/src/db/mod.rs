@@ -9,7 +9,7 @@
 
 use anyhow::Context;
 use sqlx::SqlitePool;
-use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
+use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous};
 use std::str::FromStr;
 use std::time::Duration;
 
@@ -47,18 +47,34 @@ pub use sync_meta::{Cursor, next_rev_tx};
 
 pub type Db = SqlitePool;
 
-pub async fn init_db(path: &str) -> anyhow::Result<Db> {
+/// The two pools over one database file.
+pub struct Pools {
+    pub db: Db,
+    /// Single connection for sync transactions. Every sync takes the write lock,
+    /// so concurrent syncs queue here in order instead of spinning on SQLite's
+    /// busy handler, which is unfair and timed out under bursts.
+    pub sync_db: Db,
+}
+
+pub async fn init_db(path: &str) -> anyhow::Result<Pools> {
     let opts = SqliteConnectOptions::from_str(path)
         .with_context(|| format!("parse sqlite path {path}"))?
         .create_if_missing(true)
         .journal_mode(SqliteJournalMode::Wal)
+        // Safe with WAL: a power loss can drop the last commits, never corrupt.
+        .synchronous(SqliteSynchronous::Normal)
         .busy_timeout(Duration::from_secs(5));
-    let pool = SqlitePoolOptions::new()
-        .connect_with(opts)
+    let db = SqlitePoolOptions::new()
+        .connect_with(opts.clone())
         .await
         .with_context(|| format!("open sqlite db at {path}"))?;
-    schema::init_schema(&pool).await?;
-    Ok(pool)
+    schema::init_schema(&db).await?;
+    let sync_db = SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect_with(opts)
+        .await
+        .with_context(|| format!("open sqlite sync pool at {path}"))?;
+    Ok(Pools { db, sync_db })
 }
 
 #[cfg(test)]

@@ -215,6 +215,7 @@ mod tests {
             smtp_user: get("YOMERU_SMTP_USER"),
             smtp_pass: get("YOMERU_SMTP_PASS"),
             dev_mode: false,
+            no_rate_limit: false,
             privacy_controller: None,
             privacy_contact: None,
         };

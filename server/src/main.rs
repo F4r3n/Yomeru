@@ -18,6 +18,8 @@ use db::Db;
 #[derive(Clone)]
 pub struct AppState {
     pub db: Db,
+    /// Single-connection pool for `/api/sync` transactions; see [`db::Pools`].
+    pub sync_db: Db,
     pub cfg: Arc<Config>,
     /// OTP request/verify: strict, since it guards code guessing.
     pub limiter: Arc<DefaultKeyedRateLimiter<IpAddr>>,
@@ -92,13 +94,16 @@ async fn main() -> anyhow::Result<()> {
              with no OTP. Never enable this on a public deployment."
         );
     }
+    if cfg.no_rate_limit {
+        warn!("rate limiting DISABLED (YOMERU_NO_RATE_LIMIT)");
+    }
     info!(
         trust_proxy = ?cfg.trust_proxy,
         hops = cfg.proxy_hops,
         "rate-limit client-IP resolution"
     );
 
-    let db = db::init_db(&cfg.db_path).await.context("init db")?;
+    let db::Pools { db, sync_db } = db::init_db(&cfg.db_path).await.context("init db")?;
     {
         let now = now_ms();
         // 90 days
@@ -132,6 +137,7 @@ async fn main() -> anyhow::Result<()> {
 
     let state = AppState {
         db,
+        sync_db,
         cfg: cfg.clone(),
         limiter: Arc::new(RateLimiter::keyed(auth_quota())),
         sync_limiter: Arc::new(RateLimiter::keyed(sync_quota())),

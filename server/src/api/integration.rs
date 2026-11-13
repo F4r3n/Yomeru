@@ -92,12 +92,14 @@ impl Harness {
             smtp_pass: None,
             // Off, so the Bearer check is genuinely exercised.
             dev_mode: false,
+            no_rate_limit: false,
             privacy_controller: None,
             privacy_contact: None,
         };
 
         let state = AppState {
             db: db.clone(),
+            sync_db: db.clone(),
             cfg: Arc::new(cfg),
             limiter: Arc::new(RateLimiter::keyed(auth)),
             sync_limiter: Arc::new(RateLimiter::keyed(sync)),
