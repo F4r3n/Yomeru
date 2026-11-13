@@ -122,11 +122,10 @@ fn parse_pair(a_line: &str, b_line: &str) -> Option<Parsed> {
 fn build(content: &str) -> Result<BuildOutput> {
     let lines: Vec<&str> = content.lines().collect();
     let sentences: Vec<Parsed> = lines
-        .chunks_exact(2)
-        .filter_map(|pair| match pair {
-            [a, b] => parse_pair(a, b),
-            _ => None,
-        })
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .filter_map(|[a, b]| parse_pair(a, b))
         .filter(|p| p.tokens.iter().any(|t| is_valid_headword(t)))
         .collect();
 
