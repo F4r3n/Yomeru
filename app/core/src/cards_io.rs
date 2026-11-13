@@ -64,9 +64,9 @@ pub async fn import_cards_json(platform: &Platform, text: &str) -> Result<(usize
         .and_then(|c| c.as_array())
         .ok_or("missing 'cards' array")?;
 
-    let existing = get_all_cards().await.map_err(|e| e.to_string())?;
-    let existing_ids: std::collections::HashSet<String> =
-        existing.into_iter().map(|c| c.id).collect();
+    let existing = get_all_cards().await?;
+    let existing_ids: std::collections::HashSet<&str> =
+        existing.iter().map(|c| c.id.as_str()).collect();
 
     // Route by the explicit `schema` version. Legacy exports predate this field
     // (or carry a lower number) and keyed cards by the headword string rather
@@ -98,7 +98,7 @@ pub async fn import_cards_json(platform: &Platform, text: &str) -> Result<(usize
         .collect();
 
     let added = to_put.len();
-    put_cards(&to_put).await.map_err(|e| e.to_string())?;
+    put_cards(&to_put).await?;
     if added > 0 {
         platform.settings.schedule_sync();
     }
@@ -109,7 +109,7 @@ pub async fn import_cards_json(platform: &Platform, text: &str) -> Result<(usize
 /// Unparseable entries and ids already in `existing_ids` count as skipped.
 fn parse_current_cards(
     cards: &[serde_json::Value],
-    existing_ids: &std::collections::HashSet<String>,
+    existing_ids: &std::collections::HashSet<&str>,
 ) -> (Vec<SrsCard>, Skips) {
     let mut to_put = Vec::new();
     let mut skips = Skips::default();
@@ -118,7 +118,7 @@ fn parse_current_cards(
             skips.invalid += 1;
             continue;
         };
-        if existing_ids.contains(&card.id) {
+        if existing_ids.contains(card.id.as_str()) {
             skips.existing += 1;
             continue;
         }
@@ -142,11 +142,7 @@ async fn resolve_legacy_words(
     }
     let mut word_seq = std::collections::HashMap::new();
     if !words.is_empty() {
-        let results = platform
-            .dict
-            .lookup_many(&words)
-            .await
-            .map_err(|e| e.to_string())?;
+        let results = platform.dict.lookup_many(&words).await?;
         for (w, entries) in words.into_iter().zip(results) {
             if let Some(seq) = entries.first().map(|e| e.sequence) {
                 word_seq.insert(w, seq);
@@ -163,7 +159,7 @@ async fn resolve_legacy_words(
 fn parse_legacy_cards(
     cards: &[serde_json::Value],
     word_seq: &std::collections::HashMap<String, u32>,
-    existing_ids: &std::collections::HashSet<String>,
+    existing_ids: &std::collections::HashSet<&str>,
 ) -> (Vec<SrsCard>, Skips) {
     let mut to_put = Vec::new();
     let mut skips = Skips::default();
@@ -177,7 +173,7 @@ fn parse_legacy_cards(
             continue;
         };
         let card = v1.upgrade(seq);
-        if existing_ids.contains(&card.id) {
+        if existing_ids.contains(card.id.as_str()) {
             skips.existing += 1;
             continue;
         }
@@ -247,7 +243,7 @@ mod tests {
             new_format_card(1001, "recall"),
             new_format_card(1002, "recall"),
         ];
-        let existing = HashSet::from(["1001::recall".to_string()]);
+        let existing = HashSet::from(["1001::recall"]);
         let (to_put, skips) = parse_current_cards(&cards, &existing);
         assert_eq!(skips.existing, 1);
         assert_eq!(skips.total(), 1);
@@ -319,7 +315,7 @@ mod tests {
         let cards = vec![old_format_card("一発", "recall")];
         let word_seq = HashMap::from([("一発".to_string(), 1583460u32)]);
         // The *rebuilt* (sequence-keyed) id already exists.
-        let existing = HashSet::from(["1583460::recall".to_string()]);
+        let existing = HashSet::from(["1583460::recall"]);
         let (to_put, skips) = parse_legacy_cards(&cards, &word_seq, &existing);
         assert_eq!(skips.existing, 1);
         assert!(to_put.is_empty());
