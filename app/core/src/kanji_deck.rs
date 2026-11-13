@@ -54,23 +54,20 @@ impl StudiedWord {
     }
 }
 
-/// Cards for the kanji in `words` that have none yet, deduplicated, kanji from
-/// the earliest-added words first. They are due now, staggered by a
-/// millisecond each so a due-ordered session keeps that order.
+/// Cards for the kanji in `words` that have none yet, deduplicated, in `words`
+/// order. Due now, staggered by a millisecond each to keep that order.
 pub fn missing_kanji_cards(
     words: &[StudiedWord],
-    existing_ids: &HashSet<String>,
+    existing_ids: &HashSet<&str>,
     now: f64,
 ) -> Vec<SrsCard> {
-    let mut ordered: Vec<&StudiedWord> = words.iter().collect();
-    ordered.sort_by(|a, b| a.added_ms.total_cmp(&b.added_ms));
     let mut seen = HashSet::new();
-    ordered
-        .into_iter()
+    words
+        .iter()
         .flat_map(|w| w.headword.chars())
         .filter(|&c| is_kanji(c) && seen.insert(c))
         .map(|c| SrsCard::new_kanji(c, now))
-        .filter(|card| !existing_ids.contains(&card.id))
+        .filter(|card| !existing_ids.contains(card.id.as_str()))
         .enumerate()
         .map(|(i, mut card)| {
             card.due_ms = now + i as f64;
@@ -103,7 +100,7 @@ pub async fn ensure_kanji_cards(
     platform: &Platform,
 ) -> Result<HashMap<char, Vec<StudiedWord>>, String> {
     let all = get_all_cards().await?;
-    let existing_ids: HashSet<String> = all.iter().map(|c| c.id.clone()).collect();
+    let existing_ids: HashSet<&str> = all.iter().map(|c| c.id.as_str()).collect();
 
     // One entry per word: its two direction cards share a sequence.
     let mut added: HashMap<u32, f64> = HashMap::new();
@@ -120,11 +117,13 @@ pub async fn ensure_kanji_cards(
     } else {
         platform.dict.lookup_by_sequence(&sequences).await?
     };
-    let words: Vec<StudiedWord> = sequences
+    let mut words: Vec<StudiedWord> = sequences
         .iter()
         .zip(entries)
         .filter_map(|(seq, entry)| Some(StudiedWord::from_entry(&entry?, *added.get(seq)?)))
         .collect();
+
+    words.sort_by(|a, b| a.added_ms.total_cmp(&b.added_ms));
 
     let missing = missing_kanji_cards(&words, &existing_ids, now_ms());
     if !missing.is_empty() {
@@ -173,9 +172,9 @@ mod tests {
     }
 
     #[test]
-    fn earliest_added_words_come_first_and_stay_ordered_by_due() {
+    fn cards_follow_word_order_and_stay_ordered_by_due() {
         let cards = missing_kanji_cards(
-            &[word(5.0, "電車"), word(1.0, "猫")],
+            &[word(1.0, "猫"), word(5.0, "電車")],
             &HashSet::new(),
             100.0,
         );
@@ -185,7 +184,8 @@ mod tests {
 
     #[test]
     fn existing_cards_are_left_alone() {
-        let existing: HashSet<String> = [SrsCard::new_kanji('学', 0.0).id].into();
+        let card = SrsCard::new_kanji('学', 0.0);
+        let existing: HashSet<&str> = [card.id.as_str()].into();
         let cards = missing_kanji_cards(&[word(0.0, "学校")], &existing, 0.0);
         assert_eq!(kanji_of(&cards), "校");
     }
