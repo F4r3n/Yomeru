@@ -7,13 +7,13 @@ use axum::{
     Json,
     extract::{ConnectInfo, State},
     http::{HeaderMap, StatusCode},
-    response::{IntoResponse, Response},
+    response::IntoResponse,
 };
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
 use super::auth::send_code_email;
-use super::{db_err, extract_bearer, gen_code, now_ms};
+use super::{ApiError, db_err, extract_bearer, gen_code, now_ms, rate_limit};
 use crate::AppState;
 use crate::db;
 
@@ -24,21 +24,15 @@ async fn authed_user(
     state: &AppState,
     addr: SocketAddr,
     headers: &HeaderMap,
-) -> Result<db::SessionUser, Response> {
-    if state
-        .limiter
-        .check_key(&state.client_ip(addr, headers))
-        .is_err()
-    {
-        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
-    }
+) -> Result<db::SessionUser, ApiError> {
+    rate_limit(state, &state.limiter, addr, headers)?;
     let Some(token) = extract_bearer(headers) else {
-        return Err(StatusCode::UNAUTHORIZED.into_response());
+        return Err(ApiError::Unauthorized(None));
     };
     db::validate_session(&state.db, token, now_ms())
         .await
         .map_err(|e| db_err("validate_session", e))?
-        .ok_or_else(|| StatusCode::UNAUTHORIZED.into_response())
+        .ok_or(ApiError::Unauthorized(None))
 }
 
 /// `POST /api/account/delete/request`, Bearer token: emails the account a
@@ -53,14 +47,14 @@ pub async fn delete_account_request_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
-) -> Result<Response, Response> {
+) -> Result<impl IntoResponse, ApiError> {
     let user = authed_user(&state, addr, &headers).await?;
     let code = gen_code();
     let stored = db::store_otp(&state.db, &user.email, &code, now_ms())
         .await
         .map_err(|e| db_err("store_otp", e))?;
     if !stored {
-        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
+        return Err(ApiError::TooManyRequests);
     }
     if state.cfg.dev_mode {
         return Ok(Json(serde_json::json!({ "dev_code": code })).into_response());
@@ -80,7 +74,7 @@ pub async fn delete_account_request_handler(
     .await
     {
         error!(user_id = user.id, error = ?e, "deletion code email failed");
-        return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
+        return Err(ApiError::Internal);
     }
     Ok(StatusCode::NO_CONTENT.into_response())
 }
@@ -99,17 +93,13 @@ pub async fn delete_account_handler(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     Json(body): Json<DeleteBody>,
-) -> Result<Response, Response> {
+) -> Result<impl IntoResponse, ApiError> {
     let user = authed_user(&state, addr, &headers).await?;
     let valid = db::verify_otp(&state.db, &user.email, body.code.trim(), now_ms())
         .await
         .map_err(|e| db_err("verify_otp", e))?;
     if !valid {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({ "error": "invalid or expired code" })),
-        )
-            .into_response());
+        return Err(ApiError::Forbidden("invalid or expired code"));
     }
 
     db::delete_account(&state.db, user.id, &user.email)
@@ -118,7 +108,7 @@ pub async fn delete_account_handler(
     // The id only: logging the address would keep it in the logs after the
     // account itself is gone.
     info!(user_id = user.id, "account deleted");
-    Ok(StatusCode::NO_CONTENT.into_response())
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[derive(Serialize)]

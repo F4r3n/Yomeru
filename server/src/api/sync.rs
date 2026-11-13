@@ -10,12 +10,12 @@ use std::net::SocketAddr;
 
 use axum::{
     extract::{ConnectInfo, Json, State},
-    http::{HeaderMap, StatusCode},
-    response::{IntoResponse, Response},
+    http::HeaderMap,
+    response::IntoResponse,
 };
 use serde::{Deserialize, Serialize};
 
-use super::{db_err, extract_bearer, now_ms};
+use super::{ApiError, db_err, extract_bearer, now_ms, rate_limit};
 use crate::AppState;
 use crate::db;
 
@@ -74,43 +74,21 @@ pub async fn sync_handler(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     Json(body): Json<SyncBody>,
-) -> Result<Response, Response> {
-    if state
-        .sync_limiter
-        .check_key(&state.client_ip(addr, &headers))
-        .is_err()
-    {
-        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
-    }
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.sync_limiter, addr, &headers)?;
 
     // Auth is required even in dev mode — dev just skips OTP+SMTP so the
     // token is auto-issued by /api/auth/request. Every sync still needs a
     // valid session so we know whose cards to read/write.
-    let token = match extract_bearer(&headers) {
-        Some(t) => t.to_string(),
-        None => {
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(serde_json::json!({ "error": "missing token" })),
-            )
-                .into_response());
-        }
-    };
+    let token = extract_bearer(&headers)
+        .ok_or(ApiError::Unauthorized(Some("missing token")))?
+        .to_string();
 
     let now = now_ms();
-    let db::SessionUser { id: user_id, email } = match db::validate_session(&state.db, &token, now)
+    let db::SessionUser { id: user_id, email } = db::validate_session(&state.db, &token, now)
         .await
         .map_err(|e| db_err("validate_session", e))?
-    {
-        Some(u) => u,
-        None => {
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(serde_json::json!({ "error": "invalid or expired session" })),
-            )
-                .into_response());
-        }
-    };
+        .ok_or(ApiError::Unauthorized(Some("invalid or expired session")))?;
 
     // One transaction for the whole round trip. The reads have to see exactly
     // the state the writes just produced: run separately, two devices syncing
@@ -204,8 +182,7 @@ pub async fn sync_handler(
         drill_counts,
         cursor: clock.cursor(user_id),
         full: delta_from.is_none(),
-    })
-    .into_response())
+    }))
 }
 
 // ---- Lookup endpoints (no auth, rate-limited by lookup_limiter) ----------

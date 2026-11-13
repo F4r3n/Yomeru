@@ -7,12 +7,12 @@ use std::net::SocketAddr;
 use axum::{
     extract::{ConnectInfo, Json, State},
     http::{HeaderMap, StatusCode},
-    response::{IntoResponse, Response},
+    response::IntoResponse,
 };
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
-use super::{db_err, gen_code, gen_token, now_ms};
+use super::{ApiError, db_err, gen_code, gen_token, now_ms, rate_limit};
 use crate::AppState;
 use crate::config::Config;
 use crate::db;
@@ -38,18 +38,12 @@ pub async fn auth_request_handler(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     Json(body): Json<AuthRequestBody>,
-) -> Result<Response, Response> {
-    if state
-        .limiter
-        .check_key(&state.client_ip(addr, &headers))
-        .is_err()
-    {
-        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
-    }
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.limiter, addr, &headers)?;
 
     let email = body.email.trim().to_lowercase();
     if email.is_empty() {
-        return Err(StatusCode::BAD_REQUEST.into_response());
+        return Err(ApiError::BadRequest("email required".into()));
     }
 
     // Dev mode: skip OTP+SMTP entirely. Issue a session token now and
@@ -73,12 +67,12 @@ pub async fn auth_request_handler(
 
     if !stored {
         // Per-email cooldown is still active.
-        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
+        return Err(ApiError::TooManyRequests);
     }
 
     if let Err(e) = send_otp_email(&state.cfg, &email, &code).await {
         error!(%email, error = ?e, "email send failed");
-        return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
+        return Err(ApiError::Internal);
     }
 
     Ok(StatusCode::NO_CONTENT.into_response())
@@ -89,14 +83,8 @@ pub async fn auth_verify_handler(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     Json(body): Json<VerifyBody>,
-) -> Result<Response, Response> {
-    if state
-        .limiter
-        .check_key(&state.client_ip(addr, &headers))
-        .is_err()
-    {
-        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
-    }
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.limiter, addr, &headers)?;
 
     let email = body.email.trim().to_lowercase();
     let code = body.code.trim().to_string();
@@ -107,11 +95,7 @@ pub async fn auth_verify_handler(
         .map_err(|e| db_err("verify_otp", e))?;
 
     if !valid {
-        return Err((
-            StatusCode::UNAUTHORIZED,
-            Json(serde_json::json!({ "error": "invalid or expired code" })),
-        )
-            .into_response());
+        return Err(ApiError::Unauthorized(Some("invalid or expired code")));
     }
 
     let token = gen_token();
@@ -121,7 +105,7 @@ pub async fn auth_verify_handler(
         .await
         .map_err(|e| db_err("create_session", e))?;
 
-    Ok(Json(VerifyResponse { token }).into_response())
+    Ok(Json(VerifyResponse { token }))
 }
 
 async fn send_otp_email(cfg: &Config, to: &str, code: &str) -> anyhow::Result<()> {

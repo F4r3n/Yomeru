@@ -10,15 +10,15 @@ use std::net::SocketAddr;
 
 use axum::{
     extract::{ConnectInfo, Json, State},
-    http::{HeaderMap, StatusCode},
-    response::{IntoResponse, Response},
+    http::HeaderMap,
+    response::IntoResponse,
 };
 use examples_types::ExampleEntry;
 use jmdict_types::ArchivedWordEntry;
 use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
 use serde::{Deserialize, Serialize};
 
-use super::run_blocking;
+use super::{ApiError, rate_limit, run_blocking};
 use crate::AppState;
 
 // These endpoints are unauthenticated, so the request body is the one input an
@@ -40,14 +40,8 @@ const MAX_QUERY_CHARS: usize = 256;
 /// More parts than any kanji holds: past this the answer is empty anyway.
 const MAX_PARTS: usize = 16;
 
-fn too_large(what: &str, got: usize, max: usize) -> Response {
-    (
-        StatusCode::BAD_REQUEST,
-        Json(serde_json::json!({
-            "error": format!("{what} too large: {got} (max {max})")
-        })),
-    )
-        .into_response()
+fn too_large(what: &str, got: usize, max: usize) -> ApiError {
+    ApiError::BadRequest(format!("{what} too large: {got} (max {max})"))
 }
 
 #[derive(Deserialize)]
@@ -134,14 +128,8 @@ pub async fn lookup_handler(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     Json(body): Json<LookupBody>,
-) -> Result<Response, Response> {
-    if state
-        .lookup_limiter
-        .check_key(&state.client_ip(addr, &headers))
-        .is_err()
-    {
-        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
-    }
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.lookup_limiter, addr, &headers)?;
     let words = body.words;
     if words.len() > MAX_LOOKUP_WORDS {
         return Err(too_large("words", words.len(), MAX_LOOKUP_WORDS));
@@ -150,7 +138,7 @@ pub async fn lookup_handler(
         Ok(words.iter().map(|w| jmdict_core::lookup(w)).collect())
     })
     .await?;
-    Ok(Json(LookupResponse { results }).into_response())
+    Ok(Json(LookupResponse { results }))
 }
 
 pub async fn lookup_by_sequence_handler(
@@ -158,14 +146,8 @@ pub async fn lookup_by_sequence_handler(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     Json(body): Json<LookupBySequenceBody>,
-) -> Result<Response, Response> {
-    if state
-        .lookup_limiter
-        .check_key(&state.client_ip(addr, &headers))
-        .is_err()
-    {
-        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
-    }
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.lookup_limiter, addr, &headers)?;
     let sequences = body.sequences;
     if sequences.len() > MAX_LOOKUP_SEQUENCES {
         return Err(too_large(
@@ -181,7 +163,7 @@ pub async fn lookup_by_sequence_handler(
             .collect())
     })
     .await?;
-    Ok(Json(LookupBySequenceResponse { results }).into_response())
+    Ok(Json(LookupBySequenceResponse { results }))
 }
 
 pub async fn lookup_prefix_handler(
@@ -189,14 +171,8 @@ pub async fn lookup_prefix_handler(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     Json(body): Json<LookupPrefixBody>,
-) -> Result<Response, Response> {
-    if state
-        .lookup_limiter
-        .check_key(&state.client_ip(addr, &headers))
-        .is_err()
-    {
-        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
-    }
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.lookup_limiter, addr, &headers)?;
     let text = body.text;
     if text.chars().count() > MAX_QUERY_CHARS {
         return Err(too_large("text", text.chars().count(), MAX_QUERY_CHARS));
@@ -206,7 +182,7 @@ pub async fn lookup_prefix_handler(
         Ok(jmdict_core::lookup_prefix(&text, max))
     })
     .await?;
-    Ok(Json(LookupPrefixResponse { results }).into_response())
+    Ok(Json(LookupPrefixResponse { results }))
 }
 
 pub async fn kanji_handler(
@@ -214,14 +190,8 @@ pub async fn kanji_handler(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     Json(body): Json<KanjiBody>,
-) -> Result<Response, Response> {
-    if state
-        .lookup_limiter
-        .check_key(&state.client_ip(addr, &headers))
-        .is_err()
-    {
-        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
-    }
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.lookup_limiter, addr, &headers)?;
     let word = body.word;
     if word.chars().count() > MAX_QUERY_CHARS {
         return Err(too_large("word", word.chars().count(), MAX_QUERY_CHARS));
@@ -230,23 +200,17 @@ pub async fn kanji_handler(
         Ok(kanjidic_core::lookup_many(&word))
     })
     .await?;
-    Ok(Json(KanjiResponse { entries }).into_response())
+    Ok(Json(KanjiResponse { entries }))
 }
 
 pub async fn kanji_parts_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
-) -> Result<Response, Response> {
-    if state
-        .lookup_limiter
-        .check_key(&state.client_ip(addr, &headers))
-        .is_err()
-    {
-        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
-    }
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.lookup_limiter, addr, &headers)?;
     let parts = run_blocking("kanji_parts", || Ok(kanjidic_core::parts())).await?;
-    Ok(Json(KanjiPartsResponse { parts }).into_response())
+    Ok(Json(KanjiPartsResponse { parts }))
 }
 
 pub async fn kanji_by_parts_handler(
@@ -254,14 +218,8 @@ pub async fn kanji_by_parts_handler(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     Json(body): Json<KanjiByPartsBody>,
-) -> Result<Response, Response> {
-    if state
-        .lookup_limiter
-        .check_key(&state.client_ip(addr, &headers))
-        .is_err()
-    {
-        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
-    }
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.lookup_limiter, addr, &headers)?;
     let parts: Vec<char> = body.parts.chars().collect();
     if parts.len() > MAX_PARTS {
         return Err(too_large("parts", parts.len(), MAX_PARTS));
@@ -271,7 +229,7 @@ pub async fn kanji_by_parts_handler(
         Ok(kanjidic_core::kanji_with_parts(&parts, max))
     })
     .await?;
-    Ok(Json(result).into_response())
+    Ok(Json(result))
 }
 
 pub async fn examples_handler(
@@ -279,14 +237,8 @@ pub async fn examples_handler(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     Json(body): Json<ExamplesBody>,
-) -> Result<Response, Response> {
-    if state
-        .lookup_limiter
-        .check_key(&state.client_ip(addr, &headers))
-        .is_err()
-    {
-        return Err(StatusCode::TOO_MANY_REQUESTS.into_response());
-    }
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.lookup_limiter, addr, &headers)?;
     let word = body.word;
     if word.chars().count() > MAX_QUERY_CHARS {
         return Err(too_large("word", word.chars().count(), MAX_QUERY_CHARS));
@@ -296,5 +248,5 @@ pub async fn examples_handler(
         Ok(examples_core::lookup(&word, max))
     })
     .await?;
-    Ok(Json(ExamplesResponse { entries }).into_response())
+    Ok(Json(ExamplesResponse { entries }))
 }
