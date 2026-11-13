@@ -335,7 +335,7 @@ pub(crate) fn KanjiReview() -> Element {
                 div { class: "word kanji-face", "{kanji}" }
             }
             if show_back_v {
-                KanjiBack { info: entry.clone(), used_in }
+                KanjiBack { info: entry, used_in }
             }
             div { style: "margin-top: 16px;",
                 if !show_back_v {

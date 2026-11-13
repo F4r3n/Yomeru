@@ -510,7 +510,6 @@ fn LookupListPane() -> Element {
                         let expanded = selected_word.as_deref() == Some(&head);
                         let head_for_select = head.clone();
                         let head_for_close = head.clone();
-                        let head_for_expansion = head.clone();
                         let on_select = if expanded {
                             // Already expanded — clicking collapses.
                             Some(EventHandler::new(move |_| {
@@ -534,7 +533,7 @@ fn LookupListPane() -> Element {
                             }
                             if expanded {
                                 ExpansionPanel {
-                                    word: head_for_expansion,
+                                    word: head,
                                     kanji: kanji_data.read().clone(),
                                     examples: examples_data.read().clone(),
                                     tab: *extra_tab.read(),
@@ -546,7 +545,7 @@ fn LookupListPane() -> Element {
                 }
             } else if *searched.read() {
                 {
-                    let label = if target.is_empty() { q_trim.clone() } else { target.clone() };
+                    let label = if target.is_empty() { q_trim } else { target };
                     rsx! {
                         div { class: "empty-state",
                             div { class: "glyph", Icon { name: IconName::Search, size: 44 } }

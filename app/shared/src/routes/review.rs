@@ -616,7 +616,7 @@ fn WordReview() -> Element {
                                 } else {
                                     div { class: "word", "{front_word}" }
                                     if !hide_reading {
-                                        if let Some(k) = sub_kanji.clone() {
+                                        if let Some(k) = sub_kanji {
                                             div { class: "kanji-sub", "{k}" }
                                         } else if !reading.is_empty() && reading != front_word {
                                             div { class: "reading", "{reading}" }
@@ -627,10 +627,10 @@ fn WordReview() -> Element {
 
                             if show_back_v {
                                 BackContent {
-                                    entry: entry.clone(),
+                                    entry,
                                     kanji: kanji.read().clone(),
                                     examples: examples.read().clone(),
-                                    word: front_word.clone(),
+                                    word: front_word,
                                     tab: *back_tab.read(),
                                     on_tab: EventHandler::new(move |t| back_tab.set(t)),
                                 }
@@ -752,7 +752,7 @@ fn RecapList(
                                 WordRow {
                                     key: "{r.id}",
                                     sequence: r.sequence,
-                                    entry: Some(r.entry.clone()),
+                                    entry: Some(r.entry),
                                     badge,
                                     badge_class,
                                 }
