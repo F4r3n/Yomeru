@@ -64,8 +64,8 @@ pub(super) fn gen_code() -> String {
 }
 
 pub(super) fn gen_token() -> String {
-    let bytes: Vec<u8> = (0..32).map(|_| rand::thread_rng().r#gen()).collect();
-    bytes.iter().map(|b| format!("{b:02x}")).collect()
+    let bytes: [u8; 32] = rand::thread_rng().r#gen();
+    crate::db::hex(&bytes)
 }
 
 pub(super) fn extract_bearer(headers: &HeaderMap) -> Option<&str> {

@@ -23,6 +23,15 @@ mod sync_meta;
 #[cfg(test)]
 pub(crate) mod test_support;
 
+/// Lowercase hex, two digits per byte.
+pub(crate) fn hex(bytes: &[u8]) -> String {
+    bytes
+        .iter()
+        .flat_map(|b| [b >> 4, b & 0x0f])
+        .filter_map(|n| char::from_digit(u32::from(n), 16))
+        .collect()
+}
+
 pub use auth::{
     SessionUser, create_session, delete_account, prune_expired_auth, store_otp, validate_session,
     verify_otp,
@@ -50,4 +59,12 @@ pub async fn init_db(path: &str) -> anyhow::Result<Db> {
         .with_context(|| format!("open sqlite db at {path}"))?;
     schema::init_schema(&pool).await?;
     Ok(pool)
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn hex_is_two_lowercase_digits_per_byte() {
+        assert_eq!(super::hex(&[0x00, 0x0f, 0xa5, 0xff]), "000fa5ff");
+    }
 }

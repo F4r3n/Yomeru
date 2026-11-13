@@ -82,7 +82,7 @@ pub(super) async fn seed(pool: &SqlitePool) -> anyhow::Result<()> {
 fn new_epoch() -> String {
     use rand::Rng;
     let bytes: [u8; 8] = rand::thread_rng().r#gen();
-    bytes.iter().map(|b| format!("{b:02x}")).collect()
+    super::hex(&bytes)
 }
 
 /// Takes the next revision. Call it first in the sync transaction: as a write,

@@ -26,7 +26,7 @@ const OTP_MAX_ATTEMPTS: i64 = 5;
 pub(crate) fn token_hash(token: &str) -> String {
     use sha2::{Digest, Sha256};
     let digest = Sha256::digest(token.as_bytes());
-    digest.iter().map(|b| format!("{b:02x}")).collect()
+    super::hex(&digest)
 }
 
 /// `Ok(true)` = stored, `Ok(false)` = blocked by the anti-spam floor while a
