@@ -4,6 +4,9 @@ version = "0.19.4"
 license.workspace = true
 edition = "2021"
 
+[lints]
+workspace = true
+
 [lib]
 crate-type = ["cdylib", "staticlib", "rlib"]
 
