@@ -196,7 +196,7 @@ export interface SrsSettings {
 }
 
 export const DEFAULT_SETTINGS: SrsSettings = {
-  graduationIntervalDays: 365,
+  graduationIntervalDays: 0, // off: a retired card is never tested again
   intervalScale: 1.0,
   maxSessionCards: 20,
   requestRetention: 0.9,

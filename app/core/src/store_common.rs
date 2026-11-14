@@ -104,6 +104,18 @@ pub async fn reset_card(sequence: u32, now_ms: f64) -> Result<(), String> {
     put_cards(&to_put).await
 }
 
+/// Puts every graduated card back into Review with its scheduling kept, so
+/// each comes up on its own due date. Returns how many came back.
+pub async fn reactivate_graduated() -> Result<usize, String> {
+    let mut cards = get_all_cards().await?;
+    cards.retain(|c| matches!(c.status, CardStatus::Graduated));
+    for c in &mut cards {
+        c.status = CardStatus::Active;
+    }
+    put_cards(&cards).await?;
+    Ok(cards.len())
+}
+
 /// Sends every active or graduated sibling of `sequence` back to the New
 /// Words tab: progress reset, status back to Staging. The inverse of
 /// [`promote_card`]; `added_ms` and `priority` are kept. Destructive.

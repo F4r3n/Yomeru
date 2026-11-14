@@ -43,7 +43,8 @@ pub enum CardStatus {
     /// FSRS's computed next-review interval reached the graduation threshold
     /// (`SrsSettings::graduation_interval_days`) — the card is considered
     /// learned. Kept (not deleted) and excluded from Review, shown in Word
-    /// List, and reversible via [`crate::idb::reset_card`].
+    /// List, and reversible via [`crate::idb::reset_card`] or, keeping its
+    /// scheduling, [`crate::idb::reactivate_graduated`].
     Graduated,
 }
 

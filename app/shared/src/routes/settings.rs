@@ -41,6 +41,7 @@ pub fn SettingsTab() -> Element {
     let health = use_context::<SyncHealth>();
     let mut fsrs_busy = use_signal(|| false);
     let mut fsrs_status = use_signal(|| Option::<(String, bool)>::None);
+    let mut graduated_status = use_signal(|| Option::<(String, bool)>::None);
 
     let save_settings = move |_| {
         let s = settings.read().clone();
@@ -163,6 +164,23 @@ pub fn SettingsTab() -> Element {
             };
             fsrs_status.set(Some(status));
             fsrs_busy.set(false);
+        });
+    };
+
+    let on_reactivate = move |_| {
+        spawn(async move {
+            let status = match crate::idb::reactivate_graduated().await {
+                Ok(0) => ("No graduated cards.".to_string(), false),
+                Ok(n) => {
+                    crate::sync::schedule_sync();
+                    (
+                        format!("{n} cards back in review, each on its own due date."),
+                        false,
+                    )
+                }
+                Err(e) => (format!("Couldn't bring them back: {e}"), true),
+            };
+            graduated_status.set(Some(status));
         });
     };
 
@@ -430,7 +448,15 @@ pub fn SettingsTab() -> Element {
                         value: "{cur.graduation_interval_days}",
                         oninput: move |e| settings.write().graduation_interval_days = e.value().parse().unwrap_or(0),
                     }
-                    span { class: "hint", "0 = never graduate · e.g. 365 = 1 year" }
+                    span { class: "hint",
+                        "0 = never graduate (recommended) · e.g. 365 = 1 year. A graduated card is never tested again."
+                    }
+                    div { class: "row", style: "gap: 8px;",
+                        button { class: "link", onclick: on_reactivate, "Return graduated cards to review" }
+                        if let Some((msg, err)) = graduated_status.read().clone() {
+                            span { class: if err { "error" } else { "ok" }, "{msg}" }
+                        }
+                    }
                 }
                 div { class: "form-row",
                     label { "Interval scale ×{cur.interval_scale:.2}" }

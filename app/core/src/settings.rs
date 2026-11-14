@@ -47,7 +47,9 @@ fn default_request_retention() -> f64 {
 impl Default for SrsSettings {
     fn default() -> Self {
         Self {
-            graduation_interval_days: 365,
+            // Off: FSRS intervals already stretch to years, and a retired card
+            // is never tested again.
+            graduation_interval_days: 0,
             interval_scale: 1.0,
             max_session_cards: 20,
             request_retention: default_request_retention(),
