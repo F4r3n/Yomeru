@@ -102,12 +102,22 @@ echo "==> [3/4] backing up the database to $BACKUP_DIR"
 # The new server may migrate the schema on startup; this is the way back.
 backup_db
 
+if [[ "${FORCE_DICTS:-0}" == "1" ]]; then
+    # Before the server swap, with the new builder: when a dict format
+    # changes, the new server can't read the old bins and would crash-loop.
+    # The running server loaded its dicts at startup, so rewriting them
+    # under it is harmless; it's recreated on the new ones right after.
+    echo "==> FORCE_DICTS=1 — rebuilding dict bins with the new builder"
+    "${COMPOSE[@]}" build yomeru-dicts
+    "${COMPOSE[@]}" run --rm -e FORCE=1 yomeru-dicts
+fi
+
 echo "==> [4/4] building & launching yomeru-server via podman compose"
 # Builds both images. --force-recreate because podman-compose only
 # recreates a container when docker-compose.yml changed, not its image:
 # without it the old server keeps running. Volumes are kept. The dict
 # builder skips its work while the dict volume already holds the bins,
-# so the new server starts on the old ones.
+# so without FORCE_DICTS=1 the new server starts on the old ones.
 "${COMPOSE[@]}" up -d --build --force-recreate
 
 # podman-compose can leave the server in "Created" without ever starting it:
@@ -116,19 +126,22 @@ echo "==> [4/4] building & launching yomeru-server via podman compose"
 # (`up -d` waits for it), so start the server explicitly. A no-op if it's
 # already running.
 podman start "$CONTAINER" >/dev/null
-sleep 2
-if [[ "$(podman inspect -f '{{.State.Running}}' "$CONTAINER")" != "true" ]]; then
-    echo "deploy.sh: $CONTAINER failed to start. Last log lines:" >&2
+# A server that exits at startup is restarted by `restart: unless-stopped`,
+# so a single "Running" sample can catch it between crashes. Wait a bit and
+# also require that it hasn't been restarted.
+sleep 5
+if [[ "$(podman inspect -f '{{.State.Running}}' "$CONTAINER")" != "true" \
+    || "$(podman inspect -f '{{.RestartCount}}' "$CONTAINER")" != "0" ]]; then
+    podman stop "$CONTAINER" >/dev/null 2>&1 || true
+    echo "deploy.sh: $CONTAINER failed to start (stopped it). Last log lines:" >&2
     podman logs --tail 30 "$CONTAINER" >&2
+    if podman logs --tail 30 "$CONTAINER" 2>&1 | grep -qi "unsupported.*version"; then
+        echo >&2
+        echo "  The new server can't read the dict bins on the volume (their format changed)." >&2
+        echo "  Rerun with FORCE_DICTS=1 to rebuild them before the server starts, plus" >&2
+        echo "  SKIP_DB_BACKUP=1: the server is down, so the backup this run took is current." >&2
+    fi
     exit 1
-fi
-
-if [[ "${FORCE_DICTS:-0}" == "1" ]]; then
-    # Done after the server update on purpose: a server only reads dict
-    # formats it knows, so new dicts under an old server would stop it.
-    echo "==> FORCE_DICTS=1 — rebuilding dict bins, then restarting the server"
-    "${COMPOSE[@]}" run --rm -e FORCE=1 yomeru-dicts
-    "${COMPOSE[@]}" restart yomeru-server
 fi
 
 echo
