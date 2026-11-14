@@ -104,6 +104,7 @@ impl Harness {
             limiter: Arc::new(RateLimiter::keyed(auth)),
             sync_limiter: Arc::new(RateLimiter::keyed(sync)),
             lookup_limiter: Arc::new(RateLimiter::keyed(lookup)),
+            optimize_limiter: Arc::new(RateLimiter::keyed(auth)),
         };
 
         Self {
@@ -1376,4 +1377,144 @@ mod rate_limits {
             assert_eq!(status, StatusCode::OK, "sync {i} was throttled: {body}");
         }
     }
+}
+
+// ---- FSRS optimizer and undo -------------------------------------------
+
+/// `n` cards, each answered Good at days 0, 1, 4, 12 and 30 after `T0`.
+fn reviewed_deck(n: usize) -> (Vec<db::Card>, Vec<Value>) {
+    let mut cards = Vec::new();
+    let mut reviews = Vec::new();
+    for i in 0..n {
+        let id = format!("{}::recall", 1_000_000 + i);
+        let mut c = card(&id, T0, T0 + 30.0 * DAY);
+        c.reps = 5;
+        cards.push(c);
+        for day in [0.0, 1.0, 4.0, 12.0, 30.0] {
+            let rating = if (i + day as usize).is_multiple_of(9) {
+                1
+            } else {
+                3
+            };
+            reviews.push(json!({
+                "card_id": id, "rating": rating, "kind": "review",
+                "reviewed_ms": T0 + day * DAY,
+            }));
+        }
+    }
+    (cards, reviews)
+}
+
+#[tokio::test]
+async fn optimize_fits_weights_to_the_synced_review_log() {
+    let h = Harness::new().await;
+    let (status, _) = h.post("/api/fsrs/optimize", None, &json!({})).await;
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+
+    // Too little history: a clear 400, not defaults passed off as a fit.
+    let (cards, reviews) = reviewed_deck(3);
+    h.post(
+        "/api/sync",
+        Some(&h.token),
+        &json!({ "cards": cards, "reviews": reviews }),
+    )
+    .await;
+    let (status, body) = h
+        .post("/api/fsrs/optimize", Some(&h.token), &json!({}))
+        .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(body["error"].as_str().unwrap().contains("not enough"));
+
+    let (cards, reviews) = reviewed_deck(60);
+    h.post(
+        "/api/sync",
+        Some(&h.token),
+        &json!({ "cards": cards, "reviews": reviews }),
+    )
+    .await;
+    let (status, body) = h
+        .post("/api/fsrs/optimize", Some(&h.token), &json!({}))
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let params: Vec<f64> = serde_json::from_value(body["params"].clone()).unwrap();
+    assert_eq!(params.len(), crate::optimize::WEIGHT_COUNT);
+    assert_eq!(body["reviews"], 60 * 4);
+}
+
+#[tokio::test]
+async fn optimized_weights_sync_and_invalid_ones_are_dropped() {
+    let h = Harness::new().await;
+    let settings = |w: Value, at: f64| {
+        json!({ "cards": [], "settings": {
+            "graduation_interval_days": 0, "interval_scale": 1.0,
+            "max_session_cards": 20, "request_retention": 0.9,
+            "fsrs_params": w, "updated_ms": at,
+        }})
+    };
+    let w: Vec<f64> = (0..crate::optimize::WEIGHT_COUNT)
+        .map(|i| i as f64 / 10.0)
+        .collect();
+    let (_, body) = h
+        .post("/api/sync", Some(&h.token), &settings(json!(w), T0))
+        .await;
+    assert_eq!(body["settings"]["fsrs_params"], json!(w));
+
+    // A client that predates the field edits a knob: the weights stay.
+    let mut old_client = settings(json!(null), T0 + SECOND);
+    old_client["settings"]
+        .as_object_mut()
+        .unwrap()
+        .remove("fsrs_params");
+    let (_, body) = h.post("/api/sync", Some(&h.token), &old_client).await;
+    assert_eq!(body["settings"]["fsrs_params"], json!(w));
+
+    let (_, body) = h
+        .post(
+            "/api/sync",
+            Some(&h.token),
+            &settings(json!([1.0, 2.0]), T0 + 2.0 * SECOND),
+        )
+        .await;
+    assert_eq!(body["settings"]["fsrs_params"], Value::Null);
+}
+
+#[tokio::test]
+async fn an_undone_drill_leaves_the_log_and_its_count_reaches_zero() {
+    let h = Harness::new().await;
+    let drill = json!({ "card_id": X, "rating": 3, "kind": "drill", "reviewed_ms": T0 });
+    let (_, first) = h
+        .post(
+            "/api/sync",
+            Some(&h.token),
+            &json!({ "cards": [], "reviews": [drill] }),
+        )
+        .await;
+    assert_eq!(first["drill_counts"][X], 1);
+
+    let undo = json!({
+        "card_id": X, "rating": 3, "kind": "undo",
+        "reviewed_ms": T0 + SECOND, "undoes_ms": T0,
+    });
+    let since = first["cursor"].clone();
+    let (_, body) = h
+        .post(
+            "/api/sync",
+            Some(&h.token),
+            &json!({ "cards": [], "reviews": [undo], "since": since }),
+        )
+        .await;
+    assert_eq!(body["full"], false);
+    // Present at zero, so the client's cached count is overwritten.
+    assert_eq!(body["drill_counts"][X], 0);
+
+    // Another device syncing from the first cursor learns of it too.
+    let (_, other) = h
+        .post(
+            "/api/sync",
+            Some(&h.token),
+            &json!({ "cards": [], "since": since }),
+        )
+        .await;
+    assert_eq!(other["full"], false);
+    assert_eq!(other["drill_counts"][X], 0);
 }

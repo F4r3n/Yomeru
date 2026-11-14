@@ -5,6 +5,7 @@ use crate::api;
 use crate::app::Route;
 use crate::cards_io::{format_import_result, import_cards_json, trigger_download};
 use crate::idb::get_all_cards;
+use crate::platform::Platform;
 use crate::settings::{load, save};
 use crate::sync::{SyncHealth, bump_sync_generation, clear_sync_health, sync_now};
 use crate::types::CARDS_SCHEMA_VERSION;
@@ -38,6 +39,8 @@ pub fn SettingsTab() -> Element {
     // Extension only: Firefox's data consent for sync. Elsewhere always true.
     let mut consent = use_resource(|| async { api::sync_consent().await });
     let health = use_context::<SyncHealth>();
+    let mut fsrs_busy = use_signal(|| false);
+    let mut fsrs_status = use_signal(|| Option::<(String, bool)>::None);
 
     let save_settings = move |_| {
         let s = settings.read().clone();
@@ -126,6 +129,58 @@ pub fn SettingsTab() -> Element {
                 Err(e) => sync_status.set(Some((e, true))),
             }
             sync_busy.set(false);
+        });
+    };
+
+    // Fits FSRS weights to the synced review log and keeps them as a setting.
+    let on_optimize = move |_| {
+        let s = settings.read().clone();
+        let platform = consume_context::<Platform>();
+        fsrs_busy.set(true);
+        fsrs_status.set(None);
+        spawn(async move {
+            let fitted = async {
+                // So the latest answers are part of the fit.
+                sync_now().await.map_err(|e| format!("sync failed: {e}"))?;
+                api::optimize_fsrs(s.server_url.trim(), &s.server_token).await
+            }
+            .await;
+            let status = match fitted {
+                Ok(p) => match store_fsrs_params(&platform, Some(p.params.clone())).await {
+                    Ok(updated_ms) => {
+                        // The form's timestamp too, or saving it would rewind it.
+                        let mut s = settings.write();
+                        s.fsrs_params = Some(p.params);
+                        s.settings_updated_ms = updated_ms;
+                        (
+                            format!("Fitted to {} reviews made a day or more apart.", p.reviews),
+                            false,
+                        )
+                    }
+                    Err(e) => (format!("Couldn't save the parameters: {e}"), true),
+                },
+                Err(e) => (format!("Couldn't optimize: {e}"), true),
+            };
+            fsrs_status.set(Some(status));
+            fsrs_busy.set(false);
+        });
+    };
+
+    let on_reset_fsrs = move |_| {
+        let platform = consume_context::<Platform>();
+        fsrs_busy.set(true);
+        spawn(async move {
+            let status = match store_fsrs_params(&platform, None).await {
+                Ok(updated_ms) => {
+                    let mut s = settings.write();
+                    s.fsrs_params = None;
+                    s.settings_updated_ms = updated_ms;
+                    ("Back to the default parameters.".to_string(), false)
+                }
+                Err(e) => (format!("Couldn't reset: {e}"), true),
+            };
+            fsrs_status.set(Some(status));
+            fsrs_busy.set(false);
         });
     };
 
@@ -403,6 +458,32 @@ pub fn SettingsTab() -> Element {
                         oninput: move |e| settings.write().max_session_cards = e.value().parse().unwrap_or(20),
                     }
                 }
+                div { class: "form-row",
+                    label { "Personal parameters" }
+                    span { class: "hint",
+                        if cur.fsrs_params.is_some() {
+                            "Fitted to your review history. "
+                        } else {
+                            "Using the FSRS defaults. "
+                        }
+                        "Optimizing fits the model to how you remember. Needs a sync account and a few weeks of reviews."
+                    }
+                    div { class: "row", style: "gap: 8px;",
+                        button { class: "outline",
+                            disabled: !has_token || *fsrs_busy.read(),
+                            onclick: on_optimize,
+                            if *fsrs_busy.read() { "Optimizing…" } else { "Optimize" }
+                        }
+                        if cur.fsrs_params.is_some() {
+                            button { class: "link", disabled: *fsrs_busy.read(), onclick: on_reset_fsrs,
+                                "Reset to defaults"
+                            }
+                        }
+                    }
+                    if let Some((msg, err)) = fsrs_status.read().clone() {
+                        span { class: if err { "error" } else { "ok" }, "{msg}" }
+                    }
+                }
                 div { class: "row", style: "margin-top: 6px;",
                     button { class: "primary", onclick: save_settings, "Save changes" }
                     if saved_flag {
@@ -496,4 +577,15 @@ async fn forget_sync_cursor() {
     if let Err(e) = crate::idb::set_sync_cursor(None).await {
         dioxus::logger::tracing::warn!("forget sync cursor: {e}");
     }
+}
+
+/// Saves just the FSRS weights over the stored settings, so unsaved edits in
+/// the form stay unsaved, and syncs them to the other devices. Returns the
+/// stored settings' new `settings_updated_ms`.
+async fn store_fsrs_params(platform: &Platform, w: Option<Vec<f64>>) -> Result<f64, String> {
+    let mut stored = platform.settings.load_async().await?;
+    stored.fsrs_params = w;
+    platform.settings.save(stored).await?;
+    platform.settings.schedule_sync();
+    Ok(platform.settings.load_async().await?.settings_updated_ms)
 }

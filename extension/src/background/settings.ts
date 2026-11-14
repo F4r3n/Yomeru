@@ -6,6 +6,7 @@ const SYNCED_KEYS = [
   "intervalScale",
   "maxSessionCards",
   "requestRetention",
+  "fsrsParams",
 ] as const;
 
 /** Synced scheduler settings as they cross `/api/sync` (snake_case). */
@@ -14,6 +15,9 @@ export interface SettingsPayload {
   interval_scale: number;
   max_session_cards: number;
   request_retention: number;
+  /** Absent = the default weights. */
+  /** Always sent, null for the defaults: absent keeps the server's copy. */
+  fsrs_params?: number[] | null;
   updated_ms: number;
 }
 
@@ -31,7 +35,8 @@ export async function getSettings(): Promise<SrsSettings> {
  */
 export async function saveSettings(s: SrsSettings): Promise<void> {
   const prev = await getSettings();
-  const changed = SYNCED_KEYS.some((k) => prev[k] !== s[k]);
+  // By value: `fsrsParams` is an array, never the same object twice.
+  const changed = SYNCED_KEYS.some((k) => JSON.stringify(prev[k]) !== JSON.stringify(s[k]));
   await browser.storage.local.set({
     srs_settings: {
       ...s,
@@ -50,6 +55,7 @@ export function toSettingsPayload(s: SrsSettings): SettingsPayload | undefined {
     interval_scale: s.intervalScale,
     max_session_cards: s.maxSessionCards,
     request_retention: s.requestRetention,
+    fsrs_params: s.fsrsParams ?? null,
     updated_ms: s.settingsUpdatedMs,
   };
 }
@@ -70,6 +76,7 @@ export async function adoptRemoteSettings(remote: SettingsPayload): Promise<void
       intervalScale: remote.interval_scale,
       maxSessionCards: remote.max_session_cards,
       requestRetention: remote.request_retention,
+      fsrsParams: remote.fsrs_params ?? null,
       settingsUpdatedMs: remote.updated_ms,
     },
   });

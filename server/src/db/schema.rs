@@ -15,7 +15,8 @@ const SETTINGS_DDL: &str = "CREATE TABLE IF NOT EXISTS settings (
              interval_scale            REAL NOT NULL,
              max_session_cards         INTEGER NOT NULL,
              request_retention         REAL NOT NULL,
-             updated_ms                REAL NOT NULL
+             updated_ms                REAL NOT NULL,
+             fsrs_params               TEXT
          )";
 
 /// New per-column `cards` schema. `updated_ms` is the sync merge key;
@@ -139,6 +140,7 @@ pub(super) async fn init_schema(pool: &SqlitePool) -> anyhow::Result<()> {
     }
     add_otp_attempts_column(pool).await?;
     add_cards_again_count_column(pool).await?;
+    add_settings_fsrs_params_column(pool).await?;
     for table in ["cards", "deletions", "reviews"] {
         add_rev_column(pool, table).await?;
     }
@@ -188,6 +190,23 @@ async fn add_cards_again_count_column(pool: &SqlitePool) -> anyhow::Result<()> {
         .execute(pool)
         .await
         .context("add cards.again_count column")?;
+    Ok(())
+}
+
+/// Adds `settings.fsrs_params` (JSON weights, NULL = defaults) to a database
+/// created before the optimizer. No-op once present.
+async fn add_settings_fsrs_params_column(pool: &SqlitePool) -> anyhow::Result<()> {
+    if columns(pool, "settings")
+        .await?
+        .iter()
+        .any(|c| c == "fsrs_params")
+    {
+        return Ok(());
+    }
+    sqlx::query("ALTER TABLE settings ADD COLUMN fsrs_params TEXT")
+        .execute(pool)
+        .await
+        .context("add settings.fsrs_params column")?;
     Ok(())
 }
 

@@ -24,12 +24,18 @@ pub struct ReviewLog {
     /// The button pressed: 1 = Again … 4 = Easy.
     pub rating: u8,
     /// `"review"` for a scheduled review, `"drill"` for a drill answer that
-    /// left the schedule untouched.
+    /// left the schedule untouched, `"undo"` to retract the answer at
+    /// `undoes_ms`. An undo deletes its target and is stored as a marker.
     pub kind: String,
     /// Client wall-clock ms of the answer. `f64` like every other timestamp in
     /// this API, since that is what JS `Date.now()` serializes as.
     pub reviewed_ms: f64,
+    /// For `"undo"`: `reviewed_ms` of the answer being retracted.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub undoes_ms: Option<f64>,
 }
+
+const UNDO: &str = "undo";
 
 /// Wire `kind` → stored code. `None` for an unknown kind.
 fn kind_code(kind: &str) -> Option<i64> {
@@ -40,7 +46,10 @@ fn kind_code(kind: &str) -> Option<i64> {
     }
 }
 
+const REVIEW: i64 = 0;
 const DRILL: i64 = 1;
+/// Marks a retraction, so delta syncs see the card's drill count change.
+const UNDONE: i64 = 2;
 
 /// Whether a row is worth storing. A malformed row is dropped rather than
 /// failing the whole sync: the cards and tombstones in the same request still
@@ -51,6 +60,18 @@ fn is_valid(r: &ReviewLog) -> bool {
         && kind_code(&r.kind).is_some()
         && r.reviewed_ms.is_finite()
         && r.reviewed_ms >= 0.0
+}
+
+/// The `reviewed_ms` an undo row retracts, or `None` if `r` isn't a
+/// well-formed undo.
+fn undo_target(r: &ReviewLog) -> Option<i64> {
+    if r.kind != UNDO || r.card_id.is_empty() {
+        return None;
+    }
+    #[allow(clippy::cast_possible_truncation)]
+    r.undoes_ms
+        .filter(|t| t.is_finite() && *t >= 0.0)
+        .map(|t| t as i64)
 }
 
 /// Appends `rows` to the user's log inside the caller's transaction. A row
@@ -68,7 +89,40 @@ pub async fn insert_reviews_tx(
     rows: &[ReviewLog],
     rev: i64,
 ) -> anyhow::Result<()> {
-    for r in rows.iter().filter(|r| is_valid(r)) {
+    for r in rows {
+        if let Some(target) = undo_target(r) {
+            // Rows arrive in outbox order, so the answer is already stored.
+            sqlx::query(
+                "DELETE FROM reviews
+                 WHERE user_id = ?1 AND card_id = ?2 AND reviewed_ms = ?3 AND kind IN (?4, ?5)",
+            )
+            .bind(user_id)
+            .bind(&r.card_id)
+            .bind(target)
+            .bind(REVIEW)
+            .bind(DRILL)
+            .execute(&mut *conn)
+            .await
+            .context("delete undone review")?;
+            #[allow(clippy::cast_possible_truncation)]
+            let undo_ms = r.reviewed_ms as i64;
+            sqlx::query(
+                "INSERT OR IGNORE INTO reviews (user_id, kind, card_id, reviewed_ms, rating, rev)
+                 VALUES (?1, ?2, ?3, ?4, 0, ?5)",
+            )
+            .bind(user_id)
+            .bind(UNDONE)
+            .bind(&r.card_id)
+            .bind(undo_ms)
+            .bind(rev)
+            .execute(&mut *conn)
+            .await
+            .context("insert undo marker")?;
+            continue;
+        }
+        if !is_valid(r) {
+            continue;
+        }
         // Whole ms, as every client produces (`Date.now()`). The cast saturates
         // rather than overflowing on a nonsense value.
         #[allow(clippy::cast_possible_truncation)]
@@ -88,6 +142,38 @@ pub async fn insert_reviews_tx(
         .context("insert review log row")?;
     }
     Ok(())
+}
+
+/// Every scheduled-review answer the user logged, per card id. Drills are
+/// left out: they never touch the schedule, so they aren't FSRS history.
+pub async fn get_review_answers<'e, E>(
+    ex: E,
+    user_id: i64,
+) -> anyhow::Result<HashMap<String, Vec<crate::optimize::Answer>>>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+{
+    let rows = sqlx::query(
+        "SELECT card_id, reviewed_ms, rating FROM reviews
+         WHERE user_id = ?1 AND kind = ?2",
+    )
+    .bind(user_id)
+    .bind(REVIEW)
+    .fetch_all(ex)
+    .await
+    .context("read review answers")?;
+    let mut by_card: HashMap<String, Vec<crate::optimize::Answer>> = HashMap::new();
+    for r in &rows {
+        let rating: i64 = r.get("rating");
+        by_card
+            .entry(r.get("card_id"))
+            .or_default()
+            .push(crate::optimize::Answer {
+                reviewed_ms: r.get("reviewed_ms"),
+                rating: u8::try_from(rating).unwrap_or(3),
+            });
+    }
+    Ok(by_card)
 }
 
 /// Number of drill answers logged per card id. Cards never drilled are absent.
@@ -116,7 +202,7 @@ where
 
 /// Drill counts for a delta sync: the full per-card totals, but only for cards
 /// whose count may have changed since the client's cursor — those with a
-/// drill logged after `since`, and those in `echo` (the cards of the rows the
+/// drill or undo logged after `since`, and those in `echo` (the cards of the rows the
 /// client just sent; a retried row keeps its first revision, which can
 /// predate the cursor, yet the client still needs the count to settle it).
 /// The client merges these into its cache rather than replacing the cache.
@@ -130,8 +216,8 @@ where
     E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
 {
     let rows = sqlx::query(
-        "SELECT card_id, COUNT(*) AS n FROM reviews
-         WHERE user_id = ?1 AND kind = ?2
+        "SELECT card_id, SUM(kind = ?2) AS n FROM reviews
+         WHERE user_id = ?1 AND kind IN (?2, ?5)
          GROUP BY card_id
          HAVING MAX(rev) > ?3 OR card_id IN (SELECT value FROM json_each(?4))",
     )
@@ -139,6 +225,7 @@ where
     .bind(DRILL)
     .bind(since)
     .bind(serde_json::to_string(echo).context("encode echo ids")?)
+    .bind(UNDONE)
     .fetch_all(ex)
     .await
     .context("count drills since")?;
@@ -179,7 +266,57 @@ mod tests {
             rating,
             kind: kind.to_string(),
             reviewed_ms: at,
+            undoes_ms: None,
         }
+    }
+
+    fn undo(card_id: &str, target: f64, at: f64) -> ReviewLog {
+        ReviewLog {
+            undoes_ms: Some(target),
+            ..row(card_id, "undo", 3, at)
+        }
+    }
+
+    #[tokio::test]
+    async fn undo_deletes_its_answer_in_the_same_or_a_later_upload() {
+        let db = fresh_db().await;
+        let alice = user(&db, ALICE).await;
+        insert_reviews(
+            &db,
+            alice,
+            &[
+                row("1::recall", "drill", 3, 10.0),
+                row("1::recall", "drill", 3, 20.0),
+                undo("1::recall", 20.0, 21.0),
+            ],
+        )
+        .await
+        .unwrap();
+        assert_eq!(get_drill_counts(&db, alice).await.unwrap()["1::recall"], 1);
+        insert_reviews(&db, alice, &[undo("1::recall", 10.0, 22.0)])
+            .await
+            .unwrap();
+        assert!(get_drill_counts(&db, alice).await.unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn undo_of_a_missing_row_or_another_card_is_harmless() {
+        let db = fresh_db().await;
+        let alice = user(&db, ALICE).await;
+        insert_reviews(&db, alice, &[row("1::recall", "drill", 3, 10.0)])
+            .await
+            .unwrap();
+        insert_reviews(
+            &db,
+            alice,
+            &[
+                undo("2::recall", 10.0, 11.0),
+                undo("1::recall", 99.0, 100.0),
+            ],
+        )
+        .await
+        .unwrap();
+        assert_eq!(get_drill_counts(&db, alice).await.unwrap()["1::recall"], 1);
     }
 
     #[tokio::test]

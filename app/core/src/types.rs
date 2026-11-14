@@ -94,6 +94,8 @@ pub struct SrsCard {
 pub enum ReviewKind {
     Review,
     Drill,
+    /// Retracts the answer at `undoes_ms`; the server deletes that row.
+    Undo,
 }
 
 /// One answer, as kept in the IndexedDB outbox until a sync uploads it. The
@@ -108,6 +110,9 @@ pub struct ReviewLog {
     pub rating: u8,
     pub kind: ReviewKind,
     pub reviewed_ms: f64,
+    /// For [`ReviewKind::Undo`]: `reviewed_ms` of the answer being retracted.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub undoes_ms: Option<f64>,
 }
 
 pub fn card_id(sequence: u32, direction: CardDirection) -> String {

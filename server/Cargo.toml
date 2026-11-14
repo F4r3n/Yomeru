@@ -33,6 +33,9 @@ jmdict-core    = { path = "../crates/jmdict-core" }
 kanjidic-core  = { path = "../crates/kanjidic-core" }
 examples-core  = { path = "../crates/examples-core" }
 sha2 = "0.11.1"
+# FSRS optimizer. 2.x is the FSRS-5 line: 19 weights, matching the
+# clients' rs-fsrs scheduler. Don't bump past it without moving them too.
+fsrs = "2.0.4"
 subtle = "2.6.1"
 
 [dev-dependencies]

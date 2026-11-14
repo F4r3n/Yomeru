@@ -21,6 +21,9 @@ pub struct SrsSettings {
     /// Defaulted so settings stored before this field existed still load.
     #[serde(rename = "requestRetention", default = "default_request_retention")]
     pub request_retention: f64,
+    /// FSRS weights from the server's optimizer; `None` = the defaults. Synced.
+    #[serde(rename = "fsrsParams", default)]
+    pub fsrs_params: Option<Vec<f64>>,
     #[serde(rename = "serverUrl")]
     pub server_url: String,
     #[serde(rename = "serverEmail")]
@@ -48,6 +51,7 @@ impl Default for SrsSettings {
             interval_scale: 1.0,
             max_session_cards: 20,
             request_retention: default_request_retention(),
+            fsrs_params: None,
             server_url: String::new(),
             server_email: String::new(),
             server_token: String::new(),
@@ -114,6 +118,7 @@ mod tests {
             "intervalScale",
             "maxSessionCards",
             "requestRetention",
+            "fsrsParams",
             "serverUrl",
             "serverEmail",
             "serverToken",

@@ -5,6 +5,7 @@
 
 mod account;
 mod auth;
+mod fsrs;
 #[cfg(test)]
 mod integration;
 mod lookup;
@@ -15,6 +16,7 @@ mod sync;
 
 pub use account::{delete_account_handler, delete_account_request_handler, privacy_handler};
 pub use auth::{auth_request_handler, auth_verify_handler};
+pub use fsrs::optimize_handler;
 pub use lookup::{
     examples_handler, kanji_by_parts_handler, kanji_handler, kanji_parts_handler,
     lookup_by_sequence_handler, lookup_handler, lookup_prefix_handler,
@@ -41,6 +43,7 @@ pub fn router(state: AppState) -> Router {
         .route("/api/auth/request", post(auth_request_handler))
         .route("/api/auth/verify", post(auth_verify_handler))
         .route("/api/sync", post(sync_handler))
+        .route("/api/fsrs/optimize", post(optimize_handler))
         .route(
             "/api/account/delete/request",
             post(delete_account_request_handler),

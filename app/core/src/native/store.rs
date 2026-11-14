@@ -417,6 +417,37 @@ pub async fn put_card_logged(card: &SrsCard, row: &ReviewLog) -> Result<(), Stri
     })
 }
 
+/// Undoes an answer in one transaction. See `idb::undo_answer`.
+pub async fn undo_answer(
+    prev: Option<&SrsCard>,
+    undone: &ReviewLog,
+    undo: &ReviewLog,
+) -> Result<(), String> {
+    let prev = prev.map(|c| {
+        let mut card = c.clone();
+        card.updated_ms = crate::rt::now_ms();
+        card
+    });
+    with_tx(|tx| undo_answer_on(tx, prev.as_ref(), undone, undo))
+}
+
+fn undo_answer_on(
+    conn: &Connection,
+    prev: Option<&SrsCard>,
+    undone: &ReviewLog,
+    undo: &ReviewLog,
+) -> Result<(), String> {
+    if let Some(card) = prev {
+        put_card_row(conn, card)?;
+        mark_dirty(conn, &card.id, card.updated_ms)?;
+    }
+    conn.prepare_cached("DELETE FROM review_outbox WHERE card_id = ?1 AND reviewed_ms = ?2")
+        .map_err(err)?
+        .execute(params![undone.card_id, undone.reviewed_ms])
+        .map_err(err)?;
+    add_review_on(conn, undo)
+}
+
 /// Queues one answer for the next sync.
 pub async fn add_review(row: &ReviewLog) -> Result<(), String> {
     add_review_on(&*conn()?, row)
@@ -503,6 +534,7 @@ mod tests {
             rating: 3,
             kind,
             reviewed_ms: at,
+            undoes_ms: None,
         }
     }
 
@@ -606,5 +638,36 @@ mod tests {
         assert_eq!(get_cursor_on(&conn).unwrap(), Some(c));
         set_cursor_on(&conn, None).unwrap();
         assert_eq!(get_cursor_on(&conn).unwrap(), None);
+    }
+    #[test]
+    fn undo_restores_card_and_swaps_answer_for_retraction() {
+        let conn = db();
+        let before = card(1_000_001, CardDirection::Recall);
+        let mut after = before.clone();
+        after.reps = 1;
+        let answer = review(&before.id, 10.0, ReviewKind::Review);
+        add_review_on(&conn, &answer).unwrap();
+        put_all_on(&conn, std::slice::from_ref(&after), true, 5_000.0).unwrap();
+
+        let mut prev = before.clone();
+        prev.updated_ms = 6_000.0;
+        let undo = ReviewLog {
+            kind: ReviewKind::Undo,
+            reviewed_ms: 11.0,
+            undoes_ms: Some(10.0),
+            ..answer.clone()
+        };
+        undo_answer_on(&conn, Some(&prev), &answer, &undo).unwrap();
+
+        let cards = get_all_cards_on(&conn).unwrap();
+        assert_eq!(cards.len(), 1);
+        assert_eq!(cards[0].reps, 0);
+        assert_eq!(get_outbox_on(&conn).unwrap(), vec![undo]);
+        assert!(
+            get_dirty_on(&conn)
+                .unwrap()
+                .iter()
+                .any(|d| d.id == prev.id && d.v == 6_000.0)
+        );
     }
 }

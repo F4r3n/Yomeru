@@ -422,6 +422,73 @@ pub async fn put_card_logged(card: &SrsCard, row: &ReviewLog) -> Result<(), Stri
     Ok(())
 }
 
+/// Undoes an answer in one transaction: restores `prev` (the card as it was
+/// before, `None` for a drill), drops `undone` from the outbox and queues
+/// `undo` so the server drops it too if it was already uploaded.
+pub async fn undo_answer(
+    prev: Option<&SrsCard>,
+    undone: &ReviewLog,
+    undo: &ReviewLog,
+) -> Result<(), String> {
+    let undo_val = to_value(undo).map_err(|e| e.to_string())?;
+    let card_vals = match prev {
+        Some(c) => {
+            let mut card = c.clone();
+            card.updated_ms = crate::rt::now_ms();
+            let dirty = DirtyEntry {
+                id: card.id.clone(),
+                v: card.updated_ms,
+            };
+            Some((
+                to_value(&card).map_err(|e| e.to_string())?,
+                to_value(&dirty).map_err(|e| e.to_string())?,
+            ))
+        }
+        None => None,
+    };
+    let db = open().await.map_err(|e| e.to_string())?;
+    let tx = db
+        .transaction(
+            &[STORE, DIRTY_STORE, REVIEW_STORE],
+            TransactionMode::ReadWrite,
+        )
+        .map_err(|e| e.to_string())?;
+    if let Some((card_val, dirty_val)) = card_vals {
+        tx.object_store(STORE)
+            .map_err(|e| e.to_string())?
+            .put(&card_val, None)
+            .map_err(|e| e.to_string())?
+            .await
+            .map_err(|e| e.to_string())?;
+        tx.object_store(DIRTY_STORE)
+            .map_err(|e| e.to_string())?
+            .put(&dirty_val, None)
+            .map_err(|e| e.to_string())?
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+    let reviews = tx.object_store(REVIEW_STORE).map_err(|e| e.to_string())?;
+    let key = js_sys::Array::of2(
+        &JsValue::from_str(&undone.card_id),
+        &JsValue::from_f64(undone.reviewed_ms),
+    );
+    reviews
+        .delete(Query::Key(key.into()))
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+    reviews
+        .put(&undo_val, None)
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+    tx.commit()
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 /// Queues one answer for the next sync.
 pub async fn add_review(row: &ReviewLog) -> Result<(), String> {
     let db = open().await.map_err(|e| e.to_string())?;

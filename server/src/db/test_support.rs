@@ -81,6 +81,7 @@ pub fn settings(updated_ms: f64, retention: f64) -> Settings {
         interval_scale: 1.0,
         max_session_cards: 20,
         request_retention: retention,
+        fsrs_params: None,
         updated_ms,
     }
 }

@@ -19,7 +19,8 @@ use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::{CardDirection, CardStatus, ReviewKind as LogKind, SrsCard};
 
 use super::review_common::{
-    RateButtons, ShowAnswerButton, TabButton, rating_label, use_review_shortcuts,
+    Answered, RateButtons, ShowAnswerButton, TabButton, UndoButton, rating_label, undo_answer,
+    use_review_shortcuts,
 };
 use super::review_kanji::KanjiReview;
 
@@ -178,6 +179,9 @@ fn WordReview() -> Element {
     // lands, and a second press in that window would rate the same card again
     // and then skip the next one.
     let mut rating_in_flight = use_signal(|| false);
+    // The last answer, while it can still be taken back. Only one: undo
+    // steps back a single card.
+    let mut last_answer = use_signal(|| Option::<Answered>::None);
 
     let load_session = move || {
         let generation = *load_gen.peek() + 1;
@@ -217,6 +221,7 @@ fn WordReview() -> Element {
             next_due.set(None);
             drill.set(false);
             results.set(vec![]);
+            last_answer.set(None);
             cards_loaded.set(true);
 
             // Stage 2: their words. Waits for the dictionary on a cold start.
@@ -282,6 +287,7 @@ fn WordReview() -> Element {
             graduated_msg.set(None);
             next_due.set(None);
             results.set(vec![]);
+            last_answer.set(None);
             drill.set(true);
             started.set(true);
         });
@@ -319,6 +325,7 @@ fn WordReview() -> Element {
             return;
         };
         let entry_for_label = entries.read().get(i).cloned();
+        let results_before = results.peek().len();
         if let Some(entry) = entry_for_label.clone() {
             results.with_mut(|v| {
                 v.push(SessionResult {
@@ -333,7 +340,13 @@ fn WordReview() -> Element {
         if *drill.peek() {
             // A drill counts per card and a word takes its best card's count,
             // so walking away mid-drill still credits what was practised.
-            drill_log::record_drill(&card, r);
+            let row = drill_log::record_drill(&card, r);
+            last_answer.set(Some(Answered {
+                prev: None,
+                row,
+                idx: i,
+                results: results_before,
+            }));
             idx.with_mut(|i| *i += 1);
             show_back.set(false);
             return;
@@ -344,11 +357,18 @@ fn WordReview() -> Element {
             let outcome = apply_review(&card, rating_from_u8(r), now_ms(), &settings);
             let row = drill_log::answer(&card, r, LogKind::Review);
             let card_id = card.id.clone();
+            let answered = Answered {
+                prev: Some(card.clone()),
+                row: row.clone(),
+                idx: i,
+                results: results_before,
+            };
             match outcome {
                 ReviewOutcome::Rescheduled(c) => {
                     if let Err(e) = put_card_logged(&c, &row).await {
                         warn!("put_card({card_id}) after review failed: {e}");
                     } else {
+                        last_answer.set(Some(answered));
                         schedule_sync();
                     }
                 }
@@ -356,6 +376,7 @@ fn WordReview() -> Element {
                     if let Err(e) = put_card_logged(&c, &row).await {
                         warn!("put_card({card_id}) on graduation failed: {e}");
                     } else {
+                        last_answer.set(Some(answered));
                         schedule_sync();
                     }
                     let label = entry_for_label
@@ -371,7 +392,6 @@ fn WordReview() -> Element {
             }
             idx.with_mut(|i| *i += 1);
             show_back.set(false);
-            rating_in_flight.set(false);
             // If session ended, compute next-due across all active cards. The
             // check is taken before the await: a read guard held across it
             // would panic on any `due_cards` write in the meantime.
@@ -385,6 +405,34 @@ fn WordReview() -> Element {
                     Err(e) => warn!("get_all_cards for next-due summary failed: {e}"),
                 }
             }
+            // Last, so an undo can't run before the summary lands.
+            rating_in_flight.set(false);
+        });
+    };
+
+    // Steps back to the last answered card, question side up.
+    let mut undo = move || {
+        if *rating_in_flight.peek() || !*started.peek() {
+            return;
+        }
+        let Some(last) = last_answer.peek().clone() else {
+            return;
+        };
+        rating_in_flight.set(true);
+        spawn(async move {
+            match undo_answer(&last).await {
+                Ok(()) => {
+                    last_answer.set(None);
+                    // Also drops answers after it whose save failed.
+                    results.with_mut(|v| v.truncate(last.results));
+                    idx.set(last.idx);
+                    show_back.set(false);
+                    graduated_msg.set(None);
+                    next_due.set(None);
+                }
+                Err(e) => warn!("undo of {} failed: {e}", last.row.card_id),
+            }
+            rating_in_flight.set(false);
         });
     };
 
@@ -393,7 +441,9 @@ fn WordReview() -> Element {
         show_back,
         reveal_answer,
         rate,
+        undo,
     );
+    let can_undo = *started.read() && last_answer.read().is_some();
 
     let cards = due_cards.read();
     let i = *idx.read();
@@ -592,6 +642,9 @@ fn WordReview() -> Element {
                             div { class: "row", style: "justify-content: space-between;",
                                 span { class: "muted", "Card {i + 1} of {due_count}" }
                                 span { class: "row",
+                                    if can_undo {
+                                        UndoButton { disabled: in_flight, on_undo: move |_| undo() }
+                                    }
                                     if is_drill {
                                         span { class: "badge fail", "Drill" }
                                     }
@@ -678,7 +731,10 @@ fn WordReview() -> Element {
                                 }
                             }
                         }
-                        div { style: "text-align: center; margin-top: 16px;",
+                        div { class: "row", style: "justify-content: center; gap: 8px; margin-top: 16px;",
+                            if can_undo {
+                                UndoButton { disabled: *rating_in_flight.read(), on_undo: move |_| undo() }
+                            }
                             button { class: "primary", onclick: move |_| load_session(), "Done" }
                         }
                     }

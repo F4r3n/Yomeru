@@ -10,7 +10,10 @@ use dioxus::prelude::consume_context;
 
 use crate::platform::Platform;
 
-pub use crate::platform::{PrivacyInfo, delete_account, privacy_info, request_account_deletion};
+pub use crate::platform::{
+    OptimizedParams, PrivacyInfo, delete_account, optimize_fsrs, privacy_info,
+    request_account_deletion,
+};
 
 /// In dev mode the server auto-issues a session and returns the token
 /// directly in the response body — callers should treat `Ok(Some(token))`

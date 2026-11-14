@@ -414,6 +414,45 @@ pub async fn delete_account(server_url: &str, token: &str, code: &str) -> Result
     }
 }
 
+/// FSRS weights the server fitted to this account's review log.
+#[derive(Debug, Clone, Deserialize)]
+pub struct OptimizedParams {
+    pub params: Vec<f64>,
+    /// How many reviews they were fitted on.
+    pub reviews: usize,
+}
+
+/// Asks the server to fit FSRS weights to the synced review log. Sync first,
+/// so the latest answers are part of it.
+pub async fn optimize_fsrs(server_url: &str, token: &str) -> Result<OptimizedParams, String> {
+    #[derive(Deserialize)]
+    struct ErrorBody {
+        error: String,
+    }
+    let res = rt::post_json(
+        &join_url(server_url, "/api/fsrs/optimize"),
+        &serde_json::json!({}),
+        Some(token),
+    )
+    .await?;
+    match res.status {
+        200 => {
+            let p: OptimizedParams = res.json()?;
+            srs_core::valid_weights(&p.params)
+                .ok_or_else(|| format!("server sent {} weights", p.params.len()))?;
+            Ok(p)
+        }
+        400 => Err(res
+            .json::<ErrorBody>()
+            .map(|b| b.error)
+            .unwrap_or_else(|_| "not enough review history yet".into())),
+        401 => Err("your session has expired. Sign in again first.".into()),
+        404 => Err("this server is too old to optimize. Update yomeru-server.".into()),
+        429 => Err("too many requests. Wait a minute and retry.".into()),
+        s => Err(format!("server {s}")),
+    }
+}
+
 /// Who runs a sync server and how to reach them, as set by its operator at
 /// deploy time. Either may be missing.
 #[derive(Debug, Clone, Default, PartialEq, Deserialize)]
@@ -568,6 +607,7 @@ async fn do_sync(state: &Mutex<SyncState>) -> Result<String, String> {
             merged.interval_scale = remote.interval_scale;
             merged.max_session_cards = remote.max_session_cards;
             merged.request_retention = remote.request_retention;
+            merged.fsrs_params = remote.fsrs_params;
             merged.settings_updated_ms = remote.updated_ms;
             rt::kv_set(SETTINGS_KEY, &merged)?;
         }
@@ -625,7 +665,8 @@ impl SettingsStore for LocalSettings {
         let scheduler_changed = prev.graduation_interval_days != s.graduation_interval_days
             || prev.interval_scale != s.interval_scale
             || prev.max_session_cards != s.max_session_cards
-            || prev.request_retention != s.request_retention;
+            || prev.request_retention != s.request_retention
+            || prev.fsrs_params != s.fsrs_params;
         if scheduler_changed {
             s.settings_updated_ms = rt::now_ms();
         }

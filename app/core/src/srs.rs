@@ -38,11 +38,12 @@ pub fn apply_review(
     now_ms: f64,
     settings: &SrsSettings,
 ) -> ReviewOutcome {
-    let scheduled = srs_core::review_card_with_retention(
+    let scheduled = srs_core::review_card_with(
         card.to_scheduling(),
         rating,
         now_ms,
         settings.request_retention,
+        settings.fsrs_params.as_deref(),
     );
 
     // Scale the freshly-scheduled interval by intervalScale. Stability stays as

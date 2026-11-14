@@ -59,6 +59,7 @@ describe("settings", () => {
         intervalScale: 1.5,
         maxSessionCards: 15,
         requestRetention: 0.85,
+        fsrsParams: null,
         settingsUpdatedMs: 0,
         serverUrl: "",
         serverEmail: "",
@@ -86,6 +87,19 @@ describe("settings", () => {
       await settings.saveSettings({ ...DEFAULT_SETTINGS, requestRetention: 0.8 });
       clock.mockRestore();
 
+      expect((await settings.getSettings()).settingsUpdatedMs).toBe(5_000);
+    });
+
+    it("compares fsrsParams by value", async () => {
+      const w = Array.from({ length: 19 }, (_, i) => i / 10);
+      storage.set("srs_settings", { ...DEFAULT_SETTINGS, fsrsParams: [...w], settingsUpdatedMs: 1_000 });
+
+      await settings.saveSettings({ ...DEFAULT_SETTINGS, fsrsParams: [...w], settingsUpdatedMs: 1_000 });
+      expect((await settings.getSettings()).settingsUpdatedMs).toBe(1_000);
+
+      const clock = vi.spyOn(Date, "now").mockReturnValue(5_000);
+      await settings.saveSettings({ ...DEFAULT_SETTINGS, fsrsParams: null, settingsUpdatedMs: 1_000 });
+      clock.mockRestore();
       expect((await settings.getSettings()).settingsUpdatedMs).toBe(5_000);
     });
 
@@ -126,6 +140,23 @@ describe("settings", () => {
       expect(s.maxSessionCards).toBe(7);
       expect(s.settingsUpdatedMs).toBe(2_000);
       expect(s.serverToken).toBe("t");
+    });
+
+    it("adopts optimized weights, and their removal", async () => {
+      const w = Array.from({ length: 19 }, () => 1);
+      await settings.adoptRemoteSettings({ ...remote, fsrs_params: w });
+      expect((await settings.getSettings()).fsrsParams).toEqual(w);
+
+      await settings.adoptRemoteSettings({ ...remote, updated_ms: 3_000 });
+      expect((await settings.getSettings()).fsrsParams).toBeNull();
+    });
+
+    it("sends the weights, or null for the defaults", () => {
+      expect(settings.toSettingsPayload({ ...DEFAULT_SETTINGS, settingsUpdatedMs: 1 })?.fsrs_params).toBeNull();
+      const w = Array.from({ length: 19 }, () => 1);
+      expect(
+        settings.toSettingsPayload({ ...DEFAULT_SETTINGS, fsrsParams: w, settingsUpdatedMs: 1 })?.fsrs_params,
+      ).toEqual(w);
     });
 
     it("ignores settings that are not newer than ours", async () => {

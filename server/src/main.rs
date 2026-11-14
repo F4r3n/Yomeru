@@ -11,6 +11,7 @@ mod client_ip;
 mod config;
 mod db;
 mod dicts;
+mod optimize;
 
 use config::Config;
 use db::Db;
@@ -25,6 +26,7 @@ pub struct AppState {
     pub limiter: Arc<DefaultKeyedRateLimiter<IpAddr>>,
     pub sync_limiter: Arc<DefaultKeyedRateLimiter<IpAddr>>,
     pub lookup_limiter: Arc<DefaultKeyedRateLimiter<IpAddr>>,
+    pub optimize_limiter: Arc<DefaultKeyedRateLimiter<IpAddr>>,
 }
 
 // `const { ... }` evaluates at compile time, so the `unwrap`s below cannot ever
@@ -41,6 +43,11 @@ pub(crate) fn auth_quota() -> Quota {
 /// sessions, and clients don't retry a failed sync until the next change.
 pub(crate) fn sync_quota() -> Quota {
     Quota::per_minute(const { NonZeroU32::new(60).unwrap() })
+}
+
+/// `/api/fsrs/optimize`: seconds of CPU per call, and one fit a day is plenty.
+pub(crate) fn optimize_quota() -> Quota {
+    Quota::per_minute(const { NonZeroU32::new(2).unwrap() })
 }
 
 /// Lookups: one keystroke = one lookup, easily 30+/min.
@@ -142,6 +149,7 @@ async fn main() -> anyhow::Result<()> {
         limiter: Arc::new(RateLimiter::keyed(auth_quota())),
         sync_limiter: Arc::new(RateLimiter::keyed(sync_quota())),
         lookup_limiter: Arc::new(RateLimiter::keyed(lookup_quota())),
+        optimize_limiter: Arc::new(RateLimiter::keyed(optimize_quota())),
     };
 
     let app = api::router(state);

@@ -131,8 +131,10 @@ export interface ReviewLog {
   card_id: string;
   /** The button pressed: 1 = Again … 4 = Easy. */
   rating: number;
-  kind: "review" | "drill";
+  /** `"undo"` retracts the answer at `undoes_ms`; the server deletes it. */
+  kind: "review" | "drill" | "undo";
   reviewed_ms: number;
+  undoes_ms?: number;
 }
 
 /** Cap on a staged card's priority. Mirrors `MAX_PRIORITY` in
@@ -180,6 +182,8 @@ export interface SrsSettings {
   maxSessionCards: number;
   /** FSRS desired retention (probability of recall at review time). */
   requestRetention: number;
+  /** FSRS weights from the server's optimizer; `null` = the defaults. */
+  fsrsParams: number[] | null;
   /**
    * Wall-clock ms of the last *scheduler* edit on this device: the
    * last-write-wins key for settings sync. 0 = never edited here. Mirrors
@@ -196,6 +200,7 @@ export const DEFAULT_SETTINGS: SrsSettings = {
   intervalScale: 1.0,
   maxSessionCards: 20,
   requestRetention: 0.9,
+  fsrsParams: null,
   settingsUpdatedMs: 0,
   serverUrl: "",
   serverEmail: "",

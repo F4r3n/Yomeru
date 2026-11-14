@@ -40,15 +40,39 @@ pub const DEFAULT_REQUEST_RETENTION: f64 = 0.9;
 pub const MIN_REQUEST_RETENTION: f64 = 0.70;
 pub const MAX_REQUEST_RETENTION: f64 = 0.97;
 
-fn make_fsrs(request_retention: f64) -> FSRS {
+/// Number of FSRS-5 model weights: the length of rs-fsrs's `Parameters::w`.
+pub const WEIGHT_COUNT: usize = array_len(|p: Parameters| p.w);
+
+/// `N` from a function returning `[f64; N]`, so the count follows the type.
+const fn array_len<const N: usize>(_: fn(Parameters) -> [f64; N]) -> usize {
+    N
+}
+
+/// The default FSRS-5 weights.
+pub fn default_weights() -> [f64; WEIGHT_COUNT] {
+    Parameters::default().w
+}
+
+/// `w` as a weight set, or `None` if it has the wrong length or a non-finite
+/// value.
+pub fn valid_weights(w: &[f64]) -> Option<[f64; WEIGHT_COUNT]> {
+    <[f64; WEIGHT_COUNT]>::try_from(w)
+        .ok()
+        .filter(|w| w.iter().all(|x| x.is_finite()))
+}
+
+fn make_fsrs(request_retention: f64, weights: Option<&[f64]>) -> FSRS {
     // Seed is overwritten by Scheduler::init_seed from (now, reps, difficulty,
     // stability), so we leave Parameters::seed at its default and skip the
     // per-review allocation that setting it explicitly would cost.
-    let params = Parameters {
+    let mut params = Parameters {
         request_retention: request_retention.clamp(MIN_REQUEST_RETENTION, MAX_REQUEST_RETENTION),
         enable_fuzz: true,
         ..Parameters::default()
     };
+    if let Some(w) = weights.and_then(valid_weights) {
+        params.w = w;
+    }
     FSRS::new(params)
 }
 
@@ -81,9 +105,21 @@ pub fn review_card_with_retention(
     now_ms: f64,
     request_retention: f64,
 ) -> SrsCard {
+    review_card_with(card, rating, now_ms, request_retention, None)
+}
+
+/// Apply a review with custom model `weights` (from the optimizer). Invalid
+/// or absent weights fall back to the defaults.
+pub fn review_card_with(
+    card: SrsCard,
+    rating: ReviewRating,
+    now_ms: f64,
+    request_retention: f64,
+    weights: Option<&[f64]>,
+) -> SrsCard {
     let sequence = card.sequence;
     let added_ms = card.added_ms;
-    let fsrs = make_fsrs(request_retention);
+    let fsrs = make_fsrs(request_retention, weights);
     let fsrs_card: FsrsCard = card.to_fsrs();
     let info = fsrs.next(fsrs_card, ms_to_dt(now_ms), rating.to_fsrs());
     SrsCard::from_fsrs(sequence, added_ms, info.card)
@@ -205,5 +241,22 @@ mod tests {
         let at_min =
             review_card_with_retention(base_card(), ReviewRating::Good, 0.0, MIN_REQUEST_RETENTION);
         assert_eq!(absurd.due_ms, at_min.due_ms);
+    }
+
+    #[test]
+    fn custom_weights_change_the_schedule_and_bad_ones_are_ignored() {
+        let mut w = default_weights();
+        // w[2] is the initial stability after a first "Good".
+        w[2] *= 4.0;
+        let stock = review_card(base_card(), ReviewRating::Good, 0.0);
+        let tuned = review_card_with(base_card(), ReviewRating::Good, 0.0, 0.9, Some(&w));
+        assert!(tuned.stability > stock.stability);
+
+        let short = review_card_with(base_card(), ReviewRating::Good, 0.0, 0.9, Some(&w[..5]));
+        assert_eq!(short.stability, stock.stability);
+        let mut nan = w;
+        nan[0] = f64::NAN;
+        let bad = review_card_with(base_card(), ReviewRating::Good, 0.0, 0.9, Some(&nan));
+        assert_eq!(bad.stability, stock.stability);
     }
 }

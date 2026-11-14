@@ -46,17 +46,33 @@ pub fn answer(card: &SrsCard, rating: u8, kind: ReviewKind) -> ReviewLog {
         rating,
         kind,
         reviewed_ms: now_ms(),
+        undoes_ms: None,
     }
 }
 
-/// Log a drill answer and arm a sync to upload it. A drill changes no card, so
+/// The row retracting `undone`. Queued even when `undone` is still in the
+/// outbox: a sync already in flight may be uploading it.
+pub fn undo_row(undone: &ReviewLog) -> ReviewLog {
+    ReviewLog {
+        card_id: undone.card_id.clone(),
+        rating: undone.rating,
+        kind: ReviewKind::Undo,
+        // Strictly after the answer, so the server sees the two in order.
+        reviewed_ms: now_ms().max(undone.reviewed_ms + 1.0),
+        undoes_ms: Some(undone.reviewed_ms),
+    }
+}
+
+/// Log a drill answer and arm a sync to upload it. Returns the row, so the
+/// answer can be undone. A drill changes no card, so
 /// the row is all there is to write. Best-effort: a failed write only costs the
 /// rotation order.
 ///
 /// The write runs on a task of its own rather than the calling component's, so
 /// leaving the page right after the last answer can't cancel it.
-pub fn record_drill(platform: &Platform, card: &SrsCard, rating: u8) {
+pub fn record_drill(platform: &Platform, card: &SrsCard, rating: u8) -> ReviewLog {
     let row = answer(card, rating, ReviewKind::Drill);
+    let logged = row.clone();
     let platform = platform.clone();
     crate::rt::spawn_detached(async move {
         match add_review(&row).await {
@@ -64,4 +80,5 @@ pub fn record_drill(platform: &Platform, card: &SrsCard, rating: u8) {
             Err(e) => tracing::warn!("drill_log: logging answer to {} failed: {e}", row.card_id),
         }
     });
+    logged
 }

@@ -112,6 +112,10 @@ pub(crate) struct SettingsPayload {
     pub(crate) interval_scale: f64,
     pub(crate) max_session_cards: u32,
     pub(crate) request_retention: f64,
+    /// `null` for the default weights. Always sent: the server keeps the
+    /// stored weights when it's absent, as from clients that predate it.
+    #[serde(default)]
+    pub(crate) fsrs_params: Option<Vec<f64>>,
     pub(crate) updated_ms: f64,
 }
 
@@ -122,6 +126,7 @@ impl SettingsPayload {
             interval_scale: s.interval_scale,
             max_session_cards: s.max_session_cards,
             request_retention: s.request_retention,
+            fsrs_params: s.fsrs_params.clone(),
             updated_ms: s.settings_updated_ms,
         }
     }
@@ -467,6 +472,7 @@ mod tests {
                     interval_scale: 1.0,
                     max_session_cards: 20,
                     request_retention: 0.9,
+                    fsrs_params: None,
                     updated_ms: 1_756_000_000_000.0,
                 },
                 reviews: &[
@@ -475,12 +481,14 @@ mod tests {
                         rating: 1,
                         kind: ReviewKind::Drill,
                         reviewed_ms: 1_756_950_000_000.0,
+                        undoes_ms: None,
                     },
                     ReviewLog {
                         card_id: "1467640::recognition".to_string(),
                         rating: 3,
                         kind: ReviewKind::Review,
                         reviewed_ms: 1_756_960_000_000.0,
+                        undoes_ms: None,
                     },
                 ],
                 since: None,
@@ -509,6 +517,7 @@ mod tests {
                 interval_scale: 1.0,
                 max_session_cards: 20,
                 request_retention: 0.9,
+                fsrs_params: None,
                 server_url: "https://example.invalid".to_string(),
                 server_email: "alice@example.com".to_string(),
                 server_token: "secret".to_string(),

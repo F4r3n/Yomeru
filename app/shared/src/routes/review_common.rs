@@ -10,6 +10,32 @@ use dioxus::prelude::*;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsCast;
 
+use crate::drill_log;
+use crate::sync::schedule_sync;
+use crate::types::{ReviewLog, SrsCard};
+
+/// An answer from the current session that can still be taken back.
+#[derive(Clone)]
+pub(crate) struct Answered {
+    /// The card as it was before the answer; `None` for a drill, which
+    /// changes no card.
+    pub prev: Option<SrsCard>,
+    pub row: ReviewLog,
+    /// The card's position in the session, to step back to.
+    pub idx: usize,
+    /// How many session results there were before this answer.
+    pub results: usize,
+}
+
+/// Restores the card and retracts its logged answer, locally and on the
+/// server at the next sync.
+pub(crate) async fn undo_answer(a: &Answered) -> Result<(), String> {
+    let undo = drill_log::undo_row(&a.row);
+    crate::idb::undo_answer(a.prev.as_ref(), &a.row, &undo).await?;
+    schedule_sync();
+    Ok(())
+}
+
 pub(crate) fn rating_label(r: u8) -> &'static str {
     match r {
         1 => "Again",
@@ -64,7 +90,7 @@ fn rating_key(e: &web_sys::KeyboardEvent) -> Option<u8> {
 
 #[cfg(target_arch = "wasm32")]
 /// Desktop shortcuts for a review session: Space/Enter reveals the answer,
-/// 1–4 rate it. `in_session` says whether a card is on screen; `show_back`
+/// 1–4 rate it, Z undoes the last answer (also from the recap screen). `in_session` says whether a card is on screen; `show_back`
 /// whether its answer is showing.
 ///
 /// Bound on the document so the keys work without focusing anything; the
@@ -75,6 +101,7 @@ pub(crate) fn use_review_shortcuts(
     show_back: Signal<bool>,
     mut reveal: impl FnMut() + 'static,
     mut rate: impl FnMut(u8) + 'static,
+    mut undo: impl FnMut() + 'static,
 ) {
     use_hook(move || {
         let document = web_sys::window().and_then(|w| w.document())?;
@@ -109,9 +136,18 @@ pub(crate) fn use_review_shortcuts(
             if e.ctrl_key() || e.alt_key() || e.meta_key() || e.repeat() || typing_in_field(e) {
                 return;
             }
-            let Some(runtime) = runtime.upgrade().filter(|_| in_session()) else {
+            let Some(runtime) = runtime.upgrade() else {
                 return;
             };
+            // By letter, not physical key: Z sits elsewhere on AZERTY.
+            if matches!(e.key().as_str(), "z" | "Z") {
+                e.prevent_default();
+                runtime.in_scope(scope, &mut undo);
+                return;
+            }
+            if !in_session() {
+                return;
+            }
             if *show_back.peek() {
                 let Some(r) = rating_key(e) else {
                     return;
@@ -142,6 +178,7 @@ pub(crate) fn use_review_shortcuts(
     _show_back: Signal<bool>,
     _reveal: impl FnMut() + 'static,
     _rate: impl FnMut(u8) + 'static,
+    _undo: impl FnMut() + 'static,
 ) {
     use_hook(|| ());
 }
@@ -171,6 +208,19 @@ pub(crate) fn RateButtons(disabled: bool, on_rate: EventHandler<u8>) -> Element 
                     kbd { "aria-hidden": "true", "{r}" }
                 }
             }
+        }
+    }
+}
+
+/// Takes back the last answer. Shown while there is one to take back.
+#[component]
+pub(crate) fn UndoButton(disabled: bool, on_undo: EventHandler<()>) -> Element {
+    rsx! {
+        button { class: "outline", disabled,
+            title: "Undo the last answer",
+            onclick: move |_| on_undo.call(()),
+            "Undo"
+            kbd { "aria-hidden": "true", "Z" }
         }
     }
 }

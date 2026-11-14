@@ -6,9 +6,9 @@ use dioxus::prelude::consume_context;
 pub use yomeru_core::drill_log::*;
 
 use crate::platform::Platform;
-use crate::types::SrsCard;
+use crate::types::{ReviewLog, SrsCard};
 
 /// See [`yomeru_core::drill_log::record_drill`].
-pub fn record_drill(card: &SrsCard, rating: u8) {
-    yomeru_core::drill_log::record_drill(&consume_context::<Platform>(), card, rating);
+pub fn record_drill(card: &SrsCard, rating: u8) -> ReviewLog {
+    yomeru_core::drill_log::record_drill(&consume_context::<Platform>(), card, rating)
 }

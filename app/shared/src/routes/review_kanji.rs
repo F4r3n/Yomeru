@@ -21,7 +21,10 @@ use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::{ReviewKind, SrsCard};
 
 use super::review::{next_due_message, shuffle};
-use super::review_common::{RateButtons, ShowAnswerButton, rating_label, use_review_shortcuts};
+use super::review_common::{
+    Answered, RateButtons, ShowAnswerButton, UndoButton, rating_label, undo_answer,
+    use_review_shortcuts,
+};
 
 /// One answered kanji card, kept for the end-of-session recap.
 #[derive(Clone, PartialEq)]
@@ -71,6 +74,9 @@ pub(crate) fn KanjiReview() -> Element {
     // Same guard as word review: the card only advances once its write lands,
     // so a second press in that window must not rate it again.
     let mut rating_in_flight = use_signal(|| false);
+    // The last answer, while it can still be taken back. Only one: undo
+    // steps back a single card.
+    let mut last_answer = use_signal(|| Option::<Answered>::None);
 
     let load_session = move || {
         spawn(async move {
@@ -97,6 +103,7 @@ pub(crate) fn KanjiReview() -> Element {
             started.set(false);
             drill.set(false);
             results.set(vec![]);
+            last_answer.set(None);
             let mut all = get_all_cards().await.unwrap_or_default();
             all.retain(SrsCard::is_kanji);
             has_deck.set(!all.is_empty());
@@ -135,6 +142,7 @@ pub(crate) fn KanjiReview() -> Element {
         idx.set(0);
         show_back.set(false);
         results.set(vec![]);
+        last_answer.set(None);
         drill.set(true);
         started.set(true);
     };
@@ -163,6 +171,8 @@ pub(crate) fn KanjiReview() -> Element {
             return;
         };
         let entry = info.peek().clone().flatten().filter(|k| k.literal == kanji);
+        let i = *idx.peek();
+        let results_before = results.peek().len();
         results.with_mut(|v| {
             v.push(KanjiResult {
                 id: card.id.clone(),
@@ -173,7 +183,13 @@ pub(crate) fn KanjiReview() -> Element {
         });
         if *drill.peek() {
             // One card per kanji, so each drill answer is that kanji's one drill.
-            drill_log::record_drill(&card, r);
+            let row = drill_log::record_drill(&card, r);
+            last_answer.set(Some(Answered {
+                prev: None,
+                row,
+                idx: i,
+                results: results_before,
+            }));
             idx += 1;
             show_back.set(false);
             return;
@@ -185,17 +201,51 @@ pub(crate) fn KanjiReview() -> Element {
                 apply_review(&card, rating_from_u8(r), now_ms(), &settings);
             let row = drill_log::answer(&card, r, ReviewKind::Review);
             match put_card_logged(&c, &row).await {
-                Ok(()) => schedule_sync(),
+                Ok(()) => {
+                    last_answer.set(Some(Answered {
+                        prev: Some(card.clone()),
+                        row,
+                        idx: i,
+                        results: results_before,
+                    }));
+                    schedule_sync();
+                }
                 Err(e) => warn!("put_card({}) after kanji review failed: {e}", card.id),
             }
             idx += 1;
             show_back.set(false);
-            rating_in_flight.set(false);
             if *idx.peek() >= due.peek().len() {
                 let mut all = get_all_cards().await.unwrap_or_default();
                 all.retain(SrsCard::is_kanji);
                 next_due.set(next_due_message(&all, now_ms()));
             }
+            // Last, so an undo can't run before the summary lands.
+            rating_in_flight.set(false);
+        });
+    };
+
+    // Steps back to the last answered card, question side up.
+    let mut undo = move || {
+        if *rating_in_flight.peek() || !*started.peek() {
+            return;
+        }
+        let Some(last) = last_answer.peek().clone() else {
+            return;
+        };
+        rating_in_flight.set(true);
+        spawn(async move {
+            match undo_answer(&last).await {
+                Ok(()) => {
+                    last_answer.set(None);
+                    // Also drops answers after it whose save failed.
+                    results.with_mut(|v| v.truncate(last.results));
+                    idx.set(last.idx);
+                    show_back.set(false);
+                    next_due.set(None);
+                }
+                Err(e) => warn!("undo of {} failed: {e}", last.row.card_id),
+            }
+            rating_in_flight.set(false);
         });
     };
 
@@ -204,7 +254,9 @@ pub(crate) fn KanjiReview() -> Element {
         show_back,
         reveal,
         rate,
+        undo,
     );
+    let can_undo = *started.read() && last_answer.read().is_some();
 
     if !*loaded.read() {
         return rsx! { div { class: "loading", "Building kanji deck…" } };
@@ -301,7 +353,10 @@ pub(crate) fn KanjiReview() -> Element {
                     }
                 }
             }
-            div { style: "text-align: center; margin-top: 16px;",
+            div { class: "row", style: "justify-content: center; gap: 8px; margin-top: 16px;",
+                if can_undo {
+                    UndoButton { disabled: *rating_in_flight.read(), on_undo: move |_| undo() }
+                }
                 button { class: "primary", onclick: move |_| load_session(), "Done" }
             }
         };
@@ -320,6 +375,9 @@ pub(crate) fn KanjiReview() -> Element {
             div { class: "row", style: "justify-content: space-between;",
                 span { class: "muted", "Card {i + 1} of {total}" }
                 span { class: "row",
+                    if can_undo {
+                        UndoButton { disabled: in_flight, on_undo: move |_| undo() }
+                    }
                     if show_back_v {
                         if let Some(k) = &entry {
                             span { class: "muted kanji-facts", "{kanji_facts(k)}" }

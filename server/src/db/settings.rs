@@ -18,11 +18,28 @@ pub struct Settings {
     /// can still sync its other settings without failing the whole request.
     #[serde(default = "default_request_retention")]
     pub request_retention: f64,
+    /// Optimized FSRS weights, `null` for the defaults. Outer `None` = the
+    /// field was absent (a client that predates it), which keeps the stored
+    /// weights. Stored only when they are a valid weight set.
+    #[serde(
+        default,
+        deserialize_with = "present",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub fsrs_params: Option<Option<Vec<f64>>>,
     pub updated_ms: f64,
 }
 
 fn default_request_retention() -> f64 {
     0.9
+}
+
+/// Tells a `null` field (`Some(None)`) from an absent one (`None`, via `default`).
+fn present<'de, D>(d: D) -> Result<Option<Option<Vec<f64>>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Option::<Vec<f64>>::deserialize(d).map(Some)
 }
 
 /// Upserts a user's scheduler settings, last-write-wins: the incoming row
@@ -35,14 +52,15 @@ where
     sqlx::query(
         "INSERT INTO settings
              (email, graduation_interval_days, interval_scale, max_session_cards,
-              request_retention, updated_ms)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+              request_retention, updated_ms, fsrs_params)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
          ON CONFLICT(email) DO UPDATE SET
              graduation_interval_days = excluded.graduation_interval_days,
              interval_scale = excluded.interval_scale,
              max_session_cards = excluded.max_session_cards,
              request_retention = excluded.request_retention,
-             updated_ms = excluded.updated_ms
+             updated_ms = excluded.updated_ms,
+             fsrs_params = CASE WHEN ?8 THEN excluded.fsrs_params ELSE settings.fsrs_params END
          WHERE excluded.updated_ms >= settings.updated_ms",
     )
     .bind(email)
@@ -51,6 +69,10 @@ where
     .bind(s.max_session_cards)
     .bind(s.request_retention)
     .bind(s.updated_ms)
+    .bind(encode_params(
+        s.fsrs_params.as_ref().and_then(|w| w.as_deref()),
+    )?)
+    .bind(s.fsrs_params.is_some())
     .execute(ex)
     .await
     .context("upsert settings")?;
@@ -65,7 +87,7 @@ where
 {
     let row = sqlx::query(
         "SELECT graduation_interval_days, interval_scale, max_session_cards,
-                request_retention, updated_ms
+                request_retention, updated_ms, fsrs_params
          FROM settings WHERE email = ?1",
     )
     .bind(email)
@@ -77,8 +99,19 @@ where
         interval_scale: r.get("interval_scale"),
         max_session_cards: r.get("max_session_cards"),
         request_retention: r.get("request_retention"),
+        fsrs_params: Some(
+            r.get::<Option<String>, _>("fsrs_params")
+                .and_then(|j| serde_json::from_str(&j).ok()),
+        ),
         updated_ms: r.get("updated_ms"),
     }))
+}
+
+/// Weights as stored: JSON, or NULL when absent or not a valid weight set.
+fn encode_params(w: Option<&[f64]>) -> anyhow::Result<Option<String>> {
+    w.filter(|w| w.len() == crate::optimize::WEIGHT_COUNT && w.iter().all(|x| x.is_finite()))
+        .map(|w| serde_json::to_string(w).context("encode fsrs_params"))
+        .transpose()
 }
 
 #[cfg(test)]

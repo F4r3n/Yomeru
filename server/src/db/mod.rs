@@ -41,7 +41,9 @@ pub use deletions::{
     Deletion, DeletionEntry, apply_deletions_tx, get_all_deletions, get_deletions_since,
     prune_old_deletions,
 };
-pub use reviews::{ReviewLog, get_drill_counts, get_drill_counts_since, insert_reviews_tx};
+pub use reviews::{
+    ReviewLog, get_drill_counts, get_drill_counts_since, get_review_answers, insert_reviews_tx,
+};
 pub use settings::{Settings, get_settings, upsert_settings};
 pub use sync_meta::{Cursor, next_rev_tx};
 
