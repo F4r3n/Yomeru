@@ -11,18 +11,28 @@
         word?: string;
     } = $props();
 
-    function splitAtWord(text: string, w: string): [string, string, string] | null {
+    /** Splits at the word the build marked, else at its first occurrence. */
+    function splitAtWord(ex: ExampleEntry, w: string): [string, string, string] | null {
+        if (ex.mark) {
+            const cps = Array.from(ex.japanese);
+            const [from, len] = ex.mark;
+            return [
+                cps.slice(0, from).join(""),
+                cps.slice(from, from + len).join(""),
+                cps.slice(from + len).join(""),
+            ];
+        }
         if (!w) return null;
-        const idx = text.indexOf(w);
+        const idx = ex.japanese.indexOf(w);
         if (idx === -1) return null;
-        return [text.slice(0, idx), w, text.slice(idx + w.length)];
+        return [ex.japanese.slice(0, idx), w, ex.japanese.slice(idx + w.length)];
     }
 </script>
 
 {#if examples.length > 0}
     <div class="jp-corpus">
         {#each examples as ex}
-            {@const parts = splitAtWord(ex.japanese, word)}
+            {@const parts = splitAtWord(ex, word)}
             <div class="jp-corpus-ex">
                 <div class="jp-corpus-jp">
                     {#if parts}

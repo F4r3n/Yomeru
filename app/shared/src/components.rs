@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use examples_types::ExampleEntry;
 use jmdict_types::{PartOfSpeech, WordEntry};
 
 use crate::dict::{frequency_label, preferred_headword, primary_reading};
@@ -159,5 +160,35 @@ pub fn EntryCard(
                 }
             }
         }
+    }
+}
+
+/// `(before, word, after)` of an example: where the build marked the word,
+/// else the first literal occurrence of `word`.
+fn split_example<'a>(ex: &'a ExampleEntry, word: &str) -> Option<(&'a str, &'a str, &'a str)> {
+    let s = ex.japanese.as_str();
+    let (start, end) = match ex.mark {
+        Some((from, len)) => {
+            let byte = |c: u32| s.char_indices().nth(c as usize).map_or(s.len(), |(i, _)| i);
+            (byte(from), byte(from + len))
+        }
+        None => {
+            let i = s.find(word).filter(|_| !word.is_empty())?;
+            (i, i + word.len())
+        }
+    };
+    Some((s.get(..start)?, s.get(start..end)?, s.get(end..)?))
+}
+
+/// An example sentence with the looked-up word highlighted.
+#[component]
+pub fn ExampleJp(example: ExampleEntry, word: String) -> Element {
+    match split_example(&example, &word) {
+        Some((before, mark, after)) => rsx! {
+            "{before}"
+            mark { "{mark}" }
+            "{after}"
+        },
+        None => rsx! { "{example.japanese}" },
     }
 }

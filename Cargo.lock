@@ -2095,9 +2095,12 @@ dependencies = [
 name = "examples-build"
 version = "0.19.4"
 dependencies = [
+ "aho-corasick",
  "anyhow",
  "clap",
  "examples-types",
+ "jmdict-build",
+ "jmdict-types",
  "postcard",
 ]
 

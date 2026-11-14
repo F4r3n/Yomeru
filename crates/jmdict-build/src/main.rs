@@ -7,8 +7,9 @@
 #[cfg(feature = "full")]
 mod disambig;
 mod indexer;
-mod parser;
 mod serializer;
+
+use jmdict_build::parser;
 
 use anyhow::Result;
 use clap::Parser;

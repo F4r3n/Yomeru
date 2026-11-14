@@ -4,6 +4,9 @@ version = "0.19.4"
 license.workspace = true
 edition = "2024"
 
+[lib]
+path = "src/lib.rs"
+
 [[bin]]
 name = "jmdict-build"
 path = "src/main.rs"

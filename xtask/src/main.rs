@@ -87,6 +87,9 @@ enum Cmd {
         input: PathBuf,
         #[arg(short, long)]
         output: Option<PathBuf>,
+        /// JMdict_e XML; downloaded if omitted.
+        #[arg(short, long)]
+        jmdict: Option<PathBuf>,
     },
     /// Build everything: WASM modules + dict index.
     BuildAll {
@@ -179,9 +182,17 @@ fn main() -> Result<()> {
             eprintln!("examples.utf ready at {}", out.display());
         }
 
-        Cmd::BuildExamples { input, output } => {
+        Cmd::BuildExamples {
+            input,
+            output,
+            jmdict,
+        } => {
             let output = output.unwrap_or_else(|| root.join("extension/data/examples.bin"));
-            build_examples(&root, &input, &output)?;
+            let jmdict = match jmdict {
+                Some(p) => p,
+                None => download_jmdict(&root)?,
+            };
+            build_examples(&root, &input, &jmdict, &output)?;
         }
 
         Cmd::BuildAll { input } => {
@@ -724,6 +735,7 @@ fn build_dicts(root: &Path, input: Option<PathBuf>) -> Result<()> {
     build_examples(
         root,
         &examples_utf,
+        &xml_path,
         &root.join("extension/data/examples.bin"),
     )?;
     copy_overlays(root)?;
@@ -756,7 +768,7 @@ fn download_examples(dir: &Path) -> Result<PathBuf> {
     download_source(dir, "EXAMPLES")
 }
 
-fn build_examples(root: &Path, input: &Path, output: &Path) -> Result<()> {
+fn build_examples(root: &Path, input: &Path, jmdict: &Path, output: &Path) -> Result<()> {
     run(Command::new("cargo")
         .args([
             "run",
@@ -767,6 +779,8 @@ fn build_examples(root: &Path, input: &Path, output: &Path) -> Result<()> {
             "--input",
         ])
         .arg(input)
+        .arg("--jmdict")
+        .arg(jmdict)
         .arg("--output")
         .arg(output)
         .current_dir(root))?;

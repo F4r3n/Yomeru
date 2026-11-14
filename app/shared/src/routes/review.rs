@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 use jmdict_types::WordEntry;
 
 use crate::app::Route;
-use crate::components::pos_list;
+use crate::components::{ExampleJp, pos_list};
 use crate::dict::{
     direction_label, examples_for, kanji_for, lookup_by_sequence, preferred_headword,
     primary_reading, short_gloss,
@@ -835,7 +835,7 @@ fn BackContent(
                     } else {
                         for ex in examples {
                             div { class: "example-row",
-                                div { class: "jp", ExampleJp { sentence: ex.japanese.clone(), word: word.clone() } }
+                                div { class: "jp", ExampleJp { example: ex.clone(), word: word.clone() } }
                                 div { class: "en", "{ex.english}" }
                             }
                         }
@@ -843,20 +843,5 @@ fn BackContent(
                 }
             },
         }
-    }
-}
-
-#[component]
-fn ExampleJp(sentence: String, word: String) -> Element {
-    if let Some(idx) = sentence.find(&word) {
-        let before = &sentence[..idx];
-        let after = &sentence[idx + word.len()..];
-        rsx! {
-            "{before}"
-            mark { "{word}" }
-            "{after}"
-        }
-    } else {
-        rsx! { "{sentence}" }
     }
 }

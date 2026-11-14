@@ -4,7 +4,7 @@
 // Fixtures: a malformed one is a bug in the test, so failing loudly is right.
 #![allow(clippy::unwrap_used, clippy::indexing_slicing)]
 
-use examples_types::ExampleEntry;
+use examples_types::{ExampleEntry, ExampleRef};
 use postcard::to_allocvec;
 
 /// Build a small EXPL binary in-memory. `index` is (headword → ordered list
@@ -15,15 +15,25 @@ pub fn build_binary(sentences: &[ExampleEntry], index: &[(&str, Vec<usize>)]) ->
     let mut offsets = Vec::with_capacity(sentences.len());
     for s in sentences {
         offsets.push(sentences_bytes.len() as u32);
-        let ser = to_allocvec(s).unwrap();
+        let ser = to_allocvec(&(&s.japanese, &s.english)).unwrap();
         sentences_bytes.extend_from_slice(&(ser.len() as u32).to_le_bytes());
         sentences_bytes.extend_from_slice(&ser);
     }
 
     // Lookup uses `binary_search_by`, so the index must be sorted by key.
-    let mut idx: Vec<(String, Vec<u32>)> = index
+    let mut idx: Vec<(String, Vec<ExampleRef>)> = index
         .iter()
-        .map(|(k, ids)| (k.to_string(), ids.iter().map(|&i| offsets[i]).collect()))
+        .map(|(k, ids)| {
+            let refs = ids
+                .iter()
+                .map(|&i| ExampleRef {
+                    offset: offsets[i],
+                    mark_start: 0,
+                    mark_len: 0,
+                })
+                .collect();
+            (k.to_string(), refs)
+        })
         .collect();
     idx.sort_by(|a, b| a.0.cmp(&b.0));
 
@@ -31,7 +41,7 @@ pub fn build_binary(sentences: &[ExampleEntry], index: &[(&str, Vec<usize>)]) ->
 
     let mut out = Vec::new();
     out.extend_from_slice(b"EXPL");
-    out.push(1u8);
+    out.push(2u8);
     out.extend_from_slice(&(index_bytes.len() as u32).to_le_bytes());
     out.extend_from_slice(&index_bytes);
     out.extend_from_slice(&(sentences_bytes.len() as u32).to_le_bytes());
@@ -44,5 +54,6 @@ pub fn ex(j: &str, e: &str) -> ExampleEntry {
     ExampleEntry {
         japanese: j.into(),
         english: e.into(),
+        mark: None,
     }
 }

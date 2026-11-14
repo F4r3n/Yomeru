@@ -205,6 +205,8 @@ export const DEFAULT_SETTINGS: SrsSettings = {
 export interface ExampleEntry {
   japanese: string;
   english: string;
+  /** `[start, len]` in code points of the word as written in `japanese`. */
+  mark?: [number, number] | null;
 }
 
 export interface KanjiEntry {

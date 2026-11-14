@@ -2,14 +2,14 @@
 //! a thin `#[wasm_bindgen]` shim on top of this.
 
 use anyhow::{Context, anyhow, bail};
-use examples_types::ExampleEntry;
+use examples_types::{ExampleEntry, ExampleRef, StoredSentence};
 use once_cell::sync::OnceCell;
 use postcard::from_bytes;
 
 static EXAMPLES: OnceCell<ExamplesDictInner> = OnceCell::new();
 
 struct ExamplesDictInner {
-    index: Vec<(String, Vec<u32>)>,
+    index: Vec<(String, Vec<ExampleRef>)>,
     sentences_bytes: Vec<u8>,
 }
 
@@ -41,21 +41,27 @@ pub fn lookup(headword: &str, max: usize) -> Vec<ExampleEntry> {
     {
         Err(_) => vec![],
         Ok(i) => match dict.index.get(i) {
-            Some((_, offsets)) => offsets
+            Some((_, refs)) => refs
                 .iter()
                 .take(max)
-                .filter_map(|&off| get_sentence(&dict.sentences_bytes, off))
+                .filter_map(|r| get_sentence(&dict.sentences_bytes, r))
                 .collect(),
             None => vec![],
         },
     }
 }
 
-fn get_sentence(bytes: &[u8], offset: u32) -> Option<ExampleEntry> {
-    let pos = offset as usize;
+fn get_sentence(bytes: &[u8], r: &ExampleRef) -> Option<ExampleEntry> {
+    let pos = r.offset as usize;
     let len = u32::from_le_bytes(bytes.get(pos..pos + 4)?.try_into().ok()?) as usize;
     let start = pos + 4;
-    from_bytes(bytes.get(start..start + len)?).ok()
+    let (japanese, english): StoredSentence = from_bytes(bytes.get(start..start + len)?).ok()?;
+    let mark = (r.mark_len > 0).then(|| (u32::from(r.mark_start), u32::from(r.mark_len)));
+    Some(ExampleEntry {
+        japanese,
+        english,
+        mark,
+    })
 }
 
 fn parse_binary<'a>(bytes: &'a [u8]) -> anyhow::Result<ExamplesDictInner> {
@@ -66,7 +72,7 @@ fn parse_binary<'a>(bytes: &'a [u8]) -> anyhow::Result<ExamplesDictInner> {
         bail!("invalid magic bytes");
     }
     let version = bytes.get(4).copied().unwrap_or(0);
-    if version != 1 {
+    if version != 2 {
         bail!("unsupported version {version}");
     }
 
@@ -87,7 +93,7 @@ fn parse_binary<'a>(bytes: &'a [u8]) -> anyhow::Result<ExamplesDictInner> {
 
     let index_len = read_u32(bytes, pos)?;
     pos += 4;
-    let index: Vec<(String, Vec<u32>)> = from_bytes(read_slice(bytes, pos, index_len, "index")?)?;
+    let index: Vec<(String, Vec<ExampleRef>)> = from_bytes(read_slice(bytes, pos, index_len, "index")?)?;
     pos += index_len;
 
     let sentences_len = read_u32(bytes, pos)?;

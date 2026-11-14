@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 use jmdict_types::WordEntry;
 
 use crate::app::Route;
-use crate::components::EntryCard;
+use crate::components::{EntryCard, ExampleJp};
 use crate::dict::{self, examples_for, kanji_for, primary_headword};
 use crate::icons::{Icon, IconName};
 use crate::idb::{bump_priority, get_cards_by_sequence, put_cards, reset_card};
@@ -652,7 +652,7 @@ fn ExpansionPanel(
                     div {
                         for ex in examples.iter().cloned() {
                             div { class: "example-row",
-                                div { class: "jp", ExampleJp { sentence: ex.japanese.clone(), word: word.clone() } }
+                                div { class: "jp", ExampleJp { example: ex.clone(), word: word.clone() } }
                                 div { class: "en", "{ex.english}" }
                             }
                         }
@@ -660,20 +660,5 @@ fn ExpansionPanel(
                 },
             }
         }
-    }
-}
-
-#[component]
-fn ExampleJp(sentence: String, word: String) -> Element {
-    if let Some(idx) = sentence.find(&word) {
-        let before = &sentence[..idx];
-        let after = &sentence[idx + word.len()..];
-        rsx! {
-            "{before}"
-            mark { "{word}" }
-            "{after}"
-        }
-    } else {
-        rsx! { "{sentence}" }
     }
 }
