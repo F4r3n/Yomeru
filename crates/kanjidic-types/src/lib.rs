@@ -86,14 +86,10 @@ pub struct KanjiPart {
 }
 
 /// A part as the kanji finder's grid lists it: something seen inside other
-/// kanji, with what to call it.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+/// kanji.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PartInfo {
     pub element: char,
-    /// Plain name first (`part-names.tsv`), then KANJIDIC's meanings cleaned
-    /// by [`part_meanings`]. The finder's filter box matches any of them.
-    /// Empty when nothing names the part.
-    pub names: Vec<String>,
     /// 0 when KANJIDIC has no entry for the part (⺍).
     pub strokes: u8,
     /// How many kanji contain it, at any depth.
@@ -118,9 +114,7 @@ pub struct PartIndexRecord {
     pub part_kanji_at: Vec<u32>,
     /// Each part's kanji, best known first.
     pub part_kanji: Vec<char>,
-    /// The parts some other kanji contains, in grid order. Their names are
-    /// KANJIDIC's: the plain names of `part-names.tsv` are laid over them
-    /// when served.
+    /// The parts some other kanji contains, in grid order.
     pub listed: Vec<PartInfo>,
 }
 

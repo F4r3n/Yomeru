@@ -143,12 +143,10 @@ pub fn KanjiFinder() -> Element {
     let part_tile = |p: &PartInfo| {
         let c = p.element;
         let (is_selected, dead) = tile(c);
-        let title = p.names.join(", ");
         rsx! {
             button {
                 class: if is_selected { "part-btn selected" } else { "part-btn" },
                 disabled: dead,
-                title: "{title}",
                 onclick: move |_| toggle_part(c),
                 "{c}"
             }

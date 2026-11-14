@@ -6,8 +6,8 @@ use std::path::Path;
 // Binary format: kanjidic.bin
 //
 //  [4]  magic       b"KDIC"
-//  [1]  version     3u8 (1 = entries without `parts`, 2 = no parts index;
-//                   both still readable)
+//  [1]  version     4u8 (1 = entries without `parts`, 2 = no parts index,
+//                   3 = parts index with names; all still readable)
 //  [4]  count       u32 LE — number of index entries
 //  [N×8] index      sorted (codepoint: u32 LE, byte_offset: u32 LE) pairs
 //  [4]  data_len    u32 LE
@@ -47,7 +47,7 @@ pub fn write_index(entries: &[KanjiEntry], output: &Path) -> Result<()> {
 
     // Header
     w.write_all(b"KDIC")?;
-    w.write_all(&[3u8])?;
+    w.write_all(&[4u8])?;
 
     // Index
     w.write_all(&(index.len() as u32).to_le_bytes())?;

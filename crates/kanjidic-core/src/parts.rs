@@ -7,7 +7,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use kanjidic_types::{part_meanings, KanjiEntry, PartIndexRecord, PartInfo};
+use kanjidic_types::{KanjiEntry, PartIndexRecord, PartInfo};
 
 /// Stroke counts for parts KANJIDIC has no entry for, mostly radical
 /// variants (⻌, ⻖, ⺌). Taken from KanjiVG: the count each part has most
@@ -100,30 +100,11 @@ pub fn build_index(entries: &[KanjiEntry]) -> PartIndexRecord {
         }
     }
 
-    // The full form some kanji records for a variant (水 for 氵).
-    let originals: HashMap<char, char> = entries
-        .iter()
-        .flat_map(|e| e.parts.iter())
-        .filter_map(|p| Some((p.element, p.original?)))
-        .collect();
-    let meanings = |c: &char| {
-        by_literal
-            .get(c)
-            .map(|e| part_meanings(&e.meanings))
-            .unwrap_or_default()
-    };
-
     let mut infos: Vec<PartInfo> = listed
         .iter()
         .map(|&p| {
-            let mut names = meanings(&p);
-            // A variant KANJIDIC can't name (亻) borrows its original's names.
-            if names.is_empty() {
-                names = originals.get(&p).map(meanings).unwrap_or_default();
-            }
             PartInfo {
                 element: p,
-                names,
                 strokes: by_literal
                     .get(&p)
                     .map(|e| e.stroke_count)
@@ -384,8 +365,6 @@ mod tests {
         assert!(pos('口') < pos('五') && pos('五') < pos('言'));
         // 口 is in more kanji than 千, so it leads the 3-stroke row.
         assert!(pos('口') < pos('千'));
-        // 氵 has no entry here: it borrows 水's name.
-        assert_eq!(info('氵').names, vec!["water".to_string()]);
     }
 
     #[test]

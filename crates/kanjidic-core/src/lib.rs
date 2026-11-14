@@ -140,23 +140,9 @@ pub fn lookup_many(word: &str) -> Vec<KanjiEntry> {
 }
 
 /// Every part the kanji finder can offer, by stroke count then by how many
-/// kanji use it. A plain name from `part-names.tsv` leads its part's names.
+/// kanji use it.
 pub fn parts() -> Vec<PartInfo> {
-    let Some(index) = part_index() else {
-        return vec![];
-    };
-    index
-        .listed()
-        .iter()
-        .cloned()
-        .map(|mut p| {
-            if let Some(name) = part_name(p.element) {
-                p.names.retain(|n| n != name);
-                p.names.insert(0, name.clone());
-            }
-            p
-        })
-        .collect()
+    part_index().map_or_else(Vec::new, |i| i.listed().to_vec())
 }
 
 /// The kanji containing all of `selected`, at any depth: 言 finds 語 through
@@ -179,7 +165,7 @@ pub fn kanji_with_parts(selected: &[char], max: usize) -> PartSearch {
 static PART_INDEX: OnceCell<PartIndex> = OnceCell::new();
 
 /// The finder's index: read from the binary, or for a binary from before
-/// version 3, built from every entry on first use.
+/// version 4, built from every entry on first use.
 fn part_index() -> Option<&'static PartIndex> {
     let dict = KDICT.get()?;
     Some(PART_INDEX.get_or_init(|| {
@@ -253,7 +239,7 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<KanjiDictInner> {
         bail!("invalid magic bytes");
     }
     let version = bytes.get(4).copied().unwrap_or(0);
-    if !matches!(version, 1..=3) {
+    if !matches!(version, 1..=4) {
         bail!("unsupported version {version}");
     }
 
@@ -295,6 +281,8 @@ fn parse_binary(bytes: &[u8]) -> anyhow::Result<KanjiDictInner> {
     } else {
         vec![]
     };
+    // Version 3's index has part names, which postcard would misread as v4.
+    let parts = if version >= 4 { parts } else { vec![] };
 
     Ok(KanjiDictInner {
         version,
@@ -356,10 +344,10 @@ mod tests {
     }
 
     #[test]
-    fn version_3_reads_the_stored_parts_index() {
+    fn version_4_reads_the_stored_parts_index() {
         let rec = parts::build_index(&[entry('口', 3, &[], &[], &["mouth"])]);
         let mut bin = build_raw(
-            3,
+            4,
             vec![(
                 '口',
                 to_allocvec(&KanjiRecord::from(&entry('口', 3, &[], &[], &["mouth"]))).unwrap(),
@@ -372,7 +360,12 @@ mod tests {
         assert_eq!(from_bytes::<PartIndexRecord>(&dict.parts).unwrap(), rec);
         assert!(dict.entry('口' as u32).is_some());
 
-        // A version 3 file cut short in its index section is refused.
+        // Version 3's index has another shape: it's dropped, to be rebuilt.
+        bin[4] = 3;
+        assert!(parse_binary(&bin).expect("parse v3").parts.is_empty());
+        bin[4] = 4;
+
+        // A file cut short in its index section is refused.
         let err = parse_binary(&bin[..bin.len() - 2])
             .err()
             .expect("truncated");

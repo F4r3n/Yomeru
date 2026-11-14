@@ -223,7 +223,6 @@ export interface KanjiEntry {
 /** Mirrors `PartInfo` in `kanjidic-types`: one part of the kanji finder's grid. */
 export interface PartInfo {
   element: string;
-  names: string[];
   /** 0 when unknown. */
   strokes: number;
   kanji_count: number;
