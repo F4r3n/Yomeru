@@ -1,6 +1,6 @@
 [package]
 name = "yomeru-web"
-version = "0.19.4"
+version = "0.20.0"
 license.workspace = true
 edition = "2021"
 
