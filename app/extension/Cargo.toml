@@ -23,7 +23,7 @@ js-sys                = "0.3"
 serde      = { version = "1", features = ["derive"] }
 log        = { version = "0.4", features = ["release_max_level_off"] }
 console_error_panic_hook = "0.1"
-async-trait = "0.1.89"
+async-trait = "0.1.92"
 
 [lints]
 workspace = true

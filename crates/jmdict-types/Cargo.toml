@@ -22,7 +22,7 @@ rkyv = { version = "0.8", default-features = false, features = [
     "little_endian",
     "unaligned",
 ] }
-serde_repr = "0.1.20"
+serde_repr = "0.1.21"
 
 [dev-dependencies]
 serde_json = "1"

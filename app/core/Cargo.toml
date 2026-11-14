@@ -17,7 +17,7 @@ japanese-utils   = { path = "../../crates/japanese-utils" }
 
 serde         = { version = "1", features = ["derive"] }
 serde_json    = "1"
-async-trait   = "0.1.89"
+async-trait   = "0.1.92"
 # The same crate Dioxus re-exports as `dioxus::logger::tracing`, so the
 # app's logger picks these events up unchanged.
 tracing       = "0.1"
