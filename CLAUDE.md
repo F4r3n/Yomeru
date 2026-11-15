@@ -27,6 +27,10 @@ cargo test -p deinflect
 # dictionary (JMDICT_BIN built with jmdict-types/full) and examples.utf
 JMDICT_BIN=path/to/jmdict.bin cargo test --release -p jmdict-core --test real_dict -- --ignored
 
+# After changing the grammar converter: convert the real grammar dictionary
+# (a Yomitan ZIP kept outside the repo, never committed)
+GRAMMAR_ZIP=path/to/bees-ultimate-grammar-dictionary.zip cargo test --release -p grammar-core --test real_dict -- --ignored --nocapture
+
 # Run all benchmarks (deinflect + japanese-utils)
 cargo bench -p deinflect -p japanese-utils
 
@@ -51,6 +55,7 @@ cd extension && npm install && npm run build
 | `jmdict-wasm` | Thin `#[wasm_bindgen]` shim over `jmdict-core` (exposes the `Dictionary` JS class) |
 | `kanjidic-core` / `kanjidic-wasm` | Same core/shim split: core exposes `init_from_bytes`, `lookup_one`, `lookup_many`; wasm adds the JS class |
 | `examples-core` / `examples-wasm` | Same split for example sentences |
+| `grammar-core` | Yomitan grammar dictionary ZIP → `grammar.bin` (`convert`), and `GrammarDict` (`lookup`, `lookup_longest_match`, `lookup_prefix`). Runs on the user's device: the content is the sources', so Yomeru never ships, hosts or syncs it |
 | `srs-core` | Stateless SM-2: `new_card`, `review_card`, `filter_due` |
 | `srs-wasm` | WASM wrapper for srs-core |
 | `yomeru-core` (`app/core`) | The app's logic with no UI and no Dioxus: card store (IndexedDB/SQLite), SRS, sync, settings, `Platform` (dict + settings traits), offline `LocalDict`. Functions needing the dictionary/settings take `&Platform` |

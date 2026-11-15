@@ -3937,6 +3937,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "grammar-core"
+version = "0.21.0"
+dependencies = [
+ "anyhow",
+ "deinflect",
+ "flate2",
+ "fst",
+ "postcard",
+ "serde",
+ "serde_json",
+ "zip 2.6.1",
+]
+
+[[package]]
 name = "gtk"
 version = "0.18.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
