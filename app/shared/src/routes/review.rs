@@ -593,7 +593,6 @@ fn WordReview() -> Element {
             } else if let Some(c) = current {
                 {
                     let entry = current_entry;
-                    let direction_label = direction_label(c.direction);
                     let is_drill = *drill.read();
                     let reading = entry.as_ref().map(|e| primary_reading(e).to_string()).unwrap_or_default();
                     let front_word = entry
@@ -648,7 +647,6 @@ fn WordReview() -> Element {
                                     if is_drill {
                                         span { class: "badge fail", "Drill" }
                                     }
-                                    span { class: "badge", "{direction_label}" }
                                 }
                             }
 

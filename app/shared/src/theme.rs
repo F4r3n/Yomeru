@@ -389,6 +389,16 @@ button.link {
 }
 button.link:hover:not(:disabled) { text-decoration: underline; }
 button.outline:hover:not(:disabled) { background: var(--accent); color: var(--on-accent); opacity: 1; }
+/* Undo on review cards: a bare grey glyph, there when needed but not
+   competing with the card. */
+button.undo {
+    background: transparent;
+    color: var(--subtext);
+    padding: 2px 6px;
+    font-size: 16px;
+    line-height: 1;
+}
+button.undo:hover:not(:disabled) { color: var(--accent); opacity: 1; }
 
 input[type="range"] { accent-color: var(--accent); }
 
