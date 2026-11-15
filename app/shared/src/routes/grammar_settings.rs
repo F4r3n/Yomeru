@@ -6,7 +6,7 @@
 
 use dioxus::prelude::*;
 
-use crate::grammar::{self, GrammarMeta, Installed};
+use crate::grammar::{self, GrammarMeta, Installed, Progress};
 
 #[derive(Clone, PartialEq)]
 enum State {
@@ -17,11 +17,65 @@ enum State {
     Unreadable(String),
 }
 
+/// What a running action is doing.
+#[derive(Clone, Copy, PartialEq)]
+enum Busy {
+    ReadingFile,
+    CheckingUpdate,
+    Step(Progress),
+}
+
+impl Busy {
+    fn label(self) -> String {
+        match self {
+            Busy::ReadingFile => "Reading the file…".into(),
+            Busy::CheckingUpdate => "Checking for an update…".into(),
+            Busy::Step(Progress::Downloading { received, total }) => {
+                let mb = |b: u64| b as f64 / 1e6;
+                match total {
+                    Some(t) if t > 0 => {
+                        format!("Downloading… {:.1} / {:.1} MB", mb(received), mb(t))
+                    }
+                    _ if received > 0 => format!("Downloading… {:.1} MB", mb(received)),
+                    _ => "Downloading…".into(),
+                }
+            }
+            Busy::Step(Progress::Verifying) => "Checking the download…".into(),
+            Busy::Step(Progress::Converting { done, total }) => {
+                format!("Converting… {done} / {total}")
+            }
+            Busy::Step(Progress::Saving) => "Saving on this device…".into(),
+        }
+    }
+
+    fn fraction(self) -> Option<f64> {
+        match self {
+            Busy::Step(p) => p.fraction(),
+            _ => None,
+        }
+    }
+}
+
+/// Reports `p`, skipping download updates that wouldn't move the bar or
+/// its label by a visible amount: a 32 MB body comes in thousands of chunks.
+fn report(mut busy: Signal<Option<Busy>>, p: Progress) {
+    let tenth_mb = |p: Progress| match p {
+        Progress::Downloading { received, .. } => Some(received / 100_000),
+        _ => None,
+    };
+    let unchanged = matches!(
+        *busy.peek(),
+        Some(Busy::Step(prev)) if tenth_mb(prev).is_some() && tenth_mb(prev) == tenth_mb(p)
+    );
+    if !unchanged {
+        busy.set(Some(Busy::Step(p)));
+    }
+}
+
 #[component]
 pub fn GrammarCard() -> Element {
     let mut state = use_signal(|| State::Loading);
-    // What a running action is doing, e.g. "Downloading…".
-    let mut busy = use_signal(|| None::<&'static str>);
+    let mut busy = use_signal(|| None::<Busy>);
     let mut message = use_signal(|| None::<(String, bool)>);
     let mut update = use_signal(|| None::<String>);
 
@@ -54,12 +108,17 @@ pub fn GrammarCard() -> Element {
 
     let on_download = move |_| {
         message.set(None);
-        busy.set(Some("Downloading… (about 32 MB)"));
+        report(
+            busy,
+            Progress::Downloading {
+                received: 0,
+                total: None,
+            },
+        );
         spawn(async move {
-            let result = match grammar::download_zip().await {
+            let result = match grammar::download_zip(&mut |p| report(busy, p)).await {
                 Ok((zip, sha256)) => {
-                    busy.set(Some("Converting… this takes a few seconds."));
-                    grammar::install_zip(zip, Some(sha256)).await
+                    grammar::install_zip(zip, Some(sha256), &mut |p| report(busy, p)).await
                 }
                 Err(e) => Err(format!("Download failed: {e}")),
             };
@@ -72,12 +131,11 @@ pub fn GrammarCard() -> Element {
             return;
         };
         message.set(None);
-        busy.set(Some("Reading the file…"));
+        busy.set(Some(Busy::ReadingFile));
         spawn(async move {
             let result = match file.read_bytes().await {
                 Ok(bytes) => {
-                    busy.set(Some("Converting… this takes a few seconds."));
-                    grammar::install_zip(bytes.to_vec(), None).await
+                    grammar::install_zip(bytes.to_vec(), None, &mut |p| report(busy, p)).await
                 }
                 Err(e) => Err(format!("Could not read the file: {e}")),
             };
@@ -87,7 +145,7 @@ pub fn GrammarCard() -> Element {
 
     let on_check = move |_| {
         message.set(None);
-        busy.set(Some("Checking…"));
+        busy.set(Some(Busy::CheckingUpdate));
         spawn(async move {
             match grammar::check_update().await {
                 Ok(Some(rev)) => update.set(Some(rev)),
@@ -169,7 +227,16 @@ pub fn GrammarCard() -> Element {
                 },
             }
             if let Some(what) = *busy.read() {
-                div { style: "margin-top: 10px;", span { class: "hint", "{what}" } }
+                div { style: "margin-top: 10px; display: flex; flex-direction: column; gap: 4px;",
+                    // Without a value, <progress> shows its indeterminate
+                    // animation: for steps that can't tell how far along they are.
+                    if let Some(f) = what.fraction() {
+                        progress { style: "width: 100%;", max: "1", value: "{f}" }
+                    } else {
+                        progress { style: "width: 100%;" }
+                    }
+                    span { class: "hint", "{what.label()}" }
+                }
             }
             if let Some((msg, err)) = message.read().clone() {
                 div { style: "margin-top: 10px;",

@@ -31,57 +31,117 @@ pub struct Converted {
 
 /// Convert a Yomitan dictionary ZIP (format 3) into `grammar.bin` bytes.
 pub fn convert(zip_bytes: &[u8]) -> anyhow::Result<Converted> {
-    let mut archive = zip::ZipArchive::new(Cursor::new(zip_bytes)).context("not a ZIP archive")?;
-
-    let index: Index = serde_json::from_slice(&read_file(&mut archive, "index.json")?)
-        .context("index.json isn't a Yomitan index")?;
-    if index.format.or(index.version) != Some(3) {
-        bail!("unsupported Yomitan dictionary format (only format 3 is)");
-    }
-    let meta = GrammarMeta {
-        title: index.title,
-        revision: index.revision,
-        attribution: index.attribution,
-        url: index.url,
-        index_url: index.index_url,
-        download_url: index.download_url,
-    };
-
-    // term_bank_1.json, term_bank_2.json… in numeric order, which is the
-    // dictionary's own order.
-    let mut banks: Vec<(u32, String)> = archive
-        .file_names()
-        .filter_map(|name| {
-            let n = name.strip_prefix("term_bank_")?.strip_suffix(".json")?;
-            Some((n.parse().ok()?, name.to_owned()))
-        })
-        .collect();
-    banks.sort();
-    if banks.is_empty() {
-        bail!("the dictionary has no term banks");
-    }
-
-    let mut entries = Vec::new();
-    for (_, name) in &banks {
-        // One bank at a time: parsed JSON is several times its text's size.
-        let rows: Vec<Row> = serde_json::from_slice(&read_file(&mut archive, name)?)
-            .with_context(|| format!("{name} isn't a Yomitan term bank"))?;
-        entries.extend(rows.into_iter().map(entry_from_row));
-    }
-
-    let count = entries.len();
-    let bytes = format::write(&meta, &entries)?;
-    // Read back what was written: an entry that doesn't decode would
-    // otherwise only go missing at lookup.
-    format::check_entries(&bytes)?;
-    Ok(Converted {
-        bytes,
-        meta,
-        entries: count,
-    })
+    let mut converter = Converter::new(zip_bytes.to_vec())?;
+    while converter.step()? {}
+    converter.finish()
 }
 
-fn read_file(archive: &mut zip::ZipArchive<Cursor<&[u8]>>, name: &str) -> anyhow::Result<Vec<u8>> {
+/// [`convert`] in steps of one term bank, so a caller on a UI thread can
+/// show progress and let the page repaint between them:
+///
+/// ```ignore
+/// let mut c = Converter::new(zip)?;
+/// while c.step()? { show(c.done(), c.total()); }
+/// let converted = c.finish()?;
+/// ```
+pub struct Converter {
+    archive: zip::ZipArchive<Cursor<Vec<u8>>>,
+    meta: GrammarMeta,
+    /// Term bank file names, in the dictionary's order.
+    banks: Vec<String>,
+    done: usize,
+    packed: Vec<format::Packed>,
+}
+
+impl Converter {
+    /// Opens the ZIP and reads its index. Fails on anything but a format-3
+    /// Yomitan dictionary with term banks.
+    pub fn new(zip: Vec<u8>) -> anyhow::Result<Self> {
+        let mut archive = zip::ZipArchive::new(Cursor::new(zip)).context("not a ZIP archive")?;
+
+        let index: Index = serde_json::from_slice(&read_file(&mut archive, "index.json")?)
+            .context("index.json isn't a Yomitan index")?;
+        if index.format.or(index.version) != Some(3) {
+            bail!("unsupported Yomitan dictionary format (only format 3 is)");
+        }
+        let meta = GrammarMeta {
+            title: index.title,
+            revision: index.revision,
+            attribution: index.attribution,
+            url: index.url,
+            index_url: index.index_url,
+            download_url: index.download_url,
+        };
+
+        // term_bank_1.json, term_bank_2.json… in numeric order, which is the
+        // dictionary's own order.
+        let mut banks: Vec<(u32, String)> = archive
+            .file_names()
+            .filter_map(|name| {
+                let n = name.strip_prefix("term_bank_")?.strip_suffix(".json")?;
+                Some((n.parse().ok()?, name.to_owned()))
+            })
+            .collect();
+        banks.sort();
+        if banks.is_empty() {
+            bail!("the dictionary has no term banks");
+        }
+        Ok(Self {
+            archive,
+            meta,
+            banks: banks.into_iter().map(|(_, name)| name).collect(),
+            done: 0,
+            packed: Vec::new(),
+        })
+    }
+
+    pub fn meta(&self) -> &GrammarMeta {
+        &self.meta
+    }
+
+    /// Steps the conversion takes: one per term bank.
+    pub fn total(&self) -> usize {
+        self.banks.len()
+    }
+
+    /// Steps done so far.
+    pub fn done(&self) -> usize {
+        self.done
+    }
+
+    /// Converts and compresses the next term bank. Returns whether any
+    /// remain.
+    pub fn step(&mut self) -> anyhow::Result<bool> {
+        let Some(name) = self.banks.get(self.done).cloned() else {
+            return Ok(false);
+        };
+        // One bank at a time: parsed JSON is several times its text's size.
+        let rows: Vec<Row> = serde_json::from_slice(&read_file(&mut self.archive, &name)?)
+            .with_context(|| format!("{name} isn't a Yomitan term bank"))?;
+        for row in rows {
+            self.packed.push(format::pack(&entry_from_row(row))?);
+        }
+        self.done += 1;
+        Ok(self.done < self.banks.len())
+    }
+
+    /// Writes `grammar.bin` from the converted banks. Converts any left
+    /// first.
+    pub fn finish(mut self) -> anyhow::Result<Converted> {
+        while self.step()? {}
+        let bytes = format::write(&self.meta, &self.packed)?;
+        Ok(Converted {
+            bytes,
+            meta: self.meta,
+            entries: self.packed.len(),
+        })
+    }
+}
+
+fn read_file(
+    archive: &mut zip::ZipArchive<Cursor<Vec<u8>>>,
+    name: &str,
+) -> anyhow::Result<Vec<u8>> {
     let mut file = archive
         .by_name(name)
         .with_context(|| format!("the dictionary has no {name}"))?;

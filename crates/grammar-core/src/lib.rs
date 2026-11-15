@@ -13,7 +13,7 @@ pub mod types;
 #[cfg(test)]
 mod tests;
 
-pub use convert::{Converted, convert};
+pub use convert::{Converted, Converter, convert};
 pub use dict::GrammarDict;
 pub use format::FORMAT_VERSION;
 pub use types::{

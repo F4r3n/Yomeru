@@ -75,34 +75,105 @@ pub struct Installed {
     pub bytes: usize,
 }
 
-/// Converts a Yomitan grammar ZIP, stores the result and makes it current.
-/// With `sha256` (lowercase hex), a ZIP with another digest is refused
-/// before conversion.
-pub async fn install_zip(zip: Vec<u8>, sha256: Option<String>) -> Result<Installed, String> {
-    // Give the UI a frame to show its "converting" state: in the browser the
-    // conversion below runs on this thread.
-    rt::sleep_ms(0).await;
-    let converted = blocking(move || {
-        if let Some(expected) = sha256 {
-            let actual = hex(&Sha256::digest(&zip));
+/// How long an install waits after reporting progress: about a frame, so
+/// the UI renders the new state and the browser paints it before the next
+/// step holds the page's thread.
+const YIELD_MS: u32 = 20;
+
+/// Where a download or an install stands, for a progress bar.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Progress {
+    /// Bytes of the ZIP received, out of its size when the server says.
+    Downloading { received: u64, total: Option<u64> },
+    /// Checking the download against the publisher's digest.
+    Verifying,
+    /// Term banks converted, out of the dictionary's total.
+    Converting { done: usize, total: usize },
+    /// Writing `grammar.bin` to this device's storage.
+    Saving,
+}
+
+impl Progress {
+    /// How far along this phase is, 0.0–1.0; `None` when there's no telling.
+    pub fn fraction(self) -> Option<f64> {
+        match self {
+            Progress::Downloading {
+                received,
+                total: Some(total),
+            } if total > 0 => Some((received as f64 / total as f64).min(1.0)),
+            Progress::Converting { done, total } if total > 0 => Some(done as f64 / total as f64),
+            _ => None,
+        }
+    }
+}
+
+/// Converts a Yomitan grammar ZIP, stores the result and makes it current,
+/// reporting each step to `progress`. With `sha256` (lowercase hex), a ZIP
+/// with another digest is refused before conversion.
+///
+/// The conversion runs one term bank per step. In the browser each step
+/// runs on the page's thread, so the wait between steps is what lets the
+/// page repaint (and the progress bar move).
+pub async fn install_zip(
+    zip: Vec<u8>,
+    sha256: Option<String>,
+    progress: &mut dyn FnMut(Progress),
+) -> Result<Installed, String> {
+    let zip = match sha256 {
+        Some(expected) => {
+            progress(Progress::Verifying);
+            rt::sleep_ms(YIELD_MS).await;
+            let (zip, actual) = blocking(move || {
+                let actual = hex(&Sha256::digest(&zip));
+                Ok((zip, actual))
+            })
+            .await?;
             if actual != expected {
                 return Err(format!(
                     "the download is damaged (SHA-256 {actual}, expected {expected}). Try again."
                 ));
             }
+            zip
         }
-        let converted = grammar_core::convert(&zip).map_err(|e| format!("{e:#}"))?;
-        drop(zip);
+        None => zip,
+    };
+
+    let mut converter =
+        blocking(move || grammar_core::Converter::new(zip).map_err(|e| format!("{e:#}"))).await?;
+    loop {
+        progress(Progress::Converting {
+            done: converter.done(),
+            total: converter.total(),
+        });
+        rt::sleep_ms(YIELD_MS).await;
+        let (back, more) = blocking(move || {
+            let more = converter.step().map_err(|e| format!("{e:#}"))?;
+            Ok((converter, more))
+        })
+        .await?;
+        converter = back;
+        if !more {
+            break;
+        }
+    }
+    progress(Progress::Converting {
+        done: converter.total(),
+        total: converter.total(),
+    });
+    rt::sleep_ms(YIELD_MS).await;
+    let (converted, dict) = blocking(move || {
+        let converted = converter.finish().map_err(|e| format!("{e:#}"))?;
         let dict = GrammarDict::from_bytes(&converted.bytes).map_err(|e| e.to_string())?;
         Ok((converted, dict))
     })
     .await?;
-    let (converted, dict) = converted;
     let installed = Installed {
         meta: converted.meta,
         entries: converted.entries,
         bytes: converted.bytes.len(),
     };
+    progress(Progress::Saving);
+    rt::sleep_ms(YIELD_MS).await;
     store::write(converted.bytes).await?;
     set_current(Some(Arc::new(dict)));
     Ok(installed)
@@ -110,12 +181,19 @@ pub async fn install_zip(zip: Vec<u8>, sha256: Option<String>) -> Result<Install
 
 /// Downloads the publisher's ZIP and the digest their SHA256SUMS gives it,
 /// to hand to [`install_zip`].
-pub async fn download_zip() -> Result<(Vec<u8>, String), String> {
+pub async fn download_zip(progress: &mut dyn FnMut(Progress)) -> Result<(Vec<u8>, String), String> {
+    progress(Progress::Downloading {
+        received: 0,
+        total: None,
+    });
     let sums = rt::get_text(DEFAULT_SUMS_URL).await?;
     let name = DEFAULT_ZIP_URL.rsplit('/').next().unwrap_or_default();
     let expected = digest_for(&sums, name)
         .ok_or_else(|| format!("the publisher's SHA256SUMS doesn't list {name}"))?;
-    let zip = rt::get_bytes(DEFAULT_ZIP_URL).await?;
+    let zip = rt::get_bytes_with_progress(DEFAULT_ZIP_URL, &mut |received, total| {
+        progress(Progress::Downloading { received, total });
+    })
+    .await?;
     Ok((zip, expected))
 }
 
@@ -317,6 +395,21 @@ mod tests {
         assert_eq!(digest_for(&sums, "other.zip"), Some(a));
         assert_eq!(digest_for(&sums, "missing.zip"), None);
         assert_eq!(digest_for("short  grammar.zip", "grammar.zip"), None);
+    }
+
+    #[test]
+    fn progress_fraction_is_clamped_and_unknown_without_a_total() {
+        let dl = |received, total| Progress::Downloading { received, total };
+        assert_eq!(dl(5, Some(10)).fraction(), Some(0.5));
+        // A compressed transfer can report its compressed size.
+        assert_eq!(dl(15, Some(10)).fraction(), Some(1.0));
+        assert_eq!(dl(5, None).fraction(), None);
+        assert_eq!(dl(5, Some(0)).fraction(), None);
+        assert_eq!(
+            Progress::Converting { done: 2, total: 8 }.fraction(),
+            Some(0.25)
+        );
+        assert_eq!(Progress::Saving.fraction(), None);
     }
 
     #[test]

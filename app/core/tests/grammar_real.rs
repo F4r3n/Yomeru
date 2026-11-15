@@ -26,7 +26,12 @@ fn installs_reloads_and_removes() {
         .unwrap();
     rt.block_on(async {
         let t = Instant::now();
-        let installed = grammar::install_zip(zip, None).await.unwrap();
+        let mut seen = Vec::new();
+        let installed = grammar::install_zip(zip, None, &mut |p| seen.push(p))
+            .await
+            .unwrap();
+        eprintln!("progress: {seen:?}");
+        assert_eq!(seen.last(), Some(&grammar::Progress::Saving));
         eprintln!(
             "installed {} rev {}: {} entries, {:.1} MB in {:.2?}",
             installed.meta.title,
@@ -47,13 +52,14 @@ fn installs_reloads_and_removes() {
         assert_eq!(reread.meta(), &installed.meta);
         assert_eq!(grammar::load().await.unwrap().unwrap(), installed.meta);
 
-        let bad = grammar::install_zip(b"not a zip".to_vec(), None).await;
+        let bad = grammar::install_zip(b"not a zip".to_vec(), None, &mut |_| {}).await;
         assert!(bad.is_err());
         // A failed install leaves the installed one in place.
         assert!(grammar::current().is_some());
         let damaged = grammar::install_zip(
             std::fs::read(std::env::var("GRAMMAR_ZIP").unwrap()).unwrap(),
             Some("0".repeat(64)),
+            &mut |_| {},
         )
         .await;
         assert!(damaged.unwrap_err().contains("damaged"));

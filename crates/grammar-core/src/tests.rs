@@ -397,3 +397,17 @@ fn refuses_bad_or_other_version_bytes() {
     let err = GrammarDict::from_bytes(&bytes).err().unwrap().to_string();
     assert!(err.contains("import it again"), "{err}");
 }
+
+#[test]
+fn converts_in_steps_of_one_bank() {
+    let mut c = crate::Converter::new(sample_zip()).unwrap();
+    assert_eq!((c.done(), c.total()), (0, 2));
+    assert_eq!(c.meta().title, "Test Grammar");
+    assert!(c.step().unwrap());
+    assert_eq!(c.done(), 1);
+    assert!(!c.step().unwrap());
+    assert!(!c.step().unwrap(), "stepping past the end is a no-op");
+    assert_eq!(c.done(), 2);
+    let stepped = c.finish().unwrap();
+    assert_eq!(stepped.bytes, convert(&sample_zip()).unwrap().bytes);
+}

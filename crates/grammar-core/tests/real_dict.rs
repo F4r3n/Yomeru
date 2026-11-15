@@ -22,6 +22,22 @@ fn converts_and_looks_up_the_real_dictionary() {
     let t = Instant::now();
     let converted = convert(&zip).unwrap();
     let convert_time = t.elapsed();
+
+    // The longest step is how long a page stays frozen at once.
+    let mut stepper = grammar_core::Converter::new(zip.clone()).unwrap();
+    let mut steps = Vec::new();
+    loop {
+        let t = Instant::now();
+        let more = stepper.step().unwrap();
+        steps.push(t.elapsed());
+        if !more {
+            break;
+        }
+    }
+    let t = Instant::now();
+    let stepped = stepper.finish().unwrap();
+    eprintln!("steps {steps:.2?}, finish {:.2?}", t.elapsed());
+    assert_eq!(stepped.bytes, converted.bytes);
     let t = Instant::now();
     let dict = GrammarDict::from_bytes(&converted.bytes).unwrap();
     let load_time = t.elapsed();

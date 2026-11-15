@@ -32,7 +32,7 @@ tracing       = "0.1"
 wasm-bindgen          = "0.2"
 wasm-bindgen-futures  = "0.4"
 js-sys                = "0.3"
-web-sys = { version = "0.3", features = ["Window", "Location"] }
+web-sys = { version = "0.3", features = ["Window", "Location", "ReadableStream", "ReadableStreamDefaultReader"] }
 gloo-net     = { version = "0.6", features = ["http"] }
 gloo-storage = "0.3"
 gloo-timers  = { version = "0.3", features = ["futures"] }

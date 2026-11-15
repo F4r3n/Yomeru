@@ -24,14 +24,36 @@ pub(crate) const MAGIC: &[u8; 4] = b"YGRM";
 /// another version is refused, and the app asks for a new import.
 pub const FORMAT_VERSION: u8 = 1;
 
-pub(crate) fn write(meta: &GrammarMeta, entries: &[GrammarEntry]) -> anyhow::Result<Vec<u8>> {
+/// An entry compressed for the entries blob, with the keys it's found by.
+pub(crate) struct Packed {
+    pub term: String,
+    pub reading: String,
+    pub bytes: Vec<u8>,
+}
+
+/// Compresses `entry`, and decodes the result once: an entry that doesn't
+/// round-trip would otherwise only go missing at lookup.
+pub(crate) fn pack(entry: &GrammarEntry) -> anyhow::Result<Packed> {
+    let bytes = compress(&postcard::to_allocvec(entry)?)?;
+    let back: GrammarEntry = postcard::from_bytes(&decompress(&bytes)?)
+        .with_context(|| format!("entry {} doesn't decode", entry.term))?;
+    if &back != entry {
+        bail!("entry {} doesn't survive encoding", entry.term);
+    }
+    Ok(Packed {
+        term: entry.term.clone(),
+        reading: entry.reading.clone(),
+        bytes,
+    })
+}
+
+pub(crate) fn write(meta: &GrammarMeta, entries: &[Packed]) -> anyhow::Result<Vec<u8>> {
     let mut blob = Vec::new();
     let mut keys: BTreeMap<&str, Vec<u32>> = BTreeMap::new();
     for entry in entries {
         let offset = u32::try_from(blob.len()).context("grammar dictionary over 4 GB")?;
-        let packed = compress(&postcard::to_allocvec(entry)?)?;
-        blob.extend_from_slice(&u32::try_from(packed.len())?.to_le_bytes());
-        blob.extend_from_slice(&packed);
+        blob.extend_from_slice(&u32::try_from(entry.bytes.len())?.to_le_bytes());
+        blob.extend_from_slice(&entry.bytes);
 
         for key in [entry.term.as_str(), entry.reading.as_str()] {
             if key.is_empty() {
@@ -104,16 +126,6 @@ pub(crate) fn read(bytes: &[u8]) -> anyhow::Result<Parts<'_>> {
         groups,
         entries,
     })
-}
-
-/// Decode every entry of `bytes`.
-pub(crate) fn check_entries(bytes: &[u8]) -> anyhow::Result<()> {
-    let parts = read(bytes)?;
-    for &offset in parts.groups.iter().flatten() {
-        entry_at(parts.entries, offset)
-            .with_context(|| format!("entry at {offset} doesn't decode"))?;
-    }
-    Ok(())
 }
 
 /// Every group offset must start a whole entry, so lookups can't read past
