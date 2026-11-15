@@ -139,6 +139,7 @@ fn main() -> Result<()> {
             build_wasm(&root, "jmdict-wasm", &profile)?;
             build_wasm(&root, "srs-wasm", &profile)?;
             build_wasm(&root, "kanjidic-wasm", &profile)?;
+            build_wasm(&root, "grammar-wasm", &profile)?;
             build_extension_wasm(&root, &profile)?;
             copy_overlays(&root)?;
         }
@@ -234,6 +235,8 @@ fn main() -> Result<()> {
                     "kanjidic-wasm",
                     "--exclude",
                     "examples-wasm",
+                    "--exclude",
+                    "grammar-wasm",
                     "--exclude",
                     "yomeru-android",
                     "--exclude",
@@ -411,6 +414,9 @@ fn package(root: &Path) -> Result<()> {
         "_generated/examples-wasm/examples_wasm.js",
         "_generated/examples-wasm/examples_wasm_bg.wasm",
         "data/examples.bin",
+        // Code only: the grammar data is the user's, converted on their device.
+        "_generated/grammar-wasm/grammar_wasm.js",
+        "_generated/grammar-wasm/grammar_wasm_bg.wasm",
         "_generated/yomeru-extension/yomeru_extension.js",
         "_generated/yomeru-extension/yomeru_extension_bg.wasm",
     ];
@@ -707,6 +713,7 @@ fn build_extension(root: &Path) -> Result<()> {
     build_wasm(root, "srs-wasm", "release")?;
     build_wasm(root, "kanjidic-wasm", "release")?;
     build_wasm(root, "examples-wasm", "release")?;
+    build_wasm(root, "grammar-wasm", "release")?;
     build_extension_wasm(root, "release")?;
     build_js(root)
 }

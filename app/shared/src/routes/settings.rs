@@ -540,6 +540,8 @@ pub fn SettingsTab() -> Element {
                 }
             }
 
+            super::grammar_settings::GrammarCard {}
+
             // Account: last, away from everyday settings.
             if has_token || delete_status.read().is_some() {
                 div { class: "card",

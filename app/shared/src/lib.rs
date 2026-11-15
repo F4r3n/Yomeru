@@ -5,7 +5,7 @@
 //! functions that need the [`Platform`] with versions that read it from
 //! Dioxus context.
 
-pub use yomeru_core::{idb, platform, romaji, srs, types};
+pub use yomeru_core::{grammar, idb, platform, romaji, srs, types};
 
 pub mod api;
 pub mod cards_io;

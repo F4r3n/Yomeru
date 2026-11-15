@@ -1,4 +1,5 @@
 pub mod about;
+mod grammar_settings;
 pub mod kanji_finder;
 pub mod lookup;
 pub mod new_words;

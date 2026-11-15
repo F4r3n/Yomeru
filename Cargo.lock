@@ -3951,6 +3951,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "grammar-wasm"
+version = "0.21.0"
+dependencies = [
+ "console_error_panic_hook",
+ "grammar-core",
+ "serde",
+ "serde-wasm-bindgen",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "gtk"
 version = "0.18.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10123,6 +10134,7 @@ dependencies = [
  "gloo-net",
  "gloo-storage",
  "gloo-timers",
+ "grammar-core",
  "idb",
  "japanese-utils",
  "jmdict-core",
@@ -10136,6 +10148,7 @@ dependencies = [
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
+ "sha2 0.10.9",
  "srs-core",
  "tokio",
  "tracing",
