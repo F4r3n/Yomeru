@@ -961,7 +961,7 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 .grammar-see { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 8px; font-size: 12px; }
 
 .grammar-examples {
-    margin-top: 10px; padding: 2px 12px;
+    margin-top: 6px; padding: 2px 12px;
     border-left: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
     background: color-mix(in srgb, var(--accent) 6%, transparent);
     border-radius: 0 6px 6px 0;
@@ -970,7 +970,7 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 .grammar-example + .grammar-example { border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }
 .grammar-example .jp { font-size: 15px; line-height: 1.6; }
 .grammar-example .en { color: var(--subtext); font-size: 13px; margin-top: 2px; }
-.grammar-example mark, .grammar-p mark, .grammar-pattern mark {
+.grammar-example mark, .grammar-p mark, .grammar-patterns mark {
     background: color-mix(in srgb, var(--yellow) 60%, transparent);
     color: var(--text); padding: 0 3px; border-radius: 3px;
 }
@@ -984,11 +984,15 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 }
 .grammar-sense + .grammar-sense { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border); }
 .grammar-sense-label { font-weight: 600; font-size: 14px; margin: 8px 0 2px; }
-.grammar-patterns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.grammar-pattern {
-    font-size: 12px; padding: 2px 8px; border-radius: 999px;
-    border: 1px solid var(--border); color: var(--text);
+.grammar-section { margin-top: 16px; }
+.grammar-section-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--subtext); margin-bottom: 4px;
 }
+.grammar-patterns { list-style: none; font-size: 13px; line-height: 1.7; }
+.grammar-patterns li { padding-left: 12px; position: relative; }
+.grammar-patterns li::before { content: "·"; position: absolute; left: 2px; color: var(--subtext); }
+button.grammar-more { font-size: 12px; padding: 4px 0; margin-top: 2px; }
 .grammar-prose { margin-top: 10px; }
 .grammar-p { font-size: 14px; line-height: 1.65; margin: 6px 0; overflow-wrap: anywhere; }
 .grammar-p.heading, .grammar-p.example-label { font-weight: 600; color: var(--text); margin-top: 12px; }

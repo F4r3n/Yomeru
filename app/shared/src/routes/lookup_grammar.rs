@@ -8,7 +8,7 @@
 
 use dioxus::prelude::*;
 
-use crate::grammar::{Example, GrammarEntry, ParagraphKind, Rich, SourceBlock, Span};
+use crate::grammar::{Example, GrammarEntry, ParagraphKind, Rich, Sense, SourceBlock, Span};
 use crate::icons::{Icon, IconName};
 
 /// Examples a closed card previews.
@@ -144,39 +144,78 @@ fn SourceView(source: SourceBlock, on_search: EventHandler<String>) -> Element {
                     span { class: "freq-badge", "{source.level}" }
                 }
             }
-            for (i, sense) in source.senses.iter().enumerate() {
-                {
-                    // Without the paragraphs that only repeat an example.
-                    let prose: Vec<(ParagraphKind, Rich)> =
-                        sense.prose().map(|(k, t)| (k, t.clone())).collect();
-                    let patterns: Vec<Rich> = sense.patterns().cloned().collect();
-                    let examples: Vec<Example> = sense.examples().cloned().collect();
-                    rsx! {
-                        div { key: "{i}", class: "grammar-sense",
-                            if !sense.label.is_empty() {
-                                div { class: "grammar-sense-label", "{sense.label}" }
-                            }
-                            if !prose.is_empty() {
-                                div { class: "grammar-prose",
-                                    for (j, (kind, text)) in prose.into_iter().enumerate() {
-                                        p { key: "{j}", class: paragraph_class(kind),
-                                            RichText { rich: text, on_search }
-                                        }
-                                    }
-                                }
-                            }
-                            if !patterns.is_empty() {
-                                div { class: "grammar-patterns", lang: "ja",
-                                    for (j, item) in patterns.into_iter().enumerate() {
-                                        span { key: "{j}", class: "grammar-pattern",
-                                            RichText { rich: item, on_search }
-                                        }
-                                    }
-                                }
-                            }
-                            if !examples.is_empty() {
-                                ExampleList { examples, on_search }
-                            }
+            for (i, sense) in source.senses.into_iter().enumerate() {
+                SenseView { key: "{i}", sense, on_search }
+            }
+        }
+    }
+}
+
+/// Patterns shown before "+N more".
+const PATTERNS_SHOWN: usize = 4;
+/// Examples shown before "Show N more".
+const EXAMPLES_SHOWN: usize = 3;
+
+#[component]
+fn SenseView(sense: Sense, on_search: EventHandler<String>) -> Element {
+    let mut all_patterns = use_signal(|| false);
+    let mut all_examples = use_signal(|| false);
+    // Without the paragraphs that only repeat an example.
+    let prose: Vec<(ParagraphKind, Rich)> = sense.prose().map(|(k, t)| (k, t.clone())).collect();
+    let patterns: Vec<Rich> = sense.patterns().cloned().collect();
+    let examples: Vec<Example> = sense.examples().cloned().collect();
+    let hidden_patterns = patterns.len().saturating_sub(PATTERNS_SHOWN);
+    let hidden_examples = examples.len().saturating_sub(EXAMPLES_SHOWN);
+    let pattern_count = if *all_patterns.read() {
+        patterns.len()
+    } else {
+        PATTERNS_SHOWN
+    };
+    let example_count = if *all_examples.read() {
+        examples.len()
+    } else {
+        EXAMPLES_SHOWN
+    };
+
+    rsx! {
+        div { class: "grammar-sense",
+            if !sense.label.is_empty() {
+                div { class: "grammar-sense-label", "{sense.label}" }
+            }
+            if !prose.is_empty() {
+                div { class: "grammar-prose",
+                    for (j, (kind, text)) in prose.into_iter().enumerate() {
+                        p { key: "{j}", class: paragraph_class(kind),
+                            RichText { rich: text, on_search }
+                        }
+                    }
+                }
+            }
+            if !patterns.is_empty() {
+                div { class: "grammar-section",
+                    div { class: "grammar-section-title", "Formation" }
+                    ul { class: "grammar-patterns", lang: "ja",
+                        for (j, item) in patterns.into_iter().take(pattern_count).enumerate() {
+                            li { key: "{j}", RichText { rich: item, on_search } }
+                        }
+                    }
+                    if hidden_patterns > 0 {
+                        button { class: "link grammar-more", onclick: move |_| all_patterns.toggle(),
+                            if *all_patterns.read() { "Show fewer" } else { "+{hidden_patterns} more" }
+                        }
+                    }
+                }
+            }
+            if !examples.is_empty() {
+                div { class: "grammar-section",
+                    div { class: "grammar-section-title", "Examples" }
+                    ExampleList {
+                        examples: examples.into_iter().take(example_count).collect::<Vec<_>>(),
+                        on_search,
+                    }
+                    if hidden_examples > 0 {
+                        button { class: "link grammar-more", onclick: move |_| all_examples.toggle(),
+                            if *all_examples.read() { "Show fewer" } else { "Show {hidden_examples} more" }
                         }
                     }
                 }
