@@ -1,0 +1,292 @@
+# Yomeru's grammar dictionary — DRAFT, 10 entries to settle the format.
+#
+# Written for Yomeru. The explanations and the sentences marked
+# source = "yomeru" are ours. Sentences with a `tatoeba` id come from the
+# Tatoeba corpus (CC BY 2.0 FR, https://tatoeba.org), via the Tanaka Corpus
+# file the examples dictionary is built from; the id is `<ja>_<en>`.
+#
+# Fields
+#   id           stable ASCII slug; cards point at it, never change it
+#   pattern      the headword as learners look it up
+#   forms        other spellings and variants a lookup should also find
+#   jlpt         N5…N1. Levels are unofficial since 2010: we follow
+#                Bunpro's level for the point
+#   meaning      one line, for the popup and the card's back
+#   formation    how it attaches, one line per construction, in Bunpro's
+#                notation: Verb (plain form), Verb［て］, Verb［た］,
+#                Verb［る］ (dictionary), Verb［ない］, Verb［stem］ (ます-stem),
+#                Verb［できる］ (potential), ［い］Adjective［く］,
+#                ［な］Adjective, Noun; a struck letter is dropped: ［い̶］
+#   explanation  what it does and when to use it, a short paragraph
+#   notes        nuances, pitfalls, look-alikes (optional)
+#   related      ids of patterns worth comparing
+#   examples     2–3 sentences; {…} marks the pattern in `ja`
+
+[[point]]
+id = "te-mo-ii"
+pattern = "てもいい"
+forms = ["でもいい", "ていい", "てもいいです", "てもよろしい", "ても構わない"]
+jlpt = "N5"
+meaning = "may, it's okay to (permission)"
+formation = [
+  "Verb［て］ + もいい",
+  "［い］Adjective［く］ + てもいい   (高くてもいい)",
+  "［な］Adjective / Noun + でもいい   (明日でもいい)",
+]
+explanation = """
+Says that doing something is allowed or acceptable. As a question \
+(〜てもいいですか) it is the everyday way to ask for permission. With \
+adjectives and nouns it means the condition is acceptable: 明日でもいい, \
+"tomorrow is fine too"."""
+notes = """
+More polite: 〜てもよろしいですか; dropping も (〜ていい) sounds more \
+direct. Said about yourself, it offers to do something: 私が行ってもいい\
+よ, "I can go". Don't grant permission to a superior with 〜てもいいです, \
+which sounds condescending: 使ってください instead. To agree on a time, \
+ask 何時に行けばいいですか, not 行ってもいいですか. The negative \
+〜なくてもいい means "you don't have to"; refusing permission uses \
+〜てはいけない, though a soft すみません、ちょっと… is more common."""
+related = ["te-wa-ikenai", "nakute-mo-ii"]
+examples = [
+  { tatoeba = "56836_219515", ja = "この本を借り{てもいい}ですか。", en = "May I borrow this book?" },
+  { tatoeba = "314124_89591", ja = "彼女は私に、自分の部屋を使っ{てもいい}と言った。", en = "She told me that I could use her room." },
+  { source = "yomeru", ja = "時間がなければ、明日{でもいい}ですよ。", en = "If you don't have time, tomorrow is fine too." },
+]
+
+[[point]]
+id = "ta-koto-ga-aru"
+pattern = "たことがある"
+forms = ["だことがある", "たことがない", "たことがあります"]
+jlpt = "N5"
+meaning = "have done before, have the experience of"
+formation = ["Verb［た］ + ことがある / ことがない"]
+explanation = """
+Talks about experience: something that has happened at least once in \
+your life. The negative ことがない says it never has. Often comes with \
+一度 (once), 何度も (many times) or 一度も…ない (not even once)."""
+notes = """
+Only for experiences worth mentioning, not recent everyday events: for \
+"I ate sushi yesterday", plain 食べた is right. It doesn't go with \
+habit words like いつも or よく either. Don't confuse with \
+Verb［る］ + ことがある, "it sometimes happens that…"."""
+related = ["koto-ga-aru-sometimes"]
+examples = [
+  { tatoeba = "254086_160435", ja = "私はそこへ１度行っ{たことがある}。", en = "I've been there once." },
+  { tatoeba = "281684_122319", ja = "日本国憲法を読ん{だことがあります}か。", en = "Have you ever read the Constitution of Japan?" },
+  { tatoeba = "27467_190309", ja = "一度も会っ{たことがない}。", en = "I haven't met him even once." },
+]
+
+[[point]]
+id = "nagara"
+pattern = "ながら"
+forms = []
+jlpt = "N4"
+meaning = "while (doing two things at once)"
+formation = ["Verb［stem］ + ながら   (読みながら, 食べながら)"]
+explanation = """
+Joins two actions the same person does at the same time. The action \
+before ながら is the background one; the main action comes last: \
+歯を磨きながらニュースを聞く is listening to the news, while brushing."""
+notes = """
+Both actions must have the same subject: for "while he slept, I…" use \
+〜間に or 〜うちに. The plain て-form also links two actions, but as a \
+sequence or a means (歩いて行く, "go on foot"); ながら keeps them \
+running side by side. With states or verbs like 知る, ながら(も) means \
+"although" (知っていながら, "though he knew"): a separate, later pattern."""
+related = ["aida-ni", "nagara-mo"]
+examples = [
+  { source = "yomeru", ja = "歯を磨き{ながら}ニュースを聞きます。", en = "I listen to the news while brushing my teeth." },
+  { tatoeba = "314895_88812", ja = "彼女は手紙を読み{ながら}泣いた。", en = "She wept reading the letter." },
+  { tatoeba = "1780_5171", ja = "「おはよう」とトムは微笑み{ながら}言った。", en = "\"Good morning\", said Tom with a smile." },
+]
+
+[[point]]
+id = "you-ni-suru"
+pattern = "ようにする"
+forms = ["ようにしている", "ないようにする", "ようにしてください"]
+jlpt = "N4"
+meaning = "make an effort to, make sure that"
+formation = [
+  "Verb［る］ + ようにする",
+  "Verb［ない］ + ようにする",
+]
+explanation = """
+Says you take care to do something, again and again, or with the \
+ない form to keep from doing it. ようにしている is an effort kept up as a habit: 階段を使う\
+ようにしている, "I make a point of taking the stairs". ようにしてください is a \
+polite way to ask someone to take care to do something."""
+notes = """
+ようにする is what you do on purpose; ようになる is a change that \
+happens over time. Don't confuse it with 〜ようとする, an attempt at one \
+moment (ドアを開けようとした, "I went to open the door"), not a lasting effort. Compare ことにする: deciding once, rather than trying \
+regularly."""
+related = ["you-ni-naru", "koto-ni-suru"]
+examples = [
+  { tatoeba = "70621_150543", ja = "時間を十分に利用する{ようにしなさい}。", en = "Try to make good use of your time." },
+  { tatoeba = "318281_85431", ja = "必要以上にお金を使わない{ようにしなさい}。", en = "Try not to spend more money than is necessary." },
+  { source = "yomeru", ja = "会議では、最初に結論を言う{ようにしています}。", en = "In meetings, I make a point of giving my conclusion first." },
+]
+
+[[point]]
+id = "you-ni-naru"
+pattern = "ようになる"
+forms = ["ようになった", "ようになりました"]
+jlpt = "N4"
+meaning = "come to, get to the point of (a gradual change)"
+formation = [
+  "Verb［る］ + ようになる",
+  "Verb［できる］ + ようになる   (泳げるようになる)",
+]
+explanation = """
+Describes a change in ability, habit or attitude that came about over \
+time. With a potential verb it means "became able to": 泳げるように\
+なった, "I learned to swim". With other verbs it means "came to, \
+started to": 料理をするようになった."""
+notes = """
+する verbs go through できる: 運転できるようになった. It isn't used \
+with verbs that already mean a change (増える, 変わる). For a change \
+towards not doing or not being able, Japanese usually says Verb［な̶い̶］ + なくなる (泳げなくなった) rather than ないようになる. When the \
+change is your own deliberate effort, use ようにする."""
+related = ["you-ni-suru", "naku-naru"]
+examples = [
+  { tatoeba = "293937_109752", ja = "彼は泳げる{ようになった}。", en = "He learned to swim." },
+  { tatoeba = "301794_101899", ja = "彼は田舎の生活を楽しむ{ようになった}。", en = "He has begun to enjoy country life." },
+  { tatoeba = "293349_110338", ja = "彼はリハビリの後、毎朝散歩する{ようになりました}。", en = "He came to take a walk every morning after rehabilitation." },
+]
+
+[[point]]
+id = "te-yokatta"
+pattern = "てよかった"
+forms = ["でよかった", "て良かった", "なくてよかった", "てよかったです"]
+jlpt = "N4"
+meaning = "I'm glad that, it's a good thing that"
+formation = [
+  "Verb［て］ + よかった",
+  "Verb［なくて］ + よかった",
+  "［い］Adjective［くて］ + よかった",
+  "［な］Adjective / Noun + でよかった",
+]
+explanation = """
+Expresses relief or happiness about something that happened, or about \
+something that didn't (なくてよかった). Common as a reply when things \
+turned out well: 間に合ってよかった, "I'm glad we made it in time"."""
+notes = """
+Don't mix it up with 〜ばよかった, which looks back with regret: 行けば\
+よかった, "I should have gone". 〜てよかった is about what did happen."""
+related = ["ba-yokatta"]
+examples = [
+  { tatoeba = "61897_224568", ja = "ここで君に会え{てよかった}。", en = "It was nice meeting you here." },
+  { tatoeba = "241066_173404", ja = "行きたい学校に入れ{てよかった}ね。", en = "Congratulations on being accepted to the school you've always wanted to go to." },
+  { source = "yomeru", ja = "早めに家を出{てよかった}。電車が止まっていた。", en = "Good thing I left home early: the trains had stopped." },
+]
+
+[[point]]
+id = "sou-da-appearance"
+pattern = "そうだ"
+forms = ["そうです", "そうな", "そうに", "そうにない", "なさそう", "よさそう"]
+jlpt = "N4"
+meaning = "looks like, seems (from what you can see); about to"
+formation = [
+  "Verb［stem］ + そうだ   (降りそうだ)",
+  "［い］Adjective［い̶］ + そうだ   (おいしそう)",
+  "［な］Adjective + そうだ   (元気そう)",
+  "いい → よさそう, ない → なさそう",
+]
+explanation = """
+A guess from what you can see or sense right now: おいしそう, "it looks \
+tasty". With verbs it often means something is about to happen: 雨が降\
+りそうだ, "it looks like it's going to rain". It conjugates like a な-\
+adjective: おいしそうなケーキ, 楽しそうに話す."""
+notes = """
+Not used when the quality is plain to see: a beautiful person is \
+きれいな人, not きれいそう. かわいそう is its own word, "poor thing", \
+not "looks cute". Compared with ようだ, そうだ is a first impression; \
+ようだ is a judgement weighed from evidence. Don't confuse with the hearsay そうだ, which \
+follows the plain form (降るそうだ, "I hear it will rain"). Negative \
+guesses: なさそう for adjectives, Verb［stem］ + そうにない for verbs."""
+related = ["sou-da-hearsay", "you-da", "rashii"]
+examples = [
+  { tatoeba = "241717_172757", ja = "今にも嵐になり{そうだ}。", en = "A storm is imminent." },
+  { tatoeba = "315134_88573", ja = "彼女は新しいドレスを着てうれし{そうだった}。", en = "She looked happy in her new dress." },
+  { tatoeba = "249815_164692", ja = "私にはその仕事はでき{そうにない}。", en = "I don't feel equal to doing the work." },
+]
+
+[[point]]
+id = "koto-ni-suru"
+pattern = "ことにする"
+forms = ["ことにした", "ことにしている", "ないことにする"]
+jlpt = "N3"
+meaning = "decide to"
+formation = [
+  "Verb［る］ + ことにする",
+  "Verb［ない］ + ことにする",
+]
+explanation = """
+States a decision the speaker makes. ことにした reports a decision \
+already taken: 来年日本へ行くことにした, "I've decided to go to Japan \
+next year". ことにしている is a rule you have set for yourself and keep."""
+notes = """
+ことにする is your own choice; ことになる is a decision made by others \
+or by circumstances ("it's been decided that…"). Compare ようにする, \
+which is an ongoing effort rather than a decision. In formal writing: \
+〜こととする."""
+related = ["koto-ni-naru", "you-ni-suru"]
+examples = [
+  { tatoeba = "53090_215789", ja = "ジャックは予約を取り消す{ことにした}。", en = "Jack decided to cancel the reservations." },
+  { tatoeba = "261798_152751", ja = "私は毎朝６時に起きる{ことにしている}。", en = "I make it a rule to get up at six every morning." },
+  { tatoeba = "36972_199769", ja = "ともかく来る{ことにした}。", en = "We made up our mind to come in any case." },
+]
+
+[[point]]
+id = "wake-de-wa-nai"
+pattern = "わけではない"
+forms = ["わけじゃない", "訳ではない", "わけではありません", "というわけではない"]
+jlpt = "N3"
+meaning = "it's not that, it doesn't necessarily mean"
+formation = [
+  "Verb / ［い］Adjective + わけではない",
+  "［な］Adjective + な + わけではない",
+  "Noun + の / である / という + わけではない",
+]
+explanation = """
+Denies a conclusion the listener might draw, without denying \
+everything: 嫌いなわけではない, "it's not that I dislike it". With \
+いつも, 全部, みんな it makes a partial negative: "not always", "not \
+all". Spoken: わけじゃない."""
+notes = """
+Softer and more nuanced than a plain negative. When the sentence spells \
+out the reasoning being denied ("it's raining, so…"), というわけではない \
+is the usual form. Compare わけがない, \
+"there's no way that…", which is a strong denial, and わけにはいかない, \
+"I can't very well…"."""
+related = ["wake-ga-nai", "wake-ni-wa-ikanai"]
+examples = [
+  { tatoeba = "320622_83093", ja = "母はいつも家にいる{わけではない}。", en = "My mother is not always at home." },
+  { tatoeba = "51772_214480", ja = "すべての医者が多額の金をかせぐ{わけではない}。", en = "Not all doctors make a lot of money." },
+  { source = "yomeru", ja = "料理が苦手な{わけじゃない}けど、今日は外で食べたい。", en = "I can cook just fine, but today I feel like eating out." },
+]
+
+[[point]]
+id = "ni-chigai-nai"
+pattern = "に違いない"
+forms = ["にちがいない", "に違いありません"]
+jlpt = "N3"
+meaning = "must be, there's no doubt that"
+formation = [
+  "Verb / ［い］Adjective + に違いない",
+  "［な］Adjective / Noun + に違いない   (no だ: 本当に違いない)",
+]
+explanation = """
+The speaker's firm conviction, reached by reasoning or intuition: \
+"it must be so". More common in writing and in narration than in \
+conversation, where きっと〜と思う or だろう sound more natural."""
+notes = """
+はずだ rests on facts or expectations anyone could check ("it should \
+be, since…"); に違いない is the speaker's own strong feeling. かもしれ\
+ない is the weak end of the same scale."""
+related = ["hazu-da", "kamoshirenai"]
+examples = [
+  { tatoeba = "38241_201036", ja = "どこかで間違った{にちがいない}。", en = "I must have made a mistake somewhere." },
+  { tatoeba = "315982_87725", ja = "彼女は当時金持ちだった{に違いない}。", en = "She must have been rich in those days." },
+  { tatoeba = "43744_206496", ja = "その問題には何らかの解決法がある{に違いない}。", en = "There must be some solution to the problem." },
+]

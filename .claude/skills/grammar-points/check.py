@@ -1,0 +1,187 @@
+"""Validates data/grammar.toml, and with the bee ZIP, checks our text
+doesn't repeat theirs.
+
+  python3 -I check.py [ZIP]
+
+Without the ZIP: fields, unique ids and patterns, one {…} mark per example,
+every Tatoeba example word for word as in examples.utf (id, Japanese and
+English), and related ids not written yet (a to-do list, not an error).
+
+With the ZIP: for each entry, any run of 8+ English words that our
+meaning, explanation, notes or own translations share with bee's entries
+for that pattern, and any of our own Japanese sentences (or Japanese runs
+in the explanation) sharing 14+ chars, or most of the sentence, with
+anything in bee's dictionary. A hit is rewritten, even when it is a
+coincidence. Shorter shared runs are stock phrases and pass: the check
+backs up the rule "facts in, wording out", it doesn't replace it.
+"""
+
+import importlib.util
+import json
+import re
+import sys
+import tomllib
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+REQUIRED = ["id", "pattern", "forms", "jlpt", "meaning", "formation",
+            "explanation", "related", "examples"]
+LEVELS = {"N5", "N4", "N3", "N2", "N1"}
+# Overlap thresholds: English words in a row shared with the same pattern's
+# entries; Japanese chars in a row shared with any entry, and the share of
+# our sentence they make. Below these, shared runs are stock phrases
+# ("I make it a rule to", 持ってきてよかった。) that every textbook has.
+EN_RUN = 8
+JA_RUN = 14
+JA_SHARE = 0.6
+
+
+def load_bee():
+    spec = importlib.util.spec_from_file_location("bee", Path(__file__).with_name("bee.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def tatoeba():
+    out = {}
+    with open(ROOT / "examples.utf", encoding="utf-8") as f:
+        for line in f:
+            if line.startswith("A: "):
+                ja, _, rest = line[3:].rstrip("\n").partition("\t")
+                en, _, sid = rest.partition("#ID=")
+                out[sid] = (ja, en)
+    return out
+
+
+def longest_shared(ours, theirs):
+    """The longest run of `ours` found in `theirs`."""
+    best = ""
+    for i in range(len(ours)):
+        # Only runs longer than the best so far are worth trying.
+        lo, hi = len(best) + 1, len(ours) - i
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            if ours[i:i + mid] in theirs:
+                best, lo = ours[i:i + mid], mid + 1
+            else:
+                hi = mid - 1
+    return best
+
+
+def words(t):
+    return re.findall(r"[a-z']+", t.lower())
+
+
+def validate(points):
+    errors = []
+    ids, patterns = set(), set()
+    corpus = tatoeba()
+    for p in points:
+        name = p.get("id", "?")
+        for field in REQUIRED:
+            if field not in p:
+                errors.append(f"{name}: missing {field}")
+        if name in ids:
+            errors.append(f"{name}: duplicate id")
+        ids.add(name)
+        if not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", name):
+            errors.append(f"{name}: id must be a lowercase ascii slug")
+        if p.get("pattern") in patterns:
+            errors.append(f"{name}: duplicate pattern {p.get('pattern')}")
+        patterns.add(p.get("pattern"))
+        if p.get("jlpt") not in LEVELS:
+            errors.append(f"{name}: jlpt must be one of N5…N1")
+        examples = p.get("examples", [])
+        if not 2 <= len(examples) <= 3:
+            errors.append(f"{name}: wants 2–3 examples, has {len(examples)}")
+        for ex in examples:
+            ja = ex.get("ja", "")
+            if ja.count("{") != 1 or ja.count("}") != 1:
+                errors.append(f"{name}: mark the pattern once with {{…}}: {ja}")
+            if ("tatoeba" in ex) == ("source" in ex):
+                errors.append(f"{name}: an example has either `tatoeba` or source = \"yomeru\": {ja}")
+            if "tatoeba" in ex:
+                got = corpus.get(ex["tatoeba"])
+                plain = ja.replace("{", "").replace("}", "")
+                if got is None:
+                    errors.append(f"{name}: no Tatoeba sentence {ex['tatoeba']}")
+                elif got != (plain, ex.get("en")):
+                    errors.append(f"{name}: {ex['tatoeba']} differs from the corpus:\n    corpus {got[0]} | {got[1]}\n    entry  {plain} | {ex.get('en')}")
+            elif ex.get("source") != "yomeru":
+                errors.append(f"{name}: unknown source {ex.get('source')}")
+    # A spelling two entries claim would make the lookup ambiguous.
+    claimed = {}
+    for p in points:
+        for f in [p.get("pattern"), *p.get("forms", [])]:
+            if f in claimed and claimed[f] != p.get("id"):
+                errors.append(f"{p.get('id')}: form {f} is also {claimed[f]}'s")
+            claimed.setdefault(f, p.get("id"))
+    missing = sorted({r for p in points for r in p.get("related", [])} - ids)
+    return errors, missing
+
+
+def overlap(points, zip_path):
+    bee = load_bee()
+    want = {}
+    for p in points:
+        for f in [p["pattern"], *p.get("forms", [])]:
+            want.setdefault(f, []).append(p["id"])
+    theirs = {p["id"]: [] for p in points}
+    # Our own sentences are checked against the whole dictionary: a stock
+    # sentence can sit under any entry.
+    all_ja = []
+    for r in bee.rows(zip_path):
+        t = bee.text(r[5])
+        all_ja.append(re.sub(r"\s", "", t))
+        hit = bee.matches(r, want)
+        if hit:
+            for pid in want[hit]:
+                theirs[pid].append(t)
+    all_ja = "\n".join(all_ja)
+    hits = []
+    for p in points:
+        text = " ".join(theirs[p["id"]])
+        their_words = words(text)
+        grams = {tuple(their_words[i:i + EN_RUN]) for i in range(len(their_words) - EN_RUN + 1)}
+        ours = " ".join([p["meaning"], p["explanation"], p.get("notes", "")]
+                        # Tatoeba's translations are CC BY and may appear anywhere.
+                        + [e.get("en", "") for e in p["examples"] if "tatoeba" not in e])
+        ow = words(ours)
+        for i in range(len(ow) - EN_RUN + 1):
+            if tuple(ow[i:i + EN_RUN]) in grams:
+                hits.append(f"{p['id']}: shares \"{' '.join(ow[i:i + EN_RUN])}\"")
+        ja = [re.sub(r"[{}\s]", "", e["ja"]) for e in p["examples"] if e.get("source") == "yomeru"]
+        ja += re.findall(r"[぀-ヿ一-鿿、。…〜]{10,}", p["explanation"] + p.get("notes", ""))
+        for j in ja:
+            # A pattern plus a common verb (持ってきてよかった。) is shared by
+            # everyone; most of a sentence isn't.
+            shared = longest_shared(j, all_ja)
+            if len(shared) >= max(JA_RUN, JA_SHARE * len(j)):
+                hits.append(f"{p['id']}: \"{j}\" shares \"{shared}\"")
+    return sorted(set(hits))
+
+
+def main():
+    data = tomllib.loads((ROOT / "data" / "grammar.toml").read_text(encoding="utf-8"))
+    points = data.get("point", [])
+    errors, missing = validate(points)
+    for e in errors:
+        print("ERROR", e)
+    by_level = {}
+    for p in points:
+        by_level[p.get("jlpt")] = by_level.get(p.get("jlpt"), 0) + 1
+    print(f"{len(points)} points {json.dumps(by_level, ensure_ascii=False)}; {len(errors)} errors")
+    if missing:
+        print("related, not written yet:", " ".join(missing))
+    if len(sys.argv) > 1:
+        hits = overlap(points, sys.argv[1])
+        for h in hits:
+            print("OVERLAP", h)
+        print(f"overlap check: {len(hits)} hits")
+        errors += hits
+    sys.exit(1 if errors else 0)
+
+
+if __name__ == "__main__":
+    main()
