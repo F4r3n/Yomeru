@@ -589,3 +589,51 @@ fn a_cut_meaning_is_completed_and_the_main_source_explains_most_in_english() {
     assert_eq!(unknown.full_meaning(), "Nowhere else…");
     assert_eq!(crate::GrammarEntry::default().main_source(), 0);
 }
+
+#[test]
+fn the_preview_takes_the_main_sources_examples_or_else_the_first_with_some() {
+    let ex = |ja: &str| crate::Example {
+        ja: vec![Span::Text { text: ja.into() }],
+        en: String::new(),
+    };
+    let examples = |items: Vec<crate::Example>| Block::Examples { items };
+    let entry = crate::GrammarEntry {
+        sources: vec![
+            source("A", vec![examples(vec![ex("a1"), ex("a2")])]),
+            source(
+                "Main",
+                vec![
+                    para(
+                        ParagraphKind::Plain,
+                        "The longest English explanation here.",
+                    ),
+                    examples(vec![ex("m1"), ex("m2"), ex("m3")]),
+                ],
+            ),
+        ],
+        ..Default::default()
+    };
+    assert_eq!(entry.main_source(), 1);
+    let ja = |e: Vec<crate::Example>| e.iter().map(|e| plain(&e.ja)).collect::<Vec<_>>();
+    assert_eq!(ja(entry.preview_examples(2)), ["m1", "m2"]);
+
+    let prose_only = crate::GrammarEntry {
+        sources: vec![
+            entry.sources[0].clone(),
+            source(
+                "Main",
+                vec![para(
+                    ParagraphKind::Plain,
+                    "The longest English explanation here.",
+                )],
+            ),
+        ],
+        ..Default::default()
+    };
+    assert_eq!(ja(prose_only.preview_examples(5)), ["a1", "a2"]);
+    assert!(
+        crate::GrammarEntry::default()
+            .preview_examples(2)
+            .is_empty()
+    );
+}

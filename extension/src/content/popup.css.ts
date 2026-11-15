@@ -80,4 +80,17 @@ export const POPUP_CSS = `
 .jp-corpus-mark { background:rgba(203,166,247,0.18); color:#cba6f7; border-radius:2px; padding:0 1px; }
 .jp-corpus-en { font-size:13px; color:#6c7086; line-height:1.5; }
 .jp-corpus-empty { font-size:13px; color:#6c7086; padding:8px 0; }
+.jp-grammar { display:flex; flex-direction:column; gap:10px; }
+.jp-grammar-entry { padding-top:8px; border-top:1px solid #313244; }
+.jp-grammar-entry:first-child { border-top:none; padding-top:0; }
+.jp-grammar-term { font-size:19px; }
+.jp-grammar-meaning { color:#cdd6f4; margin:2px 0 4px; }
+.jp-grammar-structure { font-size:12px; color:#a6adc8; background:#313244; border-radius:4px;
+                        padding:2px 7px; display:inline-block; margin-bottom:6px; }
+.jp-grammar-examples { display:flex; flex-direction:column; gap:8px; margin-top:4px;
+                       padding-left:10px; border-left:2px solid #313244; }
+.jp-grammar-examples .jp-corpus-jp { font-size:14px; }
+.jp-grammar-examples .jp-corpus-en { font-size:12px; }
+.jp-grammar-examples rt { font-size:9px; color:#a6adc8; }
+.jp-grammar-credit { font-size:10px; color:#6c7086; margin-top:2px; }
 `;

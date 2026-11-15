@@ -184,6 +184,27 @@ impl GrammarEntry {
             .unwrap_or_else(|| self.meaning.clone())
     }
 
+    /// Up to `n` examples for a short view: the main source's, or, when it
+    /// has none (some sources are prose only), the first source's with some.
+    pub fn preview_examples(&self, n: usize) -> Vec<Example> {
+        let main = self.main_source();
+        let of = |s: &SourceBlock| -> Vec<Example> {
+            s.senses
+                .iter()
+                .flat_map(|s| s.examples())
+                .take(n)
+                .cloned()
+                .collect()
+        };
+        self.sources
+            .get(main)
+            .into_iter()
+            .chain(&self.sources)
+            .map(of)
+            .find(|e| !e.is_empty())
+            .unwrap_or_default()
+    }
+
     /// The source to show first: the one explaining the most in English
     /// (Latin letters of its paragraphs), the first on a tie or when none
     /// has English.

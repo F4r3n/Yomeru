@@ -5,8 +5,10 @@
     import WordTab from "./WordTab.svelte";
     import KanjiTab from "./KanjiTab.svelte";
     import ExamplesTab from "./ExamplesTab.svelte";
+    import GrammarTab from "./GrammarTab.svelte";
+    import { untrack } from "svelte";
 
-    let activeTab = $state<"word" | "kanji" | "examples">("word");
+    let activeTab = $state<"word" | "kanji" | "examples" | "grammar">("word");
     let useBelow = $state(true);
     // SRS standing per entry. Missing = not fetched yet: the button waits
     // rather than guessing "Add" for a word that is already in the deck.
@@ -23,10 +25,30 @@
         $popupStore.entries[0]?.reading_forms[0]?.text ?? ""
     );
 
+    // Which grammar points arrived; they come after the words.
+    let grammarKey = $derived(
+        $popupStore.grammar ? $popupStore.grammar.entries.map((g) => g.term).join(",") : "",
+    );
+
+    $effect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        grammarKey;
+        untrack(() => {
+            if ($popupStore.grammarFirst) activeTab = "grammar";
+            else if (activeTab === "grammar" && !$popupStore.grammar) activeTab = "word";
+        });
+    });
+
     $effect(() => {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         entriesKey;
-        const sequences = $popupStore.entries.map((e: WordEntry) => e.sequence);
+        // Only a new word resets the popup, not other store updates (the
+        // pin, the grammar arriving).
+        untrack(() => resetFor($popupStore.entries));
+    });
+
+    function resetFor(entries: WordEntry[]) {
+        const sequences = entries.map((e: WordEntry) => e.sequence);
         // Words the highlighter doesn't know are certainly not in the deck, so
         // their "Add" shows at once; only known ones need the round trip.
         const initial: Record<number, WordStatus> = {};
@@ -45,7 +67,7 @@
         activeTab = "word";
         corpusExamples = [];
         examplesFetched = false;
-    });
+    }
 
     function position(node: HTMLElement, params: { wx1: number; wx2: number; wy1: number; wy2: number }) {
         function recompute({ wx1, wy1, wy2 }: { wx1: number; wx2: number; wy1: number; wy2: number }) {
@@ -143,6 +165,13 @@
                     class:jp-tab--active={activeTab === "examples"}
                     onclick={openExamples}>Examples</button
                 >
+                {#if $popupStore.grammar}
+                    <button
+                        class="jp-tab"
+                        class:jp-tab--active={activeTab === "grammar"}
+                        onclick={() => (activeTab = "grammar")}>Grammar</button
+                    >
+                {/if}
             </div>
         {/if}
 
@@ -155,6 +184,8 @@
                     onpriority={(e) => act(e, "BUMP_PRIORITY")}
                     onreset={(e) => act(e, "RESET_CARD")}
                 />
+            {:else if activeTab === "grammar" && $popupStore.grammar}
+                <GrammarTab entries={$popupStore.grammar.entries} />
             {:else if activeTab === "kanji"}
                 <KanjiTab kanjiEntries={$popupStore.kanjiEntries} />
             {:else}
@@ -181,6 +212,13 @@
                     class:jp-tab--active={activeTab === "examples"}
                     onclick={openExamples}>Examples</button
                 >
+                {#if $popupStore.grammar}
+                    <button
+                        class="jp-tab"
+                        class:jp-tab--active={activeTab === "grammar"}
+                        onclick={() => (activeTab = "grammar")}>Grammar</button
+                    >
+                {/if}
             </div>
         {/if}
     </div>

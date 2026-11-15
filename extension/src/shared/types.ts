@@ -241,3 +241,35 @@ export interface PartSearch {
   total: number;
   open_parts: string[];
 }
+
+/** A run of grammar-dictionary text — mirrors `Span` in
+ *  `grammar-core/src/types.rs` (serde's external tagging, camelCase). */
+export type GrammarSpan =
+  | { text: { text: string } }
+  | { highlight: { text: string } }
+  | { label: { text: string } }
+  | { ruby: { text: string; ruby: string } }
+  | { link: { text: string; query: string } }
+  | "lineBreak";
+
+export interface GrammarExample {
+  ja: GrammarSpan[];
+  en: string;
+}
+
+/** What the hover popup shows of a grammar point — `PopupEntry` in
+ *  `grammar-wasm`. Built from the user's own on-device dictionary. */
+export interface GrammarPopupEntry {
+  term: string;
+  reading: string;
+  jlpt: string;
+  meaning: string;
+  structure: string;
+  examples: GrammarExample[];
+}
+
+export interface GrammarPopupMatch {
+  entries: GrammarPopupEntry[];
+  /** Chars of the hovered text the pattern covers. */
+  matchLen: number;
+}

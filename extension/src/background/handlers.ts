@@ -21,11 +21,12 @@ import {
 } from "./idb";
 import { getSettings, saveSettings } from "./settings";
 import { importCards } from "./cards-backup";
-import { getSrs, getKanji, getExamples, getJmdict } from "./engines";
+import { getSrs, getKanji, getExamples, getJmdict, getGrammar } from "./engines";
 import { bumpDbVersion } from "./sync";
 import type {
   CardDirection,
   ExampleEntry,
+  GrammarPopupMatch,
   KanjiEntry,
   PartInfo,
   PartSearch,
@@ -244,6 +245,26 @@ export async function handleLookupPrefix({ text, max }: { text: string; max: num
   const jmdict = await getJmdict();
   const results = (jmdict.lookup_prefix(text, max) as WordEntry[]) ?? [];
   return { results };
+}
+
+/** Longest grammar pattern hovered `text` starts with. */
+const GRAMMAR_MAX_CHARS = 24;
+/** Examples per grammar point in the popup. */
+const GRAMMAR_EXAMPLES = 2;
+
+/**
+ * The grammar point `text` starts with, for the hover popup. `match: null`
+ * when there is none, or no grammar dictionary is installed.
+ */
+export async function handleGrammarLookup({
+  text,
+}: {
+  text: string;
+}): Promise<{ match: GrammarPopupMatch | null }> {
+  const dict = await getGrammar();
+  if (!dict || !text) return { match: null };
+  const match = dict.popup_lookup(text, GRAMMAR_MAX_CHARS, GRAMMAR_EXAMPLES) as GrammarPopupMatch | null;
+  return { match: match ?? null };
 }
 
 export async function handleImportCards({ cards }: { cards: unknown }) {

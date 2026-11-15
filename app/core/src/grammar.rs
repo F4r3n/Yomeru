@@ -40,6 +40,28 @@ fn set_current(dict: Option<Arc<GrammarDict>>) {
     *CURRENT.lock().unwrap_or_else(PoisonError::into_inner) = Some(dict);
 }
 
+/// The `BroadcastChannel` an install or removal is announced on, so other
+/// pages of the same origin drop the dictionary they loaded: the
+/// extension's background, other tabs of the web app.
+pub const CHANGE_CHANNEL: &str = "yomeru-grammar";
+
+#[cfg(target_arch = "wasm32")]
+fn announce_change() {
+    match web_sys::BroadcastChannel::new(CHANGE_CHANNEL) {
+        Ok(channel) => {
+            if let Err(e) = channel.post_message(&wasm_bindgen::JsValue::from_str("changed")) {
+                tracing::warn!("grammar change broadcast: {e:?}");
+            }
+            channel.close();
+        }
+        Err(e) => tracing::warn!("grammar change channel: {e:?}"),
+    }
+}
+
+/// Natively the app is the only reader of the file.
+#[cfg(not(target_arch = "wasm32"))]
+fn announce_change() {}
+
 /// The loaded dictionary, if [`load`] ran and one is installed.
 pub fn current() -> Option<Arc<GrammarDict>> {
     CURRENT
@@ -195,6 +217,7 @@ pub async fn install_zip(
     rt::sleep_ms(YIELD_MS).await;
     store::write(converted.bytes).await?;
     set_current(Some(Arc::new(dict)));
+    announce_change();
     Ok(installed)
 }
 
@@ -249,6 +272,7 @@ pub async fn check_update() -> Result<Option<String>, String> {
 pub async fn remove() -> Result<(), String> {
     store::delete().await?;
     set_current(None);
+    announce_change();
     Ok(())
 }
 

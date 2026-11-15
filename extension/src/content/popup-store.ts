@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import type { KanjiEntry, WordEntry } from "../shared/types.ts";
+import type { GrammarPopupMatch, KanjiEntry, WordEntry } from "../shared/types.ts";
 
 interface PopupState {
   visible: boolean;
@@ -10,6 +10,11 @@ interface PopupState {
   wy1: number;
   wy2: number;
   pinned: boolean;
+  /** The grammar point the hovered text starts with; it arrives after the
+   *  words, from the background. */
+  grammar: GrammarPopupMatch | null;
+  /** Open on the Grammar tab: the pattern is longer than the word. */
+  grammarFirst: boolean;
 }
 
 function createPopupStore() {
@@ -22,6 +27,8 @@ function createPopupStore() {
     wy1: 0,
     wy2: 0,
     pinned: false,
+    grammar: null,
+    grammarFirst: false,
   });
   const { subscribe, set, update } = store;
 
@@ -35,7 +42,13 @@ function createPopupStore() {
       wy1: number,
       wy2: number,
     ) {
-      set({ visible: true, entries, kanjiEntries, wx1, wx2, wy1, wy2, pinned: false });
+      set({
+        visible: true, entries, kanjiEntries, wx1, wx2, wy1, wy2,
+        pinned: false, grammar: null, grammarFirst: false,
+      });
+    },
+    setGrammar(grammar: GrammarPopupMatch | null, grammarFirst: boolean) {
+      update((s) => ({ ...s, grammar, grammarFirst: grammar !== null && grammarFirst }));
     },
     pin() {
       update((s) => ({ ...s, pinned: true }));

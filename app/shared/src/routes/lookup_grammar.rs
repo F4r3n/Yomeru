@@ -31,11 +31,6 @@ pub fn GrammarResults(entries: Vec<GrammarEntry>, on_search: EventHandler<String
     }
 }
 
-/// The source's examples, all senses together.
-fn examples_of(source: &SourceBlock) -> impl Iterator<Item = &Example> {
-    source.senses.iter().flat_map(|s| s.examples())
-}
-
 #[component]
 fn GrammarEntryCard(entry: GrammarEntry, on_search: EventHandler<String>) -> Element {
     let mut open = use_signal(|| false);
@@ -43,19 +38,7 @@ fn GrammarEntryCard(entry: GrammarEntry, on_search: EventHandler<String>) -> Ele
     let mut tab = use_signal(move || main_source);
     let is_open = *open.read();
     let has_detail = !entry.sources.is_empty();
-    // The first source with examples feeds the preview: some sources are
-    // prose only.
-    let preview: Vec<Example> = entry
-        .sources
-        .iter()
-        .map(|s| {
-            examples_of(s)
-                .take(PREVIEW_EXAMPLES)
-                .cloned()
-                .collect::<Vec<_>>()
-        })
-        .find(|e| !e.is_empty())
-        .unwrap_or_default();
+    let preview = entry.preview_examples(PREVIEW_EXAMPLES);
     let active = (*tab.read()).min(entry.sources.len().saturating_sub(1));
     let meaning = entry.full_meaning();
 

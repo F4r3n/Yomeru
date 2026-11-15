@@ -33,6 +33,28 @@ struct Match<'a> {
     match_len: usize,
 }
 
+/// What the hover popup shows of an entry: a glance, not the sources.
+#[derive(Serialize)]
+struct PopupEntry {
+    term: String,
+    reading: String,
+    jlpt: String,
+    meaning: String,
+    structure: String,
+    examples: Vec<grammar_core::Example>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PopupMatch {
+    entries: Vec<PopupEntry>,
+    match_len: usize,
+}
+
+/// Shortest match and headword the popup offers: one-char ones are
+/// particles and endings (は, た) that would come up on almost every word.
+const POPUP_MIN_CHARS: usize = 2;
+
 #[wasm_bindgen]
 impl GrammarDictionary {
     /// Loads `grammar.bin` bytes. Fails on a file of another format
@@ -63,6 +85,36 @@ impl GrammarDictionary {
             }),
             None => Ok(JsValue::NULL),
         }
+    }
+
+    /// The hover popup's lookup: like [`Self::lookup_longest_match`], but
+    /// `{entries, matchLen}` holds summaries (whole meaning, at most
+    /// `max_examples` examples), and a match under two chars is `null`.
+    pub fn popup_lookup(
+        &self,
+        text: &str,
+        max_chars: usize,
+        max_examples: usize,
+    ) -> Result<JsValue, JsError> {
+        let Some((entries, match_len)) = self.inner.lookup_longest_match(text, max_chars) else {
+            return Ok(JsValue::NULL);
+        };
+        let entries: Vec<PopupEntry> = entries
+            .into_iter()
+            .filter(|e| e.term.chars().count() >= POPUP_MIN_CHARS)
+            .map(|e| PopupEntry {
+                meaning: e.full_meaning(),
+                examples: e.preview_examples(max_examples),
+                term: e.term,
+                reading: e.reading,
+                jlpt: e.jlpt,
+                structure: e.structure,
+            })
+            .collect();
+        if match_len < POPUP_MIN_CHARS || entries.is_empty() {
+            return Ok(JsValue::NULL);
+        }
+        to_js(&PopupMatch { entries, match_len })
     }
 
     /// Entries whose term or reading starts with `prefix`, at most `max`.
