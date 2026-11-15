@@ -182,7 +182,7 @@ examples = [
 [[point]]
 id = "ta-hou-ga-ii"
 pattern = "たほうがいい"
-forms = ["だほうがいい", "ないほうがいい", "た方がいい", "だ方がいい", "ない方がいい"]
+forms = ["だほうがいい", "ないほうがいい", "た方がいい", "だ方がいい", "ない方がいい", "ほうがいい", "方がいい"]
 jlpt = "N5"
 meaning = "had better, should (advice)"
 formation = ["Verb［た］ + ほうがいい", "Verb［ない］ + ほうがいい"]
@@ -2384,7 +2384,7 @@ examples = [
 [[point]]
 id = "baai"
 pattern = "場合"
-forms = ["場合は", "ばあい"]
+forms = ["場合は", "ばあい", "ばあいは"]
 jlpt = "N4"
 meaning = "in case of, if, when (a possible situation)"
 formation = [
@@ -4708,4 +4708,525 @@ examples = [
   { tatoeba = "56831_219510", ja = "この本を誰が書いた{か}知っていますか。", en = "Do you have any idea who wrote this book?" },
   { tatoeba = "55073_217763", ja = "この本をどこに置いたらいい{か}教えてください。", en = "Tell me where to put these books." },
   { source = "yomeru", ja = "何時に始まる{か}わかりません。", en = "I don't know what time it starts." },
+]
+
+[[point]]
+id = "ru-tokoro"
+pattern = "るところだ"
+forms = ["るところです", "るところだった"]
+jlpt = "N4"
+meaning = "be about to, be just going to"
+formation = ["Verb［る］ + ところだ"]
+explanation = """
+The action hasn't started yet but is about to, right now: 今から出かけ\
+るところです, "I'm just about to go out". ところ is literally "place", \
+here a point in time: the speaker is standing just before the action."""
+notes = """
+Three moments of one action: 食べるところ (about to eat), 食べている\
+ところ (in the middle of eating), 食べたところ (just finished eating). \
+In the past, るところだった often means "nearly": 遅れるところだった, \
+"I almost missed it"."""
+related = ["te-iru-tokoro", "ta-tokoro", "tsumori"]
+examples = [
+  { tatoeba = "396887_124606", ja = "登校{するところです}。", en = "I am going to school." },
+  { source = "yomeru", ja = "これから晩ご飯を食べ{るところだ}。", en = "I'm just about to have dinner." },
+  { source = "yomeru", ja = "もう少しで電車に遅れ{るところだった}。", en = "I very nearly missed the train." },
+]
+
+[[point]]
+id = "te-iru-tokoro"
+pattern = "ているところだ"
+forms = ["でいるところだ", "ているところです", "でいるところです", "ているところ", "でいるところ"]
+jlpt = "N4"
+meaning = "be in the middle of doing, be busy doing (right now)"
+formation = ["Verb［て］ + いるところだ"]
+explanation = """
+Stresses that the action is going on at this very moment, often as an \
+answer or excuse: 今、宿題をしているところです, "I'm in the middle of my \
+homework right now". Plain ている can also mean a habit or a state; \
+ているところ is only "right now, in progress"."""
+notes = """
+Three moments of one action: 食べるところ (about to eat), 食べている\
+ところ (in the middle of eating), 食べたところ (just finished eating). \
+Before a noun, ところ can simply be a place: 父の働いているところ, "the \
+place where my father works"."""
+related = ["ru-tokoro", "ta-tokoro", "te-iru"]
+examples = [
+  { tatoeba = "268355_146207", ja = "上着を今着{ているところだ}。", en = "He's putting on a coat." },
+  { tatoeba = "315806_87901", ja = "彼女は昼ご飯を食べ{ているところだ}。", en = "She is having lunch now." },
+  { tatoeba = "320873_82843", ja = "母は夕食の用意をし{ているところです}。", en = "Mother is preparing supper." },
+]
+
+[[point]]
+id = "ta-tokoro"
+pattern = "たところだ"
+forms = ["だところだ", "たところです", "だところです"]
+jlpt = "N4"
+meaning = "have just done (a moment ago)"
+formation = ["Verb［た］ + ところだ"]
+explanation = """
+The action has just ended, a moment ago: 今、駅に着いたところです, "I've \
+just arrived at the station". Often comes with ちょうど or 今. The \
+focus is the point right after the action, as on a clock."""
+notes = """
+Three moments of one action: 食べるところ (about to eat), 食べている\
+ところ (in the middle of eating), 食べたところ (just finished eating). \
+〜たばかり can be weeks ago if it feels recent; たところ can't: ×去年結婚\
+したところ. Watch for ところ as a place: 角を曲がったところ, "just \
+round the corner"."""
+related = ["ta-bakari", "ru-tokoro", "te-iru-tokoro"]
+examples = [
+  { tatoeba = "257506_157028", ja = "今始め{たところです}。", en = "I'm just beginning." },
+  { tatoeba = "255024_159499", ja = "私はちょうど仕事を終え{たところです}。", en = "I have just finished my work." },
+  { tatoeba = "254666_159510", ja = "ちょうどその本を読み終わっ{たところだ}よ。", en = "I have just finished reading the book." },
+]
+
+[[point]]
+id = "te-ita"
+pattern = "ていた"
+forms = ["でいた", "ていました", "でいました", "てた"]
+jlpt = "N4"
+meaning = "was doing, had been doing; was (in a state)"
+formation = ["Verb［て］ + いた"]
+explanation = """
+The past of ている, with the same uses moved into the past: an action \
+going on at some moment (電話が鳴ったとき、テレビを見ていた, "I was \
+watching TV when the phone rang"), a state that held then (窓が開いて\
+いた, "the window was open"), or a past habit (毎朝走っていた, "I used \
+to run every morning")."""
+notes = """
+Plain た reports a finished event; ていた sets a scene that was already \
+going on. With verbs like 知る, 知っていた is "I knew" and 知らなかった \
+"I didn't know". In speech い drops: 見てた, 読んでた."""
+related = ["te-iru", "toki"]
+examples = [
+  { tatoeba = "244466_169955", ja = "昨日は曇っ{ていた}。", en = "It was cloudy yesterday." },
+  { tatoeba = "73127_235747", ja = "１週間雪が降り続い{ていた}。", en = "It had been snowing for a week." },
+  { source = "yomeru", ja = "電話が鳴ったとき、テレビを見{ていた}。", en = "I was watching TV when the phone rang." },
+]
+
+[[point]]
+id = "aida-ni"
+pattern = "間に"
+forms = ["あいだに", "間", "あいだ"]
+jlpt = "N4"
+meaning = "while, during (間: the whole time; 間に: at some point in it)"
+formation = [
+  "Verb［て］ + いる間に   (待っている間に)",
+  "Verb［ない］ + 間に   (いない間に)",
+  "Noun + の + 間に   (夏休みの間に)",
+]
+explanation = """
+間 alone covers the whole stretch: something lasts from start to end. 待っ\
+ている間、本を読んだ, "I read the whole time I was waiting". 間に puts \
+a single event somewhere inside it: 待っている間に雨が降り出した, "while \
+I was waiting, it started to rain"."""
+notes = """
+Pick by the main verb: an ongoing one (読んでいた, 寝ていた) with 間, a \
+one-off one (来た, 終わった) with 間に. 〜うちに (N3) is close but adds \
+"before it changes": 若いうちに. Noun + の + 間 also means "between": 東京\
+と大阪の間, "between Tokyo and Osaka"."""
+related = ["nagara", "toki", "uchi-ni"]
+examples = [
+  { tatoeba = "323990_79727", ja = "夜の{間に}雨が降った。", en = "It rained during the night." },
+  { tatoeba = "250217_164292", ja = "私のいない{間に}誰か訪ねてきましたか。", en = "Did anyone visit me during my absence?" },
+  { tatoeba = "246662_167836", ja = "私が外出している{間}、犬の面倒を見てくれない？", en = "Will you look after my dog while I'm out?" },
+]
+
+[[point]]
+id = "made-ni"
+pattern = "までに"
+forms = ["までには"]
+jlpt = "N4"
+meaning = "by, by the time (deadline)"
+formation = ["Noun + までに   (五時までに)", "Verb［る］ + までに   (帰るまでに)"]
+explanation = """
+Sets a deadline: the action happens once, at some point before it. 金曜日\
+までに出してください, "please hand it in by Friday". After a verb, it is \
+"by the time…": 母が帰るまでに掃除する, "I'll clean up before Mom gets \
+home"."""
+notes = """
+まで is "until" and needs an action that lasts the whole time: 五時まで\
+待つ, "wait until five". までに is "by" for one action before the \
+point: 五時までに来る, "come by five". The verb before it stays in the \
+dictionary form, even about the past."""
+related = ["kara-made", "mae-ni"]
+examples = [
+  { tatoeba = "262300_152249", ja = "六時{までに}戻る。", en = "I'll be back by six o'clock." },
+  { tatoeba = "284232_119431", ja = "彼が戻る{までに}必ず終わらせます。", en = "I will finish it by the time he comes back." },
+  { source = "yomeru", ja = "金曜日{までに}レポートを出してください。", en = "Please hand in the report by Friday." },
+]
+
+[[point]]
+id = "koto-ga-aru-sometimes"
+pattern = "ることがある"
+forms = ["ることもある", "ることがあります", "ることもあります", "ないことがある", "ないこともある"]
+jlpt = "N4"
+meaning = "sometimes (does), there are times when"
+formation = ["Verb［る］ / Verb［ない］ + ことがある"]
+explanation = """
+Says something happens now and then, not as a rule: 朝ご飯を食べないこ\
+とがある, "sometimes I skip breakfast". With も, こともある, it is "it \
+can also happen": 電車が遅れることもある, "the trains are sometimes late, \
+too"."""
+notes = """
+The verb before こと is in the dictionary or ない form. With the た form, \
+ことがある means "have done before", a different point: 行ったことがある, \
+"I've been there". Often comes with 時々 or たまに, but not with よく: \
+for something that happens often, just say よく遅れる."""
+related = ["ta-koto-ga-aru", "koto-nominalizer"]
+examples = [
+  { tatoeba = "298413_105276", ja = "彼は時々遅く帰{ることがある}。", en = "He sometimes comes home late." },
+  { tatoeba = "255203_156373", ja = "私は時々悲しくな{ることがある}。", en = "I feel sad every now and then." },
+  { source = "yomeru", ja = "忙しくて昼ご飯を食べ{ないことがある}。", en = "I'm sometimes so busy I skip lunch." },
+]
+
+[[point]]
+id = "koto-nominalizer"
+pattern = "こと"
+forms = ["ことは", "ことが", "ことを"]
+jlpt = "N4"
+hover = false
+meaning = "(doing) … , the fact that … (making a noun with こと)"
+formation = [
+  "Verb / ［い］Adjective + こと   (読むこと)",
+  "［な］Adjective + な + こと   (元気なこと)",
+]
+explanation = """
+こと after a verb makes the whole phrase a noun that can take は, が or \
+を: 本を読むことが好きです, "I like reading books". It is the usual \
+choice in definitions and statements of fact: 趣味は写真を撮ることです, \
+"my hobby is taking photos"."""
+notes = """
+の does the same job in many sentences, but not all. Only こと fits after \
+です (趣味は〜ことです) and in set patterns like ことができる, ことにする. \
+Only の fits verbs of seeing and hearing: 鳥が鳴いているのが聞こえる. \
+こと is more written, の more spoken. Ending a written rule, こと \
+gives an order: 廊下を走らないこと, "no running in the halls"."""
+related = ["no-nominalizer", "koto-ga-dekiru", "koto-ni-suru", "koto-ga-aru-sometimes"]
+examples = [
+  { tatoeba = "26650_189500", ja = "嘘をつく{ことは}悪い。", en = "It is wrong to tell lies." },
+  { tatoeba = "251134_6013", ja = "私の趣味は音楽を聞く{こと}です。", en = "My hobby is listening to music." },
+  { tatoeba = "286646_117020", ja = "彼の趣味は絵を描く{こと}です。", en = "His hobby is painting pictures." },
+]
+
+[[point]]
+id = "te-bakari"
+pattern = "てばかり"
+forms = ["でばかり", "てばかりいる", "でばかりいる", "てばっかり", "でばっかり", "てばっか", "でばっか"]
+jlpt = "N4"
+meaning = "do nothing but, keep doing (only that)"
+formation = ["Verb［て］ + ばかりいる"]
+explanation = """
+Complains that someone does one thing all the time and nothing else: 弟\
+はゲームをしてばかりいる, "my brother does nothing but play games". It \
+is usually critical. ばっかり is the casual spoken form."""
+notes = """
+The いる at the end carries the tense: 泣いてばかりいた, "she did nothing \
+but cry". Noun + ばかり is "nothing but (that thing)": 肉ばかり食べる. \
+〜たばかり is a different point, "have just done"."""
+related = ["ta-bakari", "dake", "te-iru"]
+examples = [
+  { tatoeba = "299651_104042", ja = "彼は笑っ{てばかりいる}。", en = "He does nothing but laugh." },
+  { tatoeba = "293811_109878", ja = "彼は一日中遊ん{でばかりいる}。", en = "He does nothing but play all day." },
+  { tatoeba = "37314_200113", ja = "トムはいつもテレビを見{てばかりいる}。", en = "Tom is always watching television." },
+]
+
+[[point]]
+id = "de-wa-naku"
+pattern = "ではなく"
+forms = ["じゃなく", "ではなくて", "じゃなくて", "でなく"]
+jlpt = "N4"
+meaning = "not A but B; is not A, and …"
+formation = ["Noun / ［な］Adjective + ではなく(て)"]
+explanation = """
+Sets aside A to put B in its place: 紅茶ではなくコーヒーをください, "not \
+tea, coffee please". It is the て form of ではない, so it can also just \
+link two clauses: 学生ではなくて、先生です, "I'm not a student, I'm a \
+teacher"."""
+notes = """
+じゃなくて is the spoken form, ではなく the more written one. For verbs \
+and い-adjectives, use なくて instead: 高くなくて, "not expensive, and…"."""
+related = ["nakute", "dake-de-naku", "desu"]
+examples = [
+  { tatoeba = "25773_188628", ja = "鉛筆{ではなく}、ペンで書きなさい。", en = "Write with a pen, not with a pencil." },
+  { tatoeba = "289956_113717", ja = "彼はこの病院の患者{ではなく}医者です。", en = "He is not a patient but a doctor in this hospital." },
+  { tatoeba = "67039_229678", ja = "あれは馬{ではなく}ロバだ。", en = "That is not a horse, but a donkey." },
+]
+
+[[point]]
+id = "de-dekiru"
+pattern = "でできている"
+forms = ["からできている", "でできる", "からできる", "でできています", "からできています"]
+jlpt = "N4"
+meaning = "be made of (で), be made from (から)"
+formation = ["Noun + でできている / からできている"]
+explanation = """
+Says what something is made of: この机は木でできている, "this desk is \
+made of wood". Use で when you can still see the material in the thing, \
+から when it has turned into something else: ワインはぶどうからできて\
+いる, "wine is made from grapes"."""
+notes = """
+Today many speakers use で for both, so から mostly stresses a material \
+that has changed. The same split works with 作る: 木で作る, 米から作る. \
+できている describes a particular thing; できる tends to state a general \
+fact. In 何でできているの, 何で is "of what", not なんで "why"."""
+related = ["de-particle", "kara-reason"]
+examples = [
+  { tatoeba = "68449_231082", ja = "あの橋は石{でできています}。", en = "That bridge is made of stone." },
+  { tatoeba = "61234_223900", ja = "このカップは金{でできている}。", en = "The cup is made of gold." },
+  { source = "yomeru", ja = "日本酒は米{からできています}。", en = "Sake is made from rice." },
+]
+
+[[point]]
+id = "no-hitotsu-da"
+pattern = "の一つだ"
+forms = ["の一つです", "のひとつだ", "のひとつです", "の一つ", "のひとつ"]
+jlpt = "N4"
+meaning = "is one of (the …)"
+formation = ["Noun + の一つだ   (趣味の一つだ)"]
+explanation = """
+Names one item from a group: 京都は日本で一番人気がある町の一つです, \
+"Kyoto is one of the most popular cities in Japan". The group comes \
+first, then の一つ; it often has 一番 or 最も, as in English "one of \
+the best"."""
+notes = """
+Japanese nouns have no plural, so the group noun stays as it is: 都市の\
+一つ, "one of the cities". For people, の一人 is used: 友だちの一人, \
+"one of my friends"."""
+related = ["ga-ichiban", "no-particle"]
+examples = [
+  { tatoeba = "52036_214742", ja = "スケートは趣味{の一つだ}。", en = "Skating is one of my hobbies." },
+  { tatoeba = "25660_188517", ja = "横浜は日本で最大の都市{の一つだ}。", en = "Yokohama is one of the largest cities in Japan." },
+  { source = "yomeru", ja = "すしは私の好きな食べ物{の一つです}。", en = "Sushi is one of my favorite foods." },
+]
+
+[[point]]
+id = "nai-wa-nai"
+pattern = "ない〜はない"
+forms = ["ない人はいない", "ないものはない", "ない物はない", "ない人はいません", "ないものはありません"]
+jlpt = "N4"
+meaning = "there is no one who doesn't, everyone / everything (does)"
+formation = [
+  "Verb［ない］ + 人 / Noun + はいない",
+  "Verb［ない］ + もの / Noun + はない",
+]
+explanation = """
+Two negatives that make a strong positive: この歌を知らない人はいない, \
+"there's no one who doesn't know this song", in other words everyone \
+knows it. It sounds stronger than みんな知っている. Use いない for \
+people and animals, ない for things."""
+notes = """
+The first ない belongs to the verb in front of the noun; the second \
+says no such thing exists. The same double negative works with other \
+verbs: 安くない靴は買わない, "he only buys cheap shoes". A plainer way to \
+say it: 誰でも知っている."""
+related = ["ga-aru", "nan-mo"]
+examples = [
+  { source = "yomeru", ja = "この歌を知ら{ない人はいない}。", en = "There's no one who doesn't know this song." },
+  { tatoeba = "277094_126996", ja = "地球が丸いことを知ら{ない人はいない}。", en = "There is no one but knows that the earth is round." },
+  { source = "yomeru", ja = "この店には{ない物はない}。", en = "This shop has everything." },
+]
+
+[[point]]
+id = "dake-de"
+pattern = "だけで"
+forms = ["だけでいい", "だけでも"]
+jlpt = "N4"
+meaning = "just by, just with, only (doing) … and"
+formation = [
+  "Verb［る］ / Verb［た］ + だけで   (見るだけで, 考えただけで)",
+  "Noun + だけで   (二人だけで)",
+]
+explanation = """
+Says that one small thing is already enough for the result: 見るだけで\
+楽しい, "just looking is fun". With いい, it tells someone that's all \
+they need to do: このボタンを押すだけでいい, "you only have to press this \
+button". After a noun, it limits who or what: 二人だけで話す, "talk with \
+just the two of us"."""
+notes = """
+Different from だけでなく, "not only": only the で here, no なく. \
+考えただけで (past) is "the mere thought of it": 考えただけで怖い. \
+だけでも is "even just": 一日だけでも休みたい."""
+related = ["dake", "dake-de-naku"]
+examples = [
+  { tatoeba = "47263_210000", ja = "その事を考えた{だけで}楽しくなる。", en = "The mere thought of it is enough to make me happy." },
+  { tatoeba = "58194_220872", ja = "この赤いボタンを押す{だけでいい}のです。", en = "You have only to push this red button." },
+  { tatoeba = "17622_178769", ja = "君と２人{だけで}話したいのだが。", en = "I would prefer to speak to you in private." },
+]
+
+[[point]]
+id = "hitsuyou-ga-aru"
+pattern = "必要がある"
+forms = ["必要がない", "必要はない", "必要があります", "必要はありません", "ひつようがある", "が必要だ", "が必要です", "が必要"]
+jlpt = "N4"
+meaning = "need to, it is necessary (to); need (something)"
+formation = [
+  "Verb［る］ + 必要がある   (行く必要がある)",
+  "Noun + が必要だ   (お金が必要だ)",
+]
+explanation = """
+After a verb, says the action is necessary: 予約する必要がある, "you need \
+to book". After a noun with が, says the thing is needed: 何が必要です\
+か, "what do you need?". The negative 必要はない says there's no \
+need: 急ぐ必要はない, "there's no need to hurry"."""
+notes = """
+It sounds more objective and a bit formal; なければならない stresses \
+duty, and 〜なくてもいい is the everyday way to say "you don't have \
+to". 必要 is a な-adjective as well: 必要な物, "the things you need"."""
+related = ["nakereba-naranai", "nakute-mo-ii"]
+examples = [
+  { tatoeba = "464546_187898", ja = "何{が必要}ですか。", en = "What do you need?" },
+  { tatoeba = "241648_172825", ja = "今すぐに行く{必要があります}か。", en = "Need I go right now?" },
+  { source = "yomeru", ja = "急ぐ{必要はない}よ。", en = "There's no need to hurry." },
+]
+
+[[point]]
+id = "yotei"
+pattern = "予定だ"
+forms = ["予定です", "予定でした", "予定だった", "よていだ", "よていです"]
+jlpt = "N4"
+meaning = "plan to, be scheduled to, be due to"
+formation = ["Verb［る］ + 予定だ", "Noun + の + 予定だ   (出張の予定だ)"]
+explanation = """
+Talks about a plan that has been fixed, like an entry in a calendar: 来\
+週大阪へ行く予定です, "I'm going to Osaka next week (it's planned)". \
+It works for other people's plans and for events too: 電車は十時に着\
+く予定だ, "the train is due at ten"."""
+notes = """
+つもり is your own intention, which may still change; 予定 is a settled \
+arrangement, often made with others. So for a train or a meeting, use \
+予定, not つもり. In the past, 予定だった often implies the plan fell \
+through."""
+related = ["tsumori", "you-to-omou"]
+examples = [
+  { tatoeba = "258494_156044", ja = "私は秋にパリへ行く{予定です}。", en = "I'm going to Paris in the fall." },
+  { tatoeba = "24256_187119", ja = "家にいる{予定です}。", en = "I'm just going to stay home." },
+  { source = "yomeru", ja = "明日は友だちと会う{予定だ}。", en = "I'm meeting a friend tomorrow." },
+]
+
+[[point]]
+id = "kakaru"
+pattern = "かかる"
+forms = ["掛かる", "かかります"]
+jlpt = "N4"
+meaning = "take (time), cost (money)"
+formation = [
+  "Time / Money + (が) + かかる   (三十分かかる)",
+  "Verb［る］ + のに + Time / Money + かかる   (行くのに一時間かかる)",
+]
+explanation = """
+Says how much time or money something needs: 駅まで歩いて十分かかる, \
+"it's a ten-minute walk to the station". The task goes before のに: \
+この本を読むのに一週間かかった, "it took me a week to read this \
+book"."""
+notes = """
+For a price on a tag, use です or する: 千円です, この本は千円した. かか\
+る is for the whole cost of doing something: 旅行にお金がかかる. \
+どのくらいかかりますか asks "how long / how much will it take?". かかる \
+has other meanings too: 電話がかかる, "a call comes in"."""
+related = ["kurai", "noni-purpose"]
+examples = [
+  { tatoeba = "24441_187304", ja = "何分{かかります}か？", en = "How long is the ride?" },
+  { tatoeba = "41849_204608", ja = "それを建てるのに何年も{かかった}。", en = "It took many years to build it." },
+  { tatoeba = "49402_212123", ja = "その家の維持にはずいぶんとお金が{かかる}。", en = "The maintenance of the house costs a lot." },
+]
+
+[[point]]
+id = "naosu"
+pattern = "直す"
+forms = ["なおす"]
+jlpt = "N4"
+hover = false
+meaning = "redo, do over (again, better)"
+formation = ["Verb［stem］ + 直す   (書き直す)"]
+explanation = """
+Joined to a verb stem, says you do it again, to fix it or do it \
+better: 書き直す, "rewrite"; 考え直す, "think again, reconsider"; かけ\
+直す, "call back". The new verb conjugates like 直す: 書き直してください, \
+"please write it again"."""
+notes = """
+On its own, 直す means "fix, correct": 時計を直す. 治す, with a different \
+kanji, is "cure". Compare 〜てみる "try doing" and もう一度, which just \
+repeats without the idea of fixing."""
+related = ["te-miru", "hajimeru"]
+examples = [
+  { tatoeba = "257405_157129", ja = "考え{直して}みます。", en = "I guess I'll have to think it over." },
+  { tatoeba = "52322_215025", ja = "スープを温め{直して}くれませんか。", en = "Will you warm up the soup?" },
+  { tatoeba = "240121_174348", ja = "後でもう一度かけ{直して}いただけますか。", en = "May I ask you to call me back later?" },
+]
+
+[[point]]
+id = "zurai"
+pattern = "づらい"
+forms = []
+jlpt = "N4"
+meaning = "hard to, awkward to (it bothers me)"
+formation = ["Verb［stem］ + づらい   (言いづらい)"]
+explanation = """
+Joined to a verb stem, makes an い-adjective: doing it is hard because \
+it is uncomfortable, tiring or awkward for the person: この靴は歩きづら\
+い, "these shoes are hard to walk in"; 言いづらいこと, "something awkward \
+to say"."""
+notes = """
+にくい is close and often interchangeable, but leans on the thing \
+itself; づらい leans on the person's discomfort. づらい is unusual for \
+things with no person in them: 割れにくい "doesn't break easily", not \
+×割れづらい. It comes from 辛い (つらい), "painful"."""
+related = ["nikui", "yasui"]
+examples = [
+  { tatoeba = "19709_182565", ja = "急いで書かれたので、彼の手紙は読み{づらかった}。", en = "Having been written in haste, his letter was hard to read." },
+  { source = "yomeru", ja = "この靴は歩き{づらい}。", en = "These shoes are hard to walk in." },
+  { source = "yomeru", ja = "先生には聞き{づらい}質問だ。", en = "It's an awkward question to ask the teacher." },
+]
+
+[[point]]
+id = "gai"
+pattern = "甲斐"
+forms = ["がい", "がいがある", "かいがある", "かいがあった", "がいがない"]
+jlpt = "N4"
+hover = false
+meaning = "worth (doing); the reward, the result (of)"
+formation = [
+  "Verb［stem］ + がい   (やりがい, 生きがい)",
+  "Verb［た］ + かいがある   (勉強したかいがあった)",
+  "Noun + の + かいがある   (努力のかいがあった)",
+]
+explanation = """
+After a verb stem, がい makes a noun for what makes the action worth it: \
+やりがいのある仕事, "a rewarding job"; 生きがい, "something to live \
+for". かいがある says an effort paid off: 早く来たかいがあった, "it was \
+worth coming early". Usually written in kana."""
+notes = """
+After a stem it is voiced, がい; on its own it stays かい. かいがない \
+is "in vain, no use". It isn't the がい in ちがい or まちがい."""
+related = ["kata", "yasui"]
+examples = [
+  { tatoeba = "249937_164570", ja = "私には生き{甲斐}がない。", en = "I have nothing to live for." },
+  { tatoeba = "326415_77304", ja = "お年寄りには生き{がい}が必要だ。", en = "Old people need something to live for." },
+  { source = "yomeru", ja = "毎日勉強した{かいがあった}。", en = "Studying every day paid off." },
+]
+
+[[point]]
+id = "te-sumimasen"
+pattern = "てすみません"
+forms = ["ですみません", "てすみませんでした", "ですみませんでした", "てごめん", "でごめん", "てごめんなさい", "でごめんなさい"]
+jlpt = "N4"
+meaning = "sorry for (doing)"
+formation = ["Verb［て］ + すみません / ごめん(なさい)", "Verb［な̶い̶］ + なくてすみません   (来られなくて)"]
+explanation = """
+Apologizes for something you did: 遅れてすみません, "sorry I'm late". The \
+て form gives the reason for the apology. For something you didn't do, \
+use なくて: 電話しなくてごめんね, "sorry I didn't call"."""
+notes = """
+すみませんでした is a bit more formal and looks back on something \
+finished. ごめん and ごめんなさい are for friends and family; すみません \
+for most others; 申し訳ありません for very polite or business use. With \
+a favor received, てすみません can be close to "thanks for the \
+trouble"."""
+related = ["te-yokatta", "nakute"]
+examples = [
+  { tatoeba = "275291_137945", ja = "待たせ{てごめん}。", en = "Sorry to have kept you waiting." },
+  { tatoeba = "64416_148903", ja = "邪魔し{てすみません}。", en = "I'm sorry to bother you." },
+  { tatoeba = "54635_125913", ja = "長くお待たせし{てすみませんでした}。", en = "I am sorry to have kept you waiting so long." },
 ]
