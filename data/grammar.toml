@@ -1383,6 +1383,7 @@ never take は: 誰が来ましたか, not 誰は. は replaces が and を, and
 follows other particles: 学校では, 東京には. It can also set up a \
 contrast (see は〜は)."""
 related = ["ga-particle", "wa-contrast", "wa-ga", "mo-particle"]
+homographs = ["number-wa"]
 examples = [
   { tatoeba = "67073_229712", ja = "あれ{は}古いお城です。", en = "That is an old castle." },
   { tatoeba = "18496_179638", ja = "金沢{は}静かな町です。", en = "Kanazawa is a quiet city." },
@@ -1437,6 +1438,7 @@ After an amount, も stresses that it's a lot: 三時間も待った, "I waited 
 whole three hours". After a question word, it gives "every-" or, with a \
 negative, "no-" (see 誰か / 誰も)."""
 related = ["wa-particle", "ka-mo-question-words", "nan-mo"]
+homographs = ["number-mo"]
 examples = [
   { source = "yomeru", ja = "私{も}学生です。", en = "I'm a student too." },
   { source = "yomeru", ja = "弟{も}一緒に行きます。", en = "My little brother is coming too." },
@@ -5229,4 +5231,975 @@ examples = [
   { tatoeba = "275291_137945", ja = "待たせ{てごめん}。", en = "Sorry to have kept you waiting." },
   { tatoeba = "64416_148903", ja = "邪魔し{てすみません}。", en = "I'm sorry to bother you." },
   { tatoeba = "54635_125913", ja = "長くお待たせし{てすみませんでした}。", en = "I am sorry to have kept you waiting so long." },
+]
+
+[[point]]
+id = "zutto"
+pattern = "ずっと"
+forms = []
+jlpt = "N4"
+meaning = "all along, the whole time; (comparing) by far, much"
+formation = [
+  "ずっと + Verb［て］ + いる",
+  "Noun + より + ずっと + ［い］Adjective   (前よりずっといい)",
+]
+explanation = """
+Says a state or action lasted without a break: 朝からずっと雨だ, "it's \
+been raining since morning". In a comparison it means "far, much": \
+こっちのほうがずっと安い, "this one is much cheaper". It can also stretch \
+far in space: ずっと先, "a long way ahead"."""
+notes = """
+For time, it usually goes with ている or a span word (一日中, 今週, \
+それから). ずっと前 is "a long time ago". Compare とても, which only \
+says "very" and can't compare: use ずっと with より."""
+related = ["yori-hou-ga", "te-iru"]
+examples = [
+  { tatoeba = "257511_157023", ja = "私は今週{ずっと}忙しかった。", en = "I have been busy all this week." },
+  { tatoeba = "254333_160188", ja = "私はその後{ずっと}彼に会っていません。", en = "I have not seen him ever since." },
+  { tatoeba = "303768_99929", ja = "彼は僕より{ずっと}背が高い。", en = "He is much taller than I am." },
+]
+
+[[point]]
+id = "dandan"
+pattern = "だんだん"
+forms = ["段々", "だんだんと"]
+jlpt = "N4"
+meaning = "gradually, little by little, more and more"
+formation = ["だんだん + change verb   (なる, 増える, 近づく)"]
+explanation = """
+Describes a change that happens step by step: だんだん暖かくなる, "it's \
+gradually getting warmer". It goes with verbs of change, very often \
+〜くなる / 〜になる together with てくる or ていく."""
+notes = """
+Not for actions that don't change anything: だんだん歩く is wrong. \
+どんどん is faster and more forceful, "rapidly, one after another"; \
+だんだん is a steady, gentle progression. Usually written in kana."""
+related = ["dondon", "naru", "te-kuru", "te-iku"]
+examples = [
+  { tatoeba = "281096_122906", ja = "日は{だんだん}長くなる。", en = "The day is getting longer and longer." },
+  { tatoeba = "40299_203064", ja = "{だんだん}寒くなってきている。", en = "It's getting colder and colder." },
+  { tatoeba = "263417_151139", ja = "試験が{だんだん}近づいています。", en = "The examination is drawing nearer." },
+]
+
+[[point]]
+id = "dondon"
+pattern = "どんどん"
+forms = []
+jlpt = "N4"
+meaning = "rapidly, steadily, one after another; (do it) freely"
+formation = ["どんどん + Verb"]
+explanation = """
+Says something keeps moving forward fast and without stopping: 人が\
+どんどん増える, "the number of people keeps growing fast". In a request \
+it urges the listener on: どんどん食べて, "go ahead, eat as much as you \
+like"."""
+notes = """
+Compare だんだん, a slow, gradual change, and ますます, "more and more" \
+in degree. どんどん also imitates a banging sound (drums, knocking on a \
+door)."""
+related = ["dandan"]
+examples = [
+  { tatoeba = "268533_146029", ja = "状況は{どんどん}ひどくなる。", en = "The situation gets worse and worse." },
+  { source = "yomeru", ja = "たくさんあるから、{どんどん}食べてね。", en = "There's plenty, so eat as much as you like." },
+]
+
+[[point]]
+id = "toutou"
+pattern = "とうとう"
+forms = ["到頭"]
+jlpt = "N4"
+meaning = "finally, at last, in the end"
+formation = ["とうとう + Verb［た］"]
+explanation = """
+Marks the outcome reached after a long time or a long process: とうとう\
+完成した, "it was finally finished". The outcome can be good or bad: \
+とうとう来なかった, "in the end he never came". Almost always with a past \
+verb."""
+notes = """
+やっと is for a good outcome you've been hoping for, with relief: \
+やっと終わった！. とうとう is more neutral and fits bad endings and \
+things that never happened (とうとう来なかった), which やっと can't say. \
+ついに is close but more formal. For something that simply arrives on \
+its own, like a season, いよいよ fits better: いよいよ夏だ."""
+related = ["yatto"]
+examples = [
+  { tatoeba = "38443_201236", ja = "{とうとう}その赤ん坊は眠りについた。", en = "At last, the baby fell asleep." },
+  { tatoeba = "38439_201232", ja = "{とうとう}我々はカリフォルニアに着いた。", en = "At last, we reached California." },
+  { source = "yomeru", ja = "一時間待ったが、{とうとう}彼は来なかった。", en = "I waited an hour, but in the end he never came." },
+]
+
+[[point]]
+id = "daitai"
+pattern = "だいたい"
+forms = ["大体"]
+jlpt = "N4"
+meaning = "about, roughly; mostly, for the most part"
+formation = ["だいたい + Number / Verb / Adjective", "だいたい + の + Noun   (だいたいの人)"]
+explanation = """
+Gives an approximate amount or degree: だいたい三十分, "about thirty \
+minutes"; 宿題はだいたい終わった, "my homework is mostly done". As a noun, \
+だいたいの means "most, the general": だいたいの人は知っている, "most \
+people know"."""
+notes = """
+At the start of a complaint, だいたい means "in the first place, to begin \
+with": だいたい、君が悪い. Compare ぐらい, which follows the number \
+(三十分ぐらい); both can be used together: だいたい三十分ぐらい."""
+related = ["kurai"]
+examples = [
+  { tatoeba = "41218_203976", ja = "{だいたい}どのくらいの時間がかかりますか。", en = "About how long will it take?" },
+  { tatoeba = "311507_92204", ja = "彼女は{だいたい}私と同じ年だ。", en = "She is about my age." },
+  { tatoeba = "245373_169114", ja = "仕事は{だいたい}終わった。", en = "The work is mostly done." },
+]
+
+[[point]]
+id = "tatoeba"
+pattern = "たとえば"
+forms = ["例えば"]
+jlpt = "N4"
+meaning = "for example, for instance, say"
+formation = ["たとえば + Noun / Sentence"]
+explanation = """
+Introduces an example of what was just said: 果物、たとえばりんごが好き\
+です, "I like fruit, apples for example". It can also open a sentence \
+that gives an example or a supposition: たとえば、明日雨だったら？, "say \
+it rains tomorrow?"."""
+notes = """
+Examples are often listed with や or など: たとえば、すしやてんぷらなど. \
+Written in kanji as 例えば, from 例 (example)."""
+related = ["ya-particle", "nado"]
+examples = [
+  { tatoeba = "252384_162131", ja = "{例えば}、猫や犬のような動物が好きです。", en = "I like animals, for example, cats and dogs." },
+  { tatoeba = "326009_77709", ja = "{例えば}、ロンドンは今は朝７時です。", en = "For example, it is 7:00 a.m. in London now." },
+]
+
+[[point]]
+id = "moshi"
+pattern = "もし"
+forms = ["もしも"]
+jlpt = "N4"
+hover = false
+meaning = "if, in case, supposing"
+formation = ["もし + Sentence + たら / ば / なら / と", "もし + Verb［て］ + も   (even if)"]
+explanation = """
+Announces that a condition is coming. もし doesn't make the condition by \
+itself: the clause still needs たら, ば or なら: もし雨が降ったら、行かない, \
+"if it rains, I won't go". It makes the "if" clear early and stresses \
+that it's only a possibility."""
+notes = """
+もしも is more emphatic, "if by any chance". With ても it gives "even \
+if": もし雨が降っても行く. Never use もし alone without a conditional \
+ending. Not the もし in もしもし (hello on the \
+phone) or かもしれない; for that reason this entry is search-only."""
+related = ["tara", "ba", "nara", "to-conditional"]
+examples = [
+  { tatoeba = "30773_193606", ja = "{もし}時間があれば来ます。", en = "I will come, time permitting." },
+  { tatoeba = "30584_193419", ja = "{もし}明日雪がたくさん降れば、雪だるまを作ろう。", en = "If it snows much tomorrow, let's make a snowman." },
+  { source = "yomeru", ja = "{もし}行くなら、私も行きます。", en = "If you're going, I'll go too." },
+]
+
+[[point]]
+id = "mazu"
+pattern = "まず"
+forms = ["先ず"]
+jlpt = "N4"
+meaning = "first, first of all, to begin with; (with a negative) hardly"
+formation = ["まず + Verb", "まず + Verb［ない］ / だろう   (probably)"]
+explanation = """
+Puts an action first in a sequence: まず手を洗って、それから食べる, \
+"first wash your hands, then eat". It is often followed by それから, \
+次に or 最後に."""
+notes = """
+まず is about what to do before anything else, not first place in a \
+ranking: for "came first", use 一番 or 一位. In a guess, まず means \
+"almost certainly": まず間違いない, "there's hardly any doubt"; with a \
+negative, "hardly". 最初に is close, but more literal: "at the start"."""
+related = ["sorekara"]
+examples = [
+  { tatoeba = "32768_195593", ja = "{まず}出席を取ります。", en = "I'll take attendance first." },
+  { tatoeba = "32801_195627", ja = "{まず}どこに行きたいですか。", en = "Where would you like to go first?" },
+  { tatoeba = "32773_195599", ja = "{まず}私に話させてください。", en = "Please let me speak first." },
+]
+
+[[point]]
+id = "mata"
+pattern = "また"
+forms = ["又"]
+jlpt = "N4"
+meaning = "again; also, too; and, moreover"
+formation = ["また + Verb", "Noun + も + また   (also)", "Sentence。 + また、 + Sentence   (moreover)"]
+explanation = """
+Most often means "again": また来てください, "please come again"; \
+じゃあ、また, "see you". After も it adds "too, also": 彼もまた来なかった, \
+"he didn't come either". At the start of a sentence, especially in \
+writing, it adds another point: "also, moreover"."""
+notes = """
+Don't mix it up with まだ, "still, not yet": また来た is "came again", \
+まだ来ない "hasn't come yet". For "once more" with a number, use もう: \
+もう一度."""
+related = ["mada-te-inai", "mo-particle", "mata-wa"]
+examples = [
+  { tatoeba = "323324_80393", ja = "明日{また}来なさい。", en = "Come again tomorrow." },
+  { tatoeba = "32634_195460", ja = "{また}会えて嬉しいわ。", en = "Glad to see you again." },
+  { tatoeba = "304902_98797", ja = "彼も{また}来ない。", en = "He is not coming, either." },
+]
+
+[[point]]
+id = "mata-wa"
+pattern = "または"
+forms = ["又は", "もしくは"]
+jlpt = "N4"
+meaning = "or, either … or (formal, written)"
+formation = ["Noun + または + Noun", "Sentence + または + Sentence"]
+explanation = """
+Joins two choices: 黒または青のペン, "a black or blue pen". It is the \
+"or" of forms, rules, signs and announcements, where it often means \
+either one is fine."""
+notes = """
+In conversation, か is usual (お茶かコーヒー); それとも asks the listener \
+to pick in a question (お茶？それともコーヒー？). もしくは is even more \
+formal, found in legal and official writing."""
+related = ["ka-particle", "soretomo", "mata"]
+examples = [
+  { tatoeba = "813321_173494", ja = "紅茶{または}コーヒーはいかが？", en = "Would you like some tea or coffee?" },
+  { source = "yomeru", ja = "黒{または}青のペンで書いてください。", en = "Please write in black or blue pen." },
+]
+
+[[point]]
+id = "soredemo"
+pattern = "それでも"
+forms = []
+jlpt = "N4"
+meaning = "even so, still, nevertheless"
+formation = ["Sentence。 + それでも + Sentence", "Sentence + が、 + それでも + Sentence"]
+explanation = """
+Says the second fact holds despite the first: 雨が降っていた。それでも\
+出かけた, "it was raining. Even so, I went out". Stronger than でも, \
+it stresses that the first fact should have changed things but didn't."""
+notes = """
+Often followed by やはり / やっぱり: それでもやっぱり好きだ, "I still like \
+it all the same". でも simply says "but"; それでも insists on "in spite \
+of that"."""
+related = ["demo", "shikashi", "noni"]
+examples = [
+  { tatoeba = "308751_87985", ja = "彼女は沢山欠点がある。{それでも}私は彼女が好きです。", en = "She has a lot of faults. Still, I like her." },
+  { tatoeba = "302937_100760", ja = "彼は疲れていたが、{それでも}彼らの手伝いに行った。", en = "He was tired, and yet he went to help them." },
+]
+
+[[point]]
+id = "da-ga"
+pattern = "だが"
+forms = []
+jlpt = "N4"
+meaning = "but, however (plain, written)"
+formation = ["Sentence。 + だが、 + Sentence", "Noun / ［な］Adjective + だが、 + Sentence"]
+explanation = """
+At the start of a sentence, だが is the plain-style "but", common in \
+writing and narration: 計画はよかった。だが、お金がなかった, "the plan \
+was good. But there was no money". Inside a sentence it is just だ + が: \
+学生だが、働いている, "I'm a student, but I work"."""
+notes = """
+In speech, だが sounds firm and a bit masculine; でも is the everyday \
+choice, けど is casual, and しかし is formal. The polite version is \
+ですが."""
+related = ["demo", "shikashi", "kedo", "ga-particle"]
+examples = [
+  { source = "yomeru", ja = "この店は高い。{だが}、とてもおいしい。", en = "This restaurant is expensive. But it's very good." },
+  { source = "yomeru", ja = "兄は医者{だが}、病院が嫌いだ。", en = "My brother is a doctor, but he hates hospitals." },
+]
+
+[[point]]
+id = "sonnani"
+pattern = "そんなに"
+forms = ["こんなに", "あんなに", "どんなに"]
+jlpt = "N4"
+meaning = "so much, that much; (with a negative) not that"
+formation = ["そんなに + Verb / Adjective", "そんなに + ［い］Adjective［く］ + ない"]
+explanation = """
+Points at a degree, like the other こそあど words: こんなに is "this much" \
+(here, near me), そんなに "that much" (what you said or did), あんなに \
+"that much" (something both know of). Very often with a negative: \
+そんなに高くない, "not that expensive". どんなに asks "how much", or \
+with ても means "no matter how"."""
+notes = """
+そんなに〜ない is a softer "not very", close to あまり〜ない. In requests \
+it warns: そんなに急がないで, "don't rush like that". For "such a" before \
+a noun, use そんな / こんな: そんな人, not そんなに人."""
+related = ["ko-so-a-do", "amari-nai"]
+examples = [
+  { tatoeba = "54729_217424", ja = "{こんなに}待たせてごめんなさい。", en = "I'm sorry to have kept you waiting so long." },
+  { tatoeba = "328741_74978", ja = "{そんなに}緊張しなくてもいいですよ。", en = "There's no need to be that tense." },
+  { source = "yomeru", ja = "「高かった？」「{そんなに}高くなかったよ。」", en = "\"Was it expensive?\" \"Not that expensive.\"" },
+]
+
+[[point]]
+id = "sukoshimo-nai"
+pattern = "少しも〜ない"
+forms = ["少しも", "すこしも"]
+jlpt = "N4"
+meaning = "not at all, not even a little"
+formation = ["少しも + Verb［ない］", "少しも + ［い］Adjective［く］ + ない"]
+explanation = """
+Literally "not even a little": it makes a negative total. 少しもわから\
+ない, "I don't understand it at all". Always followed by a negative."""
+notes = """
+少しも is neutral and slightly formal; ちっとも is its casual twin; \
+全然 is the most common in speech. On its own, 少しも answers "not at \
+all": 「いいえ、少しも。」."""
+related = ["chittomo", "zenzen", "amari-nai"]
+examples = [
+  { tatoeba = "306869_96835", ja = "彼らは{少しも}仕事をしない。", en = "They don't do a lick of work." },
+  { tatoeba = "66787_229428", ja = "いいえ、{少しも}。", en = "Not at all." },
+  { source = "yomeru", ja = "このコートは{少しも}暖かくない。", en = "This coat isn't warm at all." },
+]
+
+[[point]]
+id = "chittomo"
+pattern = "ちっとも〜ない"
+forms = ["ちっとも"]
+jlpt = "N4"
+meaning = "not at all, not in the least (casual)"
+formation = ["ちっとも + Verb［ない］", "ちっとも + ［い］Adjective［く］ + ない"]
+explanation = """
+The spoken, casual version of 少しも: ちっとも寒くない, "it's not cold at \
+all". It often carries a note of complaint or surprise: ちっとも来ない, \
+"he just won't come"."""
+notes = """
+Only with negatives. 全然 is the most neutral; ちっとも sounds more \
+emotional and conversational, and is rare in writing. It measures \
+amount, not how often: for "I've never been", say 全然 / 一度も行った\
+ことがない, not ちっとも."""
+related = ["sukoshimo-nai", "zenzen"]
+examples = [
+  { tatoeba = "324578_79139", ja = "ゆうべは{ちっとも}眠れなかった。", en = "I did not sleep at all last night." },
+  { tatoeba = "73539_236163", ja = "「疲れたか」「いいや、{ちっとも}」", en = "\"Are you tired?\" \"No, not at all.\"" },
+  { tatoeba = "303341_100348", ja = "彼は父親の言うことを{ちっとも}聞かない。", en = "He never takes any notice of what his father says." },
+]
+
+[[point]]
+id = "dekiru-dake"
+pattern = "できるだけ"
+forms = ["出来るだけ"]
+jlpt = "N4"
+meaning = "as much as possible, as … as one can"
+formation = ["できるだけ + Verb / ［い］Adjective［く］   (できるだけ早く)", "できるだけ + Noun   (できるだけの事)"]
+explanation = """
+Literally "as much as one can": できるだけ早く来てください, "please come \
+as early as you can". It pushes to the limit of what's possible."""
+notes = """
+なるべく is softer, "if possible, as far as is reasonable"; できるだけ \
+sounds more determined. できるだけのことをする is "do everything one \
+can". Verb［できる］ + だけ (食べられるだけ, "as much as I can eat") is a \
+different point."""
+related = ["narubeku", "dake"]
+examples = [
+  { tatoeba = "311631_92080", ja = "彼女は{できるだけ}速く走った。", en = "She ran as fast as possible." },
+  { tatoeba = "39522_202310", ja = "{できるだけ}早く手紙をくださいね。", en = "Please write to me as soon as possible." },
+  { source = "yomeru", ja = "{できるだけ}毎日歩くようにしています。", en = "I try to walk every day as much as I can." },
+]
+
+[[point]]
+id = "narubeku"
+pattern = "なるべく"
+forms = []
+jlpt = "N4"
+meaning = "as much as possible, if possible, where you can"
+formation = ["なるべく + Verb / ［い］Adjective［く］", "なるべく + Verb［ない］ + ように"]
+explanation = """
+Asks or plans for something "as far as is reasonable": なるべく早く\
+帰ります, "I'll come home as early as I can". Common in polite requests \
+and rules of thumb: なるべく水を飲む, "drink water where you can"."""
+notes = """
+Softer than できるだけ, which pushes to the limit. With a negative \
+habit it pairs with ようにする: なるべく夜は食べないようにしている. \
+Usually written in kana."""
+related = ["dekiru-dake", "you-ni-suru"]
+examples = [
+  { tatoeba = "36260_199062", ja = "{なるべく}ゆっくり話してもらえますか。", en = "Could you speak as slowly as possible?" },
+  { source = "yomeru", ja = "夜は{なるべく}早く寝るようにしています。", en = "I try to go to bed early at night when I can." },
+]
+
+[[point]]
+id = "kanarazu"
+pattern = "必ず"
+forms = ["かならず"]
+jlpt = "N4"
+meaning = "without fail, always, certainly"
+formation = ["必ず + Verb"]
+explanation = """
+Says something always or certainly happens: 必ず電話します, "I'll call \
+you, I promise"; 毎朝必ず走る, "I run every morning without fail". It \
+states a rule or a firm promise, not a guess."""
+notes = """
+きっと is a confident guess (きっと来る, "I'm sure he'll come"); ぜひ is \
+a wish or invitation (ぜひ来てください). For "never", use 決して〜ない \
+rather than 必ず with a negative. 必ずしも〜ない, "not necessarily", \
+is a separate point."""
+related = ["kitto", "zehi", "kesshite"]
+examples = [
+  { tatoeba = "303624_100073", ja = "彼は母の誕生日には{必ず}電話をかける。", en = "He never fails to call his mother on her birthday." },
+  { tatoeba = "270047_144518", ja = "人は皆{必ず}死ぬ。", en = "All men must die." },
+  { source = "yomeru", ja = "明日は{必ず}来てください。", en = "Be sure to come tomorrow." },
+]
+
+[[point]]
+id = "omo-ni"
+pattern = "主に"
+forms = ["おもに"]
+jlpt = "N4"
+meaning = "mainly, mostly, chiefly"
+formation = ["主に + Verb", "主に + Noun + だ"]
+explanation = """
+Says what makes up the largest part of something: このパソコンは主に\
+仕事で使う, "I mostly use this computer for work". It points at the main \
+part while allowing for others."""
+notes = """
+Compare だいたい, "roughly, mostly done", about amount, and ほとんど, \
+"almost all". Don't confuse it with 主 inside words like 持ち主 (owner) \
+followed by に."""
+related = ["daitai"]
+examples = [
+  { tatoeba = "281755_122247", ja = "日本人は{主に}米を食べる。", en = "The Japanese live mainly on rice." },
+  { source = "yomeru", ja = "このかばんは{主に}旅行で使います。", en = "I mainly use this bag for travel." },
+]
+
+[[point]]
+id = "ainiku"
+pattern = "あいにく"
+forms = ["生憎", "あいにくですが"]
+jlpt = "N4"
+meaning = "unfortunately, I'm sorry but (an inconvenient fact)"
+formation = ["あいにく + Sentence", "あいにく + の + Noun   (あいにくの雨)"]
+explanation = """
+Introduces a fact that gets in the way of what someone wanted: あいにく\
+父は出かけています, "I'm sorry, my father is out". Polite and a bit \
+apologetic, it's common in shops, on the phone and in business."""
+notes = """
+あいにくですが opens a polite refusal. あいにくの雨 is "the bad luck of \
+rain". 残念ながら is a general "regrettably"; あいにく is specifically \
+bad luck or bad timing that gets in someone's way. Don't use it for \
+your own fault."""
+related = []
+examples = [
+  { tatoeba = "71930_234554", ja = "{あいにく}父は留守です。", en = "I'm sorry, my father is out." },
+  { tatoeba = "71935_234558", ja = "{あいにく}店は閉まっていた。", en = "Unfortunately, the store was closed." },
+  { tatoeba = "71949_234572", ja = "{あいにく}ですが本日は予約でいっぱいです。", en = "I'm sorry, today is fully booked." },
+]
+
+[[point]]
+id = "goro"
+pattern = "ごろ"
+forms = ["頃"]
+jlpt = "N4"
+meaning = "around, about (a point in time)"
+formation = ["Time Noun + ごろ   (三時ごろ, 来週ごろ)", "Time Noun + ごろ + に + Verb"]
+explanation = """
+After a time, ごろ means "around that time": 三時ごろ行きます, "I'll go \
+around three". It works with clock times, days, months and seasons: \
+来月ごろ, 春ごろ. Ask with 何時ごろ, "around what time?"."""
+notes = """
+ごろ is for a point in time; くらい / ぐらい is for an amount or a length \
+of time: 三時ごろ (around three o'clock) but 三時間ぐらい (about three \
+hours). に after ごろ is optional. As a noun, 頃 (read ころ) means "the \
+time when": 子供の頃, "when I was a child"."""
+related = ["kurai"]
+examples = [
+  { tatoeba = "266488_148071", ja = "十時{ごろ}ですか。", en = "Is it about ten o'clock?" },
+  { tatoeba = "16775_177923", ja = "いつも何時{頃}に寝るの？", en = "What time do you usually go to bed?" },
+  { tatoeba = "243292_171185", ja = "今夜、８時{頃}に電話します。", en = "I'll call you up around eight this evening." },
+]
+
+[[point]]
+id = "goto-ni"
+pattern = "ごとに"
+forms = ["毎に"]
+jlpt = "N4"
+meaning = "every, each (time, group, thing)"
+formation = ["Number + Counter + ごとに   (五分ごとに)", "Noun + ごとに   (日曜日ごとに, 家ごとに)"]
+explanation = """
+Says something happens again at each interval or for each one of a \
+group: バスは十分ごとに来る, "the bus comes every ten minutes"; 国ごとに\
+違う, "it differs from country to country". 日ごとに means "day by \
+day", for a gradual change."""
+notes = """
+With days, ごとに and おきに differ: 二日ごとに is "every two days", but \
+一日おきに is "every other day", skipping one in between. With minutes \
+and hours they are used much alike. 毎 (毎日, 毎週) is the usual word \
+for "every day, every week"; ごとに puts weight on each interval or \
+each member. After a verb (会うごとに) it means "each time", though たびに \
+is more usual there."""
+related = ["oki-ni"]
+examples = [
+  { tatoeba = "252616_161900", ja = "私は６時間{ごとに}２粒飲まなければなりません。", en = "I have to take two pills every six hours." },
+  { tatoeba = "302195_101500", ja = "彼は日{ごとに}よくなってきている。", en = "He is getting better day by day." },
+  { source = "yomeru", ja = "このバスは十分{ごとに}来ます。", en = "This bus comes every ten minutes." },
+]
+
+[[point]]
+id = "sa-noun"
+pattern = "さ"
+forms = []
+jlpt = "N4"
+meaning = "-ness, degree (turns an adjective into a noun)"
+formation = ["［い］Adjective［い̶］ + さ   (高い → 高さ)", "［な］Adjective + さ   (便利 → 便利さ)"]
+explanation = """
+Turns an adjective into a noun for its degree or amount: 高い → 高さ, \
+"height"; 重い → 重さ, "weight"; 大切 → 大切さ, "importance". It's how \
+you ask or state a size: 長さは二メートルです, "the length is two \
+meters"."""
+notes = """
+いい becomes よさ. さ is neutral and measurable (深さ, "depth" in \
+meters); み, a later point, adds a felt quality (深み, "depth" of a \
+flavor or a person). Not every word takes み, but almost any adjective \
+takes さ."""
+related = ["mi-suffix"]
+examples = [
+  { tatoeba = "68363_230996", ja = "あの山はどれくらいの{高さ}がありますか。", en = "How high is that mountain?" },
+  { tatoeba = "242931_171544", ja = "今日は昼と夜の{長さ}が同じです。", en = "The lengths of day and night are the same today." },
+  { source = "yomeru", ja = "この箱の{重さ}は五キロです。", en = "This box weighs five kilos." },
+]
+
+[[point]]
+id = "dai-age"
+pattern = "代"
+forms = ["年代"]
+jlpt = "N4"
+meaning = "(age) in one's …s; (era) the …s; charge, fee"
+formation = ["Number + 代   (二十代)", "Year + 年代   (九十年代)", "Noun + 代   (電気代, バス代)"]
+explanation = """
+After a round number, 代 (だい) is a span of ten years of age: 二十代, \
+"in one's twenties"; 十代, "teens". After a year, 年代 is a decade: \
+一九九〇年代, "the 1990s". After a noun, 代 is the money paid for it: \
+電気代, "the electricity bill"; 食事代, "the cost of the meal"."""
+notes = """
+二十代 covers 20 to 29, so it never means exactly twenty. For fees, \
+料金 is the general word for a charge; 代 is joined to what you pay \
+for. 時代 ("era, period") is a word of its own."""
+related = []
+examples = [
+  { tatoeba = "318947_84767", ja = "父は５０{代}です。", en = "My father is in his fifties." },
+  { tatoeba = "251623_162890", ja = "私の父は２０{代}で結婚しました。", en = "My father got married in his twenties." },
+  { source = "yomeru", ja = "今月は電気{代}が高かった。", en = "The electricity bill was high this month." },
+]
+
+[[point]]
+id = "kaku"
+pattern = "各"
+forms = []
+jlpt = "N4"
+meaning = "each, every (member of a group)"
+formation = ["各 + Noun   (各国, 各部屋, 各駅)"]
+explanation = """
+A prefix for "each" of a group, taken one by one: 各国, "each country"; \
+各部屋, "each room"; 各自, "each person". It's common in writing, \
+notices and announcements: 各駅停車, "a train stopping at every \
+station"."""
+notes = """
+In everyday speech, それぞれの or どの〜も sound more natural: それぞれの\
+部屋. 毎 (毎日, 毎年) is "every" repeating in time; 各 is each member \
+of a group. 各 joins mostly short kanji nouns."""
+related = ["goto-ni"]
+examples = [
+  { tatoeba = "21756_184628", ja = "{各}国にはそれぞれの習慣がある。", en = "Each country has its own customs." },
+  { tatoeba = "43433_206187", ja = "その列車は{各}駅停車です。", en = "The train stops at every station." },
+  { source = "yomeru", ja = "{各}部屋にテレビがあります。", en = "Each room has a TV." },
+]
+
+[[point]]
+id = "me-ordinal"
+pattern = "目"
+forms = []
+jlpt = "N4"
+meaning = "-th (first, second, third … in order)"
+formation = ["Number + Counter + 目   (二つ目, 三回目, 二番目)"]
+explanation = """
+After a number and counter, 目 (め) turns it into a position in order: \
+三つ目の駅, "the third station"; 二回目, "the second time"; 二番目に\
+高い, "the second tallest". 日目 and 年目 count days or years from the \
+start: 三日目, "day three"."""
+notes = """
+Without 目 the counter is just an amount: 三回 is "three times", \
+三回目 "the third time". 一番 alone means "first, the most". Keep 三日目 \
+(day three) apart from 三日 (the third of the month, or three days)."""
+related = []
+examples = [
+  { tatoeba = "635028_635027", ja = "東京駅は三つ{目}です。", en = "Tokyo Station is the third stop." },
+  { tatoeba = "55478_218166", ja = "これは日本で２番{目}に長い川だ。", en = "This is the second longest river in Japan." },
+  { source = "yomeru", ja = "日本は三回{目}です。", en = "This is my third time in Japan." },
+]
+
+[[point]]
+id = "ma-prefix"
+pattern = "真"
+forms = ["真っ", "真ん"]
+jlpt = "N4"
+meaning = "right, completely, pure (intensifying prefix)"
+formation = ["真っ + Word   (真っ白, 真っ暗, 真っすぐ)", "真ん + Word   (真ん中, 真ん前)", "真 + Noun   (真夜中, 真冬)"]
+explanation = """
+A prefix (ま) that makes a word full or exact: 白い → 真っ白, "pure \
+white"; 暗い → 真っ暗, "pitch dark"; 中 → 真ん中, "the very middle"; \
+夜中 → 真夜中, "the dead of night". It takes the form 真っ, 真ん or \
+真 depending on the word."""
+notes = """
+These are fixed words, not a free rule: learn each one. Some readings \
+change: 真っ赤 (まっか), 真っ青 (まっさお). Most results work as な-adjectives \
+or nouns (真っ白な雪, 真っ赤な顔); 真っ白い and 真っ黒い are heard too. 真っすぐ ("straight") is a \
+word of its own."""
+related = []
+examples = [
+  { tatoeba = "21995_184864", ja = "外は{真っ}暗だった。", en = "It was pitch black outside." },
+  { tatoeba = "44891_207638", ja = "その店はちょうど駅の{真ん}前にあります。", en = "The shop is just in front of the station." },
+  { source = "yomeru", ja = "雪で庭が{真っ}白になった。", en = "The garden turned white with snow." },
+]
+
+[[point]]
+id = "fuu"
+pattern = "風"
+forms = ["ふうに"]
+jlpt = "N4"
+meaning = "way, manner (こんな風に); style (日本風)"
+formation = ["こんな / そんな / あんな / どんな + 風に + Verb", "Noun + 風   (日本風, 和風)"]
+explanation = """
+風 (ふう) is a way of doing something: こんな風に書く, "write it like \
+this"; どんな風に, "in what way, how". After a noun, it means "in the \
+style of": 日本風の部屋, "a Japanese-style room"; 和風 and 洋風, \
+"Japanese style" and "Western style"."""
+notes = """
+Often written in kana: こんなふうに. こういう風に and こうやって both mean \
+"this way". On its own, 風 is read かぜ, "wind": 風に is usually "in \
+the wind" unless こんな or どんな comes before it."""
+related = ["you-da"]
+examples = [
+  { tatoeba = "71566_234191", ja = "あなたがそんな{風に}考えるのは残念です。", en = "I'm sorry that you should think that way." },
+  { tatoeba = "37564_232508", ja = "あなたはどういう{風に}してここへ来ましたか。", en = "How did you come here?" },
+  { source = "yomeru", ja = "日本{風}の部屋に泊まりました。", en = "I stayed in a Japanese-style room." },
+]
+
+[[point]]
+id = "ka-suru"
+pattern = "化"
+forms = ["化する"]
+jlpt = "N4"
+meaning = "-ization, becoming (国際化, 映画化)"
+formation = ["Noun + 化   (国際化)", "Noun + 化 + する / される   (映画化される)"]
+explanation = """
+A suffix (か) for a change into something, like "-ization": 国際化, \
+"internationalization"; 自動化, "automation". With する it becomes a \
+verb: その本は映画化された, "the book was made into a film". It's \
+common in news and writing."""
+notes = """
+It mostly joins kanji nouns. 化 also sits inside words of their own: \
+変化 ("change"), 文化 ("culture"). Learn these as words rather than as \
+the suffix."""
+related = []
+examples = [
+  { tatoeba = "43961_206713", ja = "その本が映画{化}されてから５年になる。", en = "It is five years since the book was made into a movie." },
+  { source = "yomeru", ja = "この町も国際{化}が進んでいる。", en = "This town is becoming international too." },
+]
+
+[[point]]
+id = "ika"
+pattern = "以下"
+forms = []
+jlpt = "N4"
+meaning = "or less, … and under, below; the following"
+formation = ["Number + Counter + 以下   (六歳以下)", "Noun + 以下   (平均以下)", "以下 + の + Noun   (以下の文)"]
+explanation = """
+After an amount, 以下 means "that much or less", including the number: \
+六歳以下, "six and under". After a noun, it means "below": 平均以下, \
+"below average". On its own, 以下 is "the following": 以下の質問, "the \
+questions below"."""
+notes = """
+To leave the number out, use 未満: 十八歳未満, "under eighteen" (17 and \
+below). The opposite is 以上, "or more". For "within" a time or \
+distance, use 以内: 一時間以内, "within an hour"."""
+related = ["ijou", "inai"]
+examples = [
+  { source = "yomeru", ja = "六歳{以下}の子供は無料です。", en = "Children six and under are free." },
+  { tatoeba = "28378_191218", ja = "{以下}は彼の話です。", en = "The following is his story." },
+  { source = "yomeru", ja = "一万円{以下}のカメラを探しています。", en = "I'm looking for a camera for 10,000 yen or less." },
+]
+
+[[point]]
+id = "igai"
+pattern = "以外"
+forms = ["以外に", "以外は"]
+jlpt = "N4"
+meaning = "except, other than, besides"
+formation = ["Noun + 以外 (+ は)   (日曜日以外)", "Noun + 以外 + の + Noun   (日本以外の国)", "Noun + 以外 + に   (besides)"]
+explanation = """
+Sets one thing apart from the rest: 日曜日以外は毎日働く, "I work every \
+day except Sunday"; 日本以外の国, "countries other than Japan". With に, \
+it means "besides": 英語以外に何語を話しますか, "what languages do you \
+speak besides English?"."""
+notes = """
+Mind the homophone 意外 (いがい), "unexpected": 意外に安い, "surprisingly \
+cheap". With a negative, 以外に gives "no … other than": これ以外に方法\
+がない, "there's no other way". のほか is a more written \
+"besides"."""
+related = ["shika-nai", "dake"]
+examples = [
+  { tatoeba = "262459_152094", ja = "私{以外}の誰もがそれを知っています。", en = "Everybody knows it except me." },
+  { tatoeba = "34453_197271", ja = "ビル{以外は}みなあつまった。", en = "Except for Bill, they all made it." },
+  { source = "yomeru", ja = "英語{以外に}何語を話しますか。", en = "What languages do you speak besides English?" },
+]
+
+[[point]]
+id = "ijou"
+pattern = "以上"
+forms = ["以上です"]
+jlpt = "N4"
+meaning = "or more, … and over, above; (以上です) that's all"
+formation = ["Number + Counter + 以上   (二十歳以上)", "Noun / Verb［た］ + 以上 + に   (予想以上に, 思った以上に)", "これ / それ + 以上 + Negative"]
+explanation = """
+After an amount, 以上 means "that much or more", including the number: \
+二十歳以上, "twenty and over". After a noun or a thought, it means \
+"more than": 思った以上に難しい, "harder than I thought". これ以上 with \
+a negative is "no more, any further". 以上です closes a talk or a \
+list: "that's all"."""
+notes = """
+English "more than five" leaves out five; 五人以上 includes it. To \
+leave the number out, say 五人より多い or 五人を超える. The opposite is \
+以下. Later, 以上 after a verb also means "since, now that"."""
+related = ["ika"]
+examples = [
+  { tatoeba = "50529_213243", ja = "そのクラブには５０人{以上}の会員がいる。", en = "The club has more than fifty members." },
+  { tatoeba = "37788_200587", ja = "とても暑くて、それ{以上}我慢できなかった。", en = "It was hot. I couldn't stand it any longer." },
+  { source = "yomeru", ja = "私の話は{以上}です。", en = "That's all I have to say." },
+]
+
+[[point]]
+id = "number-wa"
+pattern = "は"
+forms = []
+jlpt = "N4"
+meaning = "at least (after an amount)"
+formation = ["Number + Counter + は   (一日二回は, 三十分は)"]
+explanation = """
+After an amount, は sets a minimum: "at least that much". 駅まで三十分は\
+かかる, "it takes at least thirty minutes to the station"; 一度は行って\
+みたい, "I want to go at least once". 少なくとも often comes before it \
+for the same sense."""
+notes = """
+The opposite stress is も, "as many as": 三十分もかかった (that's a lot). \
+しか + negative is "only": 三十分しかない. An amount at the start of a \
+sentence is often just the topic: 二人は結婚した, "the two of them got \
+married"."""
+related = ["number-mo", "shika-nai", "wa-particle"]
+homographs = ["wa-particle"]
+examples = [
+  { tatoeba = "267805_146756", ja = "少なくとも１００人{は}出席していた。", en = "No less than one hundred people were present." },
+  { source = "yomeru", ja = "一日に二回{は}歯をみがきます。", en = "I brush my teeth at least twice a day." },
+  { source = "yomeru", ja = "駅まで三十分{は}かかる。", en = "It takes at least thirty minutes to the station." },
+]
+
+[[point]]
+id = "number-mo"
+pattern = "も"
+forms = []
+jlpt = "N4"
+meaning = "as many as, as much as, as long as (a lot)"
+formation = ["Number + Counter + も   (五つも, 三時間も)"]
+explanation = """
+After an amount, も stresses that it's large, more than expected: \
+ケーキを五つも食べた, "I ate five cakes, no less!"; 三時間も待った, "I \
+waited a full three hours". The speaker's surprise or complaint is in \
+the も."""
+notes = """
+With one and a negative, も means "not even one": 一人もいない, "there's \
+no one"; 一度も行ったことがない. The opposite stress is は, "at least", \
+or しか + negative, "only". 何 + counter + も is "many": 何回も."""
+related = ["number-wa", "nan-mo", "mo-particle"]
+homographs = ["mo-particle"]
+examples = [
+  { tatoeba = "269176_145386", ja = "新しい自転車は５００００円{も}した。", en = "The new bicycle cost me as much as 50,000 yen." },
+  { tatoeba = "27006_189850", ja = "雨が３時間{も}激しく降り続いています。", en = "It has been raining heavily for three hours." },
+  { source = "yomeru", ja = "ケーキを五つ{も}食べた。", en = "I ate five pieces of cake, no less." },
+]
+
+[[point]]
+id = "nan-counter-ka"
+pattern = "何〜か"
+forms = ["何人か", "何回か", "何度か", "何冊か", "何本か", "何日か", "いくつか"]
+jlpt = "N4"
+meaning = "some, a few, several (people, times, things …)"
+formation = ["何 + Counter + か   (何人か, 何回か)", "いくつか   (some things)"]
+explanation = """
+何 with a counter and か gives an unstated small number: 何人か来た, \
+"a few people came"; 何回か行った, "I've been a few times". いくつか \
+does the same for things: りんごをいくつか買った, "I bought some \
+apples". Add の before a noun: 何人かの学生."""
+notes = """
+Don't confuse it with 何〜も, "many": 何回か is "a few times", 何回も \
+"many times". Without か it's a question: 何人, "how many people?". \
+Mind the reading: 何人か is なんにんか."""
+related = ["nan-mo", "ka-mo-question-words"]
+examples = [
+  { tatoeba = "24518_187382", ja = "{何人か}遅刻した。", en = "Some were late." },
+  { tatoeba = "29636_192472", ja = "りんごが{いくつか}木から落ちた。", en = "Some apples fell down from the tree." },
+  { tatoeba = "252937_161579", ja = "私はあの学校の生徒を{何人か}知ってます。", en = "I know some students in that school." },
+]
+
+[[point]]
+id = "ku-adverb"
+pattern = "く"
+forms = []
+jlpt = "N4"
+meaning = "-ly (an adjective describing an action)"
+formation = ["［い］Adjective［く］ + Verb   (早く起きる)", "［な］Adjective + に + Verb   (静かに話す)"]
+explanation = """
+To describe how an action is done, an い-adjective takes its く form: \
+早い → 早く起きる, "get up early"; 楽しい → 楽しく遊ぶ, "play happily". \
+A な-adjective takes に instead: 静かに話す, "speak quietly"; きれいに\
+書く, "write neatly"."""
+notes = """
+いい becomes よく: よく寝た, "I slept well". The same forms go before \
+なる and する: 大きくなる (become big), 静かにする (be quiet). Keep \
+早く (early) and 速く (fast) apart in writing; both read はやく."""
+related = ["naru", "ni-suru"]
+examples = [
+  { tatoeba = "301024_102670", ja = "彼は{速く}走れる。", en = "He can run fast." },
+  { tatoeba = "242176_172299", ja = "今朝は１時間{早く}起きた。", en = "He got up an hour early this morning." },
+  { source = "yomeru", ja = "図書館では{静かに}話してください。", en = "Please speak quietly in the library." },
+]
+
+[[point]]
+id = "toka"
+pattern = "とか"
+forms = ["とか〜とか"]
+jlpt = "N4"
+meaning = "things like, such as (casual list); … or something"
+formation = ["Noun A + とか + Noun B + (とか)", "Verb［る］ + とか + Verb［る］ + とか", "Noun + とか   (or something)"]
+explanation = """
+A casual way to give examples: すしとかてんぷらとかが好き, "I like \
+things like sushi and tempura". Unlike や, it can also join verbs: \
+掃除するとか洗濯するとか, "cleaning, laundry, that kind of thing". \
+After one noun, it softens a suggestion: お茶とか飲む？, "want some tea \
+or something?"."""
+notes = """
+や is the neutral, written choice and joins nouns only; とか belongs to \
+conversation. The last とか can be dropped. Later levels add a \
+hearsay use, "I heard that …", at the end of a sentence."""
+related = ["ya-particle", "nado", "tari-tari"]
+hover = false
+examples = [
+  { source = "yomeru", ja = "週末は映画{とか買い物とか}に行きます。", en = "On weekends I go to movies, shopping and so on." },
+  { source = "yomeru", ja = "すし{とかてんぷらとか}が好きです。", en = "I like things like sushi and tempura." },
+  { source = "yomeru", ja = "お茶{とか}飲まない？", en = "Want some tea or something?" },
+]
+
+[[point]]
+id = "nado"
+pattern = "など"
+forms = ["なんか", "なんて"]
+jlpt = "N4"
+meaning = "etc., and so on, such as; (なんか, なんて) the likes of"
+formation = ["Noun A + や + Noun B + など", "Noun + など   (お茶などいかが)", "Noun + なんか / なんて (casual)"]
+explanation = """
+After a list of examples, など means "and so on": 京都や奈良などに行った, \
+"I went to Kyoto, Nara and other places". After one noun, it softens a \
+suggestion: お茶などいかがですか, "how about some tea?". In speech, \
+なんか and なんて are the casual versions."""
+notes = """
+なんか / なんて can also play something down: 宿題なんかしたくない, "I \
+don't want to do (stupid) homework"; 私なんか, "someone like me", is \
+humble. About other people's things it sounds dismissive. なんて \
+before an adjective, "how …!", is a separate point."""
+related = ["ya-particle", "toka"]
+examples = [
+  { source = "yomeru", ja = "京都や奈良{など}に行きました。", en = "I went to places like Kyoto and Nara." },
+  { source = "yomeru", ja = "お茶{など}いかがですか。", en = "Would you like some tea or something?" },
+  { source = "yomeru", ja = "私{なんか}には無理です。", en = "Someone like me couldn't do it." },
+]
+
+[[point]]
+id = "demo-demo"
+pattern = "でも〜でも"
+forms = []
+jlpt = "N4"
+meaning = "whether A or B, either A or B (it doesn't matter)"
+formation = ["Noun A + でも + Noun B + でも"]
+explanation = """
+Names two choices and says the result is the same for both: 雨でも雪\
+でも行く, "rain or snow, I'm going"; 肉でも魚でもいい, "meat or fish, \
+either is fine". It often comes before いい or a statement that holds \
+in every case."""
+notes = """
+For verbs and adjectives, use ても〜ても: 降っても降らなくても, "whether it \
+rains or not". AもBも is "both A and B", a plain list without the \
+"no matter which" feeling. Single でも, "or something, even", is its \
+own point."""
+related = ["demo", "temo", "mo-particle"]
+examples = [
+  { source = "yomeru", ja = "雨{でも雪でも}、毎日走ります。", en = "Rain or snow, I run every day." },
+  { source = "yomeru", ja = "肉{でも魚でも}いいですよ。", en = "Meat or fish, either is fine." },
+  { source = "yomeru", ja = "大人{でも子供でも}楽しめる映画です。", en = "It's a movie both adults and children can enjoy." },
+]
+
+[[point]]
+id = "transitive-intransitive"
+pattern = "自動詞・他動詞"
+forms = ["自動詞", "他動詞"]
+jlpt = "N4"
+meaning = "intransitive and transitive verb pairs (開く / 開ける)"
+formation = ["Noun + が + Intransitive Verb   (ドアが開く)", "Noun + を + Transitive Verb   (ドアを開ける)"]
+explanation = """
+Many verbs come in pairs: an intransitive one (自動詞) for something \
+that happens by itself, with が, and a transitive one (他動詞) for \
+someone doing it, with を. ドアが開く, "the door opens"; ドアを開ける, \
+"(I) open the door". Others: 閉まる / 閉める, つく / つける, 消える / 消す, \
+始まる / 始める."""
+notes = """
+There's no single rule for which is which, so learn them as pairs. \
+For a state, the intransitive takes ている (窓が開いている, "the window is \
+open"); the transitive takes てある when someone did it on purpose \
+(窓が開けてある, "the window has been left open")."""
+related = ["te-aru", "te-iru"]
+hover = false
+examples = [
+  { tatoeba = "39002_201791", ja = "ドアを{開け}なさい。", en = "Open the door." },
+  { tatoeba = "319557_84158", ja = "部屋の電気が{つかない}。", en = "The light doesn't come on in my room." },
+  { source = "yomeru", ja = "風でドアが{開きました}。", en = "The door opened in the wind." },
+]
+
+[[point]]
+id = "ga-mirareru"
+pattern = "が見られる"
+forms = ["がみられる"]
+jlpt = "N4"
+meaning = "can be seen, is found; (written) there is"
+formation = ["Noun + が見られる"]
+explanation = """
+The potential of 見る with が: something can be seen in a place or at \
+a time: 今夜は満月が見られる, "you can see a full moon tonight". In \
+reports and the news, it means "is found, is observed": 変化が見られる, \
+"a change can be seen"."""
+notes = """
+見える is what comes into view by itself (窓から山が見える); 見られる is \
+being able to see it given the chance (この映画館で古い映画が見られる). \
+見られる is also the passive, "be seen, be watched". In casual speech, \
+見れる is heard for the potential."""
+related = ["mieru", "potential-form", "passive"]
+examples = [
+  { tatoeba = "243395_171084", ja = "今夜は満月{が見られる}。", en = "A full moon can be seen tonight." },
+  { tatoeba = "58344_221022", ja = "この森では多くの動物{が見られる}。", en = "You can see many animals in this forest." },
+]
+
+[[point]]
+id = "sukunakunai"
+pattern = "少なくない"
+forms = ["すくなくない"]
+jlpt = "N4"
+meaning = "not a few, quite a lot, many"
+formation = ["Noun + は / が / も + 少なくない"]
+explanation = """
+"Not few", which means "quite a lot": 日本食が好きな外国人は少なくない, \
+"many foreigners like Japanese food". It's an understatement, more \
+careful than 多い, and common in writing and the news."""
+notes = """
+Don't confuse it with 少なくとも, "at least". 少なくない is a plain \
+negative of 少ない and conjugates the same way: 少なくなかった."""
+related = []
+examples = [
+  { tatoeba = "281694_122306", ja = "日本食が好きな外国人は{少なくない}。", en = "Not a few foreigners like Japanese food." },
+  { tatoeba = "286407_117257", ja = "彼の作文は誤りが{少なくない}。", en = "His composition has not a few mistakes." },
 ]
