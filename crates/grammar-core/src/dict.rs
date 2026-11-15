@@ -8,6 +8,9 @@ use fst::{IntoStreamer, Streamer};
 use crate::format;
 use crate::types::{GrammarEntry, GrammarMeta};
 
+/// The longest pattern a lookup inside text tries, in chars.
+const MAX_PATTERN_CHARS: usize = 24;
+
 pub struct GrammarDict {
     meta: GrammarMeta,
     fst: fst::Map<Vec<u8>>,
@@ -85,6 +88,78 @@ impl GrammarDict {
             }
         }
         None
+    }
+
+    /// What a search box shows for `text`, at most `max` entries, each once:
+    ///
+    /// 1. headwords or readings that are exactly `text`;
+    /// 2. the headword `text` is a conjugation of (ようにしなかった → ようにする);
+    /// 3. patterns inside `text`, longest first: 来てよかった → てよかった.
+    ///    A match lying within a longer one is left out (よかった within
+    ///    てよかった), and so are one-char headwords, or every particle and
+    ///    deinflected ending (った → つ) would come up;
+    /// 4. headwords starting with `text`.
+    pub fn search(&self, text: &str, max: usize) -> Vec<GrammarEntry> {
+        let text = text.trim();
+        let mut out: Vec<GrammarEntry> = Vec::new();
+        if text.is_empty() || max == 0 {
+            return out;
+        }
+        let push = |entries: Vec<GrammarEntry>, out: &mut Vec<GrammarEntry>| {
+            for e in entries {
+                let dup = out
+                    .iter()
+                    .any(|o| o.term == e.term && o.website == e.website && o.meaning == e.meaning);
+                if !dup && out.len() < max {
+                    out.push(e);
+                }
+            }
+        };
+
+        let chars = text.chars().count();
+        // Char spans of `text` already shown: (start, len).
+        let mut spans: Vec<(usize, usize)> = Vec::new();
+        let exact = self.lookup(text);
+        if !exact.is_empty() {
+            spans.push((0, chars));
+        }
+        push(exact, &mut out);
+        if let Some((entries, len)) = self.lookup_longest_match(text, chars)
+            && len == chars
+        {
+            spans.push((0, chars));
+            push(entries, &mut out);
+        }
+
+        let mut inner: Vec<(usize, usize, Vec<GrammarEntry>)> = text
+            .char_indices()
+            .enumerate()
+            .filter_map(|(start, (i, _))| {
+                let (entries, len) =
+                    self.lookup_longest_match(text.get(i..)?, MAX_PATTERN_CHARS)?;
+                let entries: Vec<GrammarEntry> = entries
+                    .into_iter()
+                    .filter(|e| e.term.chars().count() >= 2)
+                    .collect();
+                (len >= 2 && !entries.is_empty()).then_some((start, len, entries))
+            })
+            .collect();
+        inner.sort_by_key(|&(start, len, _)| (std::cmp::Reverse(len), start));
+        for (start, len, entries) in inner {
+            let within = spans
+                .iter()
+                .any(|&(s, l)| s <= start && start + len <= s + l);
+            if within {
+                continue;
+            }
+            spans.push((start, len));
+            push(entries, &mut out);
+        }
+
+        if out.len() < max {
+            push(self.lookup_prefix(text, max), &mut out);
+        }
+        out
     }
 
     /// Entries whose term or reading starts with `prefix`, for a search box.

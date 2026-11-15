@@ -411,3 +411,18 @@ fn converts_in_steps_of_one_bank() {
     let stepped = c.finish().unwrap();
     assert_eq!(stepped.bytes, convert(&sample_zip()).unwrap().bytes);
 }
+
+#[test]
+fn search_puts_exact_then_conjugated_then_inner_then_prefix_hits() {
+    let dict = sample_dict();
+    let terms =
+        |text: &str| -> Vec<String> { dict.search(text, 10).into_iter().map(|e| e.term).collect() };
+    assert_eq!(terms("ように"), ["ように", "ようにする"]);
+    assert_eq!(terms("ようにしなかった"), ["ようにする"]);
+    // Inside a sentence, by position; each entry once.
+    assert_eq!(terms("早く寝るようにした"), ["ようにする"]);
+    assert_eq!(terms("雨によって"), ["に因って", "によって"]);
+    assert!(terms("食べる").is_empty());
+    assert!(terms("  ").is_empty());
+    assert_eq!(dict.search("よう", 1).len(), 1);
+}

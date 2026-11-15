@@ -937,6 +937,36 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
     border-radius: 3px;
 }
 
+/* ── Grammar results (lookup page) ───────────────────────────────── */
+.grammar-results { margin-top: 18px; }
+.grammar-results:first-child { margin-top: 0; }
+.grammar-card { margin-bottom: 10px; }
+.grammar-head.clickable { cursor: pointer; }
+.grammar-toggle { font-size: 12px; margin-left: auto; }
+.grammar-structure { color: var(--subtext); font-size: 13px; margin-top: 4px; }
+.grammar-source { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 10px; }
+.grammar-source summary {
+    cursor: pointer; display: flex; gap: 8px; align-items: center;
+    font-size: 13px; font-weight: 600; color: var(--accent);
+}
+.grammar-sense { margin-top: 8px; }
+.grammar-sense-label { font-weight: 600; font-size: 14px; margin: 8px 0 4px; }
+.grammar-p { font-size: 14px; line-height: 1.6; margin: 6px 0; overflow-wrap: anywhere; }
+.grammar-p.translation { color: var(--subtext); }
+.grammar-p.heading, .grammar-p.example-label { font-weight: 600; margin-top: 10px; }
+.grammar-p.inline-example { padding-left: 12px; border-left: 2px solid var(--border); }
+.grammar-p.derivation, .grammar-p.annotation {
+    padding-left: 12px; border-left: 2px solid var(--border); color: var(--subtext); margin-top: -4px;
+}
+.grammar-p mark, .grammar-patterns mark {
+    background: color-mix(in srgb, var(--yellow) 60%, transparent);
+    color: var(--text); padding: 0 3px; border-radius: 3px;
+}
+.grammar-patterns { margin: 6px 0 6px 18px; font-size: 14px; }
+.grammar-examples .example-row:last-child { border-bottom: none; }
+button.grammar-link { padding: 0 2px; font-size: inherit; }
+.grammar-website { display: inline-block; margin-top: 12px; font-size: 13px; color: var(--accent); }
+
 /* ── Table polish ────────────────────────────────────────────────── */
 tbody tr:hover { background: color-mix(in srgb, var(--card) 50%, transparent); }
 tbody tr td:first-child { font-weight: 500; }

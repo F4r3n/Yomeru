@@ -108,4 +108,12 @@ fn converts_and_looks_up_the_real_dictionary() {
         assert!(terms.contains(&term), "{text}: {terms:?}");
     }
     eprintln!("lookups {:.2?}", t.elapsed());
+
+    for (text, term) in [("てよかった", "てよかった"), ("来てよかった", "てよかった")]
+    {
+        let t = Instant::now();
+        let terms: Vec<String> = dict.search(text, 10).into_iter().map(|e| e.term).collect();
+        eprintln!("search {text} → {terms:?} in {:.2?}", t.elapsed());
+        assert_eq!(terms.first().map(String::as_str), Some(term), "{text}");
+    }
 }
