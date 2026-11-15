@@ -2,12 +2,13 @@
 //!
 //! A card per grammar point. Closed, it shows what a glance needs: the
 //! headword, its level, a two-line meaning, the structure and two
-//! examples. Open, it shows one source at a time behind tabs, each with its
-//! examples first, then its patterns, then its explanation.
+//! examples. Open, it shows one source at a time behind tabs, starting with
+//! the one explaining the most, each with its explanation, then its
+//! patterns, then its examples.
 
 use dioxus::prelude::*;
 
-use crate::grammar::{Block, Example, GrammarEntry, ParagraphKind, Rich, SourceBlock, Span};
+use crate::grammar::{Example, GrammarEntry, ParagraphKind, Rich, SourceBlock, Span};
 use crate::icons::{Icon, IconName};
 
 /// Examples a closed card previews.
@@ -32,20 +33,14 @@ pub fn GrammarResults(entries: Vec<GrammarEntry>, on_search: EventHandler<String
 
 /// The source's examples, all senses together.
 fn examples_of(source: &SourceBlock) -> impl Iterator<Item = &Example> {
-    source
-        .senses
-        .iter()
-        .flat_map(|s| &s.blocks)
-        .flat_map(|b| match b {
-            Block::Examples { items } => items.as_slice(),
-            _ => &[],
-        })
+    source.senses.iter().flat_map(|s| s.examples())
 }
 
 #[component]
 fn GrammarEntryCard(entry: GrammarEntry, on_search: EventHandler<String>) -> Element {
     let mut open = use_signal(|| false);
-    let mut tab = use_signal(|| 0usize);
+    let main_source = entry.main_source();
+    let mut tab = use_signal(move || main_source);
     let is_open = *open.read();
     let has_detail = !entry.sources.is_empty();
     // The first source with examples feeds the preview: some sources are
@@ -62,6 +57,7 @@ fn GrammarEntryCard(entry: GrammarEntry, on_search: EventHandler<String>) -> Ele
         .find(|e| !e.is_empty())
         .unwrap_or_default();
     let active = (*tab.read()).min(entry.sources.len().saturating_sub(1));
+    let meaning = entry.full_meaning();
 
     rsx! {
         div { class: if is_open { "card grammar-card open" } else { "card grammar-card" },
@@ -84,8 +80,8 @@ fn GrammarEntryCard(entry: GrammarEntry, on_search: EventHandler<String>) -> Ele
                         }
                     }
                 }
-                if !entry.meaning.is_empty() {
-                    div { class: "gloss grammar-meaning", "{entry.meaning}" }
+                if !meaning.is_empty() {
+                    div { class: "gloss grammar-meaning", "{meaning}" }
                 }
                 if !entry.structure.is_empty() {
                     div { class: "grammar-structure", lang: "ja", "{entry.structure}" }
@@ -136,8 +132,8 @@ fn GrammarEntryCard(entry: GrammarEntry, on_search: EventHandler<String>) -> Ele
     }
 }
 
-/// One source: per sense, its examples, then its patterns, then its
-/// explanation.
+/// One source: per sense, its explanation, then its patterns, then its
+/// examples.
 #[component]
 fn SourceView(source: SourceBlock, on_search: EventHandler<String>) -> Element {
     rsx! {
@@ -150,23 +146,24 @@ fn SourceView(source: SourceBlock, on_search: EventHandler<String>) -> Element {
             }
             for (i, sense) in source.senses.iter().enumerate() {
                 {
-                    let mut examples = Vec::new();
-                    let mut patterns = Vec::new();
-                    let mut prose = Vec::new();
-                    for block in &sense.blocks {
-                        match block {
-                            Block::Examples { items } => examples.extend(items.iter().cloned()),
-                            Block::Patterns { items } => patterns.extend(items.iter().cloned()),
-                            Block::Paragraph { kind, text } => prose.push((*kind, text.clone())),
-                        }
-                    }
+                    // Without the paragraphs that only repeat an example.
+                    let prose: Vec<(ParagraphKind, Rich)> =
+                        sense.prose().map(|(k, t)| (k, t.clone())).collect();
+                    let patterns: Vec<Rich> = sense.patterns().cloned().collect();
+                    let examples: Vec<Example> = sense.examples().cloned().collect();
                     rsx! {
                         div { key: "{i}", class: "grammar-sense",
                             if !sense.label.is_empty() {
                                 div { class: "grammar-sense-label", "{sense.label}" }
                             }
-                            if !examples.is_empty() {
-                                ExampleList { examples, on_search }
+                            if !prose.is_empty() {
+                                div { class: "grammar-prose",
+                                    for (j, (kind, text)) in prose.into_iter().enumerate() {
+                                        p { key: "{j}", class: paragraph_class(kind),
+                                            RichText { rich: text, on_search }
+                                        }
+                                    }
+                                }
                             }
                             if !patterns.is_empty() {
                                 div { class: "grammar-patterns", lang: "ja",
@@ -177,14 +174,8 @@ fn SourceView(source: SourceBlock, on_search: EventHandler<String>) -> Element {
                                     }
                                 }
                             }
-                            if !prose.is_empty() {
-                                div { class: "grammar-prose",
-                                    for (j, (kind, text)) in prose.into_iter().enumerate() {
-                                        p { key: "{j}", class: paragraph_class(kind),
-                                            RichText { rich: text, on_search }
-                                        }
-                                    }
-                                }
+                            if !examples.is_empty() {
+                                ExampleList { examples, on_search }
                             }
                         }
                     }

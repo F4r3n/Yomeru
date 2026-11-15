@@ -989,8 +989,8 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
     font-size: 12px; padding: 2px 8px; border-radius: 999px;
     border: 1px solid var(--border); color: var(--text);
 }
-.grammar-prose { margin-top: 10px; color: var(--subtext); }
-.grammar-p { font-size: 13px; line-height: 1.65; margin: 6px 0; overflow-wrap: anywhere; }
+.grammar-prose { margin-top: 10px; }
+.grammar-p { font-size: 14px; line-height: 1.65; margin: 6px 0; overflow-wrap: anywhere; }
 .grammar-p.heading, .grammar-p.example-label { font-weight: 600; color: var(--text); margin-top: 12px; }
 .grammar-p.inline-example { color: var(--text); padding-left: 10px; border-left: 2px solid var(--border); }
 .grammar-p.derivation, .grammar-p.annotation {

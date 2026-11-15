@@ -476,3 +476,116 @@ fn glued_subheadings_are_split_into_headings_and_items() {
     let items: Vec<String> = items.iter().map(|i| plain(i)).collect();
     assert_eq!(items, ["2. V-ばよかった", "a. V-ばよかった", "etc. Data"]);
 }
+
+fn para(kind: ParagraphKind, text: &str) -> Block {
+    Block::Paragraph {
+        kind,
+        text: vec![Span::Text { text: text.into() }],
+    }
+}
+
+fn source(name: &str, blocks: Vec<Block>) -> crate::SourceBlock {
+    crate::SourceBlock {
+        name: name.into(),
+        level: String::new(),
+        senses: vec![crate::Sense {
+            label: String::new(),
+            blocks,
+        }],
+    }
+}
+
+#[test]
+fn prose_drops_paragraphs_repeating_an_example() {
+    let sense = &source(
+        "Bunpro",
+        vec![
+            para(ParagraphKind::Translation, "Means 'I'm glad that'."),
+            para(ParagraphKind::Plain, "やっぱり今日来てよかったね。"),
+            para(ParagraphKind::Translation, "Actually, I'm glad we came."),
+            para(ParagraphKind::Plain, "行ったの？ 行かないでよかった！"),
+            Block::Examples {
+                items: vec![
+                    crate::Example {
+                        ja: vec![
+                            Span::Text {
+                                text: "やっぱり今日来".into(),
+                            },
+                            Span::Highlight {
+                                text: "てよかった".into(),
+                            },
+                            Span::Text {
+                                text: "ね。".into(),
+                            },
+                        ],
+                        en: "Actually, I'm glad we came.".into(),
+                    },
+                    crate::Example {
+                        ja: vec![
+                            Span::Text {
+                                text: "行ったの？".into(),
+                            },
+                            Span::LineBreak,
+                            Span::Text {
+                                text: "行かないでよかった！".into(),
+                            },
+                        ],
+                        en: String::new(),
+                    },
+                ],
+            },
+        ],
+    )
+    .senses[0];
+    let prose: Vec<String> = sense.prose().map(|(_, t)| plain(t)).collect();
+    assert_eq!(prose, ["Means 'I'm glad that'."]);
+    assert_eq!(sense.examples().count(), 2);
+}
+
+#[test]
+fn a_cut_meaning_is_completed_and_the_main_source_explains_most_in_english() {
+    let entry = crate::GrammarEntry {
+        meaning: "Expresses relief after…".into(),
+        sources: vec![
+            source(
+                "Short",
+                vec![para(
+                    ParagraphKind::Plain,
+                    "Expresses relief after something happened.",
+                )],
+            ),
+            source(
+                "Japanese",
+                vec![para(
+                    ParagraphKind::Plain,
+                    "物事が終わった後に、その物事に対する評価を行う文法です。",
+                )],
+            ),
+            source(
+                "Long",
+                vec![para(
+                    ParagraphKind::Translation,
+                    "A much longer English explanation of the pattern.",
+                )],
+            ),
+        ],
+        ..Default::default()
+    };
+    assert_eq!(
+        entry.full_meaning(),
+        "Expresses relief after something happened."
+    );
+    assert_eq!(entry.main_source(), 2);
+
+    let whole = crate::GrammarEntry {
+        meaning: "Complete.".into(),
+        ..entry.clone()
+    };
+    assert_eq!(whole.full_meaning(), "Complete.");
+    let unknown = crate::GrammarEntry {
+        meaning: "Nowhere else…".into(),
+        ..entry
+    };
+    assert_eq!(unknown.full_meaning(), "Nowhere else…");
+    assert_eq!(crate::GrammarEntry::default().main_source(), 0);
+}

@@ -150,3 +150,93 @@ impl Span {
 pub fn plain(rich: &[Span]) -> String {
     rich.iter().map(Span::text).collect()
 }
+
+// ── Display helpers ─────────────────────────────────────────────────────
+
+/// `s` without whitespace, for comparing texts laid out differently.
+fn squeezed(s: &str) -> String {
+    s.chars().filter(|c| !c.is_whitespace()).collect()
+}
+
+impl GrammarEntry {
+    /// The one-line meaning, whole. Some arrive cut short ("…gratitude
+    /// after…"); the source paragraph they were cut from replaces them.
+    pub fn full_meaning(&self) -> String {
+        let stem = self
+            .meaning
+            .strip_suffix('…')
+            .or_else(|| self.meaning.strip_suffix("..."))
+            .map(str::trim_end);
+        let Some(stem) = stem.filter(|s| !s.is_empty()) else {
+            return self.meaning.clone();
+        };
+        self.sources
+            .iter()
+            .flat_map(|s| &s.senses)
+            .flat_map(|s| &s.blocks)
+            .find_map(|b| match b {
+                Block::Paragraph { text, .. } => {
+                    let t = plain(text);
+                    t.starts_with(stem).then_some(t)
+                }
+                _ => None,
+            })
+            .unwrap_or_else(|| self.meaning.clone())
+    }
+
+    /// The source to show first: the one explaining the most in English
+    /// (Latin letters of its paragraphs), the first on a tie or when none
+    /// has English.
+    pub fn main_source(&self) -> usize {
+        let english = |s: &SourceBlock| -> usize {
+            s.senses
+                .iter()
+                .flat_map(|s| s.prose())
+                .map(|(_, text)| {
+                    plain(text)
+                        .chars()
+                        .filter(char::is_ascii_alphabetic)
+                        .count()
+                })
+                .sum()
+        };
+        self.sources
+            .iter()
+            .enumerate()
+            .max_by_key(|&(i, s)| (english(s), std::cmp::Reverse(i)))
+            .map_or(0, |(i, _)| i)
+    }
+}
+
+impl Sense {
+    pub fn examples(&self) -> impl Iterator<Item = &Example> {
+        self.blocks.iter().flat_map(|b| match b {
+            Block::Examples { items } => items.as_slice(),
+            _ => &[],
+        })
+    }
+
+    pub fn patterns(&self) -> impl Iterator<Item = &Rich> {
+        self.blocks.iter().flat_map(|b| match b {
+            Block::Patterns { items } => items.as_slice(),
+            _ => &[],
+        })
+    }
+
+    /// The explanation's paragraphs, without those repeating one of the
+    /// sense's examples or its translation: some sources write their
+    /// examples into the explanation as well as listing them.
+    pub fn prose(&self) -> impl Iterator<Item = (ParagraphKind, &Rich)> {
+        let repeated: Vec<String> = self
+            .examples()
+            .flat_map(|e| [squeezed(&plain(&e.ja)), squeezed(&e.en)])
+            .filter(|s| !s.is_empty())
+            .collect();
+        self.blocks.iter().filter_map(move |b| match b {
+            Block::Paragraph { kind, text } if !repeated.contains(&squeezed(&plain(text))) => {
+                Some((*kind, text))
+            }
+            _ => None,
+        })
+    }
+}
