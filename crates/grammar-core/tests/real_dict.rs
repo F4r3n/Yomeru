@@ -109,6 +109,31 @@ fn converts_and_looks_up_the_real_dictionary() {
     }
     eprintln!("lookups {:.2?}", t.elapsed());
 
+    // A source whose sub-senses arrive glued together upstream.
+    if let Some(source) = dict
+        .lookup("よかった")
+        .first()
+        .and_then(|e| e.sources.first())
+    {
+        eprintln!("よかった, {}:", source.name);
+        for block in source.senses.iter().flat_map(|s| &s.blocks) {
+            match block {
+                Block::Paragraph { kind, text } => {
+                    let t = grammar_core::types::plain(text);
+                    eprintln!("  {kind:?}: {}", t.chars().take(70).collect::<String>());
+                }
+                Block::Patterns { items } => eprintln!(
+                    "  patterns: {:?}",
+                    items
+                        .iter()
+                        .map(|i| grammar_core::types::plain(i))
+                        .collect::<Vec<_>>()
+                ),
+                Block::Examples { items } => eprintln!("  {} examples", items.len()),
+            }
+        }
+    }
+
     for (text, term) in [("てよかった", "てよかった"), ("来てよかった", "てよかった")]
     {
         let t = Instant::now();

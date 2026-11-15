@@ -22,7 +22,7 @@ use crate::types::{GrammarEntry, GrammarMeta};
 pub(crate) const MAGIC: &[u8; 4] = b"YGRM";
 /// Bump on any change to the layout or to the types: a stored file of
 /// another version is refused, and the app asks for a new import.
-pub const FORMAT_VERSION: u8 = 1;
+pub const FORMAT_VERSION: u8 = 2;
 
 /// An entry compressed for the entries blob, with the keys it's found by.
 pub(crate) struct Packed {

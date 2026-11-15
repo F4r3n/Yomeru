@@ -942,30 +942,62 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 .grammar-results:first-child { margin-top: 0; }
 .grammar-card { margin-bottom: 10px; }
 .grammar-head.clickable { cursor: pointer; }
-.grammar-toggle { font-size: 12px; margin-left: auto; }
-.grammar-structure { color: var(--subtext); font-size: 13px; margin-top: 4px; }
-.grammar-source { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 10px; }
-.grammar-source summary {
-    cursor: pointer; display: flex; gap: 8px; align-items: center;
-    font-size: 13px; font-weight: 600; color: var(--accent);
+.grammar-title { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.grammar-chevron {
+    margin-left: auto; align-self: center; color: var(--subtext);
+    display: inline-flex; transition: transform 0.15s ease;
 }
-.grammar-sense { margin-top: 8px; }
-.grammar-sense-label { font-weight: 600; font-size: 14px; margin: 8px 0 4px; }
-.grammar-p { font-size: 14px; line-height: 1.6; margin: 6px 0; overflow-wrap: anywhere; }
-.grammar-p.translation { color: var(--subtext); }
-.grammar-p.heading, .grammar-p.example-label { font-weight: 600; margin-top: 10px; }
-.grammar-p.inline-example { padding-left: 12px; border-left: 2px solid var(--border); }
-.grammar-p.derivation, .grammar-p.annotation {
-    padding-left: 12px; border-left: 2px solid var(--border); color: var(--subtext); margin-top: -4px;
+.grammar-head.clickable:hover .grammar-chevron { color: var(--accent); }
+.grammar-card.open .grammar-chevron { transform: rotate(180deg); }
+.grammar-meaning {
+    margin-top: 4px; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.grammar-p mark, .grammar-patterns mark {
+.grammar-card.open .grammar-meaning { display: block; }
+.grammar-structure {
+    display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 6px;
+    font-size: 13px; color: var(--subtext); background: color-mix(in srgb, var(--border) 35%, transparent);
+}
+.grammar-see { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 8px; font-size: 12px; }
+
+.grammar-examples {
+    margin-top: 10px; padding: 2px 12px;
+    border-left: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+    border-radius: 0 6px 6px 0;
+}
+.grammar-example { padding: 8px 0; }
+.grammar-example + .grammar-example { border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }
+.grammar-example .jp { font-size: 15px; line-height: 1.6; }
+.grammar-example .en { color: var(--subtext); font-size: 13px; margin-top: 2px; }
+.grammar-example mark, .grammar-p mark, .grammar-pattern mark {
     background: color-mix(in srgb, var(--yellow) 60%, transparent);
     color: var(--text); padding: 0 3px; border-radius: 3px;
 }
-.grammar-patterns { margin: 6px 0 6px 18px; font-size: 14px; }
-.grammar-examples .example-row:last-child { border-bottom: none; }
+
+.grammar-tabs { flex-wrap: wrap; margin-top: 14px; }
+.grammar-tabs button { font-size: 12px; }
+.grammar-source { margin-top: 12px; }
+.grammar-source-name {
+    display: flex; gap: 8px; align-items: center;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--subtext);
+}
+.grammar-sense + .grammar-sense { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border); }
+.grammar-sense-label { font-weight: 600; font-size: 14px; margin: 8px 0 2px; }
+.grammar-patterns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.grammar-pattern {
+    font-size: 12px; padding: 2px 8px; border-radius: 999px;
+    border: 1px solid var(--border); color: var(--text);
+}
+.grammar-prose { margin-top: 10px; color: var(--subtext); }
+.grammar-p { font-size: 13px; line-height: 1.65; margin: 6px 0; overflow-wrap: anywhere; }
+.grammar-p.heading, .grammar-p.example-label { font-weight: 600; color: var(--text); margin-top: 12px; }
+.grammar-p.inline-example { color: var(--text); padding-left: 10px; border-left: 2px solid var(--border); }
+.grammar-p.derivation, .grammar-p.annotation {
+    padding-left: 10px; border-left: 2px solid var(--border); margin-top: -4px; font-size: 12px;
+}
 button.grammar-link { padding: 0 2px; font-size: inherit; }
-.grammar-website { display: inline-block; margin-top: 12px; font-size: 13px; color: var(--accent); }
+.grammar-website { display: inline-block; margin-top: 14px; font-size: 12px; color: var(--accent); }
 
 /* ── Table polish ────────────────────────────────────────────────── */
 tbody tr:hover { background: color-mix(in srgb, var(--card) 50%, transparent); }

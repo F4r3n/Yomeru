@@ -31,7 +31,12 @@ pub const DEFAULT_HOME_URL: &str = "https://github.com/bee-san/bees-ultimate-gra
 /// Dioxus mobile runs the app on several threads.
 static CURRENT: Mutex<Option<Option<Arc<GrammarDict>>>> = Mutex::new(None);
 
+/// Why the stored file couldn't be loaded, so later [`load`]s answer at
+/// once instead of reading it again. Cleared by an install or a removal.
+static LOAD_ERROR: Mutex<Option<String>> = Mutex::new(None);
+
 fn set_current(dict: Option<Arc<GrammarDict>>) {
+    *LOAD_ERROR.lock().unwrap_or_else(PoisonError::into_inner) = None;
     *CURRENT.lock().unwrap_or_else(PoisonError::into_inner) = Some(dict);
 }
 
@@ -56,11 +61,25 @@ pub async fn load() -> Result<Option<GrammarMeta>, String> {
     {
         return Ok(loaded.map(|d| d.meta().clone()));
     }
+    if let Some(e) = LOAD_ERROR
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .clone()
+    {
+        return Err(e);
+    }
     let Some(bytes) = store::read().await? else {
         set_current(None);
         return Ok(None);
     };
-    let dict = blocking(move || GrammarDict::from_bytes(&bytes).map_err(|e| e.to_string())).await?;
+    let dict =
+        match blocking(move || GrammarDict::from_bytes(&bytes).map_err(|e| e.to_string())).await {
+            Ok(dict) => dict,
+            Err(e) => {
+                *LOAD_ERROR.lock().unwrap_or_else(PoisonError::into_inner) = Some(e.clone());
+                return Err(e);
+            }
+        };
     let meta = dict.meta().clone();
     set_current(Some(Arc::new(dict)));
     Ok(Some(meta))

@@ -426,3 +426,53 @@ fn search_puts_exact_then_conjugated_then_inner_then_prefix_hits() {
     assert!(terms("  ").is_empty());
     assert_eq!(dict.search("よう", 1).len(), 1);
 }
+
+#[test]
+fn glued_subheadings_are_split_into_headings_and_items() {
+    let card = div(
+        "grammarCard",
+        json!([
+            { "tag": "details", "data": { "sourceBlock": "" }, "content": [
+                { "tag": "summary", "content": span("sourceName", json!("Handbook")) },
+                div("sense", json!([
+                    { "tag": "div", "data": { "prose": "" }, "content":
+                        "Expresses relief. b. V-なければよかった In the forms V-なければよかった, regret. c. V-ようか〈invitation〉" },
+                    { "tag": "ul", "data": { "patterns": "" }, "content": [
+                        { "tag": "li", "data": { "pattern": "" }, "content": "2. V-ばよかったa. V-ばよかった" },
+                        { "tag": "li", "data": { "pattern": "" }, "content": "etc. Data" },
+                    ]},
+                ])),
+            ]},
+        ]),
+    );
+    let zip = zip_of(&[
+        ("index.json", index()),
+        ("term_bank_1.json", json!([row("よかった", "", "", card)])),
+    ]);
+    let dict = GrammarDict::from_bytes(&convert(&zip).unwrap().bytes).unwrap();
+    let blocks = &dict.lookup("よかった")[0].sources[0].senses[0].blocks;
+    let paragraphs: Vec<(ParagraphKind, String)> = blocks
+        .iter()
+        .filter_map(|b| match b {
+            Block::Paragraph { kind, text } => Some((*kind, plain(text))),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(
+        paragraphs,
+        [
+            (ParagraphKind::Plain, "Expresses relief.".to_owned()),
+            (ParagraphKind::Heading, "b. V-なければよかった".to_owned()),
+            (
+                ParagraphKind::Plain,
+                "In the forms V-なければよかった, regret.".to_owned()
+            ),
+            (ParagraphKind::Plain, "c. V-ようか〈invitation〉".to_owned()),
+        ]
+    );
+    let Some(Block::Patterns { items }) = blocks.last() else {
+        panic!("{blocks:?}")
+    };
+    let items: Vec<String> = items.iter().map(|i| plain(i)).collect();
+    assert_eq!(items, ["2. V-ばよかった", "a. V-ばよかった", "etc. Data"]);
+}

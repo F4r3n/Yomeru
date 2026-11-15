@@ -251,6 +251,9 @@ fn LookupListPane() -> Element {
     // Grammar points for the search, from the on-device grammar dictionary
     // (none when it isn't installed).
     let mut grammar_hits = use_signal(Vec::<GrammarEntry>::new);
+    // Set when the installed grammar dictionary can't be read (an older
+    // format), so the page says why grammar results are missing.
+    let mut grammar_broken = use_signal(|| false);
     let mut searching = use_signal(|| false);
     let mut searched = use_signal(|| false);
     let mut load_err = use_signal(|| Option::<String>::None);
@@ -373,6 +376,7 @@ fn LookupListPane() -> Element {
                 Ok(None) => Vec::new(),
                 Err(e) => {
                     warn!("grammar dictionary: {e}");
+                    grammar_broken.set(true);
                     Vec::new()
                 }
             };
@@ -533,6 +537,11 @@ fn LookupListPane() -> Element {
                 }
             }
 
+            if *grammar_broken.read() {
+                div { class: "hint", style: "margin-bottom: 10px;",
+                    "The grammar dictionary needs to be imported again (Settings → Grammar)."
+                }
+            }
             if *searching.read() {
                 div { class: "loading", "Searching…" }
             } else if !entries.read().is_empty() || !grammar_hits.read().is_empty() {

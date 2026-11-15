@@ -387,6 +387,19 @@ fn blocks_of(node: &Value, kind: ParagraphKind, out: &mut Vec<Block>) {
             let items: Vec<Rich> = children(child)
                 .iter()
                 .map(rich)
+                .flat_map(|r| match plain_text(&r) {
+                    // "2. V-ばよかったa. V-ばよかった": a pattern and its first
+                    // sub-pattern, glued upstream.
+                    Some(t) => subheadings(&t)
+                        .into_iter()
+                        .map(|piece| {
+                            vec![Span::Text {
+                                text: piece.trim().to_owned(),
+                            }]
+                        })
+                        .collect(),
+                    None => vec![r],
+                })
                 .filter(|r| !is_blank(r))
                 .collect();
             if !items.is_empty() {
@@ -416,9 +429,114 @@ fn flush(run: &mut Rich, kind: ParagraphKind, out: &mut Vec<Block>) {
 
 fn push_paragraph(mut text: Rich, kind: ParagraphKind, out: &mut Vec<Block>) {
     trim(&mut text);
-    if !is_blank(&text) {
-        out.push(Block::Paragraph { kind, text });
+    if is_blank(&text) {
+        return;
     }
+    let Some(plain) = plain_text(&text) else {
+        out.push(Block::Paragraph { kind, text });
+        return;
+    };
+    // Sub-senses some sources run into one paragraph: "…ought to have been.
+    // b. V-なければよかった In the forms…" becomes a heading and its text.
+    let mut pieces = subheadings(&plain).into_iter();
+    if let Some(first) = pieces.next() {
+        push_text_paragraph(first, kind, out);
+    }
+    for piece in pieces {
+        match heading_end(piece) {
+            Some(end) => {
+                push_text_paragraph(
+                    piece.get(..end).unwrap_or(piece),
+                    ParagraphKind::Heading,
+                    out,
+                );
+                push_text_paragraph(piece.get(end..).unwrap_or_default(), kind, out);
+            }
+            None => push_text_paragraph(piece, kind, out),
+        }
+    }
+}
+
+fn push_text_paragraph(text: &str, kind: ParagraphKind, out: &mut Vec<Block>) {
+    let text = text.trim();
+    if !text.is_empty() {
+        out.push(Block::Paragraph {
+            kind,
+            text: vec![Span::Text {
+                text: text.to_owned(),
+            }],
+        });
+    }
+}
+
+/// The text of a run made only of plain text and line breaks; `None` when
+/// it carries styling that splitting would lose.
+fn plain_text(rich: &[Span]) -> Option<String> {
+    rich.iter()
+        .all(|s| matches!(s, Span::Text { .. } | Span::LineBreak))
+        .then(|| crate::types::plain(rich))
+}
+
+/// `text` cut before each glued sub-heading: a letter a–h and a dot, after
+/// anything but a letter or digit, then grammar notation (`V-`, `N`,
+/// `A-`, `Ｖ－`…). "…been. b. V-なければよかった In…" → ["…been. ",
+/// "b. V-なければよかった In…"]. The text's own start is never cut.
+fn subheadings(text: &str) -> Vec<&str> {
+    let chars: Vec<(usize, char)> = text.char_indices().collect();
+    let at = |i: usize| chars.get(i).map(|&(_, c)| c);
+    let mut cuts = Vec::new();
+    for (i, &(byte, c)) in chars.iter().enumerate().skip(1) {
+        if !('a'..='h').contains(&c) || at(i + 1) != Some('.') {
+            continue;
+        }
+        if at(i - 1).is_some_and(|p| p.is_ascii_alphanumeric()) {
+            continue;
+        }
+        let mut j = i + 2;
+        if at(j) == Some(' ') {
+            j += 1;
+        }
+        let notation = at(j).is_some_and(|n| "VNAＶＮＡ".contains(n));
+        let follows = at(j + 1).is_some_and(|f| {
+            f == '-'
+                || f == '－'
+                || f.is_ascii_digit()
+                || ('１'..='９').contains(&f)
+                || !f.is_ascii()
+        });
+        if notation && follows {
+            cuts.push(byte);
+        }
+    }
+    let mut out = Vec::with_capacity(cuts.len() + 1);
+    let mut start = 0;
+    for cut in cuts {
+        out.extend(text.get(start..cut));
+        start = cut;
+    }
+    out.extend(text.get(start..));
+    out
+}
+
+/// Where a sub-heading's notation ends and its English text begins: the
+/// first space followed by a capital letter. `None` when no English text
+/// follows ("c. V-ようか〈invitation〉").
+fn heading_end(piece: &str) -> Option<usize> {
+    // Past the marker ("b. ") and the notation's first char (the "V" of
+    // "V-…", itself a capital after a space).
+    let chars = piece
+        .char_indices()
+        .skip(2)
+        .skip_while(|&(_, c)| c == ' ')
+        .skip(1);
+    let mut prev = None;
+    for (i, c) in chars {
+        if prev == Some(' ') && c.is_ascii_uppercase() {
+            return Some(i);
+        }
+        prev = Some(c);
+    }
+    None
 }
 
 fn examples(node: &Value, out: &mut Vec<Block>) {
