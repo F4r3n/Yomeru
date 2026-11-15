@@ -1463,7 +1463,8 @@ form + か (行くか) sounds rough or masculine. A question inside a \
 sentence + か means "whether": 来るかわからない, "I don't know if he'll \
 come". For "or" between two whole questions, use それとも. After a \
 question word, か gives "some-" (誰か)."""
-related = ["soretomo", "ka-mo-question-words", "kashira"]
+related = ["soretomo", "ka-mo-question-words", "kashira", "question-ka"]
+homographs = ["question-ka"]
 examples = [
   { tatoeba = "464592_229723", ja = "あれは何です{か}。", en = "What is that?" },
   { tatoeba = "56970_219649", ja = "この本は君のです{か}。", en = "Is this book yours?" },
@@ -1912,6 +1913,7 @@ not "looks cute". Compared with ようだ, そうだ is a first impression; \
 follows the plain form (降るそうだ, "I hear it will rain"). Negative \
 guesses: なさそう for adjectives, Verb［stem］ + そうにない for verbs."""
 related = ["sou-da-hearsay", "you-da", "rashii"]
+homographs = ["sou-da-hearsay"]
 examples = [
   { tatoeba = "241717_172757", ja = "今にも嵐になり{そうだ}。", en = "A storm is imminent." },
   { tatoeba = "315134_88573", ja = "彼女は新しいドレスを着てうれし{そうだった}。", en = "She looked happy in her new dress." },
@@ -2801,7 +2803,7 @@ examples = [
 [[point]]
 id = "kamoshirenai"
 pattern = "かもしれない"
-forms = ["かもしれません", "かも知れない", "かも知れません"]
+forms = ["かもしれません", "かも知れない", "かも知れません", "かも"]
 jlpt = "N4"
 meaning = "might, may, perhaps"
 formation = [
@@ -4185,4 +4187,525 @@ examples = [
   { tatoeba = "238677_175788", ja = "結構です。それ{にしましょう}。", en = "All right. I'll take it." },
   { tatoeba = "61904_224570", ja = "ここで休憩{にしましょう}。", en = "Let's take a break now." },
   { source = "yomeru", ja = "私はコーヒー{にします}。", en = "I'll have coffee." },
+]
+
+[[point]]
+id = "sou-da-hearsay"
+pattern = "そうだ"
+forms = ["そうです"]
+jlpt = "N4"
+meaning = "I hear that, they say that (hearsay)"
+formation = [
+  "Verb / ［い］Adjective + そうだ   (降るそうだ, 寒いそうだ)",
+  "［な］Adjective / Noun + だそうだ   (元気だそうだ, 学生だそうだ)",
+]
+explanation = """
+Passes on something you heard or read, without vouching for it: 明日は\
+雨が降るそうです, "I hear it's going to rain tomorrow". The source often \
+comes first with によると or では: ニュースによると, "according to the \
+news". The part before そうだ can be past or negative; そうだ itself \
+stays as it is."""
+notes = """
+Not the looks-like そうだ, which takes the stem: 降りそうだ "looks like \
+rain", 降るそうだ "I hear it'll rain". そうだ itself is not made past \
+or negative (×降るそうだった, ×降るそうではない). Compared with らしい, \
+it reports more plainly; casual speech often uses って instead."""
+related = ["sou-da-appearance", "rashii", "tte", "to-kiita"]
+homographs = ["sou-da-appearance"]
+examples = [
+  { tatoeba = "32901_195726", ja = "マイクは病気で寝こんでいる{そうだ}。", en = "They say that Mike is sick in bed." },
+  { tatoeba = "303840_99857", ja = "彼は麻雀が上手だ{そうです}。", en = "I hear he is good at mahjong." },
+  { tatoeba = "278906_125087", ja = "天気予報によれば、まもなく梅雨に入る{そうだ}。", en = "According to the weather forecast, the rainy season will set in before long." },
+]
+
+[[point]]
+id = "rashii"
+pattern = "らしい"
+forms = ["らしいです"]
+jlpt = "N4"
+meaning = "apparently, it seems, I hear (from what I've heard or seen)"
+formation = [
+  "Verb / ［い］Adjective + らしい   (行くらしい, 高いらしい)",
+  "［な］Adjective / Noun + らしい   (元気らしい, 雨らしい)",
+]
+explanation = """
+A guess based on something you heard, read or noticed, said with some \
+distance, as information rather than your own judgement: 田中さんは会\
+社をやめるらしい, "apparently Tanaka is quitting the company". It \
+conjugates like an い-adjective: らしかった, らしくない."""
+notes = """
+No だ before it after nouns: 雨らしい, not ×雨だらしい. Next to its \
+look-alikes: そうだ (stem) is what something looks like; ようだ / みたい \
+are your own judgement from evidence; らしい leans on outside \
+information, close to hearsay. Not the らしい of "typical of" (男らしい): \
+彼は学生らしい can mean "he seems to be a student" or "he is very \
+student-like", and context decides."""
+related = ["you-da", "mitai", "sou-da-hearsay", "sou-da-appearance", "rashii-typical"]
+homographs = ["rashii-typical"]
+examples = [
+  { tatoeba = "26782_189629", ja = "雨になる{らしい}よ。", en = "They say we're going to get rain!" },
+  { tatoeba = "303438_100259", ja = "彼は風邪を引いた{らしい}。", en = "He seems to have caught a cold." },
+  { tatoeba = "290359_113315", ja = "彼はすべて知っている{らしい}。", en = "It seems that he knows everything." },
+]
+
+[[point]]
+id = "rashii-typical"
+pattern = "らしい"
+forms = []
+jlpt = "N4"
+meaning = "typical of, like a real, befitting"
+formation = ["Noun + らしい   (男らしい, 春らしい)"]
+explanation = """
+After a noun, says something has the qualities you'd expect of it: 春\
+らしい天気, "real spring weather"; 彼らしい, "just like him". It is an \
+い-adjective: 子供らしくない, "not childlike"; 学生らしく, "the way a \
+student should"."""
+notes = """
+The same spelling as the らしい of "apparently" (雨らしい, "it seems it's \
+rain"); only context tells them apart. ～っぽい is close but looser, \
+"-ish", and can be a bit negative: 子供っぽい is "childish", 子供らし\
+い "childlike". Some are words of their own: 男らしい "manly", 女らしい \
+"feminine"."""
+related = ["rashii"]
+homographs = ["rashii"]
+examples = [
+  { tatoeba = "311779_91933", ja = "彼女はとても女{らしい}。", en = "She is a very feminine person." },
+  { source = "yomeru", ja = "今日は春{らしい}天気ですね。", en = "It's real spring weather today, isn't it?" },
+  { source = "yomeru", ja = "遅れて来るのは彼{らしい}ね。", en = "Coming late is just like him." },
+]
+
+[[point]]
+id = "you-da"
+pattern = "ようだ"
+forms = ["ようです", "ようでした"]
+jlpt = "N4"
+meaning = "seems, appears (my judgement); is like"
+formation = [
+  "Verb / ［い］Adjective + ようだ   (いないようだ)",
+  "［な］Adjective + な + ようだ   (元気なようだ)",
+  "Noun + の + ようだ   (留守のようだ)",
+]
+explanation = """
+Your own conclusion, drawn from what you see, hear or feel: 電気が消え\
+ている。留守のようだ, "the lights are off; they seem to be out". It \
+also compares: 夢のようだ, "it's like a dream". It conjugates like a \
+な-adjective: ような + noun, ように + verb."""
+notes = """
+みたい means the same and is its casual form; ようだ suits writing and \
+polite speech. そうだ (stem) is a first look; ようだ weighs the signs; \
+らしい leans on what others say. Often with どうやら or まるで \
+(まるで夢のようだ). Not ように "so that" (you-ni-purpose)."""
+related = ["mitai", "rashii", "sou-da-appearance", "no-you-na", "ni-mieru"]
+examples = [
+  { tatoeba = "66729_229370", ja = "いい家の{ようです}。", en = "It seems to be a good house." },
+  { tatoeba = "50620_213334", ja = "そのエレベーターは故障している{ようだ}。", en = "The elevator seems to be out of order." },
+  { tatoeba = "40360_136464", ja = "誰も本当の事を知らなかった{ようだ}。", en = "It seems that no one knew the truth." },
+]
+
+[[point]]
+id = "mitai"
+pattern = "みたい"
+forms = ["みたいだ", "みたいです", "みたいな", "みたいに"]
+jlpt = "N4"
+meaning = "seems, looks like; like (casual)"
+formation = [
+  "Verb / ［い］Adjective + みたい   (いないみたい)",
+  "［な］Adjective / Noun + みたい   (元気みたい, 夢みたい)",
+]
+explanation = """
+The everyday form of ようだ, for a guess from what you notice or for a \
+comparison: 誰もいないみたい, "looks like nobody's here"; 夢みたい, \
+"it's like a dream". It conjugates like a な-adjective: みたいな + noun, \
+みたいに + verb."""
+notes = """
+Unlike ようだ, no の or な before it: 子供みたい, not ×子供のみたい. \
+Always in kana; don't mix it up with 見たい "want to see", or with the \
+てみたい of "I'd like to try" (食べてみたい). Casual: in writing or \
+polite talk, use ようだ."""
+related = ["you-da", "rashii", "sou-da-appearance", "no-you-na"]
+examples = [
+  { tatoeba = "22010_184879", ja = "外は、夏{みたいだ}よ。", en = "It's like summer outside." },
+  { tatoeba = "53865_216561", ja = "ジェインは新しいボーイフレンドがいる{みたいだ}。", en = "Jane seems to have a new boyfriend." },
+  { tatoeba = "70145_232775", ja = "あなたはお母さん{みたいな}喋り方をするのね。", en = "You speak like your mother." },
+]
+
+[[point]]
+id = "no-you-na"
+pattern = "のような"
+forms = ["のように", "ような"]
+jlpt = "N4"
+meaning = "like, such as; as (in the same way as)"
+formation = [
+  "Noun + のような + Noun   (東京のような町)",
+  "Noun + のように + Verb / Adjective   (雪のように白い)",
+]
+explanation = """
+Compares one thing to another or gives an example: 雪のように白い, \
+"white as snow"; 東京のような大きい町, "a big city like Tokyo". Use \
+ような before a noun and ように before a verb or adjective. いつものよ\
+うに means "as usual"."""
+notes = """
+The casual equivalent is みたいな / みたいに, with no の: 東京みたいな町. \
+A verb can also come before ような: 夢を見ているような気持ち. Not ように \
+"so that" after a verb (you-ni-purpose), which has no の."""
+related = ["you-da", "mitai", "mai-no-you-ni", "you-ni-purpose"]
+examples = [
+  { tatoeba = "272579_141991", ja = "雪{のように}白い。", en = "It is white as snow." },
+  { source = "yomeru", ja = "東京{のような}大きい町に住みたい。", en = "I want to live in a big city like Tokyo." },
+  { tatoeba = "66106_228748", ja = "いつも{のように}彼は最後に劇場に着いた。", en = "As usual, he was the last to arrive at the theater." },
+]
+
+[[point]]
+id = "mai-no-you-ni"
+pattern = "毎日のように"
+forms = ["毎晩のように", "毎週のように", "毎年のように", "毎朝のように", "毎月のように"]
+jlpt = "N4"
+meaning = "almost every (day, week…)"
+formation = ["毎 + time word + のように   (毎日のように, 毎週のように)"]
+explanation = """
+"Practically every day / week": something happens so often it feels \
+like every time, without being strictly so. 毎日のようにコーヒーを飲\
+む, "I drink coffee nearly every day". Without のように, 毎日 means \
+every single day."""
+notes = """
+Stick to のように here: みたいに sounds odd with time words. Often with \
+the past ていた or ている for a habit: 毎週のように会っていた."""
+related = ["no-you-na"]
+examples = [
+  { tatoeba = "303902_99795", ja = "彼は{毎日のように}電話をしてきた。", en = "He called me up almost every day." },
+  { source = "yomeru", ja = "{毎週のように}映画を見に行きます。", en = "I go to see a movie almost every week." },
+]
+
+[[point]]
+id = "ni-mieru"
+pattern = "に見える"
+forms = ["にみえる", "に見えます", "そうに見える", "ように見える"]
+jlpt = "N4"
+meaning = "looks, looks like, appears (to be)"
+formation = [
+  "［な］Adjective / Noun + に見える   (元気に見える)",
+  "［い］Adjective［く］ + 見える   (若く見える)",
+  "Noun + のように見える   (医者のように見える)",
+]
+explanation = """
+Says how something looks, based on its appearance: 若く見える, "looks \
+young"; 静かに見える, "looks quiet". With ように or そうに it becomes \
+more of a guess: 医者のように見える, "looks like a doctor"; 高そうに\
+見える, "looks expensive"."""
+notes = """
+A noun right before に見える says what it looks like it is: 学生に見え\
+る, "looks like a student". Often written にみえる in kana. 見える alone \
+means "can be seen" (山が見える)."""
+related = ["mieru", "sou-da-appearance", "you-da", "kikoeru"]
+examples = [
+  { tatoeba = "299153_104537", ja = "彼は若く{見えた}。", en = "He appeared young." },
+  { tatoeba = "293639_110049", ja = "彼は医者のよう{に見えました}。", en = "He looked like a doctor." },
+  { source = "yomeru", ja = "そのかばんは高そう{に見える}。", en = "That bag looks expensive." },
+]
+
+[[point]]
+id = "mieru"
+pattern = "見える"
+forms = ["みえる"]
+jlpt = "N4"
+meaning = "can be seen, be visible; can see (without trying)"
+formation = ["Noun + が + 見える   (山が見える)"]
+explanation = """
+Something comes into view on its own: 窓から海が見える, "you can see \
+the sea from the window". What is seen takes が, and the person who sees \
+it, if mentioned, takes は or に."""
+notes = """
+見られる, the potential form of 見る, is about having the chance or \
+ability: 東京で富士山が見られる, "you get to see Mt Fuji from Tokyo". \
+見える is what reaches your eyes anyway. With an adjective, 見える means \
+"look": 若く見える (ni-mieru). The pair 聞こえる / 聞ける works the same \
+way."""
+related = ["kikoeru", "potential-form", "ni-mieru"]
+examples = [
+  { tatoeba = "240619_173851", ja = "向こうに大きな山が{見えます}。", en = "We can see a big mountain over there." },
+  { tatoeba = "317979_85733", ja = "飛行機が{見えた}。", en = "I saw a plane." },
+  { tatoeba = "25580_188437", ja = "屋根の上に月が{見えた}。", en = "I saw the moon above the roof." },
+]
+
+[[point]]
+id = "kikoeru"
+pattern = "聞こえる"
+forms = ["きこえる"]
+jlpt = "N4"
+meaning = "can be heard, be audible; sound (like)"
+formation = [
+  "Noun + が + 聞こえる   (音楽が聞こえる)",
+  "［い］Adjective［く］ + 聞こえる   (うるさく聞こえる)",
+  "［な］Adjective / Noun + に聞こえる   (変に聞こえる)",
+]
+explanation = """
+A sound reaches your ears without effort: 鳥の声が聞こえる, "I can hear \
+birds". What you hear takes が. On the phone, 聞こえますか is "can you \
+hear me?". With an adjective it means "sound": 変に聞こえる, "sounds \
+strange"."""
+notes = """
+聞ける, the potential of 聞く, is about getting the chance: ここでジャズ\
+が聞ける, "you can listen to jazz here". 聞こえる is what you hear \
+anyway. The same split as 見える / 見られる."""
+related = ["mieru", "potential-form"]
+examples = [
+  { tatoeba = "25441_188299", ja = "音楽が{聞こえる}。", en = "I hear music." },
+  { tatoeba = "21574_184446", ja = "学校のベルが鳴るのが{聞こえた}。", en = "I heard the school bell ring." },
+  { source = "yomeru", ja = "もしもし、{聞こえます}か。", en = "Hello, can you hear me?" },
+]
+
+[[point]]
+id = "to-omou"
+pattern = "と思う"
+forms = ["と思います", "とおもう", "と思っている"]
+jlpt = "N4"
+meaning = "I think (that)"
+formation = [
+  "Verb / ［い］Adjective + と思う   (来ると思う)",
+  "［な］Adjective / Noun + だ + と思う   (学生だと思う)",
+]
+explanation = """
+Gives your opinion or guess: 明日は晴れると思います, "I think it'll be \
+sunny tomorrow". The thought is in the plain form, so a noun needs だ: \
+本当だと思う. It also softens statements, and is very common in polite \
+speech for that reason."""
+notes = """
+For what someone else thinks, use と思っている: 田中さんは無理だと思っ\
+ている. "I don't think" is usually ないと思う (the thought is \
+negative), not と思わない. Volitional + と思う is "I'm thinking of \
+doing" (you-to-omou). Casual speech often uses って思う."""
+related = ["you-to-omou", "deshou", "to-kiita"]
+examples = [
+  { tatoeba = "36557_199355", ja = "ない{と思う}けど。", en = "I don't think so." },
+  { tatoeba = "41060_136884", ja = "誰が選ばれる{と思います}か。", en = "Who do you think will be chosen?" },
+  { tatoeba = "263853_150704", ja = "時がその問題を解決してくれる{と思います}。", en = "I think time will solve the problem." },
+]
+
+[[point]]
+id = "to-kiita"
+pattern = "と聞いた"
+forms = ["と聞きました", "ときいた", "って聞いた"]
+jlpt = "N4"
+meaning = "I heard that"
+formation = [
+  "Verb / ［い］Adjective + と聞いた",
+  "［な］Adjective / Noun + だ + と聞いた   (休みだと聞いた)",
+]
+explanation = """
+Reports something you were told: 田中さんは来月結婚すると聞きました, \
+"I heard Tanaka is getting married next month". The source takes から: \
+友達から聞いた. In casual speech, って聞いた."""
+notes = """
+聞く also means "ask", so 彼に…と聞いた can be "I asked him …"; a \
+question before と (どこかと聞いた) makes it "asked". Compared with \
+そうだ, と聞いた names the act of hearing; そうだ just passes the news \
+on."""
+related = ["sou-da-hearsay", "to-omou", "tte"]
+examples = [
+  { tatoeba = "1053224_200216", ja = "トムが金持ちの女性と結婚した{と聞いた}。", en = "I heard that Tom got married to a rich woman." },
+  { source = "yomeru", ja = "駅前に新しい店ができた{って聞いた}。", en = "I heard a new shop opened in front of the station." },
+]
+
+[[point]]
+id = "to-iwarete-iru"
+pattern = "と言われている"
+forms = ["といわれている", "と言われています", "とされている", "と考えられている"]
+jlpt = "N4"
+meaning = "it is said that, is thought to be, is considered"
+formation = [
+  "Verb / ［い］Adjective + と言われている",
+  "［な］Adjective / Noun + だ + と言われている   (天才だと言われている)",
+]
+explanation = """
+Presents what people in general say or believe, not one person: 彼は天\
+才だと言われている, "he is said to be a genius". With と考えられている \
+it is "is thought to be"; とされている is more formal still, for what is \
+officially accepted. Common in news and writing."""
+notes = """
+After a noun, だ is optional: 天才だと / 天才と言われている, and it is \
+usually left out with とされている and と考えられている. For something one person \
+told you, use そうだ or と聞いた instead."""
+related = ["sou-da-hearsay", "to-kiita", "passive"]
+examples = [
+  { tatoeba = "301764_101929", ja = "彼は天才だ{と言われている}。", en = "He is said to be a genius." },
+  { tatoeba = "300422_103271", ja = "彼は正直者だ{と言われている}。", en = "He is said to be honest." },
+  { tatoeba = "294077_109613", ja = "彼は英雄{と考えられていた}。", en = "He was regarded as a hero." },
+]
+
+[[point]]
+id = "to-iu-koto"
+pattern = "ということ"
+forms = ["ということだ", "ということです"]
+jlpt = "N4"
+meaning = "the fact that; that means; I hear that"
+formation = ["Sentence (plain) + ということ   (学生だということ)"]
+explanation = """
+Wraps a whole statement into a noun: 問題はお金がないということです, \
+"the problem is that we have no money". It also checks or sums up what \
+something means: 来られないということですか, "so you mean you can't \
+come?". At the end of a sentence, ということだ can pass on hearsay."""
+notes = """
+After nouns and な-adjectives, keep だ: 休みだということ. Casual speech \
+shortens it to ってこと (行けないってこと？). Plain こと also turns a verb \
+into a noun (行くこと); ということ is needed when the statement ends in \
+だ, and suits reported content and meanings."""
+related = ["no-nominalizer", "sou-da-hearsay", "tte"]
+examples = [
+  { tatoeba = "243466_79848", ja = "問題はお金がない{ということです}。", en = "The trouble is that we have no money." },
+  { tatoeba = "303435_100262", ja = "彼は風邪をひいている{ということです}。", en = "He is said to have a cold." },
+  { source = "yomeru", ja = "つまり、来られない{ということ}ですか。", en = "So you mean you can't come?" },
+]
+
+[[point]]
+id = "to-itte-mo-ii"
+pattern = "と言ってもいい"
+forms = ["といってもいい", "と言ってもいいです"]
+jlpt = "N4"
+meaning = "you could say, it's fair to say"
+formation = ["Noun / Sentence + と言ってもいい   (家族と言ってもいい)"]
+explanation = """
+Puts a strong description forward while admitting it stretches things \
+a little: 彼女はもう家族と言ってもいい, "you could say she's family \
+now". Often followed by だろう or くらいだ to soften it further."""
+notes = """
+Built from Verb［て］ + もいい, "it's fine to say": the speaker allows \
+themselves the word. Usually written in kana. Close to と言える, "can be \
+said", which is more neutral."""
+related = ["te-mo-ii", "to-iwarete-iru"]
+examples = [
+  { tatoeba = "303778_99919", ja = "彼は本の虫{と言ってもいい}ような人だ。", en = "He is what you might call a bookworm." },
+  { source = "yomeru", ja = "彼女はもう家族{と言ってもいい}。", en = "You could say she's family now." },
+]
+
+[[point]]
+id = "kana"
+pattern = "かな"
+forms = ["かなあ", "かなぁ"]
+jlpt = "N4"
+hover = false
+meaning = "I wonder (casual, to oneself)"
+formation = [
+  "Verb / ［い］Adjective + かな   (来るかな)",
+  "［な］Adjective / Noun + かな   (本当かな)",
+]
+explanation = """
+Wonders aloud, mostly to yourself: 明日は晴れるかな, "I wonder if it'll \
+be sunny tomorrow". After a volitional it means "maybe I'll …": 何を食\
+べようかな, "what shall I eat?". Said to someone, ないかな softens a \
+request or wish: 来てくれないかな."""
+notes = """
+Casual; it rarely follows です or ます. Used by everyone today; かしら is \
+the softer, older, mostly feminine version. More formal ways of \
+wondering: のだろうか, でしょうか. No だ after nouns: 雨かな."""
+related = ["kashira", "no-darou-ka", "ka-particle", "volitional"]
+examples = [
+  { tatoeba = "271565_143003", ja = "晴れるの{かなあ}？", en = "I wonder if it will be nice." },
+  { tatoeba = "68726_231358", ja = "あのお金で何を買おう{かな}。", en = "What shall we buy with that money?" },
+  { tatoeba = "58058_220736", ja = "この前会ってからどのくらいになる{かな}。", en = "How long has it been since we last met?" },
+]
+
+[[point]]
+id = "no-darou-ka"
+pattern = "のだろうか"
+forms = ["んだろうか", "のでしょうか", "んでしょうか"]
+jlpt = "N4"
+meaning = "I wonder (if / why …); (polite) is it that …?"
+formation = [
+  "Verb / ［い］Adjective + のだろうか",
+  "［な］Adjective / Noun + な + のだろうか   (本当なのだろうか)",
+]
+explanation = """
+Wonders about something you can't explain, often to yourself: 彼はなぜ\
+来ないのだろうか, "I wonder why he isn't coming". The polite のでしょう\
+か is a gentle way to ask someone: どこで乗り換えるのでしょうか, \
+"where should I change trains?"."""
+notes = """
+More serious than かな: のだろうか fits writing and reflection, かな \
+casual chat. Speech shortens の to ん: んだろう. Without の, だろうか / \
+でしょうか is a plain "I wonder"; with の it asks about a reason or \
+explanation behind what you see."""
+related = ["kana", "deshou", "n-desu", "kashira"]
+examples = [
+  { tatoeba = "23793_186657", ja = "火星には生き物がいる{のだろうか}。", en = "Is there any life on Mars?" },
+  { tatoeba = "38164_200960", ja = "どこで乗り換える{のでしょうか}。", en = "Where do I have to change trains?" },
+  { tatoeba = "259378_155161", ja = "私は誰な{のだろうか}。", en = "Who am I?" },
+]
+
+[[point]]
+id = "ja-nai-ka"
+pattern = "じゃないか"
+forms = ["ではないか", "じゃないですか", "じゃありませんか"]
+jlpt = "N4"
+meaning = "isn't it?, you know; (surprise or reproach) look, it's …!"
+formation = [
+  "Verb / ［い］Adjective + じゃないか   (言ったじゃないか)",
+  "［な］Adjective / Noun + じゃないか   (簡単じゃないか)",
+]
+explanation = """
+Not a real negative: it asks the listener to agree with something both \
+can see, or points it out with surprise or blame: いつも言ってるじゃない\
+か, "I always tell you, don't I!". Politely, じゃないですか: 駅は近いじゃ\
+ないですか, "the station's close, isn't it?"."""
+notes = """
+The tone falls; with a rising tone (and often ん before it: 雨なんじゃない\
+か), it is a guess, "isn't it maybe …?". じゃないか sounds masculine; \
+じゃない alone is softer, and じゃん more casual still. Volitional + じゃな\
+いか (行こうじゃないか) is a firm "let's"."""
+related = ["deshou", "desu", "volitional"]
+examples = [
+  { tatoeba = "66081_228724", ja = "いつも言ってる{じゃないか}。", en = "I say it all the time." },
+  { tatoeba = "326520_77199", ja = "話が違う{じゃないか}。", en = "That's not what you said before." },
+  { source = "yomeru", ja = "駅は近い{じゃないですか}。歩きましょう。", en = "The station's close, isn't it? Let's walk." },
+]
+
+[[point]]
+id = "ga-suru"
+pattern = "がする"
+forms = ["がします"]
+jlpt = "N4"
+meaning = "there's a (sound, smell, taste); feel (that)"
+formation = ["Noun + がする   (音がする, においがする, 味がする, 気がする)"]
+explanation = """
+Says a sense is reaching you: いいにおいがする, "something smells \
+good"; 変な音がした, "there was a strange noise". With 気, it is a \
+feeling or hunch: 雨が降るような気がする, "I have a feeling it'll \
+rain"."""
+notes = """
+Used for sound, smell, taste and feelings, not for sight: for looks, \
+use に見える. The thing giving off the sense is the topic: このスープは\
+変な味がする, "this soup tastes odd". 寒気がする "feel a chill" and 吐き\
+気がする "feel sick" are set phrases."""
+related = ["ni-mieru", "kikoeru"]
+examples = [
+  { tatoeba = "52270_214974", ja = "すぐそばでかすかな音{がした}。", en = "I heard a faint sound nearby." },
+  { source = "yomeru", ja = "この花はいいにおい{がする}。", en = "This flower smells nice." },
+  { tatoeba = "25178_188039", ja = "何か甘いものを食べたい気{がする}。", en = "I feel like eating something sweet." },
+]
+
+[[point]]
+id = "question-ka"
+pattern = "か"
+forms = []
+jlpt = "N4"
+meaning = "(question inside a sentence) who / what / where …"
+formation = [
+  "Question word … Verb / ［い］Adjective + か   (誰が来るか)",
+  "Question word … ［な］Adjective / Noun + か   (誰が先生か)",
+]
+explanation = """
+Puts a question inside a longer sentence, usually before わかる, 知る, \
+教える or 聞く: 何時に始まるかわかりません, "I don't know what time it \
+starts". It also works without a question word: 来るか教えて, "tell me \
+if you're coming"."""
+notes = """
+Usually no だ before it: 誰が先生か, not 誰が先生だか. With a question word, \
+use just か; for a yes-or-no question, かどうか is more common \
+(来るかどうか). Not the か of 誰か "someone", which follows the question \
+word directly."""
+related = ["ka-dou-ka", "ka-particle", "ka-mo-question-words"]
+homographs = ["ka-particle"]
+examples = [
+  { tatoeba = "56831_219510", ja = "この本を誰が書いた{か}知っていますか。", en = "Do you have any idea who wrote this book?" },
+  { tatoeba = "55073_217763", ja = "この本をどこに置いたらいい{か}教えてください。", en = "Tell me where to put these books." },
+  { source = "yomeru", ja = "何時に始まる{か}わかりません。", en = "I don't know what time it starts." },
 ]
