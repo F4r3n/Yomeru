@@ -6,6 +6,8 @@ doesn't repeat theirs.
 Without the ZIP: fields, unique ids and patterns, one {…} mark per example,
 every Tatoeba example word for word as in examples.utf (id, Japanese and
 English), and related ids not written yet (a to-do list, not an error).
+Length limits (meaning, explanation, notes, example length) print as
+warnings: trim the entry, they don't fail the check.
 
 With the ZIP: for each entry, any run of 8+ English words that our
 meaning, explanation, notes or own translations share with bee's entries
@@ -27,6 +29,9 @@ ROOT = Path(__file__).resolve().parents[3]
 REQUIRED = ["id", "pattern", "forms", "jlpt", "meaning", "formation",
             "explanation", "related", "examples"]
 LEVELS = {"N5", "N4", "N3", "N2", "N1"}
+# The limits SKILL.md sets: chars of meaning, words of explanation and
+# notes (a Japanese run counts as one word), chars of an example's Japanese.
+MAX_MEANING, MAX_WORDS, MAX_EXAMPLE = 60, 80, 26
 # Overlap thresholds: English words in a row shared with the same pattern's
 # entries; Japanese chars in a row shared with any entry, and the share of
 # our sentence they make. Below these, shared runs are stock phrases
@@ -90,6 +95,8 @@ def validate(points):
         if p.get("pattern") in patterns:
             errors.append(f"{name}: duplicate pattern {p.get('pattern')}")
         patterns.add(p.get("pattern"))
+        if not isinstance(p.get("hover", True), bool):
+            errors.append(f"{name}: hover must be true or false")
         if p.get("jlpt") not in LEVELS:
             errors.append(f"{name}: jlpt must be one of N5…N1")
         examples = p.get("examples", [])
@@ -119,6 +126,27 @@ def validate(points):
             claimed.setdefault(f, p.get("id"))
     missing = sorted({r for p in points for r in p.get("related", [])} - ids)
     return errors, missing
+
+
+def word_count(text):
+    return len(re.findall(r"[A-Za-z0-9'’-]+|[぀-ヿ一-鿿]+", text))
+
+
+def lengths(points):
+    warnings = []
+    for p in points:
+        name = p.get("id", "?")
+        if len(p.get("meaning", "")) > MAX_MEANING:
+            warnings.append(f"{name}: meaning over {MAX_MEANING} chars")
+        for field in ("explanation", "notes"):
+            n = word_count(p.get(field, ""))
+            if n > MAX_WORDS:
+                warnings.append(f"{name}: {field} has {n} words (max {MAX_WORDS})")
+        for ex in p.get("examples", []):
+            plain = ex.get("ja", "").replace("{", "").replace("}", "")
+            if len(plain) > MAX_EXAMPLE:
+                warnings.append(f"{name}: example over {MAX_EXAMPLE} chars: {plain}")
+    return warnings
 
 
 def overlap(points, zip_path):
@@ -168,6 +196,8 @@ def main():
     errors, missing = validate(points)
     for e in errors:
         print("ERROR", e)
+    for w in lengths(points):
+        print("LONG", w)
     by_level = {}
     for p in points:
         by_level[p.get("jlpt")] = by_level.get(p.get("jlpt"), 0) + 1

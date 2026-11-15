@@ -62,6 +62,17 @@ re-sends its whole history on every call. Work in this order:
    one of ours exactly, so ながらも still shows after ながら: it is a
    different point. Skip rows that only label a basic structure
    (`Verb + て`) unless there is a real grammar point to explain.
+   Bee files some points higher than Bunpro does (でしょう, もらう, the
+   particles は, が, も, か, で), so a level isn't finished until the
+   higher levels are searched for its Bunpro tag too:
+   ```bash
+   for l in N4 N3 N2 N1; do python3 -I bee.py list ZIP --levels $l --count 3000; done | grep 'Bunpro N5'
+   ```
+   The tag comes from matching the pattern's words, so a later point that
+   contains the particle (から〜にかけて, 可能形 + だけ) can carry it: write
+   the basic use at the Bunpro level, and leave the later point for its own
+   level. Bee also has no rows for some basics (に, と, や, possessive の):
+   write those at their textbook level and say so in the report.
 2. **Write each entry from your own knowledge first**, before any fact
    sheet: meaning, formation, explanation, notes, related.
 3. **Examples.** `tatoeba.py` with a regex that catches the conjugated
@@ -86,9 +97,29 @@ re-sends its whole history on every call. Work in this order:
    phrases, and to IMABI's sentences entirely (it writes furigana inline,
    食はんたべ, so nothing matches): if you notice you borrowed an example
    or a turn of phrase while reading, replace it yourself.
-7. **Report**: points added per level, ones you're unsure of, the
-   disagreements and level differences, the remaining count from
-   `bee.py list`, and suggest the user run `/cost` to track the batch's cost.
+   It also prints `LONG` warnings for the length limits below: trim those.
+7. **Review**, before reporting: print the batch's entries compactly
+   (pattern, meaning, formation, explanation, notes, examples) and read
+   every one as a learner would. The check only covers form; this step
+   catches what it can't:
+   - **Claims**: is each rule, contrast and "never/only" true? Re-read
+     anything written from memory that the fact sheet didn't confirm, and
+     any note that contradicts a fact sheet (a source listing a use your
+     note rules out).
+   - **Level**: example vocabulary and register at the entry's level or
+     below (no 至る所, 在宅, いらっしゃいます in an N5 entry); Tatoeba is
+     full of hard or literary sentences that match a regex.
+   - **Consistency**: an example that contradicts the entry's own notes
+     (上げた for "give" when the notes say 上げる is "raise"), contrasts
+     that agree across entries, `related` ids that point the right way.
+   - **Lookup**: forms that would match inside unrelated words (かった in
+     わかった, a bare ら).
+   Fix in place, rerun the check, and list in the report what the review
+   changed.
+8. **Report**: points added per level, ones you're unsure of, the
+   disagreements and level differences, what the review fixed, the
+   remaining count from `bee.py list`, and suggest the user run `/cost` to
+   track the batch's cost.
 
 ## Writing an entry
 
@@ -130,6 +161,10 @@ place; never add a second block for the same id.
   contrast in a few words.
 - **related**: ids of patterns worth comparing, written or not yet (the
   check lists the unwritten ones as a to-do).
+- **hover**: leave it out (true) unless the pattern would pop up inside
+  unrelated words: `hover = false` (って, inside 行って) keeps the entry
+  search-only. One-char patterns (は, に, て) need nothing: the popup
+  already skips matches under two chars.
 - **examples**: 2–3, under ~26 chars of Japanese, at the entry's level or
   below in vocabulary; the `{…}` mark covers the pattern as conjugated.
 - Plain English for learners: no linguistics jargon (連用形, ergative),
