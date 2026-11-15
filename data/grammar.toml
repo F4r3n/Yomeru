@@ -3661,3 +3661,528 @@ examples = [
   { tatoeba = "16605_212369", ja = "その意見に賛成ですか、{それとも}反対ですか。", en = "Are you for or against the plan?" },
   { tatoeba = "17394_178542", ja = "君のコップ？{それとも}妹のコップ？", en = "Is this your glass or your sister's?" },
 ]
+
+[[point]]
+id = "o-ni-naru"
+pattern = "お〜になる"
+forms = ["ご〜になる"]
+jlpt = "N4"
+meaning = "(respectful) does, is doing — said of someone you look up to"
+formation = [
+  "お + Verb［stem］ + になる   (待つ → お待ちになる)",
+  "ご + Noun (a する-verb noun) + になる   (利用 → ご利用になる)",
+]
+explanation = """
+Turns a verb into respectful language, raising the person who does it: \
+a teacher, a customer, someone older. 先生はもうお帰りになりました, "the \
+teacher has already gone home". It is the respectful rung of keigo; the \
+humble rung (お〜する) lowers your own actions, and です／ます are just \
+polite."""
+notes = """
+Never about yourself or your own family. Verbs with a respectful verb of \
+their own use that instead: いる／行く／来る → いらっしゃる, する → \
+なさる, 食べる → 召し上がる, 言う → おっしゃる, 見る → ご覧になる. \
+Verbs with a one-kana stem (見る, いる, 寝る) don't take it. Most native \
+verbs take お, most kanji compounds ご."""
+related = ["o-suru", "irassharu", "nasaru", "o-kudasai"]
+examples = [
+  { tatoeba = "37614_200412", ja = "どのくらい私を{お待ちになって}いましたか。", en = "How long have you been waiting for me?" },
+  { tatoeba = "66333_228975", ja = "いつここを{お立ちになります}か。", en = "What time do you leave here?" },
+  { source = "yomeru", ja = "先生はもう{お帰りになりました}。", en = "The teacher has already gone home." },
+]
+
+[[point]]
+id = "o-suru"
+pattern = "お〜する"
+forms = ["ご〜する", "お〜します", "お〜いたします"]
+jlpt = "N4"
+meaning = "(humble) I do (for you) — lowering your own action"
+formation = [
+  "お + Verb［stem］ + する   (持つ → お持ちする)",
+  "ご + Noun (a する-verb noun) + する   (案内 → ご案内する)",
+]
+explanation = """
+The humble rung of keigo: you lower your own action to show respect to \
+the person it is done for or toward. 荷物をお持ちしましょうか, "shall I \
+carry your bag?". Using いたす for する (お持ちいたします) makes it \
+humbler still. The respectful rung, for the other person's actions, is \
+お〜になる."""
+notes = """
+Only for actions that involve or affect the other person: お送りする \
+(see someone home), お知らせする (let someone know); not for something \
+you do on your own, like walking or sleeping. Never for the listener's \
+actions: for those use お〜になる or お〜ください. Kanji compounds take \
+ご, with a few common exceptions (お電話する, お約束する). お願いします \
+is this pattern, worn into a set phrase."""
+related = ["o-ni-naru", "itasu", "te-oru"]
+examples = [
+  { tatoeba = "24133_186996", ja = "家まで車で{お送りしましょう}か。", en = "Shall I drive you home?" },
+  { source = "yomeru", ja = "荷物を{お持ちしましょう}か。", en = "Shall I carry your bag?" },
+  { source = "yomeru", ja = "あとでメールで{お知らせします}。", en = "I'll let you know by email later." },
+]
+
+[[point]]
+id = "o-kudasai"
+pattern = "お〜ください"
+forms = ["ご〜ください", "お〜下さい", "ご〜下さい"]
+jlpt = "N4"
+meaning = "please (do) — a respectful request"
+formation = [
+  "お + Verb［stem］ + ください   (待つ → お待ちください)",
+  "ご + Noun (a する-verb noun) + ください   (連絡 → ご連絡ください)",
+]
+explanation = """
+A more respectful version of 〜てください, heard from shop staff, on \
+signs and in announcements: 少々お待ちください, "please wait a moment". \
+It asks the listener to do something while raising them, like \
+お〜になる."""
+notes = """
+Not the same as お茶をください, which asks for a thing (お茶 is just a \
+noun). Verbs with a special respectful verb use it instead: \
+いらっしゃってください (or おいでください), 召し上がってください, \
+ご覧ください. Like お〜になる, it doesn't work with one-kana stems: \
+not お見ください. Negative: お〜にならないでください, though signs \
+prefer ご遠慮ください."""
+related = ["te-kudasai", "o-ni-naru", "wo-kudasai"]
+examples = [
+  { tatoeba = "64133_226784", ja = "{お入りください}。", en = "Come right in." },
+  { tatoeba = "18097_201282", ja = "どうぞ靴を{お脱ぎ下さい}。", en = "Please take off your shoes." },
+  { source = "yomeru", ja = "少々{お待ちください}。", en = "Please wait a moment." },
+]
+
+[[point]]
+id = "irassharu"
+pattern = "いらっしゃる"
+forms = ["いらっしゃいます", "いらっしゃい"]
+jlpt = "N4"
+meaning = "(respectful) be, go, come"
+formation = [
+  "いらっしゃる   (ます-form いらっしゃいます)",
+  "Verb［て］ + いらっしゃる   (respectful ている)",
+]
+explanation = """
+The respectful verb standing in for いる, 行く and 来る when the subject \
+is someone you look up to: 社長は会議室にいらっしゃいます, "the \
+president is in the meeting room". Which of the three it means comes \
+from context. After a て-form it replaces ている: 待っていらっしゃる."""
+notes = """
+Its ます-form is いらっしゃいます, not いらっしゃります; the same goes \
+for なさる, くださる and おっしゃる. いらっしゃいませ, "welcome", greets \
+customers; plain いらっしゃい welcomes guests or, to a child, means \
+"come here". Never for yourself: the humble verbs are おる (いる) and \
+参る (行く, 来る)."""
+related = ["o-ni-naru", "nasaru", "te-oru"]
+examples = [
+  { tatoeba = "278078_125914", ja = "長く{いらっしゃる}つもりですか。", en = "Are you going to stay long?" },
+  { tatoeba = "323324_80392", ja = "明日また{いらっしゃい}。", en = "Come again tomorrow." },
+  { source = "yomeru", ja = "先生は今、教室に{いらっしゃいます}。", en = "The teacher is in the classroom now." },
+]
+
+[[point]]
+id = "nasaru"
+pattern = "なさる"
+forms = ["なさいます"]
+jlpt = "N4"
+meaning = "(respectful) do"
+formation = [
+  "なさる   (ます-form なさいます)",
+  "Noun (a する-verb noun) + なさる   (心配なさる)",
+]
+explanation = """
+The respectful verb for する, used for what a customer, a guest or a \
+superior does. 何になさいますか, "what will you have?", is the stock \
+question when someone orders. It replaces する after a noun too: \
+ご心配なさらないでください, "please don't worry"."""
+notes = """
+The ます-form is なさいます, not なさります. Its command form, なさい, \
+became a firm instruction to children (早く寝なさい): same root, very \
+different feel. Never for yourself: the humble する is いたす. In very \
+polite speech, ご + noun + なさる is common (ご利用なさる)."""
+related = ["nasai", "itasu", "irassharu", "o-ni-naru"]
+examples = [
+  { tatoeba = "39470_202257", ja = "デザートは何に{なさいます}か？", en = "What would you like for dessert?" },
+  { tatoeba = "70157_232787", ja = "あなたはお暇な時には何を{なさいます}？", en = "What do you do in your spare time?" },
+]
+
+[[point]]
+id = "itasu"
+pattern = "いたす"
+forms = ["いたします", "致す", "致します"]
+jlpt = "N4"
+meaning = "(humble) do"
+formation = [
+  "いたす   (ます-form いたします)",
+  "Noun (a する-verb noun) + いたす   (説明いたします)",
+  "お + Verb［stem］ + いたす   (お持ちいたします)",
+]
+explanation = """
+The humble verb for する: you lower your own doing, mostly in work \
+settings, to customers, in speeches. 私がご案内いたします, "I will show \
+you the way". よろしくお願いいたします is a humbler よろしくお願いし\
+ます, closing emails and introductions."""
+notes = """
+Almost always in its ます-form; written in kana more often than as 致す. \
+Never for the listener's actions: that is なさる. Other humble verbs at \
+this level: おる for いる (te-oru), 参る for 行く／来る (明日参ります), \
+申す for 言う (田中と申します, "my name is Tanaka")."""
+related = ["nasaru", "o-suru", "te-oru"]
+examples = [
+  { tatoeba = "52790_215488", ja = "ジョンソン氏をご紹介{いたします}。", en = "May I present Mr Johnson to you?" },
+  { source = "yomeru", ja = "では、私が説明{いたします}。", en = "Then I will explain." },
+  { source = "yomeru", ja = "明日、こちらからお電話{いたします}。", en = "We'll call you tomorrow." },
+]
+
+[[point]]
+id = "gozaimasu"
+pattern = "ございます"
+forms = ["でございます", "ござる"]
+jlpt = "N4"
+meaning = "(very polite) there is, have; でございます: is"
+formation = [
+  "Noun + が + ございます   (= あります)",
+  "Noun + でございます   (= です)",
+]
+explanation = """
+A very polite way of saying あります, and with で, of です. It is the \
+voice of shops, hotels and announcements: お手洗いは二階でございます, \
+"the restroom is on the second floor". It also lives on in set phrases: \
+ありがとうございます, おはようございます."""
+notes = """
+For a person's presence, use いらっしゃる (someone else) or おります \
+(you or your side), not ございます. でございます can describe yourself, \
+though: 受付の田中でございます. Plain ござる is old: you'll meet it in \
+samurai films, not in speech. With い-adjectives it gives old \
+forms like おいしゅうございます, now rare outside set greetings \
+(おめでとうございます)."""
+related = ["desu", "ga-aru", "irassharu"]
+examples = [
+  { tatoeba = "280025_123970", ja = "当店にはいろいろな種類の本が{ございます}。", en = "We have a wide choice of books." },
+  { source = "yomeru", ja = "お手洗いは二階{でございます}。", en = "The restroom is on the second floor." },
+]
+
+[[point]]
+id = "te-oru"
+pattern = "ておる"
+forms = ["でおる", "ております", "でおります"]
+jlpt = "N4"
+meaning = "(humble, formal) am doing, have been doing"
+formation = ["Verb［て］ + おる   (ます-form おります)"]
+explanation = """
+The humble version of ている, for what you or your side are doing: \
+お待ちしております, "we look forward to seeing you". It sounds formal \
+and is common at work, in shops and in letters. おる on its own is the \
+humble いる: 父は家におります, "my father is at home"."""
+notes = """
+For your own actions or your group's, never the listener's: for theirs, \
+use ていらっしゃる. Almost always in its ます-form. In western Japan \
+おる is ordinary dialect for いる and isn't humble there."""
+related = ["te-iru", "irassharu", "itasu"]
+examples = [
+  { tatoeba = "54417_217110", ja = "ご親切に感謝し{ております}。", en = "I appreciate your kindness." },
+  { tatoeba = "325835_77853", ja = "良い返事をお待ちし{ております}。", en = "I am looking forward to receiving your favorable answer." },
+  { tatoeba = "64339_226991", ja = "お席の上の棚の中に入っ{ております}。", en = "It's in the overhead compartment." },
+]
+
+[[point]]
+id = "te-choudai"
+pattern = "てちょうだい"
+forms = ["でちょうだい", "ちょうだい", "て頂戴", "頂戴"]
+jlpt = "N4"
+meaning = "please (do), would you (soft, familiar request)"
+formation = [
+  "Verb［て］ + ちょうだい",
+  "Verb［ない］ + でちょうだい   (please don't)",
+  "Noun + (を) + ちょうだい   (give me)",
+]
+explanation = """
+A soft, familiar way of asking someone to do something, close to \
+〜てくれる？: ちょっと待ってちょうだい, "wait a moment, will you?". \
+Alone after a noun it means "give me": それ、ちょうだい."""
+notes = """
+Familiar: to family, friends and children, and heard more from women \
+and from children asking parents. Not for superiors: there, 〜てくださ\
+い or 〜ていただけませんか. In formal speech, the verb 頂戴する is a \
+humble "receive" (頂戴します), a different use."""
+related = ["te-kudasai", "te-kureru", "wo-kudasai"]
+examples = [
+  { tatoeba = "265941_148618", ja = "手を貸し{てちょうだい}。", en = "Hey, could you give me a hand over here, please?" },
+  { tatoeba = "66487_229129", ja = "いすで床をこすらない{でちょうだい}。", en = "Don't scrape your chair on the floor." },
+  { source = "yomeru", ja = "そのりんご、一つ{ちょうだい}。", en = "Give me one of those apples." },
+]
+
+[[point]]
+id = "n-desu-ga"
+pattern = "んですが"
+forms = ["んですけど", "んだけど", "のですが", "んですけれども"]
+jlpt = "N4"
+meaning = "…, but (could you…?) — opening a request or topic"
+formation = [
+  "Verb / ［い］Adjective + んですが",
+  "［な］Adjective / Noun + なんですが",
+]
+explanation = """
+Sets up the situation and leaves the sentence hanging so the listener \
+can offer help or reply: すみません、駅に行きたいんですが…, "excuse me, \
+I'm trying to get to the station…". It is how a request or a question \
+usually starts politely, and the request can follow: 〜んですが、教えて\
+もらえませんか."""
+notes = """
+The が／けど isn't really "but": it softens and opens the floor. \
+のですが is more formal, んだけど casual. After a wish, it adds a hint \
+of doubt: 間に合うといいんだけど, "I hope we make it…". Without ん \
+(行きたいですが) it sounds like a flat contrast rather than a lead-in."""
+related = ["n-desu", "kedo"]
+examples = [
+  { tatoeba = "27874_202853", ja = "ちょっとお願いしたいことがある{んだけど}。", en = "I have a favor to ask of you." },
+  { tatoeba = "246478_1171676", ja = "コンサートに行けるといい{んだけど}。", en = "I wish I could go to the concert." },
+  { source = "yomeru", ja = "すみません、駅に行きたい{んですが}…。", en = "Excuse me, I'm trying to get to the station…" },
+]
+
+[[point]]
+id = "te-hoshii"
+pattern = "てほしい"
+forms = ["でほしい", "て欲しい", "で欲しい", "てほしくない", "ないでほしい"]
+jlpt = "N4"
+meaning = "want (someone) to do"
+formation = [
+  "Person + に + Verb［て］ + ほしい",
+  "Person + に + Verb［ない］ + でほしい   (want them not to)",
+]
+explanation = """
+Says you want someone else to do something; the person is marked with \
+に: 弟に手伝ってほしい, "I want my brother to help". For something you \
+want to do yourself, use 〜たい. It conjugates like the い-adjective \
+ほしい: 来てほしかった, "I wanted you to come"."""
+notes = """
+Said straight to a superior it sounds pushy: 〜ていただきたいんですが is \
+the polite version. For a third person's wish, add と思っている \
+(父は私に医者になってほしいと思っている). ようにしてほしい asks for a \
+habit or effort rather than one act: 遅れないようにしてほしい. \
+〜ないでほしい ("I want you not to") is more common than 〜てほしくない."""
+related = ["tai", "ga-hoshii", "te-morau", "you-ni-suru"]
+examples = [
+  { tatoeba = "257068_157464", ja = "すぐ来{てほしい}。", en = "I want you to come at once." },
+  { tatoeba = "17553_178701", ja = "君にその歌を歌っ{てほしい}。", en = "We want you to sing the song." },
+  { source = "yomeru", ja = "このことは誰にも言わない{でほしい}。", en = "I'd like you not to tell anyone about this." },
+]
+
+[[point]]
+id = "you-ni-iu"
+pattern = "ように言う"
+forms = ["ようにいう", "ないように言う", "ように言われた", "ように伝える", "ように頼む"]
+jlpt = "N4"
+meaning = "tell (someone) to do, ask (someone) to do"
+formation = [
+  "Person + に + Verb［る］ + ように言う",
+  "Person + に + Verb［ない］ + ように言う   (tell not to)",
+]
+explanation = """
+Reports an instruction or a request without quoting it word for word: \
+母は私に早く帰るように言った, "my mother told me to come home early". \
+言う can be swapped for 頼む (ask), 伝える (pass on) or 注意する (warn)."""
+notes = """
+The verb before ように stays in the plain dictionary or ない form, \
+whatever the original words were. A direct quote uses と instead: \
+「早く帰って」と言った. Passive ように言われた is how you say you were \
+told to do something. With 頼む, 〜てくれるように頼む softens it \
+further."""
+related = ["you-ni-suru", "tte", "you-ni-inoru"]
+examples = [
+  { tatoeba = "260501_154042", ja = "私は彼に来る{ように言った}。", en = "I told him to come." },
+  { tatoeba = "315572_88135", ja = "彼女は息子にちょっと待つ{ように言った}。", en = "She told her son to wait a minute." },
+  { tatoeba = "321568_82147", ja = "僕は、彼女にちょっと待ってくれる{ように頼んだ}。", en = "I asked her to wait a minute." },
+]
+
+[[point]]
+id = "you-ni-inoru"
+pattern = "ように祈る"
+forms = ["ようにいのる", "ますように", "ように願う"]
+jlpt = "N4"
+meaning = "pray that, hope that; (〜ますように) may…"
+formation = [
+  "Verb［る］ / Verb［ない］ + ように祈る",
+  "Verb［stem］ + ますように   (on its own: a wish)",
+]
+explanation = """
+Expresses a hope for something outside your control: 合格するように祈っ\
+ています, "I'm praying you pass". Cut short as 〜ますように it becomes a \
+wish on its own, the kind written on shrine plaques and cards: 夢が\
+かないますように, "may my dream come true"."""
+notes = """
+The verb is one you can't simply do at will: a happening, or a potential \
+form (会えますように). For your own effort, use ようにする. 願う works \
+like 祈る but sounds more like "wish" than "pray". Cut short, a wish \
+keeps its ます: a bare plain 〜ないように at the end of a sentence is \
+usually a reminder instead (遅れないように, "don't be late")."""
+related = ["you-ni-purpose", "you-ni-iu", "you-ni-suru"]
+examples = [
+  { tatoeba = "284020_119642", ja = "彼が長生きし{ますように}。", en = "May he live long!" },
+  { tatoeba = "66697_229340", ja = "いい誕生日を迎えられ{ますように}。", en = "Hope you'll have a great one." },
+  { tatoeba = "71357_233985", ja = "あなたが早くよくなる{ように祈って}います。", en = "We are hoping for your quick recovery." },
+]
+
+[[point]]
+id = "you-ni-purpose"
+pattern = "ように"
+forms = ["ないように"]
+jlpt = "N4"
+meaning = "so that, in order that (a goal you can't simply do)"
+formation = [
+  "Verb［る］ + ように   (often a potential: 見えるように)",
+  "Verb［ない］ + ように   (so as not to)",
+]
+explanation = """
+Gives the aim behind an action, when that aim is a state or a result \
+rather than something you choose to do: よく見えるように前に座った, "I \
+sat at the front so I could see well". With ない it means "so as not \
+to": 忘れないようにメモした, "I wrote it down so I wouldn't forget"."""
+notes = """
+ように goes with potential forms, ない forms and verbs like わかる, \
+見える, 治る; ために takes a verb you do on purpose, with the same \
+subject: 見るために, but 見えるように. Ending a sentence, it reminds or \
+advises: 忘れないように, "don't forget". ように after a noun + の means \
+"like, as" (いつものように), a different use."""
+related = ["tame-ni", "you-ni-suru", "you-ni-inoru"]
+examples = [
+  { source = "yomeru", ja = "よく見える{ように}、前に座った。", en = "I sat at the front so I could see well." },
+  { tatoeba = "31634_194461", ja = "もうこれ以上太らない{ように}、彼女はケーキを食べない。", en = "She does not eat cake, so as not to put on any more weight." },
+  { tatoeba = "257938_156596", ja = "私は始発バスに乗れる{ように}、早めに出かけた。", en = "I made an early start in order to catch the first bus." },
+]
+
+[[point]]
+id = "noni-purpose"
+pattern = "のに"
+forms = []
+jlpt = "N4"
+meaning = "for (doing), in order to (with 使う, いい, 必要, かかる)"
+formation = [
+  "Verb［る］ + のに + 使う / いい / 便利 / 必要 / かかる",
+  "Noun + に + 使う / いい …   (料理に使う)",
+]
+explanation = """
+Says what something is used for, good for, or what it takes to do \
+something: この箱は本を入れるのに使う, "I use this box to keep books \
+in"; 駅まで行くのに二十分かかる, "it takes twenty minutes to get to the \
+station". A noun takes に alone: 料理に使う."""
+notes = """
+Different from ために, which states a purpose for any action: のに only \
+comes before words of use, usefulness, need, time or cost. And not the \
+のに meaning "although" (noni), which follows a full clause and sounds \
+frustrated: 歩くのに便利 is purpose, 歩いたのに is "even though I \
+walked"."""
+related = ["noni", "tame-ni"]
+homographs = ["noni"]
+examples = [
+  { tatoeba = "264898_149660", ja = "辞書はことばの意味を調べる{のに}使う。", en = "We use a dictionary to look up the meaning of words." },
+  { tatoeba = "23337_186204", ja = "我々の目は暗闇に慣れる{のに}時間がかかる。", en = "Our eyes take time to adjust to the darkness." },
+  { source = "yomeru", ja = "駅まで行く{のに}二十分かかります。", en = "It takes twenty minutes to get to the station." },
+]
+
+[[point]]
+id = "noni"
+pattern = "のに"
+forms = ["なのに"]
+jlpt = "N4"
+meaning = "although, even though, despite (with frustration)"
+formation = [
+  "Verb / ［い］Adjective + のに",
+  "［な］Adjective / Noun + なのに",
+]
+explanation = """
+Joins two facts where the second goes against what the first led you \
+to expect, usually with disappointment or surprise: 約束したのに、来な\
+かった, "he promised, yet he didn't come". At the end of a sentence it \
+voices regret: 言ってくれればよかったのに, "you could have told me"."""
+notes = """
+The second half is a fact, so it can't be a request, an invitation or a \
+plan: not 雨なのに行こう; use けど or ても there. けど is neutral where \
+のに complains. A noun or な-adjective needs な: 日曜日なのに. Don't \
+confuse with のに "for (doing)" (noni-purpose)."""
+related = ["kedo", "temo", "noni-purpose"]
+homographs = ["noni-purpose"]
+examples = [
+  { tatoeba = "308859_94848", ja = "彼女に開けるなと言った{のに}、彼女は窓を開けた。", en = "She opened the window, though I told her not to." },
+  { tatoeba = "295514_108172", ja = "彼は金持ち{なのに}、幸せでない。", en = "For all his riches he is not happy." },
+  { source = "yomeru", ja = "昨日買った{のに}、もう壊れた。", en = "I only bought it yesterday, and it's already broken." },
+]
+
+[[point]]
+id = "shi"
+pattern = "し"
+forms = []
+jlpt = "N4"
+meaning = "and, and what's more (listing reasons or points)"
+formation = [
+  "Verb / ［い］Adjective + し",
+  "［な］Adjective / Noun + だし",
+]
+explanation = """
+Lists points, often as reasons that add up: この店は安いし、おいしい\
+し、よく来る, "this place is cheap, the food's good, so I come here a \
+lot". A single し hints there are other reasons left unsaid: 雨だし、\
+家にいよう, "it's raining (and all), let's stay in"."""
+notes = """
+Each part is a full clause in plain or polite form; unlike the て-form, \
+it doesn't list events in order. The points should weigh about the same. Often with も inside the clauses \
+(頭もいいし、性格もいい). Compared with から, し sounds softer, as if \
+the reason were one among several."""
+related = ["kara-reason", "te-form-sequence", "soreni"]
+examples = [
+  { tatoeba = "42426_205185", ja = "それは作りやすい{し}、しかも安い。", en = "It's easy to make and it's cheap." },
+  { tatoeba = "299221_104470", ja = "彼は手紙も書かなかった{し}、電話もしなかった。", en = "He neither wrote nor telephoned." },
+  { source = "yomeru", ja = "今日は雨だ{し}、家にいよう。", en = "It's raining today, so let's stay home." },
+]
+
+[[point]]
+id = "dake-de-naku"
+pattern = "だけでなく"
+forms = ["だけじゃなく", "だけではなく", "だけでなくて", "だけじゃなくて"]
+jlpt = "N4"
+meaning = "not only … but also"
+formation = [
+  "Noun + だけでなく",
+  "Verb / ［い］Adjective + だけでなく",
+  "［な］Adjective + な + だけでなく",
+]
+explanation = """
+Says that A is true and so is B, usually with も on the second item: 料\
+理だけでなく、掃除も上手だ, "he's good not only at cooking but at \
+cleaning too". It works with nouns, verbs and adjectives alike."""
+notes = """
+だけじゃなくて is the casual spoken form, だけではなく a little more \
+formal. More formal still: ばかりでなく, and in writing のみならず. \
+Don't confuse with だけ alone ("only"): 英語だけ話せる means English \
+is all she speaks."""
+related = ["dake", "mo-particle"]
+examples = [
+  { tatoeba = "293954_109736", ja = "彼は英語{だけでなく}フランス語も話す。", en = "He speaks French as well as English." },
+  { tatoeba = "63267_225929", ja = "きみ{だけでなく}僕も悪い。", en = "It's not just you, I am also to blame." },
+  { tatoeba = "294799_108891", ja = "彼は学校で教える{だけでなく}小説も書いた。", en = "Not only did he teach school, but he wrote novels." },
+]
+
+[[point]]
+id = "ni-suru"
+pattern = "にする"
+forms = ["にします"]
+jlpt = "N4"
+meaning = "decide on, choose, go with (a thing); make it X"
+formation = [
+  "Noun + にする   (コーヒーにする)",
+  "［な］Adjective + にする   (静かにする: make quiet)",
+]
+explanation = """
+Picks one option out of several, typically when ordering or planning: \
+私はコーヒーにします, "I'll have coffee"; 会議は金曜日にしましょう, \
+"let's make the meeting Friday". With a な-adjective it means making \
+something that way: 静かにしてください, "please be quiet"."""
+notes = """
+For deciding to do an action, use a verb and ことにする (行くことにする). \
+にする is the choice you make; になる is how things turned out \
+(会議は金曜日になった: it ended up on Friday). An い-adjective takes く \
+instead: 部屋を明るくする."""
+related = ["koto-ni-suru", "naru"]
+examples = [
+  { tatoeba = "238677_175788", ja = "結構です。それ{にしましょう}。", en = "All right. I'll take it." },
+  { tatoeba = "61904_224570", ja = "ここで休憩{にしましょう}。", en = "Let's take a break now." },
+  { source = "yomeru", ja = "私はコーヒー{にします}。", en = "I'll have coffee." },
+]
