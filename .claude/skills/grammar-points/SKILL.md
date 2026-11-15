@@ -42,6 +42,10 @@ comments or commit messages.
   - `bee.py facts ZIP <pattern>…`: a capped English fact sheet per pattern
     (sources' explanations and caveats, no examples), about 1–2k tokens each.
   - `tatoeba.py '<regex>' --count 10`: example candidates, `<id> <ja> | <en>`.
+  - `batch.py status | show N | test [--plan FILE]`: a level's plan (see
+    **Planning a level**): progress per batch; batch N's unwritten points
+    with their decisions, example candidates and the `bee.py facts` calls;
+    every regex's match count.
   - `check.py [ZIP]`: validation; with the ZIP, the overlap check.
   - `preview.py OUT.html --bee ZIP`: the whole file as one review page
     (index, search, level filter), each entry linking to bee-san's pages
@@ -54,6 +58,14 @@ comments or commit messages.
 About 20 points per batch, **one fresh session per batch**: a long session
 re-sends its whole history on every call. Work in this order:
 
+0. **With a plan** (`~/.cache/yomeru-grammar/<level>-plan.toml`, e.g.
+   `n4-plan.toml`): run `batch.py show N` once and skip steps 1 and 3's
+   searching. It prints the batch's folds (variants to add to existing
+   entries), each point's id, pattern, suggested forms, hover and note, 8
+   Tatoeba candidates, and the fact-sheet calls. The decisions are
+   suggestions: change them when writing shows a better choice, and update
+   the plan file so later batches agree. Run `tatoeba.py` only when no
+   candidate fits. Without a plan, start at step 1.
 1. **Pick the points.** `bee.py list ZIP --levels N5 --count 40`. Bee names
    some points descriptively (`Verb + てもいい`, `AながらB`) and splits
    variants into rows of their own (てもいいですか): one entry of ours covers
@@ -121,6 +133,22 @@ re-sends its whole history on every call. Work in this order:
    remaining count from `bee.py list`, and suggest the user run `/cost` to
    track the batch's cost.
 
+## Planning a level
+
+One session per level, before its batches, when the user asks for a plan.
+Do step 1 for the whole level at once (bee's rows at the level, the Bunpro
+tag searched in higher levels, the basics bee has no rows for) and write
+`~/.cache/yomeru-grammar/<level>-plan.toml`, outside the repo. Its header
+comment lists what was left out and why; then `[[batch]]` tables (`n`,
+`title`, `note`, `fold`: variants to add to existing entries) holding
+`[[batch.point]]` tables: `id`, `pattern`, `forms`, `hover`, `regex`,
+optional `facts` (the `bee.py facts` query when it isn't the pattern),
+`jlpt` when it differs, `note` (decisions and open questions). Group
+related points in one batch (たら/ば/と/なら, the keigo verbs) and keep
+batches near 20. Only our decisions go in, never bee's text. Then run
+`batch.py test`: fix any regex that finds nothing, or thousands of noisy
+matches. Report the batches, the points left out, and the open questions.
+
 ## Writing an entry
 
 Add entries with Edit, grouped by level (N5, then N4, then N3), each a
@@ -135,7 +163,10 @@ place; never add a second block for the same id.
   variants the lookup should find (でもいい, ていい, わけじゃない,
   に違いありません). The lookup deinflects, so conjugations it can reach
   (ことにした → ことにする) don't need listing; a form that belongs to
-  another entry is an error.
+  another entry is an error, except for true homographs (passive and
+  potential られる, conditional と and the particle と): both entries keep
+  the spelling and name each other in `homographs`, which lets them pass
+  the check.
 - **jlpt**: Bunpro's level for the point (levels are unofficial since 2010;
   `bee.py list` shows it as `[Bunpro N4]`; bee's own level is the first
   column and can differ, so a list by level can miss a point Bunpro puts

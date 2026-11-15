@@ -17,6 +17,28 @@ from pathlib import Path
 EXAMPLES = Path(__file__).resolve().parents[3] / "examples.utf"
 
 
+def load(path=EXAMPLES):
+    """Every corpus sentence, as (ja, en, id)."""
+    out = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            if not line.startswith("A: "):
+                continue
+            ja, _, rest = line[3:].rstrip("\n").partition("\t")
+            en, _, sid = rest.partition("#ID=")
+            out.append((ja, en, sid))
+    return out
+
+
+def pick(sentences, regex, count=10, lo=8, hi=26):
+    """(match count, up to `count` lines): short ones first, spread over the range."""
+    pattern = re.compile(regex)
+    hits = sorted((len(ja), ja, en, sid) for ja, en, sid in sentences
+                  if lo <= len(ja) <= hi and pattern.search(ja))
+    step = max(1, len(hits) // count) if count else 1
+    return len(hits), [f"{sid} {ja} | {en}" for _, ja, en, sid in hits[::step][:count]]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("regex")
@@ -26,21 +48,10 @@ def main():
     ap.add_argument("--file", default=str(EXAMPLES))
     args = ap.parse_args()
 
-    pattern = re.compile(args.regex)
-    hits = []
-    with open(args.file, encoding="utf-8") as f:
-        for line in f:
-            if not line.startswith("A: "):
-                continue
-            ja, _, rest = line[3:].rstrip("\n").partition("\t")
-            en, _, sid = rest.partition("#ID=")
-            if pattern.search(ja) and args.min <= len(ja) <= args.max:
-                hits.append((len(ja), ja, en, sid))
-    hits.sort()
-    step = max(1, len(hits) // args.count)
-    print(f"{len(hits)} matches")
-    for _, ja, en, sid in hits[::step][: args.count]:
-        print(f"{sid} {ja} | {en}")
+    n, lines = pick(load(args.file), args.regex, args.count, args.min, args.max)
+    print(f"{n} matches")
+    for line in lines:
+        print(line)
 
 
 if __name__ == "__main__":

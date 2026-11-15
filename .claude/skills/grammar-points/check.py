@@ -80,7 +80,7 @@ def words(t):
 
 def validate(points):
     errors = []
-    ids, patterns = set(), set()
+    ids = set()
     corpus = tatoeba()
     for p in points:
         name = p.get("id", "?")
@@ -92,9 +92,6 @@ def validate(points):
         ids.add(name)
         if not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", name):
             errors.append(f"{name}: id must be a lowercase ascii slug")
-        if p.get("pattern") in patterns:
-            errors.append(f"{name}: duplicate pattern {p.get('pattern')}")
-        patterns.add(p.get("pattern"))
         if not isinstance(p.get("hover", True), bool):
             errors.append(f"{name}: hover must be true or false")
         if p.get("jlpt") not in LEVELS:
@@ -117,13 +114,22 @@ def validate(points):
                     errors.append(f"{name}: {ex['tatoeba']} differs from the corpus:\n    corpus {got[0]} | {got[1]}\n    entry  {plain} | {ex.get('en')}")
             elif ex.get("source") != "yomeru":
                 errors.append(f"{name}: unknown source {ex.get('source')}")
-    # A spelling two entries claim would make the lookup ambiguous.
+    # A spelling two entries claim is a homograph (passive and potential
+    # られる): allowed only when each names the other in `homographs`, so
+    # it is deliberate and the lookup shows both. Otherwise it is a mistake.
+    homographs = {p.get("id"): set(p.get("homographs", [])) for p in points}
     claimed = {}
     for p in points:
+        name = p.get("id")
         for f in [p.get("pattern"), *p.get("forms", [])]:
-            if f in claimed and claimed[f] != p.get("id"):
-                errors.append(f"{p.get('id')}: form {f} is also {claimed[f]}'s")
-            claimed.setdefault(f, p.get("id"))
+            for other in claimed.get(f, []):
+                if other != name and not (other in homographs[name] and name in homographs[other]):
+                    errors.append(f"{name}: form {f} is also {other}'s (homographs must name each other in homographs)")
+            claimed.setdefault(f, []).append(name)
+    for p in points:
+        for h in p.get("homographs", []):
+            if h not in ids:
+                errors.append(f"{p.get('id')}: homograph {h} is not an entry")
     missing = sorted({r for p in points for r in p.get("related", [])} - ids)
     return errors, missing
 
