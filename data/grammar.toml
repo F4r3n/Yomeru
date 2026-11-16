@@ -8470,3 +8470,524 @@ examples = [
   { tatoeba = "293099_110587", ja = "彼はもう少しでひかれ{るところだった}。", en = "He came near to being run over." },
   { source = "yomeru", ja = "母が起こしてくれなければ、寝坊する{ところだった}。", en = "If Mum hadn't woken me, I would have overslept." },
 ]
+
+[[point]]
+id = "ni-tsuite"
+pattern = "について"
+forms = ["についての", "については", "についても"]
+jlpt = "N3"
+meaning = "about, concerning, on (a topic)"
+formation = [
+  "Noun + について",
+  "Noun + についての + Noun   (日本についての本)",
+]
+explanation = """
+Marks the topic that talking, thinking, writing or asking is about: \
+将来について考える, "think about the future". Before a noun it becomes \
+についての: 環境についての話, "a talk about the environment"."""
+notes = """
+The everyday word for "about", fine in speech and writing. に関して \
+means the same but sounds more formal. については puts the topic up \
+front, often as a contrast: その件については後で話します, "as for \
+that matter, I'll talk about it later". Don't confuse it with the verb \
+ついて, "follow, come along" (私についてきて)."""
+related = ["ni-kanshite", "ni-taishite"]
+examples = [
+  { tatoeba = "256446_158084", ja = "私は何度も幽霊{について}考えたことがある。", en = "I have thought about ghosts many times." },
+  { tatoeba = "305748_97955", ja = "彼らはその件{について}私に尋ねた。", en = "They inquired of me about the matter." },
+  { source = "yomeru", ja = "日本の文化{についての}レポートを書いた。", en = "I wrote a report on Japanese culture." },
+]
+
+[[point]]
+id = "ni-kanshite"
+pattern = "に関して"
+forms = ["に関する", "にかんして", "にかんする", "に関しては", "に関し"]
+jlpt = "N3"
+meaning = "regarding, concerning, in relation to"
+formation = [
+  "Noun + に関して",
+  "Noun + に関する + Noun   (税金に関する質問)",
+]
+explanation = """
+A more formal について: it names the subject a statement, question or \
+document deals with. 事故に関して、警察が調べている, "the police are \
+investigating the accident". Before a noun it is usually に関する, \
+common in titles and notices: 環境に関する調査, "a survey on the \
+environment"."""
+notes = """
+Sounds stiff in casual talk, where について is the natural choice. \
+に関しては sets the topic apart, often with a contrast or a limit: \
+値段に関しては問題ない, "as far as the price goes, no problem". \
+Compare に対して, which points at a target of feelings or actions, \
+not a subject matter."""
+related = ["ni-tsuite", "ni-taishite"]
+examples = [
+  { tatoeba = "259004_142484", ja = "税金{に関する}あなたの意見に同感です。", en = "I agree with your opinion about taxes." },
+  { tatoeba = "59005_221679", ja = "この事{に関しては}あなたの意見に賛成です。", en = "In this regard, I agree with you." },
+  { source = "yomeru", ja = "新しい規則{に関して}、質問がありますか。", en = "Are there any questions about the new rules?" },
+]
+
+[[point]]
+id = "ni-taishite"
+pattern = "に対して"
+forms = ["に対する", "にたいして", "にたいする", "に対し", "のに対して", "のに対し"]
+jlpt = "N3"
+meaning = "toward, against, to; whereas, in contrast to"
+formation = [
+  "Noun + に対して",
+  "Noun + に対する + Noun   (親に対する態度)",
+  "Verb / ［い］Adjective + のに対して",
+  "［な］Adjective / Noun + なのに対して",
+]
+explanation = """
+After a noun, it names the person or thing a feeling, attitude or \
+action is aimed at: 客に対して丁寧に話す, "speak politely to \
+customers"; 計画に対して反対する, "oppose the plan". After a clause \
+with の, it sets two facts side by side as opposites: 兄が静かなのに\
+対して、弟はよく話す, "my older brother is quiet, whereas my younger \
+brother talks a lot"."""
+notes = """
+Not "about": 日本について話す is talking about Japan, 日本に対して is \
+facing Japan as a target. In contrast use, both halves are facts, \
+compared on the same point. With numbers it can mean "per": 学生十人\
+に対して先生一人, "one teacher per ten students"."""
+related = ["ni-tsuite", "ni-kanshite", "ni-kurabete", "ni-totte"]
+examples = [
+  { tatoeba = "302931_100766", ja = "彼は批評{に対して}たいへん敏感だ。", en = "He is very sensitive to criticism." },
+  { tatoeba = "70687_233317", ja = "あなたの御援助{に対して}私達は感謝しています。", en = "We are grateful to you for your help." },
+  { source = "yomeru", ja = "兄は背が高い{のに対して}、弟は低い。", en = "My older brother is tall, whereas my younger brother is short." },
+]
+
+[[point]]
+id = "ni-totte"
+pattern = "にとって"
+forms = ["にとっては", "にとっても", "にとっての"]
+jlpt = "N3"
+meaning = "for, to (from someone's point of view)"
+formation = [
+  "Noun + にとって",
+  "Noun + にとっての + Noun   (私にとっての幸せ)",
+]
+explanation = """
+Says from whose point of view something is judged: 私にとって、家族が\
+一番大切だ, "for me, family matters most". The rest of the sentence is \
+an evaluation: important, difficult, necessary, a good chance."""
+notes = """
+Only for judgements, never for doing something for someone's sake: \
+×母にとってケーキを作った; that is 母のために. Nor for stating a \
+stance: say 私は賛成だ, not ×私にとって賛成だ. にとっては adds a \
+contrast with other people's views: 子供にとっては難しい, "for \
+children, at least, it's hard". に対して is a different point: the \
+target of an attitude."""
+related = ["tame-ni", "ni-taishite"]
+examples = [
+  { tatoeba = "270812_143754", ja = "水は人間{にとって}大切だ。", en = "Water is important for humans." },
+  { tatoeba = "42390_205148", ja = "それは私{にとって}むずかしすぎます。", en = "It's too difficult for me." },
+  { source = "yomeru", ja = "この写真は私{にとって}宝物です。", en = "This photo is a treasure to me." },
+]
+
+[[point]]
+id = "ni-yotte"
+pattern = "によって"
+forms = ["による", "により", "によっては", "によって違う", "によってちがう"]
+jlpt = "N3"
+meaning = "by (means, cause, who did it); depending on"
+formation = [
+  "Noun + によって",
+  "Noun + による + Noun   (地震による被害)",
+]
+explanation = """
+Names what something comes about through: a method (話し合いによって\
+決める, "decide by discussion"), a cause (台風によって木が倒れた, "the \
+typhoon brought trees down"), or who created something in a passive \
+sentence (この寺は有名な人によって建てられた). With 違う or 変わる it \
+means "depending on": 人によって考え方が違う, "ways of thinking differ \
+from person to person"."""
+notes = """
+For ordinary tools, で is the normal choice: ペンで書く, not ペンによって. \
+In passives, によって is for things made, found or started (books, \
+buildings, discoveries); a plain passive like 先生に叱られた uses に. \
+によっては means "in some cases": 場合によっては, "depending on the \
+situation". により is the written form. によると, "according to", is a \
+different point."""
+related = ["ni-yoru-to", "passive", "ni-motozuite"]
+examples = [
+  { tatoeba = "262979_151577", ja = "私達は経験{によって}多くを学ぶ。", en = "We learn much by experience." },
+  { source = "yomeru", ja = "この本は有名な作家{によって}書かれた。", en = "This book was written by a famous author." },
+  { source = "yomeru", ja = "国{によって}文化が違う。", en = "Culture differs from country to country." },
+]
+
+[[point]]
+id = "ni-kurabete"
+pattern = "に比べて"
+forms = ["に比べ", "にくらべて", "と比べて", "とくらべて", "に比べると", "と比べると", "に比べれば"]
+jlpt = "N3"
+meaning = "compared to, compared with"
+formation = [
+  "Noun + に比べて / と比べて",
+  "Verb + のに比べて   (歩くのに比べて)",
+]
+explanation = """
+Sets one thing against another to show a difference: 去年に比べて、\
+今年は雨が多い, "compared to last year, there's more rain this year". \
+The second half says how the topic differs, often with ずっと or \
+少し."""
+notes = """
+に and と both work here with no real difference. に比べると and に\
+比べれば are a little softer, like "if you compare it with". より \
+says the same in a plainer way: 去年より雨が多い. Compare のに対して, \
+which sets two facts side by side as opposites rather than measuring \
+one by the other."""
+related = ["yori-hou-ga", "ni-taishite"]
+examples = [
+  { tatoeba = "64545_227196", ja = "お兄さんと{比べて}、彼は運動神経が鈍い。", en = "Compared with his brother, he is a poor athlete." },
+  { source = "yomeru", ja = "昔{に比べて}、物の値段が高くなった。", en = "Compared to the old days, prices have gone up." },
+  { source = "yomeru", ja = "東京{に比べて}、この町は静かだ。", en = "Compared to Tokyo, this town is quiet." },
+]
+
+[[point]]
+id = "ni-oite"
+pattern = "において"
+forms = ["における", "に於いて", "に於ける", "においては", "においても"]
+jlpt = "N3"
+meaning = "in, at, on (formal); in the field of"
+formation = [
+  "Noun + において",
+  "Noun + における + Noun   (日本における教育)",
+]
+explanation = """
+A formal で for the place, time or field where something happens: \
+式は大ホールにおいて行われます, "the ceremony will be held in the main \
+hall". It also names an area of life or work: 人生において, "in life"; \
+医学における発見, "discoveries in medicine"."""
+notes = """
+Belongs to speeches, announcements, reports and news, not chat: in \
+conversation say 大ホールで. Before a noun, use における, since で \
+can't link to a noun directly (日本での生活 is the everyday \
+equivalent of 日本における生活)."""
+related = ["de-particle"]
+examples = [
+  { tatoeba = "270536_144030", ja = "人生{において}健康ほど大切なものはない。", en = "Nothing is more important in life than health." },
+  { tatoeba = "26265_189118", ja = "英語は商業{において}役立つ。", en = "English is useful in commerce." },
+  { source = "yomeru", ja = "卒業式は体育館{において}行います。", en = "The graduation ceremony will take place in the gym." },
+]
+
+[[point]]
+id = "ni-motozuite"
+pattern = "に基づいて"
+forms = ["にもとづいて", "に基づく", "にもとづく", "に基づき", "に基づいた"]
+jlpt = "N3"
+meaning = "based on, on the basis of"
+formation = [
+  "Noun + に基づいて",
+  "Noun + に基づく / に基づいた + Noun   (事実に基づいた話)",
+]
+explanation = """
+Says what serves as the foundation for an action, a decision or a work: \
+データに基づいて計画を立てる, "make a plan based on the data". \
+Common with facts, rules, experience, surveys and true stories: この\
+映画は実話に基づいている, "this film is based on a true story"."""
+notes = """
+The basis is something solid that the result follows from. When one \
+thing is only the starting point or the material for another (a song \
+made from an old poem), をもとに is the usual choice. によって, \
+"by", names a means or a cause, not a foundation."""
+related = ["wo-moto-ni", "ni-yotte"]
+examples = [
+  { tatoeba = "286465_117200", ja = "彼の思想は彼の体験{に基づいて}いる。", en = "His ideas are based on his experience." },
+  { tatoeba = "44141_206892", ja = "その物語は伝説{に基づいて}いる。", en = "The story is founded on tradition." },
+  { source = "yomeru", ja = "アンケートの結果{に基づいて}、計画を変えた。", en = "We changed the plan based on the survey results." },
+]
+
+[[point]]
+id = "ni-kawatte"
+pattern = "に代わって"
+forms = ["にかわって", "に代わり", "に替わって", "に代わる"]
+jlpt = "N3"
+meaning = "in place of, on behalf of; replacing"
+formation = [
+  "Noun + に代わって",
+  "Noun + に代わる + Noun   (石油に代わるエネルギー)",
+]
+explanation = """
+Someone or something takes another's place. For people, it means doing \
+something on their behalf: 社長に代わって、私がご挨拶します, "I will \
+give the greeting on behalf of the president". For things, it means \
+one has replaced the other: 手紙に代わってメールが使われるようになった, \
+"email has come to be used in place of letters"."""
+notes = """
+More formal than の代わりに, and it suits speeches and announcements. \
+の代わりに also covers simple swaps (coffee instead of tea) and \
+"in exchange"; に代わって is about standing in for someone or taking \
+over a role. Don't confuse it with に変わって, "turning into": 雨が\
+雪に変わった."""
+related = ["kawari-ni"]
+examples = [
+  { tatoeba = "285123_118540", ja = "彼{に代わって}私が責任を負った。", en = "I undertook responsibility for him." },
+  { tatoeba = "48544_211270", ja = "その計画{に代わる}ものが何かありますか。", en = "Do you have any alternatives to the plan?" },
+  { source = "yomeru", ja = "社長{に代わって}、私がご挨拶します。", en = "I will give the greeting on behalf of the president." },
+]
+
+[[point]]
+id = "kawari-ni"
+pattern = "代わりに"
+forms = ["かわりに", "の代わりに", "のかわりに", "その代わり", "そのかわり", "その代わりに"]
+jlpt = "N3"
+meaning = "instead of, in place of; in exchange for"
+formation = [
+  "Noun + の代わりに",
+  "Verb / ［い］Adjective + 代わりに   (行く代わりに, 安い代わりに)",
+]
+explanation = """
+One thing replaces another: コーヒーの代わりにお茶を飲む, "drink tea \
+instead of coffee"; 母の代わりに私が行く, "I'll go in my mother's \
+place". After a verb it can also mean "in exchange": 料理を作る代わりに、\
+皿を洗ってね, "I'll cook, so in exchange, you wash the dishes"."""
+notes = """
+その代わり(に) starts a sentence: "instead" or "but in return". \
+安い。その代わり、少し遠い, "it's cheap; on the other hand, it's a bit \
+far". After an adjective, 代わりに weighs a plus against a minus the \
+same way: 安い代わりに遠い. に代わって is a more formal way to act on \
+someone's behalf."""
+related = ["ni-kawatte"]
+examples = [
+  { tatoeba = "242181_172295", ja = "今朝はコーヒーの{代わりに}紅茶を飲んだ。", en = "I had tea instead of coffee this morning." },
+  { tatoeba = "283734_120275", ja = "彼が私の{代わりに}行った。", en = "He went in place of me." },
+  { source = "yomeru", ja = "料理を作る{代わりに}、皿を洗ってね。", en = "I'll cook, so in exchange, you wash the dishes." },
+]
+
+[[point]]
+id = "to-tomo-ni"
+pattern = "と共に"
+forms = ["とともに"]
+jlpt = "N3"
+meaning = "together with; as (one change brings another)"
+formation = [
+  "Noun + と共に",
+  "Verb［る］ + と共に   (年をとるとともに)",
+]
+explanation = """
+A formal "with": 家族と共に暮らす, "live together with my family". \
+With a change, it means one change goes along with another: 年をとる\
+とともに、体が弱くなる, "as we get older, our bodies get weaker". It \
+can also mean two things happen at once: ベルが鳴るとともに、生徒が\
+教室を出た, "the moment the bell rang, the students left the room"."""
+notes = """
+Written and formal; in conversation と一緒に is the usual "together \
+with". For a gradual change, につれて says much the same, but it \
+only covers change. After an adjective, とともに means "both … and": \
+この町は静かであるとともに、交通も便利だ, "this town is quiet, and \
+convenient too"."""
+related = ["ni-tsurete"]
+examples = [
+  { tatoeba = "249621_164886", ja = "私{と共に}来てくれませんか。", en = "Would you mind coming with me?" },
+  { tatoeba = "317269_86442", ja = "彼女は友人達{とともに}立ち去った。", en = "She went off with her friends." },
+  { source = "yomeru", ja = "年をとる{とともに}、体が弱くなる。", en = "As we get older, our bodies get weaker." },
+]
+
+[[point]]
+id = "to-narande"
+pattern = "と並んで"
+forms = ["とならんで", "と並ぶ", "と並び"]
+jlpt = "N3"
+meaning = "along with, alongside, on a par with"
+formation = ["Noun + と並んで"]
+explanation = """
+Literally "lined up beside": 友達と並んで歩く, "walk side by side with \
+a friend". Used figuratively, it puts one thing in the same rank as \
+another that is famous or important: すしは天ぷらと並んで人気がある, \
+"along with tempura, sushi is popular"."""
+notes = """
+The figurative use praises both things as among the best of their \
+kind, so it suits descriptions, guides and news, not everyday "and \
+also". For simply adding an item, と or も is enough."""
+related = ["to-tomo-ni"]
+examples = [
+  { tatoeba = "317000_86711", ja = "彼女は僕{と並んで}歩いた。", en = "She walked side by side with me." },
+  { source = "yomeru", ja = "すしは天ぷら{と並んで}人気がある日本料理だ。", en = "Along with tempura, sushi is a popular Japanese dish." },
+  { source = "yomeru", ja = "京都は奈良{と並んで}古い町として有名だ。", en = "Like Nara, Kyoto is famous as an old city." },
+]
+
+[[point]]
+id = "ni-awasete"
+pattern = "に合わせて"
+forms = ["にあわせて", "に合わせる", "に合わせ"]
+jlpt = "N3"
+meaning = "to match, in time with, to suit"
+formation = ["Noun + に合わせて"]
+explanation = """
+Doing something so that it fits something else: 音楽に合わせて踊る, \
+"dance to the music"; 子供の年に合わせて本を選ぶ, "choose books to \
+suit the child's age". The noun is the standard you adjust to: a \
+rhythm, someone's pace, a schedule, a size."""
+notes = """
+It's about adjusting yourself, so the noun is the fixed point and you \
+are the one changing. Its partner に合った + Noun, "that suits", \
+describes something that already fits: 自分に合った仕事, "a job that \
+suits me". Not \
+to be confused with 間に合わせる, "get it done in time"."""
+related = ["ni-yotte"]
+examples = [
+  { tatoeba = "23095_151644", ja = "私達は音楽{に合わせて}踊った。", en = "We danced to the music." },
+  { tatoeba = "310711_92998", ja = "彼女はギター{に合わせて}歌っている。", en = "She is singing with a guitar." },
+  { source = "yomeru", ja = "みんなのペース{に合わせて}ゆっくり歩いた。", en = "I walked slowly to match everyone's pace." },
+]
+
+[[point]]
+id = "ni-ataru"
+pattern = "に当たる"
+forms = ["にあたる", "に当たります", "にあたります"]
+jlpt = "N3"
+meaning = "is equivalent to, corresponds to; falls on (a date)"
+formation = ["Noun + に当たる"]
+explanation = """
+Says what something counts as, or matches, in another system: 父の兄は\
+私のおじに当たる, "my father's older brother is my uncle"; 「ありがとう」\
+に当たる英語, "the English for arigatou". With dates it means "falls on": \
+今年の誕生日は日曜日に当たる, "my birthday falls on a Sunday this \
+year"."""
+notes = """
+Literally 当たる means "hit": ボールが頭に当たった, "the ball hit my \
+head"; 日に当たる, "be in the sun". The grammar use is an \
+equivalence: A is, in terms of B, the same as B. Not the same point \
+as に当たって, "on the occasion of", a formal N2 expression."""
+related = ["ni-atatte"]
+examples = [
+  { tatoeba = "251422_163090", ja = "私の誕生日は日曜日{に当たる}。", en = "My birthday falls on Sunday." },
+  { tatoeba = "243126_171349", ja = "今年はお正月は日曜日{にあたる}。", en = "This year New Year's Day falls on Sunday." },
+  { source = "yomeru", ja = "父の兄は私のおじ{に当たる}。", en = "My father's older brother is my uncle." },
+]
+
+[[point]]
+id = "wo-hajime"
+pattern = "をはじめ"
+forms = ["を始め", "をはじめとして", "を始めとして", "をはじめとする", "を始めとする"]
+jlpt = "N3"
+hover = false
+meaning = "starting with, including, not only… but also"
+formation = [
+  "Noun + をはじめ",
+  "Noun + をはじめとする + Noun   (東京をはじめとする大都市)",
+]
+explanation = """
+Names the main or best-known example first, then the wider group it \
+belongs to: 先生をはじめ、クラスのみんなが喜んでくれた, "the whole \
+class, the teacher first of all, was happy for me". The second half usually has 多くの, \
+いろいろな, みんな or 全員."""
+notes = """
+The first item is the leading one, the one that stands out, not just \
+the first in order: 東京をはじめ、大阪や名古屋にも店がある. Formal, \
+suits speeches and writing. Search-only, since を始める, "start \
+something", uses the same spelling."""
+related = ["nado"]
+examples = [
+  { source = "yomeru", ja = "先生{をはじめ}、クラスのみんなが喜んでくれた。", en = "The whole class, the teacher first of all, was happy for me." },
+  { source = "yomeru", ja = "京都{をはじめ}、日本には古い町が多い。", en = "Japan has many old cities, Kyoto first among them." },
+  { source = "yomeru", ja = "すし{をはじめとする}日本料理が好きだ。", en = "I like Japanese food, sushi above all." },
+]
+
+[[point]]
+id = "kara-ni-kakete"
+pattern = "から〜にかけて"
+forms = ["にかけて"]
+jlpt = "N3"
+hover = false
+meaning = "from… through, over (a span of time or space)"
+formation = ["Noun + から + Noun + にかけて   (夜から朝にかけて)"]
+explanation = """
+Something spreads over a stretch of time or an area, without exact \
+edges: 今夜から明日にかけて雨が降るでしょう, "it will rain from tonight \
+into tomorrow"; 九月から十月にかけて台風が多い, "there are many \
+typhoons from September through October"."""
+notes = """
+から〜まで marks exact start and end points (九時から五時まで働く); \
+から〜にかけて describes a rough spread, often weather, seasons, or \
+parts of a body or region. にかけて can also stand alone: 週末にかけて, \
+"through the weekend". Search-only, since 壁にかけて, "hang it on \
+the wall", and 気にかけて, "be concerned", share the spelling."""
+related = ["kara-made", "ni-kakete-wa"]
+examples = [
+  { tatoeba = "296450_107236", ja = "彼は腰からひざ{にかけて}びしょ濡れになった。", en = "He got wet from the waist to the knees." },
+  { source = "yomeru", ja = "今夜から明日{にかけて}雨が降るでしょう。", en = "It will rain from tonight into tomorrow." },
+  { source = "yomeru", ja = "九月から十月{にかけて}台風が多い。", en = "There are many typhoons from September through October." },
+]
+
+[[point]]
+id = "ni-kakete-wa"
+pattern = "にかけては"
+forms = ["に掛けては", "にかけても"]
+jlpt = "N3"
+meaning = "when it comes to (being good at), in the matter of"
+formation = ["Noun + にかけては   (料理にかけては)"]
+explanation = """
+Picks out a skill or field and says someone is excellent in it: 料理\
+にかけては、母が一番だ, "when it comes to cooking, my mother is the \
+best". The rest of the sentence praises: 誰にも負けない, 天才だ, \
+自信がある."""
+notes = """
+Used for strong abilities, often with pride or admiration; it sounds \
+odd for a weakness or a plain topic (for that, については). \
+Different from から〜にかけて, "from… through"."""
+related = ["ni-tsuite", "kara-ni-kakete"]
+examples = [
+  { tatoeba = "315281_88426", ja = "彼女は数学{にかけては}天才です。", en = "She is a genius at mathematics." },
+  { tatoeba = "325781_77937", ja = "料理{にかけては}、彼女は名人だ。", en = "She is an expert when it comes to cooking." },
+  { tatoeba = "26375_169373", ja = "山田は英語{にかけては}クラスの誰にも負けない。", en = "Yamada is second to none in English in his class." },
+]
+
+[[point]]
+id = "ni-kagiru"
+pattern = "に限る"
+forms = ["にかぎる", "に限ります", "にかぎります"]
+jlpt = "N3"
+meaning = "X is best, there's nothing like X"
+formation = [
+  "Noun + に限る   (夏はビールに限る)",
+  "Verb［る］ / Verb［ない］ + に限る   (早く寝るに限る)",
+]
+explanation = """
+The speaker's personal view of the best thing, or the best thing to \
+do, in a situation: 疲れた時は早く寝るに限る, "when you're tired, \
+there's nothing better than an early night". The situation usually \
+comes first with は or 時は."""
+notes = """
+It's an opinion, said with confidence, not a fact; fine in talk and \
+in writing. The same words can also mean "limited to" in rules and \
+notices: 参加者は学生に限る, "participants must be students". に限って \
+("of all times") and とは限らない ("not always") are different \
+points."""
+related = ["to-wa-kagiranai", "ni-kagitte", "ta-hou-ga-ii"]
+examples = [
+  { tatoeba = "24344_187208", ja = "夏はビール{に限る}ね。", en = "Nothing beats a big glass of beer in summer." },
+  { tatoeba = "26719_189566", ja = "雨の日は外に出ない{に限る}。", en = "The best bet on a rainy day is to remain indoors." },
+  { source = "yomeru", ja = "疲れた時は早く寝る{に限る}。", en = "When you're tired, there's nothing like an early night." },
+]
+
+[[point]]
+id = "to-onaji"
+pattern = "と同じ"
+forms = ["と同じで", "と同じように", "と同じく", "と違って", "とちがって", "と同じくらい", "と同じぐらい"]
+jlpt = "N3"
+meaning = "the same as, like; unlike (と違って)"
+formation = [
+  "Noun + と同じ + Noun   (君と同じカメラ)",
+  "Verb / ［い］Adjective + のと同じ",
+  "Noun + と違って",
+]
+explanation = """
+と同じ says two things are the same: 兄と同じ学校に行く, "go to the same \
+school as my brother". Before a noun, 同じ attaches directly, with no \
+の: ×同じの本. と同じように means "in the same way as", and と同じ\
+くらい means "as … as". The opposite, と違って, means "unlike": 去年と\
+違って、今年は雪が多い."""
+notes = """
+同じ behaves like a noun before other nouns (同じ本) but takes な \
+before のに or ので: 同じなので. For comparing size or degree, と同じ\
+くらい: 兄と同じくらい背が高い, "as tall as my brother". に比べて is \
+for showing a difference, not sameness."""
+related = ["kurai", "ni-kurabete", "no-you-na"]
+examples = [
+  { tatoeba = "321762_81953", ja = "僕は君{と同じ}カメラを買った。", en = "I have bought the same camera as you have." },
+  { tatoeba = "354238_380534", ja = "彼は父{と同じく}、たくさんの本を持っている。", en = "Like his father, he has many books." },
+  { source = "yomeru", ja = "去年{と違って}、今年は雪が多い。", en = "Unlike last year, there's a lot of snow this year." },
+]
