@@ -14892,7 +14892,7 @@ examples = [
 [[point]]
 id = "ni-kagirazu"
 pattern = "に限らず"
-forms = ["にかぎらず"]
+forms = ["にかぎらず", "に限らない", "にかぎらない"]
 jlpt = "N2"
 meaning = "not limited to, not only (X but also others)"
 formation = ["Noun + に限らず   (日本に限らず)"]
@@ -19472,4 +19472,1348 @@ examples = [
   { tatoeba = "32315_195141", ja = "まるで眠れ{やしない}。", en = "I can't sleep at all!" },
   { tatoeba = "54683_217373", ja = "こんな甘いものは、飲め{やしない}。", en = "I can't drink such sweet stuff." },
   { source = "yomeru", ja = "そんな話、誰も信じ{やしない}よ。", en = "Nobody's going to believe that story." },
+]
+
+[[point]]
+id = "wo-motte"
+pattern = "をもって"
+forms = ["を以て", "をもちまして", "をもってしても", "を以てしても"]
+jlpt = "N1"
+meaning = "with, by means of; as of (a date or time, formal)"
+formation = [
+  "Noun + をもって   (書面をもって, 本日をもって)",
+  "Noun + をもってしても   (even with)",
+]
+explanation = """
+A formal を + 持って with two uses. With a means, usually abstract \
+(sincerity, a document, one's own experience), it stresses what \
+something is done with: 書面をもってお知らせします, "we will inform you \
+in writing". With a date, it marks where something that went on until \
+then ends: 本日をもって閉店します, "we close as of today". をもちまして is the politer form heard in announcements."""
+notes = """
+をもってしても means "even with X (it fails)": 彼の力をもってしても無理\
+だった. In everyday speech the means use is just で, and the time use \
+is で or までで. Not for a start with nothing before it (a film's \
+release date), nor for tools at hand (a fork). Plain を持って (holding, having) is the same spelling: \
+read the context."""
+related = ["ni-yotte", "wo-kagiri-ni", "wo-tooshite"]
+examples = [
+  { tatoeba = "291482_112195", ja = "彼はそれを威厳{をもって}言った。", en = "He said that with dignity." },
+  { source = "yomeru", ja = "本日{をもって}受付を終了します。", en = "Applications close as of today." },
+  { source = "yomeru", ja = "彼の力{をもってしても}、無理だった。", en = "Even with his ability, it couldn't be done." },
+]
+
+[[point]]
+id = "wo-oite"
+pattern = "をおいて"
+forms = ["を措いて", "をおいてほかにない", "をおいて他にない", "をおいてほかに", "をおいて他に"]
+jlpt = "N1"
+meaning = "other than, apart from (no one but X)"
+formation = ["Noun + をおいて + (ほかに) + negative   (彼をおいていない)"]
+explanation = """
+Names the one person, place or thing that fits, by saying there is no \
+other: 彼をおいて、この仕事ができる人はいない, "apart from him, \
+there's no one who can do this job". It praises X as the only real \
+choice. The sentence ends in a negative such as いない, ない or \
+考えられない."""
+notes = """
+Usually followed by ほかに or 他に. Literal を置いて (put down, leave \
+behind) shares the kana: ペンをおいて, 彼をおいて出発した. Close to \
+しかない, but をおいて is formal and always singles out something \
+highly rated."""
+related = ["shika-nai", "igai", "wo-nozoite"]
+examples = [
+  { source = "yomeru", ja = "彼{をおいて}、この仕事ができる人はいない。", en = "Apart from him, there's no one who can do this job." },
+  { source = "yomeru", ja = "桜を見るなら、京都{をおいてほかにない}。", en = "For cherry blossoms, there's no place but Kyoto." },
+]
+
+[[point]]
+id = "wo-yoso-ni"
+pattern = "をよそに"
+forms = ["を余所に"]
+jlpt = "N1"
+meaning = "ignoring, paying no attention to, in spite of"
+formation = ["Noun + をよそに   (親の心配をよそに)"]
+explanation = """
+Someone goes ahead with no regard for what others feel or expect: \
+親の心配をよそに、彼は一人で旅に出た, "ignoring his parents' \
+worry, he set off traveling alone". The noun is usually others' \
+worry, hopes, criticism or opposition, or a situation around the \
+person."""
+notes = """
+Written and a little critical or wry in tone. It describes others, \
+not one's own will. Compare をものともせず (undaunted by danger or \
+hardship, admiring) and を顧みず (without regard for one's own \
+safety or cost)."""
+related = ["wo-mono-tomo-sezu", "wo-kaerimizu", "mo-kamawazu", "ni-mo-kakawarazu"]
+examples = [
+  { source = "yomeru", ja = "親の心配{をよそに}、彼は一人で旅に出た。", en = "Ignoring his parents' worry, he set off traveling alone." },
+  { source = "yomeru", ja = "周りの反対{をよそに}、二人は結婚した。", en = "In spite of everyone's opposition, the two got married." },
+]
+
+[[point]]
+id = "wo-mono-tomo-sezu"
+pattern = "をものともせず"
+forms = ["をものともせずに", "をものともしない", "を物ともせず", "を物ともせずに"]
+jlpt = "N1"
+meaning = "undaunted by, in the face of, making light of"
+formation = ["Noun + をものともせず(に)   (危険をものともせず)"]
+explanation = """
+Someone overcomes a danger or hardship as if it were nothing: \
+寒さをものともせずに外へ出た, "making nothing of the cold, he went \
+out". The noun is an obstacle (danger, injury, bad weather, \
+pressure), and the tone admires the person's courage."""
+notes = """
+Describes someone else, not the speaker. Compare をよそに (ignoring \
+others' worry, often critical) and を顧みず (without thinking of \
+the risk to oneself)."""
+related = ["wo-yoso-ni", "wo-kaerimizu", "wo-oshite"]
+examples = [
+  { tatoeba = "27782_190622", ja = "一行は危険{をものともせず}前進した。", en = "The party went forward in the face of danger." },
+  { tatoeba = "21127_183999", ja = "寒さ{をものともせずに}、彼は薄着で外出した。", en = "Making nothing of the cold, he went out in thin clothes." },
+]
+
+[[point]]
+id = "wo-ii-koto-ni"
+pattern = "をいいことに"
+forms = ["のをいいことに", "を良いことに", "のを良いことに", "をいいことにして", "のをいいことにして"]
+jlpt = "N1"
+meaning = "taking (selfish) advantage of"
+formation = [
+  "Noun + をいいことに",
+  "Verb / ［い］Adjective + のをいいことに   (知らないのをいいことに)",
+  "［な］Adjective + なのをいいことに",
+]
+explanation = """
+Someone uses a situation as an excuse to do something they shouldn't: \
+先生がいないのをいいことに、生徒たちは騒いでいた, "taking advantage \
+of the teacher's absence, the students were making noise". The tone \
+is always critical."""
+notes = """
+Not for a fair use of a chance: that is を機に or をきっかけに. The \
+situation is usually someone's absence, ignorance, kindness or \
+silence."""
+related = ["wo-ki-ni", "wo-kikkake-ni"]
+examples = [
+  { tatoeba = "246920_167580", ja = "私が知らない{のをいいことに}彼は私をだました。", en = "He took advantage of my ignorance and deceived me." },
+  { source = "yomeru", ja = "先生がいない{のをいいことに}、生徒たちは騒いでいた。", en = "Taking advantage of the teacher's absence, the students were making noise." },
+]
+
+[[point]]
+id = "wo-yogi-naku-sareru"
+pattern = "を余儀なくされる"
+forms = ["を余儀なくさせる", "をよぎなくされる", "をよぎなくさせる"]
+jlpt = "N1"
+meaning = "be forced to, have no choice but to (by circumstances)"
+formation = [
+  "Noun + を余儀なくされる   (中止を余儀なくされる)",
+  "Noun + を余儀なくさせる   (make someone do it)",
+]
+explanation = """
+Circumstances leave someone no choice: 台風で、試合は中止を余儀なく\
+された, "because of the typhoon, the game had to be called off". \
+The noun is an action noun (中止, 辞任, 変更, 引退). Formal; common in \
+news."""
+notes = """
+The cause is outside the person's will: illness, weather, money, \
+public opinion. With させる, the cause is the subject: 不況が会社に\
+閉鎖を余儀なくさせた. Compare ざるを得ない (one's own judgment that \
+there's no choice)."""
+related = ["zaru-wo-enai", "te-mo-yamu-wo-enai", "hoka-nai"]
+examples = [
+  { tatoeba = "271223_143343", ja = "世論のため彼は引退{を余儀なくされた}。", en = "Public opinion obliged him to retire." },
+  { tatoeba = "295918_107734", ja = "彼は健康上の理由で辞任{を余儀なくされた}。", en = "He was compelled to resign on account of ill health." },
+]
+
+[[point]]
+id = "wo-fumaete"
+pattern = "を踏まえて"
+forms = ["を踏まえ", "をふまえて", "をふまえ", "を踏まえた"]
+jlpt = "N1"
+meaning = "based on, taking into account, in light of"
+formation = [
+  "Noun + を踏まえて   (結果を踏まえて)",
+  "Noun + を踏まえた + Noun",
+]
+explanation = """
+A decision or plan builds on facts, results or past experience: \
+前回の反省を踏まえて、計画を立て直した, "taking last time's lessons \
+into account, we redrew the plan". Common in reports, meetings and \
+the news."""
+notes = """
+をもとに (N2) names the material something is made from (a story \
+based on facts). を踏まえて names what is taken into account when \
+judging or deciding. に基づいて (N3) is "on the basis of" a rule or \
+data."""
+related = ["wo-moto-ni", "ni-motozuite", "ni-terashite"]
+examples = [
+  { source = "yomeru", ja = "前回の反省{を踏まえて}、計画を立て直した。", en = "Taking last time's lessons into account, we redrew the plan." },
+  { source = "yomeru", ja = "調査の結果{を踏まえ}、新しい商品を作る。", en = "We'll make a new product based on the survey's results." },
+]
+
+[[point]]
+id = "wo-oshite"
+pattern = "を押して"
+forms = ["をおして", "を押し切って", "をおしきって"]
+jlpt = "N1"
+meaning = "despite, in spite of (pushing through)"
+formation = [
+  "Noun + を押して   (病気を押して)",
+  "Noun + を押し切って   (反対を押し切って)",
+]
+explanation = """
+Someone does something even though a condition should stop them: \
+彼は病気を押して会議に出た, "despite being ill, he attended the \
+meeting". The noun is usually illness, fatigue or a bad condition. \
+を押し切って takes others' opposition: 親の反対を押し切って留学した, \
+"I went abroad overriding my parents' objections"."""
+notes = """
+The same spelling is the literal "push": ボタンを押して. Compare をもの\
+ともせず (undaunted by danger) and をよそに (ignoring others' \
+worry)."""
+related = ["wo-mono-tomo-sezu", "wo-yoso-ni", "wo-kaerimizu"]
+examples = [
+  { source = "yomeru", ja = "彼は病気{を押して}会議に出た。", en = "Despite being ill, he attended the meeting." },
+  { source = "yomeru", ja = "親の反対{を押し切って}留学した。", en = "I went abroad to study, overriding my parents' objections." },
+]
+
+[[point]]
+id = "wo-kaerimizu"
+pattern = "を顧みず"
+forms = ["も顧みず", "をかえりみず", "もかえりみず", "を顧みずに", "をかえりみずに"]
+jlpt = "N1"
+meaning = "without regard for, heedless of"
+formation = ["Noun + を顧みず   (危険を顧みず, 身の危険も顧みず)"]
+explanation = """
+Someone acts without thinking of a risk or cost, usually to \
+themselves: 危険を顧みず、子どもを助けた, "heedless of the danger, \
+he saved the child". The noun is danger, one's safety, cost, family \
+or others' trouble. Written and formal."""
+notes = """
+With も (も顧みず) it stresses "even". The tone can admire courage \
+(danger) or blame (家族を顧みず, neglecting the family). Compare \
+をものともせず (undaunted, always admiring) and をよそに (ignoring \
+others' worry)."""
+related = ["wo-mono-tomo-sezu", "wo-yoso-ni", "mo-kamawazu"]
+examples = [
+  { tatoeba = "295029_108660", ja = "彼は危険{をかえりみず}勇気を示した。", en = "He showed courage in the face of danger." },
+  { tatoeba = "316573_87135", ja = "彼女は費用{を顧みず}家を飾りたてた。", en = "She decorated her house regardless of cost." },
+]
+
+[[point]]
+id = "wo-kasanete"
+pattern = "を重ねて"
+forms = ["をかさねて", "を重ねた", "を重ね"]
+jlpt = "N1"
+meaning = "after repeated, through many (efforts, talks)"
+formation = [
+  "Noun + を重ねて   (努力を重ねて)",
+  "Noun + を重ねた + Noun / 結果",
+]
+explanation = """
+Something is done again and again, and a result follows: 努力を重ねて、\
+ついに夢をかなえた, "after years of hard work, she finally made her \
+dream come true". The noun is something that builds up: 努力, 苦労, \
+話し合い, 失敗, 練習, 年齢."""
+notes = """
+Repeating the noun with に stresses how much: 努力に努力を重ねて, \
+"after effort upon effort"; 失敗に失敗を重ねる, "one failure after \
+another". Literal 重ねる is "to pile up" (皿を重ねる); 年を重ねる is \
+"to grow older"."""
+related = ["wo-hete", "sue-ni", "ageku"]
+examples = [
+  { source = "yomeru", ja = "努力{を重ねて}、ついに夢をかなえた。", en = "After years of hard work, she finally made her dream come true." },
+  { source = "yomeru", ja = "話し合い{を重ねた}結果、意見がまとまった。", en = "After many discussions, we reached agreement." },
+]
+
+[[point]]
+id = "wo-furidashi-ni"
+pattern = "を振り出しに"
+forms = ["を振り出しとして", "をふりだしに"]
+jlpt = "N1"
+meaning = "starting from, beginning with (a first post or stop)"
+formation = ["Noun + を振り出しに   (営業を振り出しに)"]
+explanation = """
+Names the first step of a career, a tour or a series that goes on \
+from there: 彼は営業を振り出しに、社長にまでなった, "starting out \
+in sales, he rose to company president". 振り出し is the starting \
+square of a board game, so 振り出しに戻る means "back to square one"."""
+notes = """
+Close to を皮切りに (N1), which stresses a first event setting off \
+many more. を振り出しに often follows a career or a journey step by \
+step."""
+related = ["wo-kawakiri-ni"]
+examples = [
+  { source = "yomeru", ja = "彼は営業{を振り出しに}、社長にまでなった。", en = "Starting out in sales, he rose to company president." },
+  { source = "yomeru", ja = "東京{を振り出しに}、全国を回るツアーだ。", en = "It's a tour that starts in Tokyo and goes around the country." },
+]
+
+[[point]]
+id = "wo-zentei-ni"
+pattern = "を前提に"
+forms = ["を前提として", "を前提にして", "を前提とした", "を前提とする"]
+jlpt = "N1"
+meaning = "on the premise of, assuming, with a view to"
+formation = [
+  "Noun + を前提に(して) / を前提として   (結婚を前提に)",
+  "Verb + ことを前提に",
+]
+explanation = """
+Something is done on the understanding that X holds or will happen: \
+全員が来ることを前提に準備した, "we prepared assuming everyone \
+would come". 結婚を前提に付き合う is the set phrase for dating \
+"with marriage in mind"."""
+notes = """
+前提 is "premise". The X is an assumed condition, not a source of \
+data (that would be に基づいて or をもとに)."""
+related = ["wo-moto-ni", "ni-motozuite", "wo-fumaete"]
+examples = [
+  { tatoeba = "248622_165882", ja = "私たちは結婚{を前提として}交際しています。", en = "We are dating with a view to marriage." },
+  { source = "yomeru", ja = "全員が来ること{を前提に}準備した。", en = "We prepared assuming everyone would come." },
+]
+
+[[point]]
+id = "no-na-no-moto-ni"
+pattern = "の名のもとに"
+forms = ["の名の下に", "の名のもと", "の名の下"]
+jlpt = "N1"
+meaning = "in the name of, under the banner of"
+formation = ["Noun + の名のもとに   (正義の名のもとに)"]
+explanation = """
+An action is done, or excused, in the name of a value or authority: \
+正義の名のもとに、多くの人が傷つけられた, "in the name of justice, \
+many people were hurt". Often critical: the noble name hides what is \
+really going on."""
+notes = """
+Written and formal. The noun is a value or an institution: 正義, \
+自由, 教育, 科学, 法, 神. Compare のもとで (N2, under someone's \
+guidance or a condition)."""
+related = ["no-moto-de", "to-shite"]
+examples = [
+  { source = "yomeru", ja = "正義{の名のもとに}、多くの人が傷つけられた。", en = "In the name of justice, many people were hurt." },
+  { source = "yomeru", ja = "教育{の名のもとに}、子どもを厳しく叱る。", en = "They scold children harshly in the name of education." },
+]
+
+[[point]]
+id = "ni-hikikae"
+pattern = "にひきかえ"
+forms = ["に引き換え", "に引きかえ", "のにひきかえ", "のに引き換え", "それにひきかえ"]
+jlpt = "N1"
+meaning = "in contrast to, unlike, compared with"
+formation = [
+  "Noun + にひきかえ   (兄にひきかえ)",
+  "Verb / ［い］Adjective + のにひきかえ",
+  "［な］Adjective + なのにひきかえ",
+]
+explanation = """
+Sets two things side by side to stress how different they are: \
+姉が料理上手なのにひきかえ、私は卵も焼けない, "unlike my sister, who's \
+a great cook, I can't even fry an egg". The comparison \
+usually carries the speaker's judgment, praise on one side and blame \
+on the other."""
+notes = """
+に比べて (N3) compares neutrally; にひきかえ is subjective and \
+written. それにひきかえ opens a sentence: "by contrast". For one \
+thing changing completely from before, use とは打って変わって."""
+related = ["ni-kurabete", "ni-hanshite", "to-wa-utte-kawatte"]
+examples = [
+  { source = "yomeru", ja = "姉が料理上手なの{にひきかえ}、私は卵も焼けない。", en = "Unlike my sister, who's a great cook, I can't even fry an egg." },
+  { source = "yomeru", ja = "去年{にひきかえ}、今年の夏は涼しい。", en = "Compared with last year, this summer is cool." },
+]
+
+[[point]]
+id = "ni-mo-mashite"
+pattern = "にもまして"
+forms = ["にも増して"]
+jlpt = "N1"
+meaning = "even more than, above (all)"
+formation = [
+  "Noun + にもまして   (以前にもまして)",
+  "Verb / ［い］Adjective + のにもまして",
+  "Question word + にもまして   (何にもまして: above all)",
+]
+explanation = """
+X is already high, and Y goes beyond it: 今年は去年にもまして暑い, \
+"this year is even hotter than last". With a question word it means \
+"more than anything / anyone": 何にもまして健康が大事だ, "health \
+matters above all"."""
+notes = """
+The も says X itself is already notable, unlike plain より. 以前にも\
+まして ("more than ever") is the most common use."""
+related = ["yori-hou-ga", "nani-yori", "ijou-ni"]
+examples = [
+  { tatoeba = "24814_187675", ja = "何もの{にもまして}私は健康になりたい。", en = "Above all, I want to be healthy." },
+  { tatoeba = "37310_200110", ja = "トムはいまや以前{にもまして}勤勉に働いている。", en = "Tom works more diligently now." },
+]
+
+[[point]]
+id = "to-aimatte"
+pattern = "と相まって"
+forms = ["とあいまって", "と相俟って", "も相まって", "もあいまって", "相まって"]
+jlpt = "N1"
+meaning = "combined with, coupled with (adding to the effect)"
+formation = [
+  "Noun + と相まって   (AとBが相まって)",
+  "Noun + も相まって",
+]
+explanation = """
+Two factors come together and strengthen a result: 晴天も相まって、\
+会場は大勢の人でにぎわった, "helped by the fine weather, the venue \
+was crowded". AとBが相まって puts both factors as subjects."""
+notes = """
+Written. The result can be good or bad, but the two factors push the \
+same way. Compare に加えて (N2, simply "in addition to")."""
+related = ["ni-kuwaete", "to-tomo-ni"]
+examples = [
+  { tatoeba = "265271_149287", ja = "実用性と芸術性が{相まって}住みよい家ができる。", en = "Practical utility and artistic beauty combine to make a comfortable house to live in." },
+  { source = "yomeru", ja = "晴天{も相まって}、会場は大勢の人でにぎわった。", en = "Helped by the fine weather, the venue was crowded." },
+]
+
+[[point]]
+id = "wa-oroka"
+pattern = "はおろか"
+forms = ["はおろか〜も", "はおろか〜さえ"]
+jlpt = "N1"
+meaning = "let alone, not to mention, much less"
+formation = [
+  "Noun + はおろか + Noun + も / さえ / まで",
+  "Verb + のはおろか / ことはおろか",
+]
+explanation = """
+X is so obvious that it hardly needs saying; even the more extreme Y \
+is true: 走ることはおろか、歩くこともできない, "he can't even walk, \
+let alone run". The second part takes も, さえ or まで. Most often \
+negative, with a regretful tone."""
+notes = """
+The order is the reverse of English: the easier case comes first \
+in English (can't walk, let alone run) but the obvious case comes \
+first in Japanese (走ることはおろか). Not for requests or commands. \
+Same idea as はもちろん, but \
+はおろか is written and usually negative. Don't confuse with \
+愚か (foolish): 彼はおろかだ."""
+related = ["wa-mochiron", "dokoroka", "sae", "mo-saru-koto-nagara"]
+examples = [
+  { tatoeba = "253370_159150", ja = "私はバイオリン{はおろか}ギターも弾けない。", en = "I can't play the guitar, much less the violin." },
+  { tatoeba = "45855_208596", ja = "その赤ちゃんは走る事{はおろか}、歩くことさえできない。", en = "The baby cannot even walk, much less run." },
+]
+
+[[point]]
+id = "mo-saru-koto-nagara"
+pattern = "もさることながら"
+forms = ["も然ることながら"]
+jlpt = "N1"
+meaning = "X, of course, but (even more) Y"
+formation = ["Noun + もさることながら   (味もさることながら)"]
+explanation = """
+Grants that X is good or important, then adds Y as just as much or \
+more so: この店は味もさることながら、雰囲気がすばらしい, "this \
+place's food is great, of course, but the atmosphere is wonderful". \
+Formal, and usually positive."""
+notes = """
+Unlike はおろか (mostly negative, X is the obvious case), もさることな\
+がら is often praise, and Y is the point the speaker wants to stress. \
+はもちろん is the plain, everyday version."""
+related = ["wa-mochiron", "wa-oroka", "nomi-narazu"]
+examples = [
+  { tatoeba = "327665_76053", ja = "失業問題{もさることながら}、環境問題も大切だ。", en = "Although the unemployment problem can't be ignored, the environment problem is also very important." },
+  { source = "yomeru", ja = "この店は味{もさることながら}、雰囲気がすばらしい。", en = "This place's food is great, of course, but the atmosphere is wonderful." },
+]
+
+[[point]]
+id = "wa-sateoki"
+pattern = "はさておき"
+forms = ["はさておいて", "はさて置き", "はさて置いて", "何はさておき"]
+jlpt = "N1"
+meaning = "setting aside, leaving aside, joking aside"
+formation = [
+  "Noun + はさておき   (冗談はさておき)",
+  "Clause + かどうかはさておき",
+]
+explanation = """
+Puts a topic aside for now to move to what matters: 冗談はさておき、\
+本題に入ろう, "joking aside, let's get to the point". 何はさておき \
+means "before anything else, first of all"."""
+notes = """
+はともかく (N2) is close: "never mind X". はさておき feels more like \
+deliberately setting X aside to talk about something else, and is \
+often a turn in conversation. それはさておき: "anyway"."""
+related = ["wa-tomokaku", "wa-betsu-to-shite"]
+examples = [
+  { tatoeba = "268453_146109", ja = "冗談{はさておき}、君は何が言いたいのだ。", en = "Joking aside, what are you trying to say?" },
+  { tatoeba = "238595_175870", ja = "結果{はさておき}、あなたの意図はよかった。", en = "Apart from the result, your intention was good." },
+]
+
+[[point]]
+id = "wa-socchinoke"
+pattern = "そっちのけ"
+forms = ["はそっちのけで", "をそっちのけで", "そっちのけで", "そっちのけにして", "をそっちのけにして"]
+jlpt = "N1"
+meaning = "neglecting, putting aside (what one should do)"
+formation = [
+  "Noun + (は / を) そっちのけで   (勉強はそっちのけで)",
+  "Noun + そっちのけで   (仕事そっちのけで)",
+]
+explanation = """
+Someone leaves aside what they ought to be doing and gets absorbed in \
+something else: 勉強はそっちのけで、ゲームばかりしている, "he's \
+neglecting his studies and doing nothing but play games". Spoken, \
+and usually critical."""
+notes = """
+The thing left aside is the proper one (work, study, the guest, the \
+main topic). Xそっちのけ can also stand before a noun: 本人そっちのけの\
+議論, "a debate that ignores the person concerned"."""
+related = ["wa-sateoki", "bakari-noun", "wo-yoso-ni"]
+examples = [
+  { source = "yomeru", ja = "彼は勉強{はそっちのけで}、ゲームばかりしている。", en = "He's neglecting his studies and doing nothing but play games." },
+  { source = "yomeru", ja = "子どもたちは宿題{をそっちのけにして}遊びに行った。", en = "The kids left their homework aside and went out to play." },
+]
+
+[[point]]
+id = "ni-nottotte"
+pattern = "に則って"
+forms = ["にのっとって", "に則り", "にのっとり", "に則った", "にのっとった"]
+jlpt = "N1"
+meaning = "in accordance with, following (rules, tradition)"
+formation = [
+  "Noun + に則って / に則り   (規則に則って)",
+  "Noun + に則った + Noun",
+]
+explanation = """
+An action follows a rule, law or custom as its model: 大会は国際\
+ルールに則って行われる, "the tournament is held according to \
+international rules". The noun is a standard set beforehand: 法律, \
+規則, 伝統, 手順, 古式. Formal."""
+notes = """
+に沿って (N2) follows a plan or wish; に基づいて (N3) is "based on" \
+data or a rule; に則って stresses doing it by the book. 則る is also \
+read in に則して (rules), but に即して (facts) is a different word: \
+see ni-soku-shite."""
+related = ["ni-soku-shite", "ni-sotte", "ni-motozuite", "ni-junjite"]
+examples = [
+  { source = "yomeru", ja = "大会は国際ルール{に則って}行われる。", en = "The tournament is held according to international rules." },
+  { source = "yomeru", ja = "伝統{に則り}、式は神社で行われた。", en = "Following tradition, the ceremony was held at a shrine." },
+]
+
+[[point]]
+id = "ni-soku-shite"
+pattern = "に即して"
+forms = ["にそくして", "に即し", "に即した", "に則して", "に則した"]
+jlpt = "N1"
+meaning = "in line with, true to (facts, reality, a situation)"
+formation = [
+  "Noun + に即して   (現実に即して)",
+  "Noun + に即した + Noun",
+]
+explanation = """
+Something matches the actual facts or situation rather than theory: \
+現実に即して考えるべきだ, "we should think in line with reality". \
+The noun is usually 事実, 現実, 実態, 状況 or 経験. Formal."""
+notes = """
+即する is "fit closely". The spelling 則して (same reading) is used \
+with rules and laws, close to に則って. Compare に照らして (judging \
+against a standard) and に応じて (N2, adjusting to each case)."""
+related = ["ni-nottotte", "ni-terashite", "ni-oujite"]
+examples = [
+  { tatoeba = "287210_116459", ja = "彼の伝記は全くの事実{に即して}書かれたものだ。", en = "His biography is quite true to life." },
+  { source = "yomeru", ja = "現実{に即して}考えるべきだ。", en = "We should think in line with reality." },
+]
+
+[[point]]
+id = "ni-terashite"
+pattern = "に照らして"
+forms = ["に照らし", "に照らせば", "に照らすと", "にてらして", "に照らしても", "に照らした"]
+jlpt = "N1"
+meaning = "in light of, judged against (a rule or past case)"
+formation = ["Noun + に照らして / に照らせば   (法律に照らして)"]
+explanation = """
+Something is judged by checking it against a standard: 法律に照らして\
+判断する, "judge it against the law". The noun is a measure (法, \
+規則, 経験, 常識, 過去の例). 照らす is "to shine a light on", so the \
+idea is holding X up to the light of Y."""
+notes = """
+Formal. に照らしても often ends in a verdict: 常識に照らしてもおかしい, \
+"even by common sense, it's strange". Compare に即して (matching \
+the facts) and を踏まえて (taking into account)."""
+related = ["ni-soku-shite", "wo-fumaete", "kara-miru-to"]
+examples = [
+  { tatoeba = "58968_221642", ja = "この事実{に照らして}彼に罪がないことは明らかだ。", en = "In the light of this fact, it is clear that he is innocent." },
+  { source = "yomeru", ja = "過去の例{に照らせば}、成功は難しい。", en = "Judging by past cases, success will be hard." },
+]
+
+[[point]]
+id = "ni-kangamite"
+pattern = "に鑑みて"
+forms = ["に鑑み", "にかんがみて", "にかんがみ", "に鑑みれば", "に鑑みると"]
+jlpt = "N1"
+meaning = "in view of, considering (official, formal)"
+formation = ["Noun + に鑑みて / に鑑み   (現状に鑑み)"]
+explanation = """
+Gives the facts that justify a decision, in the stiff style of \
+official notices: 事故の多さに鑑みて、規則を見直した, "in view of \
+the number of accidents, the rules were reviewed". The noun is a \
+situation or past events; what follows is a decision or action."""
+notes = """
+Very formal: government, company or school announcements. In \
+everyday speech, を考えて or を考えると says the same. Compare を\
+踏まえて (building on facts), which is a little less stiff."""
+related = ["wo-fumaete", "ni-terashite", "kara-shite"]
+examples = [
+  { source = "yomeru", ja = "事故の多さ{に鑑みて}、規則を見直した。", en = "In view of the number of accidents, the rules were reviewed." },
+  { source = "yomeru", ja = "現在の状況{に鑑み}、会議は中止とします。", en = "In view of the present situation, the meeting is canceled." },
+]
+
+[[point]]
+id = "ni-junjite"
+pattern = "に準じて"
+forms = ["に準じ", "に準じる", "に準ずる", "に準じた", "にじゅんじて"]
+jlpt = "N1"
+meaning = "in accordance with, on the same basis as, in proportion to"
+formation = [
+  "Noun + に準じて / に準じ   (前例に準じて)",
+  "Noun + に準じる / に準ずる + Noun",
+]
+explanation = """
+Treats something on the same terms as a standard, or in step with \
+it: パートの給料も正社員に準じて決める, "part-timers' pay is set on \
+the same basis as full-time staff". Common in rules and contracts: \
+これに準じる, "the same applies"."""
+notes = """
+準 is "quasi": X is not exactly the standard but is handled like it. \
+Also "in proportion to" (成績に準じて). Compare に則って (strictly by \
+the rules) and に応じて (adjusting to each case)."""
+related = ["ni-nottotte", "ni-oujite"]
+examples = [
+  { source = "yomeru", ja = "パートの給料も正社員{に準じて}決める。", en = "Part-timers' pay is set on the same basis as full-time staff's." },
+  { source = "yomeru", ja = "服装は、制服{に準ずる}ものとする。", en = "Clothing shall be equivalent to the uniform." },
+]
+
+[[point]]
+id = "ni-matsuwaru"
+pattern = "にまつわる"
+forms = ["に纏わる", "にまつわって"]
+jlpt = "N1"
+meaning = "connected with, surrounding (stories, rumors)"
+formation = ["Noun + にまつわる + Noun   (城にまつわる伝説)"]
+explanation = """
+Describes stories, rumors or memories tied to something: この城に\
+まつわる伝説, "the legend connected with this castle". The noun after \
+it is usually 話, 伝説, うわさ, 思い出, エピソード or 謎."""
+notes = """
+Mostly before a noun. 纏わる literally means "to wind around, cling": \
+猫が足にまつわりつく, "the cat clings to my legs". Compare に関する \
+(N3, neutral "about"): にまつわる suggests interesting or mysterious \
+tales."""
+related = ["ni-kanshite", "ni-tsuite"]
+examples = [
+  { source = "yomeru", ja = "この城{にまつわる}伝説を知っていますか。", en = "Do you know the legend connected with this castle?" },
+  { source = "yomeru", ja = "お金{にまつわる}トラブルは多い。", en = "There are many troubles involving money." },
+]
+
+[[point]]
+id = "ni-iwaseru-to"
+pattern = "に言わせると"
+forms = ["に言わせれば", "にいわせると", "にいわせれば", "に言わせたら", "に言わせても"]
+jlpt = "N1"
+meaning = "if you ask (X), according to (X's own view)"
+formation = ["Noun (person) + に言わせると / に言わせれば   (私に言わせれば)"]
+explanation = """
+Gives one person's frank opinion, often different from the general \
+view: 私に言わせれば、あの映画はつまらない, "if you ask me, that \
+movie is boring". Literally "if one lets X say it". The opinion \
+that follows is personal and often critical."""
+notes = """
+Only with people (or a group speaking as one). によると (N4) reports \
+what someone said; に言わせると frames it as their own judgment, \
+often one the speaker doesn't share. 私に言わせれば can sound \
+blunt or self-important: use it sparingly. から言わせれば is also \
+heard."""
+related = ["ni-yoru-to", "kara-iu-to", "ni-shitara"]
+examples = [
+  { tatoeba = "250105_164403", ja = "私{に言わせれば}、彼女は少し変わっている。", en = "If you ask me, she's a little unusual." },
+  { source = "yomeru", ja = "母{に言わせると}、私はまだ子どもだそうだ。", en = "According to my mother, I'm still a child." },
+]
+
+[[point]]
+id = "ni-ou-tokoro-ga-ookii"
+pattern = "に負うところが大きい"
+forms = ["によるところが大きい", "に依るところが大きい", "に負うところが多い", "におうところがおおきい", "に負うところが大"]
+jlpt = "N1"
+meaning = "owes a great deal to, is largely due to"
+formation = ["Noun + に負うところが大きい   (彼の努力に負うところが大きい)"]
+explanation = """
+Credits a result mostly to one person or factor: この成功は、彼の努力\
+に負うところが大きい, "this success owes a great deal to his \
+effort". 負う here is "to owe". Formal, and usually used to give \
+credit or thanks."""
+notes = """
+によるところが大きい is the same with よる (due to), a bit more \
+neutral; it can also name a bad cause. おかげだ (N4) is the plain \
+spoken way to give credit."""
+related = ["okage-de", "ni-yotte"]
+examples = [
+  { tatoeba = "286930_116738", ja = "彼の成功は奥さんの力{によるところが大きい}。", en = "He owes much of his success to his wife." },
+  { source = "yomeru", ja = "この成功は、彼の努力{に負うところが大きい}。", en = "This success owes a great deal to his effort." },
+]
+
+[[point]]
+id = "ni-todomarazu"
+pattern = "にとどまらず"
+forms = ["に止まらず", "に留まらず", "にとどまらない", "に止まらない", "に留まらない"]
+jlpt = "N1"
+meaning = "not limited to, going beyond (and spreading further)"
+formation = [
+  "Noun + にとどまらず   (国内にとどまらず)",
+  "Verb + にとどまらず",
+]
+explanation = """
+Says something doesn't stop within a range but spreads beyond it: \
+その歌は日本国内にとどまらず、海外でも人気だ, "the song isn't just \
+popular in Japan, it's popular abroad too". とどまる is "to stay, \
+stop at"."""
+notes = """
+に限らず (N2) says a statement holds for others too (not only men, \
+women as well). にとどまらず describes a range that grows: an \
+influence, a problem or a fame spreading wider. Often with まで or \
+にも in the second part."""
+related = ["ni-kagirazu", "nomi-narazu", "bakari-de-naku"]
+examples = [
+  { source = "yomeru", ja = "その歌は国内{にとどまらず}、海外でも人気だ。", en = "The song isn't just popular at home; it's popular abroad too." },
+  { source = "yomeru", ja = "被害は町{にとどまらず}、県全体に広がった。", en = "The damage didn't stop at the town; it spread over the whole prefecture." },
+]
+
+[[point]]
+id = "ni-kagitta-koto-de-wa-nai"
+pattern = "に限ったことではない"
+forms = ["に限ったことじゃない", "にかぎったことではない", "にかぎったことじゃない", "に限ったことではありません", "に限った話ではない"]
+jlpt = "N1"
+meaning = "is not only true of, is nothing new (for X)"
+formation = ["Noun + に限ったことではない   (今に限ったことではない)"]
+explanation = """
+Says a problem or habit is not special to X: it happens elsewhere \
+too, or has always been so: 彼の遅刻は今日に限ったことではない, \
+"his being late isn't just today: it happens all the time". It \
+says X is nothing special, often about a problem."""
+notes = """
+今に始まったことではない is close: "it's nothing new". Compare に限ら\
+ず (N2), which links two things in one sentence; に限ったことではない \
+ends the sentence and comments on it."""
+related = ["ni-kagirazu", "ni-kagiru", "ni-kagitte"]
+examples = [
+  { source = "yomeru", ja = "彼の遅刻は今日{に限ったことではない}。", en = "His being late isn't just today; he's always late." },
+  { source = "yomeru", ja = "物価が上がっているのは、この国{に限ったことではない}。", en = "Rising prices aren't something only this country faces." },
+]
+
+[[point]]
+id = "ni-atte"
+pattern = "にあって"
+forms = ["にあっては", "にあっても"]
+jlpt = "N1"
+meaning = "in, at, under (a special situation or position)"
+formation = ["Noun + にあって(は / も)   (非常時にあって)"]
+explanation = """
+A formal に: something happens in a particular situation, time or \
+position: 社長という立場にあって、責任は重い, "in the position of \
+president, the responsibility is heavy". にあっても says "even in": \
+苦しい状況にあっても笑顔を忘れない, "even in hard times she never \
+loses her smile"."""
+notes = """
+Written. The noun is a special setting (非常時, 現代, 不況下, 立場, \
+地位), not a plain place. In speech, plain で or では. Easy to \
+confuse with the verb 会う / 遭う (雨にあって, 事故にあって): read \
+the context."""
+related = ["ni-oite", "ni-shite", "to-atte"]
+examples = [
+  { tatoeba = "296672_107014", ja = "彼は混乱の真っ只中{にあっても}冷静だ。", en = "He is cool amid confusion." },
+  { source = "yomeru", ja = "苦しい状況{にあっても}、彼女は笑顔を忘れない。", en = "Even in hard times, she never loses her smile." },
+]
+
+[[point]]
+id = "ni-itatte-wa"
+pattern = "に至っては"
+forms = ["にいたっては"]
+jlpt = "N1"
+meaning = "as for (X, the most extreme case)"
+formation = ["Noun + に至っては   (弟に至っては)"]
+explanation = """
+After a general point, picks out the most extreme example: 家族は\
+みんな朝が弱い。父に至っては、昼まで寝ている, "my whole family is \
+bad at mornings; as for my father, he sleeps until noon". Usually \
+for something bad or surprising."""
+notes = """
+The first sentence gives the trend, then に至っては names the worst \
+case. Compare に至る (N1, "reach, lead to") and に至るまで (all the \
+way to): the same verb, a different use."""
+related = ["ni-itaru", "ni-itaru-made", "ni-shite-mo"]
+examples = [
+  { source = "yomeru", ja = "みんな遅れた。田中さん{に至っては}来なかった。", en = "Everyone was late. As for Tanaka, he didn't come at all." },
+  { source = "yomeru", ja = "家族は朝が弱い。父{に至っては}昼まで寝ている。", en = "My family is bad at mornings; as for my father, he sleeps until noon." },
+]
+
+[[point]]
+id = "ni-kakatte-iru"
+pattern = "にかかっている"
+forms = ["にかかってる", "にかかっています", "に掛かっている", "に懸かっている"]
+jlpt = "N1"
+meaning = "depends on, rests on"
+formation = [
+  "Noun + にかかっている   (君の努力にかかっている)",
+  "Clause + かどうかにかかっている",
+]
+explanation = """
+Names what a result hangs on: 合格できるかどうかは、君の努力にかか\
+っている, "whether you pass depends on your effort". The topic is \
+the result (成功, 未来, 運命), and the noun is the deciding factor."""
+notes = """
+次第だ (N2) says the same and is a little more conversational. The \
+same spelling is literal hanging (壁に絵がかかっている) and catching \
+an illness (風邪にかかっている): read the context."""
+related = ["shidai-depending", "ni-yotte", "ikan"]
+examples = [
+  { tatoeba = "270369_144197", ja = "人質の運命はその交渉の結果{にかかっている}。", en = "The fate of the hostages depends on the result of the negotiation." },
+  { tatoeba = "241370_173102", ja = "国家の繁栄は市民の手{にかかっている}。", en = "The prosperity of a country depends upon its citizens." },
+]
+
+[[point]]
+id = "ni-kakatte-wa"
+pattern = "にかかっては"
+forms = ["にかかったら", "にかかると", "にかかれば", "の手にかかると", "の手にかかれば"]
+jlpt = "N1"
+meaning = "in the hands of, up against (no match for X)"
+formation = ["Noun (person) + にかかっては / にかかったら / にかかると"]
+explanation = """
+Once something meets X, X's power decides the outcome: 母にかかったら、\
+どんなうそもすぐばれる, "with my mother, any lie is found out at \
+once". X can be a master who makes a hard task easy (彼の手にかかれば\
+簡単だ), or someone no one can resist."""
+notes = """
+Spoken. The result is either "anyone/anything gives in" or "even a \
+hard thing is easy". Don't confuse with にかかっている (depends on) \
+or 病気にかかると (catch an illness)."""
+related = ["ni-kakatte-iru", "te-wa-kanawanai"]
+examples = [
+  { tatoeba = "266657_147903", ja = "叔母{にかかったら}私なんかまるで子ども扱いだ。", en = "My aunt treats me as if I were a child." },
+  { source = "yomeru", ja = "母{にかかったら}、どんなうそもすぐばれる。", en = "With my mother, any lie is found out at once." },
+  { source = "yomeru", ja = "彼の手{にかかれば}、どんな機械も直る。", en = "In his hands, any machine gets fixed." },
+]
+
+[[point]]
+id = "ni-shita-tokoro-de"
+pattern = "にしたところで"
+forms = ["にしたところが", "としたところで", "にしたところで〜ない"]
+jlpt = "N1"
+meaning = "even for (X), X is no different"
+formation = ["Noun (often a person) + にしたところで   (私にしたところで)"]
+explanation = """
+Says even X, who might be expected to differ, is in the same \
+position: 社長にしたところで、この問題は解決できない, "even the \
+president can't solve this problem". The second part usually admits \
+a limit or a negative."""
+notes = """
+にしても / にしたって (N2) are the general forms; にしたところで is \
+a little stiffer and stresses "X is no exception". 私にしたところで: \
+"I'm no different". It is にする + たところで (ta-tokoro-de, "even \
+if"), so the second part admits nothing changes. としたところで is \
+the same."""
+related = ["ni-shite-mo", "ta-tokoro-de", "ni-shiro"]
+examples = [
+  { source = "yomeru", ja = "社長{にしたところで}、この問題は解決できない。", en = "Even the president can't solve this problem." },
+  { source = "yomeru", ja = "私{にしたところで}、自信があるわけではない。", en = "I'm no different: it's not that I'm confident either." },
+]
+
+[[point]]
+id = "ni-hajinai"
+pattern = "に恥じない"
+forms = ["に恥じず", "に恥じぬ", "にはじない"]
+jlpt = "N1"
+meaning = "worthy of, living up to (a name, title)"
+formation = [
+  "Noun + に恥じない + Noun   (名に恥じない活躍)",
+  "Noun + に恥じないように",
+]
+explanation = """
+Says someone acts in a way that does justice to a name, title or \
+reputation: チャンピオンの名に恥じない試合, "a match worthy of the \
+title of champion". Literally "not to be ashamed before X". Often a \
+resolve: 期待に恥じないように頑張ります."""
+notes = """
+The noun is something honorable: 名, 名前, 伝統, 評判, 期待, 選手. \
+Formal, common in speeches. A plain verb 恥じる (to be ashamed) also \
+takes に: 自分の行いに恥じる."""
+related = ["ni-taru", "ni-atai-suru", "ni-kotaete"]
+examples = [
+  { tatoeba = "322919_80796", ja = "名声{に恥じない}ように行動するのはとてもむずかしい。", en = "It is very hard to live up to your reputation." },
+  { source = "yomeru", ja = "チャンピオンの名{に恥じない}試合だった。", en = "It was a match worthy of the title of champion." },
+]
+
+[[point]]
+id = "ni-wa-muri-ga-aru"
+pattern = "には無理がある"
+forms = ["に無理がある", "には無理があります", "に無理があった"]
+jlpt = "N1"
+meaning = "is a stretch, is unreasonable, doesn't hold up"
+formation = [
+  "Noun + には無理がある   (この計画には無理がある)",
+  "Verb + のには無理がある",
+]
+explanation = """
+Says a plan, argument or demand has a flaw that makes it \
+unreasonable: 一週間で終わらせるのには無理がある, "finishing it in a \
+week is asking too much". 無理 is "impossible, forced"; here it is a \
+noun: "there is something forced in X"."""
+notes = """
+Softer than 無理だ ("it's impossible"): it points out a weakness \
+calmly. The same idea: その説明は少し無理がある, "that explanation \
+is a bit of a stretch"."""
+related = ["wake-ga-nai", "kangaerarenai"]
+examples = [
+  { source = "yomeru", ja = "一週間で終わらせるの{には無理がある}。", en = "Finishing it in a week is asking too much." },
+  { source = "yomeru", ja = "その説明{には無理がある}よ。", en = "That explanation is a bit of a stretch." },
+]
+
+[[point]]
+id = "u-ni-mo"
+pattern = "ようにも"
+forms = ["うにも", "ようにも〜ない", "うにも〜ない"]
+hover = false
+jlpt = "N1"
+meaning = "even if one wants to (do it), one can't"
+formation = ["Verb［volitional］ + にも + Verb［できる］［ない］   (行こうにも行けない)"]
+explanation = """
+Someone wants to do something but circumstances make it impossible: \
+雨がひどくて、出かけようにも出かけられない, "it's raining so hard \
+that I can't go out even if I want to". The same verb usually comes \
+twice: first volitional, then potential negative."""
+notes = """
+The second verb is often the same one (帰ろうにも帰れない), sometimes \
+a set negative (どうしようもない, 手が出ない). Search-only: ようにも \
+also hides inside you-ni + も (聞こえるようにも)."""
+related = ["you-to-suru", "volitional", "you-ga-nai"]
+examples = [
+  { source = "yomeru", ja = "雨がひどくて、出かけ{ようにも}出かけられない。", en = "It's raining so hard that I can't go out even if I want to." },
+  { source = "yomeru", ja = "道が雪で埋まって、帰ろ{うにも}帰れない。", en = "The road is buried in snow, so we can't go home even if we want to." },
+]
+
+[[point]]
+id = "you-ni-yotte-wa"
+pattern = "ようによっては"
+forms = ["ようによって", "方によっては"]
+jlpt = "N1"
+meaning = "depending on how one (does it), in a certain way of (seeing)"
+formation = ["Verb［stem］ + ようによっては   (考えようによっては)"]
+explanation = """
+Says the outcome or the picture changes with the way one does \
+something: 考えようによっては、失敗もいい経験だ, "depending on how \
+you look at it, failure is a good experience too". よう here is \
+"way, manner", as in 考え方."""
+notes = """
+Most common with 考える, 見る, 言う, やる. Close to 次第では: やり方\
+次第では. With a single verb and no は, ようによって: 考えようによって\
+違う."""
+related = ["shidai-depending", "kata", "you-ga-nai"]
+examples = [
+  { source = "yomeru", ja = "考え{ようによっては}、失敗もいい経験だ。", en = "Depending on how you look at it, failure is a good experience too." },
+  { source = "yomeru", ja = "言い{ようによっては}、相手を傷つける。", en = "Depending on how you put it, you could hurt the other person." },
+]
+
+[[point]]
+id = "kara-ii-you-na-mono-no"
+pattern = "からいいようなものの"
+forms = ["からよかったものの", "からいいものの", "からよいようなものの", "からよかったようなものの"]
+jlpt = "N1"
+meaning = "it turned out fine because X, but (it could have been bad)"
+formation = ["Clause + からいいようなものの   (無事だったからいいようなものの)"]
+explanation = """
+Things ended well only by luck, and the speaker scolds or warns \
+about what could have happened: 財布が見つかったからいいようなものの、\
+もっと気をつけなさい, "your wallet turned up, so it's all right, but \
+be more careful". The second part is a warning or blame."""
+notes = """
+The first part is a lucky circumstance; the second says the action \
+itself was wrong. Close to からよかったけど in speech. Compare ものの \
+(N2, plain "although")."""
+related = ["mono-no", "ta-tokoro-de"]
+examples = [
+  { source = "yomeru", ja = "誰も見ていなかった{からいいようなものの}、危なかった。", en = "Luckily nobody saw, but that was a close call." },
+  { source = "yomeru", ja = "間に合った{からよかったものの}、遅刻するところだった。", en = "I made it in time, but I nearly ended up late." },
+]
+
+[[point]]
+id = "to-kitara"
+pattern = "ときたら"
+forms = ["と来たら", "ときては", "と来ては"]
+jlpt = "N1"
+meaning = "as for (X), when it comes to (complaint)"
+formation = ["Noun + ときたら   (うちの息子ときたら)"]
+explanation = """
+Brings up a person or thing in order to complain about it: うちの\
+夫ときたら、靴下を脱ぎっぱなしにする, "my husband, honestly, leaves \
+his socks lying around". The tone is exasperated; the \
+second part is criticism or dissatisfaction."""
+notes = """
+Spoken. ったら (N1) is close and more casual. Compare といえば (N3, \
+neutral "speaking of"). Occasionally positive in set talk about food \
+and drink (ビールときたら枝豆だ, "with beer, it has to be edamame"), \
+but the complaint is the use to learn."""
+related = ["ttara", "to-ieba", "to-kite-iru"]
+examples = [
+  { tatoeba = "286454_117211", ja = "彼の子供の扱い方{ときたら}ひどいものだ。", en = "It's a crime the way he treats his children." },
+  { source = "yomeru", ja = "うちの夫{ときたら}、何も片付けない。", en = "My husband, honestly, never tidies anything up." },
+]
+
+[[point]]
+id = "to-omoiki-ya"
+pattern = "と思いきや"
+forms = ["かと思いきや", "とおもいきや", "かとおもいきや"]
+jlpt = "N1"
+meaning = "I thought (X), but actually; contrary to expectations"
+formation = ["Clause (plain) + (か)と思いきや   (晴れるかと思いきや)"]
+explanation = """
+Sets up an expectation, then reveals the opposite happened: 簡単な\
+試験かと思いきや、とても難しかった, "I thought it'd be an easy exam, \
+but it was really hard". It describes a surprise already past, often \
+with a humorous or dramatic touch."""
+notes = """
+Written-looking but often used for effect in casual writing. The \
+second part is a fact that went against the guess. Compare かと思うと \
+(N2, one thing right after another) and と思ったら (spoken, "just \
+when I thought")."""
+related = ["ka-to-omou-to", "to-omou", "tokoroga"]
+examples = [
+  { source = "yomeru", ja = "簡単な試験{かと思いきや}、とても難しかった。", en = "I thought it'd be an easy exam, but it was really hard." },
+  { source = "yomeru", ja = "晴れる{と思いきや}、午後から雨になった。", en = "I thought it would clear up, but it rained from the afternoon." },
+]
+
+[[point]]
+id = "to-wa-utte-kawatte"
+pattern = "とは打って変わって"
+forms = ["と打って変わって", "とはうってかわって", "とは打って変わった", "打って変わって", "うってかわって"]
+jlpt = "N1"
+meaning = "completely different from (before), a complete turnaround"
+formation = [
+  "Noun + とは打って変わって   (昨日とは打って変わって)",
+  "Noun + とは打って変わった + Noun",
+]
+explanation = """
+The same person or thing has changed suddenly and completely: 昨日\
+とは打って変わって、今日はいい天気だ, "unlike yesterday, today the \
+weather is beautiful". Often the weather, someone's attitude or the \
+mood of a place."""
+notes = """
+The comparison is with an earlier state of the same thing. For two \
+different things side by side, use にひきかえ or と違って. 打って\
+変わって alone also works as an adverb: 彼は打って変わって優しく\
+なった."""
+related = ["ni-hikikae", "ni-hanshite"]
+examples = [
+  { tatoeba = "242846_171629", ja = "今日は昨日の寒さ{とはうって変わった}陽気だ。", en = "It isn't anything like as cold as it was yesterday." },
+  { source = "yomeru", ja = "昨日{とは打って変わって}、今日はいい天気だ。", en = "Unlike yesterday, today the weather is beautiful." },
+]
+
+[[point]]
+id = "to-wa-kurabemono-ni-naranai"
+pattern = "とは比べものにならない"
+forms = ["とは比べ物にならない", "と比べものにならない", "と比べ物にならない", "比べものにならない", "比べ物にならない", "比べものにならないほど"]
+jlpt = "N1"
+meaning = "can't compare with, is in another league from"
+formation = [
+  "Noun + とは比べものにならない   (去年とは比べものにならない)",
+  "比べものにならないほど + Adjective",
+]
+explanation = """
+The difference is so great that comparing makes no sense: 私の料理は\
+母のとは比べものにならない, "my cooking is nothing like my mother's". \
+Either side can be the better one; context tells which. 比べものに\
+ならないほど means "incomparably"."""
+notes = """
+足元にも及ばない (see ni-wa-oyobanai) says only "far worse than". \
+とは比べものにならない is neutral about direction: 今のスマホは昔の\
+とは比べものにならない (far better)."""
+related = ["ni-kurabete", "ni-wa-oyobanai", "to-dochira"]
+examples = [
+  { tatoeba = "252096_162418", ja = "私の料理などお母さんのとは{比べものにならない}。", en = "My cooking cannot hold a candle to Mother's." },
+  { tatoeba = "60526_223194", ja = "このほうが{比べものにならないほど}優れている。", en = "This is superior beyond comparison." },
+]
+
+[[point]]
+id = "to-made-wa-ikanai-ga"
+pattern = "とまではいかないが"
+forms = ["とまではいかなくても", "とまではいかないまでも", "とまではいかないとしても", "とまでは言わないが", "とまではいわないが", "とまでは言えないが", "とまでは言わなくても", "とまでは言わなくとも"]
+jlpt = "N1"
+meaning = "not quite (X), but; not to say (X), but"
+formation = ["Noun / Clause + とまではいかないが   (毎日とまではいかないが)"]
+explanation = """
+Names a high level, says it isn't reached, then gives the lower one \
+that is: 毎日とまではいかないが、よく料理をする, "not every day, but \
+I cook often". With 言わない: 嫌いとまでは言わないが、苦手だ, "I \
+won't say I hate it, but I'm not good with it"."""
+notes = """
+いかない is 行かない ("doesn't get as far as"). The 言わない version \
+softens a judgment. ないまでも (N1) is close: 毎日ではないまでも."""
+related = ["nai-made-mo", "to-iu-hodo-de-wa-nai"]
+examples = [
+  { tatoeba = "288296_99684", ja = "彼は無礼{とまでは言わなくとも}、礼儀正しくはなかった。", en = "He was impolite, not to say rude." },
+  { source = "yomeru", ja = "毎日{とまではいかないが}、よく料理をする。", en = "Not every day, but I cook often." },
+  { source = "yomeru", ja = "嫌い{とまでは言わないが}、あまり好きではない。", en = "I won't say I hate it, but I don't really like it." },
+]
+
+[[point]]
+id = "to-iwazu"
+pattern = "といわず"
+forms = ["と言わず"]
+jlpt = "N1"
+meaning = "(X and Y) alike, all over; not only (X)"
+formation = [
+  "Noun + といわず + Noun + といわず   (手といわず足といわず)",
+  "Noun + といわず   (明日といわず今日)",
+]
+explanation = """
+XといわずYといわず lists two parts of a whole to say "everywhere, \
+all of it": 手といわず足といわず、泥だらけだ, "hands, feet, he's \
+covered in mud all over". With one noun, it means "not just X": \
+明日といわず、今すぐ行こう, "not tomorrow: let's go right now"."""
+notes = """
+Written and vivid. The two nouns are parts of one whole (hands and \
+feet, day and night, inside and outside). Compare といい〜といい, which \
+lists points to judge something."""
+related = ["to-ii-to-ii", "mo-ba-mo", "wo-towazu"]
+examples = [
+  { source = "yomeru", ja = "手{といわず足といわず}、泥だらけだ。", en = "Hands, feet, he's covered in mud all over." },
+  { source = "yomeru", ja = "明日{といわず}、今すぐ行こう。", en = "Why wait till tomorrow? Let's go right now." },
+]
+
+[[point]]
+id = "to-ii-to-ii"
+pattern = "といい〜といい"
+forms = ["といい"]
+hover = false
+jlpt = "N1"
+meaning = "both (X) and (Y), whether in X or Y (in judging)"
+formation = ["Noun + といい + Noun + といい   (味といい値段といい)"]
+explanation = """
+Picks two points as examples to support a judgment of the whole: \
+この店は、味といい値段といい、文句なしだ, "this restaurant, the \
+taste, the price: there's nothing to complain about". The judgment \
+can be praise or criticism, and is the speaker's own."""
+notes = """
+Compare といわず〜といわず (all over, no evaluation) and も〜ば〜も \
+(adds facts). Search-only: といい is also the wish といい (晴れると\
+いい) and Noun + という + いい."""
+related = ["to-iwazu", "mo-ba-mo", "yara"]
+examples = [
+  { source = "yomeru", ja = "この店は、味{といい値段といい}、文句なしだ。", en = "This restaurant, the taste, the price: there's nothing to complain about." },
+  { source = "yomeru", ja = "色{といい形といい}、すてきな車だ。", en = "In both color and shape, it's a lovely car." },
+]
+
+[[point]]
+id = "to-iu-tokoro-da"
+pattern = "といったところだ"
+forms = ["というところだ", "と言ったところだ", "といったところです", "というところです", "といったところ"]
+jlpt = "N1"
+meaning = "about, at most (a modest figure or state)"
+formation = ["Noun / Number + といったところだ   (一日二時間といったところだ)"]
+explanation = """
+Gives a rough, modest figure or state: "it's about X, no more": \
+勉強時間は一日二時間といったところだ, "I study about two hours a day, \
+at most". Often with a number, or a modest grade: 六十点といった\
+ところだ, "about a passing mark, no better"."""
+notes = """
+Stresses that the amount isn't much. Don't confuse with plain \
+"a place called" (広島に口和というところがあります). もう一息というと\
+ころだ is a set phrase: "almost there"."""
+related = ["seizei", "kurai-extent"]
+examples = [
+  { tatoeba = "315638_88068", ja = "彼女は多く見ても２０歳{というところだ}。", en = "She's at most 20 years old." },
+  { source = "yomeru", ja = "勉強時間は一日二時間{といったところだ}。", en = "I study about two hours a day, at most." },
+]
+
+[[point]]
+id = "to-iu-mono"
+pattern = "というもの"
+forms = ["と言うもの", "というもの、"]
+hover = false
+jlpt = "N1"
+meaning = "for the whole (period), all through (since)"
+formation = ["Period + というもの   (この一年というもの, ここ三日というもの)"]
+explanation = """
+Stresses that a state lasted the whole of a time span, usually \
+unusual or hard: この一週間というもの、ほとんど寝ていない, "this \
+whole past week, I've hardly slept". The period usually starts with \
+この or ここ: ここ数年というもの."""
+notes = """
+てからというもの (te-kara-to-iu-mono) says "ever since": it marks \
+the starting event. というもの alone marks the length of time. \
+Search-only: というもの is everywhere (愛というものは, "what is called \
+love")."""
+related = ["te-kara-to-iu-mono", "zutto", "to-iu-mono-da"]
+examples = [
+  { source = "yomeru", ja = "この一週間{というもの}、ほとんど寝ていない。", en = "This whole past week, I've hardly slept." },
+  { source = "yomeru", ja = "ここ三日{というもの}、雨が降り続いている。", en = "It has been raining for three days straight." },
+]
+
+[[point]]
+id = "to-iou-ka"
+pattern = "といおうか"
+forms = ["と言おうか", "といおうか〜といおうか", "と言いますか", "といいますか"]
+jlpt = "N1"
+meaning = "or should I say, how shall I put it"
+formation = [
+  "Noun / Clause + といおうか   (天才といおうか)",
+  "X + といおうか + Y + といおうか",
+]
+explanation = """
+The speaker hunts for the right word, offering one and then \
+another: 彼は天才といおうか、変わり者といおうか, "he's a genius, or \
+should I say an oddball". It shows hesitation or that no single \
+word fits."""
+notes = """
+というか (N2, to-iu-ka) is the everyday spoken form. といおうか \
+sounds more thoughtful or written. Often the sentence ends with a \
+summing up: 〜といおうか、とにかく不思議な人だ."""
+related = ["to-iu-ka", "to-iu-yori"]
+examples = [
+  { source = "yomeru", ja = "天才{といおうか、変わり者といおうか}。", en = "A genius, or should I say an oddball." },
+  { source = "yomeru", ja = "うれしい{といおうか、恥ずかしいといおうか}。", en = "I'm happy, or rather embarrassed, I'm not sure." },
+]
+
+[[point]]
+id = "to-ienaku-mo-nai"
+pattern = "といえなくもない"
+forms = ["と言えなくもない", "といえないこともない", "と言えないこともない", "といえなくはない", "と言えなくはない"]
+jlpt = "N1"
+meaning = "one could say, it's not impossible to say"
+formation = ["Noun / Clause + といえなくもない   (成功といえなくもない)"]
+explanation = """
+Makes a cautious claim through a double negative: "you can't say \
+it isn't so". The speaker grants the point only half-heartedly: \
+まあ、成功といえなくもない, "well, I suppose you could call it a \
+success"."""
+notes = """
+A specific use of ないこともない / なくもない (N2, nai-koto-mo-nai): \
+the hesitant "not completely no". Weaker than といえる (N3, "one can \
+say"), and often followed by a けど and a doubt: そう言えなくもない\
+けど…."""
+related = ["nai-koto-wa-nai", "nai-de-mo-nai", "to-ieru"]
+examples = [
+  { source = "yomeru", ja = "まあ、成功{といえなくもない}。", en = "Well, I suppose you could call it a success." },
+  { source = "yomeru", ja = "彼の意見も正しい{と言えなくもない}。", en = "You could say his opinion is right too, in a way." },
+]
+
+[[point]]
+id = "to-mo-naku"
+pattern = "ともなく"
+forms = ["ともなしに", "からともなく"]
+hover = false
+jlpt = "N1"
+meaning = "without meaning to; (from) somewhere or other"
+formation = [
+  "Verb［る］ + ともなく / ともなしに   (見るともなく)",
+  "Question word (+ particle) + ともなく   (どこからともなく)",
+]
+explanation = """
+After a verb, the action happens idly, without a purpose: 窓の外を\
+眺めるともなく眺めていた, "I was gazing out the window at nothing in \
+particular". \
+After a question word it means "some ... or other, nobody knows \
+which": どこからともなく音楽が聞こえてきた, "music came from \
+somewhere"."""
+notes = """
+With a verb, the same verb usually follows (聞くともなく聞く). With \
+question words: 誰からともなく (someone, it's not clear who), いつ\
+ともなく (at some point). Search-only: the same kana \
+appear in 二人とも + 亡くなる (二人ともなくなった)."""
+related = ["nantonaku", "koto-naku"]
+examples = [
+  { tatoeba = "292011_111672", ja = "彼はどこから{ともなく}現れた。", en = "He appeared from nowhere." },
+  { source = "yomeru", ja = "窓の外を眺める{ともなく}眺めていた。", en = "I was gazing out the window at nothing in particular." },
+]
+
+[[point]]
+id = "to-shite-nai"
+pattern = "として〜ない"
+forms = ["一人として", "誰一人として", "一つとして", "何一つとして", "一度として", "一日として", "一瞬として"]
+jlpt = "N1"
+meaning = "not a single (one), not even one"
+formation = ["一 + Counter + として + negative   (一人として来なかった)"]
+explanation = """
+With "one" + counter and a negative, says there is no exception at \
+all: 父は一日として仕事を休まなかった, "my father never missed a \
+single day of work". 誰一人として and 何一つとして add stress. Formal and emphatic."""
+notes = """
+Plain として (N3) is "as" (a role): 作家の一人として, "as one of the \
+writers", is that use. This one follows 一 + counter with a negative. \
+一人も〜ない says the same more simply."""
+related = ["to-shite", "sukoshimo-nai", "number-mo"]
+examples = [
+  { tatoeba = "276684_127456", ja = "{誰一人として}その街には見当たらなかった。", en = "Not a soul was to be seen in the town." },
+  { tatoeba = "285572_118092", ja = "彼の鋭い目は{一つとして}誤りを見逃さなかった。", en = "His sharp eyes never missed a mistake." },
+  { source = "yomeru", ja = "父は{一日として}仕事を休まなかった。", en = "My father never missed a single day of work." },
+]
+
+[[point]]
+id = "kore-to-itte"
+pattern = "これといって"
+forms = ["これといった", "これと言って", "これと言った"]
+jlpt = "N1"
+meaning = "(nothing) in particular, (no) special"
+formation = [
+  "これといって + negative   (これといって予定はない)",
+  "これといった + Noun + negative",
+]
+explanation = """
+Says there is nothing worth mentioning: 週末はこれといって予定はない, \
+"I have no particular plans for the weekend". これといった comes before \
+a noun: これといった趣味はない, "I have no special hobby"."""
+notes = """
+Always with a negative. Close to 特に〜ない, but これといって stresses \
+"nothing stands out". Also これという + Noun: これという理由はない."""
+related = ["betsu-ni", "sukoshimo-nai"]
+examples = [
+  { tatoeba = "241797_172678", ja = "今は{これといって}することがないです。", en = "I have nothing particular to do now." },
+  { source = "yomeru", ja = "{これといった}趣味はない。", en = "I don't have any special hobby." },
+]
+
+[[point]]
+id = "to-kite-iru"
+pattern = "ときている"
+forms = ["ときてる", "ときているから", "ときているので", "ときた"]
+hover = false
+jlpt = "N1"
+meaning = "and on top of that it's (X), so (naturally)"
+formation = ["Clause (plain) + ときている   (安くておいしいときている)"]
+explanation = """
+Adds a striking feature, often the last straw, that explains a \
+judgment: この店は駅から近くて安いときているから、学生でいっぱいだ, \
+"this place is near the station and cheap to boot, so it's full of \
+students". It \
+can praise or complain: 高いうえにまずいときている."""
+notes = """
+Spoken, with feeling. Compare ときたら (complaint about a topic): \
+ときている comes at the end and supplies the reason. Search-only: the \
+same kana are plain と + 来ている (友達と来ている)."""
+related = ["to-kitara", "ue-ni", "shikamo"]
+examples = [
+  { source = "yomeru", ja = "駅から近くて安い{ときている}から、学生でいっぱいだ。", en = "It's near the station and cheap to boot, so it's full of students." },
+  { source = "yomeru", ja = "高いうえに、まずい{ときている}。", en = "It's expensive, and on top of that it tastes bad." },
+]
+
+[[point]]
+id = "to-wa-surprise"
+pattern = "とは"
+forms = []
+hover = false
+jlpt = "N1"
+meaning = "(to think) that…!, I can't believe that… (surprise)"
+formation = ["Clause (plain) + とは   (まさか負けるとは)"]
+explanation = """
+Ends a sentence to express shock or disbelief at a fact: まさか\
+あのチームに負けるとは, "to think we'd lose to that team!". The rest \
+(思わなかった, 驚いた) is left unsaid. Often with まさか or こんな."""
+notes = """
+The full form is とは思わなかった (N3, to-wa-omowanakatta); in \
+casual speech, なんて says the same. Not the topic とは, "X means" (愛とは何か). Search-only: とは is too common \
+to pop up."""
+related = ["to-wa-omowanakatta", "nante", "masaka"]
+examples = [
+  { tatoeba = "54765_217458", ja = "こんなところで君に会う{とは}！", en = "Fancy meeting you here!" },
+  { tatoeba = "283034_120974", ja = "彼がこんなふるまいをする{とは}。", en = "That he should behave like this!" },
 ]
