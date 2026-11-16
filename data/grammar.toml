@@ -9454,3 +9454,397 @@ examples = [
   { source = "yomeru", ja = "弟は肉{ばかり}食べる。", en = "My little brother eats nothing but meat." },
   { source = "yomeru", ja = "毎日雨{ばかりで}、どこにも行けない。", en = "It's rain every day, so I can't go anywhere." },
 ]
+
+[[point]]
+id = "nakanaka-nai"
+pattern = "なかなか〜ない"
+forms = ["なかなか", "中々"]
+jlpt = "N3"
+meaning = "not easily, just won't; (positive) quite, rather"
+formation = ["なかなか + Verb［ない］", "なかなか + ［い］Adjective / ［な］Adjective (positive: quite)"]
+explanation = """
+With a negative, なかなか says something is slow or hard to happen, \
+usually when you expect or want it to: バスがなかなか来ない, "the bus \
+just won't come". It often goes with the potential: なかなか覚えられ\
+ない, "I can't seem to remember it"."""
+notes = """
+With a positive word, なかなか means "quite, better than expected": \
+なかなかおいしい, "pretty tasty". It is a mild compliment, so don't use \
+it about a superior's work. Compare 全然〜ない (not at all): なかなか\
+〜ない means it's hard or slow, not that it never happens."""
+related = ["zenzen", "mattaku", "kanari"]
+examples = [
+  { tatoeba = "57285_219967", ja = "この風邪が{なかなか}治らない。", en = "I can't get rid of this cold." },
+  { tatoeba = "284706_118957", ja = "彼には{なかなか}会えない。", en = "It is difficult to gain access to him." },
+  { source = "yomeru", ja = "このラーメン、{なかなか}おいしいね。", en = "This ramen is pretty good, isn't it?" },
+]
+
+[[point]]
+id = "kesshite"
+pattern = "決して〜ない"
+forms = ["決して", "けっして"]
+jlpt = "N3"
+meaning = "never, by no means, not in any way"
+formation = ["決して + Verb［ない］", "決して + ［い］Adjective［く］ + ない", "決して + ［な］Adjective / Noun + ではない"]
+explanation = """
+A strong, firm negative: "absolutely not". It is used for promises \
+and warnings (決して忘れません, "I will never forget"), and to deny a \
+judgement firmly: 決して安くない, "it's by no means cheap"."""
+notes = """
+決して always needs a negative (or a strong refusal such as 〜ものか). \
+It sounds more serious and written than 絶対に〜ない, which is the usual \
+spoken choice. For "never again", use 二度と〜ない; for "have never \
+done", use 一度も〜たことがない."""
+related = ["nidoto", "mattaku", "zenzen"]
+examples = [
+  { tatoeba = "26657_189506", ja = "嘘は{決して}つくな！", en = "Never tell a lie!" },
+  { tatoeba = "257191_157342", ja = "私は{決して}肉を食べません。", en = "I never eat meat." },
+  { tatoeba = "313403_90311", ja = "彼女は{決して}幸せではなかった。", en = "She was by no means happy." },
+]
+
+[[point]]
+id = "mattaku"
+pattern = "全く"
+forms = ["まったく", "全く〜ない", "まったく〜ない"]
+jlpt = "N3"
+meaning = "not at all (with negatives); completely, truly"
+formation = ["全く + Verb［ない］", "全く + ［い］Adjective［く］ + ない", "全く + Phrase (completely)"]
+explanation = """
+With a negative, 全く makes it total: 全くわからない, "I don't \
+understand at all". With a positive it means "completely, truly": 全く\
+同じ, "exactly the same". Written in kanji or in hiragana."""
+notes = """
+全く〜ない and 全然〜ない mean the same; 全く sounds a little more \
+serious and suits writing, 全然 is the everyday spoken word. On its own, \
+まったく！ (or まったくもう) is a sigh of annoyance: "honestly!"."""
+related = ["zenzen", "sukoshimo-nai", "kesshite"]
+examples = [
+  { tatoeba = "10536829_171386", ja = "今年の夏は{全く}食欲がない。", en = "I have no appetite at all this summer." },
+  { tatoeba = "285960_117704", ja = "彼の計画は僕は{まったく}知らない。", en = "I am quite ignorant of his plan." },
+  { tatoeba = "70919_233547", ja = "あなたのご意見に{全く}賛成です。", en = "I am in full accord with your view." },
+]
+
+[[point]]
+id = "betsu-ni"
+pattern = "別に"
+forms = ["べつに", "別に〜ない", "べつに〜ない"]
+jlpt = "N3"
+meaning = "not particularly (with negatives); separately"
+formation = ["別に + Verb［ない］", "別に + ［い］Adjective［く］ + ない", "別に + ［な］Adjective / Noun + ではない"]
+explanation = """
+With a negative, 別に softens it to "not really, not in particular": \
+別に困っていない, "I'm not really in trouble". Alone, 「別に。」 is a \
+short answer meaning "nothing much" or "not really"."""
+notes = """
+「別に。」 by itself can sound cold or sulky, so use it with care. It \
+pairs naturally with わけではない: 別に嫌いなわけではない, "it's not \
+that I dislike it". Without a negative, 別に keeps its literal sense, \
+"separately, apart": 別に払う, "pay separately". A noun + 別 (年齢別) \
+means "sorted by"."""
+related = ["wake-de-wa-nai", "amari-nai"]
+examples = [
+  { tatoeba = "329671_74049", ja = "「何を考えてるの？」「{別に}・・・」", en = "\"What are you thinking about?\" \"Nothin'...\"" },
+  { source = "yomeru", ja = "{別に}怒っていないよ。", en = "I'm not particularly angry." },
+  { tatoeba = "51049_213762", ja = "ソースを{別に}ください。", en = "I'd like the sauce on the side." },
+]
+
+[[point]]
+id = "metta-ni"
+pattern = "めったに〜ない"
+forms = ["めったに", "滅多に"]
+jlpt = "N3"
+meaning = "rarely, hardly ever, seldom"
+formation = ["めったに + Verb［ない］", "めったに + Noun + はない"]
+explanation = """
+Says something happens very seldom: 父はめったに怒らない, "my father \
+rarely gets angry". It always needs a negative. めったにない on its own \
+means "rare": めったにないチャンス, "a rare chance"."""
+notes = """
+Usually written in hiragana. It is about how often, so it sits with \
+frequency words: いつも (always), よく (often), ときどき (sometimes), \
+あまり〜ない (not often), めったに〜ない (rarely), 全然〜ない (never)."""
+related = ["amari-nai", "zenzen"]
+examples = [
+  { tatoeba = "293032_110654", ja = "彼は{めったに}テレビを見ない。", en = "He scarcely ever watches TV." },
+  { source = "yomeru", ja = "父は{めったに}怒らない。", en = "My father rarely gets angry." },
+  { source = "yomeru", ja = "ここでは雪が{めったに}降らない。", en = "It hardly ever snows here." },
+]
+
+[[point]]
+id = "totemo-nai"
+pattern = "とても〜ない"
+forms = []
+jlpt = "N3"
+meaning = "cannot possibly, there's no way"
+formation = ["とても + Verb［できる］［ない］", "とても + Verb［ない］"]
+explanation = """
+With a negative, とても stops meaning "very" and says something is \
+impossible, far beyond what you can do: とても一人では運べない, "I \
+can't possibly carry it alone". It usually goes with the potential \
+form or できない."""
+notes = """
+Don't confuse it with とても + an adjective that happens to be negative \
+in meaning: とても暑くて働けない is "it's so hot I can't work", where \
+とても is still "very". The "impossible" reading needs とても to bear \
+on the negative verb itself. It sounds personal and emotional, more than \
+決して."""
+related = ["kesshite", "potential-form", "doushitemo"]
+examples = [
+  { source = "yomeru", ja = "こんなにたくさん、{とても}一人では食べられない。", en = "I can't possibly eat this much by myself." },
+  { source = "yomeru", ja = "明日までには{とても}終わらない。", en = "There's no way it'll be finished by tomorrow." },
+  { tatoeba = "56940_219619", ja = "この本は私には{とても}わからない。", en = "This book is quite above me." },
+]
+
+[[point]]
+id = "nidoto"
+pattern = "二度と"
+forms = ["にどと", "二度と〜ない", "にどと〜ない"]
+jlpt = "N3"
+meaning = "never again"
+formation = ["二度と + Verb［ない］"]
+explanation = """
+Literally "a second time": with a negative it means "never again", \
+often after a bad experience. あの店には二度と行かない, "I'll never go \
+to that shop again". Used for strong resolutions and promises."""
+notes = """
+Always with a negative (or a negative wish such as 〜たくない, \
+〜ないでください). For a plain "never" without the sense of repeating, \
+use 決して〜ない or 一度も〜ない."""
+related = ["kesshite"]
+examples = [
+  { tatoeba = "280961_123038", ja = "{二度と}しません。", en = "I will not do it again." },
+  { tatoeba = "259776_154764", ja = "私は{二度と}それをしないつもりです。", en = "I will never do it again." },
+  { source = "yomeru", ja = "あの店には{二度と}行かない。", en = "I'll never go to that shop again." },
+]
+
+[[point]]
+id = "imada-ni"
+pattern = "いまだに"
+forms = ["未だに"]
+jlpt = "N2"
+meaning = "still, even now (surprisingly long)"
+formation = ["いまだに + Phrase", "いまだに + Verb［ない］ (still not)"]
+explanation = """
+A stronger, more formal まだ: something has gone on for a long time \
+and is still the case, often to the speaker's surprise or regret. \
+いまだに覚えている, "I still remember it (even now)". With a negative: \
+いまだに連絡がない, "still no word"."""
+notes = """
+いまだに stresses the long stretch of time; まだ is neutral. For a \
+simple "not yet" (まだ食べていない), まだ is the natural word: \
+いまだに〜ない says it has been far too long. いまだかつて〜ない is a separate, written phrase: "never \
+before"."""
+related = ["mada-te-inai", "mou"]
+examples = [
+  { tatoeba = "65898_228540", ja = "{いまだに}物理が苦手なのか。", en = "Are you still having difficulty with physics?" },
+  { tatoeba = "289256_114415", ja = "彼は{いまだに}彼女の言葉を信じている。", en = "He still believes her words." },
+]
+
+[[point]]
+id = "amari-ni"
+pattern = "あまりに"
+forms = ["あまりにも", "余りに", "余りにも", "あまりの"]
+jlpt = "N3"
+meaning = "too, so very (that…), excessively"
+formation = ["あまりに(も) + ［い］Adjective / ［な］Adjective / Verb", "あまりの + Noun + に (あまりの寒さに)"]
+explanation = """
+Says a degree goes beyond what is normal, often so far that it causes \
+something: あまりに高くて買えなかった, "it was so expensive I couldn't \
+buy it". にも adds emphasis. Before a noun, use あまりの: あまりの暑さ\
+に, "in the overwhelming heat"."""
+notes = """
+Different from あまり〜ない ("not very"): あまりに works with positive \
+verbs and adjectives and means "too much". It often comes with \
+〜すぎる or a result clause with ので / て. あんまり is the casual \
+spoken form of both."""
+related = ["amari-nai", "sugiru"]
+examples = [
+  { tatoeba = "50946_230351", ja = "{あまりに}早く着いた。", en = "I arrived there too early." },
+  { tatoeba = "288807_114864", ja = "彼は{あまりにも}幼いので学校に行けなかった。", en = "He was too young to go to school." },
+  { source = "yomeru", ja = "{あまりの}寒さに、外に出られなかった。", en = "It was so cold that I couldn't go outside." },
+]
+
+[[point]]
+id = "kanari"
+pattern = "かなり"
+forms = []
+jlpt = "N3"
+meaning = "fairly, quite, considerably, pretty"
+formation = ["かなり + ［い］Adjective / ［な］Adjective / Verb", "かなりの + Noun"]
+explanation = """
+Says something is clearly more than average, though not extreme: \
+かなり寒い, "pretty cold". Before a noun it takes の: かなりの人, \
+"quite a lot of people". It works for good and bad things alike."""
+notes = """
+Roughly, とても / すごく (very) > かなり (quite) > 少し (a little). \
+ずいぶん is close but adds the speaker's surprise ("much more than I \
+thought"). かなり is common in speech and writing; in formal writing \
+相当 is a stiffer equivalent."""
+related = ["nakanaka-nai", "masumasu"]
+examples = [
+  { tatoeba = "51989_214697", ja = "スコットランドの晩秋は{かなり}寒い。", en = "Late autumn in Scotland is rather cold." },
+  { tatoeba = "72609_235233", ja = "４マイルは{かなりの}距離だ。", en = "Four miles is a good distance." },
+  { source = "yomeru", ja = "今日は{かなり}疲れた。", en = "I'm pretty tired today." },
+]
+
+[[point]]
+id = "masumasu"
+pattern = "ますます"
+forms = ["益々"]
+jlpt = "N3"
+meaning = "more and more, increasingly, even more"
+formation = ["ますます + Verb (of change: なる, 増える…)", "ますます + ［い］Adjective / ［な］Adjective + なる"]
+explanation = """
+Says a state that was already growing keeps growing: 雨がますます強く\
+なった, "the rain got heavier and heavier". Common with ほど and \
+につれて: 読めば読むほどますます面白くなる."""
+notes = """
+ますます assumes the trend was already there and is speeding up. \
+だんだん is a gradual, step-by-step change; どんどん is quick and \
+steady progress. "Less and less" is also ますます with a word of \
+decrease (ますます減る)."""
+related = ["dandan", "dondon", "ba-hodo", "ni-tsurete"]
+examples = [
+  { tatoeba = "288060_115610", ja = "彼は、{ますます}背が高くなった。", en = "He has become taller and taller." },
+  { tatoeba = "241236_173235", ja = "高く登るほど、{ますます}寒くなる。", en = "The higher we climb, the colder it becomes." },
+  { source = "yomeru", ja = "雨が{ますます}強くなってきた。", en = "The rain is getting heavier and heavier." },
+]
+
+[[point]]
+id = "marude"
+pattern = "まるで"
+forms = ["まるで〜ようだ", "まるで〜みたいだ", "まるで〜のよう"]
+jlpt = "N3"
+meaning = "just like, as if; (with negatives) not at all"
+formation = ["まるで + Noun + のようだ / みたいだ", "まるで + Verb / Adjective + ようだ / みたいだ", "まるで + Verb［ない］ (not at all)"]
+explanation = """
+まるで strengthens a comparison with ようだ or みたいだ: it isn't really \
+so, but it looks or feels exactly like it. まるで夢のようだ, "it's \
+just like a dream". The "as if" comes from ようだ / みたいだ; まるで \
+adds "completely"."""
+notes = """
+まるで is not used with らしい. With a negative it means "not \
+at all", often with a note of disappointment: まるでわからない, "I \
+can't make head or tail of it". かのように after a verb makes the \
+"as if" even clearer: まるで夢を見ているかのように."""
+related = ["you-da", "mitai", "mattaku"]
+examples = [
+  { tatoeba = "292954_110732", ja = "彼は{まるで}王様のように行動をする。", en = "He acts as if he were a king." },
+  { tatoeba = "292946_110740", ja = "彼は{まるで}アメリカ人のように英語を話す。", en = "He speaks English as if he were an American." },
+  { source = "yomeru", ja = "説明が{まるで}わからなかった。", en = "I didn't understand the explanation at all." },
+]
+
+[[point]]
+id = "ittai"
+pattern = "一体"
+forms = ["いったい", "一体全体"]
+jlpt = "N3"
+meaning = "(what / who / why) on earth, in the world"
+formation = ["一体 + Question word + Phrase + か / の"]
+explanation = """
+Adds surprise, confusion or irritation to a question: 一体何があった\
+の？, "what on earth happened?". It goes before a question word (何, \
+誰, どこ, どうして) and the sentence ends as a question. 一体全体 is \
+even stronger."""
+notes = """
+Only in questions, often ones the speaker doesn't expect an answer to. \
+It can sound accusing, so avoid it in polite requests. As a plain noun, \
+一体 also means "one body, a unit" (一体になる, "become one"), which \
+has nothing to do with this use."""
+related = ["ka-mo-question-words"]
+examples = [
+  { tatoeba = "27508_190373", ja = "{一体}、どうしたの。", en = "What on earth is the matter?" },
+  { tatoeba = "27515_190357", ja = "{一体}君は何を言おうとしているんだい。", en = "What in the world are you getting at?" },
+  { source = "yomeru", ja = "{いったい}誰がこれを壊したの？", en = "Who on earth broke this?" },
+]
+
+[[point]]
+id = "doushitemo"
+pattern = "どうしても"
+forms = []
+jlpt = "N3"
+meaning = "no matter what, at any cost; (with negatives) just can't"
+formation = ["どうしても + Verb［stem］ + たい / Noun + がほしい", "どうしても + Verb［できる］［ない］"]
+explanation = """
+With a wish, it means "at all costs": どうしても行きたい, "I really \
+want to go, whatever it takes". With a negative, it means "however \
+hard I try, I can't": どうしても思い出せない, "I just can't remember"."""
+notes = """
+After と, it says a result can't be avoided: 牛乳を飲むと、どうしても\
+おなかが痛くなる, "whenever I drink milk, I always get a stomachache". \
+Don't confuse it with どうして ("why"). For "no matter how (much)", \
+the pattern is どんなに〜ても."""
+related = ["totemo-nai", "tai", "potential-form"]
+examples = [
+  { tatoeba = "39055_210874", ja = "その戸は{どうしても}開かなかった。", en = "The door would not open." },
+  { tatoeba = "1318718_201503", ja = "{どうしても}正確な言葉を思い出せない。", en = "No matter how hard I try, I can't remember the exact words." },
+  { source = "yomeru", ja = "{どうしても}この映画が見たい。", en = "I really want to see this movie, no matter what." },
+]
+
+[[point]]
+id = "moshikashitara"
+pattern = "もしかしたら"
+forms = ["もしかすると", "もしかして"]
+jlpt = "N3"
+meaning = "maybe, perhaps, possibly; by any chance"
+formation = ["もしかしたら + Phrase + かもしれない", "もしかして + Phrase + か (question)"]
+explanation = """
+Says something is a real but uncertain possibility, and usually pairs \
+with かもしれない: もしかしたら明日は休みかもしれない, "I might have \
+tomorrow off". \
+もしかすると is the same; もしかして often opens a question: もしかして\
+田中さんですか, "are you Tanaka-san, by any chance?"."""
+notes = """
+These sound less certain than たぶん (probably) and far less than きっと \
+(surely). ひょっとしたら / ひょっとして are close equivalents. \
+もしかしたら is not "if": it doesn't make a condition, even though it \
+contains もし."""
+related = ["kamoshirenai", "deshou"]
+examples = [
+  { tatoeba = "31046_193878", ja = "{もしかすると}彼は明日来るかもしれない。", en = "He might come tomorrow." },
+  { tatoeba = "31051_193883", ja = "{もしかしたら}彼は気が変わるかもしれない。", en = "He might change his mind." },
+  { source = "yomeru", ja = "{もしかして}、田中さんですか。", en = "Are you Tanaka-san, by any chance?" },
+]
+
+[[point]]
+id = "nantonaku"
+pattern = "なんとなく"
+forms = ["何となく"]
+jlpt = "N3"
+meaning = "somehow, vaguely, for no particular reason"
+formation = ["なんとなく + Phrase"]
+explanation = """
+Says you feel or do something without a clear reason you could name: \
+なんとなく不安だ, "I feel uneasy, I don't know why". It also softens a \
+statement to "sort of": なんとなくわかる, "I sort of get it"."""
+notes = """
+Casual and very common. Asked why you did something, 「なんとなく。」 \
+alone means "no real reason". Don't confuse it with なんとか ("somehow \
+or other, one way or another"), which is about managing to do \
+something despite difficulty."""
+related = []
+examples = [
+  { tatoeba = "24900_187763", ja = "{何となく}はわかりました。", en = "I sort of understand." },
+  { source = "yomeru", ja = "{なんとなく}テレビをつけた。", en = "I turned on the TV for no real reason." },
+]
+
+[[point]]
+id = "dourude"
+pattern = "どうりで"
+forms = ["道理で"]
+jlpt = "N3"
+meaning = "no wonder, that explains it"
+formation = ["どうりで + Phrase (+ わけだ)"]
+explanation = """
+Said when you learn a reason that makes sense of something you'd \
+noticed: 「昨日徹夜したんだ。」「どうりで眠そうだね。」, "No wonder \
+you look sleepy". The sentence often ends with わけだ or はずだ."""
+notes = """
+It reacts to new information, so it comes in replies, not as the \
+first statement. Close to なるほど ("I see"), but どうりで links the \
+reason to something already observed. Usually written in hiragana."""
+related = ["wake-da"]
+examples = [
+  { tatoeba = "280455_123542", ja = "{道理で}、君が喜ぶわけだ。", en = "No wonder you are so happy." },
+  { source = "yomeru", ja = "「昨日徹夜したんだ。」「{どうりで}眠そうだね。」", en = "\"I stayed up all night.\" \"No wonder you look sleepy.\"" },
+]
