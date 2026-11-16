@@ -16727,7 +16727,7 @@ examples = [
 [[point]]
 id = "to-iu-ka"
 pattern = "というか"
-forms = ["っていうか", "ていうか", "と言うか"]
+forms = ["っていうか", "ていうか", "と言うか", "というか〜というか"]
 jlpt = "N2"
 meaning = "or rather, I mean, I'd say; (X or Y), something like"
 formation = ["X + というか + Y", "X + というか + Y + というか"]
@@ -17083,7 +17083,7 @@ examples = [
 [[point]]
 id = "mo-nan-to-mo-nai"
 pattern = "もなんともない"
-forms = ["も何ともない", "でもなんでもない", "でも何でもない", "もなんでもない"]
+forms = ["も何ともない", "でもなんでもない", "でも何でもない", "もなんでもない", "くもなんともない"]
 jlpt = "N1"
 meaning = "not at all, not in the slightest"
 formation = [
@@ -17128,7 +17128,7 @@ examples = [
 [[point]]
 id = "igai-no-nanimono-de-mo-nai"
 pattern = "以外の何ものでもない"
-forms = ["以外の何物でもない", "以外のなにものでもない", "以外の何者でもない"]
+forms = ["以外の何物でもない", "以外のなにものでもない", "以外の何者でもない", "いがいのなにものでもない"]
 jlpt = "N1"
 meaning = "nothing but, nothing other than"
 formation = ["Noun + 以外の何ものでもない   (無駄以外の何ものでもない)"]
@@ -17212,7 +17212,7 @@ examples = [
 [[point]]
 id = "you-ga"
 pattern = "ようが"
-forms = ["うが", "ようと", "うと", "ようとも", "うとも", "かろうが", "かろうと"]
+forms = ["うが", "ようと", "うと", "ようとも", "うとも", "かろうが", "かろうと", "くとも"]
 jlpt = "N1"
 hover = false
 meaning = "no matter (what / how), even if"
@@ -19274,7 +19274,7 @@ examples = [
 [[point]]
 id = "neba-naranai"
 pattern = "ねばならない"
-forms = ["ねばならぬ", "ねばならん", "ねばなりません", "ねばなるまい", "せねば"]
+forms = ["ねばならぬ", "ねばならん", "ねばなりません", "ねばなるまい", "せねば", "ねば"]
 jlpt = "N1"
 meaning = "must, have to (written or stiff)"
 formation = ["Verb［ない］ + ねばならない   (行かねばならない; する → せねば)"]
@@ -20136,7 +20136,7 @@ examples = [
 [[point]]
 id = "ni-ou-tokoro-ga-ookii"
 pattern = "に負うところが大きい"
-forms = ["によるところが大きい", "に依るところが大きい", "に負うところが多い", "におうところがおおきい", "に負うところが大"]
+forms = ["によるところが大きい", "に依るところが大きい", "に負うところが多い", "におうところがおおきい", "に負うところが大", "によるところがおおきい"]
 jlpt = "N1"
 meaning = "owes a great deal to, is largely due to"
 formation = ["Noun + に負うところが大きい   (彼の努力に負うところが大きい)"]
@@ -20348,7 +20348,7 @@ examples = [
 [[point]]
 id = "ni-wa-muri-ga-aru"
 pattern = "には無理がある"
-forms = ["に無理がある", "には無理があります", "に無理があった"]
+forms = ["に無理がある", "には無理があります", "に無理があった", "にはむりがある"]
 jlpt = "N1"
 meaning = "is a stretch, is unreasonable, doesn't hold up"
 formation = [
@@ -20559,7 +20559,7 @@ examples = [
 [[point]]
 id = "to-iwazu"
 pattern = "といわず"
-forms = ["と言わず"]
+forms = ["と言わず", "といわず〜といわず"]
 jlpt = "N1"
 meaning = "(X and Y) alike, all over; not only (X)"
 formation = [
@@ -20607,7 +20607,7 @@ examples = [
 [[point]]
 id = "to-iu-tokoro-da"
 pattern = "といったところだ"
-forms = ["というところだ", "と言ったところだ", "といったところです", "というところです", "といったところ"]
+forms = ["というところだ", "と言ったところだ", "といったところです", "というところです", "といったところ", "というところ"]
 jlpt = "N1"
 meaning = "about, at most (a modest figure or state)"
 formation = ["Noun / Number + といったところだ   (一日二時間といったところだ)"]
@@ -20901,7 +20901,7 @@ examples = [
 [[point]]
 id = "mono-to-omou"
 pattern = "ものと思う"
-forms = ["ものと思っていた", "ものと思われる", "ものとおもう", "ものと思います", "ものと思っている"]
+forms = ["ものと思っていた", "ものと思われる", "ものとおもう", "ものと思います", "ものと思っている", "ものとおもわれる"]
 jlpt = "N1"
 meaning = "to assume, take it for granted (that)"
 formation = ["Clause (plain) + ものと思う   (来るものと思っていた)"]
@@ -21999,4 +21999,219 @@ related = ["nani-yori", "wa-sateoki"]
 examples = [
   { source = "yomeru", ja = "{何をおいても}、まず家族に知らせよう。", en = "Before anything else, let's tell the family." },
   { source = "yomeru", ja = "母が倒れたら、{何をおいても}駆けつける。", en = "If my mother collapsed, I'd drop everything and rush to her." },
+]
+
+[[point]]
+id = "ka-ina-ka"
+pattern = "か否か"
+forms = ["かいなか", "か否かは", "か否かを", "か否かで"]
+jlpt = "N1"
+meaning = "whether or not"
+formation = [
+  "Verb / ［い］Adjective (plain) + か否か   (行くか否か)",
+  "［な］Adjective / Noun + か否か   (本当か否か)",
+]
+explanation = """
+A formal かどうか: 参加するか否かを決める, "decide whether or not to \
+take part". The phrase works as a noun, so it takes は, を, が or で \
+after it, and often comes before 決める, 分からない, 問題だ or 次第だ."""
+notes = """
+Written and formal (news, reports, speeches); in speech, かどうか (N4). \
+否 means "no": the pattern is literally "yes or no". Nouns and \
+［な］Adjectives take no だ before か."""
+related = ["ka-dou-ka", "shidai-depending"]
+examples = [
+  { tatoeba = "273840_137523", ja = "大事なのは全力を尽くす{か否か}だ。", en = "What matters is whether you do your best or not." },
+  { tatoeba = "249825_164682", ja = "私にはそれが真実{か否か}が分からない。", en = "I don't know whether it is true or not." },
+  { tatoeba = "283908_119896", ja = "彼が成功する{かいなか}は、彼の健康次第です。", en = "Whether he will succeed or not depends upon his health." },
+]
+
+[[point]]
+id = "ta-hyoushi-ni"
+pattern = "た拍子に"
+forms = ["たひょうしに", "た拍子で", "たはずみに", "たはずみで", "た弾みに", "た弾みで", "はずみで", "弾みで", "はずみに", "弾みに", "の拍子に", "のはずみで", "何かの拍子に", "何かのはずみで", "たひょうしで"]
+jlpt = "N1"
+meaning = "the moment (X happened), by the jolt of (accident)"
+formation = [
+  "Verb［た］ + 拍子に / はずみで   (転んだ拍子に)",
+  "Noun + の + 拍子に / はずみで",
+]
+explanation = """
+A sudden movement or event causes something unplanned right then: \
+転んだ拍子に、眼鏡が落ちた, "when I tripped, my glasses fell off". \
+はずみで is the same, with more sense of force or momentum: 言葉のはず\
+みで、ひどいことを言った, "I said something cruel in the heat of the \
+moment"."""
+notes = """
+The second half is something accidental, never planned. Not とんとん\
+拍子に, "without a hitch", a set phrase. 何かの拍子に \
+/ 何かのはずみで: "by some chance, for some reason". Compare たとたん \
+(N3), which is just "the moment", without the idea that one caused the \
+other."""
+related = ["ta-totan-ni", "ya-ina-ya"]
+examples = [
+  { source = "yomeru", ja = "転ん{だ拍子に}、眼鏡が落ちた。", en = "When I tripped, my glasses fell off." },
+  { source = "yomeru", ja = "立ち上がっ{たはずみで}、コップを倒した。", en = "As I stood up, I knocked over the glass." },
+  { source = "yomeru", ja = "何かの{拍子に}、昔のことを思い出した。", en = "Something suddenly brought back old memories." },
+]
+
+[[point]]
+id = "nagara-ni"
+pattern = "ながらに"
+forms = ["ながらの", "ながらにして", "生まれながら", "涙ながら", "昔ながら", "いながらにして"]
+jlpt = "N1"
+meaning = "while still, as (it has always been); from birth, in tears"
+formation = [
+  "Noun + ながらに / ながらの   (涙ながらに、昔ながらの)",
+  "Verb［stem］ + ながらに   (生まれながらに)",
+]
+explanation = """
+Says a state stays unchanged while something else happens: 涙ながらに\
+話した, "she spoke in tears". Mostly set phrases: 生まれながらに, \
+"from birth, by nature"; 昔ながらの店, "a shop that's the same as \
+in the old days"; 家にいながらにして, "without even leaving home"."""
+notes = """
+Learn it through the set phrases; it doesn't attach freely like \
+ながら (N4, "while doing"). ながらの + Noun before a noun. Not ながら\
+も (N3, "although")."""
+related = ["nagara", "nagara-mo", "mama"]
+examples = [
+  { tatoeba = "317468_86243", ja = "彼女は涙{ながらに}友達と別れた。", en = "She parted from her friend in tears." },
+  { tatoeba = "387553_225192", ja = "ケントは生まれ{ながらの}指導者です。", en = "Kent is a born leader." },
+  { source = "yomeru", ja = "この町には昔{ながらの}店が多い。", en = "This town has lots of old-fashioned shops." },
+]
+
+[[point]]
+id = "ni-okaremashite-wa"
+pattern = "におかれましては"
+forms = ["におかれては", "にもおかれましては"]
+jlpt = "N1"
+meaning = "as for (you, honoured person)… (very formal topic)"
+formation = ["Noun (person of high status) + におかれましては   (皆様におかれましては)"]
+explanation = """
+A very respectful way to make a superior or a valued audience the \
+topic, mostly in letters and speeches: 皆様におかれましてはお元気で\
+お過ごしのことと存じます, "I trust you are all well". It replaces は \
+when the topic is someone the speaker deeply respects."""
+notes = """
+Only for others, never for oneself or one's own group. The rest of \
+the sentence is usually about their health or wellbeing. Fixed in \
+greetings; in normal polite speech, は is enough."""
+related = ["o-ni-naru", "ni-oite"]
+examples = [
+  { source = "yomeru", ja = "皆様{におかれましては}、お元気でしょうか。", en = "I hope you are all well." },
+  { source = "yomeru", ja = "先生{におかれましては}、お変わりありませんか。", en = "I hope you have been well, Professor." },
+]
+
+[[point]]
+id = "ni-kakotsukete"
+pattern = "にかこつけて"
+forms = ["に託けて", "にかこつけ"]
+jlpt = "N1"
+meaning = "using (X) as an excuse, under the pretext of"
+formation = [
+  "Noun + にかこつけて   (仕事にかこつけて)",
+  "Verb (plain) + の + にかこつけて",
+]
+explanation = """
+Someone uses a reason that isn't the real one to do what they want: \
+出張にかこつけて、温泉に行った, "he used the business trip as an \
+excuse to visit a hot spring". The real aim is usually something \
+selfish or fun."""
+notes = """
+Critical or teasing, often about others. The noun is the pretext: \
+病気, 仕事, 用事, 雨. Compare を口実に ("on the pretext of"), which is \
+close; にかこつけて hints more at the speaker seeing through it."""
+related = ["wo-kikkake-ni", "ni-kamakete"]
+examples = [
+  { tatoeba = "28698_191535", ja = "愛国心{にかこつけて}多くの殺人が行われてきた。", en = "Many murders have been committed in the name of patriotism." },
+  { source = "yomeru", ja = "出張{にかこつけて}、温泉に行った。", en = "He used the business trip as an excuse to visit a hot spring." },
+]
+
+[[point]]
+id = "ni-kamakete"
+pattern = "にかまけて"
+forms = ["にかまけ"]
+jlpt = "N1"
+meaning = "so caught up in (X) that (one neglects something)"
+formation = ["Noun + にかまけて   (仕事にかまけて)"]
+explanation = """
+Being so busy with one thing that something important gets neglected: \
+仕事にかまけて、家族のことを忘れていた, "I was so wrapped up in work \
+that I forgot about my family". The second half names what was \
+neglected."""
+notes = """
+Often an excuse or a regret. Compare にかこつけて (N1, "using as an \
+excuse"): にかまけて is real busyness, にかこつけて a pretext. The \
+verb かまける is hardly used on its own."""
+related = ["ni-kakotsukete", "bakari-noun"]
+examples = [
+  { tatoeba = "51635_214343", ja = "スポーツ{にかまけて}学業を怠る学生もいる。", en = "Some students neglect their studies in favor of sports." },
+  { source = "yomeru", ja = "仕事{にかまけて}、家族のことを忘れていた。", en = "I was so wrapped up in work that I forgot about my family." },
+]
+
+[[point]]
+id = "no-yara"
+pattern = "のやら"
+forms = ["ものやら", "のやら〜のやら", "んだか"]
+jlpt = "N1"
+meaning = "I wonder (what, how…), who knows"
+formation = ["Question word … + Verb / Adjective (plain) + のやら   (何を考えているのやら)"]
+explanation = """
+Wonders about something the speaker can't figure out, often with a \
+sigh: 彼はいつ帰ってくるのやら, "who knows when he'll be back". \
+It often comes before 分からない: どうしたらいいのやら分からない, "I \
+have no idea what to do"."""
+notes = """
+Spoken, a little old-fashioned; のだろうか is the neutral form. \
+Usually with a question word (何, どう, いつ, どこ). Not やら〜やら (N2), \
+which lists things."""
+related = ["yara", "no-darou-ka", "kashira"]
+examples = [
+  { tatoeba = "292310_109411", ja = "彼は何と言ってよい{のやら}わからなかった。", en = "He did not know what to say." },
+  { tatoeba = "43194_205947", ja = "それがどんな{ものやら}皆目見当がつかない。", en = "I have no idea of what it is like." },
+  { source = "yomeru", ja = "あの子はどこへ行った{のやら}。", en = "Who knows where that kid went." },
+]
+
+[[point]]
+id = "mo-sokosoko-ni"
+pattern = "もそこそこに"
+forms = ["もそこそこで"]
+jlpt = "N1"
+meaning = "hurriedly (skipping), with barely any (X)"
+formation = ["Noun + もそこそこに   (挨拶もそこそこに)"]
+explanation = """
+Someone cuts a usual step short because they're in a hurry to do the \
+next thing: 説明もそこそこに、試験が始まった, "the exam started with \
+barely any explanation". 食事もそこそこに出かけた, "he left after a quick \
+bite"."""
+notes = """
+The noun is something normally done properly: 挨拶, 食事, 準備, 説明. \
+そこそこ alone means "so-so, reasonably" (そこそこおいしい): a \
+different use."""
+related = ["ni-kamakete"]
+examples = [
+  { source = "yomeru", ja = "挨拶{もそこそこに}、二人は話し始めた。", en = "Barely stopping to say hello, the two started talking." },
+  { source = "yomeru", ja = "弟は朝ご飯{もそこそこに}家を出た。", en = "My brother left home after a hurried breakfast." },
+]
+
+[[point]]
+id = "ni-nai-repeat"
+pattern = "に〜ない"
+forms = ["泣くに泣けない", "笑うに笑えない", "言うに言えない", "引くに引けない", "行くに行けない", "寝るに寝られない"]
+jlpt = "N1"
+meaning = "can't (do it) even though one wants to"
+formation = ["Verb［る］ + に + same Verb［できる］［ない］   (泣くに泣けない)"]
+explanation = """
+The same verb twice: the speaker would like to do it, but the \
+situation won't allow it: 笑うに笑えない話, "a story you can't bring \
+yourself to laugh at". 引くに引けない, "too far in to back out"."""
+notes = """
+Mostly set pairs: 泣くに泣けない, 笑うに笑えない, 言うに言えない. \
+Close to ようにも〜ない (N1, u-ni-mo), which uses the volitional form \
+and is more about trying."""
+related = ["u-ni-mo"]
+examples = [
+  { source = "yomeru", ja = "{笑うに笑えない}話だ。", en = "It's a story you can't bring yourself to laugh at." },
+  { source = "yomeru", ja = "ここまで来たら、{引くに引けない}。", en = "Now that we've come this far, we can't back out." },
 ]

@@ -10,7 +10,7 @@ and never paste what this prints into data/grammar.toml.
          caveats of the sources, without their examples and dialogues,
          capped so a review stays cheap
 
-  python3 -I bee.py list  ZIP --levels N5 --count 20
+  python3 -I bee.py list  ZIP --levels N5 --count 20 [--reviewed]
   python3 -I bee.py facts ZIP てもいい ようにする [--cap 6000]
 """
 
@@ -23,6 +23,11 @@ import zipfile
 from pathlib import Path
 
 GRAMMAR_TOML = Path(__file__).resolve().parents[3] / "data" / "grammar.toml"
+# Bee rows already looked at that need no entry of their own, kept outside
+# the repo like the plans: `"<bee headword>" = "<our id>"` when one of ours
+# covers it under another spelling, or `= "out: <reason>"` when it's left
+# out on purpose. `list` hides them; `list --reviewed` shows only them.
+REVIEWED_TOML = Path.home() / ".cache" / "yomeru-grammar" / "reviewed.toml"
 
 # Sources whose explanations are short and fact-dense come first; IMABI's
 # lessons are long essays that wander into side topics, so it comes last
@@ -137,8 +142,24 @@ def matches(row, patterns):
     return None
 
 
+def reviewed():
+    """Bee headword -> our id or "out: reason". Warns on unknown ids."""
+    if not REVIEWED_TOML.exists():
+        return {}
+    rev = tomllib.loads(REVIEWED_TOML.read_text(encoding="utf-8"))
+    ids = set()
+    if GRAMMAR_TOML.exists():
+        d = tomllib.loads(GRAMMAR_TOML.read_text(encoding="utf-8"))
+        ids = {p["id"] for p in d.get("point", [])}
+    for name, v in rev.items():
+        if not v.startswith("out:") and v not in ids:
+            print(f"reviewed.toml: {name!r} points at unknown id {v!r}", file=sys.stderr)
+    return rev
+
+
 def cmd_list(args):
     have = covered()
+    rev = reviewed()
     seen, out = set(), []
     for r in rows(args.zip):
         pid = point_id(r)
@@ -148,16 +169,20 @@ def cmd_list(args):
         lv = level(r)
         if lv not in args.levels or is_covered(r[0], have) or is_covered(r[1], have):
             continue
+        note = rev.get(r[0])
+        if (note is not None) != args.reviewed:
+            continue
         s = find(r[5], "structure")
         bp = bunpro_level(r)
         out.append((lv, r[0], r[1], text(s).strip() if s is not None else "",
-                    f"  [Bunpro {bp}]" if bp else ""))
+                    f"  [Bunpro {bp}]" if bp else "") + ((f"  -> {note}",) if note else ("",)))
     order = {lv: i for i, lv in enumerate(["N5", "N4", "N3", "N2", "N1"])}
     out.sort(key=lambda x: order[x[0]])
-    print(f"{len(out)} not covered yet in {','.join(args.levels)}", file=sys.stderr)
-    for lv, term, reading, structure, bp in out[: args.count]:
+    what = "reviewed" if args.reviewed else "not covered yet"
+    print(f"{len(out)} {what} in {','.join(args.levels)}", file=sys.stderr)
+    for lv, term, reading, structure, bp, note in out[: args.count]:
         extra = f" ({reading})" if reading and reading != term else ""
-        print(f"{lv}  {term}{extra}  {structure}{bp}")
+        print(f"{lv}  {term}{extra}  {structure}{bp}{note}")
 
 
 def blocks(node, source, out):
@@ -243,6 +268,8 @@ def main():
     a.add_argument("zip")
     a.add_argument("--levels", nargs="+", default=["N5"])
     a.add_argument("--count", type=int, default=20)
+    a.add_argument("--reviewed", action="store_true",
+                   help="show only the rows reviewed.toml hides, with their note")
     a.set_defaults(fn=cmd_list)
     f = sub.add_parser("facts")
     f.add_argument("zip")

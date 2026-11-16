@@ -39,6 +39,13 @@ comments or commit messages.
   ```
 - Scripts, in this skill's folder (run with `python3 -I`):
   - `bee.py list ZIP --levels N5 --count 40`: points not covered yet.
+    Rows listed in `~/.cache/yomeru-grammar/reviewed.toml` are hidden:
+    bee headwords already covered by one of ours under another spelling
+    (`"にして①" = "ni-shite"`) or left out on purpose (`"ガン" = "out:
+    slang"`). `--reviewed` shows only those, with their note; an unknown
+    id prints a warning. After a level's batches, review every row still
+    listed: fold real variants into `forms`, put the rest in
+    reviewed.toml, and write the real gaps as a small extra batch.
   - `bee.py facts ZIP <pattern>…`: a capped English fact sheet per pattern
     (sources' explanations and caveats, no examples), about 1–2k tokens each.
   - `tatoeba.py '<regex>' --count 10`: example candidates, `<id> <ja> | <en>`.
