@@ -3133,7 +3133,7 @@ Use it with friends and family; with others, 〜ましょう. It is the base of 
 〜ようと思う (intend) and 〜ようとする (try, be about to). Don't confuse \
 it with ようだ / ように (seems, so that), which follow the plain form: \
 行くようだ."""
-related = ["mashou", "you-to-omou"]
+related = ["mashou", "you-to-omou", "you-to-suru"]
 hover = false
 examples = [
   { tatoeba = "64382_227035", ja = "お酒を飲{もう}よ。", en = "Let's have sake." },
@@ -9252,7 +9252,7 @@ notes = """
 となる ("become"), it describes a present state, not a change you \
 watch happen. ことになっている is the version for rules about \
 actions: 九時に集まることになっている."""
-related = ["naru", "koto-ni-natte-iru"]
+related = ["naru", "koto-ni-naru"]
 examples = [
   { tatoeba = "46767_209505", ja = "その手紙の日付は１９８７年４月１日{となっている}。", en = "The letter is dated April 1, 1987." },
   { source = "yomeru", ja = "この部屋は禁煙{となっています}。", en = "Smoking is not allowed in this room." },
@@ -10909,7 +10909,7 @@ The gap is long, or feels long to the speaker: 三日ぶりのお風呂 after \
 being ill. 久しぶり, "it's been a while", is the everyday word built \
 on it. In the manner use, 仕事ぶり often praises or criticizes, and \
 some verbs take っぷり: 飲みっぷり. Alone, 振り (ふり) is "pretending"."""
-related = ["furi-o-suru"]
+related = ["furi-wo-suru"]
 examples = [
   { tatoeba = "72491_235113", ja = "５年{ぶりに}吉田君に会った。", en = "I saw Yoshida for the first time in five years." },
   { tatoeba = "57669_220349", ja = "この冬は２０年{ぶりの}寒さだった。", en = "This was the coldest winter in twenty years." },
@@ -11050,7 +11050,7 @@ follows a noun for an action: 断りなしに, "without asking". For \
 "without doing", use ないで or ずに after a verb. 抜き is a deliberate \
 "leave out": わさび抜き. なしにする is "skip, call off"; on forms, \
 なし alone means "none": 変更なし."""
-related = ["ari", "naide", "nai-de-wa-irarenai"]
+related = ["ari", "naide", "zu-ni"]
 examples = [
   { tatoeba = "270060_144505", ja = "人は空気{なしでは}生きられない。", en = "Men can not exist without air." },
   { tatoeba = "245324_169163", ja = "仕事{なしで}どうやって生活していくのか。", en = "How will you manage without a job?" },
@@ -11168,4 +11168,470 @@ examples = [
   { tatoeba = "268669_145893", ja = "食べ物は健康を{左右する}。", en = "Food works on our health." },
   { tatoeba = "275724_137512", ja = "大衆の意見が大統領の決定を{左右する}。", en = "Public opinion governs the president's decisions." },
   { tatoeba = "34853_197667", ja = "ビールの消費量は天気におおいに{左右される}。", en = "How much beer people drink largely depends on the weather." },
+]
+
+[[point]]
+id = "you-to-suru"
+pattern = "ようとする"
+forms = ["おうとする", "ようとした", "おうとした", "ようとしたが", "おうとしたが", "ようとしたけど"]
+jlpt = "N3"
+meaning = "to try to, to attempt; to be about to"
+formation = ["Verb［volitional］ + とする   (開けようとする, 書こうとする)"]
+explanation = """
+Describes an effort at one moment, often one that fails: 窓を開けよう\
+としたが、開かなかった, "I tried to open the window, but it wouldn't \
+open". With a moment word like とき, it means "just about to": 寝よう\
+としたとき, "just as I was going to sleep"."""
+notes = """
+〜てみる is trying something out to see how it goes; 〜ようとする is \
+trying to make it happen, with the result uncertain. With things that \
+have no will it means "about to": 電車が出ようとしている. For a \
+lasting effort over time, use 〜ようにする. The negative 〜ようとしない \
+is "refuses to"."""
+related = ["volitional", "te-miru", "you-ni-suru", "you-to-shinai", "you-to-omou"]
+examples = [
+  { tatoeba = "291174_112503", ja = "彼はその鳥を捕まえ{ようとしたが}、出来なかった。", en = "He tried to catch the bird, but couldn't." },
+  { tatoeba = "309216_94490", ja = "彼女の決心をかえ{ようとしたが}無理だった。", en = "I tried to change her mind, but I couldn't." },
+  { source = "yomeru", ja = "家を出{ようとした}とき、電話が鳴った。", en = "Just as I was about to leave home, the phone rang." },
+]
+
+[[point]]
+id = "you-to-shinai"
+pattern = "ようとしない"
+forms = ["おうとしない", "ようともしない", "おうともしない"]
+jlpt = "N3"
+meaning = "won't, refuses to, makes no effort to"
+formation = ["Verb［volitional］ + としない   (聞こうとしない)"]
+explanation = """
+Says someone has no will to do something, even though they could or \
+should: 彼は謝ろうとしない, "he won't apologize". Adding も, 〜ようとも\
+しない, makes it stronger: "doesn't even try"."""
+notes = """
+Used about other people (or animals), since it judges their will from \
+the outside; for yourself, say 〜たくない or 〜つもりはない. Often comes \
+with どうしても or 全然 for emphasis. Plain 〜ない only states a fact; \
+〜ようとしない adds the speaker's frustration."""
+related = ["you-to-suru", "volitional"]
+examples = [
+  { tatoeba = "22022_184891", ja = "外に出{ようとしない}。", en = "He would not go out." },
+  { tatoeba = "45413_208156", ja = "その男の子はどうしても私に名前を言{おうとしない}。", en = "That boy won't tell me his name." },
+  { source = "yomeru", ja = "弟は野菜を食べ{ようとしない}。", en = "My little brother won't eat vegetables." },
+]
+
+[[point]]
+id = "te-goran"
+pattern = "てごらん"
+forms = ["でごらん", "てご覧", "でご覧", "てごらんなさい", "でごらんなさい"]
+jlpt = "N3"
+meaning = "try (doing), have a go at (gentle, to juniors)"
+formation = ["Verb［て］ + ごらん"]
+explanation = """
+A soft way to tell someone to try something or take a look: 食べてご\
+らん, "go on, try it". It is what a parent says to a child or a teacher \
+to a student; ごらんなさい is a bit more formal and more of an order."""
+notes = """
+ごらん comes from ご覧になる, the respectful "see", but here it is only \
+used downward: never to a boss or a customer. To them, say 〜てみてくだ\
+さい. Plain 〜てみて is the neutral version among equals."""
+related = ["te-miru", "nasai"]
+examples = [
+  { tatoeba = "26377_189230", ja = "それを英語で言っ{てごらん}。", en = "Say it in English." },
+  { tatoeba = "243983_170500", ja = "最初からもう一度やっ{てごらん}。", en = "Try it again from the first." },
+  { tatoeba = "67803_230436", ja = "あの木のてっぺんを見{てごらん}。", en = "Look at the top of that tree." },
+]
+
+[[point]]
+id = "sou-mo-nai"
+pattern = "そうもない"
+forms = ["そうにもない", "そうもありません"]
+jlpt = "N3"
+meaning = "not likely to, there's no sign that"
+formation = ["Verb［stem］ + そうもない   (終わりそうもない)"]
+explanation = """
+The negative guess of 〜そうだ (looks like) for verbs: 雨はやみそうも\
+ない, "the rain shows no sign of stopping". The speaker judges from how \
+things look now that it probably won't happen."""
+notes = """
+〜そうにない means the same; も adds a little emphasis, like "not at \
+all likely". With a potential verb it is "I don't think I can": 間に合\
+いそうもない. For adjectives, the negative guess is なさそう (おいしく\
+なさそう), not そうもない."""
+related = ["sou-da-appearance", "sou-ni-naru"]
+examples = [
+  { tatoeba = "242908_171568", ja = "今日は晴れ{そうもない}よ。", en = "The weather doesn't look like clearing up today." },
+  { tatoeba = "306436_97266", ja = "彼らは結婚し{そうもない}。", en = "They are unlikely to marry." },
+  { tatoeba = "41287_204045", ja = "そんな不思議な事は起こり{そうもない}。", en = "Such a strange thing is not likely to happen." },
+]
+
+[[point]]
+id = "sou-ni-naru"
+pattern = "そうになる"
+forms = ["そうになった", "そうになります"]
+jlpt = "N3"
+meaning = "almost, nearly (happened)"
+formation = ["Verb［stem］ + そうになる   (落ちそうになる)"]
+explanation = """
+Says something came close to happening but didn't, usually in the past \
+form: 転びそうになった, "I almost fell". Often used for things you \
+don't control, like crying, laughing or an accident."""
+notes = """
+もう少しで or 危うく often comes before it for emphasis. Don't read \
+かわいそうになった as this pattern: that is かわいそう ("pitiful") + \
+になる. The verb form is the stem, as with 〜そうだ (looks like), not \
+the dictionary form."""
+related = ["sou-da-appearance", "sou-mo-nai"]
+examples = [
+  { tatoeba = "20721_183599", ja = "危うく車にひかれ{そうになった}。", en = "I was almost run over by a car." },
+  { tatoeba = "311130_92580", ja = "彼女はそのニュースを聞いて、泣き{そうになった}。", en = "She felt like crying at the news." },
+  { source = "yomeru", ja = "授業中に寝{そうになった}。", en = "I almost fell asleep in class." },
+]
+
+[[point]]
+id = "furi-wo-suru"
+pattern = "ふりをする"
+forms = ["振りをする", "ふりをして", "ふりする"]
+jlpt = "N3"
+meaning = "to pretend, to act as if"
+formation = [
+  "Verb (plain) + ふりをする   (知らないふりをする, 寝たふりをする)",
+  "［い］Adjective + ふりをする",
+  "［な］Adjective + な + ふりをする",
+  "Noun + の + ふりをする   (医者のふりをする)",
+]
+explanation = """
+Says someone acts as though something were true when it isn't: 聞こえ\
+ないふりをした, "he pretended not to hear". The past form before ふり \
+pretends to a finished state: 寝たふり, "pretending to be asleep"."""
+notes = """
+Speech often drops を: 知らないふりする. ふり is the outward act; for \
+"as if" in a description of how something looks, use 〜ように or まるで\
+〜みたい. Don't confuse it with 振る, "to wave, to dump someone"."""
+related = ["you-da", "marude"]
+examples = [
+  { tatoeba = "303507_100190", ja = "彼は聞いてない{ふりをした}。", en = "He pretended not to be listening." },
+  { tatoeba = "298154_105535", ja = "彼は私を知らない{ふりをした}。", en = "He made believe not to know me." },
+  { source = "yomeru", ja = "弟は寝た{ふりをして}いる。", en = "My little brother is pretending to be asleep." },
+]
+
+[[point]]
+id = "zu-ni"
+pattern = "ずに"
+forms = ["せずに", "ず"]
+jlpt = "N3"
+meaning = "without doing (written ないで)"
+formation = ["Verb［な̶い̶］ + ずに   (食べずに, 言わずに)", "する → せずに, 来る → 来ずに"]
+explanation = """
+The same as 〜ないで in the "without doing" sense, but a little more \
+formal and common in writing: 何も言わずに帰った, "he went home \
+without saying anything". 忘れずに, "without forgetting", is an \
+everyday reminder: 忘れずに来てね."""
+notes = """
+Watch する: it becomes せずに, never しずに. Unlike ないで, ずに can't \
+end a sentence as a request (行かないで, not 行かずに). Bare ず, in \
+writing, joins two clauses like なくて: 雨が降らず、困った. It is the \
+base of ずにいる, ずにすむ and ずにはいられない."""
+related = ["naide", "zu-ni-iru", "zu-ni-sumu", "zu-ni-wa-irarenai"]
+hover = false
+examples = [
+  { tatoeba = "289477_114195", ja = "彼はお金を払わ{ずに}レストランを出ました。", en = "He left the restaurant without paying." },
+  { tatoeba = "321152_82564", ja = "忘れ{ずに}電話してね。", en = "Don't forget to call me." },
+  { tatoeba = "266773_147786", ja = "出かける前に忘れ{ずに}ガスを閉めなさい。", en = "Don't forget to turn off the gas before going out." },
+]
+
+[[point]]
+id = "zu-ni-iru"
+pattern = "ずにいる"
+forms = ["ないでいる", "ずにおく", "ないでおく"]
+jlpt = "N3"
+meaning = "to stay without doing, keep not doing; leave undone"
+formation = [
+  "Verb［な̶い̶］ + ずにいる / ずにおく",
+  "Verb［ない］ + でいる / でおく",
+]
+explanation = """
+〜ずにいる / 〜ないでいる is a state of not doing something over a \
+while: 何も食べないでいる, "going without food". 〜ずにおく / 〜ないで\
+おく is choosing to leave something undone on purpose, like 〜ておく \
+in the negative: 鍵をかけないでおいた, "I left it unlocked"."""
+notes = """
+いる is just being in that state; おく is a deliberate choice, often for \
+later: 言わないでおこう, "I'll keep it to myself". The potential form, \
+ずにいられない, means "can't help", and belongs with \
+ずにはいられない."""
+related = ["zu-ni", "naide", "te-oku", "zu-ni-wa-irarenai"]
+examples = [
+  { tatoeba = "294370_109320", ja = "彼は何日も何も食べ{ないでいる}ことがよくある。", en = "He often goes without food for days." },
+  { tatoeba = "291897_111781", ja = "彼はドアに鍵をかけ{ないでおいた}。", en = "He left the door unlocked." },
+  { tatoeba = "42464_205223", ja = "それは言わ{ずにおいた}方がいい。", en = "You had better leave it unsaid." },
+]
+
+[[point]]
+id = "zu-ni-sumu"
+pattern = "ずにすむ"
+forms = ["ずに済む", "ないですむ", "ないで済む", "なくてすむ", "なくて済む", "ですむ", "で済む"]
+jlpt = "N3"
+meaning = "to get by without, be spared (from); X will do"
+formation = [
+  "Verb［な̶い̶］ + ずにすむ",
+  "Verb［ない］ + ですむ / なくてすむ",
+  "Noun + ですむ   (警告ですむ)",
+]
+explanation = """
+Says you were spared something unpleasant you expected to face: 歩かず\
+にすんだ, "I didn't have to walk after all". After a noun, で済む says \
+that small thing was enough, and nothing worse followed: 千円で済んだ, \
+"a thousand yen covered it"."""
+notes = """
+Usually past (すんだ), with relief. Not the same as 〜なくてもいい, \
+which gives permission not to do something; 〜ずにすむ reports that \
+you got out of it. Other, rarer uses of 済む: 気が済む, "to be \
+satisfied"."""
+related = ["zu-ni", "nakute-mo-ii"]
+examples = [
+  { tatoeba = "253855_160665", ja = "幸い、怪我をせ{ずにすんだ}。", en = "I was lucky enough to escape unhurt." },
+  { tatoeba = "295737_107948", ja = "彼は警告{ですんだ}。", en = "He got off with a warning." },
+  { source = "yomeru", ja = "バスがあったので、歩か{ずに済んだ}。", en = "There was a bus, so I didn't have to walk." },
+]
+
+[[point]]
+id = "zu-ni-wa-irarenai"
+pattern = "ずにはいられない"
+forms = ["ずにいられない", "ないではいられない", "ないでいられない", "ずにはいられません"]
+jlpt = "N3"
+meaning = "can't help (doing), can't stop oneself from"
+formation = ["Verb［な̶い̶］ + ずにはいられない   (笑わずにはいられない)", "する → せずにはいられない"]
+explanation = """
+Says a feeling is so strong you can't hold back from acting on it: \
+笑わずにはいられなかった, "I couldn't help laughing". Mostly about \
+your own feelings and reactions: laughing, crying, worrying, saying \
+something."""
+notes = """
+〜ないではいられない is a little more spoken; both are rather formal. \
+About someone else, add ようだ or らしい: 彼は笑わずにはいられないよう\
+だ. 〜ないわけにはいかない is different: duty, "I can't not do it", not \
+a feeling. 〜てしかたがない is about a feeling \
+itself (嬉しくてしかたがない), not about an action you can't stop."""
+related = ["zu-ni", "te-shikata-ga-nai", "wake-ni-wa-ikanai"]
+examples = [
+  { tatoeba = "372354_155823", ja = "笑わ{ずにはいられなかった}。", en = "I couldn't help but laugh." },
+  { tatoeba = "285322_118341", ja = "彼のことを気の毒に思わ{ずにはいられなかった}。", en = "I could not help feeling sorry for him." },
+  { source = "yomeru", ja = "この歌を聞くと、いつも泣か{ずにはいられない}。", en = "Whenever I hear this song, I can't help crying." },
+]
+
+[[point]]
+id = "te-shikata-ga-nai"
+pattern = "てしかたがない"
+forms = ["てしかたない", "て仕方がない", "て仕方ない", "でしかたがない", "で仕方がない", "で仕方ない", "てしょうがない", "でしょうがない", "てしようがない"]
+jlpt = "N3"
+meaning = "unbearably, terribly, can't help feeling"
+formation = [
+  "Verb［て］ + しかたがない   (気になってしかたがない)",
+  "［い］Adjective［い̶］ + くてしかたがない   (暑くてしかたがない)",
+  "［な］Adjective + でしかたがない   (心配でしかたがない)",
+]
+explanation = """
+Says a feeling or sensation is so strong you can't do anything about \
+it: 眠くてしかたがない, "I'm so sleepy I can't stand it". It goes with \
+words for feelings, wants and body states: 〜たくてしかたがない, "I'm \
+dying to"."""
+notes = """
+てしょうがない is the casual spoken version. Mostly about the speaker; \
+for others add らしい or ようだ. Don't confuse it with 〜てもしかたがな\
+い, "it's no use doing", which has も. Alone, しかたがない is "it can't \
+be helped"."""
+related = ["te-mo-shikata-ga-nai", "zu-ni-wa-irarenai", "te-tamaranai"]
+examples = [
+  { tatoeba = "243087_171388", ja = "今年の夏は暑{くてしかたがない}。", en = "It is unbearably hot this summer." },
+  { tatoeba = "62275_224940", ja = "コーヒーが飲みた{くて仕方がない}。", en = "I'm dying for a cup of coffee." },
+  { tatoeba = "242812_171663", ja = "今日は寒{くてしょうがない}。", en = "It's simply too cold today." },
+]
+
+[[point]]
+id = "te-mo-shikata-ga-nai"
+pattern = "てもしかたがない"
+forms = ["てもしかたない", "ても仕方がない", "ても仕方ない", "てもしょうがない", "でもしかたがない", "でも仕方がない", "でも仕方ない", "でもしょうがない"]
+jlpt = "N3"
+meaning = "it's no use (doing), there's no point (in)"
+formation = [
+  "Verb［て］ + もしかたがない   (泣いてもしかたがない)",
+  "［い］Adjective［い̶］ + くてもしかたがない",
+  "［な］Adjective / Noun + でもしかたがない",
+]
+explanation = """
+Says doing something won't change anything, so it's pointless: 終わっ\
+たことを気にしてもしかたがない, "there's no use worrying about what's over". Often \
+said to stop someone from worrying, complaining or crying."""
+notes = """
+It can also accept a bad outcome as deserved: 遅れたら怒られてもしか\
+たがない, "if I'm late, I can't complain about being scolded". Casual: \
+〜てもしょうがない. Different from 〜てしかたがない (without も), \
+"unbearably"."""
+related = ["te-shikata-ga-nai", "temo"]
+examples = [
+  { tatoeba = "50867_213580", ja = "そこへ行っ{ても仕方がない}。", en = "It is no use going there." },
+  { tatoeba = "285178_118485", ja = "彼に腹を立て{てもしかたない}。", en = "It is no use getting angry at him." },
+  { source = "yomeru", ja = "今さら言っ{てもしょうがない}よ。", en = "There's no point saying it now." },
+]
+
+[[point]]
+id = "koto-ni-naru"
+pattern = "ことになる"
+forms = ["ことになった", "ことになっている", "こととなる", "ということになる"]
+jlpt = "N3"
+meaning = "it's been decided that; it turns out, it means; the rule is"
+formation = ["Verb［る］ / Verb［ない］ + ことになる", "Verb［た］ + ことになる   (it amounts to)"]
+explanation = """
+Reports a decision or outcome not made by you alone: 来月、大阪に転勤\
+することになった, "I'm being transferred to Osaka next month". It also \
+draws a conclusion: 三回行ったことになる, "that makes three times". \
+〜ことになっている states a rule or plan: 靴を脱ぐことになっている."""
+notes = """
+〜ことにする is your own decision; 〜ことになる sounds as if it came \
+from outside, so it is also a modest way to announce your own plans. \
+It can warn of a bad result: 後で困ることになるよ. 〜ようになる is a gradual change in ability or habit, not a decision. \
+こととなる is the written form."""
+related = ["koto-ni-suru", "you-ni-naru", "nakatta-koto-ni-suru"]
+examples = [
+  { source = "yomeru", ja = "来月、大阪に転勤する{ことになった}。", en = "It's been decided that I'll transfer to Osaka next month." },
+  { tatoeba = "31719_194546", ja = "もう１度行けば、アメリカに３回いった{ことになる}。", en = "I will have been to the States three times if I go there again." },
+  { source = "yomeru", ja = "この部屋では靴を脱ぐ{ことになっている}。", en = "In this room, you're supposed to take your shoes off." },
+]
+
+[[point]]
+id = "nakatta-koto-ni-suru"
+pattern = "なかったことにする"
+forms = ["たことにする", "なかったことになる"]
+jlpt = "N3"
+meaning = "to act as if (it never happened); to count as done"
+formation = ["Verb［なかった］ + ことにする   (聞かなかったことにする)", "Verb［た］ + ことにする   (行ったことにする)"]
+explanation = """
+Treats something as true, or not true, when the facts say otherwise: \
+今の話は聞かなかったことにする, "I'll pretend I didn't hear that". \
+With the past affirmative, it counts something as done: 私も行ったこ\
+とにして, "say I went too"."""
+notes = """
+It is an agreed-on fiction, often a kind way to drop a subject or \
+cover for someone. 〜ことにする after a dictionary form is a real \
+decision (行くことにする); after the past form, a pretense. The \
+intransitive なかったことになる: "it's as if it never happened"."""
+related = ["koto-ni-suru", "koto-ni-naru", "furi-wo-suru"]
+examples = [
+  { source = "yomeru", ja = "今の話は聞か{なかったことにする}。", en = "I'll pretend I didn't hear that." },
+  { source = "yomeru", ja = "昨日のことは{なかったことにしよう}。", en = "Let's act as if yesterday never happened." },
+]
+
+[[point]]
+id = "sasete-itadaku"
+pattern = "させていただく"
+forms = ["せていただく", "させていただきます", "せていただきます"]
+jlpt = "N3"
+meaning = "(humble) I will, allow me to, with your permission"
+formation = ["Verb［causative］［て］ + いただく   (休ませていただく, 説明させていただく)"]
+explanation = """
+A very humble way to say you'll do something, framed as receiving \
+permission: 説明させていただきます, "allow me to explain". Common in \
+business, speeches and shops, for announcing your own actions: 本日は\
+休ませていただきます, "we're closed today"."""
+notes = """
+The asking form is 〜させていただけませんか (may I…?). Some find it \
+overused for actions that need nobody's permission; 〜いたします is a \
+humble alternative. Check the causative: 読む → 読ませて, not 読まさせ\
+て, though that extra さ is common in speech."""
+related = ["sasete-kudasai", "causative", "te-itadaku", "itasu"]
+examples = [
+  { tatoeba = "353241_150125", ja = "自己紹介を{させていただきます}。", en = "Let me introduce myself." },
+  { tatoeba = "39494_202282", ja = "できる限りの事は{させていただきます}。", en = "I'll do everything I can." },
+  { tatoeba = "274140_140432", ja = "相席{させていただけ}ますか。", en = "May I share this table with you?" },
+]
+
+[[point]]
+id = "te-itadakeru-to-arigatai"
+pattern = "ていただけるとありがたい"
+forms = ["でいただけるとありがたい", "ていただけるとありがたいです", "ていただければありがたい", "ていただけるとうれしい", "ていただけると助かる", "てもらえるとありがたい", "てもらえるとうれしい", "てもらえると助かる"]
+jlpt = "N3"
+meaning = "I'd be grateful if you could (polite request)"
+formation = ["Verb［て］ + いただけるとありがたい   (待っていただけるとありがたい)"]
+explanation = """
+A polite, indirect request: rather than asking outright, you say how \
+thankful you'd be: 明日までに連絡していただけるとありがたい, "I'd \
+appreciate hearing from you by tomorrow". Common in work emails."""
+notes = """
+More casual: 〜てもらえると助かる, "it'd help me if you could". \
+うれしい instead of ありがたい sounds warmer. Ending with です or \
+のですが softens it further. Gentler than 〜てください, which is still \
+a direct request."""
+related = ["te-itadaku", "te-morau", "te-kudasai"]
+examples = [
+  { tatoeba = "37574_200373", ja = "どのような資料でも送っ{ていただけるとうれしい}です。", en = "I would appreciate any information you can send to us." },
+  { tatoeba = "241038_173432", ja = "航空便で送っ{てもらえるとうれしい}のですが。", en = "I should be very grateful if you would send them by air." },
+  { source = "yomeru", ja = "少し待っ{ていただけると助かり}ます。", en = "It would help me if you could wait a little." },
+]
+
+[[point]]
+id = "te-iru-baai-ja-nai"
+pattern = "ている場合じゃない"
+forms = ["てる場合じゃない", "ている場合ではない", "ている場合ではありません", "でいる場合じゃない", "でる場合じゃない", "場合じゃない", "場合ではない"]
+jlpt = "N3"
+meaning = "this is no time to (be doing)"
+formation = ["Verb［て］ + いる場合じゃない   (寝ている場合じゃない)"]
+explanation = """
+Says the situation is too urgent or serious for what someone is doing: \
+笑っている場合じゃない, "this is no time to be laughing". Often a \
+push to get to what really matters."""
+notes = """
+In speech いる often shrinks: 寝てる場合じゃない. Alone, そんな場合じゃ\
+ない means "now's not the time for that". ではない is the more formal \
+version. Compare 〜どころではない, "far from (being able to)"."""
+related = ["baai", "dokoro-de-wa-nai"]
+examples = [
+  { source = "yomeru", ja = "今は寝{ている場合じゃない}。", en = "This is no time to be sleeping." },
+  { source = "yomeru", ja = "笑っ{ている場合ではありません}。", en = "This is no time to laugh." },
+  { source = "yomeru", ja = "そんなことを言っ{てる場合じゃない}よ。", en = "This is no time to say things like that." },
+]
+
+[[point]]
+id = "de-aru"
+pattern = "である"
+forms = ["であります", "であった", "であろう", "でもある"]
+jlpt = "N3"
+meaning = "is, am, are (formal written だ)"
+formation = ["Noun / ［な］Adjective + である   (学生である, 大切である)"]
+explanation = """
+The written-style copula, used in essays, newspapers, reports and \
+speeches instead of だ: 東京は日本の首都である. Unlike だ, it can stand \
+before a noun: 健康である人, "a person who is healthy". The past is \
+であった, the guess であろう, the negative ではない."""
+notes = """
+Keep one style in a text: である or です, not both. でもある is "is also": \
+医者でもある. Don't confuse with で + ある: パーティーはどこであるの？ \
+asks "where is the party held?", with で as the place. であります is old-\
+fashioned speech-making."""
+related = ["da", "desu"]
+hover = false
+examples = [
+  { tatoeba = "269047_145516", ja = "慎重に運転することが大切{である}。", en = "It is important to drive carefully." },
+  { tatoeba = "282896_121111", ja = "彼がアメリカにいることは本当{である}。", en = "It's true that he is in America." },
+  { source = "yomeru", ja = "彼は医者であり、作家{でもある}。", en = "He is a doctor and also a writer." },
+]
+
+[[point]]
+id = "ikura-demo"
+pattern = "いくらでも"
+forms = []
+jlpt = "N3"
+meaning = "as much as you like, any amount, plenty"
+formation = ["いくらでも + Verb   (いくらでも食べていい)"]
+explanation = """
+Says there is no limit to the amount: いくらでもある, "there's plenty". \
+With permission or an order, it means "as much as you want": いくらで\
+も食べていいよ, "eat as much as you like"."""
+notes = """
+Not the same as いくら〜ても, "no matter how much", where the verb \
+comes between いくら and ても. Its family: いつでも (any time), どこでも \
+(anywhere), 何でも (anything)."""
+related = ["ikura-temo"]
+examples = [
+  { tatoeba = "503835_145761", ja = "食料はまだ{いくらでも}ある。", en = "We still have a lot of food left." },
+  { tatoeba = "240687_173783", ja = "好きな花を{いくらでも}選びなさい。", en = "Choose any flowers you like." },
+  { source = "yomeru", ja = "ご飯は{いくらでも}食べていいよ。", en = "You can eat as much rice as you like." },
 ]
