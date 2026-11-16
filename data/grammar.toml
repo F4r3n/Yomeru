@@ -7586,7 +7586,7 @@ examples = [
 [[point]]
 id = "wake-ni-wa-ikanai"
 pattern = "わけにはいかない"
-forms = ["わけにもいかない", "わけにはいきません", "わけにもいきません", "訳にはいかない"]
+forms = ["わけにもいかない", "わけにはいきません", "わけにもいきません", "訳にはいかない", "ないわけにはいかない"]
 jlpt = "N3"
 meaning = "can't very well, can't afford to (social or moral reasons)"
 formation = [
@@ -7601,7 +7601,9 @@ but to": 行かないわけにはいかない, "I can't not go"."""
 notes = """
 Not for ability: "I can't swim" is 泳げない. わけにもいかない adds \
 "nor can I…" when another option was also ruled out. Compare わけがない \
-"there's no way it's true", about facts, not choices."""
+"there's no way it's true", about facts, not choices. \
+ないわけにはいかない is a firm "must", from duty or circumstances, \
+stronger than なければならない."""
 related = ["wake-de-wa-nai", "wake-ga-nai", "nakereba-naranai"]
 examples = [
   { tatoeba = "18018_157461", ja = "それをさせる{わけにはいかない}。", en = "I can't allow you to do that." },
@@ -7955,7 +7957,7 @@ examples = [
 [[point]]
 id = "n-ja-nai"
 pattern = "んじゃない"
-forms = ["んじゃないか", "のではないか", "んじゃないかな", "のではないでしょうか", "んじゃないの", "んじゃないですか", "んじゃありません"]
+forms = ["んじゃないか", "のではないか", "んじゃないかな", "んじゃないの", "んじゃないですか", "んじゃありません"]
 jlpt = "N3"
 meaning = "isn't it maybe…? (guess); don't…! (prohibition)"
 formation = [
@@ -7965,7 +7967,7 @@ formation = [
 ]
 explanation = """
 With a rising tone or か, かな, it is a soft guess: 雨になるんじゃないか\
-な, "I think it might rain". Written and polite: のではないでしょうか. \
+な, "I think it might rain". のではないだろうか is its written cousin. \
 Said firmly to a child or junior after a dictionary form, it forbids: \
 触るんじゃない, "don't touch that!"."""
 notes = """
@@ -7973,7 +7975,7 @@ The guess form hedges an opinion, so it is very common in polite \
 discussion. Without ん, じゃないか asks for agreement about something \
 plain to see (see じゃないか). The prohibition is stern and only for \
 those below you; んじゃありません is the softer, polite version."""
-related = ["ja-nai-ka", "kamoshirenai", "na-prohibition"]
+related = ["ja-nai-ka", "kamoshirenai", "na-prohibition", "no-de-wa-nai-darou-ka"]
 examples = [
   { tatoeba = "26790_189637", ja = "雨になっちゃう{んじゃないかな}あ。", en = "I'm afraid it will be rainy." },
   { tatoeba = "17256_178404", ja = "君の計画はうまくいかない{のではないか}と思う。", en = "I'm afraid your plan will not work." },
@@ -13022,4 +13024,856 @@ related = ["zu-ni-sumu", "tara-ii", "ba-ii-to-iu-mono-de-wa-nai"]
 examples = [
   { source = "yomeru", ja = "メール一通送れ{ばすむ}ことだ。", en = "All it takes is sending one email." },
   { source = "yomeru", ja = "謝れ{ば済む}問題じゃない。", en = "This isn't something an apology will fix." },
+]
+
+[[point]]
+id = "zaru-wo-enai"
+pattern = "ざるを得ない"
+forms = ["ざるをえない", "ざるを得ません", "ざるをえません", "せざるを得ない", "せざるをえない"]
+jlpt = "N2"
+meaning = "have no choice but to, can't avoid (doing)"
+formation = [
+  "Verb［な̶い̶］ + ざるを得ない   (行かざるを得ない)",
+  "する → せざるを得ない",
+]
+explanation = """
+Says circumstances force you into something you'd rather not do: \
+雨なので、中止せざるを得ない, "it's raining, so we have no choice but \
+to cancel". The speaker accepts it reluctantly. It is formal and a \
+little stiff, common in writing and serious speech."""
+notes = """
+ざる is an old negative, so the verb takes the ない stem: 行か + ざる. \
+Only する is irregular: せざる, never しざる. The same ざる survives in \
+set words before a noun: 見えざる手, "an invisible hand". \
+しかない and ほかない say "it's the only option" with less reluctance; \
+やむを得ない says a situation "can't be helped"."""
+related = ["hoka-nai", "shika-nai", "te-mo-yamu-wo-enai", "zu-ni-wa-irarenai"]
+examples = [
+  { tatoeba = "265428_149124", ja = "車が故障したので、バスに乗ら{ざるをえなかった}。", en = "My car broke down, so I had to take a bus." },
+  { tatoeba = "299435_104255", ja = "彼は書類に署名{せざるを得なかった}。", en = "He was forced to sign the document." },
+  { tatoeba = "51069_213782", ja = "そう考え{ざるを得ない}。", en = "I can not but think so." },
+]
+
+[[point]]
+id = "hoka-nai"
+pattern = "ほかない"
+forms = ["ほかはない", "よりほかない", "よりほかはない", "外ない", "他ない", "ほかありません", "よりしかたがない", "より仕方がない", "より仕方ない", "よりしかたない"]
+jlpt = "N2"
+meaning = "have no choice but to, the only thing to do is"
+formation = [
+  "Verb［る］ + ほかない   (待つほかない)",
+  "Verb［る］ + より(ほか)しかたがない   (待つより仕方がない)",
+]
+explanation = """
+Says every other option is gone, so one action is left: 電車が止まった\
+から、歩くほかない, "the trains have stopped, so we'll just have to \
+walk". It sounds a little more formal than しかない, which means the \
+same."""
+notes = """
+ほか means "other": literally "there is nothing other than doing it". \
+より adds "than": 待つよりほかない. ざるを得ない stresses being forced \
+against your will; ほかない is more resigned. Don't confuse it with \
+しかない after a noun, "only (that much)": 百円しかない."""
+related = ["shika-nai", "zaru-wo-enai", "you-ga-nai"]
+examples = [
+  { tatoeba = "307884_95821", ja = "彼を待つ{より仕方がない}。", en = "All we can do is to wait for him." },
+  { tatoeba = "257418_157116", ja = "私は行く{より仕方なかった}。", en = "I had no choice but to go." },
+  { source = "yomeru", ja = "終電がないから、歩いて帰る{ほかない}。", en = "There's no last train, so we'll have to walk home." },
+]
+
+[[point]]
+id = "you-ga-nai"
+pattern = "ようがない"
+forms = ["ようもない", "ようがありません", "様がない", "しようがない", "しようもない"]
+jlpt = "N2"
+meaning = "there's no way to, it's impossible to (do)"
+formation = [
+  "Verb［stem］ + ようがない   (言いようがない)",
+  "Noun + の + しようがない   (連絡のしようがない)",
+]
+explanation = """
+Says there is no method or means to do something, even if you want to: \
+住所がわからないから、連絡のしようがない, "I don't know the address, \
+so there's no way to contact them". The よう here means "way of doing"."""
+notes = """
+ようもない is stronger, "not even any way". Set phrases: 何とも言いよう\
+がない, "I don't know what to say", and 救いようがない, "beyond help". \
+しようがない can also be read as しょうがない, "it can't be helped", a \
+fixed phrase. Not the same as ようにする or ようだ."""
+related = ["hoka-nai", "kko-nai", "you-ni-suru"]
+examples = [
+  { tatoeba = "1288_187759", ja = "何とも言い{ようがない}なあ。", en = "I just don't know what to say." },
+  { source = "yomeru", ja = "住所がわからないから、連絡の{しようがない}。", en = "I don't know the address, so there's no way to contact them." },
+]
+
+[[point]]
+id = "kko-nai"
+pattern = "っこない"
+forms = ["っこありません"]
+jlpt = "N2"
+meaning = "no way, there's no chance that (casual)"
+formation = ["Verb［stem］ + っこない   (わかりっこない, できっこない)"]
+explanation = """
+A strong, casual denial: something simply can't happen. そんなこと、\
+私にできっこないよ, "there's no way I can do something like that". It \
+is mostly used with わかる, できる and potential verbs."""
+notes = """
+Spoken and familiar: in writing or polite speech use はずがない or \
+わけがない. It denies a possibility, often about what people can know \
+or do, and usually sounds emotional."""
+related = ["hazu-ga-nai", "wake-ga-nai", "you-ga-nai"]
+examples = [
+  { tatoeba = "246557_167939", ja = "私がどんな目にあったか君にはわかり{っこない}。", en = "You will never realize what I went through." },
+  { source = "yomeru", ja = "一日で全部覚えられ{っこない}よ。", en = "There's no way you can memorize it all in one day." },
+]
+
+[[point]]
+id = "kaneru"
+pattern = "かねる"
+forms = ["かねます"]
+jlpt = "N2"
+meaning = "can't (do), unable to (politely, for reasons)"
+formation = ["Verb［stem］ + かねる   (わかりかねます)"]
+hover = false
+explanation = """
+Says you are unable to do something because of your position or \
+feelings, not your ability. It is a polite, indirect way to refuse, \
+common in shops and business: 値引きはいたしかねます, "I'm afraid we \
+can't give discounts"."""
+notes = """
+The form is positive but the meaning is "can't". Its negative かねない \
+means the opposite kind of thing: "could well (happen)". Not for skills: \
+"I can't swim" is 泳げない. 見るに見かねて, "unable to just stand by and \
+watch", and 決めかねる, "can't make up my mind", are common. 兼ねる \
+in kanji also means "to double as": 書斎を兼ねた寝室."""
+related = ["kanenai", "wake-ni-wa-ikanai"]
+examples = [
+  { tatoeba = "44843_207590", ja = "その点は賛成し{かねる}。", en = "I am unable to agree on that point." },
+  { tatoeba = "325350_78366", ja = "理由がわかり{かねます}。", en = "I fail to see the reason." },
+  { tatoeba = "1699524_217185", ja = "ご期待に添い{かねます}。", en = "I'm sorry, but we cannot meet your requirements." },
+]
+
+[[point]]
+id = "kanenai"
+pattern = "かねない"
+forms = ["兼ねない", "かねません"]
+jlpt = "N2"
+meaning = "could well, might (lead to something bad)"
+formation = ["Verb［stem］ + かねない   (起こしかねない)"]
+explanation = """
+Warns that something bad is quite possible: そんなに飲んだら、体を\
+壊しかねない, "drinking that much, you could well ruin your health". \
+About people, it means "is capable of (doing something bad)": 彼なら\
+やりかねない, "he's just the type to do it"."""
+notes = """
+Only for bad outcomes: not for good news. Compared with かもしれない it \
+warns and sounds more formal. おそれがある is similar but even more \
+formal, used in news and forecasts. かねません is the polite form of \
+かねない; かねます is the polite form of かねる, "can't"."""
+related = ["kaneru", "osore-ga-aru", "kamoshirenai"]
+examples = [
+  { tatoeba = "291542_112136", ja = "彼はそんなことをやり{かねない}。", en = "He is capable of doing such a thing." },
+  { tatoeba = "58684_221359", ja = "この手の雑誌は若者に害を与え{かねない}。", en = "This kind of magazine can do harm to young people." },
+  { source = "yomeru", ja = "スピードを出しすぎると、事故を起こし{かねない}。", en = "Driving too fast could well cause an accident." },
+]
+
+[[point]]
+id = "uru"
+pattern = "得る"
+forms = ["うる", "得ない", "あり得る", "ありうる", "ありえる", "あり得ない", "ありえない", "起こりうる", "起こりえない"]
+jlpt = "N2"
+meaning = "can, be possible (formal)"
+formation = [
+  "Verb［stem］ + 得る   (あり得る, 起こり得る)",
+  "Verb［stem］ + 得ない   (あり得ない)",
+]
+hover = false
+explanation = """
+Says something is possible, especially an event or a situation: \
+事故はいつでも起こり得る, "accidents can happen at any time". It is \
+formal; the most common word by far is あり得る, "possible", with \
+あり得ない, "impossible, unthinkable"."""
+notes = """
+得る is read うる or える; its other forms always use え: 得ない (えない), \
+得ます (えます). In speech ありえない often just means "unbelievable!". \
+Not for skills: "I can swim" is 泳げる, not 泳ぎ得る. Set phrase: できる\
+限り / でき得る限り, "as far as possible"."""
+related = ["kamoshirenai", "zaru-wo-enai"]
+examples = [
+  { tatoeba = "42797_205552", ja = "それはあり{得る}ことだ。", en = "It's a possible story." },
+  { tatoeba = "54794_217485", ja = "こんなこと、日本では{起こりえない}。", en = "Such a thing can't happen in Japan." },
+  { tatoeba = "307965_95740", ja = "彼女が、佐藤君と結婚するなんて{ありえない}よ。", en = "There's no way she'll ever marry Sato." },
+]
+
+[[point]]
+id = "osore-ga-aru"
+pattern = "おそれがある"
+forms = ["恐れがある", "おそれもある", "恐れもある", "おそれがあります", "恐れがあります"]
+jlpt = "N2"
+meaning = "there's a risk of, there's a danger that"
+formation = [
+  "Verb［る］ + おそれがある   (遅れるおそれがある)",
+  "Noun + の + おそれがある   (台風のおそれがある)",
+]
+explanation = """
+Warns that something bad may happen: 明日は大雪のおそれがあります, \
+"there's a risk of heavy snow tomorrow". It is formal and typical of \
+news, weather forecasts, notices and reports."""
+notes = """
+Only for unwelcome events. かねない is close but more personal; \
+かもしれない is the neutral everyday "might". おそれ (恐れ) on its own \
+means "fear". The ない form, おそれはない, says "there's no danger \
+of"."""
+related = ["kanenai", "kamoshirenai"]
+examples = [
+  { tatoeba = "26854_189700", ja = "雨が降る{恐れがある}。", en = "It's threatening to rain." },
+  { tatoeba = "51214_213926", ja = "そういう事故は再発する{おそれがある}。", en = "Such an accident is likely to happen again." },
+  { source = "yomeru", ja = "台風で電車が遅れる{おそれがあります}。", en = "Trains may be delayed because of the typhoon." },
+]
+
+[[point]]
+id = "nai-to-mo-kagiranai"
+pattern = "ないとも限らない"
+forms = ["ないともかぎらない", "ないとも限りません"]
+jlpt = "N2"
+meaning = "it could happen that, you never know if (so be ready)"
+formation = ["Verb［ない］ + とも限らない   (降らないとも限らない)"]
+explanation = """
+A double negative: "it isn't certain that it won't happen". It points \
+to a small but real chance, usually to explain a precaution: 地震が\
+来ないとも限らないから、水を買っておこう, "an earthquake could come, \
+so let's stock up on water"."""
+notes = """
+The next clause is often advice or a precaution. Don't mix it up with \
+とは限らない, "not necessarily", which denies a rule: 高いものがいいとは\
+限らない. ないとも限らない says the worry is reasonable."""
+related = ["to-wa-kagiranai", "osore-ga-aru", "kamoshirenai"]
+examples = [
+  { source = "yomeru", ja = "山の天気は変わりやすい。雪が降ら{ないとも限らない}。", en = "Mountain weather changes fast. It could even snow." },
+  { source = "yomeru", ja = "誰かに聞かれ{ないとも限らない}。", en = "You never know, someone might overhear." },
+]
+
+[[point]]
+id = "naku-wa-nai"
+pattern = "なくはない"
+forms = ["なくもない", "なくはありません", "なくもありません"]
+jlpt = "N2"
+meaning = "it's not that (it) isn't, could sort of, not impossible"
+formation = [
+  "Verb［な̶い̶］ + なくはない   (食べられなくはない)",
+  "［い］Adjective［い̶］ + くなくはない   (高くなくはない)",
+  "Noun + が + なくはない   (時間がなくはない)",
+]
+hover = false
+explanation = """
+A hesitant yes: by denying the negative, it admits something is \
+possible or partly true, without enthusiasm: 歩けなくはないけど、\
+ちょっと遠い, "I could walk it, but it's a bit far". The clause after \
+it often adds a reservation."""
+notes = """
+ないことはない means nearly the same, and なくもない is a variant. \
+ないでもない is a more written N1 cousin. Search-only: なくはない also \
+appears inside 少なくはない, "not few"."""
+related = ["nai-koto-wa-nai", "nai-de-mo-nai"]
+examples = [
+  { source = "yomeru", ja = "辛い料理も食べられ{なくはない}けど、好きじゃない。", en = "I can eat spicy food if I have to, but I don't like it." },
+  { source = "yomeru", ja = "少し遠いが、歩け{なくはない}。", en = "It's a bit far, but it's not impossible to walk." },
+]
+
+[[point]]
+id = "te-wa-irarenai"
+pattern = "てはいられない"
+forms = ["ではいられない", "てばかりはいられない", "てばかりもいられない", "でばかりはいられない", "てはいられません"]
+jlpt = "N2"
+meaning = "can't afford to keep (doing), can't just stay (like this)"
+formation = [
+  "Verb［て］ + はいられない   (待ってはいられない)",
+  "Verb［て］ + ばかりはいられない   (遊んでばかりはいられない)",
+]
+explanation = """
+Says the situation doesn't allow you to keep doing something or stay \
+in a state: 試験が近いから、遊んでばかりはいられない, "the exam is \
+close, so I can't just keep having fun". It often comes with a sense \
+of urgency: time to act."""
+notes = """
+ずにはいられない and ないではいられない are different: "can't help \
+doing", a feeling you can't hold back. Here the verb is something you \
+must stop doing. Noun + なしではいられない is "can't do without": \
+コーヒーなしではいられない."""
+related = ["zu-ni-wa-irarenai", "te-iru"]
+examples = [
+  { tatoeba = "19742_182602", ja = "急いで。ぐずぐずし{てはいられない}。", en = "Hurry up. We've little time to waste." },
+  { source = "yomeru", ja = "試験が近いから、遊ん{でばかりはいられない}。", en = "The exam is close, so I can't just keep having fun." },
+]
+
+[[point]]
+id = "te-mo-yamu-wo-enai"
+pattern = "てもやむを得ない"
+forms = ["でもやむを得ない", "てもやむをえない", "でもやむをえない", "やむを得ない", "やむをえない", "やむを得ず", "やむをえず"]
+jlpt = "N2"
+meaning = "it can't be helped, unavoidable, understandable"
+formation = [
+  "Verb［て］ + もやむを得ない   (遅れてもやむを得ない)",
+  "やむを得ず + Verb   (やむを得ず中止した)",
+]
+explanation = """
+やむを得ない says something is unavoidable, so it has to be accepted: \
+病気なら、休んでもやむを得ない, "if you're ill, taking time off can't be \
+helped". やむを得ず, "unavoidably", comes before the verb: 雨でやむを\
+得ず中止した, "we had to cancel because of the rain"."""
+notes = """
+Formal: in conversation, しかたがない says the same. やむを得ない理由, \
+"unavoidable reasons", is a common phrase in notices. ざるを得ない is \
+about having to do something yourself; やむを得ない judges a situation \
+or a choice as acceptable."""
+related = ["zaru-wo-enai", "te-mo-shikata-ga-nai"]
+examples = [
+  { tatoeba = "42602_205358", ja = "それは{やむを得ない}ね。", en = "I can't help it." },
+  { tatoeba = "255841_158687", ja = "私は{やむを得ず}そこへ行った。", en = "I went there of necessity." },
+  { source = "yomeru", ja = "病気なら、休ん{でもやむを得ない}。", en = "If you're ill, taking time off can't be helped." },
+]
+
+[[point]]
+id = "te-tamaranai"
+pattern = "てたまらない"
+forms = ["でたまらない", "てたまりません", "くてたまらない"]
+jlpt = "N2"
+meaning = "unbearably, terribly, dying to"
+formation = [
+  "Verb［て］ + たまらない   (気になってたまらない)",
+  "［い］Adjective［い̶］ + くてたまらない   (暑くてたまらない)",
+  "［な］Adjective + でたまらない   (心配でたまらない)",
+]
+explanation = """
+Says a feeling or sensation is so strong you can hardly bear it: \
+寒くてたまらない, "it's unbearably cold". With たい it means "dying \
+to": 会いたくてたまらない, "I'm dying to see them"."""
+notes = """
+てしかたがない means almost the same; たまらない sounds more emotional. \
+Mostly about the speaker; for others add らしい or ようだ. たまらない \
+alone also praises: この味、たまらない, "this taste is irresistible". \
+てならない is the written cousin; with 思える and 気がする only \
+てならない works: 思えてならない."""
+related = ["te-shikata-ga-nai", "te-naranai"]
+examples = [
+  { tatoeba = "433760_147456", ja = "暑{くてたまらない}。", en = "I can't stand this heat." },
+  { tatoeba = "68717_231351", ja = "あのカメラが欲し{くてたまらない}。", en = "I'm dying for that camera." },
+  { tatoeba = "35890_198697", ja = "ニューヨークへ行きた{くてたまらない}。", en = "I'm dying to go to New York." },
+]
+
+[[point]]
+id = "te-naranai"
+pattern = "てならない"
+forms = ["でならない", "てなりません", "でなりません"]
+jlpt = "N2"
+meaning = "can't help feeling, terribly (written)"
+formation = [
+  "Verb［て］ + ならない   (気がしてならない)",
+  "［い］Adjective［い̶］ + くてならない   (悔しくてならない)",
+  "［な］Adjective + でならない   (残念でならない)",
+]
+explanation = """
+Says a feeling or thought comes up by itself and won't go away: 何か\
+悪いことが起こる気がしてならない, "I can't shake the feeling something \
+bad will happen". It is typical with 思える, 気がする and words for \
+feelings such as 残念, 心配."""
+notes = """
+More written than てたまらない and てしかたがない. It needs a feeling \
+that comes on its own, so not a judgement: つまらなくてならない sounds \
+odd for "this book is boring". Not the "must" ならない: that \
+one is なければならない, or てはならない, "must not"."""
+related = ["te-tamaranai", "te-shikata-ga-nai", "te-wa-ikenai"]
+examples = [
+  { tatoeba = "250001_164507", ja = "私には父がまだ生きていると思え{てならない}。", en = "I can't help thinking Father is still alive." },
+  { source = "yomeru", ja = "何か悪いことが起こる気がし{てならない}。", en = "I can't shake the feeling something bad will happen." },
+]
+
+[[point]]
+id = "de-wa-sumanai"
+pattern = "では済まされない"
+forms = ["ではすまされない", "では済まない", "ではすまない", "じゃ済まない", "じゃすまない", "じゃ済まされない", "てすむことではない", "て済むことではない", "ですむことではない"]
+jlpt = "N2"
+meaning = "won't be settled with (just), isn't enough to excuse"
+formation = [
+  "Noun / quote + では済まされない   (知らなかったでは済まされない)",
+  "Verb［て］ + 済むことではない   (謝って済むことではない)",
+]
+explanation = """
+Says a problem is too serious to end with something small: ごめんなさい\
+では済まされないよ, "saying sorry won't be enough". 知らなかったでは\
+済まされない, "'I didn't know' is no excuse", is a common warning."""
+notes = """
+済む is "to be settled". The passive 済まされない sounds firmer than \
+済まない. Its opposite is ばすむ, "it's enough to". Noun + なしでは\
+済まない has a different meaning, "can't manage without": 辞書なしでは\
+済まない."""
+related = ["ba-sumu", "zu-ni-sumu"]
+examples = [
+  { tatoeba = "268195_146367", ja = "笑いごと{ではすまなく}なる。", en = "That goes beyond a joke." },
+  { source = "yomeru", ja = "ごめんなさい{では済まされない}よ。", en = "Saying sorry won't be enough." },
+  { source = "yomeru", ja = "知らなかった{では済まされない}。", en = "\"I didn't know\" is no excuse." },
+]
+
+[[point]]
+id = "ni-suginai"
+pattern = "にすぎない"
+forms = ["に過ぎない", "にすぎません", "に過ぎません", "にすぎず", "に過ぎず"]
+jlpt = "N2"
+meaning = "merely, only, nothing more than"
+formation = [
+  "Noun + にすぎない   (冗談にすぎない)",
+  "Verb + にすぎない   (聞いてみたにすぎない)",
+]
+explanation = """
+Plays something down: it is just that, and no bigger or more important. \
+これは私の意見にすぎません, "this is only my opinion". It often comes \
+with ただ or 単なる in front: 単なるうわさにすぎない, "it's just a \
+rumour"."""
+notes = """
+Somewhat formal; in speech ただ〜だけだ says the same. でしかない is \
+close and sounds more dismissive. にほかならない works the other way: \
+it stresses that something is exactly X. すぎる on its own, "too much", \
+is a different use: 食べすぎる."""
+related = ["de-shika-nai", "ni-hoka-naranai", "dake"]
+examples = [
+  { tatoeba = "16231_177381", ja = "君は学生{にすぎない}。", en = "You are nothing but a student." },
+  { tatoeba = "42252_205009", ja = "それは怠ける口実{にすぎない}。", en = "That is a mere excuse for idleness." },
+  { source = "yomeru", ja = "これは私の意見{にすぎません}。", en = "This is only my opinion." },
+]
+
+[[point]]
+id = "ni-hoka-naranai"
+pattern = "にほかならない"
+forms = ["に他ならない", "にほかなりません", "に他なりません", "ほかならぬ", "他ならぬ"]
+jlpt = "N2"
+meaning = "nothing other than, precisely, none other than"
+formation = [
+  "Noun + にほかならない   (努力の結果にほかならない)",
+  "Clause + から + にほかならない   (好きだからにほかならない)",
+  "ほかならぬ + Noun   (ほかならぬ君の頼み)",
+]
+explanation = """
+States firmly that something is exactly this and nothing else: 成功は\
+努力の結果にほかならない, "success is nothing but the result of \
+effort". With から it names the one true reason: 続けられたのは、好きだ\
+からにほかならない, "the only reason I kept going is that I love it"."""
+notes = """
+Formal and emphatic, common in speeches and essays. ほかならぬ before a \
+noun means "none other than, of all people": ほかならぬ先生の頼みだから, \
+"since it's my teacher asking". Opposite in tone to にすぎない, "merely"."""
+related = ["ni-suginai", "de-shika-nai", "koso"]
+examples = [
+  { tatoeba = "41657_204417", ja = "そんなことするなんて、彼は泥棒{に他ならない}。", en = "He is nothing less than a thief to do such a thing." },
+  { tatoeba = "255582_158944", ja = "私は{ほかならぬ}大統領に会った。", en = "I met the president himself." },
+  { source = "yomeru", ja = "合格できたのは、毎日の努力{にほかならない}。", en = "Passing was nothing other than the result of daily effort." },
+]
+
+[[point]]
+id = "de-shika-nai"
+pattern = "でしかない"
+forms = ["でしかありません"]
+jlpt = "N2"
+meaning = "no more than, only, nothing but (dismissive)"
+formation = ["Noun + でしかない   (子供でしかない)"]
+explanation = """
+Says something is only this, and implies it falls short of what it \
+should or could be: 彼の話は言い訳でしかない, "what he says is no more \
+than an excuse". It is the copula で with しか〜ない, "nothing but"."""
+notes = """
+にすぎない means nearly the same; でしかない sounds more negative, as if \
+the speaker is disappointed or critical. Don't confuse it with \
+Place + でしか + Verb［ない］, "only (do) at": ここでしか買えない."""
+related = ["ni-suginai", "shika-nai", "ni-hoka-naranai"]
+examples = [
+  { tatoeba = "301414_102280", ja = "彼は単なる愚か者{でしかない}。", en = "He is nothing but a fool." },
+  { tatoeba = "58686_221361", ja = "この取り決めは一時的なもの{でしかない}。", en = "This arrangement is only temporary." },
+]
+
+[[point]]
+id = "to-iu-mono-da"
+pattern = "というものだ"
+forms = ["というものです", "ってもんだ", "というもんだ", "というものでしょう", "というものだろう"]
+jlpt = "N2"
+meaning = "that's what (X) is, that's just (X); that's really (unfair)"
+formation = ["Noun / Clause + というものだ   (それがわがままというものだ)"]
+explanation = """
+Two uses. A general truth: これが人生というものだ, "that's life". Or the \
+speaker's firm judgement of an act, often critical: 何も言わずに休むの\
+は、無責任というものだ, "taking time off without a word is just \
+irresponsible"."""
+notes = """
+It stays in the present, not the past or the negative. The judgement \
+use sounds strong, so soften it with でしょう or だろう. \
+というものは, "the thing called", starts a topic instead (see というの\
+は). というものではない is a separate point: "it doesn't follow that"."""
+related = ["to-iu-no-wa", "to-iu-mono-de-wa-nai", "mono-da"]
+examples = [
+  { tatoeba = "71323_233951", ja = "あなたが彼に援助を求めても、無駄{というものだ}。", en = "It's no use your begging him for help." },
+  { tatoeba = "32809_195635", ja = "まずご両親に話してみるのが順序{というものだろう}。", en = "First of all, you should talk it over with your parents." },
+  { source = "yomeru", ja = "うまくいかない日もある。それが人生{というものだ}。", en = "Some days things go wrong. That's life." },
+]
+
+[[point]]
+id = "ni-soui-nai"
+pattern = "に相違ない"
+forms = ["にそういない", "に相違ありません", "にそういありません"]
+jlpt = "N2"
+meaning = "must be, without a doubt (formal)"
+formation = [
+  "Verb / ［い］Adjective + に相違ない   (来るに相違ない)",
+  "［な］Adjective / Noun + に相違ない   (本物に相違ない)",
+]
+explanation = """
+Expresses the speaker's strong conviction, based on what they know: \
+犯人はあの男に相違ない, "the culprit must be that man". It is the \
+written, formal version of に違いない and means the same."""
+notes = """
+相違 means "difference", so literally "there is no difference from it". \
+In conversation use に違いない or きっと〜だ. Like に違いない, no だ before \
+it with nouns and な adjectives."""
+related = ["ni-chigai-nai", "hazu"]
+examples = [
+  { source = "yomeru", ja = "犯人はあの男{に相違ない}。", en = "The culprit must be that man." },
+  { source = "yomeru", ja = "これは本物{に相違ありません}。", en = "This is without a doubt the real thing." },
+]
+
+[[point]]
+id = "touzen-da"
+pattern = "て当然だ"
+forms = ["で当然だ", "のも当然だ", "も当然だ", "て当然", "のは当然だ", "て当たり前だ", "のも当たり前だ"]
+jlpt = "N2"
+meaning = "it's only natural (that), no wonder, of course"
+formation = [
+  "Verb［て］ + 当然だ   (怒って当然だ)",
+  "［い］Adjective［い̶］ + くて当然だ   (眠くて当然だ)",
+  "Clause + のも / のは + 当然だ   (怒るのも当然だ)",
+]
+explanation = """
+Says a result follows naturally from the situation: あんなに練習した\
+んだから、勝って当然だ, "after all that practice, it's only natural \
+they won". のも当然だ is "no wonder": 疲れているのも当然だ, "no wonder \
+you're tired"."""
+notes = """
+当たり前 means the same and is more casual. Also for what someone \
+deserves: 謝って当然だ, "you ought to apologise". のももっともだ is \
+close but sympathetic: it says a reaction is understandable."""
+related = ["no-mo-mottomo-da", "hazu"]
+examples = [
+  { tatoeba = "322711_81005", ja = "眠い{のは当然だ}。", en = "No wonder I'm sleepy." },
+  { tatoeba = "284048_119614", ja = "彼が怒る{のは当然だ}と思う。", en = "I think it natural for him to get angry." },
+  { source = "yomeru", ja = "あんなに働いたら、疲れ{て当然だ}。", en = "Working that hard, of course you're tired." },
+]
+
+[[point]]
+id = "no-mo-mottomo-da"
+pattern = "のももっともだ"
+forms = ["のはもっともだ", "のももっともです", "ももっともだ"]
+jlpt = "N2"
+meaning = "it's understandable that, (they) have every reason to"
+formation = ["Clause + のももっともだ   (怒るのももっともだ)"]
+explanation = """
+Says someone's feeling or reaction makes sense given the situation: \
+約束を破られたら、怒るのももっともだ, "if a promise is broken, it's \
+understandable to be angry". It shows the speaker agrees with them."""
+notes = """
+もっとも here means "reasonable": ご意見はもっともです, "you have a \
+point". 当然 says something follows naturally; もっとも sides with \
+someone's reaction. Not 最も (もっとも), "most", nor the sentence opener \
+もっとも, "mind you"."""
+related = ["touzen-da", "wake-da"]
+examples = [
+  { tatoeba = "51091_213804", ja = "そう言う{のももっともだ}。", en = "You have every reason to say so." },
+  { tatoeba = "308460_95246", ja = "彼女が彼を悪く言う{のももっともだ}。", en = "She may well speak ill of him." },
+]
+
+[[point]]
+id = "mono-ga-aru"
+pattern = "ものがある"
+forms = ["ものがあります"]
+jlpt = "N2"
+meaning = "there's something (moving, sad, impressive) about"
+formation = [
+  "Verb + ものがある   (心を打つものがある)",
+  "［い］Adjective + ものがある   (寂しいものがある)",
+  "［な］Adjective + な + ものがある   (見事なものがある)",
+]
+explanation = """
+Gives the speaker's impression that something has a certain quality, \
+felt rather than seen: この写真には見る人を引きつけるものがある, \
+"there's something about this photo that draws people in". The quality is usually \
+strong: moving, impressive, sad."""
+notes = """
+Not the literal "there is a thing": 冷蔵庫に食べるものがある, "there's \
+something to eat in the fridge". The judgement use needs a word for \
+an impression before it, and the topic is often marked with には."""
+related = ["mono-da"]
+examples = [
+  { source = "yomeru", ja = "この写真には見る人を引きつける{ものがある}。", en = "There's something about this photo that draws people in." },
+  { source = "yomeru", ja = "古い友だちと会えないのは寂しい{ものがある}。", en = "Not being able to see old friends is rather sad." },
+]
+
+[[point]]
+id = "ni-atai-suru"
+pattern = "に値する"
+forms = ["に値しない", "にあたいする", "にあたいしない"]
+jlpt = "N2"
+meaning = "be worth (doing), deserve"
+formation = [
+  "Noun + に値する   (尊敬に値する)",
+  "Verb［る］ + に値する   (読むに値する)",
+]
+explanation = """
+Says something deserves an action or a reaction: 彼の努力は尊敬に値する, \
+"his effort deserves respect". It is formal and often goes with words \
+like 賞賛, 尊敬, 注目. The negative, 値しない, says something isn't \
+worth it."""
+notes = """
+In everyday speech, 〜価値がある says "worth": 見る価値がある. 値する \
+is mostly for praise or serious judgement, not for prices."""
+related = ["dake-atte"]
+examples = [
+  { tatoeba = "291033_112643", ja = "彼はその賞{に値する}。", en = "He deserves the prize." },
+  { tatoeba = "287707_115962", ja = "彼の勇敢さは尊敬{に値する}。", en = "His bravery is worth respecting." },
+  { source = "yomeru", ja = "この本は読む{に値しない}。", en = "This book isn't worth reading." },
+]
+
+[[point]]
+id = "to-itte-mo-kagon-de-wa-nai"
+pattern = "と言っても過言ではない"
+forms = ["といっても過言ではない", "と言っても過言ではありません", "といっても過言ではありません"]
+jlpt = "N2"
+meaning = "it's no exaggeration to say (that)"
+formation = ["Clause + と言っても過言ではない   (天才だと言っても過言ではない)"]
+explanation = """
+Makes a strong claim and insists it isn't overstated: 彼は日本一の\
+料理人だと言っても過言ではない, "it's no exaggeration to say he's the \
+best cook in Japan". It is formal, typical of speeches, articles and \
+reviews."""
+notes = """
+過言 (かごん) means "saying too much". The claim before it is usually \
+big: the best, the most, a turning point."""
+related = ["to-shika-iiyou-ga-nai"]
+examples = [
+  { tatoeba = "301762_101931", ja = "彼は天才だ{と言っても過言ではない}。", en = "It is no exaggeration to say that he is a genius." },
+  { tatoeba = "241830_172645", ja = "今は車の時代だ{と言っても過言ではない}。", en = "It is not too much to say that this is the age of cars." },
+]
+
+[[point]]
+id = "to-shika-iiyou-ga-nai"
+pattern = "としか言いようがない"
+forms = ["としかいいようがない", "としか言えない", "としかいえない"]
+jlpt = "N2"
+meaning = "there's no other word for it than, can only be called"
+formation = ["Noun / Clause + としか言いようがない   (奇跡としか言いようがない)"]
+explanation = """
+Says one description is the only fitting one, often for something \
+surprising or hard to explain: 全員助かったのは奇跡としか言いようが\
+ない, "everyone surviving can only be called a miracle"."""
+notes = """
+Built from ようがない, "there's no way to", with しか: "no way to say it \
+except". としか言えない is a little weaker, "all I can say is". Often \
+with 運が悪い, 奇跡, 残念: words that close the discussion."""
+related = ["you-ga-nai", "to-itte-mo-kagon-de-wa-nai", "shika-nai"]
+examples = [
+  { tatoeba = "17472_178619", ja = "君に賛成だ{としか言えない}。", en = "I can only say that I agree with you." },
+  { source = "yomeru", ja = "あれは運が悪かった{としか言いようがない}。", en = "There's no other way to put it: it was bad luck." },
+]
+
+[[point]]
+id = "to-kangaerareru"
+pattern = "と考えられる"
+forms = ["と考えられます"]
+jlpt = "N2"
+meaning = "it's thought that, it seems likely that (impersonal)"
+formation = ["Clause + と考えられる   (原因は寝不足だと考えられる)"]
+explanation = """
+Presents a conclusion as reasonable rather than as a personal opinion: \
+事故の原因は雨だと考えられる, "the cause of the accident is thought to \
+be the rain". Common in news, reports and essays. と考えられている, \
+"it is widely believed", is listed with と言われている."""
+notes = """
+と思われる is similar and a little softer. と思う and と考える put the \
+speaker forward; と考えられる steps back from it. Its negative \
+考えられない means "unthinkable"."""
+related = ["kangaerarenai", "you-to-omou", "to-iwarete-iru"]
+examples = [
+  { tatoeba = "272168_142402", ja = "昔はずっと寒かった{と考えられる}。", en = "It is thought to have been much colder long ago." },
+  { source = "yomeru", ja = "原因は寝不足だ{と考えられる}。", en = "The cause is thought to be lack of sleep." },
+]
+
+[[point]]
+id = "no-de-wa-nai-darou-ka"
+pattern = "のではないだろうか"
+forms = ["んじゃないだろうか", "のではないでしょうか", "んじゃないでしょうか", "ではあるまいか", "のではあるまいか"]
+jlpt = "N2"
+meaning = "isn't it (the case) that…?, I think perhaps (soft opinion)"
+formation = [
+  "Verb / ［い］Adjective + のではないだろうか   (遅れるのではないだろうか)",
+  "［な］Adjective / Noun + な + のではないだろうか   (無理なのではないだろうか)",
+]
+explanation = """
+Puts an opinion forward as a question, so it sounds careful and open \
+to discussion: この計画は少し無理なのではないだろうか, "isn't this plan \
+a bit unrealistic?". Common in essays, meetings and presentations."""
+notes = """
+のではないでしょうか is the polite spoken version, very common for \
+suggestions: 〜たほうがいいのではないでしょうか. んじゃないか is the \
+casual cousin. ではあるまいか is old-fashioned and written. のだろうか \
+without ない just wonders."""
+related = ["n-ja-nai", "no-darou-ka", "mai"]
+examples = [
+  { tatoeba = "71885_234510", ja = "あきらめた方が良い{のではないでしょうか}。", en = "You may as well give up." },
+  { source = "yomeru", ja = "この計画は少し無理な{のではないだろうか}。", en = "Isn't this plan a bit unrealistic?" },
+]
+
+[[point]]
+id = "mai"
+pattern = "まい"
+forms = ["まいか", "まいとして", "まいと", "まいとする"]
+jlpt = "N2"
+meaning = "won't (do), will never (resolve); probably not (guess)"
+formation = [
+  "Verb［る］ + まい   (行くまい)",
+  "る-verbs: Verb［stem］ + まい   (見まい / 見るまい)",
+  "する → するまい / すまい;  来る → 来るまい / こまい",
+]
+hover = false
+explanation = """
+A negative of will or guess. About yourself, a firm resolve: もう二度と\
+嘘はつくまい, "I'll never tell a lie again". About others or events, a \
+guess: 彼はもう来るまい, "he probably won't come now". まいとして, \
+"trying not to": 忘れまいとしてメモした, "I wrote it down so as not to \
+forget"."""
+notes = """
+Written and a little old-fashioned. In speech: ないつもりだ (resolve) or \
+ないだろう (guess). Someone else's resolve takes まいと決める: 彼は泣く\
+まいと決めた. With nouns, ではあるまい, "it probably isn't". ようと〜まい\
+と, "whether or not", is a separate pattern. Search-only: まい hides \
+inside うまい, せまい and しまい."""
+related = ["tsumori", "deshou", "no-de-wa-nai-darou-ka"]
+examples = [
+  { tatoeba = "313207_90506", ja = "彼女は泣く{まいと}気を張った。", en = "She steeled herself not to cry." },
+  { source = "yomeru", ja = "もう二度と嘘はつく{まい}。", en = "I'll never tell a lie again." },
+  { source = "yomeru", ja = "この雨では、彼はもう来る{まい}。", en = "In this rain, he probably won't come now." },
+]
+
+[[point]]
+id = "mono-ka"
+pattern = "ものか"
+forms = ["もんか", "ものですか", "もんですか"]
+jlpt = "N2"
+meaning = "as if!, no way (will I), certainly not"
+formation = [
+  "Verb / ［い］Adjective + ものか   (行くものか)",
+  "［な］Adjective / Noun + な + ものか   (平気なものか)",
+]
+explanation = """
+A strong, emotional denial shaped like a question: あんな店、二度と\
+行くものか, "I'll never go to that shop again!". The speaker means the \
+opposite of the question: 負けるもんか, "no way I'll lose!"."""
+notes = """
+もんか is casual; ものですか sounds softer and older. Said with a \
+falling tone, never as a real question. Don't confuse it with どんな\
+ものか, "what kind of thing", where もの is just "thing". ことか, also \
+with a question word, exclaims "how much!". After a negative it can \
+also wish: 何とかならないものか, "isn't there something we can do?"."""
+related = ["koto-ka", "mono-da", "kko-nai"]
+examples = [
+  { tatoeba = "41430_204188", ja = "そんなもの知る{もんか}！", en = "I don't give a damn about it!" },
+  { tatoeba = "67798_230431", ja = "あの木までの競走なら君に負ける{もんか}。", en = "I'll bet that I can beat you to the tree." },
+  { source = "yomeru", ja = "あんな店、二度と行く{ものか}。", en = "I'll never go to that shop again!" },
+]
+
+[[point]]
+id = "ka-no-you-da"
+pattern = "かのようだ"
+forms = ["かのように", "かのような", "かのよう", "かのようです"]
+jlpt = "N2"
+meaning = "as if, as though (but it isn't so)"
+formation = [
+  "Verb / ［い］Adjective + かのようだ   (知っているかのように)",
+  "［な］Adjective / Noun + である + かのようだ   (子供であるかのように)",
+]
+explanation = """
+Compares something to what it is not, or isn't known to be: 彼は社長\
+であるかのように振る舞う, "he acts as if he were the boss". It \
+often comes with まるで and is a little literary."""
+notes = """
+ようだ alone usually guesses from evidence ("it seems"); かのようだ \
+makes a comparison the speaker knows is not true. With nouns: \
+夢であるかのよう, or simply 夢のよう."""
+related = ["marude", "you-da", "mitai"]
+examples = [
+  { tatoeba = "32314_195140", ja = "まるで夢を見ている{かのような}気分だった。", en = "I felt as if I were dreaming." },
+  { tatoeba = "62491_225156", ja = "ケンはまるで何でも知っている{かのように}話す。", en = "Ken talks as if he knew everything." },
+]
+
+[[point]]
+id = "dake-mashi"
+pattern = "だけましだ"
+forms = ["だけまし", "だけましです"]
+jlpt = "N2"
+meaning = "at least, it's better than nothing that"
+formation = [
+  "Verb / ［い］Adjective + だけましだ   (けががないだけましだ)",
+  "［な］Adjective + な + だけましだ   (元気なだけましだ)",
+]
+hover = false
+explanation = """
+Looks at a bad situation and points to one thing that makes it less \
+bad: 雨だけど、風がないだけましだ, "it's raining, but at least there's \
+no wind". まし means "less bad, preferable"."""
+notes = """
+The first half is usually a complaint and the second a small comfort. \
+まだましだ, "still better", is related. Search-only: だけまし hides \
+inside いただけました."""
+related = ["dake", "dake-atte"]
+examples = [
+  { source = "yomeru", ja = "雨だけど、風がない{だけましだ}。", en = "It's raining, but at least there's no wind." },
+  { source = "yomeru", ja = "財布はなくしたが、パスポートが無事だった{だけましだ}。", en = "I lost my wallet, but at least my passport was safe." },
+]
+
+[[point]]
+id = "dake-no-koto-da"
+pattern = "だけのことだ"
+forms = ["だけのことです", "だけのことさ", "だけのこと"]
+jlpt = "N2"
+meaning = "it's simply (that), all there is to it, (I'll) just"
+formation = ["Verb / ［い］Adjective + だけのことだ   (やり直すだけのことだ)"]
+explanation = """
+Makes something sound simple and not worth worrying about: 失敗したら、\
+もう一度やるだけのことだ, "if I fail, I'll just do it again". Or it \
+plays a fact down: 少し疲れているだけのことだ, "I'm just a bit tired, \
+that's all"."""
+notes = """
+Often after a ば or たら clause: "if X, then simply Y". Don't confuse it \
+with だけのことはある, "as you'd expect of", which praises: さすが\
+プロだけのことはある."""
+related = ["dake", "dake-atte", "ba-sumu"]
+examples = [
+  { source = "yomeru", ja = "失敗したら、もう一度やる{だけのことだ}。", en = "If I fail, I'll just do it again." },
+  { source = "yomeru", ja = "怒っているんじゃない。少し疲れている{だけのことだ}。", en = "I'm not angry. I'm just a bit tired, that's all." },
+]
+
+[[point]]
+id = "ta-mono-de-wa-nai"
+pattern = "たものではない"
+forms = ["たものじゃない", "たもんじゃない", "たものではありません", "だものではない"]
+jlpt = "N2"
+meaning = "can't possibly, (it's) impossible to (with potential)"
+formation = ["Verb［できる］［た］ + ものではない   (食べられたものではない)"]
+hover = false
+explanation = """
+A strong, emotional "it's so bad that you can't": 辛すぎて、食べられた\
+ものではない, "it's too spicy to eat at all". わかったものではない \
+means "who knows": 何が起こるかわかったものではない, "there's no \
+telling what will happen"."""
+notes = """
+Casual: たもんじゃない. Mostly with potential verbs and わかる. \
+Search-only, because たものではない is also a plain "it is not a thing \
+that was…": ローマは一日で造られたものではない."""
+related = ["mono-da", "kko-nai"]
+examples = [
+  { tatoeba = "264168_150386", ja = "次に何が起こるかわかっ{たものではない}。", en = "There is no telling what will happen next." },
+  { source = "yomeru", ja = "この料理は辛すぎて、食べられ{たもんじゃない}。", en = "This dish is too spicy to eat at all." },
 ]
