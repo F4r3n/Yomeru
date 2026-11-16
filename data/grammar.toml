@@ -6463,7 +6463,7 @@ examples = [
 [[point]]
 id = "bakari-ni"
 pattern = "ばかりに"
-forms = []
+forms = ["たいばかりに", "ほしいばかりに"]
 jlpt = "N3"
 meaning = "just because, only because (with regret)"
 formation = [
@@ -8237,7 +8237,7 @@ examples = [
 [[point]]
 id = "shidai-depending"
 pattern = "次第で"
-forms = ["次第だ", "次第です", "しだいで", "しだいだ", "次第", "しだい"]
+forms = ["次第だ", "次第です", "しだいで", "しだいだ", "次第", "しだい", "次第では", "しだいでは"]
 jlpt = "N3"
 homographs = ["shidai"]
 meaning = "depending on, up to (someone)"
@@ -11970,7 +11970,7 @@ examples = [
 [[point]]
 id = "ijou-wa"
 pattern = "以上は"
-forms = ["いじょうは"]
+forms = ["いじょうは", "上は", "うえは"]
 jlpt = "N2"
 meaning = "now that, since (… naturally / must)"
 formation = [
@@ -14041,6 +14041,101 @@ related = ["ni-sakigakete", "ni-atatte", "mae-ni"]
 examples = [
   { tatoeba = "22576_185444", ja = "会{に先立って}彼らは夕食をとった。", en = "Prior to the meeting, they had dinner." },
   { source = "yomeru", ja = "試合{に先立ち}、開会式が行われた。", en = "Prior to the match, an opening ceremony was held." },
+]
+
+[[point]]
+id = "shitagatte"
+pattern = "したがって"
+forms = ["従って"]
+jlpt = "N2"
+meaning = "therefore, consequently, accordingly"
+formation = ["Sentence (cause)。 + したがって、 + Sentence (result)"]
+explanation = """
+Starts a sentence that follows logically from the one before: 雨の日は\
+客が少ない。したがって、店を早く閉める, "there are few customers on \
+rainy days; therefore we close early". A formal, written だから."""
+notes = """
+For logical results in reports, rules and explanations, not for \
+feelings or requests. In speech, だから or それで. Not にしたがって \
+(N2, "as… changes, along with"), which follows a noun or verb."""
+related = ["ni-shitagatte", "sorede", "kara-reason"]
+examples = [
+  { tatoeba = "53475_216172", ja = "{したがって}生産費を削る必要がある。", en = "Therefore, it is necessary to reduce the cost." },
+  { source = "yomeru", ja = "雨の日は客が少ない。{したがって}、店を早く閉める。", en = "There are few customers on rainy days, so we close early." },
+]
+
+[[point]]
+id = "mo-shinai"
+pattern = "もしない"
+forms = ["もしなかった", "もしません", "もせず", "もしないで"]
+hover = false
+jlpt = "N2"
+meaning = "(doesn't) even (do), won't so much as"
+formation = ["Verb［stem］ + もしない   (見もしない)"]
+explanation = """
+Stresses that someone doesn't do even the smallest, most expected \
+thing, usually with annoyance: 彼は私の顔を見もしなかった, "he didn't \
+even look at me". Common with 見る, 聞く, 読む, 考える, 返事する \
+(返事もしない)."""
+notes = """
+Critical of others, or surprised at oneself: 考えもしなかった, "it never \
+crossed my mind". With a する verb, the noun takes も: 連絡もしない. \
+Compare ようともしない (N3), "won't even try". Search-only: もしない \
+is also plain も + しない (何もしない)."""
+related = ["you-to-shinai", "sae"]
+examples = [
+  { tatoeba = "31805_194632", ja = "メグは私を見{もしなかった}。", en = "Meg didn't even look at me." },
+  { tatoeba = "246735_163688", ja = "私の言葉が彼女を傷つけるとは考え{もしなかった}。", en = "It never occurred to me that my words would hurt her feelings." },
+]
+
+[[point]]
+id = "n-datta"
+pattern = "んだった"
+forms = ["のだった", "るんだった"]
+hover = false
+jlpt = "N2"
+meaning = "I should have (done it) (regret)"
+formation = ["Verb［る］ + んだった   (買うんだった)"]
+explanation = """
+Regret about one's own past choice: もっと早く出るんだった, "I should \
+have left earlier". The verb stays in the dictionary form even though \
+the chance is past. The negative is its own entry: んじゃなかった, "I \
+shouldn't have"."""
+notes = """
+Spoken, often with a sigh or よ. About the speaker; for others, add \
+と言っている. Compare ばよかった (N4), the same regret, gentler and \
+more common. Search-only: plain の + だった (休みだったんだった) \
+looks the same."""
+related = ["n-ja-nakatta", "ba-yokatta", "beki-da"]
+examples = [
+  { tatoeba = "30415_193250", ja = "もっと早くホテルの予約をしておく{んだった}。", en = "I ought to have made a hotel reservation earlier." },
+  { source = "yomeru", ja = "傘を持ってくる{んだった}。", en = "I should have brought an umbrella." },
+]
+
+[[point]]
+id = "omoi-wo-suru"
+pattern = "思いをする"
+forms = ["思いをした", "思いをしている", "おもいをする", "思いをさせる", "思いをさせた"]
+jlpt = "N2"
+meaning = "to feel, go through (a feeling), experience"
+formation = [
+  "［い］Adjective + 思いをする   (寂しい思いをする)",
+  "［な］Adjective + な + 思いをする   (いやな思いをする)",
+]
+explanation = """
+Says someone went through a feeling because of what happened: 旅行中\
+楽しい思いをした, "I had a good time on the trip". Very common with \
+bad feelings: 怖い思い, 恥ずかしい思い, 寂しい思い. 思いをさせる: \
+"make someone feel": 寂しい思いをさせてごめん."""
+notes = """
+More vivid than plain adjective + なる or と思う: the feeling was lived \
+through, often over a while. Not 思う, "think". Fixed adjectives are \
+best learned with it: つらい思い, 悔しい思い."""
+related = ["to-omou", "ga-suru"]
+examples = [
+  { tatoeba = "325595_78123", ja = "旅行中楽しい{思いをした}。", en = "I had a good time during the trip." },
+  { tatoeba = "287506_116163", ja = "彼の母は彼のことで恥ずかしい{思いをした}。", en = "His mother felt ashamed for him." },
+  { source = "yomeru", ja = "寂しい{思いをさせて}ごめんね。", en = "Sorry for making you feel lonely." },
 ]
 
 [[point]]
