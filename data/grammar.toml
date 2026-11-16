@@ -182,7 +182,7 @@ examples = [
 [[point]]
 id = "ta-hou-ga-ii"
 pattern = "たほうがいい"
-forms = ["だほうがいい", "ないほうがいい", "た方がいい", "だ方がいい", "ない方がいい", "ほうがいい", "方がいい"]
+forms = ["だほうがいい", "ないほうがいい", "た方がいい", "だ方がいい", "ない方がいい", "ほうがいい", "方がいい", "ほうがよかった", "方がよかった"]
 jlpt = "N5"
 meaning = "had better, should (advice)"
 formation = ["Verb［た］ + ほうがいい", "Verb［ない］ + ほうがいい"]
@@ -196,7 +196,8 @@ It is fairly direct; to a superior it can sound pushy, so soften it: \
 〜たほうがいいと思います, 〜たほうがいいかもしれません. With the dictionary \
 form (行くほうがいい) it sounds like a general comparison more than \
 advice. The negative is ない, never なかった: 行かなかったほうがいい is \
-wrong."""
+wrong. In the past, 〜たほうがよかった is regret or blame, "should \
+have": 傘を持ってきたほうがよかった."""
 related = ["yori-hou-ga", "nakute-wa-ikenai"]
 examples = [
   { tatoeba = "52148_214854", ja = "すぐに寝{たほうがいい}。", en = "You'd better go to bed at once." },
@@ -1894,7 +1895,7 @@ examples = [
 [[point]]
 id = "sou-da-appearance"
 pattern = "そうだ"
-forms = ["そうです", "そうな", "そうに", "そうにない", "なさそう", "よさそう"]
+forms = ["そうです", "そうな", "そうに", "そうにない", "なさそう", "よさそう", "そうにしている"]
 jlpt = "N4"
 meaning = "looks like, seems (from what you can see); about to"
 formation = [
@@ -1914,7 +1915,8 @@ Not used when the quality is plain to see: a beautiful person is \
 not "looks cute". Compared with ようだ, そうだ is a first impression; \
 ようだ is a judgement weighed from evidence. Don't confuse with the hearsay そうだ, which \
 follows the plain form (降るそうだ, "I hear it will rain"). Negative \
-guesses: なさそう for adjectives, Verb［stem］ + そうにない for verbs."""
+guesses: なさそう for adjectives, Verb［stem］ + そうにない for verbs. \
+〜そうにしている describes how someone looks or acts: 眠そうにしている."""
 related = ["sou-da-hearsay", "you-da", "rashii"]
 homographs = ["sou-da-hearsay"]
 examples = [
@@ -3759,12 +3761,13 @@ examples = [
 [[point]]
 id = "irassharu"
 pattern = "いらっしゃる"
-forms = ["いらっしゃいます", "いらっしゃい"]
+forms = ["いらっしゃいます", "いらっしゃい", "ていらっしゃる", "でいらっしゃる"]
 jlpt = "N4"
 meaning = "(respectful) be, go, come"
 formation = [
   "いらっしゃる   (ます-form いらっしゃいます)",
   "Verb［て］ + いらっしゃる   (respectful ている)",
+  "Noun + でいらっしゃる   (respectful です: 田中様でいらっしゃいますか)",
 ]
 explanation = """
 The respectful verb standing in for いる, 行く and 来る when the subject \
@@ -4612,9 +4615,9 @@ examples = [
 [[point]]
 id = "no-darou-ka"
 pattern = "のだろうか"
-forms = ["んだろうか", "のでしょうか", "んでしょうか"]
+forms = ["んだろうか", "のでしょうか", "んでしょうか", "んだろう", "のだろう"]
 jlpt = "N4"
-meaning = "I wonder (if / why …); (polite) is it that …?"
+meaning = "I wonder (if / why …); is it that …?; must be (のだろう)"
 formation = [
   "Verb / ［い］Adjective + のだろうか",
   "［な］Adjective / Noun + な + のだろうか   (本当なのだろうか)",
@@ -4628,7 +4631,8 @@ notes = """
 More serious than かな: のだろうか fits writing and reflection, かな \
 casual chat. Speech shortens の to ん: んだろう. Without の, だろうか / \
 でしょうか is a plain "I wonder"; with の it asks about a reason or \
-explanation behind what you see."""
+explanation behind what you see. Without か, のだろう / んだろう is a \
+confident guess at the reason: 疲れているんだろう, "he must be tired"."""
 related = ["kana", "deshou", "n-desu", "kashira"]
 examples = [
   { tatoeba = "23793_186657", ja = "火星には生き物がいる{のだろうか}。", en = "Is there any life on Mars?" },
@@ -7765,7 +7769,7 @@ examples = [
 [[point]]
 id = "mono-da"
 pattern = "ものだ"
-forms = ["ものです", "もんだ", "ものではない", "もんじゃない"]
+forms = ["ものです", "もんだ", "ものではない", "もんじゃない", "たいものだ", "たいものです"]
 hover = false
 jlpt = "N3"
 meaning = "that's how things are; one should; how…! (feeling)"
@@ -7782,7 +7786,8 @@ expected to do (年上の人には敬語を使うものだ), and voices a feelin
 notes = """
 ものではない is "one shouldn't" (人の悪口を言うものではない). ことだ \
 is advice to one listener; ものだ is a general rule. After た, ものだ \
-recalls a past habit (see たものだ). Casual: もんだ."""
+recalls a past habit (see たものだ). After たい it is a heartfelt wish: \
+一度行ってみたいものだ, "I'd really love to go once". Casual: もんだ."""
 related = ["koto-da-advice", "beki-da", "ta-mono-da", "mono-reason"]
 examples = [
   { tatoeba = "245951_168541", ja = "子供は決してじっとしていない{ものだ}。", en = "Children are never at rest." },
@@ -8814,7 +8819,7 @@ examples = [
 [[point]]
 id = "ni-awasete"
 pattern = "に合わせて"
-forms = ["にあわせて", "に合わせる", "に合わせ"]
+forms = ["にあわせて", "に合わせる", "に合わせ", "に合った"]
 jlpt = "N3"
 meaning = "to match, in time with, to suit"
 formation = ["Noun + に合わせて"]
@@ -11368,19 +11373,21 @@ examples = [
 [[point]]
 id = "zu-ni-sumu"
 pattern = "ずにすむ"
-forms = ["ずに済む", "ないですむ", "ないで済む", "なくてすむ", "なくて済む", "ですむ", "で済む"]
+forms = ["ずに済む", "ないですむ", "ないで済む", "なくてすむ", "なくて済む", "ですむ", "で済む", "て済む", "てすむ"]
 jlpt = "N3"
 meaning = "to get by without, be spared (from); X will do"
 formation = [
   "Verb［な̶い̶］ + ずにすむ",
   "Verb［ない］ + ですむ / なくてすむ",
   "Noun + ですむ   (警告ですむ)",
+  "Verb［て］ + すむ   (謝ってすむ)",
 ]
 explanation = """
 Says you were spared something unpleasant you expected to face: 歩かず\
 にすんだ, "I didn't have to walk after all". After a noun, で済む says \
 that small thing was enough, and nothing worse followed: 千円で済んだ, \
-"a thousand yen covered it"."""
+"a thousand yen covered it". After a て-form it says doing that much is \
+enough: 謝ってすむ問題じゃない, "an apology won't settle this"."""
 notes = """
 Usually past (すんだ), with relief. Not the same as 〜なくてもいい, \
 which gives permission not to do something; 〜ずにすむ reports that \
@@ -11476,7 +11483,7 @@ examples = [
 [[point]]
 id = "koto-ni-naru"
 pattern = "ことになる"
-forms = ["ことになった", "ことになっている", "こととなる", "ということになる"]
+forms = ["ことになった", "ことになっている", "こととなる", "ということになる", "たことになる"]
 jlpt = "N3"
 meaning = "it's been decided that; it turns out, it means; the rule is"
 formation = ["Verb［る］ / Verb［ない］ + ことになる", "Verb［た］ + ことになる   (it amounts to)"]
@@ -11634,4 +11641,188 @@ examples = [
   { tatoeba = "503835_145761", ja = "食料はまだ{いくらでも}ある。", en = "We still have a lot of food left." },
   { tatoeba = "240687_173783", ja = "好きな花を{いくらでも}選びなさい。", en = "Choose any flowers you like." },
   { source = "yomeru", ja = "ご飯は{いくらでも}食べていいよ。", en = "You can eat as much rice as you like." },
+]
+
+[[point]]
+id = "kara-iu-to"
+pattern = "から言うと"
+forms = ["からいうと", "から言えば", "からいえば", "から言って", "からいって", "から言ったら", "からいったら", "で言うと", "でいうと"]
+jlpt = "N3"
+meaning = "from the point of view of, judging by; in terms of"
+formation = [
+  "Noun + から言うと / から言えば / から言って",
+  "Noun + で言うと   (日本で言うと)",
+]
+explanation = """
+Names the yardstick a judgement is made by: 値段から言うと、こっちの\
+ほうがいい, "price-wise, this one is better". The noun is a standpoint, \
+a criterion or a source of experience (経験から言って). で言うと puts \
+something into another frame: 日本で言うと中学生だ, "in Japan, that \
+would be junior high"."""
+notes = """
+It follows a viewpoint, not a person: for "from my point of view" use \
+私から見ると or 私としては. The four forms mean the same. Close to \
+からすると, and to から見ると, which can follow a person."""
+related = ["kara-miru-to", "ni-totte", "kara-suru-to"]
+examples = [
+  { source = "yomeru", ja = "経験{から言って}、それは無理だと思う。", en = "Speaking from experience, I don't think that's possible." },
+  { source = "yomeru", ja = "値段{から言うと}、こっちのほうがいいね。", en = "In terms of price, this one is better." },
+  { source = "yomeru", ja = "十五歳は、日本{で言うと}中学三年生だ。", en = "Fifteen is, in Japan, the third year of junior high." },
+]
+
+[[point]]
+id = "koso"
+pattern = "こそ"
+forms = ["こそが", "こそは"]
+jlpt = "N3"
+meaning = "precisely, the very; this one (and no other)"
+formation = ["Noun (+ particle) + こそ   (今度こそ, ここでこそ)"]
+explanation = """
+Puts strong stress on one item as the one that really counts: 今度こそ\
+勝つ, "this time I'll win for sure", which implies the earlier tries \
+failed. これこそ探していた本だ is "this is the very book I was looking \
+for". In a reply it turns thanks or an apology back: こちらこそ, "no, \
+thank *you*"."""
+notes = """
+こそ takes the place of は, が and を (今年こそ, not ×今年はこそ); other \
+particles stay before it (ここでこそ). It also turns a reproach back: \
+君こそ遅れたじゃないか, "you're the one who was late!". Compare さえ, "even", and \
+だけ, "only". からこそ, "precisely because", has its own entry. \
+ようこそ ("welcome") and そこそこ ("fairly") are separate words."""
+related = ["kara-koso", "sae", "dake"]
+examples = [
+  { tatoeba = "17692_178837", ja = "君{こそ}私が探していた人だ。", en = "You are the man I've been looking for." },
+  { tatoeba = "56128_218813", ja = "これ{こそ}求めていたものですよ。", en = "That's just what I wanted." },
+  { source = "yomeru", ja = "今度{こそ}試験に合格するぞ。", en = "This time I'll pass the exam for sure." },
+]
+
+[[point]]
+id = "particle-plus-no"
+pattern = "への"
+forms = ["での", "までの", "からの", "との"]
+hover = false
+jlpt = "N3"
+meaning = "to, at, from, with … (a particle linking to a noun)"
+formation = ["Noun + への / での / までの / からの / との + Noun   (友達への手紙)"]
+explanation = """
+Particles like へ, で, まで, から and と can't describe a noun on their \
+own; adding の lets them: 日本での生活, "life in Japan"; 駅までの道, \
+"the way to the station"; 母からの手紙, "a letter from my mother"."""
+notes = """
+に never takes の: 友達への手紙, not ×友達にの手紙, so への stands in \
+for both に and へ. Nor do を and が: the object links with plain の \
+(日本語の勉強, not ×日本語をの勉強). The pair is a link and nothing more: \
+日本での生活 means the same as 日本の生活, with the place stressed."""
+related = ["no-particle", "e-particle", "de-particle", "ni-oite"]
+examples = [
+  { tatoeba = "21507_184379", ja = "学校{への}近道だよ。", en = "It's a shortcut to the school." },
+  { tatoeba = "279715_124279", ja = "東京{での}生活には慣れましたか？", en = "Have you got used to living in Tokyo?" },
+  { tatoeba = "25998_188851", ja = "駅{までの}道を教えて下さい。", en = "Could you please tell me how to get to the station?" },
+]
+
+[[point]]
+id = "koto-na-no"
+pattern = "ことなの"
+forms = ["ことなんだ", "ことなんです", "ことなのです", "ってことなの"]
+jlpt = "N3"
+meaning = "it's that…, it's a matter of (explaining)"
+formation = [
+  "Verb / ［い］Adjective + ことなの",
+  "［な］Adjective + な + ことなの   (大切なことなんです)",
+]
+explanation = """
+Wraps a point up as a "matter" and gives it the explaining tone of \
+んです: 大切なことなんです, "this is something important (so listen)". \
+It often closes a definition begun with というのは, and どういうことなの？ \
+asks "what is this supposed to mean?", often with surprise or \
+annoyance."""
+notes = """
+Casual ことなの and ことなんだ, polite ことなんです; ことなのです is \
+written. Plain んです explains a situation; ことなんです sets out the \
+point as a fact to take in. After a noun, こと means "about": 彼のことな\
+の is "it's about him"."""
+related = ["n-desu", "to-iu-no-wa", "koto-nominalizer"]
+examples = [
+  { tatoeba = "275788_137448", ja = "大切な{ことなんだ}から。", en = "Now, this is really important." },
+  { tatoeba = "25065_187926", ja = "何か深刻な{ことなのです}か。", en = "Is it anything serious?" },
+  { tatoeba = "271236_143331", ja = "これはいったいどういう{ことなの}。", en = "What does all this add up to?" },
+]
+
+[[point]]
+id = "nai-kana"
+pattern = "ないかな"
+forms = ["ないかなあ", "ないかなぁ", "ないかなー"]
+jlpt = "N3"
+meaning = "I wish … would; could you … (casual)"
+formation = [
+  "Verb［ない］ + かな   (来ないかな)",
+  "Verb［て］ + くれないかな / もらえないかな   (request)",
+]
+explanation = """
+Wishes for something outside your control, often impatiently: 早くバス\
+が来ないかな, "I wish the bus would hurry up and come". The verb is \
+negative but you want it to happen. With くれない or もらえない it \
+becomes a soft casual request: 手伝ってくれないかな, "could you help \
+me?"."""
+notes = """
+The same words can be a real doubt: 間に合わないかな, "I wonder if \
+we'll be late". Context decides; wishes are usually about events, often \
+with 早く or もう. Casual only: to a superior, 〜ていただけませんか. \
+んじゃないかな is a guess, "probably", not a wish."""
+related = ["kana", "nai-ka", "n-ja-nai", "te-kureru"]
+examples = [
+  { tatoeba = "328794_74925", ja = "何かいいこと{ないかな}。", en = "I wish something nice would happen." },
+  { tatoeba = "272061_142509", ja = "静かになら{ないかなぁ}。いらいらするな。", en = "I wish that noise would stop. It gets on my nerves." },
+  { tatoeba = "64696_227344", ja = "お願いを聞いてもらえ{ないかな}。", en = "I wonder if you could do me a favor." },
+]
+
+[[point]]
+id = "te-mo-minai"
+pattern = "てもみない"
+forms = ["てもみなかった", "でもみない", "でもみなかった", "てもみません", "てもみませんでした"]
+jlpt = "N3"
+meaning = "never even (thought, imagined)"
+formation = ["Verb［て］ + もみない   (思ってもみない)"]
+explanation = """
+Stresses that something hadn't crossed your mind at all, usually about \
+something that then happened: 優勝するなんて思ってもみなかった, "I never \
+even imagined we'd win". Almost always with 思う, 考える or 想像する, and \
+in the past."""
+notes = """
+Literally "not even try to think": てみる plus も. Before a noun it \
+describes the unexpected: 思ってもみないこと, "something I never \
+imagined". 夢にも思わなかった is a stronger set phrase; plain 〜とは思わ\
+なかった is a simple "I didn't think"."""
+related = ["te-miru", "sae"]
+examples = [
+  { tatoeba = "254881_486397", ja = "そんなところで彼女と会うなんて、思っ{てもみなかった}。", en = "Never did I expect to see her in such a place." },
+  { tatoeba = "50198_212913", ja = "そのときは、母親のことなど考え{てもみなかった}。", en = "At the time, she gave no thought to her mother." },
+  { source = "yomeru", ja = "日本に住むなんて、思っ{てもみなかった}。", en = "I never even imagined I'd live in Japan." },
+]
+
+[[point]]
+id = "to-iu-hodo-de-wa-nai"
+pattern = "というほどではない"
+forms = ["というほどではありません", "というほどじゃない", "というほどでもない", "ほどではない", "ほどじゃない", "ほどでもない"]
+jlpt = "N3"
+meaning = "not so much as to call it, not to the point of"
+formation = [
+  "Noun / Verb / Adjective + というほどではない   (病気というほどではない)",
+  "Noun / Verb［る］ + ほどではない   (心配するほどではない)",
+]
+explanation = """
+Plays something down: it's there, but not to the degree the word \
+suggests. 頭が少し痛いけど、病気というほどではない, "my head hurts a \
+bit, but I wouldn't call it being ill". Without という it measures \
+against a level: 心配するほどではない, "it's nothing to worry about"."""
+notes = """
+ほどでもない adds "not even": それほどでもない is the modest reply to a \
+compliment, "oh, not really". ほど〜ない compares two things with an \
+adjective (昨日ほど寒くない); here ほどではない closes the sentence on \
+its own."""
+related = ["hodo-nai", "kurai-extent", "to-iu"]
+examples = [
+  { tatoeba = "324396_79321", ja = "友達{というほどではない}が知り合いだ。", en = "He is not a friend, but an acquaintance." },
+  { tatoeba = "49875_212592", ja = "そのホテルは評判{ほどではない}。", en = "That hotel is not all it's cracked up to be." },
+  { tatoeba = "65840_228482", ja = "いやそれ{ほどでもない}よ。何か用かい？", en = "Not really. What's up?" },
 ]
