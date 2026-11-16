@@ -694,7 +694,8 @@ notes = """
 For clock times, use ごろ: 三時ごろ, "around three o'clock" (三時ぐらい \
 is heard, but ごろ is standard). くらい and ぐらい are interchangeable. \
 Later levels add "at least" and "so much that" uses."""
-related = ["goro", "hodo"]
+related = ["goro", "hodo-nai", "kurai-extent"]
+homographs = ["kurai-extent"]
 examples = [
   { tatoeba = "25993_188846", ja = "駅まではバスで１０分{ぐらい}かかります。", en = "It's about ten minutes to the station by bus." },
   { tatoeba = "64597_227249", ja = "お金はどの{くらい}持っていますか。", en = "How much money do you have?" },
@@ -8990,4 +8991,466 @@ examples = [
   { tatoeba = "321762_81953", ja = "僕は君{と同じ}カメラを買った。", en = "I have bought the same camera as you have." },
   { tatoeba = "354238_380534", ja = "彼は父{と同じく}、たくさんの本を持っている。", en = "Like his father, he has many books." },
   { source = "yomeru", ja = "去年{と違って}、今年は雪が多い。", en = "Unlike last year, there's a lot of snow this year." },
+]
+
+[[point]]
+id = "wo-kikkake-ni"
+pattern = "をきっかけに"
+forms = ["をきっかけにして", "をきっかけとして", "がきっかけで", "がきっかけになって"]
+jlpt = "N3"
+meaning = "taking … as the trigger, prompted by, since (an event)"
+formation = [
+  "Noun + をきっかけに",
+  "Noun + がきっかけで",
+]
+explanation = """
+Names the event that started something new: 留学をきっかけに料理を始め\
+た, "studying abroad got me into cooking". The first event is a chance \
+moment, and what follows is usually a lasting change in a person's \
+life, habits or relations."""
+notes = """
+がきっかけで puts the trigger as the subject: 友だちの一言がきっかけで. \
+For a cause that simply produces a result (an accident, a delay), use \
+で or せいで, not きっかけ: きっかけ is about something beginning. \
+を契機に is a stiffer written equivalent."""
+related = ["wo-tooshite", "sei-de"]
+examples = [
+  { tatoeba = "328444_75275", ja = "松川先生との出会い{をきっかけに}、私の人生は変わった。", en = "My life changed, sparked by meeting Mr Matsukawa." },
+  { source = "yomeru", ja = "留学{をきっかけに}、料理を始めた。", en = "Studying abroad got me started cooking." },
+  { source = "yomeru", ja = "友だちの一言{がきっかけで}、ピアノを習い始めた。", en = "A friend's remark got me to start piano lessons." },
+]
+
+[[point]]
+id = "wo-chuushin-ni"
+pattern = "を中心に"
+forms = ["を中心にして", "を中心として", "をちゅうしんに", "を中心とする", "を中心とした"]
+jlpt = "N3"
+meaning = "centered on, mainly, focusing on"
+formation = [
+  "Noun + を中心に",
+  "Noun + を中心とする / を中心とした + Noun",
+]
+explanation = """
+Says what something gathers around, in space or in focus: 駅を中心に町\
+が広がっている, "the town spreads out around the station"; 若い人を中心\
+に人気がある, "it's popular, mainly with young people". Before a noun, \
+use を中心とする or を中心とした."""
+notes = """
+The subject spreads out or turns around the center: people, places, \
+topics. を中心にして and を中心として mean the same and sound a little \
+more formal. For "mostly, mainly" in general, 主に is the plain adverb."""
+related = ["wo-to-suru", "wo-tooshite"]
+examples = [
+  { source = "yomeru", ja = "この町は駅{を中心に}広がっている。", en = "This town spreads out around the station." },
+  { source = "yomeru", ja = "このゲームは若い人{を中心に}人気がある。", en = "This game is popular, mainly with young people." },
+  { source = "yomeru", ja = "会議は新しい計画{を中心に}話し合った。", en = "The meeting focused on the new plan." },
+]
+
+[[point]]
+id = "wo-tooshite"
+pattern = "を通して"
+forms = ["をとおして", "を通じて", "をつうじて", "を通した", "を通じた"]
+jlpt = "N3"
+meaning = "through, by way of; throughout (a period)"
+formation = [
+  "Noun + を通して / を通じて",
+]
+explanation = """
+Two uses. With a person or medium, it is the channel something passes \
+through: 友だちを通して知り合った, "we met through a friend". With a \
+stretch of time, it means "all through": 一年を通して暖かい, "it's warm \
+all year round"."""
+notes = """
+を通じて means the same and Bunpro files it at N2; を通して sounds \
+more deliberate, as if someone used the channel on purpose. Don't confuse with plain 通す, "let through": 子どもを通して\
+ください is "please let the children pass". によって says who or what \
+does something; を通して says what it went through on the way."""
+related = ["ni-yotte", "wo-kikkake-ni"]
+examples = [
+  { tatoeba = "59244_221918", ja = "この国は年間{を通して}気温の変化がない。", en = "This country has an even temperature throughout the year." },
+  { tatoeba = "37377_200176", ja = "トムとマイクはお互いの友人{を通じて}知り合った。", en = "Tom and Mike became acquainted through their mutual friends." },
+  { source = "yomeru", ja = "インターネット{を通して}友だちができた。", en = "I made friends through the internet." },
+]
+
+[[point]]
+id = "wo-to-suru"
+pattern = "を〜とする"
+forms = ["を〜として", "を〜とした", "を〜とし"]
+jlpt = "N3"
+meaning = "take A as B, treat A as B, with A as B"
+formation = [
+  "Noun A + を + Noun B + とする",
+  "Noun A + を + Noun B + とした + Noun",
+]
+explanation = """
+Gives A the role of B: 優勝を目標として練習する, "train with the title \
+as our goal". Often used with nouns like 目標, 中心, テーマ and 前提. \
+Before a noun, とする or とした: 彼をリーダーとするチーム, "the team \
+led by him"."""
+notes = """
+A formal, written-leaning pattern; in speech を〜にする is common: 優勝\
+を目標にする. Don't confuse with ようとする ("try to"), which follows \
+a volitional verb: 開けようとした. を中心に is one fixed use of this \
+pattern."""
+related = ["to-shite", "wo-chuushin-ni", "you-to-suru"]
+examples = [
+  { tatoeba = "317624_86087", ja = "彼女{を秘書として}使ってみよう。", en = "I'll try her out as a secretary." },
+  { source = "yomeru", ja = "優勝{を目標として}練習している。", en = "We're training with winning the title as our goal." },
+  { source = "yomeru", ja = "彼{をリーダーとする}チームができた。", en = "A team was formed with him as its leader." },
+]
+
+[[point]]
+id = "to-shite"
+pattern = "として"
+forms = ["としての"]
+jlpt = "N3"
+meaning = "as (a role or capacity); (one) として〜ない: not a single"
+formation = [
+  "Noun + として",
+  "Noun + としての + Noun",
+  "一 + Counter + として + Verb［ない］   (一人として来なかった)",
+]
+explanation = """
+Gives the role or status someone acts in: 医者として働く, "work as a \
+doctor". Before a noun, としての: 親としての責任, "one's responsibility \
+as a parent". After "one" plus a counter, with a negative, it stresses \
+"not even one": 一人として来なかった, "not a single person came"."""
+notes = """
+として is about a role; for "like, similar to", use のように. The \
+"not a single" use sounds firm and a bit formal; 一人も来なかった is \
+the everyday version. としては ("for a …") and としても ("even if") \
+are later points."""
+related = ["wo-to-suru", "no-you-na"]
+examples = [
+  { tatoeba = "295771_107914", ja = "彼は芸人{として}成功した。", en = "He made good as an entertainer." },
+  { source = "yomeru", ja = "父は医者{として}働いている。", en = "My father works as a doctor." },
+  { source = "yomeru", ja = "パーティーには一人{として}来なかった。", en = "Not a single person came to the party." },
+]
+
+[[point]]
+id = "wa-mochiron"
+pattern = "はもちろん"
+forms = ["はもちろんのこと", "はもとより"]
+jlpt = "N3"
+meaning = "not to mention, … of course, and also"
+formation = [
+  "Noun + はもちろん + Noun + も",
+]
+explanation = """
+Puts the obvious case first, then adds a less obvious one, usually with \
+も or まで: 英語はもちろん、中国語も話せる, "she speaks Chinese, not \
+to mention English". The first item goes without saying; the second \
+is the news."""
+notes = """
+はもとより means the same and is more formal and written. Order \
+matters: the obvious item comes before はもちろん, unlike English \
+"not to mention", which puts it after. Compare ばかりでなく, which \
+adds without the "of course" feeling."""
+related = ["bakari-de-naku", "dake-de-naku", "dokoroka"]
+examples = [
+  { tatoeba = "21382_184254", ja = "学生{はもちろん}先生も来た。", en = "The teacher as well as his students has come." },
+  { tatoeba = "293971_109719", ja = "彼は英語とドイツ語{はもちろん}、スペイン語も話す。", en = "He speaks Spanish, not to mention English and German." },
+]
+
+[[point]]
+id = "bakari-de-naku"
+pattern = "ばかりでなく"
+forms = ["ばかりではなく", "ばかりじゃなく", "ばかりか"]
+jlpt = "N3"
+meaning = "not only … but also"
+formation = [
+  "Noun + ばかりでなく",
+  "Verb / ［い］Adjective + ばかりでなく",
+  "［な］Adjective + な + ばかりでなく",
+]
+explanation = """
+Adds a second item to the first, usually with も: 彼は学問ばかりでなく\
+経験もある, "he has experience as well as learning". It is the more \
+formal, written cousin of だけでなく. ばかりか is stronger: the second \
+item is more surprising, often something bad: 謝らないばかりか、笑って\
+いた, "not only didn't he apologize, he was laughing"."""
+notes = """
+After ばかりか, the second part often has まで or さえ. Don't confuse \
+with ばかり alone ("nothing but"). ばかりか cannot end in a command \
+or invitation; ばかりでなく can."""
+related = ["dake-de-naku", "wa-mochiron", "bakari-noun"]
+examples = [
+  { tatoeba = "294868_108821", ja = "彼は学問{ばかりでなく}経験もある。", en = "He has experience as well as learning." },
+  { tatoeba = "70137_232767", ja = "あなた{ばかりでなく}私もまちがっている。", en = "Not only you but also I am in the wrong." },
+  { source = "yomeru", ja = "彼は謝らない{ばかりか}、笑っていた。", en = "Not only did he not apologize, he was laughing." },
+]
+
+[[point]]
+id = "dokoroka"
+pattern = "どころか"
+forms = []
+jlpt = "N3"
+meaning = "far from, let alone, not even"
+formation = [
+  "Noun / ［な］Adjective + どころか",
+  "Verb / ［い］Adjective + どころか",
+]
+explanation = """
+Denies the first idea strongly and replaces it with something further \
+away: 雨はやむどころかひどくなった, "far from stopping, the rain got \
+worse". With a negative it means "let alone": ドイツ語どころか英語も\
+話せない, "I can't speak English, let alone German"."""
+notes = """
+With a negative, the harder item goes before どころか and the easier \
+one after, with も or さえ. With a positive, it's the reverse: 漢字\
+どころか古い本も読める, "she can read not just kanji but old books \
+too". どころではない, "this is no time for", is a later point."""
+related = ["wa-mochiron", "bakari-de-naku", "dokoro-de-wa-nai"]
+examples = [
+  { tatoeba = "256244_158286", ja = "私はドイツ語{どころか}英語も話せない。", en = "I cannot speak English, much less German." },
+  { tatoeba = "26706_189552", ja = "雨はやむ{どころか}いよいよひどくなった。", en = "Instead of stopping, the rain increased." },
+]
+
+[[point]]
+id = "de-yuumei"
+pattern = "で有名"
+forms = ["で有名だ", "でゆうめい", "で有名です", "で有名な"]
+jlpt = "N3"
+meaning = "famous for, known for"
+formation = [
+  "Noun + で有名",
+  "Verb / ［い］Adjective + ことで有名 / ので有名",
+]
+explanation = """
+Says what a place or person is known for: この公園はバラで有名です, \
+"this park is famous for its roses". For a whole fact, put こと or の \
+before it: 雨が多いことで有名だ, "it's known for its heavy rain"."""
+notes = """
+で marks the reason for the fame, but で after a place can also say \
+where: 世界で有名, "famous around the world". It can \
+also mean "notorious" when the thing is bad. として有名 says the role \
+someone is known in: 歌手として有名."""
+related = ["to-shite"]
+examples = [
+  { tatoeba = "59325_222001", ja = "この公園はバラ{で有名です}。", en = "This park is famous for its roses." },
+  { tatoeba = "19296_181636", ja = "京都は古いお寺があるの{で有名だ}。", en = "Kyoto is famous for its old temples." },
+]
+
+[[point]]
+id = "to-natte-iru"
+pattern = "となっている"
+forms = ["となっています", "となっており"]
+jlpt = "N3"
+meaning = "is (set as, stated as, by rule or arrangement)"
+formation = [
+  "Noun / ［な］Adjective + となっている",
+]
+explanation = """
+States how things are set up, often by a rule, a schedule or what's \
+written: この部屋は禁煙となっています, "this room is non-smoking". It \
+is common on signs, in announcements and in formal writing, where a \
+plain です would sound too blunt."""
+notes = """
+になっている means much the same and is more neutral. Unlike plain \
+となる ("become"), it describes a present state, not a change you \
+watch happen. ことになっている is the version for rules about \
+actions: 九時に集まることになっている."""
+related = ["naru", "koto-ni-natte-iru"]
+examples = [
+  { tatoeba = "46767_209505", ja = "その手紙の日付は１９８７年４月１日{となっている}。", en = "The letter is dated April 1, 1987." },
+  { source = "yomeru", ja = "この部屋は禁煙{となっています}。", en = "Smoking is not allowed in this room." },
+]
+
+[[point]]
+id = "ippou-de"
+pattern = "一方で"
+forms = ["一方", "いっぽうで", "一方では", "その一方で"]
+jlpt = "N3"
+meaning = "while, on the other hand, at the same time"
+formation = [
+  "Verb / ［い］Adjective + 一方で",
+  "［な］Adjective + な / である + 一方で",
+  "Noun + である + 一方で",
+  "Sentence。 + 一方、 / その一方で、",
+]
+explanation = """
+Sets two sides next to each other: 兄は勉強が得意な一方で、スポーツは\
+苦手だ, "my brother is good at studying, while he's bad at sports". \
+At the start of a sentence, 一方、 or その一方で、 means "meanwhile, \
+on the other hand"."""
+notes = """
+The two sides can be about the same thing or about different things. \
+反面 is only for two sides of one thing. Don't confuse with 一方だ, \
+"keeps getting more and more"."""
+related = ["hanmen", "ippou-da", "nagara-mo"]
+examples = [
+  { source = "yomeru", ja = "兄は勉強が得意な{一方で}、スポーツは苦手だ。", en = "My brother is good at studying, but bad at sports." },
+  { source = "yomeru", ja = "仕事が増える{一方で}、給料は変わらない。", en = "While the work increases, the pay stays the same." },
+  { tatoeba = "27212_190056", ja = "{一方では}彼は親切だが、他方では怠け者だ。", en = "On one hand he is kind, but on the other hand he is lazy." },
+]
+
+[[point]]
+id = "hanmen"
+pattern = "反面"
+forms = ["はんめん", "半面", "その反面"]
+jlpt = "N3"
+meaning = "on the other hand (two sides of one thing)"
+formation = [
+  "Verb / ［い］Adjective + 反面",
+  "［な］Adjective + な / である + 反面",
+  "Sentence。 + その反面、",
+]
+explanation = """
+Shows that one thing has two opposite sides: 都会は便利な反面、物価が\
+高い, "the city is convenient, but on the other hand things are \
+expensive". The good and the bad belong to the same person, place or \
+thing."""
+notes = """
+一方で can compare two different things; 反面 can't: it needs one \
+subject with two faces. It sounds a little formal. 半面 is a \
+less common spelling."""
+related = ["ippou-de", "nagara-mo"]
+examples = [
+  { source = "yomeru", ja = "都会は便利な{反面}、物価が高い。", en = "The city is convenient, but things are expensive." },
+  { source = "yomeru", ja = "この仕事は楽しい{反面}、とても疲れる。", en = "This job is fun, but on the other hand it's very tiring." },
+  { tatoeba = "42230_204988", ja = "それは値段は安いが、その{反面}品質がよくない。", en = "It is cheap, but on the other hand it is not good." },
+]
+
+[[point]]
+id = "hou-da"
+pattern = "ほうだ"
+forms = ["方だ", "ほうです", "方です", "のほうだ", "の方だ", "のほうです", "の方です"]
+jlpt = "N3"
+meaning = "rather, on the … side; (のは〜のほうだ) it's X that …"
+formation = [
+  "Verb［る］ / Verb［ない］ + ほうだ",
+  "［い］Adjective + ほうだ",
+  "［な］Adjective + な + ほうだ",
+  "Noun + の + ほうだ",
+  "… + のは + Noun + のほうだ   (悪いのは君のほうだ)",
+]
+explanation = """
+Puts someone or something on one side of a scale, compared with the \
+usual: 父はよく食べるほうだ, "my father is a fairly big eater". It is a \
+soft judgement: "more … than most". のは〜のほうだ picks one of two \
+sides, often against what was expected: 悪いのは君のほうだ, "you're the \
+one to blame (not me)"."""
+notes = """
+It softens a statement about oneself: 私は朝は強いほうです sounds more \
+modest than 朝に強い. Compare たほうがいい (advice) and より〜のほうが \
+(a comparison of two named things)."""
+related = ["yori-hou-ga", "ta-hou-ga-ii"]
+examples = [
+  { source = "yomeru", ja = "父はよく食べる{ほうだ}。", en = "My father is a pretty big eater." },
+  { source = "yomeru", ja = "私は朝は強い{ほうです}。", en = "I'm fairly good at getting up in the morning." },
+  { tatoeba = "28648_191488", ja = "悪いのはきみ{のほうだ}。", en = "It is you who is to blame." },
+]
+
+[[point]]
+id = "kurai-extent"
+pattern = "くらい"
+forms = ["ぐらい", "くらいだ", "ぐらいだ", "くらいです", "ぐらいです"]
+jlpt = "N3"
+meaning = "so … that, to the point of; at least (a minimum)"
+formation = [
+  "Verb / ［い］Adjective + くらい / ぐらい",
+  "［な］Adjective + な + くらい",
+  "Noun + くらい   (電話くらい)",
+]
+explanation = """
+Shows how far something goes by giving an example of its degree: 泣き\
+たいくらいうれしかった, "I was so happy I could cry". After a noun, it \
+can mark the least one could do: 電話ぐらいしてよ, "at least give me a \
+call", or the only thing there is: 休みの日にするのは掃除くらいだ, \
+"cleaning is about all I do on days off"."""
+notes = """
+ほど works the same for degree and sounds a bit more formal, but ほど \
+doesn't take the "at least" or "only" uses. As a sentence end: 歩けない\
+くらいだ, "I can barely walk". The "about, around" use after amounts \
+(十分ぐらい) is the earlier くらい entry. くらい and ぐらい are \
+interchangeable."""
+related = ["kurai", "hodo-nai"]
+homographs = ["kurai"]
+examples = [
+  { source = "yomeru", ja = "泣きたい{くらい}うれしかった。", en = "I was so happy I could cry." },
+  { source = "yomeru", ja = "遅れるなら電話{ぐらい}してよ。", en = "If you're going to be late, at least call." },
+  { tatoeba = "282024_121979", ja = "猫の手も借りたい{くらいだ}。", en = "We are so busy we'll take any help we can get." },
+]
+
+[[point]]
+id = "hodo-nai"
+pattern = "ほど〜ない"
+forms = ["ほど〜はない", "くらい〜はない", "ぐらい〜はない"]
+jlpt = "N3"
+meaning = "not as … as; nothing is as … as"
+formation = [
+  "Noun + ほど + ［い］Adjective［い̶］ + くない",
+  "Noun + ほど + Verb［ない］   (兄ほど食べない)",
+  "Noun + ほど + Adjective + Noun + はない   (友情ほど大切なものはない)",
+]
+explanation = """
+A ほど B ない says A doesn't reach the level of B: 今日は昨日ほど寒く\
+ない, "today isn't as cold as yesterday". With a noun and はない, it \
+says nothing beats the first item: 友情ほど大切なものはない, "nothing \
+is as important as friendship"."""
+notes = """
+The thing compared with goes before ほど, and the sentence must be \
+negative: ×昨日ほど寒い. くらい〜はない works the same in the "nothing \
+is as" use. For a plain "more than", use より."""
+related = ["yori-hou-ga", "kurai-extent", "ba-hodo"]
+examples = [
+  { tatoeba = "61223_223887", ja = "このカメラはあのカメラ{ほど高くない}。", en = "This camera is less expensive than that one." },
+  { tatoeba = "324327_79390", ja = "友情{ほど重要なものはない}。", en = "There is nothing so important as friendship." },
+  { source = "yomeru", ja = "今日は昨日{ほど寒くない}。", en = "Today isn't as cold as yesterday." },
+]
+
+[[point]]
+id = "mama"
+pattern = "まま"
+forms = ["ままで", "ままに", "ままだ", "ままにする", "のまま", "たまま", "ないまま"]
+jlpt = "N3"
+meaning = "as it is, unchanged, while still (in a state)"
+formation = [
+  "Verb［た］ + まま",
+  "Verb［ない］ + まま",
+  "Noun + の + まま",
+  "［い］Adjective + まま",
+  "［な］Adjective + な + まま",
+]
+explanation = """
+Says a state stays as it was while something else happens: 帽子をかぶ\
+ったまま部屋に入った, "she came in with her hat still on". ままにする \
+leaves something as it is on purpose: 窓を開けたままにしておく, "leave \
+the window open". そのまま means "just as it is"."""
+notes = """
+The state usually feels out of place or unchanged when it should have \
+changed. ながら joins two actions done together; まま keeps one state \
+fixed. Use た before まま, not the dictionary form: ×かぶるまま. In casual \
+speech まんま is heard."""
+related = ["nagara", "te-oku"]
+examples = [
+  { tatoeba = "316984_86727", ja = "彼女は帽子をかぶった{まま}部屋に入ってきました。", en = "She came into the room with her hat on." },
+  { tatoeba = "35443_198251", ja = "パジャマ{のまま}朝食を食べた。", en = "I had breakfast in pajamas." },
+  { tatoeba = "274205_140368", ja = "窓を開けた{ままに}しておいて下さい。", en = "Please keep the windows open." },
+]
+
+[[point]]
+id = "bakari-noun"
+pattern = "ばかり"
+forms = ["ばっかり", "ばっか", "ばかりで"]
+jlpt = "N3"
+meaning = "nothing but, only, all (too much of one thing)"
+formation = [
+  "Noun + ばかり",
+  "Noun + ばかり + Verb   (肉ばかり食べる)",
+]
+explanation = """
+Says one thing takes up everything, usually as a complaint: 弟は肉ばか\
+り食べる, "my brother eats nothing but meat". It can replace を or が, \
+or sit after other particles: 友だちとばかり遊ぶ."""
+notes = """
+だけ is a neutral "only"; ばかり adds "too much, again and again". \
+ばっかり and ばっか are casual. Keep apart from てばかり ("do nothing \
+but"), たばかり ("just did") and るばかりだ ("keeps getting"). After a \
+number, ばかり can mean "about": 百円ばかり, a rather old-fashioned use."""
+related = ["te-bakari", "ta-bakari", "bakari-da", "dake"]
+examples = [
+  { tatoeba = "289194_114477", ja = "彼はいつも同じ間違い{ばかり}している。", en = "He keeps making the same mistake." },
+  { source = "yomeru", ja = "弟は肉{ばかり}食べる。", en = "My little brother eats nothing but meat." },
+  { source = "yomeru", ja = "毎日雨{ばかりで}、どこにも行けない。", en = "It's rain every day, so I can't go anywhere." },
 ]
