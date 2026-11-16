@@ -4,17 +4,22 @@ version = "0.21.0"
 license.workspace = true
 edition = "2024"
 
+[features]
+# The TOML → grammar.bin compiler, for xtask and the tests.
+build = ["dep:toml"]
+
 [dependencies]
 deinflect  = { path = "../deinflect" }
 anyhow     = "1"
 fst        = "0.4"
 postcard   = { version = "1", features = ["alloc"] }
 serde      = { version = "1", features = ["derive"] }
-serde_json = "1"
-# Pure-Rust deflate only: the conversion runs in WASM too, so no zlib, and
-# none of zip's other codecs (Yomitan ZIPs are deflate or stored).
+# Pure-Rust deflate only: the lookups run in WASM too, so no zlib.
 flate2     = { version = "1", default-features = false, features = ["rust_backend"] }
-zip        = { version = "2", default-features = false, features = ["deflate"] }
+toml       = { version = "0.8", optional = true }
+
+[dev-dependencies]
+grammar-core = { path = ".", features = ["build"] }
 
 [lints]
 workspace = true

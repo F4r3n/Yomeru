@@ -23,7 +23,7 @@ Lookups go over HTTP to the yomeru-server on the same origin:
 For local dev, run the server alongside `dx serve` and point the
 website at it via a proxy in `Dioxus.toml` (or run both on the same
 host:port). See `server/README.md` for server setup; `server/data/`
-must contain `jmdict.bin`, `kanjidic.bin`, `examples.bin` (build with
+must contain `jmdict.bin`, `kanjidic.bin`, `examples.bin`, `grammar.bin` (build with
 `cargo xtask build-all`).
 
 ## Prerequisites

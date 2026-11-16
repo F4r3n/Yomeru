@@ -14,10 +14,9 @@ kanjidic-types   = { path = "../../crates/kanjidic-types" }
 examples-types   = { path = "../../crates/examples-types" }
 srs-core         = { path = "../../crates/srs-core" }
 japanese-utils   = { path = "../../crates/japanese-utils" }
-# The grammar dictionary is converted and looked up on the device on every
-# target (see src/grammar.rs), so this isn't native-only like the others.
+# Its entry types are on every target; natively it also looks up the
+# bundled grammar.bin (src/native/dict.rs).
 grammar-core     = { path = "../../crates/grammar-core" }
-sha2             = "0.10"
 
 serde         = { version = "1", features = ["derive"] }
 serde_json    = "1"
@@ -32,7 +31,7 @@ tracing       = "0.1"
 wasm-bindgen          = "0.2"
 wasm-bindgen-futures  = "0.4"
 js-sys                = "0.3"
-web-sys = { version = "0.3", features = ["Window", "Location", "ReadableStream", "ReadableStreamDefaultReader", "BroadcastChannel"] }
+web-sys = { version = "0.3", features = ["Window", "Location"] }
 gloo-net     = { version = "0.6", features = ["http"] }
 gloo-storage = "0.3"
 gloo-timers  = { version = "0.3", features = ["futures"] }

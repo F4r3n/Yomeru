@@ -13,6 +13,7 @@ pub struct DictAssets {
     pub jmdict: Asset,
     pub kanjidic: Asset,
     pub examples: Asset,
+    pub grammar: Asset,
     pub mnemonics: Option<Asset>,
     pub part_names: Option<Asset>,
 }
@@ -23,6 +24,7 @@ impl DictSource for DictAssets {
             DictFile::Jmdict => Some(self.jmdict),
             DictFile::Kanjidic => Some(self.kanjidic),
             DictFile::Examples => Some(self.examples),
+            DictFile::Grammar => Some(self.grammar),
             DictFile::Mnemonics => self.mnemonics,
             DictFile::PartNames => self.part_names,
         };

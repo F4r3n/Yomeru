@@ -1,6 +1,6 @@
 //! Thin `#[wasm_bindgen]` shim over `grammar-core`, for the extension's
-//! background script. The bytes it loads are the user's own `grammar.bin`,
-//! converted on their device: this module ships no dictionary data.
+//! background script. It loads the `data/grammar.bin` shipped with the
+//! extension.
 
 use grammar_core::GrammarDict;
 use serde::Serialize;
@@ -33,14 +33,14 @@ struct Match<'a> {
     match_len: usize,
 }
 
-/// What the hover popup shows of an entry: a glance, not the sources.
+/// What the hover popup shows of an entry: a glance, not the explanation.
 #[derive(Serialize)]
 struct PopupEntry {
-    term: String,
-    reading: String,
+    id: String,
+    pattern: String,
     jlpt: String,
     meaning: String,
-    structure: String,
+    formation: Vec<String>,
     examples: Vec<grammar_core::Example>,
 }
 
@@ -51,26 +51,17 @@ struct PopupMatch {
     match_len: usize,
 }
 
-/// Shortest match and headword the popup offers: one-char ones are
-/// particles and endings (は, た) that would come up on almost every word.
-const POPUP_MIN_CHARS: usize = 2;
-
 #[wasm_bindgen]
 impl GrammarDictionary {
     /// Loads `grammar.bin` bytes. Fails on a file of another format
-    /// version, with a message asking to import it again.
+    /// version.
     #[wasm_bindgen(constructor)]
     pub fn new(bytes: &[u8]) -> Result<GrammarDictionary, JsError> {
         let inner = GrammarDict::from_bytes(bytes).map_err(|e| JsError::new(&format!("{e:#}")))?;
         Ok(GrammarDictionary { inner })
     }
 
-    /// `{title, revision, attribution, url, indexUrl, downloadUrl}`.
-    pub fn meta(&self) -> Result<JsValue, JsError> {
-        to_js(self.inner.meta())
-    }
-
-    /// Entries whose term or reading is exactly `text`.
+    /// Entries whose pattern or a form is exactly `text`.
     pub fn lookup(&self, text: &str) -> Result<JsValue, JsError> {
         to_js(&self.inner.lookup(text))
     }
@@ -87,38 +78,39 @@ impl GrammarDictionary {
         }
     }
 
-    /// The hover popup's lookup: like [`Self::lookup_longest_match`], but
-    /// `{entries, matchLen}` holds summaries (whole meaning, at most
-    /// `max_examples` examples), and a match under two chars is `null`.
+    /// The hover popup's lookup (`GrammarDict::hover_match`):
+    /// `{entries, matchLen}` of summaries with at most `max_examples`
+    /// examples, or `null`.
     pub fn popup_lookup(
         &self,
         text: &str,
         max_chars: usize,
         max_examples: usize,
     ) -> Result<JsValue, JsError> {
-        let Some((entries, match_len)) = self.inner.lookup_longest_match(text, max_chars) else {
+        let Some((entries, match_len)) = self.inner.hover_match(text, max_chars) else {
             return Ok(JsValue::NULL);
         };
         let entries: Vec<PopupEntry> = entries
             .into_iter()
-            .filter(|e| e.term.chars().count() >= POPUP_MIN_CHARS)
             .map(|e| PopupEntry {
-                meaning: e.full_meaning(),
-                examples: e.preview_examples(max_examples),
-                term: e.term,
-                reading: e.reading,
+                id: e.id,
+                pattern: e.pattern,
                 jlpt: e.jlpt,
-                structure: e.structure,
+                meaning: e.meaning,
+                formation: e.formation,
+                examples: e.examples.into_iter().take(max_examples).collect(),
             })
             .collect();
-        if match_len < POPUP_MIN_CHARS || entries.is_empty() {
-            return Ok(JsValue::NULL);
-        }
         to_js(&PopupMatch { entries, match_len })
     }
 
-    /// Entries whose term or reading starts with `prefix`, at most `max`.
+    /// Entries with a pattern or form starting with `prefix`, at most `max`.
     pub fn lookup_prefix(&self, prefix: &str, max: usize) -> Result<JsValue, JsError> {
         to_js(&self.inner.lookup_prefix(prefix, max))
+    }
+
+    /// What the Lookup page's search shows for `text` (`GrammarDict::search`).
+    pub fn search(&self, text: &str, max: usize) -> Result<JsValue, JsError> {
+        to_js(&self.inner.search(text, max))
     }
 }

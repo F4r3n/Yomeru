@@ -1,21 +1,18 @@
-//! Grammar dictionary: converts a Yomitan grammar dictionary ZIP into our
-//! own `grammar.bin`, then loads it and looks grammar points up in text.
-//!
-//! The dictionary's content belongs to its sources, so Yomeru never ships,
-//! hosts or syncs it: each device downloads or imports the ZIP and converts
-//! it here. Tests use hand-written entries only.
+//! Grammar dictionary: Yomeru's own `data/grammar.toml`, compiled into
+//! `grammar.bin` at build time (feature `build`) and shipped with the app
+//! like JMdict, then loaded and looked up in text here.
 
-mod convert;
+#[cfg(feature = "build")]
+mod compile;
 mod dict;
 mod format;
 pub mod types;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "build"))]
 mod tests;
 
-pub use convert::{Converted, Converter, convert};
-pub use dict::GrammarDict;
+#[cfg(feature = "build")]
+pub use compile::{Compiled, compile};
+pub use dict::{GrammarDict, HOVER_MIN_CHARS};
 pub use format::FORMAT_VERSION;
-pub use types::{
-    Block, Example, GrammarEntry, GrammarMeta, ParagraphKind, Rich, Sense, SourceBlock, Span,
-};
+pub use types::{Example, GrammarEntry, Related, Rich, Span};

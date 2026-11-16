@@ -254,7 +254,7 @@ const GRAMMAR_EXAMPLES = 2;
 
 /**
  * The grammar point `text` starts with, for the hover popup. `match: null`
- * when there is none, or no grammar dictionary is installed.
+ * when there is none.
  */
 export async function handleGrammarLookup({
   text,
@@ -265,6 +265,19 @@ export async function handleGrammarLookup({
   if (!dict || !text) return { match: null };
   const match = dict.popup_lookup(text, GRAMMAR_MAX_CHARS, GRAMMAR_EXAMPLES) as GrammarPopupMatch | null;
   return { match: match ?? null };
+}
+
+/** What the Lookup page's search shows for `text`, at most `max` points. */
+export async function handleGrammarSearch({
+  text,
+  max,
+}: {
+  text: string;
+  max: number;
+}): Promise<{ entries: unknown[] }> {
+  const dict = await getGrammar();
+  if (!dict || !text) return { entries: [] };
+  return { entries: (dict.search(text, max) as unknown[]) ?? [] };
 }
 
 export async function handleImportCards({ cards }: { cards: unknown }) {

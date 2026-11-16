@@ -11,6 +11,7 @@ use yomeru_shared::{launch_with_config, platform_with_dict, startup_head};
 static JMDICT: Asset = asset!("/assets/dict/jmdict.bin");
 static KANJIDIC: Asset = asset!("/assets/dict/kanjidic.bin");
 static EXAMPLES: Asset = asset!("/assets/dict/examples.bin");
+static GRAMMAR: Asset = asset!("/assets/dict/grammar.bin");
 static MNEMONICS: Asset = asset!("/assets/dict/kanji-mnemonics.tsv");
 static PART_NAMES: Asset = asset!("/assets/dict/part-names.tsv");
 
@@ -19,6 +20,7 @@ fn main() {
         jmdict: JMDICT,
         kanjidic: KANJIDIC,
         examples: EXAMPLES,
+        grammar: GRAMMAR,
         mnemonics: Some(MNEMONICS),
         part_names: Some(PART_NAMES),
     }));

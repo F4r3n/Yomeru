@@ -10,8 +10,7 @@
 pub mod cards_io;
 pub mod dict;
 pub mod drill_log;
-/// The grammar dictionary: downloaded or imported, converted and kept on
-/// this device only.
+/// The grammar dictionary's entry types, shipped like JMdict.
 pub mod grammar;
 /// The card store: IndexedDB in the browser, SQLite natively. Same API.
 #[cfg(target_arch = "wasm32")]

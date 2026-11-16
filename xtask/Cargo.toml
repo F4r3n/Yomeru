@@ -13,3 +13,5 @@ clap    = { version = "4", features = ["derive"] }
 ureq    = "2"
 flate2  = "1"
 zip     = "2"
+# data/grammar.toml → grammar.bin, in process: no download, no -build crate.
+grammar-core = { path = "../crates/grammar-core", features = ["build"] }

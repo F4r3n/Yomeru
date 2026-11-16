@@ -1,70 +1,54 @@
 //! `grammar.bin`: `YGRM` magic + version byte, then four length-prefixed
 //! (u32 LE) blobs:
 //!
-//! 1. Meta: postcard [`GrammarMeta`].
-//! 2. FST: term or reading → group index.
-//! 3. Groups (postcard `Vec<Vec<u32>>`): group index → byte offsets of its
+//! 1. FST: pattern or form → group index.
+//! 2. Groups (postcard `Vec<Vec<u32>>`): group index → byte offsets of its
 //!    entries in the entries blob, in dictionary order.
+//! 3. Ids (postcard `Vec<(String, u32)>`, sorted by id): id → byte offset.
 //! 4. Entries: each a u32 LE length, then a raw-deflated postcard
-//!    [`GrammarEntry`]. Entries are big (a few KB of prose each) and only a
-//!    handful are read per lookup, so each is compressed on its own.
+//!    [`GrammarEntry`]. Only a handful are read per lookup, so each is
+//!    compressed on its own.
 
-use std::collections::BTreeMap;
-use std::io::{Read, Write};
+use std::io::Read;
+#[cfg(feature = "build")]
+use std::io::Write;
 
 use anyhow::{Context, bail};
-use flate2::Compression;
 use flate2::read::DeflateDecoder;
-use flate2::write::DeflateEncoder;
 
-use crate::types::{GrammarEntry, GrammarMeta};
+use crate::types::GrammarEntry;
 
 pub(crate) const MAGIC: &[u8; 4] = b"YGRM";
-/// Bump on any change to the layout or to the types: a stored file of
-/// another version is refused, and the app asks for a new import.
-pub const FORMAT_VERSION: u8 = 2;
+/// Bump on any change to the layout or to the types. The file ships with
+/// the code, so a mismatch is a build mistake.
+pub const FORMAT_VERSION: u8 = 3;
 
-/// An entry compressed for the entries blob, with the keys it's found by.
-pub(crate) struct Packed {
-    pub term: String,
-    pub reading: String,
-    pub bytes: Vec<u8>,
-}
+#[cfg(feature = "build")]
+pub(crate) fn write(entries: &[GrammarEntry]) -> anyhow::Result<Vec<u8>> {
+    use std::collections::BTreeMap;
 
-/// Compresses `entry`, and decodes the result once: an entry that doesn't
-/// round-trip would otherwise only go missing at lookup.
-pub(crate) fn pack(entry: &GrammarEntry) -> anyhow::Result<Packed> {
-    let bytes = compress(&postcard::to_allocvec(entry)?)?;
-    let back: GrammarEntry = postcard::from_bytes(&decompress(&bytes)?)
-        .with_context(|| format!("entry {} doesn't decode", entry.term))?;
-    if &back != entry {
-        bail!("entry {} doesn't survive encoding", entry.term);
-    }
-    Ok(Packed {
-        term: entry.term.clone(),
-        reading: entry.reading.clone(),
-        bytes,
-    })
-}
-
-pub(crate) fn write(meta: &GrammarMeta, entries: &[Packed]) -> anyhow::Result<Vec<u8>> {
     let mut blob = Vec::new();
     let mut keys: BTreeMap<&str, Vec<u32>> = BTreeMap::new();
+    let mut ids: Vec<(String, u32)> = Vec::with_capacity(entries.len());
     for entry in entries {
         let offset = u32::try_from(blob.len()).context("grammar dictionary over 4 GB")?;
-        blob.extend_from_slice(&u32::try_from(entry.bytes.len())?.to_le_bytes());
-        blob.extend_from_slice(&entry.bytes);
-
-        for key in [entry.term.as_str(), entry.reading.as_str()] {
-            if key.is_empty() {
-                continue;
-            }
+        let bytes = compress(&postcard::to_allocvec(entry)?)?;
+        let back: GrammarEntry = postcard::from_bytes(&decompress(&bytes)?)
+            .with_context(|| format!("entry {} doesn't decode", entry.id))?;
+        if &back != entry {
+            bail!("entry {} doesn't survive encoding", entry.id);
+        }
+        blob.extend_from_slice(&u32::try_from(bytes.len())?.to_le_bytes());
+        blob.extend_from_slice(&bytes);
+        ids.push((entry.id.clone(), offset));
+        for key in entry.keys() {
             let group = keys.entry(key).or_default();
             if !group.contains(&offset) {
                 group.push(offset);
             }
         }
     }
+    ids.sort();
 
     let mut fst = fst::MapBuilder::memory();
     let mut groups = Vec::with_capacity(keys.len());
@@ -78,9 +62,9 @@ pub(crate) fn write(meta: &GrammarMeta, entries: &[Packed]) -> anyhow::Result<Ve
     out.extend_from_slice(MAGIC);
     out.push(FORMAT_VERSION);
     for part in [
-        postcard::to_allocvec(meta)?.as_slice(),
-        &fst,
+        fst.as_slice(),
         &postcard::to_allocvec(&groups)?,
+        &postcard::to_allocvec(&ids)?,
         &blob,
     ] {
         out.extend_from_slice(&u32::try_from(part.len())?.to_le_bytes());
@@ -90,9 +74,9 @@ pub(crate) fn write(meta: &GrammarMeta, entries: &[Packed]) -> anyhow::Result<Ve
 }
 
 pub(crate) struct Parts<'a> {
-    pub meta: GrammarMeta,
     pub fst: &'a [u8],
     pub groups: Vec<Vec<u32>>,
+    pub ids: Vec<(String, u32)>,
     pub entries: &'a [u8],
 }
 
@@ -103,7 +87,7 @@ pub(crate) fn read(bytes: &[u8]) -> anyhow::Result<Parts<'_>> {
     let version = bytes.get(4).copied().unwrap_or(0);
     if version != FORMAT_VERSION {
         bail!(
-            "grammar dictionary format {version}, this version reads {FORMAT_VERSION}: import it again"
+            "grammar dictionary format {version}, this version reads {FORMAT_VERSION}: rebuild it (cargo xtask build-grammar)"
         );
     }
     let mut rest = bytes.get(5..).unwrap_or_default();
@@ -115,22 +99,25 @@ pub(crate) fn read(bytes: &[u8]) -> anyhow::Result<Parts<'_>> {
         rest = after.get(len..).unwrap_or_default();
         Ok(part)
     };
-    let meta = postcard::from_bytes(next("meta")?).context("bad meta")?;
     let fst = next("fst")?;
     let groups: Vec<Vec<u32>> = postcard::from_bytes(next("groups")?).context("bad groups")?;
+    let ids: Vec<(String, u32)> = postcard::from_bytes(next("ids")?).context("bad ids")?;
     let entries = next("entries")?;
-    check_offsets(&groups, entries)?;
+    check_offsets(
+        groups.iter().flatten().chain(ids.iter().map(|(_, o)| o)),
+        entries,
+    )?;
     Ok(Parts {
-        meta,
         fst,
         groups,
+        ids,
         entries,
     })
 }
 
-/// Every group offset must start a whole entry, so lookups can't read past
-/// the blob or from the middle of an entry.
-fn check_offsets(groups: &[Vec<u32>], entries: &[u8]) -> anyhow::Result<()> {
+/// Every offset must start a whole entry, so lookups can't read past the
+/// blob or from the middle of an entry.
+fn check_offsets<'a>(offsets: impl Iterator<Item = &'a u32>, entries: &[u8]) -> anyhow::Result<()> {
     let mut starts = Vec::new();
     let mut pos = 0usize;
     while pos < entries.len() {
@@ -142,9 +129,9 @@ fn check_offsets(groups: &[Vec<u32>], entries: &[u8]) -> anyhow::Result<()> {
             .filter(|&end| end <= entries.len())
             .with_context(|| format!("truncated entry at {pos}"))?;
     }
-    for &offset in groups.iter().flatten() {
+    for &offset in offsets {
         if starts.binary_search(&(offset as usize)).is_err() {
-            bail!("group points into the middle of an entry ({offset})");
+            bail!("offset into the middle of an entry ({offset})");
         }
     }
     Ok(())
@@ -163,8 +150,9 @@ fn split_len(bytes: &[u8]) -> Option<(usize, &[u8])> {
     Some((u32::from_le_bytes(*len) as usize, rest))
 }
 
+#[cfg(feature = "build")]
 fn compress(bytes: &[u8]) -> anyhow::Result<Vec<u8>> {
-    let mut enc = DeflateEncoder::new(Vec::new(), Compression::best());
+    let mut enc = flate2::write::DeflateEncoder::new(Vec::new(), flate2::Compression::best());
     enc.write_all(bytes)?;
     Ok(enc.finish()?)
 }

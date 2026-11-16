@@ -1,9 +1,11 @@
 # Yomeru's grammar dictionary — N5 complete, N4–N3 in progress.
 #
-# Written for Yomeru. The explanations and the sentences marked
-# source = "yomeru" are ours. Sentences with a `tatoeba` id come from the
-# Tatoeba corpus (CC BY 2.0 FR, https://tatoeba.org), via the Tanaka Corpus
-# file the examples dictionary is built from; the id is `<ja>_<en>`.
+# Written for Yomeru. Copyright 2026 F4r3n, licensed under CC BY-SA 4.0
+# (https://creativecommons.org/licenses/by-sa/4.0/). The explanations and
+# the sentences marked source = "yomeru" are ours. Sentences with a
+# `tatoeba` id come from the Tatoeba corpus (CC BY 2.0 FR,
+# https://tatoeba.org), via the Tanaka Corpus file the examples dictionary
+# is built from; the id is `<ja>_<en>`.
 #
 # Fields
 #   id           stable ASCII slug; cards point at it, never change it

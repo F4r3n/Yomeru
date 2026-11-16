@@ -105,6 +105,8 @@ pub fn App() -> Element {
     // Offline dictionaries take a moment to load; start now rather than on
     // the first lookup. A no-op for the HTTP-backed dictionary.
     use_hook(|| consume_context::<Platform>().dict.warm_up());
+    // Earlier versions downloaded a grammar dictionary onto the device.
+    use_hook(|| spawn(crate::grammar::remove_old_download()));
 
     use_future(move || async move {
         match crate::sync::sync_now().await {

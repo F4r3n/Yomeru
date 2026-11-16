@@ -91,6 +91,12 @@ enum Cmd {
         #[arg(short, long)]
         jmdict: Option<PathBuf>,
     },
+    /// Compile data/grammar.toml into the grammar dictionary.
+    BuildGrammar {
+        /// Output path (default: extension/data/grammar.bin)
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+    },
     /// Build everything: WASM modules + dict index.
     BuildAll {
         /// Path to JMdict_e (uncompressed XML).
@@ -98,8 +104,8 @@ enum Cmd {
         #[arg(short, long)]
         input: Option<PathBuf>,
     },
-    /// Build only the three binary dict indexes (JMdict, KANJIDIC2,
-    /// examples). Downloads inputs if missing. Used by the
+    /// Build only the binary dict indexes (JMdict, KANJIDIC2, examples,
+    /// grammar). Downloads inputs if missing. Used by the
     /// `yomeru-dicts` Docker builder service, which has neither
     /// wasm-pack nor npm available.
     BuildDicts {
@@ -142,6 +148,12 @@ fn main() -> Result<()> {
             build_wasm(&root, "grammar-wasm", &profile)?;
             build_extension_wasm(&root, &profile)?;
             copy_overlays(&root)?;
+            build_grammar(&root, &root.join("extension/data/grammar.bin"))?;
+        }
+
+        Cmd::BuildGrammar { output } => {
+            let output = output.unwrap_or_else(|| root.join("extension/data/grammar.bin"));
+            build_grammar(&root, &output)?;
         }
 
         Cmd::DownloadDict { output_dir } => {
@@ -414,7 +426,7 @@ fn package(root: &Path) -> Result<()> {
         "_generated/examples-wasm/examples_wasm.js",
         "_generated/examples-wasm/examples_wasm_bg.wasm",
         "data/examples.bin",
-        // Code only: the grammar data is the user's, converted on their device.
+        "data/grammar.bin",
         "_generated/grammar-wasm/grammar_wasm.js",
         "_generated/grammar-wasm/grammar_wasm_bg.wasm",
         "_generated/yomeru-extension/yomeru_extension.js",
@@ -709,6 +721,8 @@ fn download_kanjivg(dir: &Path) -> Result<PathBuf> {
 /// The release build of the extension's wasm modules and JS, given the dict
 /// indexes are already in `extension/data/`.
 fn build_extension(root: &Path) -> Result<()> {
+    // From the checked-in TOML, so the release job needn't hand it over.
+    build_grammar(root, &root.join("extension/data/grammar.bin"))?;
     build_wasm(root, "jmdict-wasm", "release")?;
     build_wasm(root, "srs-wasm", "release")?;
     build_wasm(root, "kanjidic-wasm", "release")?;
@@ -746,6 +760,30 @@ fn build_dicts(root: &Path, input: Option<PathBuf>) -> Result<()> {
         &root.join("extension/data/examples.bin"),
     )?;
     copy_overlays(root)?;
+    build_grammar(root, &root.join("extension/data/grammar.bin"))?;
+    Ok(())
+}
+
+/// Compiles the checked-in `data/grammar.toml` into `output`.
+fn build_grammar(root: &Path, output: &Path) -> Result<()> {
+    let src = root.join("data/grammar.toml");
+    let text =
+        std::fs::read_to_string(&src).with_context(|| format!("reading {}", src.display()))?;
+    let compiled = grammar_core::compile(&text).context("compiling data/grammar.toml")?;
+    for w in &compiled.warnings {
+        eprintln!("  warning: {w}");
+    }
+    if let Some(parent) = output.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(output, &compiled.bytes)
+        .with_context(|| format!("writing {}", output.display()))?;
+    eprintln!(
+        "Built {} grammar points → {} ({} KB)",
+        compiled.entries,
+        output.display(),
+        compiled.bytes.len() / 1024
+    );
     Ok(())
 }
 

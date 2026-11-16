@@ -48,7 +48,7 @@ jobs:
       # only checks that the app compiles, so empty stand-ins do.
       - run: |
           mkdir -p app/android/assets/dict
-          touch app/android/assets/dict/{jmdict.bin,kanjidic.bin,examples.bin,kanji-mnemonics.tsv,part-names.tsv}
+          touch app/android/assets/dict/{jmdict.bin,kanjidic.bin,examples.bin,grammar.bin,kanji-mnemonics.tsv,part-names.tsv}
       - run: cargo ndk -t arm64-v8a build -p yomeru-android
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}

@@ -3944,10 +3944,10 @@ dependencies = [
  "deinflect",
  "flate2",
  "fst",
+ "grammar-core",
  "postcard",
  "serde",
- "serde_json",
- "zip 2.6.1",
+ "toml",
 ]
 
 [[package]]
@@ -7521,6 +7521,7 @@ dependencies = [
  "examples-types",
  "fsrs",
  "governor",
+ "grammar-core",
  "jmdict-core",
  "jmdict-types",
  "kanjidic-core",
@@ -10042,6 +10043,7 @@ dependencies = [
  "anyhow",
  "clap",
  "flate2",
+ "grammar-core",
  "ureq",
  "zip 2.6.1",
 ]
@@ -10148,7 +10150,6 @@ dependencies = [
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
- "sha2 0.10.9",
  "srs-core",
  "tokio",
  "tracing",

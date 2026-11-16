@@ -1,20 +1,21 @@
 //! Grammar results on the lookup page.
 //!
 //! A card per grammar point. Closed, it shows what a glance needs: the
-//! headword, its level, a two-line meaning, the structure and two
-//! examples. Open, it shows one source at a time behind tabs, starting with
-//! the one explaining the most, each with its explanation, then its
-//! patterns, then its examples.
+//! pattern, its level, the meaning, how it attaches and two examples.
+//! Open, it adds every construction, the explanation, the notes, all the
+//! examples and the points worth comparing.
 
 use dioxus::prelude::*;
 
-use crate::grammar::{Example, GrammarEntry, ParagraphKind, Rich, Sense, SourceBlock, Span};
+use crate::grammar::{Example, GrammarEntry, Span};
 use crate::icons::{Icon, IconName};
 
 /// Examples a closed card previews.
 const PREVIEW_EXAMPLES: usize = 2;
+/// Other spellings listed before "+N".
+const FORMS_SHOWN: usize = 6;
 
-/// The Grammar section: `entries` as cards. `on_search` searches a headword
+/// The Grammar section: `entries` as cards. `on_search` searches a pattern
 /// a card links to.
 #[component]
 pub fn GrammarResults(entries: Vec<GrammarEntry>, on_search: EventHandler<String>) -> Element {
@@ -24,8 +25,8 @@ pub fn GrammarResults(entries: Vec<GrammarEntry>, on_search: EventHandler<String
     rsx! {
         div { class: "grammar-results",
             div { class: "section-title", "Grammar" }
-            for (i, entry) in entries.into_iter().enumerate() {
-                GrammarEntryCard { key: "{i}-{entry.term}", entry, on_search }
+            for entry in entries {
+                GrammarEntryCard { key: "{entry.id}", entry, on_search }
             }
         }
     }
@@ -34,171 +35,85 @@ pub fn GrammarResults(entries: Vec<GrammarEntry>, on_search: EventHandler<String
 #[component]
 fn GrammarEntryCard(entry: GrammarEntry, on_search: EventHandler<String>) -> Element {
     let mut open = use_signal(|| false);
-    let main_source = entry.main_source();
-    let mut tab = use_signal(move || main_source);
     let is_open = *open.read();
-    let has_detail = !entry.sources.is_empty();
-    let preview = entry.preview_examples(PREVIEW_EXAMPLES);
-    let active = (*tab.read()).min(entry.sources.len().saturating_sub(1));
-    let meaning = entry.full_meaning();
+    let shown_examples = if is_open {
+        entry.examples.len()
+    } else {
+        PREVIEW_EXAMPLES
+    };
+    let hidden_forms = entry.forms.len().saturating_sub(FORMS_SHOWN);
+    let forms = entry
+        .forms
+        .iter()
+        .take(FORMS_SHOWN)
+        .cloned()
+        .collect::<Vec<_>>()
+        .join("、");
 
     rsx! {
         div { class: if is_open { "card grammar-card open" } else { "card grammar-card" },
             div {
-                class: if has_detail { "grammar-head clickable" } else { "grammar-head" },
-                onclick: move |_| if has_detail { open.toggle() },
+                class: "grammar-head clickable",
+                onclick: move |_| open.toggle(),
                 div { class: "grammar-title",
-                    span { class: "headword", lang: "ja", "{entry.term}" }
-                    if !entry.reading.is_empty() && entry.reading != entry.term {
-                        span { class: "kanji-sub", lang: "ja", "{entry.reading}" }
-                    }
-                    if !entry.jlpt.is_empty() {
-                        span { class: "freq-badge", "{entry.jlpt}" }
-                    }
-                    if has_detail {
-                        span {
-                            class: "grammar-chevron",
-                            title: if is_open { "Close" } else { "Open" },
-                            Icon { name: IconName::ChevronDown, size: 18 }
-                        }
+                    span { class: "headword", lang: "ja", "{entry.pattern}" }
+                    span { class: "freq-badge", "{entry.jlpt}" }
+                    span {
+                        class: "grammar-chevron",
+                        title: if is_open { "Close" } else { "Open" },
+                        Icon { name: IconName::ChevronDown, size: 18 }
                     }
                 }
-                if !meaning.is_empty() {
-                    div { class: "gloss grammar-meaning", "{meaning}" }
-                }
-                if !entry.structure.is_empty() {
-                    div { class: "grammar-structure", lang: "ja", "{entry.structure}" }
-                }
-            }
-            if !entry.see_also.is_empty() {
-                div { class: "grammar-see",
-                    span { class: "muted", "See" }
-                    for target in entry.see_also.iter().cloned() {
-                        button {
-                            class: "chip",
-                            lang: "ja",
-                            onclick: {
-                                let target = target.clone();
-                                move |_| on_search.call(target.clone())
-                            },
-                            "{target}"
-                        }
+                div { class: "gloss grammar-meaning", "{entry.meaning}" }
+                if !is_open {
+                    if let Some(first) = entry.formation.first() {
+                        div { class: "grammar-structure", lang: "ja", "{first}" }
                     }
                 }
-            }
-            if !is_open && !preview.is_empty() {
-                ExampleList { examples: preview, on_search }
             }
             if is_open {
-                if entry.sources.len() > 1 {
-                    div { class: "subtabs grammar-tabs",
-                        for (i, source) in entry.sources.iter().enumerate() {
-                            button {
-                                key: "{i}",
-                                class: if i == active { "active" } else { "" },
-                                onclick: move |_| tab.set(i),
-                                "{source.name}"
-                            }
-                        }
+                if !forms.is_empty() {
+                    div { class: "grammar-forms muted", lang: "ja",
+                        "Also: {forms}"
+                        if hidden_forms > 0 { " +{hidden_forms}" }
                     }
                 }
-                if let Some(source) = entry.sources.get(active).cloned() {
-                    SourceView { key: "{active}", source, on_search }
-                }
-                if !entry.website.is_empty() {
-                    a { class: "grammar-website", href: "{entry.website}", target: "_blank",
-                        "All explanations and illustrations on the dictionary's website ↗"
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// One source: per sense, its explanation, then its patterns, then its
-/// examples.
-#[component]
-fn SourceView(source: SourceBlock, on_search: EventHandler<String>) -> Element {
-    rsx! {
-        div { class: "grammar-source",
-            div { class: "grammar-source-name",
-                span { "{source.name}" }
-                if !source.level.is_empty() {
-                    span { class: "freq-badge", "{source.level}" }
-                }
-            }
-            for (i, sense) in source.senses.into_iter().enumerate() {
-                SenseView { key: "{i}", sense, on_search }
-            }
-        }
-    }
-}
-
-/// Patterns shown before "+N more".
-const PATTERNS_SHOWN: usize = 4;
-/// Examples shown before "Show N more".
-const EXAMPLES_SHOWN: usize = 3;
-
-#[component]
-fn SenseView(sense: Sense, on_search: EventHandler<String>) -> Element {
-    let mut all_patterns = use_signal(|| false);
-    let mut all_examples = use_signal(|| false);
-    // Without the paragraphs that only repeat an example.
-    let prose: Vec<(ParagraphKind, Rich)> = sense.prose().map(|(k, t)| (k, t.clone())).collect();
-    let patterns: Vec<Rich> = sense.patterns().cloned().collect();
-    let examples: Vec<Example> = sense.examples().cloned().collect();
-    let hidden_patterns = patterns.len().saturating_sub(PATTERNS_SHOWN);
-    let hidden_examples = examples.len().saturating_sub(EXAMPLES_SHOWN);
-    let pattern_count = if *all_patterns.read() {
-        patterns.len()
-    } else {
-        PATTERNS_SHOWN
-    };
-    let example_count = if *all_examples.read() {
-        examples.len()
-    } else {
-        EXAMPLES_SHOWN
-    };
-
-    rsx! {
-        div { class: "grammar-sense",
-            if !sense.label.is_empty() {
-                div { class: "grammar-sense-label", "{sense.label}" }
-            }
-            if !prose.is_empty() {
-                div { class: "grammar-prose",
-                    for (j, (kind, text)) in prose.into_iter().enumerate() {
-                        p { key: "{j}", class: paragraph_class(kind),
-                            RichText { rich: text, on_search }
-                        }
-                    }
-                }
-            }
-            if !patterns.is_empty() {
                 div { class: "grammar-section",
                     div { class: "grammar-section-title", "Formation" }
                     ul { class: "grammar-patterns", lang: "ja",
-                        for (j, item) in patterns.into_iter().take(pattern_count).enumerate() {
-                            li { key: "{j}", RichText { rich: item, on_search } }
-                        }
-                    }
-                    if hidden_patterns > 0 {
-                        button { class: "link grammar-more", onclick: move |_| all_patterns.toggle(),
-                            if *all_patterns.read() { "Show fewer" } else { "+{hidden_patterns} more" }
+                        for (i, line) in entry.formation.iter().enumerate() {
+                            li { key: "{i}", "{line}" }
                         }
                     }
                 }
-            }
-            if !examples.is_empty() {
-                div { class: "grammar-section",
-                    div { class: "grammar-section-title", "Examples" }
-                    ExampleList {
-                        examples: examples.into_iter().take(example_count).collect::<Vec<_>>(),
-                        on_search,
+                p { class: "grammar-p", "{entry.explanation}" }
+                if !entry.notes.is_empty() {
+                    div { class: "grammar-section",
+                        div { class: "grammar-section-title", "Notes" }
+                        p { class: "grammar-p", "{entry.notes}" }
                     }
-                    if hidden_examples > 0 {
-                        button { class: "link grammar-more", onclick: move |_| all_examples.toggle(),
-                            if *all_examples.read() { "Show fewer" } else { "Show {hidden_examples} more" }
+                }
+            }
+            if !entry.examples.is_empty() {
+                div { class: if is_open { "grammar-section" } else { "" },
+                    if is_open {
+                        div { class: "grammar-section-title", "Examples" }
+                    }
+                    ExampleList {
+                        examples: entry.examples.iter().take(shown_examples).cloned().collect::<Vec<_>>(),
+                    }
+                }
+            }
+            if is_open && !entry.related.is_empty() {
+                div { class: "grammar-see",
+                    span { class: "muted", "Compare" }
+                    for rel in entry.related.iter().cloned() {
+                        button {
+                            key: "{rel.id}",
+                            class: "chip",
+                            lang: "ja",
+                            onclick: move |_| on_search.call(rel.pattern.clone()),
+                            "{rel.pattern}"
                         }
                     }
                 }
@@ -207,54 +122,22 @@ fn SenseView(sense: Sense, on_search: EventHandler<String>) -> Element {
     }
 }
 
-fn paragraph_class(kind: ParagraphKind) -> &'static str {
-    match kind {
-        ParagraphKind::Plain => "grammar-p",
-        ParagraphKind::Translation => "grammar-p translation",
-        ParagraphKind::Heading => "grammar-p heading",
-        ParagraphKind::InlineExample => "grammar-p inline-example",
-        ParagraphKind::Derivation => "grammar-p derivation",
-        ParagraphKind::Annotation => "grammar-p annotation",
-        ParagraphKind::ExampleLabel => "grammar-p example-label",
-    }
-}
-
 #[component]
-fn ExampleList(examples: Vec<Example>, on_search: EventHandler<String>) -> Element {
+fn ExampleList(examples: Vec<Example>) -> Element {
     rsx! {
         div { class: "grammar-examples",
             for (i, ex) in examples.into_iter().enumerate() {
                 div { key: "{i}", class: "grammar-example",
-                    div { class: "jp", lang: "ja", RichText { rich: ex.ja, on_search } }
-                    if !ex.en.is_empty() {
-                        div { class: "en", "{ex.en}" }
+                    div { class: "jp", lang: "ja",
+                        for (j, span) in ex.ja.iter().cloned().enumerate() {
+                            match span {
+                                Span::Text { text } => rsx! { span { key: "{j}", "{text}" } },
+                                Span::Highlight { text } => rsx! { mark { key: "{j}", "{text}" } },
+                            }
+                        }
                     }
+                    div { class: "en", "{ex.en}" }
                 }
-            }
-        }
-    }
-}
-
-#[component]
-fn RichText(rich: Rich, on_search: EventHandler<String>) -> Element {
-    rsx! {
-        for (i, span) in rich.into_iter().enumerate() {
-            match span {
-                Span::Text { text } => rsx! { span { key: "{i}", "{text}" } },
-                Span::Highlight { text } => rsx! { mark { key: "{i}", "{text}" } },
-                Span::Label { text } => rsx! { strong { key: "{i}", "{text}" } },
-                Span::Ruby { text, ruby } => rsx! {
-                    ruby { key: "{i}", "{text}" rt { "{ruby}" } }
-                },
-                Span::Link { text, query } => rsx! {
-                    button {
-                        key: "{i}",
-                        class: "link grammar-link",
-                        onclick: move |_| on_search.call(query.clone()),
-                        "{text}"
-                    }
-                },
-                Span::LineBreak => rsx! { br { key: "{i}" } },
             }
         }
     }

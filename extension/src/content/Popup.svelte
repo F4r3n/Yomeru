@@ -27,7 +27,7 @@
 
     // Which grammar points arrived; they come after the words.
     let grammarKey = $derived(
-        $popupStore.grammar ? $popupStore.grammar.entries.map((g) => g.term).join(",") : "",
+        $popupStore.grammar ? $popupStore.grammar.entries.map((g) => g.id).join(",") : "",
     );
 
     $effect(() => {

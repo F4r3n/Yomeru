@@ -11,6 +11,16 @@ data/kanji-mnemonics.tsv and data/part-names.tsv are Copyright 2026 F4r3n,
 licensed under the Creative Commons Attribution-ShareAlike 4.0 International
 License (CC BY-SA 4.0): https://creativecommons.org/licenses/by-sa/4.0/
 
+Grammar dictionary
+------------------
+data/grammar.toml, and the grammar.bin built from it, are Copyright 2026
+F4r3n, licensed under the Creative Commons Attribution-ShareAlike 4.0
+International License (CC BY-SA 4.0):
+https://creativecommons.org/licenses/by-sa/4.0/
+Its example sentences with a `tatoeba` id are from the Tatoeba project,
+https://tatoeba.org, licensed under CC BY 2.0 FR:
+https://creativecommons.org/licenses/by/2.0/fr/
+
 Dictionary data
 ---------------
 The dictionary files built by this project (jmdict.bin, kanjidic.bin,

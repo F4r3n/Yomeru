@@ -51,6 +51,7 @@ jobs:
             extension/data/jmdict.bin
             extension/data/kanjidic.bin
             extension/data/examples.bin
+            extension/data/grammar.bin
             extension/data/kanji-mnemonics.tsv
             extension/data/part-names.tsv
           retention-days: 1

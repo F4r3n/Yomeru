@@ -23,7 +23,7 @@ image=yomeru-android-build
 dict_src="$root/extension/data"
 dict_dst="$root/app/android/assets/dict"
 mkdir -p "$dict_dst"
-for f in jmdict.bin kanjidic.bin examples.bin kanji-mnemonics.tsv part-names.tsv; do
+for f in jmdict.bin kanjidic.bin examples.bin grammar.bin kanji-mnemonics.tsv part-names.tsv; do
     if [[ ! -f "$dict_src/$f" ]]; then
         echo "missing $dict_src/$f — run: cargo xtask build-all" >&2
         exit 1

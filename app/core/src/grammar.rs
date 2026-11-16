@@ -1,462 +1,51 @@
-//! The grammar dictionary on this device.
-//!
-//! Its content belongs to the sources bee-san's dictionary collects, so
-//! Yomeru never ships, hosts or syncs it: the user downloads the publisher's
-//! ZIP (or imports one), [`grammar_core::convert`] turns it into
-//! `grammar.bin` here, and the file stays in this device's storage —
-//! IndexedDB in the browser, the app's data dir natively. Nothing in this
-//! module talks to the Yomeru server.
+//! The grammar dictionary: Yomeru's own `data/grammar.toml`, compiled into
+//! `grammar.bin` and shipped like JMdict. Lookups go through
+//! [`crate::platform::DictClient::grammar_search`]: the server, the
+//! Android app's bundled copy, or the extension's background.
 
-use std::sync::{Arc, Mutex, PoisonError};
+pub use grammar_core::{Example, GrammarEntry, Related, Rich, Span};
 
-pub use grammar_core::{
-    Block, Example, GrammarDict, GrammarEntry, GrammarMeta, ParagraphKind, Rich, Sense,
-    SourceBlock, Span,
-};
-use serde::Deserialize;
-use sha2::{Digest, Sha256};
-
-use crate::rt;
-
-/// The publisher's ZIP on their GitHub Pages site, which allows
-/// cross-origin downloads (GitHub release assets don't).
-pub const DEFAULT_ZIP_URL: &str = "https://bee-san.github.io/bees-ultimate-grammar-dictionary/downloads/bees-ultimate-grammar-dictionary.zip";
-/// `sha256  file` lines for each ZIP the publisher releases.
-pub const DEFAULT_SUMS_URL: &str =
-    "https://bee-san.github.io/bees-ultimate-grammar-dictionary/downloads/SHA256SUMS";
-pub const DEFAULT_HOME_URL: &str = "https://github.com/bee-san/bees-ultimate-grammar-dictionary";
-
-/// The loaded dictionary. `None` until [`load`] ran; `Some(None)` when it
-/// ran and nothing is installed. A static Mutex rather than a thread-local:
-/// Dioxus mobile runs the app on several threads.
-static CURRENT: Mutex<Option<Option<Arc<GrammarDict>>>> = Mutex::new(None);
-
-/// Why the stored file couldn't be loaded, so later [`load`]s answer at
-/// once instead of reading it again. Cleared by an install or a removal.
-static LOAD_ERROR: Mutex<Option<String>> = Mutex::new(None);
-
-fn set_current(dict: Option<Arc<GrammarDict>>) {
-    *LOAD_ERROR.lock().unwrap_or_else(PoisonError::into_inner) = None;
-    *CURRENT.lock().unwrap_or_else(PoisonError::into_inner) = Some(dict);
+/// Deletes the grammar dictionary earlier versions downloaded and converted
+/// on the device (bee-san's, never ours to keep around). Once per device;
+/// harmless when there is none.
+pub async fn remove_old_download() {
+    const DONE_KEY: &str = "yomeru_old_grammar_removed";
+    if crate::rt::kv_get::<bool>(DONE_KEY).unwrap_or(false) {
+        return;
+    }
+    match old::delete().await {
+        Ok(()) => {
+            if let Err(e) = crate::rt::kv_set(DONE_KEY, &true) {
+                tracing::warn!("[yomeru] {e}");
+            }
+        }
+        Err(e) => tracing::warn!("[yomeru] removing the old grammar dictionary: {e}"),
+    }
 }
 
-/// The `BroadcastChannel` an install or removal is announced on, so other
-/// pages of the same origin drop the dictionary they loaded: the
-/// extension's background, other tabs of the web app.
-pub const CHANGE_CHANNEL: &str = "yomeru-grammar";
-
+/// Its own IndexedDB database, `yomeru-grammar`.
 #[cfg(target_arch = "wasm32")]
-fn announce_change() {
-    match web_sys::BroadcastChannel::new(CHANGE_CHANNEL) {
-        Ok(channel) => {
-            if let Err(e) = channel.post_message(&wasm_bindgen::JsValue::from_str("changed")) {
-                tracing::warn!("grammar change broadcast: {e:?}");
-            }
-            channel.close();
-        }
-        Err(e) => tracing::warn!("grammar change channel: {e:?}"),
-    }
-}
-
-/// Natively the app is the only reader of the file.
-#[cfg(not(target_arch = "wasm32"))]
-fn announce_change() {}
-
-/// The loaded dictionary, if [`load`] ran and one is installed.
-pub fn current() -> Option<Arc<GrammarDict>> {
-    CURRENT
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .clone()
-        .flatten()
-}
-
-/// Loads the installed dictionary from storage, once; later calls return
-/// what the first found. `Ok(None)` when none is installed. A stored file
-/// this build can't read (an older format) is an error asking to import
-/// again, and stays stored until then.
-pub async fn load() -> Result<Option<GrammarMeta>, String> {
-    if let Some(loaded) = CURRENT
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .clone()
-    {
-        return Ok(loaded.map(|d| d.meta().clone()));
-    }
-    if let Some(e) = LOAD_ERROR
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .clone()
-    {
-        return Err(e);
-    }
-    let Some(bytes) = store::read().await? else {
-        set_current(None);
-        return Ok(None);
-    };
-    let dict =
-        match blocking(move || GrammarDict::from_bytes(&bytes).map_err(|e| e.to_string())).await {
-            Ok(dict) => dict,
-            Err(e) => {
-                *LOAD_ERROR.lock().unwrap_or_else(PoisonError::into_inner) = Some(e.clone());
-                return Err(e);
-            }
-        };
-    let meta = dict.meta().clone();
-    set_current(Some(Arc::new(dict)));
-    Ok(Some(meta))
-}
-
-/// What an install produced, for the settings screen.
-#[derive(Debug, Clone)]
-pub struct Installed {
-    pub meta: GrammarMeta,
-    pub entries: usize,
-    /// Size of the stored `grammar.bin`.
-    pub bytes: usize,
-}
-
-/// How long an install waits after reporting progress: about a frame, so
-/// the UI renders the new state and the browser paints it before the next
-/// step holds the page's thread.
-const YIELD_MS: u32 = 20;
-
-/// Where a download or an install stands, for a progress bar.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Progress {
-    /// Bytes of the ZIP received, out of its size when the server says.
-    Downloading { received: u64, total: Option<u64> },
-    /// Checking the download against the publisher's digest.
-    Verifying,
-    /// Term banks converted, out of the dictionary's total.
-    Converting { done: usize, total: usize },
-    /// Writing `grammar.bin` to this device's storage.
-    Saving,
-}
-
-impl Progress {
-    /// How far along this phase is, 0.0–1.0; `None` when there's no telling.
-    pub fn fraction(self) -> Option<f64> {
-        match self {
-            Progress::Downloading {
-                received,
-                total: Some(total),
-            } if total > 0 => Some((received as f64 / total as f64).min(1.0)),
-            Progress::Converting { done, total } if total > 0 => Some(done as f64 / total as f64),
-            _ => None,
-        }
-    }
-}
-
-/// Converts a Yomitan grammar ZIP, stores the result and makes it current,
-/// reporting each step to `progress`. With `sha256` (lowercase hex), a ZIP
-/// with another digest is refused before conversion.
-///
-/// The conversion runs one term bank per step. In the browser each step
-/// runs on the page's thread, so the wait between steps is what lets the
-/// page repaint (and the progress bar move).
-pub async fn install_zip(
-    zip: Vec<u8>,
-    sha256: Option<String>,
-    progress: &mut dyn FnMut(Progress),
-) -> Result<Installed, String> {
-    let zip = match sha256 {
-        Some(expected) => {
-            progress(Progress::Verifying);
-            rt::sleep_ms(YIELD_MS).await;
-            let (zip, actual) = blocking(move || {
-                let actual = hex(&Sha256::digest(&zip));
-                Ok((zip, actual))
-            })
-            .await?;
-            if actual != expected {
-                return Err(format!(
-                    "the download is damaged (SHA-256 {actual}, expected {expected}). Try again."
-                ));
-            }
-            zip
-        }
-        None => zip,
-    };
-
-    let mut converter =
-        blocking(move || grammar_core::Converter::new(zip).map_err(|e| format!("{e:#}"))).await?;
-    loop {
-        progress(Progress::Converting {
-            done: converter.done(),
-            total: converter.total(),
-        });
-        rt::sleep_ms(YIELD_MS).await;
-        let (back, more) = blocking(move || {
-            let more = converter.step().map_err(|e| format!("{e:#}"))?;
-            Ok((converter, more))
-        })
-        .await?;
-        converter = back;
-        if !more {
-            break;
-        }
-    }
-    progress(Progress::Converting {
-        done: converter.total(),
-        total: converter.total(),
-    });
-    rt::sleep_ms(YIELD_MS).await;
-    let (converted, dict) = blocking(move || {
-        let converted = converter.finish().map_err(|e| format!("{e:#}"))?;
-        let dict = GrammarDict::from_bytes(&converted.bytes).map_err(|e| e.to_string())?;
-        Ok((converted, dict))
-    })
-    .await?;
-    let installed = Installed {
-        meta: converted.meta,
-        entries: converted.entries,
-        bytes: converted.bytes.len(),
-    };
-    progress(Progress::Saving);
-    rt::sleep_ms(YIELD_MS).await;
-    store::write(converted.bytes).await?;
-    set_current(Some(Arc::new(dict)));
-    announce_change();
-    Ok(installed)
-}
-
-/// Downloads the publisher's ZIP and the digest their SHA256SUMS gives it,
-/// to hand to [`install_zip`].
-pub async fn download_zip(progress: &mut dyn FnMut(Progress)) -> Result<(Vec<u8>, String), String> {
-    progress(Progress::Downloading {
-        received: 0,
-        total: None,
-    });
-    let sums = rt::get_text(DEFAULT_SUMS_URL).await?;
-    let name = DEFAULT_ZIP_URL.rsplit('/').next().unwrap_or_default();
-    let expected = digest_for(&sums, name)
-        .ok_or_else(|| format!("the publisher's SHA256SUMS doesn't list {name}"))?;
-    let zip = rt::get_bytes_with_progress(DEFAULT_ZIP_URL, &mut |received, total| {
-        progress(Progress::Downloading { received, total });
-    })
-    .await?;
-    Ok((zip, expected))
-}
-
-/// The digest `SHA256SUMS` gives for `file`, lowercased.
-fn digest_for(sums: &str, file: &str) -> Option<String> {
-    sums.lines().find_map(|line| {
-        let (digest, name) = line.split_once(char::is_whitespace)?;
-        // `sha256sum -b` marks binary files with a leading '*'.
-        let name = name.trim().trim_start_matches('*');
-        (name == file && digest.len() == 64).then(|| digest.to_ascii_lowercase())
-    })
-}
-
-/// The revision the publisher now offers, when it differs from the
-/// installed one. `Ok(None)` when up to date, or when nothing installed
-/// says where to look.
-pub async fn check_update() -> Result<Option<String>, String> {
-    #[derive(Deserialize)]
-    struct Index {
-        revision: String,
-    }
-    let Some(meta) = load().await? else {
-        return Ok(None);
-    };
-    if meta.index_url.is_empty() {
-        return Ok(None);
-    }
-    let text = rt::get_text(&meta.index_url).await?;
-    let index: Index = serde_json::from_str(&text).map_err(|e| format!("bad index.json: {e}"))?;
-    Ok((index.revision != meta.revision).then_some(index.revision))
-}
-
-/// Deletes the stored dictionary.
-pub async fn remove() -> Result<(), String> {
-    store::delete().await?;
-    set_current(None);
-    announce_change();
-    Ok(())
-}
-
-fn hex(bytes: &[u8]) -> String {
-    use std::fmt::Write;
-    bytes.iter().fold(String::new(), |mut s, b| {
-        let _ = write!(s, "{b:02x}");
-        s
-    })
-}
-
-/// Runs CPU-heavy work off the async runtime natively; in the browser there
-/// is one thread, so it just runs.
-#[cfg(not(target_arch = "wasm32"))]
-async fn blocking<T: Send + 'static>(
-    f: impl FnOnce() -> Result<T, String> + Send + 'static,
-) -> Result<T, String> {
-    tokio::task::spawn_blocking(f)
-        .await
-        .map_err(|e| format!("grammar task failed: {e}"))?
-}
-
-#[cfg(target_arch = "wasm32")]
-async fn blocking<T>(f: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
-    f()
-}
-
-// ── Storage ──────────────────────────────────────────────────────────
-
-/// IndexedDB, in a database of its own so the card database's versioning
-/// never has to know about it. The extension's pages and background share
-/// the extension's origin, so its background script reads the same file.
-#[cfg(target_arch = "wasm32")]
-mod store {
-    use idb::{Database, DatabaseEvent, Factory, ObjectStoreParams, Query, TransactionMode};
-    use js_sys::Uint8Array;
-    use wasm_bindgen::{JsCast, JsValue};
-
-    const DB_NAME: &str = "yomeru-grammar";
-    const DB_VERSION: u32 = 1;
-    const STORE: &str = "files";
-    const KEY: &str = "grammar.bin";
-
-    fn err(e: impl std::fmt::Debug) -> String {
-        format!("grammar storage: {e:?}")
-    }
-
-    async fn open() -> Result<Database, String> {
-        let mut req = Factory::new()
-            .map_err(err)?
-            .open(DB_NAME, Some(DB_VERSION))
-            .map_err(err)?;
-        req.on_upgrade_needed(|event| {
-            let Ok(db) = event.database() else {
-                return;
-            };
-            if !db.store_names().iter().any(|n| n == STORE)
-                && let Err(e) = db.create_object_store(STORE, ObjectStoreParams::new())
-            {
-                tracing::error!("grammar idb upgrade: {e:?}");
-            }
-        });
-        req.await.map_err(err)
-    }
-
-    pub(super) async fn read() -> Result<Option<Vec<u8>>, String> {
-        let db = open().await?;
-        let tx = db
-            .transaction(&[STORE], TransactionMode::ReadOnly)
-            .map_err(err)?;
-        let v = tx
-            .object_store(STORE)
-            .map_err(err)?
-            .get(Query::Key(JsValue::from_str(KEY)))
-            .map_err(err)?
-            .await
-            .map_err(err)?;
-        Ok(v.and_then(|v| v.dyn_into::<Uint8Array>().ok())
-            .map(|a| a.to_vec()))
-    }
-
-    pub(super) async fn write(bytes: Vec<u8>) -> Result<(), String> {
-        let db = open().await?;
-        let tx = db
-            .transaction(&[STORE], TransactionMode::ReadWrite)
-            .map_err(err)?;
-        let value = Uint8Array::from(bytes.as_slice());
-        drop(bytes);
-        tx.object_store(STORE)
-            .map_err(err)?
-            .put(&value, Some(&JsValue::from_str(KEY)))
-            .map_err(err)?
-            .await
-            .map_err(err)?;
-        tx.commit().map_err(err)?.await.map_err(err)?;
-        Ok(())
-    }
-
+mod old {
     pub(super) async fn delete() -> Result<(), String> {
-        let db = open().await?;
-        let tx = db
-            .transaction(&[STORE], TransactionMode::ReadWrite)
-            .map_err(err)?;
-        tx.object_store(STORE)
+        let err = |e: idb::Error| format!("{e:?}");
+        idb::Factory::new()
             .map_err(err)?
-            .delete(Query::Key(JsValue::from_str(KEY)))
+            .delete("yomeru-grammar")
             .map_err(err)?
             .await
-            .map_err(err)?;
-        tx.commit().map_err(err)?.await.map_err(err)?;
-        Ok(())
+            .map_err(err)
     }
 }
 
-/// A file in the app's data dir, replaced through a temp file and a rename
-/// so a crash can't leave half of one.
+/// `grammar.bin` in the app's data dir.
 #[cfg(not(target_arch = "wasm32"))]
-mod store {
-    use std::path::PathBuf;
-
-    fn path() -> PathBuf {
-        crate::rt::data_dir().join("grammar.bin")
-    }
-
-    pub(super) async fn read() -> Result<Option<Vec<u8>>, String> {
-        super::blocking(|| match std::fs::read(path()) {
-            Ok(bytes) => Ok(Some(bytes)),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
-            Err(e) => Err(format!("reading {}: {e}", path().display())),
-        })
-        .await
-    }
-
-    pub(super) async fn write(bytes: Vec<u8>) -> Result<(), String> {
-        super::blocking(move || {
-            let tmp = path().with_extension("bin.tmp");
-            std::fs::write(&tmp, bytes).map_err(|e| format!("writing {}: {e}", tmp.display()))?;
-            std::fs::rename(&tmp, path()).map_err(|e| format!("saving {}: {e}", path().display()))
-        })
-        .await
-    }
-
+mod old {
     pub(super) async fn delete() -> Result<(), String> {
-        super::blocking(|| match std::fs::remove_file(path()) {
+        let path = crate::rt::data_dir().join("grammar.bin");
+        match std::fs::remove_file(&path) {
             Ok(()) => Ok(()),
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
-            Err(e) => Err(format!("deleting {}: {e}", path().display())),
-        })
-        .await
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn finds_the_digest_of_a_file_in_sha256sums() {
-        let a = "a".repeat(64);
-        let b = "B".repeat(64);
-        let sums = format!("{a}  other.zip\n{b} *grammar.zip\n");
-        assert_eq!(digest_for(&sums, "grammar.zip"), Some("b".repeat(64)));
-        assert_eq!(digest_for(&sums, "other.zip"), Some(a));
-        assert_eq!(digest_for(&sums, "missing.zip"), None);
-        assert_eq!(digest_for("short  grammar.zip", "grammar.zip"), None);
-    }
-
-    #[test]
-    fn progress_fraction_is_clamped_and_unknown_without_a_total() {
-        let dl = |received, total| Progress::Downloading { received, total };
-        assert_eq!(dl(5, Some(10)).fraction(), Some(0.5));
-        // A compressed transfer can report its compressed size.
-        assert_eq!(dl(15, Some(10)).fraction(), Some(1.0));
-        assert_eq!(dl(5, None).fraction(), None);
-        assert_eq!(dl(5, Some(0)).fraction(), None);
-        assert_eq!(
-            Progress::Converting { done: 2, total: 8 }.fraction(),
-            Some(0.25)
-        );
-        assert_eq!(Progress::Saving.fraction(), None);
-    }
-
-    #[test]
-    fn hex_is_lowercase_and_padded() {
-        assert_eq!(hex(&[0x00, 0x0f, 0xab]), "000fab");
+            Err(e) => Err(format!("deleting {}: {e}", path.display())),
+        }
     }
 }

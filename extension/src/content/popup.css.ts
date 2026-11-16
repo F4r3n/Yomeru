@@ -86,7 +86,7 @@ export const POPUP_CSS = `
 .jp-grammar-term { font-size:19px; }
 .jp-grammar-meaning { color:#cdd6f4; margin:2px 0 4px; }
 .jp-grammar-structure { font-size:12px; color:#a6adc8; background:#313244; border-radius:4px;
-                        padding:2px 7px; display:inline-block; margin-bottom:6px; }
+                        padding:2px 7px; display:block; width:fit-content; margin-bottom:6px; }
 .jp-grammar-examples { display:flex; flex-direction:column; gap:8px; margin-top:4px;
                        padding-left:10px; border-left:2px solid #313244; }
 .jp-grammar-examples .jp-corpus-jp { font-size:14px; }

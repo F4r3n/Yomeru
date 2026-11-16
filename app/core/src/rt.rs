@@ -40,26 +40,6 @@ pub async fn post_json<B: Serialize + ?Sized>(
     imp::post(url, json, bearer).await
 }
 
-/// GETs `url`'s body as bytes; an error for any non-2xx status. For files
-/// from other hosts (the grammar dictionary download), so it sends no token.
-pub async fn get_bytes(url: &str) -> Result<Vec<u8>, String> {
-    imp::get(url, &mut |_, _| {}).await
-}
-
-/// [`get_bytes`], calling `progress(received, total)` as the body arrives.
-/// `total` is the response's `Content-Length`, when it sends one.
-pub async fn get_bytes_with_progress(
-    url: &str,
-    progress: &mut dyn FnMut(u64, Option<u64>),
-) -> Result<Vec<u8>, String> {
-    imp::get(url, progress).await
-}
-
-/// [`get_bytes`] as UTF-8 text.
-pub async fn get_text(url: &str) -> Result<String, String> {
-    String::from_utf8(get_bytes(url).await?).map_err(|_| format!("{url} isn't text"))
-}
-
 #[cfg(target_arch = "wasm32")]
 mod imp {
     use super::HttpResponse;
@@ -117,47 +97,6 @@ mod imp {
         let status = res.status();
         let body = res.text().await.map_err(|e| e.to_string())?;
         Ok(HttpResponse { status, body })
-    }
-
-    pub(super) async fn get(
-        url: &str,
-        progress: &mut dyn FnMut(u64, Option<u64>),
-    ) -> Result<Vec<u8>, String> {
-        use js_sys::{Reflect, Uint8Array};
-        use wasm_bindgen::{JsCast, JsValue};
-        use wasm_bindgen_futures::JsFuture;
-
-        let res = gloo_net::http::Request::get(url)
-            .send()
-            .await
-            .map_err(|e| e.to_string())?;
-        if !res.ok() {
-            return Err(format!("HTTP {} from {url}", res.status()));
-        }
-        let total = res
-            .headers()
-            .get("content-length")
-            .and_then(|v| v.parse::<u64>().ok());
-        let Some(body) = res.body() else {
-            return res.binary().await.map_err(|e| e.to_string());
-        };
-        let js = |e: JsValue| format!("download from {url}: {e:?}");
-        let reader: web_sys::ReadableStreamDefaultReader = body.get_reader().unchecked_into();
-        let mut out = Vec::with_capacity(total.unwrap_or(0) as usize);
-        loop {
-            let chunk = JsFuture::from(reader.read()).await.map_err(js)?;
-            let done = Reflect::get(&chunk, &JsValue::from_str("done"))
-                .ok()
-                .and_then(|v| v.as_bool())
-                .unwrap_or(true);
-            if done {
-                break;
-            }
-            let value = Reflect::get(&chunk, &JsValue::from_str("value")).map_err(js)?;
-            out.extend_from_slice(&Uint8Array::new(&value).to_vec());
-            progress(out.len() as u64, total);
-        }
-        Ok(out)
     }
 }
 
@@ -325,23 +264,5 @@ mod imp {
         let status = res.status().as_u16();
         let body = res.text().await.map_err(|e| e.to_string())?;
         Ok(HttpResponse { status, body })
-    }
-
-    pub(super) async fn get(
-        url: &str,
-        progress: &mut dyn FnMut(u64, Option<u64>),
-    ) -> Result<Vec<u8>, String> {
-        let mut res = client().get(url).send().await.map_err(|e| e.to_string())?;
-        let status = res.status();
-        if !status.is_success() {
-            return Err(format!("HTTP {} from {url}", status.as_u16()));
-        }
-        let total = res.content_length();
-        let mut out = Vec::with_capacity(total.unwrap_or(0) as usize);
-        while let Some(chunk) = res.chunk().await.map_err(|e| e.to_string())? {
-            out.extend_from_slice(&chunk);
-            progress(out.len() as u64, total);
-        }
-        Ok(out)
     }
 }

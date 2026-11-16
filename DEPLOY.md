@@ -12,8 +12,8 @@ throughout.
 
 ## 1. Build the dict bins (once, on a build host)
 
-The server needs three binary files at startup
-(`jmdict.bin` / `kanjidic.bin` / `examples.bin`).
+The server needs four binary files at startup
+(`jmdict.bin` / `kanjidic.bin` / `examples.bin` / `grammar.bin`).
 
 **Podman deploy** (compose, below): you can skip this section — the
 `yomeru-dicts` builder service in `server/docker-compose.yml`
@@ -29,7 +29,7 @@ cargo xtask download-dict
 cargo xtask download-kanjidic
 cargo xtask download-examples
 cargo xtask build-all
-# ↳ writes extension/data/{jmdict,kanjidic,examples}.bin
+# ↳ writes extension/data/{jmdict,kanjidic,examples,grammar}.bin
 ```
 
 Total ≈45 MB. Copy that directory to the deploy host (e.g.
@@ -81,7 +81,9 @@ The compose file defines two services that share named volumes:
 
 - `yomeru-dicts` — one-shot builder. Runs `cargo xtask build-all`
   inside its image, writes `jmdict.bin` / `kanjidic.bin` /
-  `examples.bin` to the `yomeru-dicts` named volume, then exits 0.
+  `examples.bin` / `grammar.bin` to the `yomeru-dicts` named volume,
+  then exits 0. `grammar.bin` is compiled from the image's
+  `data/grammar.toml` on every run.
   Skips itself on subsequent runs if the volume is already
   populated.
 - `yomeru-server` — long-running. `depends_on` `yomeru-dicts` with
@@ -408,7 +410,7 @@ image and writes the old format again.
 │   ├── index.html
 │   ├── assets/...
 │   └── yomeru-web_bg-<hash>.wasm
-├── dicts/              # jmdict.bin, kanjidic.bin, examples.bin
+├── dicts/              # jmdict.bin, kanjidic.bin, examples.bin, grammar.bin
 └── yomeru.db           # SQLite — sync state
 ```
 

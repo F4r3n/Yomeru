@@ -29,7 +29,7 @@ pub fn search_on_open(word: String) {
 }
 const HISTORY_MAX: usize = 10;
 /// Grammar points shown for one search.
-const GRAMMAR_MAX: usize = 10;
+const GRAMMAR_MAX: u8 = 10;
 
 #[derive(Clone, Copy, PartialEq)]
 enum ExtraTab {
@@ -248,12 +248,8 @@ fn LookupListPane() -> Element {
     let mut input_seed = use_signal(|| (0u32, query.peek().clone()));
     let mut last_target = use_signal(String::new);
     let mut entries = use_signal(Vec::<WordEntry>::new);
-    // Grammar points for the search, from the on-device grammar dictionary
-    // (none when it isn't installed).
+    // Grammar points for the search.
     let mut grammar_hits = use_signal(Vec::<GrammarEntry>::new);
-    // Set when the installed grammar dictionary can't be read (an older
-    // format), so the page says why grammar results are missing.
-    let mut grammar_broken = use_signal(|| false);
     let mut searching = use_signal(|| false);
     let mut searched = use_signal(|| false);
     let mut load_err = use_signal(|| Option::<String>::None);
@@ -368,17 +364,14 @@ fn LookupListPane() -> Element {
             results.truncate(30);
             // Grammar is searched as typed (kana for romaji): its patterns
             // are kana and seldom katakana.
-            let grammar = match crate::grammar::load().await {
-                Ok(Some(_)) => crate::grammar::current()
-                    .zip(targets.first())
-                    .map(|(d, t)| d.search(t, GRAMMAR_MAX))
-                    .unwrap_or_default(),
-                Ok(None) => Vec::new(),
-                Err(e) => {
-                    warn!("grammar dictionary: {e}");
-                    grammar_broken.set(true);
-                    Vec::new()
-                }
+            let grammar = match targets.first() {
+                Some(t) => dict::grammar_search(t, GRAMMAR_MAX)
+                    .await
+                    .unwrap_or_else(|e| {
+                        warn!("grammar search: {e}");
+                        Vec::new()
+                    }),
+                None => Vec::new(),
             };
             if matched.is_none() && !grammar.is_empty() {
                 matched = targets.first().cloned();
@@ -489,12 +482,12 @@ fn LookupListPane() -> Element {
     let target = last_target.read().clone();
     let show_converted = is_romaji(&q_trim) && !target.is_empty() && target != q_trim;
     let result_count = entries.read().len();
-    // Grammar leads when the search is itself a grammar headword (てよかった),
+    // Grammar leads when the search is itself a grammar pattern (てよかった),
     // and otherwise follows the words.
     let grammar_first = grammar_hits
         .read()
         .first()
-        .is_some_and(|g| g.term == target || g.reading == target);
+        .is_some_and(|g| g.keys().any(|k| k == target));
     let on_grammar_search = EventHandler::new(move |term: String| {
         let mut search = on_history;
         search(term);
@@ -537,11 +530,6 @@ fn LookupListPane() -> Element {
                 }
             }
 
-            if *grammar_broken.read() {
-                div { class: "hint", style: "margin-bottom: 10px;",
-                    "The grammar dictionary needs to be imported again (Settings → Grammar)."
-                }
-            }
             if *searching.read() {
                 div { class: "loading", "Searching…" }
             } else if !entries.read().is_empty() || !grammar_hits.read().is_empty() {
