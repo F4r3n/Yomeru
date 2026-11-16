@@ -118,7 +118,49 @@ fn GrammarEntryCard(entry: GrammarEntry, on_search: EventHandler<String>) -> Ele
                     }
                 }
             }
+            if is_open {
+                a {
+                    class: "grammar-more-link",
+                    href: "{bee_search_url(&entry.pattern)}",
+                    target: "_blank",
+                    rel: "noopener",
+                    "More on Bee's Ultimate Grammar Dictionary ↗"
+                }
+            }
         }
+    }
+}
+
+/// Bee-san's grammar dictionary site, searched for `pattern`: a search
+/// rather than a page, so nothing of theirs is stored here and no id can go
+/// stale. No `level`: theirs can differ from ours (Bunpro's).
+fn bee_search_url(pattern: &str) -> String {
+    const SITE: &str = "https://bee-san.github.io/bees-ultimate-grammar-dictionary/";
+    let mut url = format!("{SITE}?q=");
+    for b in pattern.bytes() {
+        if b.is_ascii_alphanumeric() || b"-._~".contains(&b) {
+            url.push(char::from(b));
+        } else {
+            url.push_str(&format!("%{b:02X}"));
+        }
+    }
+    url
+}
+
+#[cfg(test)]
+mod tests {
+    use super::bee_search_url;
+
+    #[test]
+    fn the_bee_link_searches_the_encoded_pattern() {
+        assert_eq!(
+            bee_search_url("くらい"),
+            "https://bee-san.github.io/bees-ultimate-grammar-dictionary/?q=%E3%81%8F%E3%82%89%E3%81%84"
+        );
+        assert_eq!(
+            bee_search_url("a b&c"),
+            "https://bee-san.github.io/bees-ultimate-grammar-dictionary/?q=a%20b%26c"
+        );
     }
 }
 

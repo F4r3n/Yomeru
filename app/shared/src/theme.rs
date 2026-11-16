@@ -984,6 +984,7 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 .grammar-patterns { list-style: none; font-size: 13px; line-height: 1.7; }
 .grammar-patterns li { padding-left: 12px; position: relative; }
 .grammar-patterns li::before { content: "·"; position: absolute; left: 2px; color: var(--subtext); }
+.grammar-more-link { display: inline-block; margin-top: 14px; font-size: 12px; color: var(--accent); }
 .grammar-p { font-size: 14px; line-height: 1.65; margin: 10px 0 6px; overflow-wrap: anywhere; }
 
 /* ── Table polish ────────────────────────────────────────────────── */
