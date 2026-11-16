@@ -10753,3 +10753,419 @@ examples = [
   { tatoeba = "282466_121539", ja = "背中に痛{み}を感じる。", en = "I feel a pain in the back." },
   { tatoeba = "274737_138498", ja = "他人の弱{み}に付け込むな。", en = "Don't take advantage of others' weakness." },
 ]
+
+[[point]]
+id = "teki"
+pattern = "的"
+forms = ["的な", "的に"]
+jlpt = "N3"
+meaning = "-ic, -al, -ly (turns a noun into an adjective)"
+formation = ["Noun + 的   (経済的, 科学的)", "Noun + 的な + Noun", "Noun + 的に + Verb"]
+explanation = """
+Added to a noun, mostly a two-kanji one, it makes a な-adjective: 科学\
+的な考え, "a scientific way of thinking"; 個人的な問題, "a personal \
+matter". With に it works as an adverb: 具体的に話す, "speak in \
+concrete terms"."""
+notes = """
+It attaches mostly to Chinese-style nouns (経済, 一般, 国際): ×水的. \
+In casual speech it also follows a name or pronoun to soften an \
+opinion: 私的には, "as for me". Read alone, 的 (まと) is "a target"."""
+related = ["ppoi", "rashii-typical"]
+examples = [
+  { tatoeba = "68485_231119", ja = "あの学者は、科学{的な}大発見をした。", en = "That scholar made a great scientific discovery." },
+  { tatoeba = "250830_163681", ja = "私の個人{的な}問題に干渉しないで下さい。", en = "Don't stick your nose into my personal affairs." },
+  { tatoeba = "18363_179505", ja = "具体{的に}話して欲しい。", en = "I want specific information." },
+]
+
+[[point]]
+id = "gata"
+pattern = "型"
+forms = []
+jlpt = "N3"
+meaning = "type, model, -style"
+formation = ["Noun + 型   (血液型, 最新型)"]
+explanation = """
+After a noun, names a type or a model of something: 血液型, "blood \
+type"; 最新型, "the latest model"; 大型, "large-sized". It also sorts \
+people by how they are: 夜型, "a night person"."""
+notes = """
+Read がた after a word (血液型, 小型), かた alone (型, "a mold, a \
+form"). 型 is about shape and model; 式 (しき) is about method or \
+style: 日本式, "Japanese-style"."""
+related = ["teki"]
+examples = [
+  { tatoeba = "58722_221397", ja = "この車は最新{型}です。", en = "This car is the latest model." },
+  { tatoeba = "70730_233360", ja = "あなたの血液{型}は何ですか。", en = "What's your blood group?" },
+  { tatoeba = "321972_81743", ja = "僕は夜{型}なんだ。", en = "I'm a night owl." },
+]
+
+[[point]]
+id = "doushi"
+pattern = "同士"
+forms = []
+jlpt = "N3"
+meaning = "fellow, among (people of the same kind)"
+formation = ["Noun + 同士   (友達同士, 隣同士)"]
+explanation = """
+After a noun for people, says they are all of that kind, together or \
+toward each other: 友達同士, "(between) friends"; いとこ同士, "cousins \
+(of each other)"; 男同士で話す, "talk man to man"."""
+notes = """
+It names a group of two or more who share the relation, so it doesn't \
+go with one person: ×私は友達同士だ. Not to be confused with どうして, \
+"why", which only sounds alike."""
+related = ["au"]
+examples = [
+  { tatoeba = "68747_231380", ja = "あの２人の少年はいとこ{同士}です。", en = "Those two boys are cousins." },
+  { tatoeba = "278698_125295", ja = "敵{同士}が面と向かい合った。", en = "The enemies stood face to face." },
+  { tatoeba = "73405_236025", ja = "１０代の友だち{同士}が徹夜でおしゃべりした。", en = "The teenage friends stayed up talking all night." },
+]
+
+[[point]]
+id = "muke"
+pattern = "向け"
+forms = ["向けの", "向けに", "向けだ"]
+jlpt = "N3"
+meaning = "aimed at, made for, intended for"
+formation = ["Noun + 向け   (子供向け)", "Noun + 向けの + Noun", "Noun + 向けに + Verb"]
+explanation = """
+Says something was made with a certain group in mind: 子供向けの本, "a \
+book for children"; 初心者向けのコース, "a course for beginners". With \
+に it goes before a verb: 子供向けに書く, "write for children"."""
+notes = """
+向け is about who the maker aimed at; 向き is about who it happens to \
+suit. A show made for children is 子供向け; a film that just happens \
+to suit children is 子供向き. 向けて after に is the verb 向ける, \
+"toward": 試験に向けて, "for the exam"."""
+related = ["muki", "tame-ni"]
+examples = [
+  { tatoeba = "60835_223500", ja = "このテレビショーは子供{向けだ}。", en = "This TV show is aimed at children." },
+  { tatoeba = "267054_147506", ja = "初心者{向けの}コースはありますか。", en = "Do you have a course for beginners?" },
+  { tatoeba = "291262_112415", ja = "彼はその物語を子供{向けに}書き直した。", en = "He adapted the story for children." },
+]
+
+[[point]]
+id = "muki"
+pattern = "向き"
+forms = ["向きの", "向きに", "向きだ"]
+jlpt = "N3"
+meaning = "suited to, fit for; facing (a direction)"
+formation = ["Noun + 向き   (若者向き, 南向き)", "Noun + 向きの + Noun"]
+explanation = """
+Says something suits a certain group or purpose: 初心者向きの本, "a \
+book suited to beginners". After a direction it says which way \
+something faces: 南向きの部屋, "a south-facing room"."""
+notes = """
+向き judges a fit; 向け states who it was made for (see 向け). The \
+negative is 向きではない or 不向き: 仕事に不向きだ, "not suited to the \
+job". 上向き, "picking up", is a word of its own."""
+related = ["muke"]
+examples = [
+  { tatoeba = "49537_212256", ja = "その映画は子供{向きだ}。", en = "This movie is suitable for children." },
+  { tatoeba = "55588_218276", ja = "これは若者{向きの}車です。", en = "This is a car for young people." },
+  { tatoeba = "49336_212057", ja = "その家は南{向き}なので、とても日当たりがよい。", en = "As the house has a southern aspect, it is very sunny." },
+]
+
+[[point]]
+id = "atari"
+pattern = "当たり"
+forms = ["あたり", "当り"]
+jlpt = "N3"
+hover = false
+meaning = "per, for each"
+formation = ["Number + Counter + 当たり   (一人当たり, 一日当たり)"]
+explanation = """
+After an amount with its counter, says the figure is for each one: \
+一人当たり千円, "1,000 yen per person"; 一日当たり八時間, "eight hours \
+a day". Often 当たりの + noun: 一日当たりの料金, "the daily rate"."""
+notes = """
+Common with prices, figures and statistics. につき is a formal \
+equivalent. To share things out, use ずつ instead: 一人二つずつ取る, \
+"take two each". \
+あたり after a place or time is another word, "around": 駅のあたり, \
+明日あたり. 日当たり is "sunlight a room gets"."""
+related = ["goto-ni", "zutsu"]
+examples = [
+  { tatoeba = "27663_190502", ja = "一人{あたり}千ドル払った。", en = "Each individual paid 1,000 dollars." },
+  { tatoeba = "36969_199766", ja = "トヨタの１日{あたり}の料金は？", en = "What's the daily rate for a Toyota?" },
+  { source = "yomeru", ja = "この店のランチは一人{当たり}千円ぐらいだ。", en = "Lunch at this shop is about 1,000 yen per person." },
+]
+
+[[point]]
+id = "buri"
+pattern = "ぶり"
+forms = ["振り", "ぶりに", "ぶりの"]
+jlpt = "N3"
+hover = false
+meaning = "for the first time in (a time); the way of (doing)"
+formation = ["Time + ぶり   (五年ぶり)", "Verb［stem］ / Noun + ぶり   (話しぶり, 仕事ぶり)"]
+explanation = """
+After a length of time, says something happens again after that long \
+a gap: 五年ぶりに会った, "met for the first time in five years"; 二十\
+年ぶりの寒さ, "the coldest in twenty years". After a verb stem or a \
+noun, it means the way someone does it: 話しぶり, "way of talking"."""
+notes = """
+The gap is long, or feels long to the speaker: 三日ぶりのお風呂 after \
+being ill. 久しぶり, "it's been a while", is the everyday word built \
+on it. In the manner use, 仕事ぶり often praises or criticizes, and \
+some verbs take っぷり: 飲みっぷり. Alone, 振り (ふり) is "pretending"."""
+related = ["furi-o-suru"]
+examples = [
+  { tatoeba = "72491_235113", ja = "５年{ぶりに}吉田君に会った。", en = "I saw Yoshida for the first time in five years." },
+  { tatoeba = "57669_220349", ja = "この冬は２０年{ぶりの}寒さだった。", en = "This was the coldest winter in twenty years." },
+  { tatoeba = "19844_182717", ja = "久し{ぶりに}彼は帰ってきた。", en = "After a long absence he came back." },
+]
+
+[[point]]
+id = "oki-ni"
+pattern = "おきに"
+forms = ["置きに", "おきの"]
+jlpt = "N3"
+meaning = "every (other), at intervals of"
+formation = ["Number + Counter + おきに   (一日おきに, 五分おきに)"]
+explanation = """
+After an amount with its counter, says something repeats with that \
+gap between: 一日おきに, "every other day"; 十分おきに, "every ten \
+minutes". It works for space too: 一メートルおきに, "every metre"; 一\
+行おきに書く, "write on every other line"."""
+notes = """
+With days, years and counted things, the number is what's skipped: 一\
+日おき is every second day, unlike 毎日. With hours and minutes, ３時間\
+おき is usually just "every three hours", like ３時間ごと. To be exact \
+with days, use ごとに: 二日ごとに, "every two days"."""
+related = ["goto-ni"]
+examples = [
+  { tatoeba = "310109_93598", ja = "彼女は１日{おきに}訪ねてくる。", en = "She visits us every other day." },
+  { tatoeba = "326483_77236", ja = "六時間{おきに}体温を測った。", en = "I took my temperature every six hours." },
+  { tatoeba = "27794_190635", ja = "一行{おきに}書け。", en = "Write on every other line." },
+]
+
+[[point]]
+id = "kiri"
+pattern = "きり"
+forms = ["っきり", "きりで", "たきり", "たっきり"]
+jlpt = "N3"
+hover = false
+meaning = "only, just; (did) and since then never"
+formation = ["Noun + きり   (二人きり)", "Verb［た］ + きり + Negative   (出たきり帰らない)"]
+explanation = """
+After a noun or a number, it means "only, no more than": 二人きりで話\
+す, "talk with just the two of us"; 一度きり, "only once". After a past \
+verb, says the action was the last thing that happened: 出かけたきり帰\
+らない, "went out and hasn't come back since"."""
+notes = """
+Speech often doubles it: っきり (二人っきり, それっきり). Close to だけ, \
+but きり stresses that nothing follows or nobody else is there. After \
+た, the sentence ends in a negative or a "since then" meaning; 寝たき\
+り, "bedridden", is a word of its own, as is はっきり, "clearly"."""
+related = ["dake", "mama"]
+examples = [
+  { tatoeba = "293705_109983", ja = "彼は一人{きりで}朝食を摂った。", en = "He had breakfast all alone." },
+  { tatoeba = "288553_115118", ja = "彼は３年前に家を出た{きり}全然消息がない。", en = "He went away from home three years ago, and has never been heard of since." },
+  { source = "yomeru", ja = "今日は家に一人{っきり}だ。", en = "I'm home all alone today." },
+]
+
+[[point]]
+id = "dake-shika"
+pattern = "だけしか"
+forms = []
+jlpt = "N3"
+meaning = "only, nothing but (emphatic)"
+formation = ["Noun + だけしか + Verb［ない］", "Verb［る］ + だけしか + Verb［ない］"]
+explanation = """
+Puts だけ and しか together for a stronger "only": これだけしか知らない, \
+"this is all I know". Like しか, it needs a negative verb after it."""
+notes = """
+The meaning is the same as しか〜ない, with more weight on how little \
+it is. Plain だけ takes a positive verb: これだけ知っている. \
+×だけしか知っている."""
+related = ["shika-nai", "dake"]
+examples = [
+  { tatoeba = "33526_160740", ja = "私はこれ{だけしか}知りません。", en = "I know nothing but this." },
+  { tatoeba = "252597_161919", ja = "私は５千円{だけしか}持っていません。", en = "I have only five thousand yen." },
+  { tatoeba = "40844_203606", ja = "ただ霧{だけしか}見えなかった。", en = "I could see nothing but fog." },
+]
+
+[[point]]
+id = "dake-de-wa"
+pattern = "だけでは"
+forms = ["だけじゃ"]
+jlpt = "N3"
+meaning = "just (X) is not enough, by (X) alone … not"
+formation = ["Noun + だけでは + Negative", "Verb［る］ + だけでは + Negative   (思っているだけでは)"]
+explanation = """
+Says that one thing alone won't do, so more is needed: 愛だけでは生き\
+られない, "you can't live on love alone"; 見ているだけではわからない, \
+"just watching won't teach you". The sentence ends in a negative or a \
+word like だめ."""
+notes = """
+だけで says one thing is enough; だけでは says it isn't. Don't mix it \
+up with だけではなく, "not only … but also", where なく continues the \
+sentence: 英語だけではなく、中国語も話せる. だけじゃ is the spoken form."""
+related = ["dake-de", "dake-de-naku"]
+examples = [
+  { tatoeba = "28693_191530", ja = "愛情{だけでは}生きてはいけない。", en = "You cannot live by love alone." },
+  { source = "yomeru", ja = "見ている{だけでは}上手にならないよ。", en = "Just watching won't make you any better." },
+  { source = "yomeru", ja = "薬を飲む{だけじゃ}治らないよ。", en = "Just taking medicine won't cure it." },
+]
+
+[[point]]
+id = "ten"
+pattern = "点"
+forms = ["点で", "点では", "という点で", "の点で"]
+jlpt = "N3"
+meaning = "point, respect, in terms of"
+formation = ["Noun + の + 点で", "Verb / ［い］Adjective + 点で   (安い点で)", "Phrase + という点で"]
+explanation = """
+Names the aspect a judgement is about: この点で, "on this point"; 値段\
+の点では, "in terms of price"; 多くの点で違う, "differ in many ways". \
+With という, a whole phrase becomes the point: 安いという点で, "in \
+that it's cheap"."""
+notes = """
+点では often sets up a contrast: 値段の点ではいいが、色が…, "price-wise \
+it's fine, but the color…". 面 (めん) is close: 経済面で, "on the \
+economic side". On its own 点 is also "a score" or "a dot"."""
+related = ["ni-kanshite", "to-shite"]
+examples = [
+  { tatoeba = "44850_207597", ja = "その{点では}君に賛成できない。", en = "I can't agree with you here." },
+  { tatoeba = "281765_122238", ja = "日本人は多くの{点で}アメリカ人と違う。", en = "Japanese differ from Americans in many respects." },
+  { tatoeba = "310330_93378", ja = "彼女はあらゆる{点で}君に追いついた。", en = "She has caught up with you in every respect." },
+]
+
+[[point]]
+id = "nashi"
+pattern = "なし"
+forms = ["無し", "なしで", "なしに", "なしの", "なしでは"]
+jlpt = "N3"
+hover = false
+meaning = "without, no (X)"
+formation = ["Noun + なしで / なしに + Verb   (砂糖なしで)", "Noun + なしの + Noun", "Noun + なし   (in lists, signs)"]
+explanation = """
+After a noun, means "without it": 砂糖なしで飲む, "drink it without \
+sugar"; 予告なしに, "without notice". なしでは + a negative says you \
+can't manage without it: 水なしでは生きられない."""
+notes = """
+なしで is the everyday form; なしに is a bit more formal and also \
+follows a noun for an action: 断りなしに, "without asking". For \
+"without doing", use ないで or ずに after a verb. 抜き is a deliberate \
+"leave out": わさび抜き. なしにする is "skip, call off"; on forms, \
+なし alone means "none": 変更なし."""
+related = ["ari", "naide", "nai-de-wa-irarenai"]
+examples = [
+  { tatoeba = "270060_144505", ja = "人は空気{なしでは}生きられない。", en = "Men can not exist without air." },
+  { tatoeba = "245324_169163", ja = "仕事{なしで}どうやって生活していくのか。", en = "How will you manage without a job?" },
+  { tatoeba = "325331_78385", ja = "利用条件を予告{なしに}変更することがあります。", en = "Terms of use may be changed without notice." },
+]
+
+[[point]]
+id = "ari"
+pattern = "あり"
+forms = ["有り"]
+jlpt = "N3"
+hover = false
+meaning = "there is, with, available (written, list style)"
+formation = ["Noun + あり   (駐車場あり)"]
+explanation = """
+The old form of ある, still used to say something exists or is \
+included in short written notes: 駐車場あり, "parking available"; 経験\
+あり, "has experience". It is also heard in proverbs: 壁に耳あり, \
+"walls have ears"."""
+notes = """
+Its opposite is なし: 駐車場なし, "no parking". In casual speech, \
+それもありだね means "that works too, that's acceptable"."""
+related = ["nashi"]
+examples = [
+  { tatoeba = "18397_179538", ja = "苦あれば楽{あり}。", en = "No sweet without sweat." },
+  { source = "yomeru", ja = "駐車場{あり}。", en = "Parking available." },
+  { source = "yomeru", ja = "それも{あり}だね。", en = "That works too." },
+]
+
+[[point]]
+id = "sugata"
+pattern = "姿"
+forms = ["の姿"]
+jlpt = "N3"
+meaning = "figure, sight of (someone); dressed in"
+formation = ["Noun + の + 姿   (彼の姿)", "Verb + 姿   (働く姿)", "Noun + 姿   (着物姿)"]
+explanation = """
+The visible shape of a person, as you see them: 姿を見る, "catch \
+sight of"; 姿を消す, "disappear"; 父の働く姿, "my father at work". After clothing it means \
+dressed that way: 着物姿, "in a kimono"."""
+notes = """
+誰の姿も見えない is "not a soul in sight". 姿 is how someone looks \
+from outside as a whole; 顔 is only the face, and 様子 is how things \
+seem."""
+related = ["you-da"]
+examples = [
+  { tatoeba = "250983_163529", ja = "私の{姿}を見ると彼は逃げた。", en = "When he saw me, he ran away." },
+  { tatoeba = "21766_184638", ja = "街路には誰の{姿}も見られなかった。", en = "No one was to be seen in the street." },
+  { tatoeba = "311829_91883", ja = "彼女はトラの{姿}を見て気絶した。", en = "She fainted at the sight of a tiger." },
+]
+
+[[point]]
+id = "toori"
+pattern = "とおり"
+forms = ["通り", "どおり", "とおりに", "どおりに", "通りに", "の通り", "た通り"]
+jlpt = "N3"
+hover = false
+meaning = "as, just as, in the way that"
+formation = ["Verb［る］ / Verb［た］ + とおり   (言ったとおり)", "Noun + の + とおり   (この通り)", "Noun + どおり   (予定どおり)"]
+explanation = """
+Says something happens or is done the same way as something else: 言っ\
+たとおりにする, "do as I said"; 予定どおり, "as planned"; 時間どおりに\
+着く, "arrive on time"."""
+notes = """
+After a verb or の it's とおり; joined straight to a noun it becomes \
+どおり: 説明のとおり = 説明どおり. ように after a verb is close but \
+looser: 言ったように. その通り is "exactly". With numbers it counts \
+ways: 三通り, "three ways". 通り alone is also "a street"."""
+related = ["you-ni-iu", "mama"]
+examples = [
+  { tatoeba = "241105_173365", ja = "言った{通りに}しろ。", en = "Do as I told you." },
+  { tatoeba = "257288_157245", ja = "私は言われた{とおりに}しただけです。", en = "I only did as I was told." },
+  { tatoeba = "314475_89230", ja = "彼女は私達の期待{通りに}成長した。", en = "She lived up to our expectations." },
+]
+
+[[point]]
+id = "kankei-ga-aru"
+pattern = "関係がある"
+forms = ["と関係がある", "に関係がある", "関係がない", "関係ない"]
+jlpt = "N3"
+meaning = "to be related to, to have to do with"
+formation = ["Noun + と / に + 関係がある"]
+explanation = """
+Says two things are connected: 健康と関係がある, "has to do with \
+health". The negative is common for "it's none of your business": 君\
+には関係ない, "this has nothing to do with you"."""
+notes = """
+と is used for a link between two things on the same level; に points \
+at what is affected: 生活に関係がある. 関係ない in speech often drops \
+が. For "about, on the subject of", use に関して."""
+related = ["ni-kanshite"]
+examples = [
+  { tatoeba = "55753_218445", ja = "これは君には{関係がない}。", en = "This has nothing to do with you." },
+  { tatoeba = "42246_205005", ja = "それは大気汚染と{関係がある}。", en = "It is concerned with air pollution." },
+  { tatoeba = "254615_159907", ja = "私はその犯罪とは{関係がない}。", en = "I have nothing to do with that crime." },
+]
+
+[[point]]
+id = "sayuu-suru"
+pattern = "左右する"
+forms = ["に左右される"]
+jlpt = "N3"
+meaning = "to influence, to decide; to depend on (passive)"
+formation = ["Noun + を + 左右する", "Noun + に + 左右される"]
+explanation = """
+Says something has a strong effect on how another thing turns out: 健\
+康を左右する, "affects your health". The passive 〜に左右される says \
+something depends on it: 天気に左右される, "depends on the weather"."""
+notes = """
+Formal, common in news and writing, and stronger than 影響する: it \
+decides the result, not just touches it. Read as a noun, 左右 is just \
+"left and right": 左右を見る, "look both ways"."""
+related = ["ni-yotte"]
+examples = [
+  { tatoeba = "268669_145893", ja = "食べ物は健康を{左右する}。", en = "Food works on our health." },
+  { tatoeba = "275724_137512", ja = "大衆の意見が大統領の決定を{左右する}。", en = "Public opinion governs the president's decisions." },
+  { tatoeba = "34853_197667", ja = "ビールの消費量は天気におおいに{左右される}。", en = "How much beer people drink largely depends on the weather." },
+]
