@@ -4716,7 +4716,7 @@ examples = [
 [[point]]
 id = "ru-tokoro"
 pattern = "るところだ"
-forms = ["るところです", "るところだった"]
+forms = ["るところです"]
 jlpt = "N4"
 meaning = "be about to, be just going to"
 formation = ["Verb［る］ + ところだ"]
@@ -4728,12 +4728,12 @@ notes = """
 Three moments of one action: 食べるところ (about to eat), 食べている\
 ところ (in the middle of eating), 食べたところ (just finished eating). \
 In the past, るところだった often means "nearly": 遅れるところだった, \
-"I almost missed it"."""
-related = ["te-iru-tokoro", "ta-tokoro", "tsumori"]
+"I almost missed it" (see ところだった)."""
+related = ["te-iru-tokoro", "ta-tokoro", "tsumori", "tokoro-datta"]
 examples = [
   { tatoeba = "396887_124606", ja = "登校{するところです}。", en = "I am going to school." },
   { source = "yomeru", ja = "これから晩ご飯を食べ{るところだ}。", en = "I'm just about to have dinner." },
-  { source = "yomeru", ja = "もう少しで電車に遅れ{るところだった}。", en = "I very nearly missed the train." },
+  { source = "yomeru", ja = "今から電話をかけ{るところです}。", en = "I'm just about to make a call." },
 ]
 
 [[point]]
@@ -4811,7 +4811,7 @@ examples = [
 [[point]]
 id = "aida-ni"
 pattern = "間に"
-forms = ["あいだに", "間", "あいだ"]
+forms = ["あいだに", "間", "あいだ", "の間に", "のあいだに"]
 jlpt = "N4"
 meaning = "while, during (間: the whole time; 間に: at some point in it)"
 formation = [
@@ -7993,4 +7993,480 @@ related = ["you-da", "rashii", "sou-da-appearance"]
 examples = [
   { source = "yomeru", ja = "部屋が暗い。もう寝た{とみえる}。", en = "The room is dark. They seem to be asleep already." },
   { source = "yomeru", ja = "とても疲れていた{とみえて}、彼はすぐ寝てしまった。", en = "He must have been very tired: he fell asleep right away." },
+]
+
+[[point]]
+id = "uchi-ni"
+pattern = "うちに"
+forms = ["内に", "うちは", "内は"]
+jlpt = "N3"
+meaning = "while (still), before it changes; in the course of"
+formation = [
+  "Verb［る］ + うちに   (いるうちに)",
+  "Verb［て］ + いる + うちに   (見ているうちに)",
+  "［い］Adjective + うちに   (若いうちに)",
+  "［な］Adjective + な + うちに   (元気なうちに)",
+  "Noun + の + うちに   (午前のうちに)",
+]
+explanation = """
+Marks a window of time that won't last: do it now, while the state still \
+holds. 若いうちに旅行したい, "I want to travel while I'm young". With an \
+ongoing action, it means something changed without you noticing: 話して\
+いるうちに仲良くなった, "as we talked, we became friends"."""
+notes = """
+間に just places an event inside a stretch; うちに adds "before it ends" \
+or "little by little". うちは stresses the stretch itself, often against \
+what comes later: 若いうちは無理がきく, "while you're young, you can push \
+yourself". Not to be confused with うち (home): うちに帰る, "go home"."""
+related = ["aida-ni", "nai-uchi-ni", "saichuu-ni"]
+examples = [
+  { tatoeba = "52330_215034", ja = "スープは熱い{うちに}召し上がれ。", en = "Eat your soup while it is hot." },
+  { tatoeba = "240718_125244", ja = "鉄は熱い{うちに}打て。", en = "Strike while the iron is hot." },
+  { source = "yomeru", ja = "話している{うちに}、仲良くなった。", en = "As we talked, we became friends." },
+]
+
+[[point]]
+id = "nai-uchi-ni"
+pattern = "ないうちに"
+forms = ["ない内に"]
+jlpt = "N3"
+meaning = "before (something happens), while not yet"
+formation = ["Verb［ない］ + うちに   (暗くならないうちに)"]
+explanation = """
+Do something before a change you'd rather avoid sets in: 暗くならない\
+うちに帰ろう, "let's go home before it gets dark". In the past, it says \
+something happened sooner than expected: 五分も待たないうちにバスが来た, \
+"the bus came before I'd even waited five minutes"."""
+notes = """
+Close to 前に, but 前に is just order in time; ないうちに adds urgency or \
+surprise, so it fits changes like getting dark, cold, forgetting or \
+being found out. It can also mean "while not (noticing), before you \
+knew it": しばらく会わないうちに大きくなったね, "you've grown so much \
+since I last saw you"."""
+related = ["uchi-ni", "mae-ni"]
+examples = [
+  { tatoeba = "267108_147452", ja = "暑くなら{ないうちに}出かけよう。", en = "Let's go out before it gets hot." },
+  { tatoeba = "41485_204242", ja = "そんなに待た{ないうちに}バスが来た。", en = "I had not waited long before the bus came." },
+  { source = "yomeru", ja = "忘れ{ないうちに}メモしておこう。", en = "I'll write it down before I forget." },
+]
+
+[[point]]
+id = "ta-totan-ni"
+pattern = "たとたん"
+forms = ["たとたんに", "だとたん", "だとたんに", "た途端", "た途端に", "だ途端", "だ途端に"]
+jlpt = "N3"
+meaning = "the moment (that), just as, as soon as"
+formation = ["Verb［た］ + とたん(に)   (立ったとたん)"]
+explanation = """
+Something happens right at the moment another action ends, usually \
+something sudden or unexpected: 立ち上がったとたん、頭が痛くなった, \
+"the moment I stood up, I got a headache". The first part is past \
+whatever the tense of the sentence."""
+notes = """
+The second part is what you saw or what happened to you, not a choice, \
+an order or a negative: ×家に着いたとたん、テレビをつけよう. For "as soon as" with a plan, use \
+次第 or すぐ. Compare たら, which is neutral, and や否や (N1), which is \
+written."""
+related = ["shidai", "tara", "to-douji-ni"]
+examples = [
+  { tatoeba = "24212_187075", ja = "家に着い{たとたん}嵐になった。", en = "I had barely got home when the storm broke." },
+  { tatoeba = "241505_172968", ja = "腰を下ろし{たとたんに}、電話が鳴った。", en = "I had no sooner sat down than the telephone rang." },
+  { tatoeba = "24124_186987", ja = "家を出{たとたん}、通りで偶然彼女に会った。", en = "As soon as I left home, I came across her in the street." },
+]
+
+[[point]]
+id = "tabi-ni"
+pattern = "たびに"
+forms = ["度に", "のたびに", "の度に", "のたび", "の度"]
+jlpt = "N3"
+meaning = "every time, whenever"
+formation = ["Verb［る］ + たびに   (会うたびに)", "Noun + の + たびに   (旅行のたびに)"]
+explanation = """
+Each time the first thing happens, the second follows too: この歌を聞く\
+たびに、夏を思い出す, "every time I hear this song, I think of summer". \
+The two things come round together, again and again."""
+notes = """
+Not for natural laws or plain conditions: for "when you press it, it \
+opens" use と. The first part is an action or event that comes round \
+again, not a plain stretch of time: for "every two weeks" use ごとに \
+(二週間ごとに)."""
+related = ["to-conditional", "toki"]
+examples = [
+  { tatoeba = "58776_221452", ja = "この写真を見る{たびに}私の父を思い出す。", en = "Every time I see this picture, I remember my father." },
+  { tatoeba = "255845_158683", ja = "私はやる{たびに}失敗した。", en = "Each time I tried, I failed." },
+  { tatoeba = "315478_88229", ja = "彼女は洗い物{のたびに}皿を割る。", en = "She breaks a dish every time she washes dishes." },
+]
+
+[[point]]
+id = "saichuu-ni"
+pattern = "最中に"
+forms = ["さいちゅうに", "最中", "さいちゅう", "最中だ", "最中です"]
+jlpt = "N3"
+meaning = "in the middle of, right while (doing)"
+formation = [
+  "Verb［て］ + いる + 最中に   (食べている最中に)",
+  "Noun + の + 最中に   (会議の最中に)",
+]
+explanation = """
+Puts something right in the busiest part of an action, often as an \
+interruption: 食事の最中に電話が鳴った, "the phone rang right in the \
+middle of dinner". 最中だ on its own says you're deep in it now: 今、\
+勉強している最中だ."""
+notes = """
+Stronger than 間に or ているところ: it's the peak of the action, so it \
+suits things with a clear course (meetings, meals, games), and the \
+event is usually unwelcome. 真っ最中 is the emphatic form. Read さい\
+ちゅう; もなか is a sweet."""
+related = ["aida-ni", "te-iru-tokoro", "uchi-ni"]
+examples = [
+  { tatoeba = "26469_189321", ja = "映画の{最中に}彼は震え始めた。", en = "He began to tremble during the movie." },
+  { tatoeba = "310737_92972", ja = "彼女はきゅうりを切っている{最中だった}。", en = "She was right in the middle of cutting cucumbers." },
+  { source = "yomeru", ja = "食事の{最中に}電話が鳴った。", en = "The phone rang right in the middle of dinner." },
+]
+
+[[point]]
+id = "te-hajimete"
+pattern = "て初めて"
+forms = ["てはじめて", "で初めて", "ではじめて"]
+jlpt = "N3"
+meaning = "only after, not until (doing)"
+formation = ["Verb［て］ + 初めて   (失って初めて)"]
+explanation = """
+Something only becomes true, often a realization, once an experience \
+has happened: 病気になって初めて健康の大切さがわかった, "it wasn't until \
+I got ill that I understood how important health is". The second part \
+is usually わかる, 気づく or a change that came late."""
+notes = """
+Don't mix it up with plain 初めて, "for the first time": 生まれて初めて\
+海を見た is "I saw the sea for the first time in my life", not "only \
+after". If the sentence works with "not until", it's this pattern. \
+The second part can't be a wish or a request."""
+related = ["te-kara", "te-irai"]
+examples = [
+  { tatoeba = "326576_77143", ja = "話すのを聞い{て初めて}彼だとわかった。", en = "It wasn't until I heard him speak that I recognized him." },
+  { tatoeba = "239016_175449", ja = "健康を失っ{て初めて}健康のありがたみがわかる。", en = "People do not know the blessing of good health until they lose it." },
+  { tatoeba = "246744_167755", ja = "私が呼ん{ではじめて}彼は来た。", en = "It was not until I called that he came." },
+]
+
+[[point]]
+id = "te-irai"
+pattern = "て以来"
+forms = ["で以来", "以来", "いらい"]
+jlpt = "N3"
+meaning = "(ever) since"
+formation = ["Verb［て］ + 以来   (日本に来て以来)", "Noun + 以来   (去年以来, それ以来)"]
+explanation = """
+From a point in the past up to now, a state has held: 日本に来て以来、\
+毎日日本語を話している, "since coming to Japan, I've spoken Japanese \
+every day". それ以来, "since then", is very common on its own."""
+notes = """
+The span runs to the present and the state is ongoing or unchanged, so \
+it fits ている or a negative (以来、会っていない). For a single next step \
+use てから: ×朝ご飯を食べて以来、出かけた. Slightly formal; てから\
+ずっと is the everyday way to say it."""
+related = ["te-kara", "zutto", "te-hajimete"]
+examples = [
+  { tatoeba = "53868_216564", ja = "ジェインが東京に引っ越し{て以来}、連絡がないんだ。", en = "I haven't heard from Jane since she moved to Tokyo." },
+  { tatoeba = "41725_204483", ja = "それ{以来}彼から一度も便りがない。", en = "We have never heard from him since." },
+  { tatoeba = "28315_191155", ja = "{以来}ずっと友人です。", en = "We've been friends ever since." },
+]
+
+[[point]]
+id = "ta-ue-de"
+pattern = "た上で"
+forms = ["たうえで", "だ上で", "だうえで"]
+jlpt = "N3"
+meaning = "after (doing first), once (done), on the basis of"
+formation = [
+  "Verb［た］ + 上で   (よく考えた上で)",
+  "Noun + の + 上で   (相談の上で)",
+]
+explanation = """
+First do one thing properly, then act on it: よく考えた上で決めます, \
+"I'll decide after thinking it over carefully". The first step is a \
+needed check, talk or look, and the second is a decision or action \
+built on it."""
+notes = """
+More formal and more deliberate than てから, typical of business and \
+notices: 確認の上でご連絡ください. The で often drops: 相談の上、決め\
+ます. With a dictionary form, 上で means "for, when doing" instead: 生活\
+する上で大切なこと, "something important for daily life"."""
+related = ["te-kara", "ta-ato-de", "sue-ni"]
+examples = [
+  { tatoeba = "70534_233165", ja = "あなたの申し出はよく調べ{た上で}ご返事しましょう。", en = "I'll give you our answer after we go into your proposal in greater detail." },
+  { tatoeba = "274929_138306", ja = "多くの買い物は注意深く考え{た上で}行われている。", en = "Many purchases are carefully thought out." },
+  { source = "yomeru", ja = "家族と相談し{たうえで}決めます。", en = "I'll decide after talking it over with my family." },
+]
+
+[[point]]
+id = "shidai"
+pattern = "次第"
+forms = ["しだい"]
+jlpt = "N3"
+homographs = ["shidai-depending"]
+meaning = "as soon as (something is done)"
+formation = ["Verb［stem］ + 次第   (着き次第, 決まり次第)"]
+explanation = """
+The moment the first thing is done, the speaker will do the second: \
+着き次第、電話します, "I'll call as soon as I arrive". It's formal and \
+forward-looking, typical in business and announcements."""
+notes = """
+The second part is a plan, request or promise, so it doesn't narrate \
+the past: ×着き次第、雨が降った (use たとたん). Not to be confused with \
+Noun + 次第, "depending on", or the adverb 次第に, "gradually"."""
+related = ["shidai-depending", "ta-totan-ni", "te-kara"]
+examples = [
+  { tatoeba = "238542_175922", ja = "決まり{次第}教えてください。", en = "Please let me know as soon as it's decided." },
+  { tatoeba = "20128_183007", ja = "あなたの用意が出来{次第}出発しましょう。", en = "We'll leave as soon as you are ready." },
+  { tatoeba = "266386_148173", ja = "終わり{次第}すぐにこの質問用紙を送ります。", en = "I'll mail this questionnaire as soon as I finish." },
+]
+
+[[point]]
+id = "shidai-depending"
+pattern = "次第で"
+forms = ["次第だ", "次第です", "しだいで", "しだいだ", "次第", "しだい"]
+jlpt = "N3"
+homographs = ["shidai"]
+meaning = "depending on, up to (someone)"
+formation = ["Noun + 次第で / 次第だ   (天気次第で, 君次第だ)"]
+explanation = """
+The outcome rests on the noun: 天気次第で、行くかどうか決める, "we'll \
+decide whether to go depending on the weather". 次第だ ends the sentence: \
+あなた次第です, "it's up to you"."""
+notes = """
+Close to によって, but 次第 says the noun is what decides it, often \
+something someone can influence (努力次第, "it depends on your \
+effort"). によって can also just list how things differ. The adverb \
+次第に, "gradually", is a different word."""
+related = ["shidai", "ni-yotte"]
+examples = [
+  { tatoeba = "237713_231410", ja = "あなた{次第です}。", en = "It's up to you." },
+  { tatoeba = "17798_178944", ja = "君が成功できるかは君の努力{次第だ}。", en = "Your success depends on your efforts." },
+  { source = "yomeru", ja = "天気{次第で}、行くかどうか決めよう。", en = "Let's decide whether to go depending on the weather." },
+]
+
+[[point]]
+id = "sue-ni"
+pattern = "末に"
+forms = ["すえに", "の末に", "た末に", "の末", "た末", "末の"]
+jlpt = "N3"
+meaning = "after (a long effort), in the end, finally"
+formation = ["Verb［た］ + 末に   (悩んだ末に)", "Noun + の + 末に   (長い議論の末に)"]
+explanation = """
+After a long or hard process, a result came at last: さんざん悩んだ末\
+に、仕事をやめた, "after agonizing for ages, I quit my job". 末 is "the \
+end", so the stress is on how much came before."""
+notes = """
+For the past and for real results, not plans. The first part is \
+something long: thinking, arguing, trying. た上で is a careful step \
+before acting; 末に is the end of a struggle. 末 alone can also mean \
+"end of a period": 今月の末, "the end of this month"."""
+related = ["ta-ue-de", "ageku"]
+examples = [
+  { tatoeba = "278034_125950", ja = "長い議論{の末}、彼らは一つの計画を出した。", en = "They came up with a plan after a long discussion." },
+  { tatoeba = "29944_192778", ja = "よく考え{た末}、私は家にいることに決めた。", en = "After some careful thought, I elected to stay at home." },
+  { source = "yomeru", ja = "何度も失敗し{た末に}、やっと合格した。", en = "After failing again and again, I finally passed." },
+]
+
+[[point]]
+id = "sai-ni"
+pattern = "際に"
+forms = ["さいに", "の際", "の際に", "の際は", "際は", "際には"]
+hover = false
+jlpt = "N3"
+meaning = "when, at the time of, on the occasion of (formal)"
+formation = [
+  "Verb［る］ / Verb［た］ + 際に   (帰る際に)",
+  "Noun + の + 際に   (お帰りの際に)",
+]
+explanation = """
+A formal とき, for one particular occasion: お帰りの際は、忘れ物にご注意\
+ください, "when you leave, please make sure you have all your things". \
+Typical of notices, instructions and polite speech."""
+notes = """
+In everyday talk, とき is the natural choice; 際 sounds stiff with \
+small daily things. It's for a specific occasion, not a long stretch: \
+×子供の際. Inside words like 実際, 国際 or 間際, 際 is not this \
+pattern."""
+related = ["toki", "ni-atatte"]
+examples = [
+  { tatoeba = "23823_186687", ja = "火事{の際は}１１９番に電話してください。", en = "In the case of fire, dial 119." },
+  { tatoeba = "61508_224171", ja = "こちらに立ち寄った{際には}電話をかけてね。", en = "If you're ever in the area, give me a call." },
+  { tatoeba = "325393_78324", ja = "離陸{の際は}、シートベルトを締めなくてはならない。", en = "You must fasten your seat belts during take-off." },
+]
+
+[[point]]
+id = "tsuide-ni"
+pattern = "ついでに"
+forms = ["のついでに"]
+jlpt = "N3"
+meaning = "while (you're) at it, on the way, taking the chance"
+formation = [
+  "Verb［る］ / Verb［た］ + ついでに   (出かけるついでに)",
+  "Noun + の + ついでに   (買い物のついでに)",
+  "ついでに + sentence   (alone, at the start)",
+]
+explanation = """
+Since you're doing one thing anyway, you do another along with it: \
+散歩のついでに郵便局に寄った, "I dropped by the post office on my walk". \
+On its own at the start, it adds a small extra request or remark: \
+ついでに、これもお願い, "while you're at it, this too, please"."""
+notes = """
+The first action is the main one; the second is extra and easy to \
+add. If both matter equally, use し or て instead. In speech, Noun + \
+ついでに without の also happens: 買い物ついでに."""
+related = ["nagara"]
+examples = [
+  { tatoeba = "39921_202687", ja = "{ついでに}、私にもコーヒーを淹れてください。", en = "While you are about it, please make some coffee for me." },
+  { tatoeba = "17930_179074", ja = "君が飲む{ついでに}、僕の分も入れてくれないかな。", en = "Would you mind making an extra cup of coffee whenever you decide to have some?" },
+  { source = "yomeru", ja = "散歩{のついでに}郵便局に寄った。", en = "I dropped by the post office on my walk." },
+]
+
+[[point]]
+id = "to-douji-ni"
+pattern = "と同時に"
+forms = ["とどうじに", "同時に", "どうじに"]
+jlpt = "N3"
+meaning = "at the same time as, as soon as; while also"
+formation = [
+  "Verb［る］ + と同時に   (始まると同時に)",
+  "Noun + と同時に   (卒業と同時に)",
+  "［い］Adjective + と同時に   (厳しいと同時に)",
+  "［な］Adjective / Noun + である + と同時に   (便利であると同時に)",
+]
+explanation = """
+Two things happen at one moment: ベルが鳴ると同時に、みんな立ち上がった, \
+"the moment the bell rang, everyone stood up". It can also say \
+something has two sides at once: 彼は厳しいと同時に優しい, "he's strict \
+and kind at the same time"."""
+notes = """
+Unlike たとたん, the second part doesn't have to be a surprise, and it \
+can be a plan: 卒業と同時に結婚する. 同時に alone at the start of a \
+sentence means "at the same time, also". For the "two sides" use, \
+nouns and な-adjectives often take である (便利であると同時に), though \
+it can drop."""
+related = ["ta-totan-ni", "nagara", "to-tomo-ni"]
+examples = [
+  { tatoeba = "270095_142816", ja = "生まれる{と同時に}死は始まる。", en = "As soon as man is born, he begins to die." },
+  { tatoeba = "296054_107631", ja = "彼は厳しい{と同時に}優しい。", en = "He is at once stern and tender." },
+  { source = "yomeru", ja = "ドアが開く{と同時に}、子供たちが走り出した。", en = "The moment the door opened, the children ran out." },
+]
+
+[[point]]
+id = "ni-tsurete"
+pattern = "につれて"
+forms = ["につれ"]
+jlpt = "N3"
+meaning = "as (one thing changes, so does the other)"
+formation = ["Verb［る］ + につれて   (年を取るにつれて)", "Noun + につれて   (時代につれて)"]
+explanation = """
+As one thing changes step by step, another changes along with it: 秋が\
+近づくにつれて、涼しくなる, "as autumn draws near, it gets cooler". Both \
+parts are gradual changes, often with なる or ていく."""
+notes = """
+Both sides must be changes, not one-off events: ×年を取るにつれて、車を\
+買った. Close to に従って (N2), which can also mean "following (a \
+rule)"; とともに is broader and more formal. Written in kana, it can \
+also be the verb 連れる: 家につれていく, "take someone home"."""
+related = ["ni-shitagatte", "to-tomo-ni", "ba-hodo"]
+examples = [
+  { tatoeba = "270120_144445", ja = "人は年を取る{につれて}忘れっぽくなる。", en = "The older we grow, the more forgetful we become." },
+  { tatoeba = "282181_121824", ja = "年を取る{につれて}寒がるものです。", en = "They'll be more sensitive to the cold as they grow older." },
+  { tatoeba = "25926_188780", ja = "演説が進む{につれて}ますます退屈になった。", en = "I got more and more bored as the speech went on." },
+]
+
+[[point]]
+id = "ippou-da"
+pattern = "一方だ"
+forms = ["いっぽうだ", "一方です", "いっぽうです", "一方である"]
+jlpt = "N3"
+meaning = "keep on (rising, falling, worsening), more and more"
+formation = ["Verb［る］ + 一方だ   (増える一方だ)"]
+explanation = """
+A change keeps going in one direction with no sign of stopping: 物価は\
+上がる一方だ, "prices just keep going up". It goes with verbs of change \
+like 増える, 減る, 悪くなる, 上がる."""
+notes = """
+Usually for unwelcome trends, but not always. ばかりだ is close and more \
+clearly negative. 一方 on its own, or 一方で, means "on the other hand" \
+or "while": 兄は背が高い一方、弟は低い."""
+related = ["bakari-da", "te-iku"]
+examples = [
+  { tatoeba = "319932_11451466", ja = "物価は上がる{一方だ}。", en = "Prices go on rising." },
+  { source = "yomeru", ja = "仕事は増える{一方です}。", en = "My work just keeps increasing." },
+  { source = "yomeru", ja = "この町の人口は減る{一方だ}。", en = "This town's population keeps going down." },
+]
+
+[[point]]
+id = "bakari-da"
+pattern = "るばかりだ"
+forms = ["るばかりです", "るばかりで", "るばかりだった"]
+jlpt = "N3"
+meaning = "just keeps (getting worse), only (getting more and more)"
+formation = ["Verb［る］ + ばかりだ   (悪くなるばかりだ)"]
+explanation = """
+Things only move one way, almost always for the worse: 病気は悪くなる\
+ばかりだ, "the illness just keeps getting worse". The speaker sounds \
+worried or helpless."""
+notes = """
+Close to 一方だ, but more emotional and more clearly bad news. Keep it \
+apart from たばかり ("just did") and てばかり ("do nothing but"). With \
+a non-change verb it means "all one can do is": 泣くばかりだった, "she \
+did nothing but cry"."""
+related = ["ippou-da", "ta-bakari", "te-bakari"]
+examples = [
+  { tatoeba = "319927_83789", ja = "物価は安くなるどころか、高くな{るばかりだった}。", en = "Far from falling, the prices of commodities went on rising." },
+  { source = "yomeru", ja = "病気は悪くな{るばかりだ}。", en = "The illness just keeps getting worse." },
+  { source = "yomeru", ja = "雪は強くな{るばかりだった}。", en = "The snow only got heavier." },
+]
+
+[[point]]
+id = "ta-tokoro-discovery"
+pattern = "たところ"
+forms = ["だところ", "たところが", "だところが"]
+jlpt = "N3"
+meaning = "when I did (it), (I found that); I did, and then"
+formation = ["Verb［た］ + ところ   (聞いてみたところ)"]
+explanation = """
+You did something, and the second part is what you found or what \
+happened as a result: 店に電話したところ、もう閉まっていた, "when I \
+called the shop, it was already closed". Often with てみたところ, \
+"when I tried"."""
+notes = """
+The second part is a past fact you learned, not your own next choice: \
+×電話したところ、出かけた. Not the same as たところだ, "have just \
+done", which ends the sentence. When the result goes against what you \
+expected, it often becomes たところが: 頼んだところが、断られた, "I \
+asked, but was turned down"."""
+related = ["ta-tokoro", "tara", "ta-totan-ni"]
+examples = [
+  { tatoeba = "283346_120662", ja = "彼がリー嬢に結婚を申し込ん{だところ}、彼女は承諾した。", en = "He proposed to Miss Lee and she accepted." },
+  { source = "yomeru", ja = "店に電話し{たところ}、もう閉まっていた。", en = "When I called the shop, it was already closed." },
+  { source = "yomeru", ja = "先生に聞いてみ{たところ}、すぐ教えてくれた。", en = "When I asked the teacher, they told me right away." },
+]
+
+[[point]]
+id = "tokoro-datta"
+pattern = "ところだった"
+forms = ["るところだった", "ないところだった", "ところでした", "るところでした"]
+jlpt = "N3"
+meaning = "almost, nearly (did, but didn't)"
+formation = [
+  "Verb［る］ + ところだった   (遅れるところだった)",
+  "Verb［ない］ + ところだった   (間に合わないところだった)",
+]
+explanation = """
+Something nearly happened, but in the end didn't: もう少しで車にひかれる\
+ところだった, "I was nearly hit by a car". Often with もう少しで, 危うく, \
+or a たら / なかったら clause saying what saved you."""
+notes = """
+Usually about a near miss, good or bad: 忘れるところだった, "I almost \
+forgot". The same words can also be the plain past of るところだ, "was \
+about to": 出かけるところだった, "I was just about to leave". Context \
+and もう少しで tell them apart."""
+related = ["ru-tokoro", "kakeru"]
+examples = [
+  { tatoeba = "20720_183598", ja = "危うく溺れ{るところだった}。", en = "I came near to being drowned." },
+  { tatoeba = "293099_110587", ja = "彼はもう少しでひかれ{るところだった}。", en = "He came near to being run over." },
+  { source = "yomeru", ja = "母が起こしてくれなければ、寝坊する{ところだった}。", en = "If Mum hadn't woken me, I would have overslept." },
 ]
