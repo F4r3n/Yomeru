@@ -11826,3 +11826,402 @@ examples = [
   { tatoeba = "49875_212592", ja = "そのホテルは評判{ほどではない}。", en = "That hotel is not all it's cracked up to be." },
   { tatoeba = "65840_228482", ja = "いやそれ{ほどでもない}よ。何か用かい？", en = "Not really. What's up?" },
 ]
+
+[[point]]
+id = "mono-dakara"
+pattern = "ものだから"
+forms = ["もんだから", "ものですから", "もので", "もんで"]
+jlpt = "N2"
+meaning = "because, you see (an excuse or personal reason)"
+formation = [
+  "Verb / ［い］Adjective + ものだから",
+  "［な］Adjective / Noun + な + ものだから   (子供なものだから)",
+]
+explanation = """
+Gives a reason with a feeling of "it couldn't be helped", most often to \
+explain or excuse what you did: 道が混んでいたものだから、遅れました, \
+"the roads were jammed, you see, so I was late". It sounds softer and \
+more personal than から. もので and casual もんだから mean the same."""
+notes = """
+No command, request or "let's" after it (×近いものだから歩こう): use \
+から there. Ending on ものですから leaves the result unsaid, a polite \
+way to apologise or decline. Not to be confused with plain もの + で: \
+この家は私のもので is "this house is mine, and…"."""
+related = ["kara-reason", "node", "mono-reason"]
+examples = [
+  { tatoeba = "66100_228742", ja = "いつもの列車に乗り遅れた{ものですから}。", en = "It's because I missed my usual train." },
+  { source = "yomeru", ja = "道が混んでいた{ものだから}、遅れました。", en = "The roads were jammed, you see, so I was late." },
+  { source = "yomeru", ja = "急いでいた{もんで}、財布を忘れちゃった。", en = "I was in a hurry, so I forgot my wallet." },
+]
+
+[[point]]
+id = "koto-dakara"
+pattern = "ことだから"
+forms = ["のことだから", "ことですから", "のことですから"]
+jlpt = "N2"
+meaning = "knowing (X), being who (X) is, so surely…"
+formation = ["Noun (a person) + のことだから"]
+explanation = """
+Bases a confident guess on what a person is like, someone both speakers \
+know well: 田中さんのことだから、また遅れるだろう, "knowing Tanaka, \
+he'll be late again". The second half is usually a guess with だろう, \
+はずだ or に違いない. The trait can be good or bad."""
+notes = """
+After a verb or adjective, ことだから is often just "since it's a … \
+matter": 大事なことだから、よく考えて, "it's important, so think it \
+over". It can also mean "since this is a rare chance": せっかく集まった\
+ことだから、写真を撮ろう."""
+related = ["dake-ni", "no-dakara", "hazu"]
+examples = [
+  { source = "yomeru", ja = "田中さん{のことだから}、また遅れるだろう。", en = "Knowing Tanaka, he'll be late again." },
+  { source = "yomeru", ja = "まじめな彼{のことだから}、もう準備しているよ。", en = "He's so conscientious, he's surely got it ready already." },
+  { tatoeba = "19614_182441", ja = "急を要する{ことだから}急いでください。", en = "Please hurry, it's urgent." },
+]
+
+[[point]]
+id = "dake-ni"
+pattern = "だけに"
+forms = []
+jlpt = "N2"
+meaning = "precisely because, all the more since"
+formation = [
+  "Verb / ［い］Adjective + だけに",
+  "［な］Adjective + な + だけに   (有名なだけに)",
+  "Noun + だけに   (プロだけに)",
+]
+explanation = """
+Says a result is just what its reason leads you to expect, or stronger \
+than usual because of it: 期待していただけに、がっかりした, "I'd had \
+high hopes, so I was all the more disappointed". The result can be good \
+or bad, and なおさら or かえって often stresses it."""
+notes = """
+だけに also keeps its plain sense "only (in, to)": 日本だけにいる犬, \
+"a dog found only in Japan". Contrast だけあって, which only praises \
+(as you'd expect of). Contrast からこそ, which stresses the reason \
+itself rather than the size of the result."""
+related = ["dake-atte", "kara-koso", "sasuga"]
+examples = [
+  { source = "yomeru", ja = "期待していた{だけに}、がっかりした。", en = "I'd had high hopes, so I was all the more disappointed." },
+  { source = "yomeru", ja = "有名な店{だけに}、いつも混んでいる。", en = "Being a famous restaurant, it's always crowded." },
+  { source = "yomeru", ja = "毎日練習した{だけに}、勝ててうれしい。", en = "I practised every day, so I'm all the happier to win." },
+]
+
+[[point]]
+id = "dake-atte"
+pattern = "だけあって"
+forms = ["だけのことはある", "だけのことはあって", "だけのことはあります", "だけある"]
+jlpt = "N2"
+meaning = "as you'd expect of; (it was) worth it, not for nothing"
+formation = [
+  "Verb / ［い］Adjective + だけあって",
+  "［な］Adjective + な + だけあって",
+  "Noun + だけあって   (プロだけあって)",
+  "Verb / ［い］Adjective + だけのことはある   (sentence end)",
+]
+explanation = """
+Praises a result as fitting its cause, such as talent, effort, price or \
+experience: プロだけあって、上手だね, "she's a pro, so of course she's \
+good". At the end of a sentence, だけのことはある says something paid \
+off: 高かっただけのことはある, "it was worth the price". Often with \
+さすが."""
+notes = """
+Only for good results that have already shown: no future, guesses or \
+だろう after it. For disappointment, or for "all the more", use \
+だけに. だけある is a casual sentence ending."""
+related = ["dake-ni", "sasuga", "gai"]
+examples = [
+  { tatoeba = "273157_141414", ja = "専門家{だけあって}彼はその分野に詳しい。", en = "As may be expected of an expert, he's well versed in the field." },
+  { tatoeba = "304683_99017", ja = "彼は留学した{だけのことはある}。", en = "He hasn't studied abroad for nothing." },
+  { source = "yomeru", ja = "高かった{だけあって}、とても丈夫だ。", en = "It was expensive, and it's very sturdy, as you'd expect." },
+]
+
+[[point]]
+id = "kara-ni-wa"
+pattern = "からには"
+forms = []
+jlpt = "N2"
+meaning = "now that, since (… then I must / I will)"
+formation = [
+  "Verb［る］ / Verb［た］ + からには",
+  "［な］Adjective / Noun + である + からには",
+]
+explanation = """
+Takes a fact or a decision as settled and draws the strong consequence: \
+やるからには、勝ちたい, "if I'm doing this at all, I want to win". The \
+second half is a resolve, a duty or advice: つもりだ, なければならない, \
+べきだ, なさい. The idea is "having got this far, see it through"."""
+notes = """
+Close to 以上は and 上は, which are stiffer. Plain から gives any \
+reason; からには insists on what must follow. からは alone is an older, \
+written variant (not looked up: it would match inside 明日からは)."""
+related = ["ijou-wa", "kara-reason", "beki-da"]
+examples = [
+  { tatoeba = "29121_191959", ja = "わたしがここに来た{からには}、心配することはない。", en = "Now that I am here, you don't have to worry." },
+  { tatoeba = "30188_193023", ja = "やる{からには}、ちゃんとやりなさい。", en = "If you do it at all, do it well." },
+]
+
+[[point]]
+id = "ijou-wa"
+pattern = "以上は"
+forms = ["いじょうは"]
+jlpt = "N2"
+meaning = "now that, since (… naturally / must)"
+formation = [
+  "Verb［る］ / Verb［た］ + 以上（は）",
+  "Noun + である + 以上（は）",
+  "Verb［る］ / Verb［た］ + 上は   (written)",
+]
+explanation = """
+Like からには, sets out a fact, then the duty or conclusion that follows \
+from it: 約束した以上は、守らなければならない, "now that I've \
+promised, I have to keep it". は is often dropped (引き受けた以上、\
+最後までやる). 上は is a more formal, written version."""
+notes = """
+After a number, 以上 means "or more" (三人以上): another entry. The \
+second half is a must, a resolve or a firm conclusion, not a neutral \
+fact. Bare 上は is ambiguous (頂上は, "the summit"): it means "now \
+that" only after a verb."""
+related = ["kara-ni-wa", "ijou"]
+examples = [
+  { source = "yomeru", ja = "約束した{以上は}、守らなければならない。", en = "Now that I've promised, I have to keep it." },
+  { source = "yomeru", ja = "引き受けた{以上は}、最後までやります。", en = "Since I've taken it on, I'll see it through." },
+  { source = "yomeru", ja = "こうなった{上は}、やるしかない。", en = "Now that it's come to this, there's nothing for it but to act." },
+]
+
+[[point]]
+id = "kara-suru-to"
+pattern = "からすると"
+forms = ["からすれば"]
+jlpt = "N2"
+meaning = "judging from; from the standpoint of"
+formation = ["Noun + からすると / からすれば"]
+explanation = """
+Two close uses. With evidence, it leads to a guess: この空模様からする\
+と、雨になりそうだ, "judging from the sky, it's going to rain". With a \
+person or group, it gives their point of view: 親からすれば、子供は\
+いつまでも子供だ, "to parents, children are always children"."""
+notes = """
+からして shares the "judging from" use: see that entry. から言うと \
+follows a criterion (price, experience), not a person; から見ると \
+works best for what can be seen."""
+related = ["kara-shite", "kara-miru-to", "kara-iu-to", "ni-shitara"]
+examples = [
+  { tatoeba = "18150_222272", ja = "この空模様{からすると}、雨になりそうだ。", en = "Judging from the look of the sky, it is likely to rain." },
+  { source = "yomeru", ja = "親{からすれば}、子供はいつまでも子供だ。", en = "To parents, children are always children." },
+]
+
+[[point]]
+id = "kara-shite"
+pattern = "からして"
+forms = []
+jlpt = "N2"
+meaning = "even (X, to begin with); judging from"
+formation = ["Noun + からして"]
+explanation = """
+Picks one basic, obvious item to say the whole is the same: この映画は\
+題名からして怖い, "even this film's title is scary", so the rest must \
+be too. It's also used like からすると, "judging from": 顔つきからして\
+、失敗したらしい, "from their faces, they seem to have failed"."""
+notes = """
+In the first use, the item is the most basic one (the name, the first \
+step, the way someone talks), and the comment is usually critical."""
+related = ["kara-suru-to", "sae"]
+examples = [
+  { tatoeba = "305168_98532", ja = "彼らの顔つき{からして}、まあ失敗したのでしょう。", en = "From the way they look, I would say that they failed." },
+  { source = "yomeru", ja = "この映画は題名{からして}怖い。", en = "Even this film's title is scary." },
+  { source = "yomeru", ja = "あの人は話し方{からして}偉そうだ。", en = "Even the way he talks is arrogant." },
+]
+
+[[point]]
+id = "kara-miru-to"
+pattern = "から見ると"
+forms = ["から見れば", "から見て", "から見ても", "から見たら", "からみると", "からみれば", "からみて"]
+jlpt = "N2"
+meaning = "seen from, from (someone's) point of view"
+formation = ["Noun + から見ると / から見れば / から見て / から見ても"]
+explanation = """
+Gives a judgement as seen by a person or from a position: 私から見れば\
+、彼が間違っている, "in my view, he's wrong". から見て often leads to a \
+guess, and どこから見ても means "however you look at it": どこから見て\
+も学者だ, "he's every inch a scholar"."""
+notes = """
+Unlike から言うと, it can follow a person, including oneself. It fits \
+what can be seen or observed, less so sounds or smells. It also keeps \
+its literal sense: 遠くから見ると, "seen from far away"."""
+related = ["kara-suru-to", "kara-iu-to", "ni-shitara", "ni-totte"]
+examples = [
+  { tatoeba = "246586_167912", ja = "私{から見れば}彼が間違っている。", en = "In my eyes, he is wrong." },
+  { tatoeba = "292012_111671", ja = "彼はどこ{から見ても}学者だ。", en = "He is every bit a scholar." },
+]
+
+[[point]]
+id = "ni-shitara"
+pattern = "にしたら"
+forms = ["にすれば", "にしてみれば", "にしてみたら"]
+jlpt = "N2"
+meaning = "for (someone), from (someone's) point of view"
+formation = ["Noun (a person) + にしたら / にすれば / にしてみれば"]
+explanation = """
+Imagines how a situation feels to someone else: 子供にしたら、この宿題\
+は多すぎる, "for a child, this is too much homework". にしてみれば \
+stresses "if you put yourself in their place", and にすれば is a little \
+more formal."""
+notes = """
+Not for your own view (×私にしたら): use 私としては or 私から見ると. \
+Don't mix it up with にする "decide on" + たら: コーヒーにしたら？ is \
+"how about coffee?"."""
+related = ["kara-miru-to", "ni-totte", "kara-suru-to", "to-shite-wa"]
+examples = [
+  { source = "yomeru", ja = "子供{にしたら}、この宿題は多すぎる。", en = "For a child, this is too much homework." },
+  { source = "yomeru", ja = "母{にしてみれば}、心配なのは当然だ。", en = "From my mother's side, it's natural to worry." },
+]
+
+[[point]]
+id = "tokoro-wo-miru-to"
+pattern = "ところを見ると"
+forms = ["ところをみると", "ところを見れば"]
+jlpt = "N2"
+meaning = "judging from (the fact) that, seeing that"
+formation = ["Verb (often Verb［ている］) + ところを見ると   (笑っているところを見ると)"]
+explanation = """
+Turns something the speaker has noticed into a guess: 笑っているところ\
+を見ると、合格したらしい, "seeing that she's smiling, she must have \
+passed". The guess usually ends with らしい, ようだ, みたいだ, だろう or \
+に違いない."""
+notes = """
+The evidence is something actually observed, often someone's behaviour, \
+and the conclusion is a guess, not a fact. からすると and からして \
+follow a noun; ところを見ると follows a whole clause."""
+related = ["kara-suru-to", "rashii", "you-da"]
+examples = [
+  { source = "yomeru", ja = "笑っている{ところを見ると}、合格したらしい。", en = "Seeing that she's smiling, she must have passed." },
+  { source = "yomeru", ja = "電気が消えている{ところを見ると}、留守のようだ。", en = "Seeing that the lights are off, they seem to be out." },
+]
+
+[[point]]
+id = "kara-to-itte"
+pattern = "からといって"
+forms = ["からって", "からと言って"]
+jlpt = "N2"
+meaning = "just because (… doesn't mean)"
+formation = [
+  "Verb / ［い］Adjective + からといって",
+  "［な］Adjective / Noun + だ + からといって",
+]
+explanation = """
+Rejects a conclusion one might draw from a reason: お金があるからとい\
+って、幸せとは限らない, "just because you have money doesn't mean \
+you're happy". The second half is a denial or a criticism: とは限らない, \
+わけではない, ことにはならない, or a "don't"."""
+notes = """
+からって is casual. The same words can also just report someone's \
+reason: 忙しいからと言って帰った, "he left, saying he was busy"; \
+context tells them apart."""
+related = ["to-wa-kagiranai", "wake-de-wa-nai", "kara-reason"]
+examples = [
+  { tatoeba = "318504_85209", ja = "貧しい{からといって}人を軽蔑するな。", en = "Don't look down on a man because he is poor." },
+  { tatoeba = "296020_107665", ja = "彼が賢い{からといって}正直だという事にはならない。", en = "Just because he's wise doesn't mean that he's honest." },
+]
+
+[[point]]
+id = "no-dakara"
+pattern = "のだから"
+forms = ["んだから", "のですから", "んですから"]
+jlpt = "N2"
+meaning = "since (as you know), given that"
+formation = [
+  "Verb / ［い］Adjective + のだから",
+  "［な］Adjective / Noun + な + のだから   (学生なのだから)",
+]
+explanation = """
+Gives a reason both speakers already accept, and builds a firm point on \
+it, often advice or a reproach: もう大きくなったのだから、行儀良くしな\
+さい, "you're a big boy now, so behave yourself". The の presents the \
+reason as an established fact."""
+notes = """
+Pushier than plain から, and odd when the listener doesn't know the \
+reason yet. At the end of a sentence, んだから sounds exasperated: \
+本当に困った人なんだから, "honestly, you're hopeless"."""
+related = ["kara-reason", "n-desu", "kara-ni-wa"]
+examples = [
+  { tatoeba = "31206_194037", ja = "もう大きくなった{のだから}、行儀良くしなさい。", en = "Now you are a big boy, behave yourself." },
+  { tatoeba = "18014_179158", ja = "君がそう言う{んだから}。", en = "Since you say so." },
+  { source = "yomeru", ja = "自分で決めた{んだから}、頑張りなさい。", en = "You decided this yourself, so do your best." },
+]
+
+[[point]]
+id = "to-iu-koto-wa"
+pattern = "ということは"
+forms = ["ってことは", "と言うことは"]
+jlpt = "N2"
+meaning = "so that means, in other words"
+formation = [
+  "Sentence。 + ということは + Sentence",
+  "Clause + ということは + (Conclusion) + ということだ",
+]
+explanation = """
+Draws a conclusion from a fact just stated: 電気がついている。というこ\
+とは、誰かいるね, "the light's on, so someone's in". At the start of a \
+sentence, often as a question, it checks what the other person means. \
+Mid-sentence, "X ということは Y ということだ" is "X means Y"."""
+notes = """
+The same words often just make a clause into a topic, "the fact that": \
+地球が丸いということは明らかだ, "that the earth is round is clear". \
+Only the "that means" use is this point."""
+related = ["to-iu-koto", "to-iu-no-wa", "tsumari"]
+examples = [
+  { source = "yomeru", ja = "電気がついている。{ということは}、誰かいるね。", en = "The light is on. That means someone's home." },
+  { source = "yomeru", ja = "「明日は雨だって。」「{ってことは}、試合は中止？」", en = "\"They say it'll rain tomorrow.\" \"So the match is off?\"" },
+]
+
+[[point]]
+id = "ue-de"
+pattern = "上で"
+forms = ["うえで", "の上で", "の上では", "る上で", "る上では"]
+hover = false
+jlpt = "N2"
+meaning = "in terms of, as far as … goes; in (doing), for"
+formation = [
+  "Noun + の上で（は）   (規則の上では)",
+  "Verb［る］ + 上で   (生活する上で)",
+]
+explanation = """
+Noun の上で names the area a statement holds in: 規則の上では、まだ学生\
+だ, "according to the rules, he's still a student". Verb［る］上で \
+means "when doing, for doing", often with 大切だ, 必要だ or 役に立つ: \
+日本で生活する上で、日本語は大切だ, "for living in Japan, Japanese \
+matters"."""
+notes = """
+Verb［た］上で is another pattern, "after doing (first)": see that \
+entry. Both lean formal. 上で is also the plain place, "on (top of)": \
+机の上で, so this entry stays out of the hover popup."""
+related = ["ta-ue-de", "ni-oite", "kara-iu-to"]
+examples = [
+  { tatoeba = "20226_183105", ja = "規則{の上では}彼はまだ学生だ。", en = "Technically he is still a student." },
+  { source = "yomeru", ja = "日本で生活する{上で}、日本語は大切だ。", en = "For living in Japan, Japanese is important." },
+]
+
+[[point]]
+id = "no-uchi"
+pattern = "のうち"
+forms = ["のうちで", "のうちでは", "のうちの", "の内"]
+jlpt = "N2"
+meaning = "among, (out) of"
+formation = [
+  "Noun + のうち（で）   (四季のうちで)",
+  "Number + のうち（の）   (十人のうち三人)",
+]
+explanation = """
+Picks from within a group or range: 四季のうちで春が一番好きだ, "of the \
+four seasons, I like spring best". It often goes with comparisons \
+(一番, ほう) and with numbers: 十人のうち三人が来た, "three out of ten \
+came"."""
+notes = """
+Means the same as の中で, which is more common in speech. Usually \
+written in kana. うちに (while) is another use of the same word: see \
+that entry."""
+related = ["ga-ichiban", "uchi-ni", "yori-hou-ga"]
+examples = [
+  { tatoeba = "245519_168968", ja = "四季{のうちで}春が一番好きだ。", en = "Spring is my favourite of the four seasons." },
+  { tatoeba = "52752_235467", ja = "２人{のうちでは}、ジョンの方が背が高い。", en = "John is the taller of the two." },
+]
