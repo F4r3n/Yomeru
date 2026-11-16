@@ -10358,7 +10358,7 @@ examples = [
 [[point]]
 id = "kiru"
 pattern = "切る"
-forms = ["きる", "切れる", "きれる"]
+forms = ["きる", "切れる", "きれる", "切れない", "きれない"]
 jlpt = "N3"
 hover = false
 meaning = "do completely, all the way; can't (do it all)"
@@ -15168,7 +15168,7 @@ examples = [
 [[point]]
 id = "mo-mata"
 pattern = "もまた"
-forms = ["も又"]
+forms = ["も又", "又〜も"]
 jlpt = "N2"
 meaning = "also, likewise, too (emphatic, a bit literary)"
 formation = ["Noun + もまた   (私もまた)"]
@@ -16863,6 +16863,28 @@ examples = [
   { source = "yomeru", ja = "みんなに約束した{手前}、やめられない。", en = "Having promised everyone, I can't back out." },
   { source = "yomeru", ja = "子供の{手前}、泣くわけにはいかなかった。", en = "In front of the kids, I couldn't cry." },
   { tatoeba = "68194_230827", ja = "あの信号の{手前}で降ろしてください。", en = "Please let me off on this side of that traffic light." },
+]
+
+[[point]]
+id = "ni-yorazu"
+pattern = "によらず"
+forms = ["に依らず", "によらない", "によらぬ"]
+jlpt = "N2"
+meaning = "regardless of, whatever; contrary to (looks)"
+formation = ["Noun + によらず   (年齢によらず、何事によらず)"]
+explanation = """
+Says something holds no matter what the noun is: 年齢によらず、誰で\
+も参加できる, "anyone can take part, whatever their age". 見かけによ\
+らず is a set phrase, "despite how he looks": 彼は見かけによらず力が\
+強い, "he's stronger than he looks"."""
+notes = """
+Close to にかかわらず and を問わず (N2); によらず fits most with 何, \
+年齢, 性別, 理由, 経験. Formal except in 見かけによらず and 人は見かけ\
+によらない ("you can't judge by looks")."""
+related = ["ni-kakawarazu", "wo-towazu", "ni-yotte"]
+examples = [
+  { tatoeba = "313478_90236", ja = "彼女は見かけ{によらず}頑張りやだ。", en = "She is persistent though she doesn't look so." },
+  { source = "yomeru", ja = "年齢{によらず}、誰でも参加できます。", en = "Anyone can take part, whatever their age." },
 ]
 
 [[point]]
