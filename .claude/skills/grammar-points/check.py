@@ -74,6 +74,35 @@ def longest_shared(ours, theirs):
     return best
 
 
+def shared_candidates(ours, theirs):
+    """Which of `ours` share a JA_RUN-char run with `theirs`, and the part of
+    `theirs` such a run can sit in.
+
+    Searching all of bee's text (about 30M chars) once per probe made the
+    check take minutes. A hit needs a run of at least JA_RUN chars, all of
+    them chars our strings use, so only bee's runs of such chars that are
+    that long can hold one: one pass over them, sliding a JA_RUN window
+    against the set of our windows, finds the strings worth the exact
+    search, and the exact search then runs on those runs alone.
+    """
+    chars = set("".join(ours))
+    if not chars:
+        return set(), ""
+    cls = "[" + "".join(re.escape(c) for c in sorted(chars)) + "]"
+    runs = re.findall(cls + "{%d,}" % JA_RUN, theirs)
+    windows = {}
+    for j in ours:
+        for i in range(len(j) - JA_RUN + 1):
+            windows.setdefault(j[i:i + JA_RUN], set()).add(j)
+    found = set()
+    for r in runs:
+        for i in range(len(r) - JA_RUN + 1):
+            hit = windows.get(r[i:i + JA_RUN])
+            if hit:
+                found |= hit
+    return found, "\n".join(runs)
+
+
 def words(t):
     return re.findall(r"[a-z']+", t.lower())
 
@@ -173,6 +202,13 @@ def overlap(points, zip_path):
             for pid in want[hit]:
                 theirs[pid].append(t)
     all_ja = "\n".join(all_ja)
+    ours_ja = {}
+    for p in points:
+        ja = [re.sub(r"[{}\s]", "", e["ja"]) for e in p["examples"] if e.get("source") == "yomeru"]
+        ja += re.findall(r"[぀-ヿ一-鿿、。…〜]{10,}", p["explanation"] + p.get("notes", ""))
+        ours_ja[p["id"]] = ja
+    candidates, their_ja = shared_candidates(
+        [j for js in ours_ja.values() for j in js], all_ja)
     hits = []
     for p in points:
         text = " ".join(theirs[p["id"]])
@@ -185,12 +221,12 @@ def overlap(points, zip_path):
         for i in range(len(ow) - EN_RUN + 1):
             if tuple(ow[i:i + EN_RUN]) in grams:
                 hits.append(f"{p['id']}: shares \"{' '.join(ow[i:i + EN_RUN])}\"")
-        ja = [re.sub(r"[{}\s]", "", e["ja"]) for e in p["examples"] if e.get("source") == "yomeru"]
-        ja += re.findall(r"[぀-ヿ一-鿿、。…〜]{10,}", p["explanation"] + p.get("notes", ""))
-        for j in ja:
+        for j in ours_ja[p["id"]]:
+            if j not in candidates:
+                continue
             # A pattern plus a common verb (持ってきてよかった。) is shared by
             # everyone; most of a sentence isn't.
-            shared = longest_shared(j, all_ja)
+            shared = longest_shared(j, their_ja)
             if len(shared) >= max(JA_RUN, JA_SHARE * len(j)):
                 hits.append(f"{p['id']}: \"{j}\" shares \"{shared}\"")
     return sorted(set(hits))
