@@ -104,7 +104,9 @@ def covered():
     if not GRAMMAR_TOML.exists():
         return set()
     d = tomllib.loads(GRAMMAR_TOML.read_text(encoding="utf-8"))
-    return {f for p in d.get("point", []) for f in [p["pattern"], *p.get("forms", [])]}
+    names = {f for p in d.get("point", []) for f in [p["pattern"], *p.get("forms", [])]}
+    # Bee's names lose their 〜 in core_names(): ours must match the same way.
+    return names | {n for f in names for n in core_names(f)}
 
 
 def core_names(name):

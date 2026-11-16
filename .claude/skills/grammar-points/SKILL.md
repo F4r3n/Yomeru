@@ -151,9 +151,21 @@ matches. Report the batches, the points left out, and the open questions.
 
 ## Writing an entry
 
-Add entries with Edit, grouped by level (N5, then N4, then N3), each a
-`[[point]]` block in the field order of the existing ones. Fix an entry in
-place; never add a second block for the same id.
+Add entries grouped by level (N5, then N4, then N3), each a `[[point]]`
+block in the field order of the existing ones. Fix an entry in place;
+never add a second block for the same id.
+
+Never Read `data/grammar.toml` whole, so never use Edit on it: Edit needs
+a Read first, and the file is thousands of lines. Instead:
+- **new entries**: append the batch with one `cat >> data/grammar.toml
+  <<'EOF'` heredoc when its level's group is at the end of the file;
+  otherwise insert the block with a short Python script after the last
+  entry of that level;
+- **fixes**: a short `python3 -` script doing exact `str.replace` pairs,
+  with `assert s.count(old) == 1` on each so a miss fails loudly. A
+  one-line `sed -i` is fine for a single unambiguous line;
+- **reading**: `grep -n` for ids, forms and patterns, and `sed -n 'A,Bp'`
+  for the few entries you need to compare against.
 
 - **id**: a lowercase romaji slug of the pattern (`te-mo-ii`,
   `wake-de-wa-nai`), with a suffix when two patterns share a spelling
