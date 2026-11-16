@@ -6114,8 +6114,9 @@ notes = """
 なんか / なんて can also play something down: 宿題なんかしたくない, "I \
 don't want to do (stupid) homework"; 私なんか, "someone like me", is \
 humble. About other people's things it sounds dismissive. なんて \
-before an adjective, "how …!", is a separate point."""
-related = ["ya-particle", "toka"]
+before an adjective, "how …!", is a separate point (nante)."""
+related = ["ya-particle", "toka", "nante"]
+homographs = ["nante"]
 examples = [
   { source = "yomeru", ja = "京都や奈良{など}に行きました。", en = "I went to places like Kyoto and Nara." },
   { source = "yomeru", ja = "お茶{など}いかがですか。", en = "Would you like some tea or something?" },
@@ -6318,6 +6319,168 @@ examples = [
   { tatoeba = "27693_190545", ja = "一緒にくる{かい}。", en = "Do you want to come along?" },
   { tatoeba = "63134_225796", ja = "きょうの午後は面白かった{かい}。", en = "Did you have a good time this afternoon?" },
   { tatoeba = "42984_205739", ja = "それで君はどうするん{だい}？", en = "And what do you do?" },
+]
+
+[[point]]
+id = "inai"
+pattern = "以内"
+forms = ["以内に", "以内で", "以内の"]
+jlpt = "N4"
+meaning = "within, not more than (an amount or time)"
+formation = ["Number + Counter + 以内   (一時間以内に)"]
+explanation = """
+Sets an upper limit, the amount itself included: 一時間以内に戻ります, \
+"I'll be back within an hour". 200字以内で書く, "write in 200 \
+characters or fewer". With に for a deadline, で for a limit on how \
+something is done."""
+notes = """
+Like 以下 ("or less") and 以上 ("or more"), 以内 includes the number. \
+以内 is for time, distance and amounts within a range; 以下 is more for \
+levels and quantities. Not 以外 ("except")."""
+related = ["ika", "ijou", "igai"]
+examples = [
+  { tatoeba = "27750_235776", ja = "１時間{以内}に戻ってきます。", en = "I'll be back within an hour." },
+  { tatoeba = "73238_235858", ja = "１ヶ月{以内}に帰ってきなさい。", en = "Come back within a month." },
+]
+
+[[point]]
+id = "naku-naru"
+pattern = "なくなる"
+forms = ["くなくなる", "なくなった", "なくなりました", "無くなる"]
+jlpt = "N4"
+meaning = "to no longer (do), stop being; to run out, disappear"
+formation = [
+  "Verb［ない］ → Verb［な̶い̶］ + なくなる   (食べなくなる)",
+  "［い］Adjective［い̶］ + くなくなる   (痛くなくなる)",
+]
+explanation = """
+A change from doing or being something to not any more: 最近、テレビ\
+を見なくなった, "I've stopped watching TV lately". As a verb on its \
+own, なくなる means "to run out, be gone": お金がなくなった, "I'm out \
+of money"."""
+notes = """
+The opposite of ようになる (N4, "come to do"). Potential verbs are \
+common: 見えなくなる, "go out of sight"; 分からなくなる, "get lost, \
+stop understanding". Not 亡くなる, "to pass away", the same sound."""
+related = ["you-ni-naru", "naru"]
+examples = [
+  { tatoeba = "18613_227283", ja = "お金が{なくなった}。", en = "I am short of money." },
+  { tatoeba = "296716_106970", ja = "彼は最近あまり見かけ{なくなった}。", en = "He hasn't been much in evidence recently." },
+  { tatoeba = "53122_215821", ja = "ジャックは群集の中に見え{なくなった}。", en = "Jack was lost sight of in the crowd." },
+]
+
+[[point]]
+id = "kitto"
+pattern = "きっと"
+forms = ["屹度"]
+jlpt = "N4"
+meaning = "surely, certainly, I'm sure (that)"
+formation = ["きっと + Clause (often + だろう / と思う / よ)"]
+explanation = """
+A confident guess about something not yet known: 明日はきっと晴れる\
+よ, "it'll surely be sunny tomorrow". With a request or promise it \
+means "be sure to": きっと来てね, "be sure to come"."""
+notes = """
+A feeling of confidence, not proof. Compare 必ず (N4): 必ず is "without \
+fail", a rule or a firm promise; きっと is the speaker's belief. With \
+negatives, use だろう: きっと来ないだろう."""
+related = ["kanarazu", "ni-chigai-nai", "deshou"]
+examples = [
+  { tatoeba = "243329_171148", ja = "今夜は、{きっと}晴れるよ。", en = "I bet it's fine tonight." },
+  { tatoeba = "289651_114021", ja = "彼は{きっと}君を手伝ってくれるよ。", en = "He's sure to help you." },
+]
+
+[[point]]
+id = "mochiron"
+pattern = "もちろん"
+forms = ["勿論"]
+jlpt = "N4"
+meaning = "of course, naturally"
+formation = ["もちろん + Clause", "もちろん (alone, as an answer)"]
+explanation = """
+Says something is obvious or expected: もちろん、いいよ, "of course, \
+sure". Alone, it's a strong "yes": 「来る?」「もちろん!」. In \
+the middle of a sentence it can soften a point: もちろん簡単ではない, \
+"of course it isn't easy"."""
+notes = """
+Noun + はもちろん (N3) means "not to mention": 子供はもちろん大人も. \
+Compare 当然 ("naturally", more matter-of-fact) and 確かに (N2, \
+"admittedly")."""
+related = ["wa-mochiron", "tashika-ni"]
+examples = [
+  { tatoeba = "30544_193393", ja = "{もちろん}、いいよ。", en = "Of course, you may." },
+  { tatoeba = "30531_193366", ja = "{もちろん}首相に面会するのは難しい。", en = "Of course it's difficult to gain access to the Prime Minister." },
+]
+
+[[point]]
+id = "yatto"
+pattern = "やっと"
+forms = ["やっとのことで", "のがやっと", "のがやっとだ"]
+jlpt = "N4"
+meaning = "finally, at last (after effort); barely (manage)"
+formation = [
+  "やっと + Verb［た］   (やっと着いた)",
+  "Verb［る］ + のがやっとだ   (歩くのがやっとだ)",
+]
+explanation = """
+Says something long-awaited or hard finally happened: やっと駅に着い\
+た, "we finally reached the station". のがやっとだ means "it's all one \
+can do": 疲れて、歩くのがやっとだった, "I was so tired I could barely \
+walk"."""
+notes = """
+Only for good, wished-for results. とうとう (N4) also takes bad ones \
+(とうとう雨が降った); ついに (N3) is more dramatic and written. Compare \
+ようやく, the same as やっと but more formal."""
+related = ["toutou", "tsui-ni", "iyoiyo"]
+examples = [
+  { tatoeba = "30234_193069", ja = "{やっと}金曜日だ。", en = "Thank God it's Friday!" },
+  { tatoeba = "30246_193082", ja = "{やっと}その意味が分かった。", en = "The meaning dawned upon me at last." },
+  { tatoeba = "47490_210225", ja = "その子は靴のひもを結ぶ{のがやっと}だった。", en = "That child could barely manage to tie his shoes." },
+]
+
+[[point]]
+id = "zehi"
+pattern = "ぜひ"
+forms = ["是非", "ぜひとも", "是非とも"]
+jlpt = "N4"
+meaning = "by all means, definitely (wish, request, invitation)"
+formation = ["ぜひ + Verb［て］ください / Verb［stem］たい / Verb［よう］"]
+explanation = """
+Adds warmth and strength to a wish, request or invitation: ぜひ遊びに\
+来てください, "please do come and visit". ぜひ行きたい, "I'd really \
+love to go". Alone, ぜひ! means "absolutely!"."""
+notes = """
+Only with wishes, requests and invitations, never with plain facts or \
+guesses: not ぜひ雨が降る. For "surely" use きっと. ぜひとも is \
+stronger and more formal."""
+related = ["kitto", "kanarazu", "tai"]
+examples = [
+  { tatoeba = "51317_214027", ja = "{ぜひ}、遊びにおいでください。", en = "Do come and visit us." },
+  { tatoeba = "38522_214022", ja = "{ぜひ}お願いします。", en = "By all means." },
+]
+
+[[point]]
+id = "ippai"
+pattern = "いっぱい"
+forms = ["一杯", "いっぱいだ", "いっぱいに", "いっぱいの"]
+jlpt = "N4"
+meaning = "full (of); a lot, plenty"
+formation = [
+  "Noun + で + いっぱいだ   (人でいっぱいだ)",
+  "いっぱい + Verb   (いっぱい食べた)",
+]
+explanation = """
+Says a space is full: 部屋は人でいっぱいだった, "the room was full of \
+people"; おなかがいっぱい, "I'm full". As an adverb, it's a casual "a \
+lot": いっぱい食べた, "I ate a lot"."""
+notes = """
+The thing that fills takes で. The adverb use is spoken; たくさん is \
+neutral. 一杯 also means "one cupful" (コーヒーを一杯). Compare だらけ \
+(N3), "covered with (something bad)"."""
+related = ["darake", "zukume"]
+examples = [
+  { tatoeba = "64037_226693", ja = "お腹が{いっぱい}です。", en = "My stomach is full." },
+  { tatoeba = "319566_84149", ja = "部屋は煙で{いっぱい}だった。", en = "The room was full of smoke." },
 ]
 
 [[point]]
@@ -10761,7 +10924,7 @@ Almost always for unwanted things: dirt, mistakes, debt. For something \
 good, use いっぱい: 花がいっぱい, ×花だらけ (unless it's a complaint). \
 ばかり says "nothing but"; だらけ adds that it's everywhere and \
 unpleasant."""
-related = ["bakari", "ippai"]
+related = ["bakari-noun", "ippai"]
 examples = [
   { tatoeba = "56975_219654", ja = "この本は間違い{だらけ}だ。", en = "This book is full of mistakes." },
   { tatoeba = "320272_83444", ja = "壁は落書き{だらけ}だ。", en = "The wall was covered with graffiti." },
@@ -11578,7 +11741,7 @@ The asking form is 〜させていただけませんか (may I…?). Some find i
 overused for actions that need nobody's permission; 〜いたします is a \
 humble alternative. Check the causative: 読む → 読ませて, not 読まさせ\
 て, though that extra さ is common in speech."""
-related = ["sasete-kudasai", "causative", "te-itadaku", "itasu"]
+related = ["sasete-kudasai", "causative", "te-itadakemasen-ka", "itasu"]
 examples = [
   { tatoeba = "353241_150125", ja = "自己紹介を{させていただきます}。", en = "Let me introduce myself." },
   { tatoeba = "39494_202282", ja = "できる限りの事は{させていただきます}。", en = "I'll do everything I can." },
@@ -11601,7 +11764,7 @@ More casual: 〜てもらえると助かる, "it'd help me if you could". \
 うれしい instead of ありがたい sounds warmer. Ending with です or \
 のですが softens it further. Gentler than 〜てください, which is still \
 a direct request."""
-related = ["te-itadaku", "te-morau", "te-kudasai"]
+related = ["te-itadakemasen-ka", "te-morau", "te-kudasai"]
 examples = [
   { tatoeba = "37574_200373", ja = "どのような資料でも送っ{ていただけるとうれしい}です。", en = "I would appreciate any information you can send to us." },
   { tatoeba = "241038_173432", ja = "航空便で送っ{てもらえるとうれしい}のですが。", en = "I should be very grateful if you would send them by air." },
@@ -11647,7 +11810,7 @@ Keep one style in a text: である or です, not both. でもある is "is als
 医者でもある. Don't confuse with で + ある: パーティーはどこであるの？ \
 asks "where is the party held?", with で as the place. であります is old-\
 fashioned speech-making."""
-related = ["da", "desu"]
+related = ["desu"]
 hover = false
 examples = [
   { tatoeba = "269047_145516", ja = "慎重に運転することが大切{である}。", en = "It is important to drive carefully." },
@@ -11859,6 +12022,97 @@ examples = [
   { tatoeba = "324396_79321", ja = "友達{というほどではない}が知り合いだ。", en = "He is not a friend, but an acquaintance." },
   { tatoeba = "49875_212592", ja = "そのホテルは評判{ほどではない}。", en = "That hotel is not all it's cracked up to be." },
   { tatoeba = "65840_228482", ja = "いやそれ{ほどでもない}よ。何か用かい？", en = "Not really. What's up?" },
+]
+
+[[point]]
+id = "nante"
+pattern = "なんて"
+forms = ["何て"]
+hover = false
+jlpt = "N3"
+meaning = "what a…! how…!; (to think) that…! (surprise)"
+formation = [
+  "なんて + Adjective (+ Noun) + だろう   (なんてきれいなんだろう)",
+  "Clause (plain) + なんて   (負けるなんて)",
+]
+explanation = """
+Two uses. At the start of a sentence it exclaims: なんてきれいな夕焼け\
+だろう, "what a beautiful sunset!". After a clause it shows surprise or \
+shock at a fact, often followed by a judgment: 彼が負けるなんて信じら\
+れない, "I can't believe he lost"."""
+notes = """
+Casual. After a noun, なんて plays something down (宿題なんて, "stupid \
+homework"): that use is in など. The written exclamation is なんという \
+(N1); the surprise use is close to とは (N1). Search-only: なんて is also "what (did you say)": なんて言った\
+の?"""
+related = ["nado", "nan-to-iu", "to-wa-surprise", "koto-ka"]
+homographs = ["nado"]
+examples = [
+  { tatoeba = "36133_198936", ja = "{なんて}きれいな夕焼けだろう。", en = "What a beautiful sunset!" },
+  { tatoeba = "311883_91829", ja = "彼女は{なんて}速く走っているのでしょう。", en = "How fast she is running!" },
+  { tatoeba = "308312_95373", ja = "彼女が私達に加わる{なんて}、思ってもいなかった。", en = "I never expected that she would join us." },
+]
+
+[[point]]
+id = "tonikaku"
+pattern = "とにかく"
+forms = ["兎に角", "ともかく"]
+jlpt = "N3"
+meaning = "anyway, at any rate, in any case"
+formation = ["とにかく + Clause"]
+explanation = """
+Sets aside details or doubts and goes to the main point or action: \
+とにかくやってみよう, "anyway, let's give it a try". It also means \
+"really, just": とにかく暑い, "it's just so hot"."""
+notes = """
+ともかく is the same, a little more formal; Noun + はともかく (N2) is \
+"leaving X aside". Compare なにしろ (N3), which gives a reason, and \
+いずれにしても (N1), which follows a list of options."""
+related = ["wa-tomokaku", "nanishiro", "izure-ni-shite-mo"]
+examples = [
+  { tatoeba = "37670_200469", ja = "{とにかく}最善を尽くします。", en = "In any event, I will do my best." },
+  { tatoeba = "37664_200463", ja = "{とにかく}その問題を解いてみよう。", en = "I will try to solve the problem at any rate." },
+]
+
+[[point]]
+id = "waza-to"
+pattern = "わざと"
+forms = ["態と"]
+jlpt = "N3"
+meaning = "on purpose, deliberately"
+formation = ["わざと + Verb   (わざと負ける)"]
+explanation = """
+Someone does something knowingly, often something bad or that looks \
+like an accident: 彼はわざと間違えた, "he made a mistake on purpose". \
+わざとじゃない, "I didn't mean it"."""
+notes = """
+Not わざわざ (N3): わざわざ is going out of one's way, usually kindly \
+(わざわざ来てくれた); わざと is deliberately, often unkindly. In writing, \
+故意に is the formal word."""
+related = ["wazawaza"]
+examples = [
+  { tatoeba = "293413_110275", ja = "彼は{わざと}間違えた。", en = "He made a mistake on purpose." },
+  { tatoeba = "46378_209117", ja = "その少年は{わざと}私の足を踏んだ。", en = "The boy stepped on my foot on purpose." },
+]
+
+[[point]]
+id = "kichinto"
+pattern = "きちんと"
+forms = ["きちんとした", "きちんとする"]
+jlpt = "N3"
+meaning = "properly, neatly, precisely"
+formation = ["きちんと + Verb   (きちんと片付ける)", "きちんとした + Noun"]
+explanation = """
+Says something is done properly or in good order: 部屋をきちんと片付け\
+る, "tidy the room properly". きちんとした人, "a neat, reliable \
+person". It also covers being on time or exact: きちんと払う."""
+notes = """
+Close to ちゃんと (N3), which is more casual and broader. きちんと \
+stresses order and neatness; ちゃんと, doing what's expected."""
+related = ["chanto"]
+examples = [
+  { tatoeba = "63388_226047", ja = "{きちんと}座りなさい。", en = "Sit up straight." },
+  { tatoeba = "264784_149774", ja = "自分の部屋は{きちんと}片づけておきなさい。", en = "Keep your room neat and tidy." },
 ]
 
 [[point]]
@@ -12954,7 +13208,7 @@ without insisting, and often follows with "but…": 早いに越したことは\
 ないが、急がなくてもいい. に限る, "nothing beats", is a stronger, \
 personal preference. After a negative it means "best if there's \
 none": 事故がないに越したことはない."""
-related = ["ni-kagiru", "hou-ga-ii", "beki-da"]
+related = ["ni-kagiru", "ta-hou-ga-ii", "beki-da"]
 examples = [
   { tatoeba = "329093_74626", ja = "警戒する{に越したことはない}。", en = "You can't be too vigilant." },
   { source = "yomeru", ja = "旅行の荷物は軽い{に越したことはない}。", en = "For a trip, the lighter your bags, the better." },
@@ -16477,7 +16731,7 @@ notes = """
 てでも is one's own "at any cost". てまで looks at how far someone \
 went, often critically: 徹夜してまでやることじゃない, "it's not worth \
 staying up all night for"."""
-related = ["te-de-mo", "made"]
+related = ["te-de-mo", "kara-made"]
 examples = [
   { tatoeba = "280157_123838", ja = "頭を下げ{てまで}金を借りたくない。", en = "I wouldn't lower myself to borrow money." },
   { tatoeba = "261542_153003", ja = "私は父に反対し{てまで}彼女の味方になった。", en = "I supported her even against my father." },
@@ -16594,7 +16848,7 @@ Don't mix it with なければと思う, "I feel I must": 行かなければと�
 ばいいと思う / ばいいな say the same wish more directly. With \
 another person's action, くだされば or もらえれば: 来ていただければ\
 と思います."""
-related = ["ba", "ba-ii", "to-omou"]
+related = ["ba", "tara-ii", "to-omou"]
 examples = [
   { tatoeba = "25265_188126", ja = "何かお役に立て{ればと思います}。", en = "I hope I can be of some help to you." },
   { tatoeba = "54774_217465", ja = "こんなすばらしい天気が続け{ばと思う}。", en = "I hope this fine weather holds." },
@@ -16912,6 +17166,30 @@ related = ["ni-kakawarazu", "wo-towazu", "ni-yotte"]
 examples = [
   { tatoeba = "313478_90236", ja = "彼女は見かけ{によらず}頑張りやだ。", en = "She is persistent though she doesn't look so." },
   { source = "yomeru", ja = "年齢{によらず}、誰でも参加できます。", en = "Anyone can take part, whatever their age." },
+]
+
+[[point]]
+id = "tsutsu"
+pattern = "つつ"
+forms = ["つつも"]
+hover = false
+jlpt = "N2"
+meaning = "while (doing); although, even though (つつも)"
+formation = ["Verb［stem］ + つつ / つつも   (知りつつ)"]
+explanation = """
+A written ながら. Two uses: two actions at once, 景色を楽しみつつ歩く, \
+"walk while enjoying the view"; and with つつも, "even though": 体に悪い\
+と知りつつ、タバコをやめられない, "though I know it's bad for me, I \
+can't quit smoking"."""
+notes = """
+The contrast use is more common, often with 知る, 思う, 言う. つつある \
+(N2) is a different point: "in the process of". Formal and written; in \
+speech, ながら and ながらも. Search-only: つつ also starts words like \
+包む in kana."""
+related = ["nagara", "nagara-mo", "tsutsu-aru", "tsu-tsu"]
+examples = [
+  { tatoeba = "73634_236268", ja = "「春を待ち{つつ}」は漱石の小説だったね。", en = "\"Waiting for Spring\" is a novel by Soseki, isn't it?" },
+  { source = "yomeru", ja = "体に悪いと知り{つつも}、やめられない。", en = "Even though I know it's bad for me, I can't stop." },
 ]
 
 [[point]]
@@ -18812,7 +19090,7 @@ Common words: 黒ずくめ, いいことずくめ, 規則ずくめ, ごちそう
 結構ずくめ. Stick to these: it is idiomatic (not ×本ずくめ). Unlike \
 だらけ and まみれ, it can be positive. Not for \
 dirt or physical coverings (×泥ずくめ: 泥だらけ)."""
-related = ["darake", "mamire", "bakari"]
+related = ["darake", "mamire", "bakari-noun"]
 examples = [
   { tatoeba = "313640_90074", ja = "彼女は黒{ずくめ}の服装をしていた。", en = "She was dressed all in black." },
   { source = "yomeru", ja = "引っ越してから、いいこと{ずくめ}だ。", en = "Since I moved, it's been one good thing after another." },
@@ -22358,4 +22636,74 @@ related = ["u-ni-mo"]
 examples = [
   { source = "yomeru", ja = "{笑うに笑えない}話だ。", en = "It's a story you can't bring yourself to laugh at." },
   { source = "yomeru", ja = "ここまで来たら、{引くに引けない}。", en = "Now that we've come this far, we can't back out." },
+]
+
+[[point]]
+id = "ika-ni"
+pattern = "いかに"
+forms = ["如何に", "いかに〜か", "いかに〜ても"]
+jlpt = "N1"
+meaning = "how (much); however (much) (formal)"
+formation = [
+  "いかに + Adjective / Verb + か   (いかに大切か)",
+  "いかに + Verb［て］ + も   (いかに努力しても)",
+]
+explanation = """
+A formal どんなに or どう. With か it stresses degree: 健康がいかに大切\
+か分かった, "I realized how important health is". With ても it's \
+"however much": いかに急いでも間に合わない, "however we hurry, we \
+won't make it"."""
+notes = """
+Written and speech-like (lectures, essays). いかにも is a different \
+word: "truly, just like" (いかにも彼らしい). Compare いかなる (N1), \
+"any kind of", before a noun."""
+related = ["ika-naru", "ikura-temo"]
+examples = [
+  { tatoeba = "256922_157609", ja = "私は教育が{いかに}重要であるかを痛感しました。", en = "It was brought home to me how important education is." },
+  { tatoeba = "323859_79858", ja = "問題は、{いかに}核戦争を避けるかである。", en = "The question is how to avoid nuclear war." },
+]
+
+[[point]]
+id = "ni-hitoshii"
+pattern = "に等しい"
+forms = ["にひとしい", "に等しく", "ないに等しい"]
+jlpt = "N1"
+meaning = "equal to; as good as, amounting to"
+formation = [
+  "Noun + に等しい   (拒否に等しい)",
+  "Verb (plain) + に等しい   (ないに等しい)",
+]
+explanation = """
+Literally "equal to" (一ドルは百セントに等しい), but mostly a judgment: \
+something is practically the same as something worse or bigger. \
+その返事は拒否に等しい, "that answer amounts to a refusal". ないに\
+等しい: "next to nothing"."""
+notes = """
+Written and formal. Close to も同然だ (N1), which is more emotional and \
+spoken. Often with ほとんど: ほとんど脅迫に等しい."""
+related = ["mo-douzen-da"]
+examples = [
+  { tatoeba = "58394_221072", ja = "この条件では拒絶{に等しい}。", en = "These conditions amount to refusal." },
+  { tatoeba = "57930_220608", ja = "この地域の失業はほぼない{に等しい}。", en = "Unemployment in this part of the country is virtually nonexistent." },
+]
+
+[[point]]
+id = "nai-made-mo"
+pattern = "ないまでも"
+forms = ["と言わないまでも", "とは言わないまでも", "とはいわないまでも", "ないまでも〜せめて"]
+jlpt = "N1"
+meaning = "even if not (X), at least (Y); not to say"
+formation = ["Verb［ない］ + までも   (毎日とは言わないまでも)"]
+explanation = """
+Concedes the higher level and settles for a lower one: 暑いとは言わない\
+までも、暖かい, "it's warm, if not hot". With a wish: 毎週とは言わない\
+までも、せめて月に二回は映画を見たい, "if not every week, I'd like \
+to see a film at least twice a month"."""
+notes = """
+Very often とは言わないまでも. The second half often has せめて or \
+少なくとも ("at least"). Not までもない (N1, "no need to")."""
+related = ["made-mo-nai", "to-made-wa-ikanai-ga"]
+examples = [
+  { tatoeba = "267077_147478", ja = "暑いと言わ{ないまでも}、暖かい。", en = "It is warm, not to say hot." },
+  { tatoeba = "289788_113886", ja = "彼はけちとは言わ{ないまでも}倹約家だ。", en = "He is thrifty, not to say stingy." },
 ]
