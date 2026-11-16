@@ -2516,7 +2516,7 @@ examples = [
 [[point]]
 id = "te-miru"
 pattern = "てみる"
-forms = ["でみる"]
+forms = ["でみる", "てみたら", "てみると"]
 jlpt = "N4"
 meaning = "try doing, do and see"
 formation = ["Verb［て］ + みる"]
@@ -2528,8 +2528,9 @@ give it a go."""
 notes = """
 It is "try out", not "make an effort": for an attempt that may fail, \
 use the volitional + とする: 起きようとした, "I tried to get up". \
-So 〜てみた means you really did it, whatever the result. Usually \
-written in kana, though it comes from 見る."""
+So 〜てみた means you really did it, whatever the result. 〜てみたら / \
+〜てみると + a past tense tells what you found: 開けてみたら空だった, \
+"when I opened it, it was empty". Usually in kana."""
 related = ["you-to-suru"]
 examples = [
   { tatoeba = "67906_230539", ja = "あの店は行っ{てみました}か。", en = "Have you tried that store?" },
@@ -2907,7 +2908,7 @@ examples = [
 [[point]]
 id = "hazu"
 pattern = "はずだ"
-forms = ["はずです", "はずだった", "はずでした", "はずの", "はずなのに", "はずでは", "はずじゃ", "筈だ"]
+forms = ["はずです", "はずだった", "はずでした", "はずの", "はずなのに", "たはずだ", "たはずなのに", "はずでは", "はずじゃ", "筈だ"]
 jlpt = "N4"
 meaning = "should be, is expected to (I'm fairly sure)"
 formation = [
@@ -10317,4 +10318,438 @@ examples = [
   { tatoeba = "66692_229334", ja = "いい天気だ{なあ}。", en = "Isn't it a lovely day!" },
   { tatoeba = "27370_190212", ja = "一杯やりたい{なあ}。", en = "I feel like a drink." },
   { tatoeba = "70850_233481", ja = "あなたのように英語が話せたらいい{なあ}。", en = "I wish I could speak English like you." },
+]
+
+[[point]]
+id = "kakeru"
+pattern = "かける"
+forms = ["かけ", "かけの", "かけた"]
+jlpt = "N3"
+hover = false
+meaning = "half-done, start to, be about to"
+formation = ["Verb［stem］ + かける   (読みかける)", "Verb［stem］ + かけの + Noun   (読みかけの本)"]
+explanation = """
+Joined to a verb stem, says an action has started but isn't finished, \
+or is just about to happen: 読みかけの本, "a book I'm partway through"; \
+ボタンが取れかけている, "the button is coming off". It conjugates like \
+the verb かける."""
+notes = """
+With verbs of change it means "about to, nearly": 死にかけた, "nearly \
+died". Not every 〜かける is this: 話しかける, "speak to someone", and \
+追いかける, "chase", are words of their own. Search only, since かける \
+alone has many other meanings."""
+related = ["hajimeru", "owaru", "ru-tokoro"]
+examples = [
+  { tatoeba = "33424_196249", ja = "ボタンが取れ{かけている}のに気付いた。", en = "I found the button loose." },
+  { tatoeba = "323956_79761", ja = "夜が明け{かけて}きた。", en = "Day is breaking." },
+  { source = "yomeru", ja = "机の上に読み{かけの}本がある。", en = "There's a half-read book on the desk." },
+]
+
+[[point]]
+id = "kiru"
+pattern = "切る"
+forms = ["きる", "切れる", "きれる"]
+jlpt = "N3"
+hover = false
+meaning = "do completely, all the way; can't (do it all)"
+formation = ["Verb［stem］ + 切る   (使い切る)", "Verb［stem］ + 切れない   (食べきれない)"]
+explanation = """
+Joined to a verb stem, says something is done to the very end, with \
+nothing left: お金を使い切った, "I spent all the money". The potential \
+negative 〜きれない is the most common use: 食べきれない, "too much to \
+eat it all"."""
+notes = """
+終わる just says an action is done; 切る stresses that it's done \
+fully, often with effort: 読み終わった "finished reading", 読み切った \
+"read it all the way through". It can also mean "totally" for a state: \
+疲れ切る, "be worn out". Often in kana. 売り切れ, "sold out", is a word \
+of its own."""
+related = ["owaru", "te-shimau"]
+examples = [
+  { tatoeba = "62860_225524", ja = "クリームを使い{切って}しまった。", en = "We have run out of cream." },
+  { tatoeba = "324950_78766", ja = "欲張っても食べ{きれない}よ。", en = "Your eyes are bigger than your stomach." },
+  { source = "yomeru", ja = "一日でこの本を読み{きった}。", en = "I read this whole book in a day." },
+]
+
+[[point]]
+id = "komu"
+pattern = "込む"
+forms = ["こむ"]
+jlpt = "N3"
+hover = false
+meaning = "into, in; thoroughly, deeply"
+formation = ["Verb［stem］ + 込む   (飛び込む)"]
+explanation = """
+Joined to a verb stem, adds the idea of going into something: 飛び込む, \
+"jump in"; 乗り込む, "get on board". With verbs of thinking or states, \
+it means deeply or for a long time: 考え込む, "be lost in thought"; \
+眠り込む, "fall fast asleep"."""
+notes = """
+It can also mean putting something in: 詰め込む, "cram in"; 書き込む, \
+"write in". 〜入れる is close but neutral; 込む adds pushing in, or \
+staying in: 座り込む, "sit down and stay put". On its own, 込む (also 混む) means "be crowded": 電車が込んで\
+いる."""
+related = ["dasu", "kiru"]
+examples = [
+  { tatoeba = "248837_165668", ja = "私たちは車に乗り{込んだ}。", en = "We got into a car." },
+  { tatoeba = "31761_194588", ja = "メアリーは台所へ飛び{込んで}きた。", en = "Mary burst into the kitchen." },
+  { tatoeba = "303964_99733", ja = "私は眠り{込んだ}。", en = "I fell asleep." },
+]
+
+[[point]]
+id = "au"
+pattern = "合う"
+forms = ["あう"]
+jlpt = "N3"
+hover = false
+meaning = "each other, together"
+formation = ["Verb［stem］ + 合う   (助け合う)"]
+explanation = """
+Joined to a verb stem, says two or more people do the action to each \
+other or together: 助け合う, "help each other"; 話し合う, "talk it \
+over". The people come with と or are the subject: 友達と分け合う, \
+"share with friends"."""
+notes = """
+Some compounds became words of their own: 知り合う, "get to know", and \
+its noun 知り合い, "acquaintance"; 間に合う, "be in time". On its own, \
+合う means "fit, suit, match": 口に合う, "suit one's taste"."""
+related = ["komu"]
+examples = [
+  { tatoeba = "43607_206359", ja = "その問題を話し{合いましょう}。", en = "Let's talk over the matter." },
+  { tatoeba = "293818_109871", ja = "彼は一箱のお菓子を友達全員と分け{合った}。", en = "He shared his box of biscuits with all his friends." },
+  { source = "yomeru", ja = "家族で助け{合って}生きている。", en = "We live helping each other as a family." },
+]
+
+[[point]]
+id = "agaru"
+pattern = "上がる"
+forms = ["あがる"]
+jlpt = "N3"
+hover = false
+meaning = "up; be finished, be done"
+formation = ["Verb［stem］ + 上がる   (立ち上がる, でき上がる)"]
+explanation = """
+Joined to a verb stem, adds an upward movement: 立ち上がる, "stand \
+up"; 飛び上がる, "jump up". It also says something is completed and \
+ready: でき上がる, "be finished"; 仕上がる, "be done, turn out"."""
+notes = """
+上がる takes no object; 上げる is the version with one, for \
+finishing work yourself: 仕上げる, "finish (a job)"; 書き上げる, \
+"finish writing". 終わる is about an action ending; 上がる is about a \
+result being ready. On its own, 上がる means "go up, rise"."""
+related = ["owaru", "kiru"]
+examples = [
+  { tatoeba = "45261_208004", ja = "その男は立ち{上がった}。", en = "The man stood up." },
+  { tatoeba = "238019_176445", ja = "計画が出来{上がった}。", en = "The plans have been drawn up." },
+  { tatoeba = "245472_169015", ja = "仕{上がった}ばかり。", en = "Just finished it." },
+]
+
+[[point]]
+id = "toosu"
+pattern = "通す"
+forms = ["とおす"]
+jlpt = "N3"
+meaning = "do to the end, keep doing throughout"
+formation = ["Verb［stem］ + 通す   (やり通す)", "Verb［stem］ + 通し   (noun: 泣き通しだ)"]
+explanation = """
+Joined to a verb stem, says an action goes on from start to finish \
+without a break, often in spite of difficulty: 最後までやり通す, "see \
+it through to the end"; 一晩中泣き通した, "cried the whole night"."""
+notes = """
+続ける just says it goes on; 通す adds that it lasts all the way \
+through a set stretch, like a book or a night. 切る is about finishing \
+it all; 通す is about not stopping. The noun 〜通し, with だ, is \
+common: 立ち通しだった, "was on my feet the whole time"."""
+related = ["tsuzukeru", "kiru"]
+examples = [
+  { tatoeba = "303792_99905", ja = "彼は本を読み{通した}。", en = "He read the book from cover to cover." },
+  { tatoeba = "312603_91111", ja = "彼女は一晩中泣き{通した}。", en = "She kept crying all night long." },
+  { tatoeba = "309896_93767", ja = "彼女は一日中泣き{通し}だった。", en = "She did nothing but cry all day." },
+]
+
+[[point]]
+id = "mawaru"
+pattern = "回る"
+forms = ["まわる"]
+jlpt = "N3"
+meaning = "around, all over, here and there"
+formation = ["Verb［stem］ + 回る   (歩き回る)", "Verb［て］ + 回る   (見て回る)"]
+explanation = """
+Joined to a verb stem, says someone moves around a place doing the \
+action: 歩き回る, "walk around"; 走り回る, "run around". With the て \
+form, it means going from place to place doing it: 店を見て回る, "look \
+around the shops"."""
+notes = """
+The stem form is about moving all over; the て form is about visiting \
+one place after another. 〜回す is the version with an object, moving \
+something around or treating someone carelessly: 振り回す, "swing \
+around". On its own, 回る means "turn, spin"."""
+related = ["komu", "te-iku"]
+examples = [
+  { tatoeba = "27398_190239", ja = "一日中歩き{回って}くたくただ。", en = "I walked around all day, and I am done in." },
+  { tatoeba = "23290_186156", ja = "我々はあちらこちらに走り{回った}。", en = "We were running to and fro." },
+  { tatoeba = "290594_113080", ja = "彼はその家を見て{回った}。", en = "He went over the house." },
+]
+
+[[point]]
+id = "kaesu"
+pattern = "返す"
+forms = ["かえす"]
+jlpt = "N3"
+meaning = "again (reread, redo); back (answer back)"
+formation = ["Verb［stem］ + 返す   (読み返す, 言い返す)"]
+explanation = """
+Joined to a verb stem, says the action is done again, often to check \
+it: 読み返す, "read over"; 見返す, "look again". With actions aimed at \
+someone, it means doing it back: 言い返す, "talk back"; 送り返す, \
+"send back"."""
+notes = """
+直す is redoing to fix or improve; 返す is just going over it again, \
+or answering in kind. 繰り返す, "repeat", is a word of its own. On its \
+own, 返す means "return, give back": 本を返す."""
+related = ["naosu"]
+examples = [
+  { tatoeba = "280068_123928", ja = "答案を出す前にもう一度読み{返しなさい}。", en = "Read over your paper before you hand it in." },
+  { source = "yomeru", ja = "母に言い{返して}しまった。", en = "I ended up talking back to my mother." },
+  { tatoeba = "20844_183721", ja = "間違った商品を送り{返しましょう}か。", en = "Should we send back the wrong merchandise?" },
+]
+
+[[point]]
+id = "nareru"
+pattern = "慣れる"
+forms = ["なれる"]
+jlpt = "N3"
+hover = false
+meaning = "be used to doing, familiar from use"
+formation = ["Verb［stem］ + 慣れる   (使い慣れる)", "Verb［stem］ + 慣れた + Noun   (住み慣れた町)"]
+explanation = """
+Joined to a verb stem, says something has become familiar because you \
+do it often: 使い慣れたペン, "a pen I'm used to using"; 住み慣れた町, \
+"the town I've long lived in". Mostly found as 慣れた before a noun, \
+or as 〜慣れている."""
+notes = """
+For "get used to" with a noun or a whole action, 慣れる stands alone \
+with に: 仕事に慣れた; 一人で住むことに慣れた. 見慣れない, "unfamiliar \
+to the eye", is common for something new. Search only, since なれる is \
+also "can become"."""
+related = ["you-ni-naru"]
+examples = [
+  { source = "yomeru", ja = "使い{慣れた}ペンで書きたい。", en = "I want to write with a pen I'm used to." },
+  { source = "yomeru", ja = "住み{慣れた}町を出るのは寂しい。", en = "It's sad to leave the town I've lived in so long." },
+  { source = "yomeru", ja = "見{慣れない}車が止まっている。", en = "There's a car I've never seen parked there." },
+]
+
+[[point]]
+id = "yamu"
+pattern = "止む"
+forms = ["やむ"]
+jlpt = "N3"
+hover = false
+meaning = "stop (crying, raining)"
+formation = ["Verb［stem］ + 止む   (泣き止む, 降り止む)"]
+explanation = """
+Joined to a verb stem, says something that was going on has stopped by \
+itself: 赤ちゃんが泣き止んだ, "the baby stopped crying"; 雨が降り止ん\
+だ, "the rain stopped". Used with a small set of verbs: crying, \
+raining, a noise."""
+notes = """
+For stopping something on purpose, use やめる: 読むのをやめた, "I \
+stopped reading". 止む is what stops by itself; やめる is what you \
+stop. On its own, 止む is used for weather: 雨がやんだ. Often in kana."""
+related = ["owaru", "dasu"]
+examples = [
+  { tatoeba = "310996_92713", ja = "彼女はすっかり泣き{止んだ}。", en = "She stopped crying altogether." },
+  { tatoeba = "26896_189743", ja = "雨が降り{止んだ}。", en = "It has ceased raining." },
+  { source = "yomeru", ja = "赤ちゃんがやっと泣き{やんだ}。", en = "The baby finally stopped crying." },
+]
+
+[[point]]
+id = "tate"
+pattern = "たて"
+forms = ["たての", "立て"]
+jlpt = "N3"
+hover = false
+meaning = "freshly, just (made, done)"
+formation = ["Verb［stem］ + たて   (焼きたて)", "Verb［stem］ + たての + Noun   (焼きたてのパン)"]
+explanation = """
+Joined to a verb stem, says something has only just been done and is \
+still fresh: 焼きたてのパン, "bread fresh from the oven"; できたて, \
+"freshly made"; 塗りたて, "wet (paint)". Usually with の before a noun, \
+or with だ at the end."""
+notes = """
+たばかり says any action was just done; たて is for a fresh state, \
+mostly of food or new things, and is used with a small set of verbs: \
+焼く, 作る, できる, 生まれる, 塗る. ×食べたて is not said. Search only, \
+since たて is inside many words."""
+related = ["ta-bakari"]
+examples = [
+  { tatoeba = "268176_146386", ja = "焼き{たての}ケーキは容易に切れない。", en = "A freshly baked cake doesn't cut easily." },
+  { source = "yomeru", ja = "でき{たての}料理は温かい。", en = "Freshly made food is warm." },
+  { source = "yomeru", ja = "このペンキは塗り{たて}です。", en = "This paint is wet." },
+]
+
+[[point]]
+id = "ppanashi"
+pattern = "っぱなし"
+forms = ["っ放し", "っぱなしにする", "っぱなしだ"]
+jlpt = "N3"
+meaning = "leave (as is, on, open); keep (doing)"
+formation = ["Verb［stem］ + っぱなし   (開けっぱなし)", "Verb［stem］ + っぱなしにする   (leave it so)"]
+explanation = """
+Joined to a verb stem, says a state is left as it is when it should \
+have been dealt with: 窓を開けっぱなしにした, "I left the window \
+open". With other verbs, it says something goes on and on: 立ちっぱな\
+しだった, "I was on my feet the whole time"."""
+notes = """
+Usually critical, for carelessness or something tiring. まま says a \
+state goes on, neutrally: 窓を開けたまま寝た. っぱなし adds that it \
+shouldn't have been left so. Casual; the written form is 〜放し."""
+related = ["mama", "te-oku"]
+examples = [
+  { tatoeba = "65397_228044", ja = "エアコンをつけ{っぱなしにしない}で。", en = "Don't leave the air conditioner on." },
+  { tatoeba = "276167_137069", ja = "誰かが水を出し{っぱなしにして}たんだ。", en = "Someone left the water running." },
+  { tatoeba = "262190_152360", ja = "私は立ち{っぱなし}だった。", en = "I stood all the way." },
+]
+
+[[point]]
+id = "gachi"
+pattern = "がち"
+forms = ["がちだ", "がちな", "がちです"]
+jlpt = "N3"
+hover = false
+meaning = "tend to, apt to (something bad)"
+formation = ["Verb［stem］ + がち   (忘れがち)", "Noun + がち   (病気がち)"]
+explanation = """
+Says something tends to happen often, usually something unwanted: 遅れ\
+がちだ, "tend to be late"; 病気がちな子, "a sickly child". It works \
+like a な-adjective: がちだ, がちな + noun."""
+notes = """
+Neutral habits are fine (ついパフェを頼みがち), often with つい or \
+うっかり, but praise isn't: ×勉強しがち. やすい is about how easily \
+something happens; がち is about how often it does. っぽい is for a \
+person's nature (忘れっぽい, "forgetful"); がち is for a pattern. 曇り\
+がち, "often cloudy", is common for weather."""
+related = ["ppoi", "yasui", "gimi"]
+examples = [
+  { tatoeba = "301509_102184", ja = "彼は遅刻し{がちだ}。", en = "He is apt to be late." },
+  { tatoeba = "251389_163123", ja = "うちの息子は病気{がちだ}。", en = "My son is subject to ill health." },
+  { tatoeba = "275853_137383", ja = "大都会に住んでいる人は運動不足になり{がちだ}。", en = "People living in a big city tend to lack exercise." },
+]
+
+[[point]]
+id = "gimi"
+pattern = "気味"
+forms = ["ぎみ", "気味だ", "気味の"]
+jlpt = "N3"
+meaning = "a touch of, slightly, -ish"
+formation = ["Noun + 気味   (風邪気味)", "Verb［stem］ + 気味   (疲れ気味)"]
+explanation = """
+Says there is a slight sign of something, usually not good: 風邪気味, \
+"a touch of a cold"; 疲れ気味, "a bit tired"; 太り気味, "a bit \
+overweight". It works like a な-adjective: 気味だ, 気味の + noun."""
+notes = """
+気味 is about a light state right now; がち is about how often \
+something happens: 風邪気味 "coming down with a cold", 風邪をひきがち \
+"often catch colds". 気味が悪い, "creepy", and 不気味, "eerie", are \
+words of their own."""
+related = ["gachi", "ppoi"]
+examples = [
+  { tatoeba = "242973_171504", ja = "今日は風邪{気味だ}。", en = "I have a touch of a cold today." },
+  { tatoeba = "288992_114679", ja = "彼はいくぶん太り{気味だ}。", en = "He is on the heavy side." },
+  { tatoeba = "253313_161205", ja = "風邪{気味だった}ので、早く寝たよ。", en = "Having a slight cold, I went to bed early." },
+]
+
+[[point]]
+id = "gatai"
+pattern = "がたい"
+forms = ["難い"]
+jlpt = "N3"
+hover = false
+meaning = "hard to (bring oneself to), almost impossible to"
+formation = ["Verb［stem］ + がたい   (信じがたい)"]
+explanation = """
+Joined to a verb stem, makes an い-adjective: the speaker can hardly \
+bring themselves to do it, or feels it can't be done: 信じがたい話, \
+"a hard-to-believe story"; 許しがたい, "unforgivable". Formal, found \
+more in writing."""
+notes = """
+にくい and づらい are about difficulty in practice: 読みにくい字, \
+"writing that's hard to read". がたい is about feelings or judgement, \
+close to "can't", but never for lack of skill: ×この字は読みがたい. It fits verbs like 信じる, 理解\
+する, 許す, 忘れる. ありがたい, "grateful", is a word of its own."""
+related = ["nikui", "zurai"]
+examples = [
+  { tatoeba = "17226_178373", ja = "君の言うことは信じ{がたい}。", en = "I find it difficult to believe." },
+  { tatoeba = "49428_212149", ja = "その音楽は、年輩の人たちには理解し{がたい}。", en = "The music is difficult for grownups to understand." },
+  { source = "yomeru", ja = "あの人のうそは許し{がたい}。", en = "His lies are hard to forgive." },
+]
+
+[[point]]
+id = "ppoi"
+pattern = "っぽい"
+forms = []
+jlpt = "N3"
+meaning = "-ish, like, tends to"
+formation = ["Noun + っぽい   (子供っぽい)", "Verb［stem］ + っぽい   (忘れっぽい)", "［い］Adjective［い̶］ + っぽい   (安っぽい)"]
+explanation = """
+Makes an い-adjective. After a noun or adjective, says something seems \
+like it or has a lot of it: 子供っぽい, "childish"; 黒っぽい, "darkish"; \
+熱っぽい, "feverish". After a verb stem, says someone tends to do it: \
+忘れっぽい, "forgetful"; 怒りっぽい, "short-tempered"."""
+notes = """
+Casual. らしい says something is a true example of its kind \
+(男らしい, "manly"); っぽい says it only looks like it, often as a \
+criticism: 子供っぽい is "childish" for an adult. In speech it can also \
+mean "seems": 雨っぽい, "looks like rain", close to みたい."""
+related = ["rashii", "mitai", "gachi"]
+examples = [
+  { tatoeba = "303687_100010", ja = "彼は忘れ{っぽい}。", en = "He is apt to forget." },
+  { tatoeba = "243247_171230", ja = "今晩は少し熱{っぽい}のです。", en = "I feel a bit feverish tonight." },
+  { tatoeba = "249207_165298", ja = "私たちは彼の行為を子供{っぽい}と思った。", en = "We regarded his behavior as childish." },
+]
+
+[[point]]
+id = "darake"
+pattern = "だらけ"
+forms = []
+jlpt = "N3"
+meaning = "full of, covered in (something bad)"
+formation = ["Noun + だらけ   (間違いだらけ)"]
+explanation = """
+After a noun, says something is full of it or covered all over: 間違\
+いだらけ, "full of mistakes"; ほこりだらけ, "covered in dust". It works \
+like a noun: だらけだ, だらけの + noun."""
+notes = """
+Almost always for unwanted things: dirt, mistakes, debt. For something \
+good, use いっぱい: 花がいっぱい, ×花だらけ (unless it's a complaint). \
+ばかり says "nothing but"; だらけ adds that it's everywhere and \
+unpleasant."""
+related = ["bakari", "ippai"]
+examples = [
+  { tatoeba = "56975_219654", ja = "この本は間違い{だらけ}だ。", en = "This book is full of mistakes." },
+  { tatoeba = "320272_83444", ja = "壁は落書き{だらけ}だ。", en = "The wall was covered with graffiti." },
+  { tatoeba = "39592_202381", ja = "テーブルはほこり{だらけ}だった。", en = "The table was covered with dust." },
+]
+
+[[point]]
+id = "mi-suffix"
+pattern = "み"
+forms = []
+jlpt = "N3"
+meaning = "(turns an adjective into a noun: a sense of, -ness)"
+formation = ["［い］Adjective［い̶］ + み   (楽しみ, 重み)", "［な］Adjective + み   (新鮮み)"]
+explanation = """
+Replaces the い of some adjectives to make a noun for a feeling or a \
+quality you sense: 楽しみ, "something to look forward to"; 痛み, \
+"pain"; 甘み, "sweetness (as a taste)"; 重み, "weight, importance"."""
+notes = """
+さ is a measurable degree and works with almost any adjective: 重さ, \
+"weight in kilos". み is the quality as felt, and only some adjectives \
+take it: 重み, "a sense of weight, importance"; ×大きみ. Many み nouns \
+are words of their own: 楽しみにする, "look forward to"."""
+related = ["sa-noun"]
+examples = [
+  { tatoeba = "253411_161107", ja = "私はクリスマスを楽し{み}に待っています。", en = "I am looking forward to Christmas." },
+  { tatoeba = "282466_121539", ja = "背中に痛{み}を感じる。", en = "I feel a pain in the back." },
+  { tatoeba = "274737_138498", ja = "他人の弱{み}に付け込むな。", en = "Don't take advantage of others' weakness." },
 ]
