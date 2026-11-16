@@ -6294,6 +6294,33 @@ examples = [
 ]
 
 [[point]]
+id = "kai-dai"
+pattern = "かい"
+forms = ["だい", "のかい", "んだい", "のだい"]
+hover = false
+jlpt = "N4"
+meaning = "(casual question ending, warm or male-sounding)"
+formation = [
+  "Verb / ［い］Adjective (plain) + かい   (行くかい)",
+  "Question word … + (の / ん) + だい   (何をしてるんだい)",
+]
+explanation = """
+A friendly, casual way to ask a question, a softer か. かい goes on \
+yes/no questions: 元気かい?, "you doing OK?". だい goes on questions \
+with a question word: どこへ行くんだい?, "where are you off to?"."""
+notes = """
+Sounds warm and a little old-fashioned; used mostly by men, or by \
+adults to children. Nouns take かい or だい directly: 本当かい, 誰だい. \
+With a question word, use だい: 何だい?, "what is it?". \
+Search-only: かい and だい sit inside many words (会社, 大学)."""
+related = ["question-ka", "ka-particle", "n-desu"]
+examples = [
+  { tatoeba = "27693_190545", ja = "一緒にくる{かい}。", en = "Do you want to come along?" },
+  { tatoeba = "63134_225796", ja = "きょうの午後は面白かった{かい}。", en = "Did you have a good time this afternoon?" },
+  { tatoeba = "42984_205739", ja = "それで君はどうするん{だい}？", en = "And what do you do?" },
+]
+
+[[point]]
 id = "tame-ni"
 pattern = "ために"
 forms = ["為に", "のために", "のため"]
