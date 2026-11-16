@@ -1,0 +1,25 @@
+[package]
+name = "grammar-core"
+version = "0.21.0"
+license.workspace = true
+edition = "2024"
+
+[features]
+# The TOML → grammar.bin compiler, for xtask and the tests.
+build = ["dep:toml"]
+
+[dependencies]
+deinflect  = { path = "../deinflect" }
+anyhow     = "1"
+fst        = "0.4"
+postcard   = { version = "1", features = ["alloc"] }
+serde      = { version = "1", features = ["derive"] }
+# Pure-Rust deflate only: the lookups run in WASM too, so no zlib.
+flate2     = { version = "1", default-features = false, features = ["rust_backend"] }
+toml       = { version = "0.8", optional = true }
+
+[dev-dependencies]
+grammar-core = { path = ".", features = ["build"] }
+
+[lints]
+workspace = true

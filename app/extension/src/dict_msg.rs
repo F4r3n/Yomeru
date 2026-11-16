@@ -5,6 +5,7 @@ use async_trait::async_trait;
 use examples_types::ExampleEntry;
 use jmdict_types::WordEntry;
 use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
+use yomeru_shared::grammar::GrammarEntry;
 use yomeru_shared::platform::DictClient;
 pub struct ExtensionDict;
 
@@ -76,6 +77,17 @@ struct ExamplesResp {
     entries: Vec<ExampleEntry>,
 }
 
+#[derive(Serialize)]
+struct TextMaxPayload<'a> {
+    text: &'a str,
+    max: u8,
+}
+
+#[derive(Deserialize)]
+struct GrammarResp {
+    entries: Vec<GrammarEntry>,
+}
+
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl DictClient for ExtensionDict {
@@ -125,5 +137,11 @@ impl DictClient for ExtensionDict {
 
     async fn kanji_with_parts(&self, parts: &str, max: u8) -> Result<PartSearch, String> {
         crate::send_bg_message("KANJI_BY_PARTS", KanjiByPartsPayload { parts, max }).await
+    }
+
+    async fn grammar_search(&self, text: &str, max: u8) -> Result<Vec<GrammarEntry>, String> {
+        let r: GrammarResp =
+            crate::send_bg_message("GRAMMAR_SEARCH", TextMaxPayload { text, max }).await?;
+        Ok(r.entries)
     }
 }

@@ -1,4 +1,5 @@
 import { mount } from "svelte";
+import { get } from "svelte/store";
 import Popup from "./Popup.svelte";
 import { popupStore } from "./popup-store";
 import { getJapaneseAtPoint, isEditableAt } from "./detector";
@@ -14,7 +15,7 @@ import { debug } from "../shared/debug.ts";
 // ── Types from wasm-pack generated declarations ───────────────────────────────
 import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
 import type * as KanjidicWasm from "../../_generated/kanjidic-wasm/kanjidic_wasm.js";
-import type { WordEntry } from "../shared/types.ts";
+import type { GrammarPopupMatch, WordEntry } from "../shared/types.ts";
 import { preferredHeadword } from "../shared/dict.ts";
 import { loadKanjiOverlays } from "../shared/kanji-overlays.ts";
 
@@ -304,9 +305,16 @@ async function handleHover(e: MouseEvent): Promise<void> {
     wordRange.setEnd(hit.node, utf16End);
     const wordRect = wordRange.getBoundingClientRect();
 
+    if (hw === lastLookedUp) {
+      // Still on the word: keep the highlight on the pattern if the popup
+      // opened on it.
+      const shown = get(popupStore);
+      const len = shown.grammarFirst && shown.grammar ? shown.grammar.matchLen : result.match_len;
+      const end = codePointToUtf16(hit.nodeText, cpOffset + (len ?? 0));
+      setHighlight(hit.node, utf16Start, end - utf16Start);
+      return;
+    }
     setHighlight(hit.node, utf16Start, utf16End - utf16Start);
-
-    if (hw === lastLookedUp) return;
     lastLookedUp = hw;
 
     const kanjiEntries = kanjiDictionary
@@ -323,6 +331,12 @@ async function handleHover(e: MouseEvent): Promise<void> {
       wordRect.height > 0 ? wordRect.top    : e.clientY - 20,
       wordRect.height > 0 ? wordRect.bottom : e.clientY,
     );
+
+    // The highlight grows to the pattern when the popup opens on it.
+    lookupGrammar(text, hw, result.match_len ?? 0, (match) => {
+      const end = codePointToUtf16(hit.nodeText, cpOffset + match.matchLen);
+      setHighlight(hit.node, utf16Start, end - utf16Start);
+    });
 
     // 300 ms dwell on the same word before the popup pins.
     clearTimeout(pinTimer!);
@@ -349,6 +363,29 @@ function scheduleHide(): void {
     clearHighlight();
     lastLookedUp = null;
   }, 150);
+}
+
+/**
+ * Asks the background for the grammar point `text` starts with, and adds it
+ * to the popup if the popup still shows `shownFor`. `onFirst` runs when the
+ * pattern is longer than `wordLen` and the popup opens on it.
+ */
+function lookupGrammar(
+  text: string,
+  shownFor: string,
+  wordLen: number,
+  onFirst?: (match: GrammarPopupMatch) => void,
+): void {
+  browser.runtime
+    .sendMessage({ type: "GRAMMAR_LOOKUP", payload: { text } })
+    .then((res: { match: GrammarPopupMatch | null } | undefined) => {
+      const match = res?.match ?? null;
+      if (!match || lastLookedUp !== shownFor) return;
+      const first = match.matchLen > wordLen;
+      popupStore.setGrammar(match, first);
+      if (first) onFirst?.(match);
+    })
+    .catch((e) => console.error("[yomeru] grammar lookup failed:", e));
 }
 
 // ── Selection lookup ──────────────────────────────────────────────────────────
@@ -387,6 +424,8 @@ document.addEventListener("mouseup", async (e) => {
         selRect?.height ? selRect.bottom : e.clientY,
       );
       lastLookedUp = text;
+      // Opens on the pattern only when it is the whole selection.
+      lookupGrammar(text, text, [...text].length - 1);
     }
   } catch (err) {
     console.error("[yomeru] Selection lookup error:", err);

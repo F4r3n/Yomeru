@@ -2,7 +2,9 @@
 # Entrypoint for the yomeru-dicts builder image. See xtask/Dockerfile.
 #
 # Behaviour:
-#   - If /dicts already holds all three .bin files and FORCE != 1, exit
+#   - Compile data/grammar.toml into /dicts/grammar.bin (always: it comes
+#     with the image).
+#   - If /dicts already holds the three other .bin files and FORCE != 1, exit
 #     immediately. Lets `depends_on` keep `docker compose up` cheap
 #     after the first run.
 #   - Otherwise: run `cargo xtask build-all` (downloads JMdict_e,
@@ -19,6 +21,11 @@ for f in kanji-mnemonics.tsv part-names.tsv; do
         cp "/build/data/$f" "/dicts/$f"
     fi
 done
+
+# Same for the grammar dictionary: compiled from the image's
+# data/grammar.toml on every start, in about a second.
+cd /build
+cargo run --release -p xtask -- build-grammar --output /dicts/grammar.bin
 
 if [ "${FORCE:-0}" != "1" ] \
     && [ -s /dicts/jmdict.bin ] \

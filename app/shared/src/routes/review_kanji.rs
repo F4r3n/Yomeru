@@ -386,7 +386,6 @@ pub(crate) fn KanjiReview() -> Element {
                     if is_drill {
                         span { class: "badge fail", "Drill" }
                     }
-                    span { class: "badge", "Kanji" }
                 }
             }
             div { class: "face",

@@ -3937,6 +3937,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "grammar-core"
+version = "0.21.0"
+dependencies = [
+ "anyhow",
+ "deinflect",
+ "flate2",
+ "fst",
+ "grammar-core",
+ "postcard",
+ "serde",
+ "toml",
+]
+
+[[package]]
+name = "grammar-wasm"
+version = "0.21.0"
+dependencies = [
+ "console_error_panic_hook",
+ "grammar-core",
+ "serde",
+ "serde-wasm-bindgen",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "gtk"
 version = "0.18.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7496,6 +7521,7 @@ dependencies = [
  "examples-types",
  "fsrs",
  "governor",
+ "grammar-core",
  "jmdict-core",
  "jmdict-types",
  "kanjidic-core",
@@ -10017,6 +10043,7 @@ dependencies = [
  "anyhow",
  "clap",
  "flate2",
+ "grammar-core",
  "ureq",
  "zip 2.6.1",
 ]
@@ -10109,6 +10136,7 @@ dependencies = [
  "gloo-net",
  "gloo-storage",
  "gloo-timers",
+ "grammar-core",
  "idb",
  "japanese-utils",
  "jmdict-core",

@@ -1,6 +1,6 @@
 //! Target glue: the handful of host services the app needs — clock, random,
-//! detached tasks, timers, a small key-value store, and a
-//! JSON POST — behind one API, so the rest of the crate never names a web or
+//! detached tasks, timers, a small key-value store, a JSON POST and a
+//! plain GET — behind one API, so the rest of the crate never names a web or
 //! native crate directly.
 //!
 //! * wasm32 (website, extension): `js_sys`, `localStorage`, `gloo-*`.

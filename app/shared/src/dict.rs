@@ -11,6 +11,7 @@ use dioxus::prelude::consume_context;
 use examples_types::ExampleEntry;
 use jmdict_types::WordEntry;
 use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
+use yomeru_core::grammar::GrammarEntry;
 
 pub use yomeru_core::dict::*;
 
@@ -64,5 +65,13 @@ pub async fn examples_for(word: &str, max: u8) -> Result<Vec<ExampleEntry>, Stri
     consume_context::<Platform>()
         .dict
         .examples_for(word, max)
+        .await
+}
+
+/// The grammar points a search box shows for `text`, at most `max`.
+pub async fn grammar_search(text: &str, max: u8) -> Result<Vec<GrammarEntry>, String> {
+    consume_context::<Platform>()
+        .dict
+        .grammar_search(text, max)
         .await
 }

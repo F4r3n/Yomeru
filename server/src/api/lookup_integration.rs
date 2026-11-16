@@ -28,6 +28,18 @@ const EXAMPLE_COUNT: usize = 7;
 /// Entries sharing the `かな` prefix, more than the prefix search's default `max`.
 const PREFIX_FILLER: u32 = 40;
 
+const GRAMMAR_TOML: &str = r#"
+[[point]]
+id = "te-mo-ii"
+pattern = "てもいい"
+forms = ["でもいい"]
+jlpt = "N5"
+meaning = "may, it's okay to"
+formation = ["Verb［て］ + もいい"]
+explanation = "Permission."
+examples = [{ source = "yomeru", ja = "行っ{てもいい}。", en = "You may go." }]
+"#;
+
 fn ensure_dicts() {
     DICTS.call_once(|| {
         use jmdict_core::test_utils::{build_binary, word};
@@ -81,6 +93,9 @@ fn ensure_dicts() {
             .collect();
         let index = [(EXAMPLE_WORD, (0..EXAMPLE_COUNT).collect())];
         examples_core::init_from_bytes(&examples_bin(&sentences, &index)).expect("init examples");
+
+        let grammar = grammar_core::compile(GRAMMAR_TOML).expect("compile grammar");
+        crate::dicts::init_grammar_from_bytes(&grammar.bytes).expect("init grammar");
     });
 }
 
@@ -255,6 +270,27 @@ async fn examples_returns_sentences_for_the_word() {
     assert_eq!(body["entries"], json!([]), "no sentences is []");
 }
 
+#[tokio::test]
+async fn grammar_returns_the_points_for_the_text() {
+    let h = harness().await;
+    let (status, body) = h
+        .post("/api/grammar", None, &json!({ "text": "行ってもいい" }))
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let entries = body["entries"].as_array().expect("entries");
+    assert_eq!(entries.len(), 1);
+    assert_eq!(entries[0]["id"], "te-mo-ii");
+    assert_eq!(
+        entries[0]["examples"][0]["ja"][1]["highlight"]["text"],
+        "てもいい"
+    );
+
+    let (_, body) = h
+        .post("/api/grammar", None, &json!({ "text": "全然" }))
+        .await;
+    assert_eq!(body["entries"], json!([]), "no points is []");
+}
+
 // ---- defaults for an omitted `max` -------------------------------------------
 
 #[tokio::test]
@@ -318,6 +354,7 @@ async fn text_inputs_take_at_most_256_chars() {
         ("/api/lookup-prefix", "text"),
         ("/api/kanji", "word"),
         ("/api/examples", "word"),
+        ("/api/grammar", "text"),
     ] {
         assert_limit(
             &h,
@@ -366,6 +403,7 @@ async fn the_lookup_routes_share_one_rate_limit() {
         ("/api/kanji-parts", json!({})),
         ("/api/kanji-by-parts", json!({ "parts": "良" })),
         ("/api/examples", json!({ "word": EXAMPLE_WORD })),
+        ("/api/grammar", json!({ "text": "てもいい" })),
     ] {
         let (status, _) = h.post(path, None, &body).await;
         assert_eq!(status, StatusCode::TOO_MANY_REQUESTS, "{path}");

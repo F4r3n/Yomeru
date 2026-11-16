@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 #
 # One-shot builder for the binary dictionary indexes. Runs `cargo xtask
-# build-all` and writes the three .bin files into /dicts — a named
+# build-all` and writes the .bin files into /dicts — a named
 # volume shared with `yomeru-server` via docker-compose.yml.
 #
 # Lets you refresh the dictionaries without rebuilding the server
@@ -31,7 +31,8 @@ COPY xtask ./xtask
 COPY crates ./crates
 COPY server ./server
 COPY app ./app
-# Not a build input: copied to /dicts on every start (see the entrypoint).
+# Not a build input: copied (overlays) or compiled (grammar.toml) to /dicts
+# on every start (see the entrypoint).
 COPY data ./data
 
 # Warm the build cache so runtime startup is fast: pre-compile xtask

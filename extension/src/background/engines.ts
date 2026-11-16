@@ -1,5 +1,5 @@
 /**
- * Lazy loading of the four WASM engines.
+ * Lazy loading of the WASM engines.
  *
  * Each is fetched on first use and then cached for the life of the service
  * worker. Callers go through the `get*` accessors rather than touching the
@@ -15,12 +15,14 @@ import type * as SrsWasm from "../../_generated/srs-wasm/srs_wasm.js";
 import type * as KanjiWasm from "../../_generated/kanjidic-wasm/kanjidic_wasm.js";
 import type * as ExamplesWasm from "../../_generated/examples-wasm/examples_wasm.js";
 import type * as JmDictWasm from "../../_generated/jmdict-wasm/jmdict_wasm.js";
+import type * as GrammarWasm from "../../_generated/grammar-wasm/grammar_wasm.js";
 import { loadKanjiOverlays } from "../shared/kanji-overlays.ts";
 
 export type SrsEngine = InstanceType<typeof SrsWasm.SrsEngine>;
 export type KanjiDictionary = InstanceType<typeof KanjiWasm.KanjiDictionary>;
 export type ExamplesDict = InstanceType<typeof ExamplesWasm.ExamplesDict>;
 export type JmDictDictionary = InstanceType<typeof JmDictWasm.Dictionary>;
+export type GrammarDictionary = InstanceType<typeof GrammarWasm.GrammarDictionary>;
 
 /**
  * Loads a wasm-bindgen module and initialises it against its `_bg.wasm`.
@@ -95,6 +97,26 @@ export async function getJmdict(): Promise<JmDictDictionary> {
     jmdict = new mod.Dictionary(await loadData("jmdict.bin"));
   }
   return jmdict;
+}
+
+// ── Grammar dictionary ───────────────────────────────────────────────────────
+//
+// Yomeru's own, compiled from data/grammar.toml and shipped in `data/` like
+// the others.
+
+/** The load in progress or done. */
+let grammar: Promise<GrammarDictionary | null> | null = null;
+
+/** Null when the grammar data can't be loaded; the failure is logged once. */
+export function getGrammar(): Promise<GrammarDictionary | null> {
+  grammar ??= (async () => {
+    const mod = await loadModule<typeof GrammarWasm>("grammar-wasm", "grammar_wasm");
+    return new mod.GrammarDictionary(await loadData("grammar.bin"));
+  })().catch((e) => {
+    console.error("[yomeru] grammar dictionary load failed:", e);
+    return null;
+  });
+  return grammar;
 }
 
 /**

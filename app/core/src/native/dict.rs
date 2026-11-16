@@ -1,6 +1,6 @@
 //! Offline dictionary: the same lookups the server's `/api/*` endpoints
-//! answer, run in-process against `jmdict.bin`, `kanjidic.bin` and
-//! `examples.bin` bundled with the app.
+//! answer, run in-process against `jmdict.bin`, `kanjidic.bin`,
+//! `examples.bin` and `grammar.bin` bundled with the app.
 //!
 //! The data ships with the app, read through a [`DictSource`](crate::local_dict::DictSource) the UI
 //! provides (Dioxus assets: `yomeru_shared::local_dict::DictAssets`, declared
@@ -10,9 +10,10 @@
 //! a blocking thread; every later call finds the cores ready.
 
 use examples_types::ExampleEntry;
+use grammar_core::{GrammarDict, GrammarEntry};
 use jmdict_types::{ArchivedWordEntry, WordEntry};
 use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use tokio::sync::OnceCell;
 
@@ -25,6 +26,7 @@ pub enum DictFile {
     Jmdict,
     Kanjidic,
     Examples,
+    Grammar,
     /// Optional overlay, as on the server: without it kanji cards just go
     /// without mnemonics.
     Mnemonics,
@@ -55,7 +57,7 @@ impl LocalDict {
     }
 }
 
-/// The three dictionaries, loaded independently so a screen only waits for
+/// The dictionaries, loaded independently so a screen only waits for
 /// the one it reads: Review needs the words at once, the example sentences
 /// can arrive later.
 #[derive(Clone, Copy, Debug)]
@@ -66,6 +68,8 @@ enum Part {
     Kanji,
     /// Example sentences.
     Examples,
+    /// Grammar points.
+    Grammar,
 }
 
 /// Process-global like the cores they guard: those live in `OnceCell`s of
@@ -73,6 +77,9 @@ enum Part {
 static WORDS: OnceCell<Result<(), String>> = OnceCell::const_new();
 static KANJI: OnceCell<Result<(), String>> = OnceCell::const_new();
 static EXAMPLES: OnceCell<Result<(), String>> = OnceCell::const_new();
+static GRAMMAR: OnceCell<Result<(), String>> = OnceCell::const_new();
+/// grammar-core has no global of its own: the loaded dictionary.
+static GRAMMAR_DICT: OnceLock<GrammarDict> = OnceLock::new();
 
 impl Part {
     fn ready(self) -> &'static OnceCell<Result<(), String>> {
@@ -80,6 +87,7 @@ impl Part {
             Self::Words => &WORDS,
             Self::Kanji => &KANJI,
             Self::Examples => &EXAMPLES,
+            Self::Grammar => &GRAMMAR,
         }
     }
 
@@ -118,6 +126,15 @@ impl Part {
                 steps
                     .time("init", || examples_core::init_from_bytes(&bytes))
                     .map_err(init_err)
+            }
+            Self::Grammar => {
+                let bytes = steps.time("read", || read(source, DictFile::Grammar))?;
+                let dict = steps
+                    .time("init", || GrammarDict::from_bytes(&bytes))
+                    .map_err(init_err)?;
+                // Loaded once (see `ensure`), so the cell is empty here.
+                let _ = GRAMMAR_DICT.set(dict);
+                Ok(())
             }
         }
     }
@@ -208,7 +225,7 @@ impl DictClient for LocalDict {
         // (Review) waits for, so they get the disk and CPU to themselves.
         let source = self.source.clone();
         crate::rt::spawn_detached(async move {
-            for part in [Part::Words, Part::Kanji, Part::Examples] {
+            for part in [Part::Words, Part::Kanji, Part::Examples, Part::Grammar] {
                 if let Err(e) = ensure(part, source.clone()).await {
                     tracing::error!("[yomeru] {e}");
                 }
@@ -264,5 +281,13 @@ impl DictClient for LocalDict {
         self.ensure(Part::Kanji).await?;
         let parts: Vec<char> = parts.chars().collect();
         Ok(kanjidic_core::kanji_with_parts(&parts, usize::from(max)))
+    }
+
+    async fn grammar_search(&self, text: &str, max: u8) -> Result<Vec<GrammarEntry>, String> {
+        self.ensure(Part::Grammar).await?;
+        Ok(GRAMMAR_DICT
+            .get()
+            .map(|d| d.search(text, usize::from(max)))
+            .unwrap_or_default())
     }
 }

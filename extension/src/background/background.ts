@@ -17,6 +17,8 @@ import {
   handleGetAllCards,
   handleGetDue,
   handleGetExamples,
+  handleGrammarLookup,
+  handleGrammarSearch,
   handleGetKanji,
   handleGetKanjiParts,
   handleKanjiByParts,
@@ -102,6 +104,10 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
       return handleKanjiByParts(msg.payload as { parts: string; max: number });
     case "GET_EXAMPLES":
       return handleGetExamples(msg.payload as { word: string });
+    case "GRAMMAR_LOOKUP":
+      return handleGrammarLookup(msg.payload as { text: string });
+    case "GRAMMAR_SEARCH":
+      return handleGrammarSearch(msg.payload as { text: string; max: number });
     case "LOOKUP_WORD":
       return handleLookupWord(msg.payload as { word: string });
     case "LOOKUP_MANY":

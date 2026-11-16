@@ -74,7 +74,8 @@ cargo run -p server -- \
 ```
 
 `extension/data/` must contain `jmdict.bin`, `kanjidic.bin`,
-`examples.bin` — build them once with `cargo xtask build-all`.
+`examples.bin`, `grammar.bin` — build them once with `cargo xtask build-all`
+(`cargo xtask build-grammar` alone after editing `data/grammar.toml`).
 
 For dev, the simplest setup is one reverse proxy fronting both
 `dx serve` (HTML/JS/wasm) and the server (`/api/*`). Caddy or nginx

@@ -6,9 +6,11 @@ use jmdict_types::WordEntry;
 use crate::app::Route;
 use crate::components::{EntryCard, ExampleJp};
 use crate::dict::{self, examples_for, kanji_for, primary_headword};
+use crate::grammar::GrammarEntry;
 use crate::icons::{Icon, IconName};
 use crate::idb::{bump_priority, get_cards_by_sequence, put_cards, reset_card};
 use crate::romaji::{hiragana_to_katakana, is_romaji, romaji_to_hiragana};
+use crate::routes::lookup_grammar::GrammarResults;
 use crate::srs::now_ms;
 use crate::sync::schedule_sync;
 use crate::types::{CardDirection, CardStatus, SrsCard};
@@ -26,6 +28,8 @@ pub fn search_on_open(word: String) {
     *SEARCH_ON_OPEN.lock().unwrap_or_else(|e| e.into_inner()) = Some(word);
 }
 const HISTORY_MAX: usize = 10;
+/// Grammar points shown for one search.
+const GRAMMAR_MAX: u8 = 10;
 
 #[derive(Clone, Copy, PartialEq)]
 enum ExtraTab {
@@ -244,6 +248,8 @@ fn LookupListPane() -> Element {
     let mut input_seed = use_signal(|| (0u32, query.peek().clone()));
     let mut last_target = use_signal(String::new);
     let mut entries = use_signal(Vec::<WordEntry>::new);
+    // Grammar points for the search.
+    let mut grammar_hits = use_signal(Vec::<GrammarEntry>::new);
     let mut searching = use_signal(|| false);
     let mut searched = use_signal(|| false);
     let mut load_err = use_signal(|| Option::<String>::None);
@@ -299,6 +305,7 @@ fn LookupListPane() -> Element {
         }
         if q.is_empty() {
             entries.set(Vec::new());
+            grammar_hits.set(Vec::new());
             searched.set(false);
             return;
         }
@@ -355,6 +362,20 @@ fn LookupListPane() -> Element {
             }
             let mut results = dedup_by_sequence(groups);
             results.truncate(30);
+            // Grammar is searched as typed (kana for romaji): its patterns
+            // are kana and seldom katakana.
+            let grammar = match targets.first() {
+                Some(t) => dict::grammar_search(t, GRAMMAR_MAX)
+                    .await
+                    .unwrap_or_else(|e| {
+                        warn!("grammar search: {e}");
+                        Vec::new()
+                    }),
+                None => Vec::new(),
+            };
+            if matched.is_none() && !grammar.is_empty() {
+                matched = targets.first().cloned();
+            }
             if let Some(t) = matched {
                 let next = push_history(history.read().clone(), &t);
                 history.set(next);
@@ -386,6 +407,7 @@ fn LookupListPane() -> Element {
                 None
             };
             entries.set(results);
+            grammar_hits.set(grammar);
             searching.set(false);
             searched.set(true);
             if let Some(w) = single_word {
@@ -460,6 +482,16 @@ fn LookupListPane() -> Element {
     let target = last_target.read().clone();
     let show_converted = is_romaji(&q_trim) && !target.is_empty() && target != q_trim;
     let result_count = entries.read().len();
+    // Grammar leads when the search is itself a grammar pattern (てよかった),
+    // and otherwise follows the words.
+    let grammar_first = grammar_hits
+        .read()
+        .first()
+        .is_some_and(|g| g.keys().any(|k| k == target));
+    let on_grammar_search = EventHandler::new(move |term: String| {
+        let mut search = on_history;
+        search(term);
+    });
     let result_label = if result_count == 1 {
         format!("{result_count} result")
     } else {
@@ -500,7 +532,10 @@ fn LookupListPane() -> Element {
 
             if *searching.read() {
                 div { class: "loading", "Searching…" }
-            } else if !entries.read().is_empty() {
+            } else if !entries.read().is_empty() || !grammar_hits.read().is_empty() {
+                if grammar_first {
+                    GrammarResults { entries: grammar_hits.read().clone(), on_search: on_grammar_search }
+                }
                 for entry in entries.read().iter() {
                     {
                         let head = primary_headword(entry).to_string();
@@ -542,6 +577,9 @@ fn LookupListPane() -> Element {
                             }
                         }
                     }
+                }
+                if !grammar_first {
+                    GrammarResults { entries: grammar_hits.read().clone(), on_search: on_grammar_search }
                 }
             } else if *searched.read() {
                 {

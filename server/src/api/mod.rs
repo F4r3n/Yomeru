@@ -18,7 +18,7 @@ pub use account::{delete_account_handler, delete_account_request_handler, privac
 pub use auth::{auth_request_handler, auth_verify_handler};
 pub use fsrs::optimize_handler;
 pub use lookup::{
-    examples_handler, kanji_by_parts_handler, kanji_handler, kanji_parts_handler,
+    examples_handler, grammar_handler, kanji_by_parts_handler, kanji_handler, kanji_parts_handler,
     lookup_by_sequence_handler, lookup_handler, lookup_prefix_handler,
 };
 pub use sync::sync_handler;
@@ -59,6 +59,7 @@ pub fn router(state: AppState) -> Router {
         .route("/api/kanji-parts", post(kanji_parts_handler))
         .route("/api/kanji-by-parts", post(kanji_by_parts_handler))
         .route("/api/examples", post(examples_handler))
+        .route("/api/grammar", post(grammar_handler))
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
         .with_state(state)

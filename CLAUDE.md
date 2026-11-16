@@ -27,6 +27,10 @@ cargo test -p deinflect
 # dictionary (JMDICT_BIN built with jmdict-types/full) and examples.utf
 JMDICT_BIN=path/to/jmdict.bin cargo test --release -p jmdict-core --test real_dict -- --ignored
 
+# Compile data/grammar.toml into extension/data/grammar.bin (also part of
+# build-all, build-dicts and build); `cargo test -p grammar-core` compiles it too
+cargo xtask build-grammar
+
 # Run all benchmarks (deinflect + japanese-utils)
 cargo bench -p deinflect -p japanese-utils
 
@@ -51,9 +55,11 @@ cd extension && npm install && npm run build
 | `jmdict-wasm` | Thin `#[wasm_bindgen]` shim over `jmdict-core` (exposes the `Dictionary` JS class) |
 | `kanjidic-core` / `kanjidic-wasm` | Same core/shim split: core exposes `init_from_bytes`, `lookup_one`, `lookup_many`; wasm adds the JS class |
 | `examples-core` / `examples-wasm` | Same split for example sentences |
+| `grammar-core` | Yomeru's own `data/grammar.toml` → `grammar.bin` (`compile`, feature `build`), and `GrammarDict` (`lookup`, `by_id`, `lookup_longest_match`, `hover_match`, `search`, `lookup_prefix`). Shipped like JMdict |
+| `grammar-wasm` | WASM wrapper over `grammar-core` for the extension background (`GrammarDictionary` JS class) |
 | `srs-core` | Stateless SM-2: `new_card`, `review_card`, `filter_due` |
 | `srs-wasm` | WASM wrapper for srs-core |
-| `yomeru-core` (`app/core`) | The app's logic with no UI and no Dioxus: card store (IndexedDB/SQLite), SRS, sync, settings, `Platform` (dict + settings traits), offline `LocalDict`. Functions needing the dictionary/settings take `&Platform` |
+| `yomeru-core` (`app/core`) | The app's logic with no UI and no Dioxus: card store (IndexedDB/SQLite), SRS, sync, settings, `Platform` (dict + settings traits; `DictClient::grammar_search` for grammar), offline `LocalDict`. Functions needing the dictionary/settings take `&Platform` |
 | `yomeru-shared` (`app/shared`) | Dioxus UI over `yomeru-core`; re-exports its modules and wraps `&Platform` functions with versions reading it from Dioxus context |
 
 Native consumers (server, app, benches) depend on the `-core` crates. The `-wasm` crates exist only to expose those cores to JavaScript. Cargo crate names match the `extension/_generated/<crate>/<crate>_module.js` paths in the manifest — renaming a `-wasm` crate would also break extension JS imports.

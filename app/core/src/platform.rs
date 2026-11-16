@@ -10,6 +10,7 @@
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use examples_types::ExampleEntry;
+use grammar_core::GrammarEntry;
 use jmdict_types::WordEntry;
 use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
 use serde::{Deserialize, Serialize};
@@ -46,6 +47,9 @@ pub trait DictClient: Send + Sync {
     async fn kanji_parts(&self) -> Result<Vec<PartInfo>, String>;
     /// The kanji holding all of `parts`, at most `max` of them.
     async fn kanji_with_parts(&self, parts: &str, max: u8) -> Result<PartSearch, String>;
+    /// The grammar points a search box shows for `text`, at most `max`
+    /// (see `grammar_core::GrammarDict::search`).
+    async fn grammar_search(&self, text: &str, max: u8) -> Result<Vec<GrammarEntry>, String>;
 }
 
 /// Settings persistence + sync orchestration. `load()` is intentionally
@@ -196,6 +200,15 @@ struct KanjiResponse {
 struct ExamplesResponse {
     entries: Vec<ExampleEntry>,
 }
+#[derive(Serialize)]
+struct TextMaxBody<'a> {
+    text: &'a str,
+    max: u8,
+}
+#[derive(Deserialize)]
+struct GrammarResponse {
+    entries: Vec<GrammarEntry>,
+}
 #[derive(Deserialize)]
 struct KanjiPartsResponse {
     parts: Vec<PartInfo>,
@@ -266,6 +279,11 @@ impl DictClient for HttpDict {
 
     async fn kanji_with_parts(&self, parts: &str, max: u8) -> Result<PartSearch, String> {
         post_json("/api/kanji-by-parts", &KanjiByPartsBody { parts, max }).await
+    }
+
+    async fn grammar_search(&self, text: &str, max: u8) -> Result<Vec<GrammarEntry>, String> {
+        let parsed: GrammarResponse = post_json("/api/grammar", &TextMaxBody { text, max }).await?;
+        Ok(parsed.entries)
     }
 }
 

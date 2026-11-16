@@ -241,3 +241,34 @@ export interface PartSearch {
   total: number;
   open_parts: string[];
 }
+
+/** A run of grammar example text — mirrors `Span` in
+ *  `grammar-core/src/types.rs` (serde's external tagging, camelCase). */
+export type GrammarSpan =
+  | { text: { text: string } }
+  | { highlight: { text: string } };
+
+export interface GrammarExample {
+  ja: GrammarSpan[];
+  en: string;
+  /** Tatoeba sentence ids `<ja>_<en>`; empty for Yomeru's own sentences. */
+  tatoeba: string;
+}
+
+/** What the hover popup shows of a grammar point — `PopupEntry` in
+ *  `grammar-wasm`. */
+export interface GrammarPopupEntry {
+  id: string;
+  pattern: string;
+  jlpt: string;
+  meaning: string;
+  /** How it attaches, one line per construction. */
+  formation: string[];
+  examples: GrammarExample[];
+}
+
+export interface GrammarPopupMatch {
+  entries: GrammarPopupEntry[];
+  /** Chars of the hovered text the pattern covers. */
+  matchLen: number;
+}

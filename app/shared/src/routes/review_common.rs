@@ -212,15 +212,15 @@ pub(crate) fn RateButtons(disabled: bool, on_rate: EventHandler<u8>) -> Element 
     }
 }
 
-/// Takes back the last answer. Shown while there is one to take back.
+/// Takes back the last answer: a small icon, shown while there is one to take back.
 #[component]
 pub(crate) fn UndoButton(disabled: bool, on_undo: EventHandler<()>) -> Element {
     rsx! {
-        button { class: "outline", disabled,
-            title: "Undo the last answer",
+        button { class: "undo", disabled,
+            title: "Undo the last answer (Z)",
+            "aria-label": "Undo the last answer",
             onclick: move |_| on_undo.call(()),
-            "Undo"
-            kbd { "aria-hidden": "true", "Z" }
+            "↶"
         }
     }
 }

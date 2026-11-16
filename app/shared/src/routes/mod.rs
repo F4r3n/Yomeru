@@ -1,6 +1,7 @@
 pub mod about;
 pub mod kanji_finder;
 pub mod lookup;
+mod lookup_grammar;
 pub mod new_words;
 pub mod privacy;
 pub mod review;

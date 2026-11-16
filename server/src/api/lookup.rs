@@ -123,6 +123,22 @@ pub struct ExamplesResponse {
     pub entries: Vec<ExampleEntry>,
 }
 
+#[derive(Deserialize)]
+pub struct GrammarBody {
+    pub text: String,
+    #[serde(default = "default_grammar_max")]
+    pub max: u8,
+}
+
+fn default_grammar_max() -> u8 {
+    8
+}
+
+#[derive(Serialize)]
+pub struct GrammarResponse {
+    pub entries: Vec<grammar_core::GrammarEntry>,
+}
+
 pub async fn lookup_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
@@ -249,4 +265,26 @@ pub async fn examples_handler(
     })
     .await?;
     Ok(Json(ExamplesResponse { entries }))
+}
+
+/// The grammar points the Lookup page's search shows for `text`.
+pub async fn grammar_handler(
+    State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Json(body): Json<GrammarBody>,
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.lookup_limiter, addr, &headers)?;
+    let text = body.text;
+    if text.chars().count() > MAX_QUERY_CHARS {
+        return Err(too_large("text", text.chars().count(), MAX_QUERY_CHARS));
+    }
+    let max = usize::from(body.max);
+    let entries = run_blocking("grammar_search", move || {
+        Ok(crate::dicts::grammar()
+            .map(|d| d.search(&text, max))
+            .unwrap_or_default())
+    })
+    .await?;
+    Ok(Json(GrammarResponse { entries }))
 }

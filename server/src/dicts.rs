@@ -1,9 +1,13 @@
-//! Loads jmdict.bin / kanjidic.bin / examples.bin at startup. The underlying
-//! crates store their parsed state in process-global `OnceCell`s, so once
+//! Loads jmdict.bin / kanjidic.bin / examples.bin / grammar.bin at startup.
+//! The underlying crates store their parsed state in process-global
+//! `OnceCell`s (grammar-core has none: [`grammar`] holds it), so once
 //! `init_all` returns successfully the lookup fns can be called from any
 //! handler without further plumbing.
 
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
+
+use grammar_core::GrammarDict;
 
 use anyhow::{Context, Result};
 
@@ -17,7 +21,27 @@ pub fn init_all(data_dir: &str) -> Result<()> {
     )?;
     init_overlay(&dir.join("part-names.tsv"), kanjidic_core::init_part_names)?;
     init_examples(&dir.join("examples.bin"))?;
+    init_grammar(&dir.join("grammar.bin"))?;
     Ok(())
+}
+
+static GRAMMAR: OnceLock<GrammarDict> = OnceLock::new();
+
+/// The grammar dictionary, once [`init_all`] (or a test) loaded it.
+pub fn grammar() -> Option<&'static GrammarDict> {
+    GRAMMAR.get()
+}
+
+/// Loads `grammar.bin` bytes; a second call keeps the first dictionary.
+pub fn init_grammar_from_bytes(bytes: &[u8]) -> Result<()> {
+    let dict = GrammarDict::from_bytes(bytes).context("init grammar")?;
+    let _ = GRAMMAR.set(dict);
+    Ok(())
+}
+
+fn init_grammar(path: &Path) -> Result<()> {
+    let bytes = std::fs::read(path).with_context(|| format!("read {}", path.display()))?;
+    init_grammar_from_bytes(&bytes)
 }
 
 fn init_jmdict(path: &Path) -> Result<()> {

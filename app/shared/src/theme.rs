@@ -389,6 +389,16 @@ button.link {
 }
 button.link:hover:not(:disabled) { text-decoration: underline; }
 button.outline:hover:not(:disabled) { background: var(--accent); color: var(--on-accent); opacity: 1; }
+/* Undo on review cards: a bare grey glyph, there when needed but not
+   competing with the card. */
+button.undo {
+    background: transparent;
+    color: var(--subtext);
+    padding: 2px 6px;
+    font-size: 16px;
+    line-height: 1;
+}
+button.undo:hover:not(:disabled) { color: var(--accent); opacity: 1; }
 
 input[type="range"] { accent-color: var(--accent); }
 
@@ -926,6 +936,56 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
     padding: 0 3px;
     border-radius: 3px;
 }
+
+/* ── Grammar results (lookup page) ───────────────────────────────── */
+.grammar-results { margin-top: 18px; }
+.grammar-results:first-child { margin-top: 0; }
+.grammar-card { margin-bottom: 10px; }
+.grammar-head.clickable { cursor: pointer; }
+.grammar-title { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.grammar-chevron {
+    margin-left: auto; align-self: center; color: var(--subtext);
+    display: inline-flex; transition: transform 0.15s ease;
+}
+.grammar-head.clickable:hover .grammar-chevron { color: var(--accent); }
+.grammar-card.open .grammar-chevron { transform: rotate(180deg); }
+.grammar-meaning {
+    margin-top: 4px; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.grammar-card.open .grammar-meaning { display: block; }
+.grammar-structure {
+    display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 6px;
+    font-size: 13px; color: var(--subtext); background: color-mix(in srgb, var(--border) 35%, transparent);
+}
+.grammar-forms { margin-top: 6px; font-size: 12px; overflow-wrap: anywhere; }
+.grammar-see { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 14px; font-size: 12px; }
+
+.grammar-examples {
+    margin-top: 6px; padding: 2px 12px;
+    border-left: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+    border-radius: 0 6px 6px 0;
+}
+.grammar-example { padding: 8px 0; }
+.grammar-example + .grammar-example { border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }
+.grammar-example .jp { font-size: 15px; line-height: 1.6; }
+.grammar-example .en { color: var(--subtext); font-size: 13px; margin-top: 2px; }
+.grammar-example mark {
+    background: color-mix(in srgb, var(--yellow) 60%, transparent);
+    color: var(--text); padding: 0 3px; border-radius: 3px;
+}
+
+.grammar-section { margin-top: 16px; }
+.grammar-section-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--subtext); margin-bottom: 4px;
+}
+.grammar-patterns { list-style: none; font-size: 13px; line-height: 1.7; }
+.grammar-patterns li { padding-left: 12px; position: relative; }
+.grammar-patterns li::before { content: "·"; position: absolute; left: 2px; color: var(--subtext); }
+.grammar-more-link { display: inline-block; margin-top: 14px; font-size: 12px; color: var(--accent); }
+.grammar-p { font-size: 14px; line-height: 1.65; margin: 10px 0 6px; overflow-wrap: anywhere; }
 
 /* ── Table polish ────────────────────────────────────────────────── */
 tbody tr:hover { background: color-mix(in srgb, var(--card) 50%, transparent); }
