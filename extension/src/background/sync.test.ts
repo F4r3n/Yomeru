@@ -165,6 +165,10 @@ describe("sync", () => {
     storage.set("srs_settings", {
       serverUrl: SERVER,
       serverToken: TOKEN,
+      // The fixtures' value, set here rather than left to the default, which
+      // can change (graduation is now off by default: 0). The Rust client
+      // test seeds it the same way.
+      graduationIntervalDays: 365,
       settingsUpdatedMs: 1_756_000_000_000,
     });
   }
