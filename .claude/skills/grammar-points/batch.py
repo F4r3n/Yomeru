@@ -13,8 +13,8 @@ of bee's rows each point covers, never bee's text.
            finds nothing or everything
 
   python3 -I batch.py status
-  python3 -I batch.py show 2 [--count 8]
-  python3 -I batch.py test
+  python3 -I batch.py show 2 [--count 8] [--level n3]
+  python3 -I batch.py test [--level n3]
 """
 
 import argparse
@@ -27,7 +27,7 @@ sys.path.insert(0, str(HERE))  # -I drops the script's folder; tatoeba.py is our
 import tatoeba  # noqa: E402
 
 GRAMMAR_TOML = HERE.parents[2] / "data" / "grammar.toml"
-PLAN = Path.home() / ".cache" / "yomeru-grammar" / "n4-plan.toml"
+PLANS = Path.home() / ".cache" / "yomeru-grammar"
 
 
 def written_ids():
@@ -35,7 +35,7 @@ def written_ids():
         return {p["id"] for p in tomllib.load(f).get("point", [])}
 
 
-def show(batch, done, sentences, count):
+def show(batch, done, sentences, count, level):
     print(f"# Batch {batch['n']}: {batch['title']}")
     if batch.get("note"):
         print(batch["note"].strip())
@@ -46,7 +46,7 @@ def show(batch, done, sentences, count):
     if skipped:
         print(f"({skipped} already written)")
     for p in todo:
-        print(f"\n## {p['id']}  {p['pattern']}  [{p.get('jlpt', 'N4')}]")
+        print(f"\n## {p['id']}  {p['pattern']}  [{p.get('jlpt', level)}]")
         if p.get("forms"):
             print("forms: " + ", ".join(p["forms"]))
         if p.get("hover") is False:
@@ -73,11 +73,13 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["status", "show", "test"])
     ap.add_argument("n", nargs="?", type=int)
-    ap.add_argument("--plan", default=str(PLAN))
+    ap.add_argument("--level", default="n4", help="picks <level>-plan.toml (default n4)")
+    ap.add_argument("--plan", help="a plan file instead of --level")
     ap.add_argument("--count", type=int, default=8)
     args = ap.parse_args()
 
-    with open(args.plan, "rb") as f:
+    plan_path = args.plan or PLANS / f"{args.level.lower()}-plan.toml"
+    with open(plan_path, "rb") as f:
         plan = tomllib.load(f)
     done = written_ids()
     batches = plan["batch"]
@@ -107,7 +109,7 @@ def main():
     batch = next((b for b in batches if b["n"] == args.n), None)
     if batch is None:
         sys.exit(f"no batch {args.n}; batches: {[b['n'] for b in batches]}")
-    show(batch, done, sentences, args.count)
+    show(batch, done, sentences, args.count, plan.get("level", args.level.upper()))
 
 
 if __name__ == "__main__":

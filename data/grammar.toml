@@ -586,7 +586,7 @@ examples = [
 id = "zenzen"
 pattern = "全然"
 forms = ["ぜんぜん"]
-jlpt = "N5"
+jlpt = "N4"
 meaning = "not at all (with a negative)"
 formation = ["全然 + Verb［ない］", "全然 + ［い］Adjective［く］ + ない"]
 explanation = """
@@ -705,7 +705,7 @@ examples = [
 id = "to-dochira"
 pattern = "とどちらが"
 forms = ["どちらが", "とどっちが"]
-jlpt = "N5"
+jlpt = "N4"
 meaning = "which (of the two) is more …?"
 formation = [
   "Noun A + と + Noun B + と + どちらが + Adjective + か",
@@ -2148,7 +2148,7 @@ examples = [
 id = "sugiru"
 pattern = "すぎる"
 forms = ["過ぎる", "すぎ", "過ぎ"]
-jlpt = "N4"
+jlpt = "N5"
 meaning = "too, too much"
 formation = [
   "Verb［stem］ + すぎる   (食べすぎる)",
@@ -2439,7 +2439,7 @@ examples = [
 [[point]]
 id = "te-kureru"
 pattern = "てくれる"
-forms = ["でくれる", "てくれませんか", "でくれませんか", "てくれない", "でくれない", "てくれてありがとう"]
+forms = ["でくれる", "てくれませんか", "でくれませんか", "てくれない", "でくれない", "てくれてありがとう", "てくれますか", "でくれますか"]
 jlpt = "N4"
 meaning = "do something for me / us (a favour received)"
 formation = ["Verb［て］ + くれる"]
@@ -3891,7 +3891,7 @@ examples = [
 id = "te-choudai"
 pattern = "てちょうだい"
 forms = ["でちょうだい", "ちょうだい", "て頂戴", "頂戴"]
-jlpt = "N4"
+jlpt = "N2"
 meaning = "please (do), would you (soft, familiar request)"
 formation = [
   "Verb［て］ + ちょうだい",
@@ -3945,7 +3945,7 @@ examples = [
 [[point]]
 id = "te-hoshii"
 pattern = "てほしい"
-forms = ["でほしい", "て欲しい", "で欲しい", "てほしくない", "ないでほしい"]
+forms = ["でほしい", "て欲しい", "で欲しい", "てほしくない", "ないでほしい", "ようにしてほしい", "ないようにしてほしい"]
 jlpt = "N4"
 meaning = "want (someone) to do"
 formation = [
@@ -4195,7 +4195,7 @@ examples = [
 id = "sou-da-hearsay"
 pattern = "そうだ"
 forms = ["そうです"]
-jlpt = "N4"
+jlpt = "N3"
 meaning = "I hear that, they say that (hearsay)"
 formation = [
   "Verb / ［い］Adjective + そうだ   (降るそうだ, 寒いそうだ)",
@@ -4863,7 +4863,7 @@ examples = [
 id = "koto-ga-aru-sometimes"
 pattern = "ることがある"
 forms = ["ることもある", "ることがあります", "ることもあります", "ないことがある", "ないこともある"]
-jlpt = "N4"
+jlpt = "N3"
 meaning = "sometimes (does), there are times when"
 formation = ["Verb［る］ / Verb［ない］ + ことがある"]
 explanation = """
@@ -4938,7 +4938,7 @@ examples = [
 id = "de-wa-naku"
 pattern = "ではなく"
 forms = ["じゃなく", "ではなくて", "じゃなくて", "でなく"]
-jlpt = "N4"
+jlpt = "N3"
 meaning = "not A but B; is not A, and …"
 formation = ["Noun / ［な］Adjective + ではなく(て)"]
 explanation = """
@@ -5186,7 +5186,7 @@ examples = [
 id = "gai"
 pattern = "甲斐"
 forms = ["がい", "がいがある", "かいがある", "かいがあった", "がいがない"]
-jlpt = "N4"
+jlpt = "N2"
 hover = false
 meaning = "worth (doing); the reward, the result (of)"
 formation = [
@@ -6202,4 +6202,82 @@ related = []
 examples = [
   { tatoeba = "281694_122306", ja = "日本食が好きな外国人は{少なくない}。", en = "Not a few foreigners like Japanese food." },
   { tatoeba = "286407_117257", ja = "彼の作文は誤りが{少なくない}。", en = "His composition has not a few mistakes." },
+]
+
+[[point]]
+id = "ni-ki-ga-tsuku"
+pattern = "に気がつく"
+forms = ["に気が付く", "に気づく", "に気付く", "にきがつく", "気がつく", "気が付く"]
+jlpt = "N4"
+meaning = "notice, realize, become aware of"
+formation = [
+  "Noun + に気がつく",
+  "Verb / ［い］Adjective + の / こと + に気がつく   (ないのに気がつく)",
+]
+explanation = """
+Says that something comes to your attention, by sight or by thinking: \
+間違いに気がついた, "I noticed the mistake". What you notice takes に; a \
+whole clause becomes a noun first with の or こと: かさがないのに気がつい\
+た, "I noticed my umbrella was gone". 気づく is a shorter verb with the \
+same meaning."""
+notes = """
+It's about noticing, not about seeing: 見る and 見える just say what is \
+in view. Don't mix it up with 気をつける ("be careful", を) or 気にする \
+("worry about", を). The negative 気がつかなかった is the usual way to \
+say "I didn't realize"."""
+related = ["ga-suru", "mieru", "no-nominalizer"]
+examples = [
+  { tatoeba = "69043_231677", ja = "彼が家を出て行くのに{気が付き}ましたか？", en = "Did you notice him leave the house?" },
+  { tatoeba = "290658_113017", ja = "彼はその危険{に気がつかなかった}。", en = "He was not aware of the danger." },
+  { source = "yomeru", ja = "家に帰ってから、かさを忘れたこと{に気がついた}。", en = "After I got home, I realized I had forgotten my umbrella." },
+]
+
+[[point]]
+id = "no-wa-da"
+pattern = "のは〜だ"
+forms = ["のは〜です", "のは〜からだ"]
+jlpt = "N4"
+meaning = "it's … that …, the one who / the reason … is …"
+formation = [
+  "Verb / ［い］Adjective + のは + Noun + だ",
+  "［な］Adjective + な + のは + Noun + だ",
+  "… + のは + Clause + からだ   (the reason)",
+]
+explanation = """
+Puts the known part first, made into a noun with のは, and saves the \
+new information for the end, before だ: まちがっているのは私だ, "it's me \
+who's wrong". With からだ at the end it gives a reason: 遅れたのは電車\
+が止まったからです, "the reason I was late is that the train stopped"."""
+notes = """
+English stresses the word with its voice or "it's … that"; Japanese \
+moves it to the end. A plain sentence (私がまちがっている) states a \
+fact; the のは version answers "who?" or "why?". Use からだ, not ので\
+だ, for the reason."""
+related = ["no-nominalizer", "kara-reason", "n-desu"]
+examples = [
+  { tatoeba = "32552_195378", ja = "まちがっている{のは}私だ。", en = "It is me that is wrong." },
+  { tatoeba = "246656_167842", ja = "私が会いたい{のは}彼女なんです。", en = "It is her that I want to meet." },
+  { source = "yomeru", ja = "遅れた{のは}電車が止まったからです。", en = "The reason I was late is that the train stopped." },
+]
+
+[[point]]
+id = "nai-ka"
+pattern = "ないか"
+forms = ["ないかい"]
+jlpt = "N4"
+hover = false
+meaning = "won't you, how about (casual invitation)"
+formation = ["Verb［ない］ + か"]
+explanation = """
+The casual way to invite or suggest, the plain version of 〜ませんか: \
+今夜映画を見に行かないか, "how about going to a movie tonight?". In \
+speech it's often just 行かない？ with a rising tone."""
+notes = """
+With か it sounds rather masculine and a bit firm; 行かない？ suits \
+everyone. Not every ないか invites: 寒くないか asks "aren't you cold?", \
+and 〜ないかな is a wish or a doubt. To a superior, use 〜ませんか."""
+related = ["masen-ka", "mashou", "volitional"]
+examples = [
+  { tatoeba = "243401_171078", ja = "今夜映画を見に行か{ないか}。", en = "How about going to the movie tonight?" },
+  { tatoeba = "435631_171208", ja = "今晩少し飲ま{ないか}。", en = "Let's have a few drinks tonight." },
 ]

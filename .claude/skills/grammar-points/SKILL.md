@@ -42,7 +42,7 @@ comments or commit messages.
   - `bee.py facts ZIP <pattern>…`: a capped English fact sheet per pattern
     (sources' explanations and caveats, no examples), about 1–2k tokens each.
   - `tatoeba.py '<regex>' --count 10`: example candidates, `<id> <ja> | <en>`.
-  - `batch.py status | show N | test [--plan FILE]`: a level's plan (see
+  - `batch.py status | show N | test [--level n3]`: a level's plan (see
     **Planning a level**): progress per batch; batch N's unwritten points
     with their decisions, example candidates and the `bee.py facts` calls;
     every regex's match count.
@@ -59,7 +59,7 @@ About 20 points per batch, **one fresh session per batch**: a long session
 re-sends its whole history on every call. Work in this order:
 
 0. **With a plan** (`~/.cache/yomeru-grammar/<level>-plan.toml`, e.g.
-   `n4-plan.toml`): run `batch.py show N` once and skip steps 1 and 3's
+   `n4-plan.toml`): run `batch.py show N --level n4` once and skip steps 1 and 3's
    searching. It prints the batch's folds (variants to add to existing
    entries), each point's id, pattern, suggested forms, hover and note, 8
    Tatoeba candidates, and the fact-sheet calls. The decisions are
@@ -172,6 +172,11 @@ place; never add a second block for the same id.
   column and can differ, so a list by level can miss a point Bunpro puts
   lower). No Bunpro entry for the point: the usual textbook level, listed
   in the report.
+  Bunpro decides even when an entry is already written: no exceptions for
+  "taught earlier". But check that the tag's Bunpro card is the same use:
+  a bee row can carry the card of another use of the word (the に row's card
+  is frequency に, N4; the くらい row's is extent, N3), and that tag doesn't
+  move the basic entry.
 - **meaning**: one line, at most ~60 chars, English glosses separated by
   commas; a parenthesis for the use when it helps ("(permission)").
 - **formation**: one line per construction, in Bunpro's notation: word
