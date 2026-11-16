@@ -5754,6 +5754,7 @@ meters); み, a later point, adds a felt quality (深み, "depth" of a \
 flavor or a person). Not every word takes み, but almost any adjective \
 takes さ."""
 related = ["mi-suffix"]
+homographs = ["sa-particle"]
 examples = [
   { tatoeba = "68363_230996", ja = "あの山はどれくらいの{高さ}がありますか。", en = "How high is that mountain?" },
   { tatoeba = "242931_171544", ja = "今日は昼と夜の{長さ}が同じです。", en = "The lengths of day and night are the same today." },
@@ -9847,4 +9848,473 @@ related = ["wake-da"]
 examples = [
   { tatoeba = "280455_123542", ja = "{道理で}、君が喜ぶわけだ。", en = "No wonder you are so happy." },
   { source = "yomeru", ja = "「昨日徹夜したんだ。」「{どうりで}眠そうだね。」", en = "\"I stayed up all night.\" \"No wonder you look sleepy.\"" },
+]
+
+[[point]]
+id = "chanto"
+pattern = "ちゃんと"
+forms = ["ちゃんとした", "ちゃんとする"]
+jlpt = "N3"
+meaning = "properly, neatly, as one should"
+formation = ["ちゃんと + Verb", "ちゃんとした + Noun   (a proper, decent …)"]
+explanation = """
+Says something is done the way it should be, fully and without \
+shortcuts: ちゃんと手を洗って, "wash your hands properly". ちゃんとした + \
+Noun means "proper, decent": ちゃんとした仕事, "a proper job". \
+ちゃんとする alone is "to behave, to get it together"."""
+notes = """
+Casual and very common, often in advice and scolding. きちんと is close \
+but a little more formal and stresses neatness and precision \
+(きちんと並べる, "line up neatly"); ちゃんと stresses doing what's \
+expected. Don't confuse it with ちゃん + the particle と (美奈ちゃんと, \
+"with Mina")."""
+related = ["kichinto"]
+examples = [
+  { tatoeba = "305903_97801", ja = "彼らは{ちゃんと}面倒見てもらえるでしょう。", en = "They will be taken good care of." },
+  { source = "yomeru", ja = "ご飯の前に{ちゃんと}手を洗いなさい。", en = "Wash your hands properly before eating." },
+  { source = "yomeru", ja = "もっと{ちゃんとした}服を着て来て。", en = "Come in more decent clothes." },
+]
+
+[[point]]
+id = "tsui"
+pattern = "つい"
+forms = ["ついつい"]
+jlpt = "N3"
+hover = false
+meaning = "without meaning to, couldn't help; just (a moment ago)"
+formation = ["つい + Verb［て］ + しまう", "つい + さっき / この間 / 最近   (just recently)"]
+explanation = """
+Says you did something you didn't intend, giving in to habit or \
+temptation, so it nearly always comes with てしまう: つい食べてしまった, \
+"I ate it without meaning to". ついつい stresses it. Before a time word \
+it means "just": ついさっき, "just a moment ago"."""
+notes = """
+うっかり is a careless slip, like forgetting something; つい is a \
+weakness you know about. Unlike ついに ("finally"), つい never means \
+"at last". Mostly about yourself, or about people you sympathize \
+with."""
+related = ["te-shimau", "tsui-ni"]
+examples = [
+  { tatoeba = "39828_202594", ja = "{つい}眠ってしまった。", en = "I couldn't help falling asleep." },
+  { tatoeba = "325764_77953", ja = "料理がおいしくて{つい}食べ過ぎた。", en = "The food was so good that I ate too much." },
+  { source = "yomeru", ja = "{つい}さっき家に着いた。", en = "I got home just a moment ago." },
+]
+
+[[point]]
+id = "wazawaza"
+pattern = "わざわざ"
+forms = ["態々"]
+jlpt = "N3"
+meaning = "going out of one's way, taking the trouble"
+formation = ["わざわざ + Verb"]
+explanation = """
+Says someone made a special effort they didn't have to: わざわざ来て\
+くれた, "they came all this way for me". Very common in thanks, with \
+てくれる or てもらう. With a negative it says "no need to bother": \
+わざわざ行かなくてもいい."""
+notes = """
+わざと means "on purpose", often with bad intent (わざと負けた, "lost \
+on purpose"); わざわざ is about the trouble taken, usually for \
+someone else. わざわざ can also sound critical, "go to the trouble of \
+doing something pointless": わざわざ遠い店で買う."""
+related = ["waza-to"]
+examples = [
+  { tatoeba = "293424_110264", ja = "彼は{わざわざ}私の手伝いをしてくれた。", en = "He went out of his way to help me." },
+  { tatoeba = "60271_222940", ja = "この雨の中、{わざわざ}来てもらってありがとう。", en = "Thank you for coming all the way in this rain." },
+  { tatoeba = "29153_191991", ja = "{わざわざ}家に来なくてもいいですよ。", en = "Do not bother to come to my home." },
+]
+
+[[point]]
+id = "sekkaku"
+pattern = "せっかく"
+forms = ["折角", "せっかくの"]
+jlpt = "N3"
+meaning = "with all the trouble, precious (chance), since … anyway"
+formation = ["せっかく + Verb / Phrase + のに", "せっかく + Verb / Phrase + (ん)だから", "せっかくの + Noun"]
+explanation = """
+Marks something valuable or hard-won. With のに it regrets that it went \
+to waste: せっかく作ったのに、誰も食べない, "I made it specially, and \
+nobody eats it". With から it says to make good use of it: せっかく来た\
+んだから, "since we've come all this way". せっかくの + Noun is "a \
+precious …": せっかくの休み."""
+notes = """
+The result decides the mood: のに for disappointment, から with a \
+suggestion or a wish (〜ましょう, 〜たい). せっかくですが is a polite way \
+to turn down an offer: "it's kind of you, but…". Not for things that \
+cost no effort and have no special value."""
+related = ["noni", "kara-reason"]
+examples = [
+  { tatoeba = "51329_214039", ja = "{せっかく}雨の中を会いに行ったのに彼女は留守だった。", en = "Though I went to see her all the way in the rain, she was out." },
+  { source = "yomeru", ja = "{せっかくの}休みなのに、雨だ。", en = "It's my precious day off, and it's raining." },
+  { source = "yomeru", ja = "{せっかく}来たんだから、ゆっくりしていって。", en = "Since you've come all this way, stay and relax." },
+]
+
+[[point]]
+id = "kaette"
+pattern = "かえって"
+forms = ["却って"]
+jlpt = "N3"
+hover = false
+meaning = "on the contrary, instead, all the more"
+formation = ["かえって + Phrase"]
+explanation = """
+Says the result was the opposite of what you'd expect or intended: 薬を\
+飲んだら、かえって悪くなった, "I took medicine, and it actually got \
+worse". The first part is usually an action meant to help, followed \
+by the unexpected outcome."""
+notes = """
+Usually written in hiragana, so it looks like 帰って ("go home"); \
+context tells them apart. むしろ also means "rather", but it compares \
+two choices (AよりむしろB); かえって reports an outcome that went \
+against expectation."""
+related = ["mushiro"]
+examples = [
+  { tatoeba = "263733_150824", ja = "事故は減らずに{かえって}多くなっている。", en = "Instead of fewer accidents there are more." },
+  { source = "yomeru", ja = "薬を飲んだら、{かえって}悪くなった。", en = "I took medicine, and I actually got worse." },
+  { source = "yomeru", ja = "タクシーで行ったら、{かえって}時間がかかった。", en = "I took a taxi, and it actually took longer." },
+]
+
+[[point]]
+id = "mushiro"
+pattern = "むしろ"
+forms = ["寧ろ"]
+jlpt = "N3"
+meaning = "rather, if anything, sooner"
+formation = ["A + より(も) + むしろ + B", "むしろ + Phrase"]
+explanation = """
+Picks the second of two options as the better fit or the preferred \
+one: バスよりむしろ歩きたい, "I'd rather walk than take the bus". \
+Alone it corrects an idea: 暑くない。むしろ寒い, "it's not hot; if \
+anything, it's cold"."""
+notes = """
+Often with より or というより: 先生というよりむしろ友達, "more a friend \
+than a teacher". かえって is about a result that went against \
+expectation; むしろ is a choice or judgment. A little formal; in \
+conversation people also say どっちかというと."""
+related = ["kaette", "to-iu-yori", "yori-hou-ga"]
+examples = [
+  { tatoeba = "35264_198075", ja = "バスより{むしろ}歩きたい。", en = "I'd rather walk than take a bus." },
+  { tatoeba = "294845_108844", ja = "彼は学者というよりも{むしろ}テレビタレントである。", en = "He is not so much a scholar as a TV personality." },
+]
+
+[[point]]
+id = "tsui-ni"
+pattern = "ついに"
+forms = ["遂に", "終に"]
+jlpt = "N3"
+meaning = "at last, finally, in the end"
+formation = ["ついに + Verb［た］", "ついに + Noun + だ   (ついに明日だ)"]
+explanation = """
+Marks the end point of a long wait or process, often an important or \
+dramatic one: ついに完成した, "it was finally finished". It can also \
+announce that the moment has come: ついに明日は試合だ, "the match is \
+tomorrow at last"."""
+notes = """
+とうとう is the everyday word and is close in meaning; ついに sounds \
+more formal or dramatic, as in news and stories. やっと adds relief at \
+something hoped for. With a negative, ついに means "never, in the \
+end": ついに来なかった. Not the same as つい ("without meaning to")."""
+related = ["toutou", "yatto", "tsui"]
+examples = [
+  { tatoeba = "291777_111901", ja = "彼は{ついに}現れた。", en = "He appeared at last." },
+  { tatoeba = "255045_159478", ja = "私は{ついに}課題を終わらせた。", en = "Finally I finished my task." },
+]
+
+[[point]]
+id = "sude-ni"
+pattern = "すでに"
+forms = ["既に"]
+jlpt = "N3"
+meaning = "already (formal)"
+formation = ["すでに + Phrase"]
+explanation = """
+The written, formal word for "already": 着いたときには、すでに電車は\
+出ていた, "when I arrived, the train had already left". It's common in \
+news, writing and polite speech, where もう would sound casual."""
+notes = """
+もう has more uses: "soon" (もう来る) and "no longer" (もう行かない). \
+すでに means only "already", for something that has happened or is \
+true by now."""
+related = ["mou"]
+examples = [
+  { tatoeba = "51900_214607", ja = "{すでに}２０年経った。", en = "Twenty years already passed." },
+  { tatoeba = "246611_167887", ja = "私が駅に着いたときは{すでに}電車は出ていた。", en = "The train had already left when I arrived at the station." },
+]
+
+[[point]]
+id = "futatabi"
+pattern = "再び"
+forms = ["ふたたび"]
+jlpt = "N3"
+meaning = "again, once more (formal)"
+formation = ["再び + Verb"]
+explanation = """
+A formal word for "again", common in writing and news: 再び会う, "meet \
+again". It often describes going back to an earlier state: 森は再び静か\
+になった, "the forest became quiet again"."""
+notes = """
+また is the everyday word and has more uses ("also", "see you"); \
+再び is only "again" and sounds literary in casual talk. 二度と再び + \
+negative is an emphatic "never again". It's for a second time; for \
+"again and again", use 何度も."""
+related = ["mata"]
+examples = [
+  { tatoeba = "308876_94830", ja = "彼女に{再び}会った。", en = "I saw her again." },
+  { tatoeba = "269486_145077", ja = "森の中は{再び}静かになった。", en = "It became quiet again in the forest." },
+]
+
+[[point]]
+id = "tadachi-ni"
+pattern = "直ちに"
+forms = ["ただちに"]
+jlpt = "N3"
+meaning = "immediately, at once (formal)"
+formation = ["直ちに + Verb"]
+explanation = """
+A formal word for "immediately", used in orders, announcements and \
+written reports: 直ちに病院へ行ってください, "go to the hospital at \
+once". In everyday talk, すぐに says the same."""
+notes = """
+すぐ also means "close by" (駅のすぐ前) and "easily" (すぐ泣く); \
+直ちに is only about time, and stresses no delay at all. Too stiff \
+for casual requests between friends."""
+related = []
+examples = [
+  { tatoeba = "301661_102033", ja = "彼は{直ちに}手紙の返事を書いた。", en = "He lost no time answering the letter." },
+  { source = "yomeru", ja = "{直ちに}会議を始めます。", en = "We will start the meeting right away." },
+]
+
+[[point]]
+id = "sorezore"
+pattern = "それぞれ"
+forms = ["それぞれの", "其々", "夫々"]
+jlpt = "N3"
+meaning = "each, respectively, each in their own way"
+formation = ["それぞれ + Verb / Phrase", "それぞれの + Noun", "Noun + それぞれ   (人それぞれ)"]
+explanation = """
+Treats the members of a group one by one, each with its own thing: \
+それぞれの部屋, "each room"; みんなそれぞれ意見がある, "everyone has \
+their own opinion". 人それぞれ is a set phrase: "it differs from person \
+to person"."""
+notes = """
+ずつ is about equal amounts per person (一人一つずつ, "one each"); \
+それぞれ stresses that each one is separate or different. Works as a \
+noun too: それぞれが, "each of them"."""
+related = ["zutsu"]
+examples = [
+  { tatoeba = "305879_97825", ja = "彼らは{それぞれの}道を行った。", en = "They went their separate ways." },
+  { tatoeba = "239167_175299", ja = "犬は{それぞれ}異なった性格をもっている。", en = "Each individual dog has a different character." },
+]
+
+[[point]]
+id = "daiichi"
+pattern = "第一"
+forms = ["だいいち", "第一に", "まず第一に"]
+jlpt = "N3"
+hover = false
+meaning = "first of all, to begin with, besides"
+formation = ["第一(に)、 + Sentence", "まず第一に、 + Sentence"]
+explanation = """
+Introduces the first or most important reason or point: まず第一に、\
+高すぎる, "first of all, it's too expensive". In conversation, 第一 \
+alone adds the clinching reason against something: 行かない。第一、\
+お金がない, "I'm not going. Besides, I have no money"."""
+notes = """
+The conversational 第一 sounds argumentative, like "and anyway". 第一 \
+is also an ordinary prefix for "number one, first": 第一印象, "first \
+impression"; 第一課, "lesson 1". As a noun it means "the top \
+priority": 健康が第一だ, "health comes first"."""
+related = []
+examples = [
+  { tatoeba = "32753_195579", ja = "まず{第一に}、それは高すぎる。", en = "First of all, it is too expensive." },
+  { tatoeba = "32756_195582", ja = "まず{第一に}、あなたは正直でなければならない。", en = "To begin with, you must be honest." },
+  { source = "yomeru", ja = "行きたくない。{第一}、お金がない。", en = "I don't want to go. Besides, I have no money." },
+]
+
+[[point]]
+id = "tokoroga"
+pattern = "ところが"
+forms = []
+jlpt = "N3"
+hover = false
+meaning = "however, but (contrary to expectation)"
+formation = ["Sentence。 + ところが、 + Sentence"]
+explanation = """
+Starts a sentence that reports a surprising turn, against what the \
+first sentence led you to expect: 晴れると思った。ところが、雨が降った, \
+"I thought it would be sunny. But it rained". Common in stories and \
+explanations."""
+notes = """
+The second part is a fact that happened or is true, never your own \
+request, plan or wish: no ところが、行きましょう. In a reply, it \
+corrects what the other person assumes: 「暇でしょう？」「ところが、\
+忙しいんだ。」. しかし and でも work for \
+any contrast; ところが stresses the surprise. Don't confuse it with \
+ところ ("place") + が in the middle of a sentence."""
+related = ["shikashi", "demo"]
+examples = [
+  { source = "yomeru", ja = "晴れると思った。{ところが}、雨が降った。", en = "I thought it would be sunny. But it rained." },
+  { source = "yomeru", ja = "簡単だと思った。{ところが}、全然できなかった。", en = "I thought it was easy. But I couldn't do it at all." },
+]
+
+[[point]]
+id = "sate"
+pattern = "さて"
+forms = ["さてと"]
+jlpt = "N3"
+meaning = "well, now, so (moving on)"
+formation = ["さて、 + Sentence"]
+explanation = """
+Moves to the next topic or the next step, often in speeches, lessons \
+and meetings: さて、次の話題に移ろう, "now, let's move on to the next \
+topic". Said to yourself, さてと marks getting started: さてと、\
+始めるか, "right, let's get going"."""
+notes = """
+ところで changes the subject suddenly ("by the way"), often to \
+something unrelated; さて moves on in an orderly way, as the next part \
+of the same talk."""
+related = ["tokorode"]
+examples = [
+  { tatoeba = "54078_216772", ja = "{さて}、次の話題に移ろう。", en = "But now to our next topic." },
+  { tatoeba = "54086_216780", ja = "{さて}、あなたの意見はどうですか。", en = "Now, what is your opinion?" },
+]
+
+[[point]]
+id = "aruiwa"
+pattern = "あるいは"
+forms = ["或いは"]
+jlpt = "N3"
+meaning = "or; possibly, perhaps"
+formation = ["Noun + (か) + あるいは + Noun", "Sentence + 、あるいは + Sentence", "あるいは + Phrase + かもしれない   (perhaps)"]
+explanation = """
+A formal "or" between two options: 電話あるいはメールで, "by phone or \
+by email". With かもしれない it means "perhaps": あるいは本当かもしれない, \
+"perhaps it's true"."""
+notes = """
+または is close and also formal. それとも only links questions and is \
+the conversational choice there (コーヒー？それとも紅茶？). In everyday \
+speech, か is enough: 電話かメール."""
+related = ["mata-wa", "soretomo"]
+examples = [
+  { tatoeba = "17726_234269", ja = "あなたか{あるいは}私が間違っている。", en = "Either you or I am wrong." },
+  { tatoeba = "63752_226408", ja = "ガスで調理しますか、{あるいは}電気ですか。", en = "Do you cook by gas or electricity?" },
+  { tatoeba = "67318_229955", ja = "{あるいは}それは本当かもしれない。", en = "Perhaps that's true." },
+]
+
+[[point]]
+id = "mottomo"
+pattern = "もっとも"
+forms = ["尤も"]
+jlpt = "N3"
+hover = false
+meaning = "though, mind you, admittedly"
+formation = ["Sentence。 + もっとも、 + Sentence"]
+explanation = """
+Adds a reservation to what you just said, limiting it: この店は安い。\
+もっとも、いつも混んでいるけど, "This shop is cheap. Mind you, it's \
+always crowded". The second sentence often ends in けど or が."""
+notes = """
+Written in kana it looks like 最も ("most": もっとも高い, "the \
+highest"); the comma and its place at the start of a sentence tell them \
+apart. もっともだ (尤もだ) is an adjective, "reasonable, natural": \
+怒るのはもっともだ, "it's natural that you're angry"."""
+related = ["kedo"]
+examples = [
+  { source = "yomeru", ja = "この店は安い。{もっとも}、いつも混んでいるけど。", en = "This shop is cheap. Mind you, it's always crowded." },
+  { source = "yomeru", ja = "明日は休みだ。{もっとも}、宿題はある。", en = "Tomorrow's a day off. Mind you, I have homework." },
+]
+
+[[point]]
+id = "de-wa-conj"
+pattern = "では"
+forms = ["それでは", "じゃあ", "それじゃあ", "それじゃ"]
+jlpt = "N3"
+hover = false
+meaning = "well then, in that case, now"
+formation = ["では、 + Sentence", "じゃあ、 + Sentence   (casual)"]
+explanation = """
+Starts a sentence that follows from what was just said or the \
+situation: 「もう時間です。」「では、始めましょう。」, "Well then, let's \
+start". Also used to close a conversation: じゃあ、また明日, "OK, see \
+you tomorrow"."""
+notes = """
+では and それでは are polite or formal; じゃあ and じゃ are casual. \
+Different from the particles で + は in the middle of a sentence \
+(東京では, "in Tokyo") and from the では of ではない."""
+related = ["sorede"]
+examples = [
+  { tatoeba = "39363_202152", ja = "{では}、後で会いましょう。", en = "Well, see you later." },
+  { tatoeba = "39366_202155", ja = "{では}、急いだほうがいいですね。", en = "We'd better hurry then." },
+  { tatoeba = "1389443_215897", ja = "{じゃあ}注文します。", en = "OK, I'll order it." },
+]
+
+[[point]]
+id = "saa"
+pattern = "さあ"
+forms = ["さぁ"]
+jlpt = "N3"
+meaning = "come on, now; well, I don't know"
+formation = ["さあ、 + Sentence"]
+explanation = """
+Urges action, yours or someone else's, often with a volitional or \
+command form: さあ、行こう, "come on, let's go". Said slowly, as a reply, \
+it means you don't know or aren't sure: 「どこにあるの？」「さあ…」, \
+"Hmm, no idea"."""
+notes = """
+The "I don't know" さあ can sound dismissive to a superior; \
+さあ、ちょっとわかりません softens it. さて moves on to the next topic; \
+さあ pushes someone to act now."""
+related = ["sate"]
+examples = [
+  { tatoeba = "54229_216921", ja = "{さあ}、入って入って。", en = "Come on in!" },
+  { tatoeba = "54242_216935", ja = "{さあ}、仕事にとりかかろう。", en = "Now let's get down to work." },
+  { source = "yomeru", ja = "「田中さんはどこ？」「{さあ}、知らない。」", en = "\"Where's Tanaka?\" \"Hmm, I don't know.\"" },
+]
+
+[[point]]
+id = "sa-particle"
+pattern = "さ"
+forms = []
+jlpt = "N3"
+meaning = "(casual ending: sure, you know); hey (filler)"
+formation = ["Verb / ［い］Adjective + さ", "［な］Adjective / Noun + さ   (no だ: 大丈夫さ)", "Phrase + さ、   (filler)"]
+explanation = """
+At the end of a sentence, さ states something lightly, as obvious: \
+大丈夫さ, "it'll be fine, sure". In the middle of a sentence it's a \
+filler, like "you know": あのさ、明日ひま？, "hey, are you free \
+tomorrow?"."""
+notes = """
+Casual, and more common among men and in eastern Japan. だ drops \
+before it: 学生さ, not 学生だ さ. ってさ reports hearsay: 来ないってさ, \
+"he says he's not coming". Using the filler a lot sounds childish. A \
+different word from the suffix さ of 高さ."""
+related = ["yo", "tte"]
+homographs = ["sa-noun"]
+examples = [
+  { tatoeba = "279068_124925", ja = "伝染病だって{さ}。", en = "He, um, said that it was contagious." },
+  { source = "yomeru", ja = "大丈夫{さ}。きっとうまくいくよ。", en = "It's fine. I'm sure it'll go well." },
+  { source = "yomeru", ja = "あの{さ}、明日ひま？", en = "Hey, are you free tomorrow?" },
+]
+
+[[point]]
+id = "naa"
+pattern = "なあ"
+forms = ["なぁ"]
+jlpt = "N3"
+meaning = "(exclamation, wish, talking to oneself); hey"
+formation = ["Sentence (plain) + なあ", "Verb［たい］ / たらいい + なあ   (wish)"]
+explanation = """
+Expresses a feeling, mostly to yourself: いい天気だなあ, "what nice \
+weather!". With たい or たらいい it's a wish: 休みたいなあ, "I wish I \
+could rest". It usually follows plain forms: いいなあ."""
+notes = """
+ね asks the listener to agree; なあ is more inward, a thought said out \
+loud. Directed at someone, なあ works like a casual ね, mostly in men's \
+speech, and なあ at the start of a sentence is "hey". Don't confuse it \
+with the prohibition な (行くな, "don't go")."""
+related = ["ne", "tai", "na-prohibition"]
+examples = [
+  { tatoeba = "66692_229334", ja = "いい天気だ{なあ}。", en = "Isn't it a lovely day!" },
+  { tatoeba = "27370_190212", ja = "一杯やりたい{なあ}。", en = "I feel like a drink." },
+  { tatoeba = "70850_233481", ja = "あなたのように英語が話せたらいい{なあ}。", en = "I wish I could speak English like you." },
 ]
