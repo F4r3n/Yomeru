@@ -6281,3 +6281,379 @@ examples = [
   { tatoeba = "243401_171078", ja = "今夜映画を見に行か{ないか}。", en = "How about going to the movie tonight?" },
   { tatoeba = "435631_171208", ja = "今晩少し飲ま{ないか}。", en = "Let's have a few drinks tonight." },
 ]
+
+[[point]]
+id = "tame-ni"
+pattern = "ために"
+forms = ["為に", "のために", "のため"]
+jlpt = "N3"
+meaning = "in order to, for (the sake of); because of (formal)"
+formation = [
+  "Verb［る］ + ために   (purpose)",
+  "Noun + のために   (for, for the sake of)",
+  "Verb / ［い］Adjective + ために   (cause: 遅れたために)",
+  "［な］Adjective + な / Noun + の + ために   (cause)",
+]
+explanation = """
+Gives a goal: 留学するためにお金をためている, "I'm saving money to \
+study abroad". After a noun with の it means "for": 家族のために働く, \
+"I work for my family". In a more formal style it gives a cause \
+instead: 事故のために電車が遅れた, "the train was late because of an \
+accident"."""
+notes = """
+For a goal, the verb must be something you choose to do, with the same \
+subject in both halves; for states and potentials (見える, 話せる) use \
+ように. A past verb before it always means a cause, and a cause can't \
+be followed by an order, a request or the speaker's will. ため without \
+に is the same and can end a sentence: 健康のためだ. The cause use is \
+stiff: in speech, から or ので."""
+related = ["you-ni-purpose", "noni-purpose", "kara-reason", "node", "sono-tame"]
+examples = [
+  { tatoeba = "257442_157092", ja = "私は黒板を見る{ために}眼鏡をかけた。", en = "I put on my glasses to see the blackboard." },
+  { tatoeba = "314623_89083", ja = "彼女は自分{のために}おいしい料理を作った。", en = "She cooked herself a good meal." },
+  { source = "yomeru", ja = "事故{のために}、電車が遅れた。", en = "The train was late because of an accident." },
+]
+
+[[point]]
+id = "okage-de"
+pattern = "おかげで"
+forms = ["お陰で", "おかげだ", "おかげです", "おかげさまで"]
+jlpt = "N3"
+meaning = "thanks to, because of (a good result)"
+formation = [
+  "Verb / ［い］Adjective + おかげで",
+  "［な］Adjective + な + おかげで",
+  "Noun + の + おかげで",
+]
+explanation = """
+Credits something or someone for a good result: 先生のおかげで合格\
+できた, "I passed thanks to my teacher". At the end of a sentence, \
+おかげだ / おかげです says what you owe it to. おかげさまで is a polite \
+set phrase for good news about yourself, as in "I'm fine, thank you", \
+thanking people in general."""
+notes = """
+For a bad result, use せいで. おかげで with a bad result is sarcastic, \
+like "thanks a lot": 君のおかげで遅刻したよ. A verb before it is \
+usually past: 手伝ってくれたおかげで."""
+related = ["sei-de", "tame-ni", "kara-reason"]
+examples = [
+  { tatoeba = "28037_190875", ja = "医者の{おかげで}彼女は病気が治った。", en = "With the help of doctors, she got over her illness." },
+  { tatoeba = "71001_233629", ja = "あなたの{おかげで}、私は早く終えることが出来ました。", en = "Thanks to your help, I was able to finish early." },
+  { tatoeba = "65115_227762", ja = "{おかげさまで}元気です。", en = "I'm fine, thank you." },
+]
+
+[[point]]
+id = "sei-de"
+pattern = "せいで"
+forms = ["せいだ", "せいです", "せいか", "せいにする"]
+jlpt = "N3"
+meaning = "because of, due to (a bad result); someone's fault"
+formation = [
+  "Verb / ［い］Adjective + せいで",
+  "［な］Adjective + な + せいで",
+  "Noun + の + せいで",
+  "Noun + の + せいにする   (blame on)",
+]
+explanation = """
+Blames something for a bad result: 雪のせいで電車が止まった, "the \
+trains stopped because of the snow". At the end, お前のせいだ: \
+"it's your fault". 〜のせいにする pins the blame on someone, and せいか \
+means "maybe because": 疲れたせいか、頭が痛い, "my head hurts, maybe \
+because I'm tired"."""
+notes = """
+For a good result, use おかげで; for a neutral reason, から, ので or \
+ために. せいか only guesses at the cause and blames less; it also fits \
+results that aren't bad (年のせいか、早く目が覚める)."""
+related = ["okage-de", "bakari-ni", "tame-ni"]
+examples = [
+  { tatoeba = "64308_226960", ja = "お前の{せいだ}ぞ。", en = "This is your fault." },
+  { tatoeba = "297755_105931", ja = "彼は私の{せいにし}ようとした。", en = "He tried to put the blame on me." },
+  { source = "yomeru", ja = "雨の{せいで}、洗濯物がぬれてしまった。", en = "The laundry got wet because of the rain." },
+]
+
+[[point]]
+id = "kara-koso"
+pattern = "からこそ"
+forms = ["だからこそ"]
+jlpt = "N3"
+meaning = "precisely because, it's because … that; that's exactly why"
+formation = [
+  "Verb / ［い］Adjective + からこそ",
+  "［な］Adjective / Noun + だからこそ",
+  "Sentence。 + だからこそ + Sentence",
+]
+explanation = """
+Stresses that this, and nothing else, is the real reason, often one \
+the listener wouldn't expect: 簡単じゃないからこそ、おもしろい, "it's \
+fun precisely because it isn't easy". At the start of a sentence, \
+だからこそ means "that's exactly why"."""
+notes = """
+The sentence often ends with のだ / んです. The reason is one the \
+speaker finds meaningful, so it rarely gives a plain everyday cause \
+(not 雨だからこそ遅れた). こそ follows から, never ので: no のでこそ."""
+related = ["kara-reason", "koso"]
+examples = [
+  { tatoeba = "308743_94961", ja = "彼女には欠点がある{からこそ}僕は一層彼女が好きだ。", en = "I love her all the more for her faults." },
+  { tatoeba = "41061_203836", ja = "{だからこそ}、車で行くなといったんですよ。", en = "That's why I told you not to go by car." },
+  { source = "yomeru", ja = "毎日練習した{からこそ}、勝てたんだ。", en = "It's because we practiced every day that we won." },
+]
+
+[[point]]
+id = "koto-kara"
+pattern = "ことから"
+forms = []
+jlpt = "N3"
+meaning = "from the fact that, since (a basis, or a name's origin)"
+formation = [
+  "Verb / ［い］Adjective + ことから",
+  "［な］Adjective + な / である + ことから",
+  "Noun + である + ことから",
+]
+explanation = """
+Gives the fact that leads to a conclusion, or explains how something \
+got its name: 星の形をしていることから、星の砂と呼ばれる, "it's called \
+star sand because it's shaped like a star". Formal and written; the \
+sentence often ends in と呼ばれる, とわかった or と考えられる."""
+notes = """
+Not for everyday personal reasons (I was tired, so I went home): use \
+から or ので. Don't confuse with ことから始める, "start with", where \
+から is just "from": 簡単なことから始めよう."""
+related = ["kara-reason", "node"]
+examples = [
+  { tatoeba = "20796_183673", ja = "眼鏡の形をしている{ことから}、その橋を眼鏡橋とよぶ。", en = "Since the bridge looks like a pair of glasses, they call it Meganebashi." },
+  { tatoeba = "61128_223792", ja = "この{ことから}、会社には事故の責任が無いことになる。", en = "It follows from this that the company is not responsible for the accident." },
+]
+
+[[point]]
+id = "to-iu-riyuu-de"
+pattern = "という理由で"
+forms = ["という理由から", "というりゆうで"]
+jlpt = "N3"
+meaning = "on the grounds that, for the reason that"
+formation = [
+  "Verb / ［い］Adjective + という理由で",
+  "［な］Adjective / Noun (+ だ) + という理由で",
+]
+explanation = """
+Names the reason given for a decision, often someone else's: 高いと\
+いう理由で買わなかった, "I didn't buy it on the grounds that it was too \
+expensive". Because the reason is quoted, it can be an excuse, or one \
+the speaker doesn't quite accept."""
+notes = """
+Common with decisions done to someone: 許された, 断られた, 首になった. \
+という理由から is the same, more written. A plain から or ので gives \
+the reason as your own; という理由で puts a little distance."""
+related = ["to-iu", "kara-reason", "tame-ni"]
+examples = [
+  { tatoeba = "299111_104579", ja = "彼は若い{という理由で}許された。", en = "He was excused on the ground that he was young." },
+  { source = "yomeru", ja = "子どもだ{という理由で}、入れてもらえなかった。", en = "I wasn't let in on the grounds that I was a child." },
+]
+
+[[point]]
+id = "bakari-ni"
+pattern = "ばかりに"
+forms = []
+jlpt = "N3"
+meaning = "just because, only because (with regret)"
+formation = [
+  "Verb［た］ / Verb［ない］ + ばかりに",
+  "［い］Adjective + ばかりに",
+  "［な］Adjective + な / である + ばかりに",
+  "Noun + である + ばかりに",
+]
+explanation = """
+Blames one small thing for a big, unwanted result: 一言言ったばかりに、\
+けんかになった, "just because I said one word, it turned into a \
+fight". The tone is regret: if only that one thing hadn't happened."""
+notes = """
+The result is usually bad and out of the speaker's control, so no \
+orders or plans after it. 〜たいばかりに is "just wanting to…", for \
+what someone went through for that one wish: 会いたいばかりに遠くから\
+来た. Not the たばかり of "just did"."""
+related = ["sei-de", "ta-bakari", "te-bakari"]
+examples = [
+  { source = "yomeru", ja = "傘を忘れた{ばかりに}、びしょぬれになった。", en = "Just because I forgot my umbrella, I got soaked." },
+  { source = "yomeru", ja = "英語ができない{ばかりに}、その仕事につけなかった。", en = "Just because I can't speak English, I couldn't get that job." },
+]
+
+[[point]]
+id = "sono-tame"
+pattern = "そのため"
+forms = ["そのために", "そのためか"]
+jlpt = "N3"
+meaning = "for that reason, because of that; for that purpose"
+formation = ["Sentence。 + そのため + Sentence"]
+explanation = """
+Starts a sentence with the result of what came before, in a formal or \
+written style: 大雪が降った。そのため、電車が止まった, "there was \
+heavy snow. Because of that, the trains stopped". そのために can also \
+mean "for that purpose": 留学したい。そのためにお金をためている."""
+notes = """
+In conversation, だから or それで. そのためか: "perhaps because of \
+that". Before a noun, そのための means "for that": そのための時間."""
+related = ["tame-ni", "sorede", "sono-kekka"]
+examples = [
+  { tatoeba = "50269_212984", ja = "{そのため}大勢の人が亡くなった。", en = "Therefore many people passed away." },
+  { tatoeba = "50271_212986", ja = "{そのために}問題はますます複雑になった。", en = "That made the problem all the more complicated." },
+  { source = "yomeru", ja = "台風が来た。{そのため}、学校は休みになった。", en = "A typhoon came. Because of that, school was closed." },
+]
+
+[[point]]
+id = "sono-kekka"
+pattern = "その結果"
+forms = ["そのけっか"]
+jlpt = "N3"
+meaning = "as a result, consequently"
+formation = ["Sentence。 + その結果 + Sentence"]
+explanation = """
+Links an action or event to the result it brought: 駅前に大きな店が\
+できた。その結果、小さな店が閉まった, "a big store opened by the \
+station. As a result, the small shops closed". Neutral to formal; common in reports and the news."""
+notes = """
+The result is something that has happened, so no orders or plans \
+after it. Inside one sentence, Verb［た］ + 結果 does the same: よく\
+考えた結果、やめることにした. その結果 can also be just "that \
+result": その結果に驚いた."""
+related = ["sono-tame", "sorede"]
+examples = [
+  { tatoeba = "48408_211134", ja = "{その結果}、彼女は、職を失うこととなった。", en = "The consequence was that she lost her job." },
+  { source = "yomeru", ja = "毎日日記を書いた。{その結果}、漢字を覚えた。", en = "I wrote a diary every day. As a result, I learned kanji." },
+]
+
+[[point]]
+id = "sokode"
+pattern = "そこで"
+forms = []
+jlpt = "N3"
+meaning = "so, therefore (taking a step to deal with it)"
+formation = ["Sentence。 + そこで + Sentence"]
+explanation = """
+Introduces what someone did about the situation just described: 道が\
+わからなかった。そこで、駅の人に聞いた, "I didn't know the way, so I \
+asked someone at the station". What follows is usually an action or \
+a decision."""
+notes = """
+それで reports any result (I overslept, so I was late); そこで is for \
+a step taken on purpose, so it doesn't fit results nobody chose. \
+Taken literally, そこで is "there, at that place" (そこで待って, \
+"wait there") or "at that point" (そこでやめた, "I stopped there"). \
+The context tells which."""
+related = ["sorede", "suruto", "sono-tame"]
+examples = [
+  { source = "yomeru", ja = "部屋が暑かった。{そこで}、窓を開けた。", en = "The room was hot, so I opened the window." },
+  { source = "yomeru", ja = "一人では無理だった。{そこで}、友達に頼んだ。", en = "I couldn't do it alone, so I asked a friend." },
+]
+
+[[point]]
+id = "suruto"
+pattern = "すると"
+forms = ["そうすると"]
+jlpt = "N3"
+hover = false
+meaning = "then, thereupon; (in that case) so"
+formation = ["Sentence。 + すると + Sentence"]
+explanation = """
+Tells what happened right after the previous event, often something \
+unexpected: ドアを開けた。すると、猫が飛び出してきた, "I opened the \
+door, and a cat jumped out". In conversation, (そう)すると draws a \
+conclusion from what was just said: すると、明日は休みですね, "so \
+tomorrow is a day off, then"."""
+notes = """
+It comes from the と of "when" (Verb + と), so what follows is \
+something that happened or follows naturally, not the speaker's own \
+choice: for that, そこで. それから just lists the next step. Search \
+only: inside a sentence, する + と (練習すると) is the plain \
+conditional."""
+related = ["to-conditional", "sokode", "sorekara"]
+examples = [
+  { source = "yomeru", ja = "ボタンを押した。{すると}、ドアが開いた。", en = "I pushed the button, and the door opened." },
+  { source = "yomeru", ja = "窓を開けた。{すると}、冷たい風が入ってきた。", en = "I opened the window. Then a cold wind came in." },
+]
+
+[[point]]
+id = "naze-nara"
+pattern = "なぜなら"
+forms = ["なぜならば", "なぜかというと", "なぜかと言うと"]
+jlpt = "N3"
+meaning = "because, the reason is (starting a sentence)"
+formation = ["Sentence。 + なぜなら + Clause + からだ"]
+explanation = """
+Gives the reason after the statement, in a new sentence that ends \
+with からだ / からです: 今日は早く寝る。なぜなら明日は試験だからだ, "I'm \
+going to bed early. Because tomorrow is the exam". It sounds written \
+or like a speech; in conversation, なぜかというと, or just 〜からです."""
+notes = """
+Don't drop the ending: なぜなら with a bare sentence after it sounds \
+unfinished. The "because" in the middle of an English sentence is から \
+or ので, not なぜなら."""
+related = ["kara-reason", "doushite", "no-wa-da"]
+examples = [
+  { tatoeba = "36426_199225", ja = "{なぜなら}新聞記者だったからです。", en = "Because I was a newspaper reporter." },
+  { tatoeba = "36430_199229", ja = "{なぜなら}私は昨日長い間勉強したからです。", en = "Because I studied for a long time yesterday." },
+]
+
+[[point]]
+id = "nanishiro"
+pattern = "なにしろ"
+forms = ["何しろ"]
+jlpt = "N3"
+meaning = "after all, you see, what with (stressing a reason)"
+formation = ["なにしろ + Sentence   (often + から / ので)"]
+explanation = """
+Puts the reason that explains everything up front, often something \
+extreme: なにしろ忙しくて、寝る時間もない, "I'm just so busy, I don't \
+even have time to sleep". The sentence often ends with から, ので or \
+のだ."""
+notes = """
+Conversational and a little emphatic. とにかく is "anyway": it pushes \
+other things aside instead of giving a reason."""
+related = ["tonikaku", "kara-reason"]
+examples = [
+  { source = "yomeru", ja = "{なにしろ}初めてなので、よくわかりません。", en = "It's my first time, after all, so I don't really know." },
+  { source = "yomeru", ja = "{なにしろ}人が多くて、何も見えなかった。", en = "There were just so many people, I couldn't see anything." },
+]
+
+[[point]]
+id = "tsumari"
+pattern = "つまり"
+forms = []
+jlpt = "N3"
+meaning = "in other words, that is, in short"
+formation = [
+  "Sentence。 + つまり + Sentence",
+  "A、つまり B   (B restates A)",
+]
+explanation = """
+Says what came before in other words, or sums it up: 店は五時に閉まる。\
+つまり、あと十分だ, "the store closes at five. So that's ten minutes \
+from now". As a \
+conclusion, the sentence often ends in ということだ or のだ: つまり、\
+行けないということ？, "so basically, you can't go?"."""
+notes = """
+すなわち does the same in writing, mostly for an exact "namely"; \
+つまり is everyday and also sums up or draws a conclusion."""
+related = ["sunawachi"]
+examples = [
+  { tatoeba = "305431_98271", ja = "彼らは３日後、{つまり}６月１０日に出発します。", en = "They are leaving in three days, that is to say June 10th." },
+  { tatoeba = "18618_179759", ja = "金と私とは他人同士だ。{つまり}、貧しいのだ。", en = "Money and I are strangers; in other words, I am poor." },
+]
+
+[[point]]
+id = "sunawachi"
+pattern = "すなわち"
+forms = ["即ち"]
+jlpt = "N3"
+meaning = "namely, that is to say (formal)"
+formation = ["A、すなわち B   (B is the same as A, said exactly)"]
+explanation = """
+Says that two things are the same, the second making the first exact: \
+日本の首都、すなわち東京, "the capital of Japan, namely Tokyo". \
+Found in writing, speeches and the news, rarely in conversation."""
+notes = """
+つまり is the everyday word, and it can also sum up a point; すなわち \
+mostly links two names for one thing."""
+related = ["tsumari"]
+examples = [
+  { tatoeba = "42825_205579", ja = "それは３年後、{すなわち}１９６５年に起こった。", en = "It happened three years later, that is in 1965." },
+  { tatoeba = "301770_101923", ja = "彼は天文学、{すなわち}星の研究をしている。", en = "He studies astronomy, or the science of stars." },
+]
