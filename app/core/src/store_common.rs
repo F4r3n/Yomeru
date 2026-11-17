@@ -178,7 +178,7 @@ mod tests {
 
     #[test]
     fn deleting_a_grammar_point_deletes_its_one_card() {
-        let g = SrsCard::new_grammar("te-wa-ikenai", 0.0);
+        let g = SrsCard::new_grammar(7, 0.0);
         assert_eq!(sibling_ids(g.sequence), vec![g.id]);
         assert_eq!(
             sibling_ids(1_467_640),

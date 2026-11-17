@@ -24,8 +24,8 @@ pub enum CardDirection {
     /// 1,000,000, so the two id spaces never meet.
     Kanji,
     /// A grammar point, reviewed pattern → meaning. Such a card's `sequence`
-    /// is `grammar_core::grammar_seq` of the point's id: top bit set, above
-    /// both other ranges.
+    /// is `grammar_core::card_sequence` of the entry's `seq`: top bit set,
+    /// above both other ranges.
     Grammar,
 }
 
@@ -208,10 +208,10 @@ impl SrsCard {
         }
     }
 
-    /// A new grammar card for point `id`, into staging like words: grammar
-    /// points are added by hand and enter at the user's pace.
-    pub fn new_grammar(id: &str, now_ms: f64) -> Self {
-        Self::new(grammar_core::grammar_seq(id), CardDirection::Grammar, now_ms)
+    /// A new grammar card for the entry numbered `seq`, into staging like
+    /// words: grammar points are added by hand and enter at the user's pace.
+    pub fn new_grammar(seq: u32, now_ms: f64) -> Self {
+        Self::new(grammar_core::card_sequence(seq), CardDirection::Grammar, now_ms)
     }
 
     pub fn kind(&self) -> CardKind {
@@ -305,8 +305,8 @@ mod tests {
 
     #[test]
     fn a_grammar_card_is_keyed_by_its_point_and_is_no_word() {
-        let c = SrsCard::new_grammar("te-wa-ikenai", 5.0);
-        assert_eq!(c.sequence, grammar_core::grammar_seq("te-wa-ikenai"));
+        let c = SrsCard::new_grammar(7, 5.0);
+        assert_eq!(c.sequence, grammar_core::card_sequence(7));
         assert_eq!(c.id, format!("{}::grammar", c.sequence));
         assert_eq!(c.status, CardStatus::Staging);
         assert_eq!(c.kind(), CardKind::Grammar);

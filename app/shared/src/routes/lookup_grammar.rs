@@ -69,7 +69,7 @@ fn GrammarEntryCard(entry: GrammarEntry, on_search: EventHandler<String>) -> Ele
                     }
                 }
                 div { class: "gloss grammar-meaning", "{entry.meaning}" }
-                GrammarDeckButton { id: entry.id.clone() }
+                GrammarDeckButton { id: entry.id.clone(), seq: entry.seq }
                 if !is_open {
                     if let Some(first) = entry.formation.first() {
                         div { class: "grammar-structure", lang: "ja", "{first}" }
@@ -153,11 +153,11 @@ fn bee_search_url(pattern: &str) -> String {
 }
 
 /// The point's card in the deck: Add, then the staging priority like a
-/// word, then its state. The card is `SrsCard::new_grammar`, keyed by
-/// `grammar_seq`, so `get_cards_by_sequence` finds exactly that one.
+/// word, then its state. The card is `SrsCard::new_grammar` of the entry's
+/// `seq`, so `get_cards_by_sequence` finds exactly that one.
 #[component]
-fn GrammarDeckButton(id: String) -> Element {
-    let sequence = crate::grammar::grammar_seq(&id);
+fn GrammarDeckButton(id: String, seq: u32) -> Element {
+    let sequence = crate::grammar::card_sequence(seq);
     let mut card = use_signal(|| None::<SrsCard>);
     let mut busy = use_signal(|| false);
     use_effect(use_reactive!(|sequence| {
@@ -184,7 +184,7 @@ fn GrammarDeckButton(id: String) -> Element {
         spawn(async move {
             let current = card.peek().clone();
             let res = match current {
-                None => put_card(&SrsCard::new_grammar(&id, now_ms())).await,
+                None => put_card(&SrsCard::new_grammar(seq, now_ms())).await,
                 Some(_) => bump_priority(sequence).await,
             };
             match res {

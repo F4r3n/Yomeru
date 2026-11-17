@@ -38,10 +38,10 @@ fn is_verb_stem(stem: &str) -> bool {
 pub struct GrammarDict {
     fst: fst::Map<Vec<u8>>,
     groups: Vec<Vec<u32>>,
-    /// Sorted by id.
-    ids: Vec<(String, u32)>,
-    /// [`crate::grammar_seq`] of each id → its index in `ids`.
-    seqs: HashMap<u32, usize>,
+    /// `(id, seq, offset)`, sorted by id.
+    ids: Vec<(String, u32, u32)>,
+    /// Each entry's `seq` → its byte offset.
+    seqs: HashMap<u32, u32>,
     entries: Vec<u8>,
 }
 
@@ -51,12 +51,7 @@ impl GrammarDict {
         // Structure only: `compile` already decoded every entry of the file
         // it wrote, and the version byte refuses files of other builds.
         let parts = format::read(bytes)?;
-        let seqs = parts
-            .ids
-            .iter()
-            .enumerate()
-            .map(|(i, (id, _))| (crate::grammar_seq(id), i))
-            .collect();
+        let seqs = parts.ids.iter().map(|&(_, seq, offset)| (seq, offset)).collect();
         Ok(Self {
             fst: fst::Map::new(parts.fst.to_vec())?,
             groups: parts.groups,
@@ -84,17 +79,19 @@ impl GrammarDict {
     pub fn by_id(&self, id: &str) -> Option<GrammarEntry> {
         let i = self
             .ids
-            .binary_search_by(|(k, _)| k.as_str().cmp(id))
+            .binary_search_by(|(k, _, _)| k.as_str().cmp(id))
             .ok()?;
-        let &(_, offset) = self.ids.get(i)?;
+        let &(_, _, offset) = self.ids.get(i)?;
         format::entry_at(&self.entries, offset).ok()
     }
 
-    /// The entry a grammar card with this `sequence` reviews (see
-    /// [`crate::grammar_seq`]). `None` once the point left the dictionary.
-    pub fn by_seq(&self, sequence: u32) -> Option<GrammarEntry> {
-        let &i = self.seqs.get(&sequence)?;
-        let &(_, offset) = self.ids.get(i)?;
+    /// The entry numbered `seq`, which a grammar card reviews. `None` once
+    /// the point left the dictionary.
+    ///
+    /// Until cards key on `kind` + `item`, a card's `sequence` is `seq` with
+    /// [`crate::GRAMMAR_SEQ_BIT`] set; the bit is ignored here so both work.
+    pub fn by_seq(&self, seq: u32) -> Option<GrammarEntry> {
+        let &offset = self.seqs.get(&(seq & !crate::GRAMMAR_SEQ_BIT))?;
         format::entry_at(&self.entries, offset).ok()
     }
 

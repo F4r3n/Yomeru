@@ -4,7 +4,8 @@
 //! 1. FST: pattern or form → group index.
 //! 2. Groups (postcard `Vec<Vec<u32>>`): group index → byte offsets of its
 //!    entries in the entries blob, in dictionary order.
-//! 3. Ids (postcard `Vec<(String, u32)>`, sorted by id): id → byte offset.
+//! 3. Ids (postcard `Vec<(String, u32, u32)>`, sorted by id): id, `seq`,
+//!    byte offset.
 //! 4. Entries: each a u32 LE length, then a raw-deflated postcard
 //!    [`GrammarEntry`]. Only a handful are read per lookup, so each is
 //!    compressed on its own.
@@ -21,7 +22,7 @@ use crate::types::GrammarEntry;
 pub(crate) const MAGIC: &[u8; 4] = b"YGRM";
 /// Bump on any change to the layout or to the types. The file ships with
 /// the code, so a mismatch is a build mistake.
-pub const FORMAT_VERSION: u8 = 3;
+pub const FORMAT_VERSION: u8 = 4;
 
 #[cfg(feature = "build")]
 pub(crate) fn write(entries: &[GrammarEntry]) -> anyhow::Result<Vec<u8>> {
@@ -29,7 +30,7 @@ pub(crate) fn write(entries: &[GrammarEntry]) -> anyhow::Result<Vec<u8>> {
 
     let mut blob = Vec::new();
     let mut keys: BTreeMap<&str, Vec<u32>> = BTreeMap::new();
-    let mut ids: Vec<(String, u32)> = Vec::with_capacity(entries.len());
+    let mut ids: Vec<(String, u32, u32)> = Vec::with_capacity(entries.len());
     for entry in entries {
         let offset = u32::try_from(blob.len()).context("grammar dictionary over 4 GB")?;
         let bytes = compress(&postcard::to_allocvec(entry)?)?;
@@ -40,7 +41,7 @@ pub(crate) fn write(entries: &[GrammarEntry]) -> anyhow::Result<Vec<u8>> {
         }
         blob.extend_from_slice(&u32::try_from(bytes.len())?.to_le_bytes());
         blob.extend_from_slice(&bytes);
-        ids.push((entry.id.clone(), offset));
+        ids.push((entry.id.clone(), entry.seq, offset));
         for key in entry.keys() {
             let group = keys.entry(key).or_default();
             if !group.contains(&offset) {
@@ -76,7 +77,7 @@ pub(crate) fn write(entries: &[GrammarEntry]) -> anyhow::Result<Vec<u8>> {
 pub(crate) struct Parts<'a> {
     pub fst: &'a [u8],
     pub groups: Vec<Vec<u32>>,
-    pub ids: Vec<(String, u32)>,
+    pub ids: Vec<(String, u32, u32)>,
     pub entries: &'a [u8],
 }
 
@@ -101,10 +102,10 @@ pub(crate) fn read(bytes: &[u8]) -> anyhow::Result<Parts<'_>> {
     };
     let fst = next("fst")?;
     let groups: Vec<Vec<u32>> = postcard::from_bytes(next("groups")?).context("bad groups")?;
-    let ids: Vec<(String, u32)> = postcard::from_bytes(next("ids")?).context("bad ids")?;
+    let ids: Vec<(String, u32, u32)> = postcard::from_bytes(next("ids")?).context("bad ids")?;
     let entries = next("entries")?;
     check_offsets(
-        groups.iter().flatten().chain(ids.iter().map(|(_, o)| o)),
+        groups.iter().flatten().chain(ids.iter().map(|(_, _, o)| o)),
         entries,
     )?;
     Ok(Parts {

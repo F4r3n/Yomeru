@@ -71,7 +71,8 @@ export const MS_PER_DAY = 86_400_000;
 /** Mirrors `CardDirection` in `app/shared/src/types.rs`. A `"kanji"` card
  * reviews one kanji, and its `sequence` is the kanji's code point, not a
  * JMdict `ent_seq`. A `"grammar"` card reviews a grammar point, and its
- * `sequence` is `grammar_seq` of the point's id (top bit set). */
+ * `sequence` is the entry's `seq` with the top bit set
+ * (`grammar_core::card_sequence`). */
 export type CardDirection = "recognition" | "recall" | "kanji" | "grammar";
 
 /** Whether a card reviews a JMdict word, so its `sequence` is an `ent_seq`. */

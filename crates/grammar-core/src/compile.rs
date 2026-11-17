@@ -14,6 +14,8 @@ use crate::types::{Example, GrammarEntry, Related, parse_marked};
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct File {
+    /// The `seq` the next new entry takes.
+    next_seq: u32,
     point: Vec<Point>,
 }
 
@@ -21,6 +23,7 @@ struct File {
 #[serde(deny_unknown_fields)]
 struct Point {
     id: String,
+    seq: u32,
     pattern: String,
     #[serde(default)]
     forms: Vec<String>,
@@ -62,8 +65,8 @@ pub struct Compiled {
 }
 
 /// Parses `data/grammar.toml` and writes `grammar.bin`. Fails on anything a
-/// lookup would get wrong: duplicate ids, a bad `{…}` mark, a spelling two
-/// entries share without naming each other homographs.
+/// lookup would get wrong: duplicate ids or `seq` numbers, a bad `{…}` mark,
+/// a spelling two entries share without naming each other homographs.
 pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
     let file: File = toml::from_str(toml_text).context("parsing grammar.toml")?;
     let mut warnings = Vec::new();
@@ -81,10 +84,19 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
         if !ids.insert(&p.id) {
             bail!("{}: duplicate id", p.id);
         }
-        // Review cards key on this number, which can't change: rename the
-        // newer id instead.
-        if let Some(other) = seqs.insert(crate::grammar_seq(&p.id), &p.id) {
-            bail!("{}: same card number as {other}, pick another id", p.id);
+        // Review cards key on this number. `next_seq` only goes up, so a
+        // number below it that no entry has belonged to a removed one and
+        // stays unused.
+        if p.seq == 0 || p.seq >= file.next_seq {
+            bail!(
+                "{}: seq {} must be from 1 to next_seq - 1 ({}): a new entry takes next_seq and raises it",
+                p.id,
+                p.seq,
+                file.next_seq - 1
+            );
+        }
+        if let Some(other) = seqs.insert(p.seq, &p.id) {
+            bail!("{}: seq {} is already {other}'s", p.id, p.seq);
         }
         if !matches!(p.jlpt.as_str(), "N5" | "N4" | "N3" | "N2" | "N1") {
             bail!("{}: jlpt must be one of N5…N1, not {:?}", p.id, p.jlpt);
@@ -166,6 +178,7 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
         }
         entries.push(GrammarEntry {
             id: p.id,
+            seq: p.seq,
             pattern: p.pattern,
             forms: p.forms,
             jlpt: p.jlpt,

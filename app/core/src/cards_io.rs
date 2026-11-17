@@ -424,7 +424,9 @@ mod tests {
         assert!(cards[5].is_kanji());
         assert_eq!(cards[5].sequence, u32::from('猫'));
         assert!(cards[6].is_grammar());
-        assert_eq!(cards[6].sequence, crate::grammar::grammar_seq("te-mo-ii"));
+        // The number grammar cards had before entries were numbered: a hash
+        // of the id "te-mo-ii", top bit set.
+        assert_eq!(cards[6].sequence, 3_444_285_014);
     }
 
     /// Writing the cards back gives the same file: the fixture is what

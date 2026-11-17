@@ -26,7 +26,7 @@ import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-REQUIRED = ["id", "pattern", "forms", "jlpt", "meaning", "formation",
+REQUIRED = ["id", "seq", "pattern", "forms", "jlpt", "meaning", "formation",
             "explanation", "related", "examples"]
 LEVELS = {"N5", "N4", "N3", "N2", "N1"}
 # The limits SKILL.md sets: chars of meaning, words of explanation and
@@ -232,10 +232,28 @@ def overlap(points, zip_path):
     return sorted(set(hits))
 
 
+def check_seqs(points, next_seq):
+    """Each entry's seq unique, from 1 to below next_seq (compile's rule)."""
+    if not isinstance(next_seq, int):
+        return ["next_seq missing at the top of the file"]
+    errors, owner = [], {}
+    for p in points:
+        seq, name = p.get("seq"), p.get("id", "?")
+        if not isinstance(seq, int) or not 1 <= seq < next_seq:
+            errors.append(f"{name}: seq {seq} must be from 1 to {next_seq - 1}; "
+                          "a new entry takes next_seq and raises it")
+        elif seq in owner:
+            errors.append(f"{name}: seq {seq} is already {owner[seq]}'s")
+        else:
+            owner[seq] = name
+    return errors
+
+
 def main():
     data = tomllib.loads((ROOT / "data" / "grammar.toml").read_text(encoding="utf-8"))
     points = data.get("point", [])
     errors, missing = validate(points)
+    errors += check_seqs(points, data.get("next_seq"))
     for e in errors:
         print("ERROR", e)
     for w in lengths(points):

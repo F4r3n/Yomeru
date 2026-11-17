@@ -446,7 +446,7 @@ mod tests {
 
     #[test]
     fn trouble_lists_leave_grammar_cards_out() {
-        let grammar = SrsCard::new_grammar("te-wa-ikenai", 0.0);
+        let grammar = SrsCard::new_grammar(7, 0.0);
         let mut g = active(grammar.sequence, CardDirection::Grammar, 5, 5.0);
         g.id = grammar.id;
         let cards = [active(1, CardDirection::Recall, 5, 5.0), g];

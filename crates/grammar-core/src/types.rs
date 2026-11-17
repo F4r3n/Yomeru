@@ -6,8 +6,11 @@ use serde::{Deserialize, Serialize};
 /// One grammar point.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GrammarEntry {
-    /// Stable ASCII slug ("te-mo-ii"); cards point at it.
+    /// ASCII slug ("te-mo-ii"): the readable key, for links and lookups.
     pub id: String,
+    /// The entry's number, issued once from `grammar.toml`'s `next_seq` and
+    /// never reused: review cards key on it.
+    pub seq: u32,
     /// The headword as learners look it up, e.g. "てもいい".
     pub pattern: String,
     /// Other spellings and variants a lookup also finds.

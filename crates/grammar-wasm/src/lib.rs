@@ -37,7 +37,7 @@ struct Match<'a> {
 #[derive(Serialize)]
 struct PopupEntry {
     id: String,
-    /// The `sequence` of the point's review card (`grammar_seq(id)`).
+    /// The `sequence` of the point's review card (`card_sequence(seq)`).
     seq: u32,
     pattern: String,
     jlpt: String,
@@ -102,7 +102,7 @@ impl GrammarDictionary {
         let entries: Vec<PopupEntry> = entries
             .into_iter()
             .map(|e| PopupEntry {
-                seq: grammar_core::grammar_seq(&e.id),
+                seq: grammar_core::card_sequence(e.seq),
                 id: e.id,
                 pattern: e.pattern,
                 jlpt: e.jlpt,
@@ -125,9 +125,3 @@ impl GrammarDictionary {
     }
 }
 
-/// The `sequence` of the review card for grammar point `id`
-/// (`grammar_core::grammar_seq`).
-#[wasm_bindgen]
-pub fn grammar_seq(id: &str) -> u32 {
-    grammar_core::grammar_seq(id)
-}

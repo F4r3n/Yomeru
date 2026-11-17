@@ -8,7 +8,11 @@
 # is built from; the id is `<ja>_<en>`.
 #
 # Fields
-#   id           stable ASCII slug; cards point at it, never change it
+#   id           ASCII slug: the readable key, for links and lookups
+#   seq          the entry's number, which review cards key on: a new entry
+#                takes the file's `next_seq` and raises it by one. Never
+#                change or reuse one, even after removing its entry; that
+#                is what keeps old cards off a new point
 #   pattern      the headword as learners look it up
 #   forms        other spellings and variants a lookup should also find
 #   jlpt         N5…N1. Levels are unofficial since 2010: we follow
@@ -31,8 +35,11 @@
 #                inside 行って). One-char patterns (は, に, て) never show on
 #                hover anyway: the popup skips matches under two chars
 
+next_seq = 938
+
 [[point]]
 id = "te-mo-ii"
+seq = 1
 pattern = "てもいい"
 forms = ["でもいい", "ていい", "てもいいです", "てもいいですか", "てもよろしい", "でもよろしい", "てもよろしいですか", "でもよろしいですか", "てもよろしいでしょうか", "でもよろしいでしょうか"]
 jlpt = "N5"
@@ -64,6 +71,7 @@ examples = [
 
 [[point]]
 id = "ta-koto-ga-aru"
+seq = 2
 pattern = "たことがある"
 forms = ["だことがある", "たことがない", "たことがあります"]
 jlpt = "N5"
@@ -87,6 +95,7 @@ examples = [
 
 [[point]]
 id = "te-kudasai"
+seq = 3
 pattern = "てください"
 forms = ["でください", "て下さい", "で下さい"]
 jlpt = "N5"
@@ -111,6 +120,7 @@ examples = [
 
 [[point]]
 id = "naide-kudasai"
+seq = 4
 pattern = "ないでください"
 forms = ["ないで下さい"]
 jlpt = "N5"
@@ -134,6 +144,7 @@ examples = [
 
 [[point]]
 id = "te-wa-ikenai"
+seq = 5
 pattern = "てはいけない"
 forms = ["ではいけない", "てはいけません", "ではいけません", "ちゃいけない", "じゃいけない", "てはだめ", "ちゃだめ", "じゃだめ"]
 jlpt = "N5"
@@ -159,6 +170,7 @@ examples = [
 
 [[point]]
 id = "nakute-wa-ikenai"
+seq = 6
 pattern = "なくてはいけない"
 forms = ["なくてはならない", "なくてはいけません", "なくてはなりません", "なくちゃいけない", "なくちゃ"]
 jlpt = "N5"
@@ -185,6 +197,7 @@ examples = [
 
 [[point]]
 id = "ta-hou-ga-ii"
+seq = 7
 pattern = "たほうがいい"
 forms = ["だほうがいい", "ないほうがいい", "た方がいい", "だ方がいい", "ない方がいい", "ほうがいい", "方がいい", "ほうがよかった", "方がよかった"]
 jlpt = "N5"
@@ -211,6 +224,7 @@ examples = [
 
 [[point]]
 id = "te-kara"
+seq = 8
 pattern = "てから"
 forms = ["でから"]
 jlpt = "N5"
@@ -235,6 +249,7 @@ examples = [
 
 [[point]]
 id = "mae-ni"
+seq = 9
 pattern = "前に"
 forms = ["まえに", "前"]
 jlpt = "N5"
@@ -259,6 +274,7 @@ examples = [
 
 [[point]]
 id = "tai"
+seq = 10
 pattern = "たい"
 forms = ["たいです", "したい"]
 jlpt = "N5"
@@ -284,6 +300,7 @@ examples = [
 
 [[point]]
 id = "mashou"
+seq = 11
 pattern = "ましょう"
 forms = ["ましょうか"]
 jlpt = "N5"
@@ -310,6 +327,7 @@ examples = [
 
 [[point]]
 id = "masen-ka"
+seq = 12
 pattern = "ませんか"
 forms = []
 jlpt = "N5"
@@ -335,6 +353,7 @@ examples = [
 
 [[point]]
 id = "ni-iku"
+seq = 13
 pattern = "に行く"
 forms = ["にいく", "に来る", "にくる", "に帰る", "にかえる", "に行きます"]
 jlpt = "N5"
@@ -359,6 +378,7 @@ examples = [
 
 [[point]]
 id = "tari-tari"
+seq = 14
 pattern = "たり〜たりする"
 forms = ["たりする", "たり", "だり", "たり〜たり"]
 jlpt = "N5"
@@ -387,6 +407,7 @@ examples = [
 
 [[point]]
 id = "te-iru"
+seq = 15
 pattern = "ている"
 forms = ["でいる", "てる"]
 jlpt = "N5"
@@ -412,6 +433,7 @@ examples = [
 
 [[point]]
 id = "node"
+seq = 16
 pattern = "ので"
 forms = ["なので"]
 jlpt = "N5"
@@ -437,6 +459,7 @@ examples = [
 
 [[point]]
 id = "kedo"
+seq = 17
 pattern = "けど"
 forms = ["けれど", "けれども", "けども"]
 jlpt = "N5"
@@ -461,6 +484,7 @@ examples = [
 
 [[point]]
 id = "n-desu"
+seq = 18
 pattern = "んです"
 forms = ["のです", "んだ", "のだ", "なの"]
 jlpt = "N5"
@@ -486,6 +510,7 @@ examples = [
 
 [[point]]
 id = "no-ga-suki"
+seq = 19
 pattern = "のが好き"
 forms = ["のがすき", "のが嫌い", "のがきらい", "のが大好き"]
 jlpt = "N5"
@@ -511,6 +536,7 @@ examples = [
 
 [[point]]
 id = "yori-hou-ga"
+seq = 20
 pattern = "より〜のほうが"
 forms = ["のほうが", "の方が", "より〜の方が", "ほうが"]
 jlpt = "N5"
@@ -538,6 +564,7 @@ examples = [
 
 [[point]]
 id = "ga-ichiban"
+seq = 21
 pattern = "が一番"
 forms = ["がいちばん", "で一番", "の中で一番", "のなかでいちばん"]
 jlpt = "N5"
@@ -565,6 +592,7 @@ examples = [
 
 [[point]]
 id = "kara-made"
+seq = 22
 pattern = "から〜まで"
 forms = ["まで"]
 jlpt = "N5"
@@ -589,6 +617,7 @@ examples = [
 
 [[point]]
 id = "zenzen"
+seq = 23
 pattern = "全然"
 forms = ["ぜんぜん"]
 jlpt = "N4"
@@ -612,6 +641,7 @@ examples = [
 
 [[point]]
 id = "mada-te-inai"
+seq = 24
 pattern = "まだ〜ていない"
 forms = ["まだ", "まだ〜ていません", "ていません"]
 jlpt = "N5"
@@ -636,6 +666,7 @@ examples = [
 
 [[point]]
 id = "mou"
+seq = 25
 pattern = "もう"
 forms = []
 jlpt = "N5"
@@ -659,6 +690,7 @@ examples = [
 
 [[point]]
 id = "naru"
+seq = 26
 pattern = "なる"
 forms = ["になる", "くなる"]
 jlpt = "N5"
@@ -685,6 +717,7 @@ examples = [
 
 [[point]]
 id = "kurai"
+seq = 27
 pattern = "くらい"
 forms = ["ぐらい", "どのくらい", "どれくらい", "どのぐらい", "どれぐらい"]
 jlpt = "N5"
@@ -709,6 +742,7 @@ examples = [
 
 [[point]]
 id = "to-dochira"
+seq = 28
 pattern = "とどちらが"
 forms = ["どちらが", "とどっちが"]
 jlpt = "N4"
@@ -734,6 +768,7 @@ examples = [
 
 [[point]]
 id = "wa-ga"
+seq = 29
 pattern = "は〜が"
 forms = []
 jlpt = "N5"
@@ -758,6 +793,7 @@ examples = [
 
 [[point]]
 id = "wo-kudasai"
+seq = 30
 pattern = "をください"
 forms = ["を下さい", "ください", "下さい"]
 jlpt = "N5"
@@ -781,6 +817,7 @@ examples = [
 
 [[point]]
 id = "ka-mo-question-words"
+seq = 31
 pattern = "誰か"
 forms = ["だれか", "何か", "なにか", "どこか", "いつか", "誰も", "だれも", "何も", "なにも", "どこも", "どこにも"]
 jlpt = "N5"
@@ -807,6 +844,7 @@ examples = [
 
 [[point]]
 id = "desu"
+seq = 32
 pattern = "です"
 forms = ["だ", "でした", "だった", "ではありません", "じゃありません", "ではない", "じゃない", "ではなかった", "じゃなかった", "ですか", "でしたか"]
 jlpt = "N5"
@@ -836,6 +874,7 @@ examples = [
 
 [[point]]
 id = "masu"
+seq = 33
 pattern = "ます"
 forms = ["ません", "ました", "ませんでした"]
 jlpt = "N5"
@@ -861,6 +900,7 @@ examples = [
 
 [[point]]
 id = "te-form-sequence"
+seq = 34
 pattern = "て"
 forms = []
 jlpt = "N5"
@@ -886,6 +926,7 @@ examples = [
 
 [[point]]
 id = "kute"
+seq = 35
 pattern = "くて"
 forms = []
 jlpt = "N5"
@@ -913,6 +954,7 @@ examples = [
 
 [[point]]
 id = "ne"
+seq = 36
 pattern = "ね"
 forms = ["ねえ"]
 jlpt = "N5"
@@ -936,6 +978,7 @@ examples = [
 
 [[point]]
 id = "yo"
+seq = 37
 pattern = "よ"
 forms = []
 jlpt = "N5"
@@ -959,6 +1002,7 @@ examples = [
 
 [[point]]
 id = "wo-particle"
+seq = 38
 pattern = "を"
 forms = []
 jlpt = "N5"
@@ -983,6 +1027,7 @@ examples = [
 
 [[point]]
 id = "e-particle"
+seq = 39
 pattern = "へ"
 forms = ["へ行く", "へいく", "へ来る", "へ帰る"]
 jlpt = "N5"
@@ -1006,6 +1051,7 @@ examples = [
 
 [[point]]
 id = "ga-aru"
+seq = 40
 pattern = "がある"
 forms = ["がいる", "があります", "がいます"]
 jlpt = "N5"
@@ -1034,6 +1080,7 @@ examples = [
 
 [[point]]
 id = "en-suru"
+seq = 41
 pattern = "円する"
 forms = ["円もする"]
 jlpt = "N5"
@@ -1058,6 +1105,7 @@ examples = [
 
 [[point]]
 id = "tachi"
+seq = 42
 pattern = "たち"
 forms = ["達", "ら"]
 jlpt = "N5"
@@ -1081,6 +1129,7 @@ examples = [
 
 [[point]]
 id = "ageru"
+seq = 43
 pattern = "あげる"
 forms = ["上げる"]
 jlpt = "N5"
@@ -1104,6 +1153,7 @@ examples = [
 
 [[point]]
 id = "kureru"
+seq = 44
 pattern = "くれる"
 forms = ["呉れる"]
 jlpt = "N5"
@@ -1127,6 +1177,7 @@ examples = [
 
 [[point]]
 id = "ko-so-a-do"
+seq = 45
 pattern = "こそあど"
 forms = ["これ", "それ", "あれ", "どれ", "この", "その", "あの", "どの", "ここ", "そこ", "あそこ", "どこ", "こちら", "そちら", "あちら", "どちら", "こんな", "そんな", "あんな", "どんな", "こう", "そう", "ああ", "こういう", "そういう", "ああいう", "どういう"]
 jlpt = "N5"
@@ -1156,6 +1207,7 @@ examples = [
 
 [[point]]
 id = "dou-desu-ka"
+seq = 46
 pattern = "はどうですか"
 forms = ["どうですか", "はいかがですか", "いかがですか", "どう", "いかが", "てはどうですか"]
 jlpt = "N5"
@@ -1179,6 +1231,7 @@ examples = [
 
 [[point]]
 id = "doushite"
+seq = 47
 pattern = "どうして"
 forms = ["なぜ", "なんで"]
 jlpt = "N5"
@@ -1202,6 +1255,7 @@ examples = [
 
 [[point]]
 id = "dou-yatte"
+seq = 48
 pattern = "どうやって"
 forms = []
 jlpt = "N5"
@@ -1224,6 +1278,7 @@ examples = [
 
 [[point]]
 id = "sorekara"
+seq = 49
 pattern = "それから"
 forms = []
 jlpt = "N5"
@@ -1247,6 +1302,7 @@ examples = [
 
 [[point]]
 id = "shikashi"
+seq = 50
 pattern = "しかし"
 forms = []
 jlpt = "N5"
@@ -1269,6 +1325,7 @@ examples = [
 
 [[point]]
 id = "no-ga-jouzu"
+seq = 51
 pattern = "のが上手"
 forms = ["のがじょうず", "のが下手", "のがへた", "のが得意", "のが苦手"]
 jlpt = "N5"
@@ -1291,6 +1348,7 @@ examples = [
 
 [[point]]
 id = "no-nominalizer"
+seq = 52
 pattern = "のは"
 forms = ["のが", "のを"]
 jlpt = "N5"
@@ -1318,6 +1376,7 @@ examples = [
 
 [[point]]
 id = "i-adjective-forms"
+seq = 53
 pattern = "くない"
 forms = ["くなかった", "くありません", "くありませんでした"]
 jlpt = "N5"
@@ -1347,6 +1406,7 @@ examples = [
 
 [[point]]
 id = "wa-contrast"
+seq = 54
 pattern = "は〜は"
 forms = []
 jlpt = "N5"
@@ -1372,6 +1432,7 @@ examples = [
 
 [[point]]
 id = "wa-particle"
+seq = 55
 pattern = "は"
 forms = []
 jlpt = "N5"
@@ -1398,6 +1459,7 @@ examples = [
 
 [[point]]
 id = "ga-particle"
+seq = 56
 pattern = "が"
 forms = []
 jlpt = "N5"
@@ -1425,6 +1487,7 @@ examples = [
 
 [[point]]
 id = "mo-particle"
+seq = 57
 pattern = "も"
 forms = ["も〜も"]
 jlpt = "N5"
@@ -1453,6 +1516,7 @@ examples = [
 
 [[point]]
 id = "ka-particle"
+seq = 58
 pattern = "か"
 forms = []
 jlpt = "N5"
@@ -1481,6 +1545,7 @@ examples = [
 
 [[point]]
 id = "de-particle"
+seq = 59
 pattern = "で"
 forms = []
 jlpt = "N5"
@@ -1507,6 +1572,7 @@ examples = [
 
 [[point]]
 id = "ni-particle"
+seq = 60
 pattern = "に"
 forms = []
 jlpt = "N5"
@@ -1537,6 +1603,7 @@ examples = [
 
 [[point]]
 id = "to-particle"
+seq = 61
 pattern = "と"
 forms = ["と一緒に", "といっしょに"]
 jlpt = "N5"
@@ -1564,6 +1631,7 @@ examples = [
 
 [[point]]
 id = "ya-particle"
+seq = 62
 pattern = "や"
 forms = ["や〜など"]
 jlpt = "N5"
@@ -1585,6 +1653,7 @@ examples = [
 
 [[point]]
 id = "no-particle"
+seq = 63
 pattern = "の"
 forms = []
 jlpt = "N5"
@@ -1608,6 +1677,7 @@ examples = [
 
 [[point]]
 id = "kara-reason"
+seq = 64
 pattern = "から"
 forms = ["だから", "ですから"]
 jlpt = "N5"
@@ -1636,6 +1706,7 @@ examples = [
 
 [[point]]
 id = "dake"
+seq = 65
 pattern = "だけ"
 forms = []
 jlpt = "N5"
@@ -1663,6 +1734,7 @@ examples = [
 
 [[point]]
 id = "morau"
+seq = 66
 pattern = "もらう"
 forms = ["貰う"]
 jlpt = "N5"
@@ -1687,6 +1759,7 @@ examples = [
 
 [[point]]
 id = "tsumori"
+seq = 67
 pattern = "つもり"
 forms = ["つもりだ", "つもりです", "つもりはない"]
 jlpt = "N5"
@@ -1715,6 +1788,7 @@ examples = [
 
 [[point]]
 id = "deshou"
+seq = 68
 pattern = "でしょう"
 forms = ["だろう", "でしょうか", "だろうか", "でしょ"]
 jlpt = "N5"
@@ -1743,6 +1817,7 @@ examples = [
 
 [[point]]
 id = "tte"
+seq = 69
 pattern = "って"
 forms = []
 jlpt = "N5"
@@ -1771,6 +1846,7 @@ examples = [
 
 [[point]]
 id = "na-prohibition"
+seq = 70
 pattern = "な"
 forms = []
 jlpt = "N5"
@@ -1794,6 +1870,7 @@ examples = [
 
 [[point]]
 id = "nagara"
+seq = 71
 pattern = "ながら"
 forms = []
 jlpt = "N4"
@@ -1818,6 +1895,7 @@ examples = [
 
 [[point]]
 id = "you-ni-suru"
+seq = 72
 pattern = "ようにする"
 forms = ["ようにしている", "ないようにする", "ようにしてください"]
 jlpt = "N4"
@@ -1845,6 +1923,7 @@ examples = [
 
 [[point]]
 id = "you-ni-naru"
+seq = 73
 pattern = "ようになる"
 forms = ["ようになった", "ようになりました"]
 jlpt = "N4"
@@ -1872,6 +1951,7 @@ examples = [
 
 [[point]]
 id = "te-yokatta"
+seq = 74
 pattern = "てよかった"
 forms = ["でよかった", "て良かった", "なくてよかった", "てよかったです"]
 jlpt = "N4"
@@ -1898,6 +1978,7 @@ examples = [
 
 [[point]]
 id = "sou-da-appearance"
+seq = 75
 pattern = "そうだ"
 forms = ["そうです", "そうな", "そうに", "そうにない", "なさそう", "よさそう", "そうにしている"]
 jlpt = "N4"
@@ -1931,6 +2012,7 @@ examples = [
 
 [[point]]
 id = "ta-ato-de"
+seq = 76
 pattern = "たあとで"
 forms = ["だあとで", "た後で", "だ後で", "のあとで", "の後で", "たあとに", "た後に", "あとで", "後で", "あとに", "後に"]
 jlpt = "N4"
@@ -1955,6 +2037,7 @@ examples = [
 
 [[point]]
 id = "nakute-mo-ii"
+seq = 77
 pattern = "なくてもいい"
 forms = ["なくてもいいです", "なくてもかまわない", "なくても構わない", "なくていい"]
 jlpt = "N4"
@@ -1981,6 +2064,7 @@ examples = [
 
 [[point]]
 id = "naide"
+seq = 78
 pattern = "ないで"
 forms = []
 jlpt = "N4"
@@ -2005,6 +2089,7 @@ examples = [
 
 [[point]]
 id = "koto-ga-dekiru"
+seq = 79
 pattern = "ことができる"
 forms = ["事ができる"]
 jlpt = "N4"
@@ -2029,6 +2114,7 @@ examples = [
 
 [[point]]
 id = "shika-nai"
+seq = 80
 pattern = "しか〜ない"
 forms = ["しか", "しかない", "しかありません"]
 jlpt = "N4"
@@ -2053,6 +2139,7 @@ examples = [
 
 [[point]]
 id = "ga-hoshii"
+seq = 81
 pattern = "がほしい"
 forms = ["が欲しい", "ほしい", "欲しい"]
 jlpt = "N4"
@@ -2076,6 +2163,7 @@ examples = [
 
 [[point]]
 id = "nasai"
+seq = 82
 pattern = "なさい"
 forms = []
 jlpt = "N4"
@@ -2101,6 +2189,7 @@ examples = [
 
 [[point]]
 id = "toki"
+seq = 83
 pattern = "とき"
 forms = ["時"]
 jlpt = "N4"
@@ -2129,6 +2218,7 @@ examples = [
 
 [[point]]
 id = "amari-nai"
+seq = 84
 pattern = "あまり〜ない"
 forms = ["あまり", "あんまり"]
 jlpt = "N4"
@@ -2153,6 +2243,7 @@ examples = [
 
 [[point]]
 id = "sugiru"
+seq = 85
 pattern = "すぎる"
 forms = ["過ぎる", "すぎ", "過ぎ"]
 jlpt = "N5"
@@ -2180,6 +2271,7 @@ examples = [
 
 [[point]]
 id = "kata"
+seq = 86
 pattern = "方"
 forms = ["かた"]
 jlpt = "N4"
@@ -2202,6 +2294,7 @@ examples = [
 
 [[point]]
 id = "te-aru"
+seq = 87
 pattern = "てある"
 forms = ["てあります"]
 jlpt = "N4"
@@ -2226,6 +2319,7 @@ examples = [
 
 [[point]]
 id = "kashira"
+seq = 88
 pattern = "かしら"
 forms = []
 jlpt = "N4"
@@ -2248,6 +2342,7 @@ examples = [
 
 [[point]]
 id = "demo"
+seq = 89
 pattern = "でも"
 forms = []
 jlpt = "N4"
@@ -2276,6 +2371,7 @@ examples = [
 
 [[point]]
 id = "hokani"
+seq = 90
 pattern = "ほかに"
 forms = ["他に", "ほかには", "のほかに"]
 jlpt = "N4"
@@ -2299,6 +2395,7 @@ examples = [
 
 [[point]]
 id = "hotondo"
+seq = 91
 pattern = "ほとんど"
 forms = ["殆ど"]
 jlpt = "N4"
@@ -2325,6 +2422,7 @@ examples = [
 
 [[point]]
 id = "nan-mo"
+seq = 92
 pattern = "何〜も"
 forms = ["何回も", "何度も", "何時間も", "何人も", "何年も", "何日も"]
 jlpt = "N4"
@@ -2347,6 +2445,7 @@ examples = [
 
 [[point]]
 id = "sorede"
+seq = 93
 pattern = "それで"
 forms = []
 jlpt = "N4"
@@ -2370,6 +2469,7 @@ examples = [
 
 [[point]]
 id = "soreni"
+seq = 94
 pattern = "それに"
 forms = []
 jlpt = "N4"
@@ -2392,6 +2492,7 @@ examples = [
 
 [[point]]
 id = "baai"
+seq = 95
 pattern = "場合"
 forms = ["場合は", "ばあい", "ばあいは"]
 jlpt = "N4"
@@ -2419,6 +2520,7 @@ examples = [
 
 [[point]]
 id = "te-ageru"
+seq = 96
 pattern = "てあげる"
 forms = ["であげる", "てさしあげる", "でさしあげる"]
 jlpt = "N4"
@@ -2445,6 +2547,7 @@ examples = [
 
 [[point]]
 id = "te-kureru"
+seq = 97
 pattern = "てくれる"
 forms = ["でくれる", "てくれませんか", "でくれませんか", "てくれない", "でくれない", "てくれてありがとう", "てくれますか", "でくれますか"]
 jlpt = "N4"
@@ -2472,6 +2575,7 @@ examples = [
 
 [[point]]
 id = "te-morau"
+seq = 98
 pattern = "てもらう"
 forms = ["でもらう", "てもらえますか", "でもらえますか", "てもらえませんか", "でもらえませんか", "てもらえない", "でもらえない"]
 jlpt = "N4"
@@ -2497,6 +2601,7 @@ examples = [
 
 [[point]]
 id = "te-itadakemasen-ka"
+seq = 99
 pattern = "ていただけませんか"
 forms = ["でいただけませんか", "ていただけますか", "でいただけますか", "ていただけないでしょうか", "ていただく", "でいただく"]
 jlpt = "N4"
@@ -2521,6 +2626,7 @@ examples = [
 
 [[point]]
 id = "te-miru"
+seq = 100
 pattern = "てみる"
 forms = ["でみる", "てみたら", "てみると"]
 jlpt = "N4"
@@ -2546,6 +2652,7 @@ examples = [
 
 [[point]]
 id = "te-oku"
+seq = 101
 pattern = "ておく"
 forms = ["でおく", "て置く", "で置く"]
 jlpt = "N4"
@@ -2574,6 +2681,7 @@ examples = [
 
 [[point]]
 id = "te-iku"
+seq = 102
 pattern = "ていく"
 forms = ["でいく", "て行く", "で行く"]
 jlpt = "N4"
@@ -2598,6 +2706,7 @@ examples = [
 
 [[point]]
 id = "te-kuru"
+seq = 103
 pattern = "てくる"
 forms = ["でくる", "て来る", "で来る"]
 jlpt = "N4"
@@ -2622,6 +2731,7 @@ examples = [
 
 [[point]]
 id = "te-shimau"
+seq = 104
 pattern = "てしまう"
 forms = ["でしまう", "ちゃう", "じゃう", "て仕舞う"]
 jlpt = "N4"
@@ -2649,6 +2759,7 @@ examples = [
 
 [[point]]
 id = "hajimeru"
+seq = 105
 pattern = "始める"
 forms = ["はじめる"]
 jlpt = "N4"
@@ -2671,6 +2782,7 @@ examples = [
 
 [[point]]
 id = "owaru"
+seq = 106
 pattern = "終わる"
 forms = ["終える", "おわる", "おえる"]
 jlpt = "N4"
@@ -2694,6 +2806,7 @@ examples = [
 
 [[point]]
 id = "tsuzukeru"
+seq = 107
 pattern = "続ける"
 forms = ["つづける"]
 jlpt = "N4"
@@ -2716,6 +2829,7 @@ examples = [
 
 [[point]]
 id = "dasu"
+seq = 108
 pattern = "出す"
 forms = []
 jlpt = "N4"
@@ -2740,6 +2854,7 @@ examples = [
 
 [[point]]
 id = "yasui"
+seq = 109
 pattern = "やすい"
 forms = ["易い"]
 jlpt = "N4"
@@ -2764,6 +2879,7 @@ examples = [
 
 [[point]]
 id = "nikui"
+seq = 110
 pattern = "にくい"
 forms = []
 jlpt = "N4"
@@ -2787,6 +2903,7 @@ examples = [
 
 [[point]]
 id = "ka-dou-ka"
+seq = 111
 pattern = "かどうか"
 forms = ["か〜ないか"]
 jlpt = "N4"
@@ -2812,6 +2929,7 @@ examples = [
 
 [[point]]
 id = "kamoshirenai"
+seq = 112
 pattern = "かもしれない"
 forms = ["かもしれません", "かも知れない", "かも知れません", "かも"]
 jlpt = "N4"
@@ -2836,6 +2954,7 @@ examples = [
 
 [[point]]
 id = "garu"
+seq = 113
 pattern = "がる"
 forms = ["がっている"]
 jlpt = "N4"
@@ -2866,6 +2985,7 @@ examples = [
 
 [[point]]
 id = "tagaru"
+seq = 114
 pattern = "たがる"
 forms = ["たがっている"]
 jlpt = "N4"
@@ -2889,6 +3009,7 @@ examples = [
 
 [[point]]
 id = "ta-bakari"
+seq = 115
 pattern = "たばかり"
 forms = ["だばかり"]
 jlpt = "N4"
@@ -2913,6 +3034,7 @@ examples = [
 
 [[point]]
 id = "hazu"
+seq = 116
 pattern = "はずだ"
 forms = ["はずです", "はずだった", "はずでした", "はずの", "はずなのに", "たはずだ", "たはずなのに", "はずでは", "はずじゃ", "筈だ"]
 jlpt = "N4"
@@ -2941,6 +3063,7 @@ examples = [
 
 [[point]]
 id = "hazu-ga-nai"
+seq = 117
 pattern = "はずがない"
 forms = ["はずはない", "はずない", "はずがありません", "はずはありません"]
 jlpt = "N4"
@@ -2967,6 +3090,7 @@ examples = [
 
 [[point]]
 id = "tara"
+seq = 118
 pattern = "たら"
 forms = ["だら", "かったら", "だったら"]
 jlpt = "N4"
@@ -2998,6 +3122,7 @@ examples = [
 
 [[point]]
 id = "ba"
+seq = 119
 pattern = "ば"
 forms = ["れば", "えば", "ければ", "なければ"]
 jlpt = "N4"
@@ -3030,6 +3155,7 @@ examples = [
 
 [[point]]
 id = "to-conditional"
+seq = 120
 pattern = "と"
 forms = []
 jlpt = "N4"
@@ -3060,6 +3186,7 @@ examples = [
 
 [[point]]
 id = "nara"
+seq = 121
 pattern = "なら"
 forms = ["ならば", "んなら", "のなら"]
 jlpt = "N4"
@@ -3089,6 +3216,7 @@ examples = [
 
 [[point]]
 id = "potential-form"
+seq = 122
 pattern = "られる"
 forms = ["れる", "える"]
 jlpt = "N4"
@@ -3120,6 +3248,7 @@ examples = [
 
 [[point]]
 id = "volitional"
+seq = 123
 pattern = "よう"
 forms = ["おう"]
 jlpt = "N4"
@@ -3149,6 +3278,7 @@ examples = [
 
 [[point]]
 id = "you-to-omou"
+seq = 124
 pattern = "ようと思う"
 forms = ["おうと思う", "ようと思っている", "おうと思っている", "ようとおもう"]
 jlpt = "N4"
@@ -3173,6 +3303,7 @@ examples = [
 
 [[point]]
 id = "command-form"
+seq = 125
 pattern = "命令形"
 forms = ["しろ", "来い", "せよ"]
 jlpt = "N4"
@@ -3203,6 +3334,7 @@ examples = [
 
 [[point]]
 id = "passive"
+seq = 126
 pattern = "られる"
 forms = ["れる"]
 jlpt = "N4"
@@ -3235,6 +3367,7 @@ examples = [
 
 [[point]]
 id = "causative"
+seq = 127
 pattern = "させる"
 forms = ["せる", "させます"]
 jlpt = "N4"
@@ -3265,6 +3398,7 @@ examples = [
 
 [[point]]
 id = "causative-passive"
+seq = 128
 pattern = "させられる"
 forms = ["せられる"]
 jlpt = "N4"
@@ -3292,6 +3426,7 @@ examples = [
 
 [[point]]
 id = "sasete-kudasai"
+seq = 129
 pattern = "させてください"
 forms = ["せてください", "させてもらえませんか", "させていただけませんか", "させてくれ"]
 jlpt = "N4"
@@ -3315,6 +3450,7 @@ examples = [
 
 [[point]]
 id = "ba-yokatta"
+seq = 130
 pattern = "ばよかった"
 forms = ["たらよかった", "ばよかったのに", "たらよかったのに", "なければよかった", "なければよかったのに"]
 jlpt = "N4"
@@ -3343,6 +3479,7 @@ examples = [
 
 [[point]]
 id = "tara-dou"
+seq = 131
 pattern = "たらどう"
 forms = ["だらどう", "たらどうですか", "たらいかがですか", "たら？"]
 jlpt = "N4"
@@ -3366,6 +3503,7 @@ examples = [
 
 [[point]]
 id = "nai-to"
+seq = 132
 pattern = "ないと"
 forms = ["ないといけない", "ないとだめ", "ないといけません"]
 jlpt = "N4"
@@ -3390,6 +3528,7 @@ examples = [
 
 [[point]]
 id = "nakereba-naranai"
+seq = 133
 pattern = "なければならない"
 forms = ["なければいけない", "なければなりません", "なければいけません", "なきゃ", "なければだめ"]
 jlpt = "N4"
@@ -3418,6 +3557,7 @@ examples = [
 
 [[point]]
 id = "temo"
+seq = 134
 pattern = "ても"
 forms = ["くても"]
 jlpt = "N4"
@@ -3448,6 +3588,7 @@ examples = [
 
 [[point]]
 id = "nakute"
+seq = 135
 pattern = "なくて"
 forms = ["くなくて"]
 jlpt = "N4"
@@ -3474,6 +3615,7 @@ examples = [
 
 [[point]]
 id = "koto-ni-suru"
+seq = 136
 pattern = "ことにする"
 forms = ["ことにした", "ことにしている", "ないことにする"]
 jlpt = "N3"
@@ -3500,6 +3642,7 @@ examples = [
 
 [[point]]
 id = "wake-de-wa-nai"
+seq = 137
 pattern = "わけではない"
 forms = ["わけじゃない", "訳ではない", "わけではありません", "というわけではない"]
 jlpt = "N3"
@@ -3529,6 +3672,7 @@ examples = [
 
 [[point]]
 id = "ni-chigai-nai"
+seq = 138
 pattern = "に違いない"
 forms = ["にちがいない", "に違いありません"]
 jlpt = "N3"
@@ -3554,6 +3698,7 @@ examples = [
 
 [[point]]
 id = "zutsu"
+seq = 139
 pattern = "ずつ"
 forms = []
 jlpt = "N3"
@@ -3576,6 +3721,7 @@ examples = [
 
 [[point]]
 id = "tokorode"
+seq = 140
 pattern = "ところで"
 forms = []
 jlpt = "N3"
@@ -3597,6 +3743,7 @@ examples = [
 
 [[point]]
 id = "chuu-juu"
+seq = 141
 pattern = "中"
 forms = []
 jlpt = "N3"
@@ -3624,6 +3771,7 @@ examples = [
 
 [[point]]
 id = "tara-ii"
+seq = 142
 pattern = "たらいい"
 forms = ["だらいい", "たらいいですか", "ばいい", "ばいいですか", "たらいいのに"]
 jlpt = "N3"
@@ -3653,6 +3801,7 @@ examples = [
 
 [[point]]
 id = "soretomo"
+seq = 143
 pattern = "それとも"
 forms = []
 jlpt = "N2"
@@ -3676,6 +3825,7 @@ examples = [
 
 [[point]]
 id = "o-ni-naru"
+seq = 144
 pattern = "お〜になる"
 forms = ["ご〜になる"]
 jlpt = "N4"
@@ -3705,6 +3855,7 @@ examples = [
 
 [[point]]
 id = "o-suru"
+seq = 145
 pattern = "お〜する"
 forms = ["ご〜する", "お〜します", "お〜いたします"]
 jlpt = "N4"
@@ -3735,6 +3886,7 @@ examples = [
 
 [[point]]
 id = "o-kudasai"
+seq = 146
 pattern = "お〜ください"
 forms = ["ご〜ください", "お〜下さい", "ご〜下さい"]
 jlpt = "N4"
@@ -3764,6 +3916,7 @@ examples = [
 
 [[point]]
 id = "irassharu"
+seq = 147
 pattern = "いらっしゃる"
 forms = ["いらっしゃいます", "いらっしゃい", "ていらっしゃる", "でいらっしゃる"]
 jlpt = "N4"
@@ -3793,6 +3946,7 @@ examples = [
 
 [[point]]
 id = "nasaru"
+seq = 148
 pattern = "なさる"
 forms = ["なさいます"]
 jlpt = "N4"
@@ -3819,6 +3973,7 @@ examples = [
 
 [[point]]
 id = "itasu"
+seq = 149
 pattern = "いたす"
 forms = ["いたします", "致す", "致します"]
 jlpt = "N4"
@@ -3847,6 +4002,7 @@ examples = [
 
 [[point]]
 id = "gozaimasu"
+seq = 150
 pattern = "ございます"
 forms = ["でございます", "ござる"]
 jlpt = "N4"
@@ -3875,6 +4031,7 @@ examples = [
 
 [[point]]
 id = "te-oru"
+seq = 151
 pattern = "ておる"
 forms = ["でおる", "ております", "でおります"]
 jlpt = "N4"
@@ -3898,6 +4055,7 @@ examples = [
 
 [[point]]
 id = "te-choudai"
+seq = 152
 pattern = "てちょうだい"
 forms = ["でちょうだい", "ちょうだい", "て頂戴", "頂戴"]
 jlpt = "N2"
@@ -3925,6 +4083,7 @@ examples = [
 
 [[point]]
 id = "n-desu-ga"
+seq = 153
 pattern = "んですが"
 forms = ["んですけど", "んだけど", "のですが", "んですけれども"]
 jlpt = "N4"
@@ -3953,6 +4112,7 @@ examples = [
 
 [[point]]
 id = "te-hoshii"
+seq = 154
 pattern = "てほしい"
 forms = ["でほしい", "て欲しい", "で欲しい", "てほしくない", "ないでほしい", "ようにしてほしい", "ないようにしてほしい"]
 jlpt = "N4"
@@ -3981,6 +4141,7 @@ examples = [
 
 [[point]]
 id = "you-ni-iu"
+seq = 155
 pattern = "ように言う"
 forms = ["ようにいう", "ないように言う", "ように言われた", "ように伝える", "ように頼む"]
 jlpt = "N4"
@@ -4008,6 +4169,7 @@ examples = [
 
 [[point]]
 id = "you-ni-inoru"
+seq = 156
 pattern = "ように祈る"
 forms = ["ようにいのる", "ますように", "ように願う"]
 jlpt = "N4"
@@ -4036,6 +4198,7 @@ examples = [
 
 [[point]]
 id = "you-ni-purpose"
+seq = 157
 pattern = "ように"
 forms = ["ないように"]
 jlpt = "N4"
@@ -4064,6 +4227,7 @@ examples = [
 
 [[point]]
 id = "noni-purpose"
+seq = 158
 pattern = "のに"
 forms = []
 jlpt = "N4"
@@ -4093,6 +4257,7 @@ examples = [
 
 [[point]]
 id = "noni"
+seq = 159
 pattern = "のに"
 forms = ["なのに"]
 jlpt = "N4"
@@ -4121,6 +4286,7 @@ examples = [
 
 [[point]]
 id = "shi"
+seq = 160
 pattern = "し"
 forms = []
 jlpt = "N4"
@@ -4148,6 +4314,7 @@ examples = [
 
 [[point]]
 id = "dake-de-naku"
+seq = 161
 pattern = "だけでなく"
 forms = ["だけじゃなく", "だけではなく", "だけでなくて", "だけじゃなくて"]
 jlpt = "N4"
@@ -4175,6 +4342,7 @@ examples = [
 
 [[point]]
 id = "ni-suru"
+seq = 162
 pattern = "にする"
 forms = ["にします"]
 jlpt = "N4"
@@ -4202,6 +4370,7 @@ examples = [
 
 [[point]]
 id = "sou-da-hearsay"
+seq = 163
 pattern = "そうだ"
 forms = ["そうです"]
 jlpt = "N3"
@@ -4231,6 +4400,7 @@ examples = [
 
 [[point]]
 id = "rashii"
+seq = 164
 pattern = "らしい"
 forms = ["らしいです"]
 jlpt = "N4"
@@ -4261,6 +4431,7 @@ examples = [
 
 [[point]]
 id = "rashii-typical"
+seq = 165
 pattern = "らしい"
 forms = []
 jlpt = "N4"
@@ -4287,6 +4458,7 @@ examples = [
 
 [[point]]
 id = "you-da"
+seq = 166
 pattern = "ようだ"
 forms = ["ようです", "ようでした"]
 jlpt = "N4"
@@ -4315,6 +4487,7 @@ examples = [
 
 [[point]]
 id = "mitai"
+seq = 167
 pattern = "みたい"
 forms = ["みたいだ", "みたいです", "みたいな", "みたいに"]
 jlpt = "N4"
@@ -4342,6 +4515,7 @@ examples = [
 
 [[point]]
 id = "no-you-na"
+seq = 168
 pattern = "のような"
 forms = ["のように", "ような"]
 jlpt = "N4"
@@ -4368,6 +4542,7 @@ examples = [
 
 [[point]]
 id = "mai-no-you-ni"
+seq = 169
 pattern = "毎日のように"
 forms = ["毎晩のように", "毎週のように", "毎年のように", "毎朝のように", "毎月のように"]
 jlpt = "N4"
@@ -4389,6 +4564,7 @@ examples = [
 
 [[point]]
 id = "ni-mieru"
+seq = 170
 pattern = "に見える"
 forms = ["にみえる", "に見えます", "そうに見える", "ように見える"]
 jlpt = "N4"
@@ -4416,6 +4592,7 @@ examples = [
 
 [[point]]
 id = "mieru"
+seq = 171
 pattern = "見える"
 forms = ["みえる"]
 jlpt = "N4"
@@ -4440,6 +4617,7 @@ examples = [
 
 [[point]]
 id = "kikoeru"
+seq = 172
 pattern = "聞こえる"
 forms = ["きこえる"]
 jlpt = "N4"
@@ -4467,6 +4645,7 @@ examples = [
 
 [[point]]
 id = "to-omou"
+seq = 173
 pattern = "と思う"
 forms = ["と思います", "とおもう", "と思っている"]
 jlpt = "N4"
@@ -4494,6 +4673,7 @@ examples = [
 
 [[point]]
 id = "to-kiita"
+seq = 174
 pattern = "と聞いた"
 forms = ["と聞きました", "ときいた", "って聞いた"]
 jlpt = "N4"
@@ -4519,6 +4699,7 @@ examples = [
 
 [[point]]
 id = "to-iwarete-iru"
+seq = 175
 pattern = "と言われている"
 forms = ["といわれている", "と言われています", "とされている", "と考えられている"]
 jlpt = "N4"
@@ -4545,6 +4726,7 @@ examples = [
 
 [[point]]
 id = "to-iu-koto"
+seq = 176
 pattern = "ということ"
 forms = ["ということだ", "ということです"]
 jlpt = "N4"
@@ -4570,6 +4752,7 @@ examples = [
 
 [[point]]
 id = "to-itte-mo-ii"
+seq = 177
 pattern = "と言ってもいい"
 forms = ["といってもいい", "と言ってもいいです"]
 jlpt = "N4"
@@ -4591,6 +4774,7 @@ examples = [
 
 [[point]]
 id = "kana"
+seq = 178
 pattern = "かな"
 forms = ["かなあ", "かなぁ"]
 jlpt = "N4"
@@ -4618,6 +4802,7 @@ examples = [
 
 [[point]]
 id = "no-darou-ka"
+seq = 179
 pattern = "のだろうか"
 forms = ["んだろうか", "のでしょうか", "んでしょうか", "んだろう", "のだろう"]
 jlpt = "N4"
@@ -4646,6 +4831,7 @@ examples = [
 
 [[point]]
 id = "ja-nai-ka"
+seq = 180
 pattern = "じゃないか"
 forms = ["ではないか", "じゃないですか", "じゃありませんか"]
 jlpt = "N4"
@@ -4673,6 +4859,7 @@ examples = [
 
 [[point]]
 id = "ga-suru"
+seq = 181
 pattern = "がする"
 forms = ["がします"]
 jlpt = "N4"
@@ -4697,6 +4884,7 @@ examples = [
 
 [[point]]
 id = "question-ka"
+seq = 182
 pattern = "か"
 forms = []
 jlpt = "N4"
@@ -4725,6 +4913,7 @@ examples = [
 
 [[point]]
 id = "ru-tokoro"
+seq = 183
 pattern = "るところだ"
 forms = ["るところです"]
 jlpt = "N4"
@@ -4748,6 +4937,7 @@ examples = [
 
 [[point]]
 id = "te-iru-tokoro"
+seq = 184
 pattern = "ているところだ"
 forms = ["でいるところだ", "ているところです", "でいるところです", "ているところ", "でいるところ"]
 jlpt = "N4"
@@ -4772,6 +4962,7 @@ examples = [
 
 [[point]]
 id = "ta-tokoro"
+seq = 185
 pattern = "たところだ"
 forms = ["だところだ", "たところです", "だところです"]
 jlpt = "N4"
@@ -4796,6 +4987,7 @@ examples = [
 
 [[point]]
 id = "te-ita"
+seq = 186
 pattern = "ていた"
 forms = ["でいた", "ていました", "でいました", "てた"]
 jlpt = "N4"
@@ -4820,6 +5012,7 @@ examples = [
 
 [[point]]
 id = "aida-ni"
+seq = 187
 pattern = "間に"
 forms = ["あいだに", "間", "あいだ", "の間に", "のあいだに"]
 jlpt = "N4"
@@ -4848,6 +5041,7 @@ examples = [
 
 [[point]]
 id = "made-ni"
+seq = 188
 pattern = "までに"
 forms = ["までには"]
 jlpt = "N4"
@@ -4872,6 +5066,7 @@ examples = [
 
 [[point]]
 id = "koto-ga-aru-sometimes"
+seq = 189
 pattern = "ることがある"
 forms = ["ることもある", "ることがあります", "ることもあります", "ないことがある", "ないこともある"]
 jlpt = "N3"
@@ -4896,6 +5091,7 @@ examples = [
 
 [[point]]
 id = "koto-nominalizer"
+seq = 190
 pattern = "こと"
 forms = ["ことは", "ことが", "ことを"]
 jlpt = "N4"
@@ -4925,6 +5121,7 @@ examples = [
 
 [[point]]
 id = "te-bakari"
+seq = 191
 pattern = "てばかり"
 forms = ["でばかり", "てばかりいる", "でばかりいる", "てばっかり", "でばっかり", "てばっか", "でばっか"]
 jlpt = "N4"
@@ -4947,6 +5144,7 @@ examples = [
 
 [[point]]
 id = "de-wa-naku"
+seq = 192
 pattern = "ではなく"
 forms = ["じゃなく", "ではなくて", "じゃなくて", "でなく"]
 jlpt = "N3"
@@ -4969,6 +5167,7 @@ examples = [
 
 [[point]]
 id = "de-dekiru"
+seq = 193
 pattern = "でできている"
 forms = ["からできている", "でできる", "からできる", "でできています", "からできています"]
 jlpt = "N4"
@@ -4993,6 +5192,7 @@ examples = [
 
 [[point]]
 id = "no-hitotsu-da"
+seq = 194
 pattern = "の一つだ"
 forms = ["の一つです", "のひとつだ", "のひとつです", "の一つ", "のひとつ"]
 jlpt = "N4"
@@ -5016,6 +5216,7 @@ examples = [
 
 [[point]]
 id = "nai-wa-nai"
+seq = 195
 pattern = "ない〜はない"
 forms = ["ない人はいない", "ないものはない", "ない物はない", "ない人はいません", "ないものはありません"]
 jlpt = "N4"
@@ -5043,6 +5244,7 @@ examples = [
 
 [[point]]
 id = "dake-de"
+seq = 196
 pattern = "だけで"
 forms = ["だけでいい", "だけでも"]
 jlpt = "N4"
@@ -5070,6 +5272,7 @@ examples = [
 
 [[point]]
 id = "hitsuyou-ga-aru"
+seq = 197
 pattern = "必要がある"
 forms = ["必要がない", "必要はない", "必要があります", "必要はありません", "ひつようがある", "が必要だ", "が必要です", "が必要"]
 jlpt = "N4"
@@ -5096,6 +5299,7 @@ examples = [
 
 [[point]]
 id = "yotei"
+seq = 198
 pattern = "予定だ"
 forms = ["予定です", "予定でした", "予定だった", "よていだ", "よていです"]
 jlpt = "N4"
@@ -5120,6 +5324,7 @@ examples = [
 
 [[point]]
 id = "kakaru"
+seq = 199
 pattern = "かかる"
 forms = ["掛かる", "かかります"]
 jlpt = "N4"
@@ -5147,6 +5352,7 @@ examples = [
 
 [[point]]
 id = "naosu"
+seq = 200
 pattern = "直す"
 forms = ["なおす"]
 jlpt = "N4"
@@ -5171,6 +5377,7 @@ examples = [
 
 [[point]]
 id = "zurai"
+seq = 201
 pattern = "づらい"
 forms = []
 jlpt = "N4"
@@ -5195,6 +5402,7 @@ examples = [
 
 [[point]]
 id = "gai"
+seq = 202
 pattern = "甲斐"
 forms = ["がい", "がいがある", "かいがある", "かいがあった", "がいがない"]
 jlpt = "N2"
@@ -5222,6 +5430,7 @@ examples = [
 
 [[point]]
 id = "te-sumimasen"
+seq = 203
 pattern = "てすみません"
 forms = ["ですみません", "てすみませんでした", "ですみませんでした", "てごめん", "でごめん", "てごめんなさい", "でごめんなさい"]
 jlpt = "N4"
@@ -5246,6 +5455,7 @@ examples = [
 
 [[point]]
 id = "zutto"
+seq = 204
 pattern = "ずっと"
 forms = []
 jlpt = "N4"
@@ -5272,6 +5482,7 @@ examples = [
 
 [[point]]
 id = "dandan"
+seq = 205
 pattern = "だんだん"
 forms = ["段々", "だんだんと"]
 jlpt = "N4"
@@ -5294,6 +5505,7 @@ examples = [
 
 [[point]]
 id = "dondon"
+seq = 206
 pattern = "どんどん"
 forms = []
 jlpt = "N4"
@@ -5316,6 +5528,7 @@ examples = [
 
 [[point]]
 id = "toutou"
+seq = 207
 pattern = "とうとう"
 forms = ["到頭"]
 jlpt = "N4"
@@ -5341,6 +5554,7 @@ examples = [
 
 [[point]]
 id = "daitai"
+seq = 208
 pattern = "だいたい"
 forms = ["大体"]
 jlpt = "N4"
@@ -5364,6 +5578,7 @@ examples = [
 
 [[point]]
 id = "tatoeba"
+seq = 209
 pattern = "たとえば"
 forms = ["例えば"]
 jlpt = "N4"
@@ -5385,6 +5600,7 @@ examples = [
 
 [[point]]
 id = "moshi"
+seq = 210
 pattern = "もし"
 forms = ["もしも"]
 jlpt = "N4"
@@ -5410,6 +5626,7 @@ examples = [
 
 [[point]]
 id = "mazu"
+seq = 211
 pattern = "まず"
 forms = ["先ず"]
 jlpt = "N4"
@@ -5433,6 +5650,7 @@ examples = [
 
 [[point]]
 id = "mata"
+seq = 212
 pattern = "また"
 forms = ["又"]
 jlpt = "N4"
@@ -5456,6 +5674,7 @@ examples = [
 
 [[point]]
 id = "mata-wa"
+seq = 213
 pattern = "または"
 forms = ["又は", "もしくは"]
 jlpt = "N4"
@@ -5477,6 +5696,7 @@ examples = [
 
 [[point]]
 id = "soredemo"
+seq = 214
 pattern = "それでも"
 forms = []
 jlpt = "N4"
@@ -5498,6 +5718,7 @@ examples = [
 
 [[point]]
 id = "da-ga"
+seq = 215
 pattern = "だが"
 forms = []
 jlpt = "N4"
@@ -5520,6 +5741,7 @@ examples = [
 
 [[point]]
 id = "sonnani"
+seq = 216
 pattern = "そんなに"
 forms = ["こんなに", "あんなに", "どんなに"]
 jlpt = "N4"
@@ -5544,6 +5766,7 @@ examples = [
 
 [[point]]
 id = "sukoshimo-nai"
+seq = 217
 pattern = "少しも〜ない"
 forms = ["少しも", "すこしも"]
 jlpt = "N4"
@@ -5565,6 +5788,7 @@ examples = [
 
 [[point]]
 id = "chittomo"
+seq = 218
 pattern = "ちっとも〜ない"
 forms = ["ちっとも"]
 jlpt = "N4"
@@ -5588,6 +5812,7 @@ examples = [
 
 [[point]]
 id = "dekiru-dake"
+seq = 219
 pattern = "できるだけ"
 forms = ["出来るだけ"]
 jlpt = "N4"
@@ -5610,6 +5835,7 @@ examples = [
 
 [[point]]
 id = "narubeku"
+seq = 220
 pattern = "なるべく"
 forms = []
 jlpt = "N4"
@@ -5631,6 +5857,7 @@ examples = [
 
 [[point]]
 id = "kanarazu"
+seq = 221
 pattern = "必ず"
 forms = ["かならず"]
 jlpt = "N4"
@@ -5654,6 +5881,7 @@ examples = [
 
 [[point]]
 id = "omo-ni"
+seq = 222
 pattern = "主に"
 forms = ["おもに"]
 jlpt = "N4"
@@ -5675,6 +5903,7 @@ examples = [
 
 [[point]]
 id = "ainiku"
+seq = 223
 pattern = "あいにく"
 forms = ["生憎", "あいにくですが"]
 jlpt = "N4"
@@ -5698,6 +5927,7 @@ examples = [
 
 [[point]]
 id = "goro"
+seq = 224
 pattern = "ごろ"
 forms = ["頃"]
 jlpt = "N4"
@@ -5721,6 +5951,7 @@ examples = [
 
 [[point]]
 id = "goto-ni"
+seq = 225
 pattern = "ごとに"
 forms = ["毎に"]
 jlpt = "N4"
@@ -5747,6 +5978,7 @@ examples = [
 
 [[point]]
 id = "sa-noun"
+seq = 226
 pattern = "さ"
 forms = []
 jlpt = "N4"
@@ -5772,6 +6004,7 @@ examples = [
 
 [[point]]
 id = "dai-age"
+seq = 227
 pattern = "代"
 forms = ["年代"]
 jlpt = "N4"
@@ -5795,6 +6028,7 @@ examples = [
 
 [[point]]
 id = "kaku"
+seq = 228
 pattern = "各"
 forms = []
 jlpt = "N4"
@@ -5818,6 +6052,7 @@ examples = [
 
 [[point]]
 id = "me-ordinal"
+seq = 229
 pattern = "目"
 forms = []
 jlpt = "N4"
@@ -5841,6 +6076,7 @@ examples = [
 
 [[point]]
 id = "ma-prefix"
+seq = 230
 pattern = "真"
 forms = ["真っ", "真ん"]
 jlpt = "N4"
@@ -5865,6 +6101,7 @@ examples = [
 
 [[point]]
 id = "fuu"
+seq = 231
 pattern = "風"
 forms = ["ふうに", "という風に", "というふうに"]
 jlpt = "N4"
@@ -5889,6 +6126,7 @@ examples = [
 
 [[point]]
 id = "ka-suru"
+seq = 232
 pattern = "化"
 forms = ["化する"]
 jlpt = "N4"
@@ -5911,6 +6149,7 @@ examples = [
 
 [[point]]
 id = "ika"
+seq = 233
 pattern = "以下"
 forms = []
 jlpt = "N4"
@@ -5934,6 +6173,7 @@ examples = [
 
 [[point]]
 id = "igai"
+seq = 234
 pattern = "以外"
 forms = ["以外に", "以外は"]
 jlpt = "N4"
@@ -5958,6 +6198,7 @@ examples = [
 
 [[point]]
 id = "ijou"
+seq = 235
 pattern = "以上"
 forms = ["以上です"]
 jlpt = "N4"
@@ -5982,6 +6223,7 @@ examples = [
 
 [[point]]
 id = "number-wa"
+seq = 236
 pattern = "は"
 forms = []
 jlpt = "N4"
@@ -6007,6 +6249,7 @@ examples = [
 
 [[point]]
 id = "number-mo"
+seq = 237
 pattern = "も"
 forms = []
 jlpt = "N4"
@@ -6031,6 +6274,7 @@ examples = [
 
 [[point]]
 id = "nan-counter-ka"
+seq = 238
 pattern = "何〜か"
 forms = ["何人か", "何回か", "何度か", "何冊か", "何本か", "何日か", "いくつか"]
 jlpt = "N4"
@@ -6054,6 +6298,7 @@ examples = [
 
 [[point]]
 id = "ku-adverb"
+seq = 239
 pattern = "く"
 forms = []
 jlpt = "N4"
@@ -6077,6 +6322,7 @@ examples = [
 
 [[point]]
 id = "toka"
+seq = 240
 pattern = "とか"
 forms = ["とか〜とか"]
 jlpt = "N4"
@@ -6102,6 +6348,7 @@ examples = [
 
 [[point]]
 id = "nado"
+seq = 241
 pattern = "など"
 forms = ["なんか", "なんて"]
 jlpt = "N4"
@@ -6127,6 +6374,7 @@ examples = [
 
 [[point]]
 id = "demo-demo"
+seq = 242
 pattern = "でも〜でも"
 forms = []
 jlpt = "N4"
@@ -6151,6 +6399,7 @@ examples = [
 
 [[point]]
 id = "transitive-intransitive"
+seq = 243
 pattern = "自動詞・他動詞"
 forms = ["自動詞", "他動詞"]
 jlpt = "N4"
@@ -6177,6 +6426,7 @@ examples = [
 
 [[point]]
 id = "ga-mirareru"
+seq = 244
 pattern = "が見られる"
 forms = ["がみられる"]
 jlpt = "N4"
@@ -6200,6 +6450,7 @@ examples = [
 
 [[point]]
 id = "sukunakunai"
+seq = 245
 pattern = "少なくない"
 forms = ["すくなくない"]
 jlpt = "N4"
@@ -6220,6 +6471,7 @@ examples = [
 
 [[point]]
 id = "ni-ki-ga-tsuku"
+seq = 246
 pattern = "に気がつく"
 forms = ["に気が付く", "に気づく", "に気付く", "にきがつく", "気がつく", "気が付く"]
 jlpt = "N4"
@@ -6248,6 +6500,7 @@ examples = [
 
 [[point]]
 id = "no-wa-da"
+seq = 247
 pattern = "のは〜だ"
 forms = ["のは〜です", "のは〜からだ"]
 jlpt = "N4"
@@ -6276,6 +6529,7 @@ examples = [
 
 [[point]]
 id = "nai-ka"
+seq = 248
 pattern = "ないか"
 forms = ["ないかい"]
 jlpt = "N4"
@@ -6298,6 +6552,7 @@ examples = [
 
 [[point]]
 id = "kai-dai"
+seq = 249
 pattern = "かい"
 forms = ["だい", "のかい", "んだい", "のだい"]
 hover = false
@@ -6325,6 +6580,7 @@ examples = [
 
 [[point]]
 id = "inai"
+seq = 250
 pattern = "以内"
 forms = ["以内に", "以内で", "以内の"]
 jlpt = "N4"
@@ -6347,6 +6603,7 @@ examples = [
 
 [[point]]
 id = "naku-naru"
+seq = 251
 pattern = "なくなる"
 forms = ["くなくなる", "なくなった", "なくなりました", "無くなる"]
 jlpt = "N4"
@@ -6373,6 +6630,7 @@ examples = [
 
 [[point]]
 id = "kitto"
+seq = 252
 pattern = "きっと"
 forms = ["屹度"]
 jlpt = "N4"
@@ -6394,6 +6652,7 @@ examples = [
 
 [[point]]
 id = "mochiron"
+seq = 253
 pattern = "もちろん"
 forms = ["勿論"]
 jlpt = "N4"
@@ -6416,6 +6675,7 @@ examples = [
 
 [[point]]
 id = "yatto"
+seq = 254
 pattern = "やっと"
 forms = ["やっとのことで", "のがやっと", "のがやっとだ"]
 jlpt = "N4"
@@ -6442,6 +6702,7 @@ examples = [
 
 [[point]]
 id = "zehi"
+seq = 255
 pattern = "ぜひ"
 forms = ["是非", "ぜひとも", "是非とも"]
 jlpt = "N4"
@@ -6463,6 +6724,7 @@ examples = [
 
 [[point]]
 id = "ippai"
+seq = 256
 pattern = "いっぱい"
 forms = ["一杯", "いっぱいだ", "いっぱいに", "いっぱいの"]
 jlpt = "N4"
@@ -6487,6 +6749,7 @@ examples = [
 
 [[point]]
 id = "tame-ni"
+seq = 257
 pattern = "ために"
 forms = ["為に", "のために", "のため"]
 jlpt = "N3"
@@ -6519,6 +6782,7 @@ examples = [
 
 [[point]]
 id = "okage-de"
+seq = 258
 pattern = "おかげで"
 forms = ["お陰で", "おかげだ", "おかげです", "おかげさまで"]
 jlpt = "N3"
@@ -6547,6 +6811,7 @@ examples = [
 
 [[point]]
 id = "sei-de"
+seq = 259
 pattern = "せいで"
 forms = ["せいだ", "せいです", "せいか", "せいにする"]
 jlpt = "N3"
@@ -6576,6 +6841,7 @@ examples = [
 
 [[point]]
 id = "kara-koso"
+seq = 260
 pattern = "からこそ"
 forms = ["だからこそ"]
 jlpt = "N3"
@@ -6603,6 +6869,7 @@ examples = [
 
 [[point]]
 id = "koto-kara"
+seq = 261
 pattern = "ことから"
 forms = []
 jlpt = "N3"
@@ -6629,6 +6896,7 @@ examples = [
 
 [[point]]
 id = "to-iu-riyuu-de"
+seq = 262
 pattern = "という理由で"
 forms = ["という理由から", "というりゆうで"]
 jlpt = "N3"
@@ -6654,6 +6922,7 @@ examples = [
 
 [[point]]
 id = "bakari-ni"
+seq = 263
 pattern = "ばかりに"
 forms = ["たいばかりに", "ほしいばかりに"]
 jlpt = "N3"
@@ -6681,6 +6950,7 @@ examples = [
 
 [[point]]
 id = "sono-tame"
+seq = 264
 pattern = "そのため"
 forms = ["そのために", "そのためか"]
 jlpt = "N3"
@@ -6703,6 +6973,7 @@ examples = [
 
 [[point]]
 id = "sono-kekka"
+seq = 265
 pattern = "その結果"
 forms = ["そのけっか"]
 jlpt = "N3"
@@ -6725,6 +6996,7 @@ examples = [
 
 [[point]]
 id = "sokode"
+seq = 266
 pattern = "そこで"
 forms = []
 jlpt = "N3"
@@ -6749,6 +7021,7 @@ examples = [
 
 [[point]]
 id = "suruto"
+seq = 267
 pattern = "すると"
 forms = ["そうすると"]
 jlpt = "N3"
@@ -6775,6 +7048,7 @@ examples = [
 
 [[point]]
 id = "naze-nara"
+seq = 268
 pattern = "なぜなら"
 forms = ["なぜならば", "なぜかというと", "なぜかと言うと"]
 jlpt = "N3"
@@ -6797,6 +7071,7 @@ examples = [
 
 [[point]]
 id = "nanishiro"
+seq = 269
 pattern = "なにしろ"
 forms = ["何しろ"]
 jlpt = "N3"
@@ -6818,6 +7093,7 @@ examples = [
 
 [[point]]
 id = "tsumari"
+seq = 270
 pattern = "つまり"
 forms = []
 jlpt = "N3"
@@ -6843,6 +7119,7 @@ examples = [
 
 [[point]]
 id = "sunawachi"
+seq = 271
 pattern = "すなわち"
 forms = ["即ち"]
 jlpt = "N3"
@@ -6863,6 +7140,7 @@ examples = [
 
 [[point]]
 id = "to-iu"
+seq = 272
 pattern = "という"
 forms = ["っていう"]
 jlpt = "N3"
@@ -6891,6 +7169,7 @@ examples = [
 
 [[point]]
 id = "to-iu-no-wa"
+seq = 273
 pattern = "というのは"
 forms = ["というものは"]
 jlpt = "N3"
@@ -6920,6 +7199,7 @@ examples = [
 
 [[point]]
 id = "to-ieba"
+seq = 274
 pattern = "といえば"
 forms = ["と言えば", "というと", "と言うと", "といったら", "と言ったら"]
 jlpt = "N3"
@@ -6944,6 +7224,7 @@ examples = [
 
 [[point]]
 id = "to-itte-mo"
+seq = 275
 pattern = "といっても"
 forms = ["と言っても", "とはいっても", "とは言っても"]
 jlpt = "N3"
@@ -6970,6 +7251,7 @@ examples = [
 
 [[point]]
 id = "to-iu-yori"
+seq = 276
 pattern = "というより"
 forms = ["というよりも", "というよりは", "と言うより"]
 jlpt = "N3"
@@ -6995,6 +7277,7 @@ examples = [
 
 [[point]]
 id = "ka-to-iu-to"
+seq = 277
 pattern = "かというと"
 forms = ["かといえば", "かと言うと", "かと言えば"]
 jlpt = "N3"
@@ -7022,6 +7305,7 @@ examples = [
 
 [[point]]
 id = "ni-yoru-to"
+seq = 278
 pattern = "によると"
 forms = ["によれば", "の話では", "の話によると"]
 jlpt = "N3"
@@ -7046,6 +7330,7 @@ examples = [
 
 [[point]]
 id = "to-no-koto-da"
+seq = 279
 pattern = "とのことだ"
 forms = ["とのことです", "とのこと"]
 jlpt = "N3"
@@ -7069,6 +7354,7 @@ examples = [
 
 [[point]]
 id = "n-datte"
+seq = 280
 pattern = "んだって"
 forms = ["んですって"]
 jlpt = "N3"
@@ -7096,6 +7382,7 @@ examples = [
 
 [[point]]
 id = "datte-question"
+seq = 281
 pattern = "だって"
 forms = ["ですって"]
 jlpt = "N3"
@@ -7122,6 +7409,7 @@ examples = [
 
 [[point]]
 id = "kke"
+seq = 282
 pattern = "っけ"
 forms = ["だっけ", "たっけ", "でしたっけ", "ましたっけ"]
 jlpt = "N3"
@@ -7151,6 +7439,7 @@ examples = [
 
 [[point]]
 id = "to-ieru"
+seq = 283
 pattern = "と言える"
 forms = ["といえる", "と言えます"]
 jlpt = "N3"
@@ -7174,6 +7463,7 @@ examples = [
 
 [[point]]
 id = "kangaerarenai"
+seq = 284
 pattern = "考えられない"
 forms = ["かんがえられない", "とは考えられない"]
 jlpt = "N3"
@@ -7200,6 +7490,7 @@ examples = [
 
 [[point]]
 id = "to-wa-omowanakatta"
+seq = 285
 pattern = "とは思わなかった"
 forms = ["とはおもわなかった", "とは思いませんでした", "とばかり思っていた", "とばかりおもっていた"]
 jlpt = "N3"
@@ -7226,6 +7517,7 @@ examples = [
 
 [[point]]
 id = "iu-made-mo-nai"
+seq = 286
 pattern = "言うまでもない"
 forms = ["いうまでもない", "は言うまでもない", "言うまでもなく", "いうまでもなく"]
 jlpt = "N3"
@@ -7252,6 +7544,7 @@ examples = [
 
 [[point]]
 id = "to-wa-kagiranai"
+seq = 287
 pattern = "とは限らない"
 forms = ["とはかぎらない", "とは限りません", "とも限らない"]
 jlpt = "N3"
@@ -7277,6 +7570,7 @@ examples = [
 
 [[point]]
 id = "to-shitara"
+seq = 288
 pattern = "としたら"
 forms = ["とすれば", "とすると", "だとしたら", "だとすれば", "だとすると"]
 jlpt = "N3"
@@ -7306,6 +7600,7 @@ examples = [
 
 [[point]]
 id = "tatoe-temo"
+seq = 289
 pattern = "たとえ〜ても"
 forms = ["たとえ", "たとえ〜でも", "例え〜ても", "例え〜でも"]
 jlpt = "N3"
@@ -7334,6 +7629,7 @@ examples = [
 
 [[point]]
 id = "ikura-temo"
+seq = 290
 pattern = "いくら〜ても"
 forms = ["いくら〜でも", "どんなに〜ても", "どんなに〜でも"]
 jlpt = "N3"
@@ -7362,6 +7658,7 @@ examples = [
 
 [[point]]
 id = "temo-nakutemo"
+seq = 291
 pattern = "ても〜なくても"
 forms = ["でも〜なくても"]
 jlpt = "N3"
@@ -7390,6 +7687,7 @@ examples = [
 
 [[point]]
 id = "sae"
+seq = 292
 pattern = "さえ"
 forms = ["でさえ", "にさえ", "とさえ"]
 jlpt = "N3"
@@ -7420,6 +7718,7 @@ examples = [
 
 [[point]]
 id = "sae-ba"
+seq = 293
 pattern = "さえ〜ば"
 forms = ["さえあれば", "さえすれば", "さえいれば", "さえなければ", "さえ〜なければ", "さえ〜たら"]
 jlpt = "N3"
@@ -7449,6 +7748,7 @@ examples = [
 
 [[point]]
 id = "ba-hodo"
+seq = 294
 pattern = "ば〜ほど"
 forms = ["れば〜ほど", "ければ〜ほど", "なら〜ほど"]
 jlpt = "N3"
@@ -7477,6 +7777,7 @@ examples = [
 
 [[point]]
 id = "nagara-mo"
+seq = 295
 pattern = "ながらも"
 forms = []
 jlpt = "N3"
@@ -7505,6 +7806,7 @@ examples = [
 
 [[point]]
 id = "kuse-ni"
+seq = 296
 pattern = "くせに"
 forms = ["くせして", "癖に"]
 jlpt = "N3"
@@ -7533,6 +7835,7 @@ examples = [
 
 [[point]]
 id = "ni-shite-wa"
+seq = 297
 pattern = "にしては"
 forms = []
 jlpt = "N3"
@@ -7562,6 +7865,7 @@ examples = [
 
 [[point]]
 id = "wari-ni"
+seq = 298
 pattern = "割に"
 forms = ["割には", "の割に", "の割には", "のわりに", "のわりには"]
 jlpt = "N3"
@@ -7590,6 +7894,7 @@ examples = [
 
 [[point]]
 id = "dekireba"
+seq = 299
 pattern = "できれば"
 forms = ["できたら", "出来れば", "出来たら"]
 jlpt = "N3"
@@ -7612,6 +7917,7 @@ examples = [
 
 [[point]]
 id = "de-yokereba"
+seq = 300
 pattern = "でよければ"
 forms = ["でよかったら", "でもよければ", "でもよかったら", "よかったら", "もしよければ", "もしよかったら"]
 jlpt = "N3"
@@ -7640,6 +7946,7 @@ examples = [
 
 [[point]]
 id = "ba-noni"
+seq = 301
 pattern = "ば〜のに"
 forms = ["たら〜のに", "なら〜のに"]
 jlpt = "N3"
@@ -7666,6 +7973,7 @@ examples = [
 
 [[point]]
 id = "mo-ba-mo"
+seq = 302
 pattern = "も〜ば〜も"
 forms = ["も〜ば、〜も"]
 jlpt = "N2"
@@ -7693,6 +8001,7 @@ examples = [
 
 [[point]]
 id = "te-mo-kamawanai"
+seq = 303
 pattern = "てもかまわない"
 forms = ["でもかまわない", "ても構わない", "でも構わない", "てもかまいません", "ても構いません", "でもかまいません", "でも構いません"]
 jlpt = "N3"
@@ -7723,6 +8032,7 @@ examples = [
 
 [[point]]
 id = "wake-da"
+seq = 304
 pattern = "わけだ"
 forms = ["わけです", "訳だ", "というわけだ", "というわけです"]
 jlpt = "N3"
@@ -7751,6 +8061,7 @@ examples = [
 
 [[point]]
 id = "wake-ga-nai"
+seq = 305
 pattern = "わけがない"
 forms = ["わけはない", "わけない", "訳がない", "わけがありません", "わけありません"]
 jlpt = "N3"
@@ -7778,6 +8089,7 @@ examples = [
 
 [[point]]
 id = "wake-ni-wa-ikanai"
+seq = 306
 pattern = "わけにはいかない"
 forms = ["わけにもいかない", "わけにはいきません", "わけにもいきません", "訳にはいかない", "ないわけにはいかない"]
 jlpt = "N3"
@@ -7806,6 +8118,7 @@ examples = [
 
 [[point]]
 id = "ni-kimatte-iru"
+seq = 307
 pattern = "に決まっている"
 forms = ["にきまっている", "に決まってる", "に決まっています", "にきまってる", "に決まってます"]
 jlpt = "N3"
@@ -7832,6 +8145,7 @@ examples = [
 
 [[point]]
 id = "kanarazushimo"
+seq = 308
 pattern = "必ずしも"
 forms = ["かならずしも"]
 jlpt = "N3"
@@ -7858,6 +8172,7 @@ examples = [
 
 [[point]]
 id = "nai-koto-wa-nai"
+seq = 309
 pattern = "ないことはない"
 forms = ["ないこともない", "ないことはありません", "ないこともありません"]
 jlpt = "N3"
@@ -7885,6 +8200,7 @@ examples = [
 
 [[point]]
 id = "koto-wa-nai"
+seq = 310
 pattern = "ことはない"
 forms = ["ことはありません", "こともない"]
 jlpt = "N3"
@@ -7909,6 +8225,7 @@ examples = [
 
 [[point]]
 id = "beki-da"
+seq = 311
 pattern = "べきだ"
 forms = ["べき", "べきです", "べきではない", "べきじゃない", "べきだった", "べきではなかった"]
 jlpt = "N3"
@@ -7937,6 +8254,7 @@ examples = [
 
 [[point]]
 id = "koto-da-advice"
+seq = 312
 pattern = "ことだ"
 forms = ["ことです", "ないことだ", "ないことです"]
 hover = false
@@ -7965,6 +8283,7 @@ examples = [
 
 [[point]]
 id = "mono-da"
+seq = 313
 pattern = "ものだ"
 forms = ["ものです", "もんだ", "ものではない", "もんじゃない", "たいものだ", "たいものです"]
 hover = false
@@ -7994,6 +8313,7 @@ examples = [
 
 [[point]]
 id = "ta-mono-da"
+seq = 314
 pattern = "たものだ"
 forms = ["だものだ", "たものです", "たもんだ", "だもんだ", "たものだった", "だものだった"]
 jlpt = "N3"
@@ -8017,6 +8337,7 @@ examples = [
 
 [[point]]
 id = "mono-reason"
+seq = 315
 pattern = "もの"
 forms = ["もん", "だもの", "だもん", "んだもの", "んだもん", "ですもの"]
 hover = false
@@ -8043,6 +8364,7 @@ examples = [
 
 [[point]]
 id = "koto-ka"
+seq = 316
 pattern = "ことか"
 forms = ["ことだろう", "ことでしょう"]
 hover = false
@@ -8070,6 +8392,7 @@ examples = [
 
 [[point]]
 id = "koto-ni-emotion"
+seq = 317
 pattern = "ことに"
 forms = []
 hover = false
@@ -8098,6 +8421,7 @@ examples = [
 
 [[point]]
 id = "you-na-ki-ga-suru"
+seq = 318
 pattern = "ような気がする"
 forms = ["ようなきがする", "ような気がします", "気がする", "気がします"]
 jlpt = "N3"
@@ -8124,6 +8448,7 @@ examples = [
 
 [[point]]
 id = "masaka"
+seq = 319
 pattern = "まさか"
 forms = []
 jlpt = "N3"
@@ -8149,6 +8474,7 @@ examples = [
 
 [[point]]
 id = "n-ja-nai"
+seq = 320
 pattern = "んじゃない"
 forms = ["んじゃないか", "のではないか", "んじゃないかな", "んじゃないの", "んじゃないですか", "んじゃありません"]
 jlpt = "N3"
@@ -8177,6 +8503,7 @@ examples = [
 
 [[point]]
 id = "to-mieru"
+seq = 321
 pattern = "とみえる"
 forms = ["と見える", "とみえて", "と見えて", "とみえます", "と見えます"]
 hover = false
@@ -8202,6 +8529,7 @@ examples = [
 
 [[point]]
 id = "uchi-ni"
+seq = 322
 pattern = "うちに"
 forms = ["内に", "うちは", "内は"]
 jlpt = "N3"
@@ -8232,6 +8560,7 @@ examples = [
 
 [[point]]
 id = "nai-uchi-ni"
+seq = 323
 pattern = "ないうちに"
 forms = ["ない内に"]
 jlpt = "N3"
@@ -8257,6 +8586,7 @@ examples = [
 
 [[point]]
 id = "ta-totan-ni"
+seq = 324
 pattern = "たとたん"
 forms = ["たとたんに", "だとたん", "だとたんに", "た途端", "た途端に", "だ途端", "だ途端に"]
 jlpt = "N3"
@@ -8281,6 +8611,7 @@ examples = [
 
 [[point]]
 id = "tabi-ni"
+seq = 325
 pattern = "たびに"
 forms = ["度に", "のたびに", "の度に", "のたび", "の度"]
 jlpt = "N3"
@@ -8304,6 +8635,7 @@ examples = [
 
 [[point]]
 id = "saichuu-ni"
+seq = 326
 pattern = "最中に"
 forms = ["さいちゅうに", "最中", "さいちゅう", "最中だ", "最中です"]
 jlpt = "N3"
@@ -8331,6 +8663,7 @@ examples = [
 
 [[point]]
 id = "te-hajimete"
+seq = 327
 pattern = "て初めて"
 forms = ["てはじめて", "で初めて", "ではじめて"]
 jlpt = "N3"
@@ -8355,6 +8688,7 @@ examples = [
 
 [[point]]
 id = "te-irai"
+seq = 328
 pattern = "て以来"
 forms = ["で以来", "以来", "いらい"]
 jlpt = "N3"
@@ -8378,6 +8712,7 @@ examples = [
 
 [[point]]
 id = "ta-ue-de"
+seq = 329
 pattern = "た上で"
 forms = ["たうえで", "だ上で", "だうえで"]
 jlpt = "N3"
@@ -8405,6 +8740,7 @@ examples = [
 
 [[point]]
 id = "shidai"
+seq = 330
 pattern = "次第"
 forms = ["しだい"]
 jlpt = "N3"
@@ -8428,6 +8764,7 @@ examples = [
 
 [[point]]
 id = "shidai-depending"
+seq = 331
 pattern = "次第で"
 forms = ["次第だ", "次第です", "しだいで", "しだいだ", "次第", "しだい", "次第では", "しだいでは"]
 jlpt = "N3"
@@ -8452,6 +8789,7 @@ examples = [
 
 [[point]]
 id = "sue-ni"
+seq = 332
 pattern = "末に"
 forms = ["すえに", "の末に", "た末に", "の末", "た末", "末の"]
 jlpt = "N3"
@@ -8475,6 +8813,7 @@ examples = [
 
 [[point]]
 id = "sai-ni"
+seq = 333
 pattern = "際に"
 forms = ["さいに", "の際", "の際に", "の際は", "際は", "際には"]
 hover = false
@@ -8502,6 +8841,7 @@ examples = [
 
 [[point]]
 id = "tsuide-ni"
+seq = 334
 pattern = "ついでに"
 forms = ["のついでに"]
 jlpt = "N3"
@@ -8529,6 +8869,7 @@ examples = [
 
 [[point]]
 id = "to-douji-ni"
+seq = 335
 pattern = "と同時に"
 forms = ["とどうじに", "同時に", "どうじに"]
 jlpt = "N3"
@@ -8559,6 +8900,7 @@ examples = [
 
 [[point]]
 id = "ni-tsurete"
+seq = 336
 pattern = "につれて"
 forms = ["につれ"]
 jlpt = "N3"
@@ -8582,6 +8924,7 @@ examples = [
 
 [[point]]
 id = "ippou-da"
+seq = 337
 pattern = "一方だ"
 forms = ["いっぽうだ", "一方です", "いっぽうです", "一方である"]
 jlpt = "N3"
@@ -8604,6 +8947,7 @@ examples = [
 
 [[point]]
 id = "bakari-da"
+seq = 338
 pattern = "るばかりだ"
 forms = ["るばかりです", "るばかりで", "るばかりだった"]
 jlpt = "N3"
@@ -8627,6 +8971,7 @@ examples = [
 
 [[point]]
 id = "ta-tokoro-discovery"
+seq = 339
 pattern = "たところ"
 forms = ["だところ", "たところが", "だところが"]
 jlpt = "N3"
@@ -8652,6 +8997,7 @@ examples = [
 
 [[point]]
 id = "tokoro-datta"
+seq = 340
 pattern = "ところだった"
 forms = ["るところだった", "ないところだった", "ところでした", "るところでした"]
 jlpt = "N3"
@@ -8678,6 +9024,7 @@ examples = [
 
 [[point]]
 id = "ni-tsuite"
+seq = 341
 pattern = "について"
 forms = ["についての", "については", "についても"]
 jlpt = "N3"
@@ -8705,6 +9052,7 @@ examples = [
 
 [[point]]
 id = "ni-kanshite"
+seq = 342
 pattern = "に関して"
 forms = ["に関する", "にかんして", "にかんする", "に関しては", "に関し"]
 jlpt = "N3"
@@ -8734,6 +9082,7 @@ examples = [
 
 [[point]]
 id = "ni-taishite"
+seq = 343
 pattern = "に対して"
 forms = ["に対する", "にたいして", "にたいする", "に対し", "のに対して", "のに対し"]
 jlpt = "N3"
@@ -8765,6 +9114,7 @@ examples = [
 
 [[point]]
 id = "ni-totte"
+seq = 344
 pattern = "にとって"
 forms = ["にとっては", "にとっても", "にとっての"]
 jlpt = "N3"
@@ -8793,6 +9143,7 @@ examples = [
 
 [[point]]
 id = "ni-yotte"
+seq = 345
 pattern = "によって"
 forms = ["による", "により", "によっては", "によって違う", "によってちがう"]
 jlpt = "N3"
@@ -8824,6 +9175,7 @@ examples = [
 
 [[point]]
 id = "ni-kurabete"
+seq = 346
 pattern = "に比べて"
 forms = ["に比べ", "にくらべて", "と比べて", "とくらべて", "に比べると", "と比べると", "に比べれば"]
 jlpt = "N3"
@@ -8852,6 +9204,7 @@ examples = [
 
 [[point]]
 id = "ni-oite"
+seq = 347
 pattern = "において"
 forms = ["における", "に於いて", "に於ける", "においては", "においても"]
 jlpt = "N3"
@@ -8879,6 +9232,7 @@ examples = [
 
 [[point]]
 id = "ni-motozuite"
+seq = 348
 pattern = "に基づいて"
 forms = ["にもとづいて", "に基づく", "にもとづく", "に基づき", "に基づいた"]
 jlpt = "N3"
@@ -8906,6 +9260,7 @@ examples = [
 
 [[point]]
 id = "ni-kawatte"
+seq = 349
 pattern = "に代わって"
 forms = ["にかわって", "に代わり", "に替わって", "に代わる"]
 jlpt = "N3"
@@ -8935,6 +9290,7 @@ examples = [
 
 [[point]]
 id = "kawari-ni"
+seq = 350
 pattern = "代わりに"
 forms = ["かわりに", "の代わりに", "のかわりに", "その代わり", "そのかわり", "その代わりに"]
 jlpt = "N3"
@@ -8963,6 +9319,7 @@ examples = [
 
 [[point]]
 id = "to-tomo-ni"
+seq = 351
 pattern = "と共に"
 forms = ["とともに"]
 jlpt = "N3"
@@ -8992,6 +9349,7 @@ examples = [
 
 [[point]]
 id = "to-narande"
+seq = 352
 pattern = "と並んで"
 forms = ["とならんで", "と並ぶ", "と並び"]
 jlpt = "N3"
@@ -9015,6 +9373,7 @@ examples = [
 
 [[point]]
 id = "ni-awasete"
+seq = 353
 pattern = "に合わせて"
 forms = ["にあわせて", "に合わせる", "に合わせ", "に合った"]
 jlpt = "N3"
@@ -9040,6 +9399,7 @@ examples = [
 
 [[point]]
 id = "ni-ataru"
+seq = 354
 pattern = "に当たる"
 forms = ["にあたる", "に当たります", "にあたります"]
 jlpt = "N3"
@@ -9065,6 +9425,7 @@ examples = [
 
 [[point]]
 id = "wo-hajime"
+seq = 355
 pattern = "をはじめ"
 forms = ["を始め", "をはじめとして", "を始めとして", "をはじめとする", "を始めとする"]
 jlpt = "N3"
@@ -9093,6 +9454,7 @@ examples = [
 
 [[point]]
 id = "kara-ni-kakete"
+seq = 356
 pattern = "から〜にかけて"
 forms = ["にかけて"]
 jlpt = "N3"
@@ -9119,6 +9481,7 @@ examples = [
 
 [[point]]
 id = "ni-kakete-wa"
+seq = 357
 pattern = "にかけては"
 forms = ["に掛けては", "にかけても"]
 jlpt = "N3"
@@ -9142,6 +9505,7 @@ examples = [
 
 [[point]]
 id = "ni-kagiru"
+seq = 358
 pattern = "に限る"
 forms = ["にかぎる", "に限ります", "にかぎります"]
 jlpt = "N3"
@@ -9170,6 +9534,7 @@ examples = [
 
 [[point]]
 id = "to-onaji"
+seq = 359
 pattern = "と同じ"
 forms = ["と同じで", "と同じように", "と同じく", "と違って", "とちがって", "と同じくらい", "と同じぐらい"]
 jlpt = "N3"
@@ -9199,6 +9564,7 @@ examples = [
 
 [[point]]
 id = "wo-kikkake-ni"
+seq = 360
 pattern = "をきっかけに"
 forms = ["をきっかけにして", "をきっかけとして", "がきっかけで", "がきっかけになって"]
 jlpt = "N3"
@@ -9226,6 +9592,7 @@ examples = [
 
 [[point]]
 id = "wo-chuushin-ni"
+seq = 361
 pattern = "を中心に"
 forms = ["を中心にして", "を中心として", "をちゅうしんに", "を中心とする", "を中心とした"]
 jlpt = "N3"
@@ -9252,6 +9619,7 @@ examples = [
 
 [[point]]
 id = "wo-tooshite"
+seq = 362
 pattern = "を通して"
 forms = ["をとおして", "を通した"]
 jlpt = "N3"
@@ -9278,6 +9646,7 @@ examples = [
 
 [[point]]
 id = "wo-to-suru"
+seq = 363
 pattern = "を〜とする"
 forms = ["を〜として", "を〜とした", "を〜とし"]
 jlpt = "N3"
@@ -9305,6 +9674,7 @@ examples = [
 
 [[point]]
 id = "to-suru"
+seq = 364
 pattern = "とする"
 forms = ["とします", "だとする", "だとします"]
 jlpt = "N3"
@@ -9333,6 +9703,7 @@ examples = [
 
 [[point]]
 id = "o-da"
+seq = 365
 pattern = "お〜だ"
 forms = ["お〜です", "ご〜です", "ご〜だ"]
 jlpt = "N3"
@@ -9362,6 +9733,7 @@ examples = [
 
 [[point]]
 id = "you-ni-natte-iru"
+seq = 366
 pattern = "ようになっている"
 forms = ["ようになっています", "ないようになっている"]
 jlpt = "N3"
@@ -9390,6 +9762,7 @@ examples = [
 
 [[point]]
 id = "to-shite"
+seq = 367
 pattern = "として"
 forms = ["としての"]
 jlpt = "N3"
@@ -9418,6 +9791,7 @@ examples = [
 
 [[point]]
 id = "wa-mochiron"
+seq = 368
 pattern = "はもちろん"
 forms = ["はもちろんのこと", "はもとより"]
 jlpt = "N3"
@@ -9443,6 +9817,7 @@ examples = [
 
 [[point]]
 id = "bakari-de-naku"
+seq = 369
 pattern = "ばかりでなく"
 forms = ["ばかりではなく", "ばかりじゃなく", "ばかりか"]
 jlpt = "N3"
@@ -9471,6 +9846,7 @@ examples = [
 
 [[point]]
 id = "dokoroka"
+seq = 370
 pattern = "どころか"
 forms = []
 jlpt = "N3"
@@ -9497,6 +9873,7 @@ examples = [
 
 [[point]]
 id = "de-yuumei"
+seq = 371
 pattern = "で有名"
 forms = ["で有名だ", "でゆうめい", "で有名です", "で有名な"]
 jlpt = "N3"
@@ -9522,6 +9899,7 @@ examples = [
 
 [[point]]
 id = "to-natte-iru"
+seq = 372
 pattern = "となっている"
 forms = ["となっています", "となっており"]
 jlpt = "N3"
@@ -9547,6 +9925,7 @@ examples = [
 
 [[point]]
 id = "ippou-de"
+seq = 373
 pattern = "一方で"
 forms = ["一方", "いっぽうで", "一方では", "その一方で"]
 jlpt = "N3"
@@ -9575,6 +9954,7 @@ examples = [
 
 [[point]]
 id = "hanmen"
+seq = 374
 pattern = "反面"
 forms = ["はんめん", "半面", "その反面"]
 jlpt = "N3"
@@ -9602,6 +9982,7 @@ examples = [
 
 [[point]]
 id = "hou-da"
+seq = 375
 pattern = "ほうだ"
 forms = ["方だ", "ほうです", "方です", "のほうだ", "の方だ", "のほうです", "の方です"]
 jlpt = "N3"
@@ -9632,6 +10013,7 @@ examples = [
 
 [[point]]
 id = "kurai-extent"
+seq = 376
 pattern = "くらい"
 forms = ["ぐらい", "くらいだ", "ぐらいだ", "くらいです", "ぐらいです"]
 jlpt = "N3"
@@ -9663,6 +10045,7 @@ examples = [
 
 [[point]]
 id = "hodo-nai"
+seq = 377
 pattern = "ほど〜ない"
 forms = ["ほど〜はない", "くらい〜はない", "ぐらい〜はない"]
 jlpt = "N3"
@@ -9690,6 +10073,7 @@ examples = [
 
 [[point]]
 id = "mama"
+seq = 378
 pattern = "まま"
 forms = ["ままで", "ままに", "ままだ", "ままにする", "のまま", "たまま", "ないまま"]
 jlpt = "N3"
@@ -9720,6 +10104,7 @@ examples = [
 
 [[point]]
 id = "bakari-noun"
+seq = 379
 pattern = "ばかり"
 forms = ["ばっかり", "ばっか", "ばかりで"]
 jlpt = "N3"
@@ -9746,6 +10131,7 @@ examples = [
 
 [[point]]
 id = "nakanaka-nai"
+seq = 380
 pattern = "なかなか〜ない"
 forms = ["なかなか", "中々"]
 jlpt = "N3"
@@ -9770,6 +10156,7 @@ examples = [
 
 [[point]]
 id = "kesshite"
+seq = 381
 pattern = "決して〜ない"
 forms = ["決して", "けっして"]
 jlpt = "N3"
@@ -9793,6 +10180,7 @@ examples = [
 
 [[point]]
 id = "mattaku"
+seq = 382
 pattern = "全く"
 forms = ["まったく", "全く〜ない", "まったく〜ない"]
 jlpt = "N3"
@@ -9815,6 +10203,7 @@ examples = [
 
 [[point]]
 id = "betsu-ni"
+seq = 383
 pattern = "別に"
 forms = ["べつに", "別に〜ない", "べつに〜ない"]
 jlpt = "N3"
@@ -9839,6 +10228,7 @@ examples = [
 
 [[point]]
 id = "metta-ni"
+seq = 384
 pattern = "めったに〜ない"
 forms = ["めったに", "滅多に"]
 jlpt = "N3"
@@ -9861,6 +10251,7 @@ examples = [
 
 [[point]]
 id = "totemo-nai"
+seq = 385
 pattern = "とても〜ない"
 forms = []
 jlpt = "N3"
@@ -9886,6 +10277,7 @@ examples = [
 
 [[point]]
 id = "nidoto"
+seq = 386
 pattern = "二度と"
 forms = ["にどと", "二度と〜ない", "にどと〜ない"]
 jlpt = "N3"
@@ -9908,6 +10300,7 @@ examples = [
 
 [[point]]
 id = "imada-ni"
+seq = 387
 pattern = "いまだに"
 forms = ["未だに"]
 jlpt = "N2"
@@ -9931,6 +10324,7 @@ examples = [
 
 [[point]]
 id = "amari-ni"
+seq = 388
 pattern = "あまりに"
 forms = ["あまりにも", "余りに", "余りにも", "あまりの"]
 jlpt = "N3"
@@ -9955,6 +10349,7 @@ examples = [
 
 [[point]]
 id = "kanari"
+seq = 389
 pattern = "かなり"
 forms = []
 jlpt = "N3"
@@ -9978,6 +10373,7 @@ examples = [
 
 [[point]]
 id = "masumasu"
+seq = 390
 pattern = "ますます"
 forms = ["益々"]
 jlpt = "N3"
@@ -10001,6 +10397,7 @@ examples = [
 
 [[point]]
 id = "marude"
+seq = 391
 pattern = "まるで"
 forms = ["まるで〜ようだ", "まるで〜みたいだ", "まるで〜のよう"]
 jlpt = "N3"
@@ -10025,6 +10422,7 @@ examples = [
 
 [[point]]
 id = "ittai"
+seq = 392
 pattern = "一体"
 forms = ["いったい", "一体全体"]
 jlpt = "N3"
@@ -10049,6 +10447,7 @@ examples = [
 
 [[point]]
 id = "doushitemo"
+seq = 393
 pattern = "どうしても"
 forms = []
 jlpt = "N3"
@@ -10072,6 +10471,7 @@ examples = [
 
 [[point]]
 id = "moshikashitara"
+seq = 394
 pattern = "もしかしたら"
 forms = ["もしかすると", "もしかして"]
 jlpt = "N3"
@@ -10097,6 +10497,7 @@ examples = [
 
 [[point]]
 id = "nantonaku"
+seq = 395
 pattern = "なんとなく"
 forms = ["何となく"]
 jlpt = "N3"
@@ -10119,6 +10520,7 @@ examples = [
 
 [[point]]
 id = "dourude"
+seq = 396
 pattern = "どうりで"
 forms = ["道理で"]
 jlpt = "N3"
@@ -10140,6 +10542,7 @@ examples = [
 
 [[point]]
 id = "chanto"
+seq = 397
 pattern = "ちゃんと"
 forms = ["ちゃんとした", "ちゃんとする"]
 jlpt = "N3"
@@ -10165,6 +10568,7 @@ examples = [
 
 [[point]]
 id = "tsui"
+seq = 398
 pattern = "つい"
 forms = ["ついつい"]
 jlpt = "N3"
@@ -10190,6 +10594,7 @@ examples = [
 
 [[point]]
 id = "wazawaza"
+seq = 399
 pattern = "わざわざ"
 forms = ["態々"]
 jlpt = "N3"
@@ -10214,6 +10619,7 @@ examples = [
 
 [[point]]
 id = "sekkaku"
+seq = 400
 pattern = "せっかく"
 forms = ["折角", "せっかくの"]
 jlpt = "N3"
@@ -10239,6 +10645,7 @@ examples = [
 
 [[point]]
 id = "kaette"
+seq = 401
 pattern = "かえって"
 forms = ["却って"]
 jlpt = "N3"
@@ -10264,6 +10671,7 @@ examples = [
 
 [[point]]
 id = "mushiro"
+seq = 402
 pattern = "むしろ"
 forms = ["寧ろ", "よりむしろ"]
 jlpt = "N3"
@@ -10287,6 +10695,7 @@ examples = [
 
 [[point]]
 id = "tsui-ni"
+seq = 403
 pattern = "ついに"
 forms = ["遂に", "終に"]
 jlpt = "N3"
@@ -10310,6 +10719,7 @@ examples = [
 
 [[point]]
 id = "sude-ni"
+seq = 404
 pattern = "すでに"
 forms = ["既に"]
 jlpt = "N3"
@@ -10331,6 +10741,7 @@ examples = [
 
 [[point]]
 id = "futatabi"
+seq = 405
 pattern = "再び"
 forms = ["ふたたび"]
 jlpt = "N3"
@@ -10353,6 +10764,7 @@ examples = [
 
 [[point]]
 id = "tadachi-ni"
+seq = 406
 pattern = "直ちに"
 forms = ["ただちに"]
 jlpt = "N3"
@@ -10374,6 +10786,7 @@ examples = [
 
 [[point]]
 id = "sorezore"
+seq = 407
 pattern = "それぞれ"
 forms = ["それぞれの", "其々", "夫々"]
 jlpt = "N3"
@@ -10396,6 +10809,7 @@ examples = [
 
 [[point]]
 id = "daiichi"
+seq = 408
 pattern = "第一"
 forms = ["だいいち", "第一に", "まず第一に"]
 jlpt = "N3"
@@ -10421,6 +10835,7 @@ examples = [
 
 [[point]]
 id = "tokoroga"
+seq = 409
 pattern = "ところが"
 forms = []
 jlpt = "N3"
@@ -10447,6 +10862,7 @@ examples = [
 
 [[point]]
 id = "sate"
+seq = 410
 pattern = "さて"
 forms = ["さてと"]
 jlpt = "N3"
@@ -10469,6 +10885,7 @@ examples = [
 
 [[point]]
 id = "aruiwa"
+seq = 411
 pattern = "あるいは"
 forms = ["或いは"]
 jlpt = "N3"
@@ -10491,6 +10908,7 @@ examples = [
 
 [[point]]
 id = "mottomo"
+seq = 412
 pattern = "もっとも"
 forms = ["尤も"]
 jlpt = "N3"
@@ -10514,6 +10932,7 @@ examples = [
 
 [[point]]
 id = "de-wa-conj"
+seq = 413
 pattern = "では"
 forms = ["それでは", "じゃあ", "それじゃあ", "それじゃ"]
 jlpt = "N3"
@@ -10538,6 +10957,7 @@ examples = [
 
 [[point]]
 id = "saa"
+seq = 414
 pattern = "さあ"
 forms = ["さぁ"]
 jlpt = "N3"
@@ -10561,6 +10981,7 @@ examples = [
 
 [[point]]
 id = "sa-particle"
+seq = 415
 pattern = "さ"
 forms = []
 jlpt = "N3"
@@ -10586,6 +11007,7 @@ examples = [
 
 [[point]]
 id = "naa"
+seq = 416
 pattern = "なあ"
 forms = ["なぁ"]
 jlpt = "N3"
@@ -10609,6 +11031,7 @@ examples = [
 
 [[point]]
 id = "kakeru"
+seq = 417
 pattern = "かける"
 forms = ["かけ", "かけの", "かけた"]
 jlpt = "N3"
@@ -10634,6 +11057,7 @@ examples = [
 
 [[point]]
 id = "kiru"
+seq = 418
 pattern = "切る"
 forms = ["きる", "切れる", "きれる", "切れない", "きれない"]
 jlpt = "N3"
@@ -10660,6 +11084,7 @@ examples = [
 
 [[point]]
 id = "komu"
+seq = 419
 pattern = "込む"
 forms = ["こむ"]
 jlpt = "N3"
@@ -10685,6 +11110,7 @@ examples = [
 
 [[point]]
 id = "au"
+seq = 420
 pattern = "合う"
 forms = ["あう"]
 jlpt = "N3"
@@ -10709,6 +11135,7 @@ examples = [
 
 [[point]]
 id = "agaru"
+seq = 421
 pattern = "上がる"
 forms = ["あがる"]
 jlpt = "N3"
@@ -10733,6 +11160,7 @@ examples = [
 
 [[point]]
 id = "toosu"
+seq = 422
 pattern = "通す"
 forms = ["とおす"]
 jlpt = "N3"
@@ -10756,6 +11184,7 @@ examples = [
 
 [[point]]
 id = "mawaru"
+seq = 423
 pattern = "回る"
 forms = ["まわる"]
 jlpt = "N3"
@@ -10780,6 +11209,7 @@ examples = [
 
 [[point]]
 id = "kaesu"
+seq = 424
 pattern = "返す"
 forms = ["かえす"]
 jlpt = "N3"
@@ -10803,6 +11233,7 @@ examples = [
 
 [[point]]
 id = "nareru"
+seq = 425
 pattern = "慣れる"
 forms = ["なれる"]
 jlpt = "N3"
@@ -10828,6 +11259,7 @@ examples = [
 
 [[point]]
 id = "yamu"
+seq = 426
 pattern = "止む"
 forms = ["やむ"]
 jlpt = "N3"
@@ -10852,6 +11284,7 @@ examples = [
 
 [[point]]
 id = "tate"
+seq = 427
 pattern = "たて"
 forms = ["たての", "立て"]
 jlpt = "N3"
@@ -10877,6 +11310,7 @@ examples = [
 
 [[point]]
 id = "ppanashi"
+seq = 428
 pattern = "っぱなし"
 forms = ["っ放し", "っぱなしにする", "っぱなしだ"]
 jlpt = "N3"
@@ -10900,6 +11334,7 @@ examples = [
 
 [[point]]
 id = "gachi"
+seq = 429
 pattern = "がち"
 forms = ["がちだ", "がちな", "がちです"]
 jlpt = "N3"
@@ -10925,6 +11360,7 @@ examples = [
 
 [[point]]
 id = "gimi"
+seq = 430
 pattern = "気味"
 forms = ["ぎみ", "気味だ", "気味の"]
 jlpt = "N3"
@@ -10948,6 +11384,7 @@ examples = [
 
 [[point]]
 id = "gatai"
+seq = 431
 pattern = "がたい"
 forms = ["難い"]
 jlpt = "N3"
@@ -10973,6 +11410,7 @@ examples = [
 
 [[point]]
 id = "ppoi"
+seq = 432
 pattern = "っぽい"
 forms = []
 jlpt = "N3"
@@ -10997,6 +11435,7 @@ examples = [
 
 [[point]]
 id = "darake"
+seq = 433
 pattern = "だらけ"
 forms = []
 jlpt = "N3"
@@ -11020,6 +11459,7 @@ examples = [
 
 [[point]]
 id = "mi-suffix"
+seq = 434
 pattern = "み"
 forms = []
 jlpt = "N3"
@@ -11043,6 +11483,7 @@ examples = [
 
 [[point]]
 id = "teki"
+seq = 435
 pattern = "的"
 forms = ["的な", "的に"]
 jlpt = "N3"
@@ -11066,6 +11507,7 @@ examples = [
 
 [[point]]
 id = "gata"
+seq = 436
 pattern = "型"
 forms = []
 jlpt = "N3"
@@ -11088,6 +11530,7 @@ examples = [
 
 [[point]]
 id = "doushi"
+seq = 437
 pattern = "同士"
 forms = []
 jlpt = "N3"
@@ -11110,6 +11553,7 @@ examples = [
 
 [[point]]
 id = "muke"
+seq = 438
 pattern = "向け"
 forms = ["向けの", "向けに", "向けだ"]
 jlpt = "N3"
@@ -11133,6 +11577,7 @@ examples = [
 
 [[point]]
 id = "muki"
+seq = 439
 pattern = "向き"
 forms = ["向きの", "向きに", "向きだ"]
 jlpt = "N3"
@@ -11155,6 +11600,7 @@ examples = [
 
 [[point]]
 id = "atari"
+seq = 440
 pattern = "当たり"
 forms = ["あたり", "当り"]
 jlpt = "N3"
@@ -11180,6 +11626,7 @@ examples = [
 
 [[point]]
 id = "buri"
+seq = 441
 pattern = "ぶり"
 forms = ["振り", "ぶりに", "ぶりの"]
 jlpt = "N3"
@@ -11205,6 +11652,7 @@ examples = [
 
 [[point]]
 id = "oki-ni"
+seq = 442
 pattern = "おきに"
 forms = ["置きに", "おきの"]
 jlpt = "N3"
@@ -11229,6 +11677,7 @@ examples = [
 
 [[point]]
 id = "kiri"
+seq = 443
 pattern = "きり"
 forms = ["っきり", "きりで", "たきり", "たっきり"]
 jlpt = "N3"
@@ -11254,6 +11703,7 @@ examples = [
 
 [[point]]
 id = "dake-shika"
+seq = 444
 pattern = "だけしか"
 forms = []
 jlpt = "N3"
@@ -11275,6 +11725,7 @@ examples = [
 
 [[point]]
 id = "dake-de-wa"
+seq = 445
 pattern = "だけでは"
 forms = ["だけじゃ"]
 jlpt = "N3"
@@ -11298,6 +11749,7 @@ examples = [
 
 [[point]]
 id = "ten"
+seq = 446
 pattern = "点"
 forms = ["点で", "点では", "という点で", "の点で", "という点では", "という点から", "という点から考えると", "という点から見ると", "という点において"]
 jlpt = "N3"
@@ -11323,6 +11775,7 @@ examples = [
 
 [[point]]
 id = "nashi"
+seq = 447
 pattern = "なし"
 forms = ["無し", "なしで", "なしに", "なしの", "なしでは", "なしには"]
 jlpt = "N3"
@@ -11348,6 +11801,7 @@ examples = [
 
 [[point]]
 id = "ari"
+seq = 448
 pattern = "あり"
 forms = ["有り"]
 jlpt = "N3"
@@ -11371,6 +11825,7 @@ examples = [
 
 [[point]]
 id = "sugata"
+seq = 449
 pattern = "姿"
 forms = ["の姿"]
 jlpt = "N3"
@@ -11393,6 +11848,7 @@ examples = [
 
 [[point]]
 id = "toori"
+seq = 450
 pattern = "とおり"
 forms = ["通り", "どおり", "とおりに", "どおりに", "通りに", "の通り", "た通り"]
 jlpt = "N3"
@@ -11417,6 +11873,7 @@ examples = [
 
 [[point]]
 id = "kankei-ga-aru"
+seq = 451
 pattern = "関係がある"
 forms = ["と関係がある", "に関係がある", "関係がない", "関係ない"]
 jlpt = "N3"
@@ -11439,6 +11896,7 @@ examples = [
 
 [[point]]
 id = "sayuu-suru"
+seq = 452
 pattern = "左右する"
 forms = ["に左右される"]
 jlpt = "N3"
@@ -11461,6 +11919,7 @@ examples = [
 
 [[point]]
 id = "you-to-suru"
+seq = 453
 pattern = "ようとする"
 forms = ["おうとする", "ようとした", "おうとした", "ようとしたが", "おうとしたが", "ようとしたけど", "ようとしている", "おうとしている"]
 jlpt = "N3"
@@ -11486,6 +11945,7 @@ examples = [
 
 [[point]]
 id = "you-to-shinai"
+seq = 454
 pattern = "ようとしない"
 forms = ["おうとしない", "ようともしない", "おうともしない"]
 jlpt = "N3"
@@ -11509,6 +11969,7 @@ examples = [
 
 [[point]]
 id = "te-goran"
+seq = 455
 pattern = "てごらん"
 forms = ["でごらん", "てご覧", "でご覧", "てごらんなさい", "でごらんなさい"]
 jlpt = "N3"
@@ -11531,6 +11992,7 @@ examples = [
 
 [[point]]
 id = "sou-mo-nai"
+seq = 456
 pattern = "そうもない"
 forms = ["そうにもない", "そうもありません"]
 jlpt = "N3"
@@ -11554,6 +12016,7 @@ examples = [
 
 [[point]]
 id = "sou-ni-naru"
+seq = 457
 pattern = "そうになる"
 forms = ["そうになった", "そうになります"]
 jlpt = "N3"
@@ -11577,6 +12040,7 @@ examples = [
 
 [[point]]
 id = "furi-wo-suru"
+seq = 458
 pattern = "ふりをする"
 forms = ["振りをする", "ふりをして", "ふりする"]
 jlpt = "N3"
@@ -11604,6 +12068,7 @@ examples = [
 
 [[point]]
 id = "zu-ni"
+seq = 459
 pattern = "ずに"
 forms = ["せずに", "ず"]
 jlpt = "N3"
@@ -11629,6 +12094,7 @@ examples = [
 
 [[point]]
 id = "zu-ni-iru"
+seq = 460
 pattern = "ずにいる"
 forms = ["ないでいる", "ずにおく", "ないでおく"]
 jlpt = "N3"
@@ -11656,6 +12122,7 @@ examples = [
 
 [[point]]
 id = "zu-ni-sumu"
+seq = 461
 pattern = "ずにすむ"
 forms = ["ずに済む", "ないですむ", "ないで済む", "なくてすむ", "なくて済む", "ですむ", "で済む", "て済む", "てすむ"]
 jlpt = "N3"
@@ -11686,6 +12153,7 @@ examples = [
 
 [[point]]
 id = "zu-ni-wa-irarenai"
+seq = 462
 pattern = "ずにはいられない"
 forms = ["ずにいられない", "ないではいられない", "ないでいられない", "ずにはいられません"]
 jlpt = "N3"
@@ -11711,6 +12179,7 @@ examples = [
 
 [[point]]
 id = "te-shikata-ga-nai"
+seq = 463
 pattern = "てしかたがない"
 forms = ["てしかたない", "て仕方がない", "て仕方ない", "でしかたがない", "で仕方がない", "で仕方ない", "てしょうがない", "でしょうがない", "てしようがない"]
 jlpt = "N3"
@@ -11739,6 +12208,7 @@ examples = [
 
 [[point]]
 id = "te-mo-shikata-ga-nai"
+seq = 464
 pattern = "てもしかたがない"
 forms = ["てもしかたない", "ても仕方がない", "ても仕方ない", "てもしょうがない", "でもしかたがない", "でも仕方がない", "でも仕方ない", "でもしょうがない"]
 jlpt = "N3"
@@ -11766,6 +12236,7 @@ examples = [
 
 [[point]]
 id = "koto-ni-naru"
+seq = 465
 pattern = "ことになる"
 forms = ["ことになった", "ことになっている", "こととなる", "ということになる", "たことになる"]
 jlpt = "N3"
@@ -11790,6 +12261,7 @@ examples = [
 
 [[point]]
 id = "nakatta-koto-ni-suru"
+seq = 466
 pattern = "なかったことにする"
 forms = ["たことにする", "なかったことになる"]
 jlpt = "N3"
@@ -11813,6 +12285,7 @@ examples = [
 
 [[point]]
 id = "sasete-itadaku"
+seq = 467
 pattern = "させていただく"
 forms = ["せていただく", "させていただきます", "せていただきます"]
 jlpt = "N3"
@@ -11837,6 +12310,7 @@ examples = [
 
 [[point]]
 id = "te-itadakeru-to-arigatai"
+seq = 468
 pattern = "ていただけるとありがたい"
 forms = ["でいただけるとありがたい", "ていただけるとありがたいです", "ていただければありがたい", "ていただけるとうれしい", "ていただけると助かる", "てもらえるとありがたい", "てもらえるとうれしい", "てもらえると助かる"]
 jlpt = "N3"
@@ -11860,6 +12334,7 @@ examples = [
 
 [[point]]
 id = "te-iru-baai-ja-nai"
+seq = 469
 pattern = "ている場合じゃない"
 forms = ["てる場合じゃない", "ている場合ではない", "ている場合ではありません", "でいる場合じゃない", "でる場合じゃない", "場合じゃない", "場合ではない"]
 jlpt = "N3"
@@ -11882,6 +12357,7 @@ examples = [
 
 [[point]]
 id = "de-aru"
+seq = 470
 pattern = "である"
 forms = ["であります", "であった", "であろう", "でもある"]
 jlpt = "N3"
@@ -11907,6 +12383,7 @@ examples = [
 
 [[point]]
 id = "ikura-demo"
+seq = 471
 pattern = "いくらでも"
 forms = []
 jlpt = "N3"
@@ -11929,6 +12406,7 @@ examples = [
 
 [[point]]
 id = "kara-iu-to"
+seq = 472
 pattern = "から言うと"
 forms = ["からいうと", "から言えば", "からいえば", "から言って", "からいって", "から言ったら", "からいったら", "で言うと", "でいうと"]
 jlpt = "N3"
@@ -11956,6 +12434,7 @@ examples = [
 
 [[point]]
 id = "koso"
+seq = 473
 pattern = "こそ"
 forms = ["こそが", "こそは"]
 jlpt = "N3"
@@ -11982,6 +12461,7 @@ examples = [
 
 [[point]]
 id = "particle-plus-no"
+seq = 474
 pattern = "への"
 forms = ["での", "までの", "からの", "との"]
 hover = false
@@ -12006,6 +12486,7 @@ examples = [
 
 [[point]]
 id = "koto-na-no"
+seq = 475
 pattern = "ことなの"
 forms = ["ことなんだ", "ことなんです", "ことなのです", "ってことなの"]
 jlpt = "N3"
@@ -12034,6 +12515,7 @@ examples = [
 
 [[point]]
 id = "nai-kana"
+seq = 476
 pattern = "ないかな"
 forms = ["ないかなあ", "ないかなぁ", "ないかなー"]
 jlpt = "N3"
@@ -12062,6 +12544,7 @@ examples = [
 
 [[point]]
 id = "te-mo-minai"
+seq = 477
 pattern = "てもみない"
 forms = ["てもみなかった", "でもみない", "でもみなかった", "てもみません", "てもみませんでした", "てもみないで", "でもみないで"]
 jlpt = "N3"
@@ -12086,6 +12569,7 @@ examples = [
 
 [[point]]
 id = "to-iu-hodo-de-wa-nai"
+seq = 478
 pattern = "というほどではない"
 forms = ["というほどではありません", "というほどじゃない", "というほどでもない", "ほどではない", "ほどじゃない", "ほどでもない"]
 jlpt = "N3"
@@ -12113,6 +12597,7 @@ examples = [
 
 [[point]]
 id = "nante"
+seq = 479
 pattern = "なんて"
 forms = ["何て"]
 hover = false
@@ -12142,6 +12627,7 @@ examples = [
 
 [[point]]
 id = "tonikaku"
+seq = 480
 pattern = "とにかく"
 forms = ["兎に角", "ともかく"]
 jlpt = "N3"
@@ -12163,6 +12649,7 @@ examples = [
 
 [[point]]
 id = "waza-to"
+seq = 481
 pattern = "わざと"
 forms = ["態と"]
 jlpt = "N3"
@@ -12184,6 +12671,7 @@ examples = [
 
 [[point]]
 id = "kichinto"
+seq = 482
 pattern = "きちんと"
 forms = ["きちんとした", "きちんとする"]
 jlpt = "N3"
@@ -12204,6 +12692,7 @@ examples = [
 
 [[point]]
 id = "mono-dakara"
+seq = 483
 pattern = "ものだから"
 forms = ["もんだから", "ものですから", "もので", "もんで"]
 jlpt = "N2"
@@ -12231,6 +12720,7 @@ examples = [
 
 [[point]]
 id = "koto-dakara"
+seq = 484
 pattern = "ことだから"
 forms = ["のことだから", "ことですから", "のことですから"]
 jlpt = "N2"
@@ -12255,6 +12745,7 @@ examples = [
 
 [[point]]
 id = "dake-ni"
+seq = 485
 pattern = "だけに"
 forms = []
 jlpt = "N2"
@@ -12283,6 +12774,7 @@ examples = [
 
 [[point]]
 id = "dake-atte"
+seq = 486
 pattern = "だけあって"
 forms = ["だけのことはある", "だけのことはあって", "だけのことはあります", "だけある"]
 jlpt = "N2"
@@ -12312,6 +12804,7 @@ examples = [
 
 [[point]]
 id = "ru-ni-wa"
+seq = 487
 pattern = "には"
 forms = []
 jlpt = "N2"
@@ -12337,6 +12830,7 @@ examples = [
 
 [[point]]
 id = "dake-no"
+seq = 488
 pattern = "だけの"
 forms = []
 jlpt = "N2"
@@ -12366,6 +12860,7 @@ examples = [
 
 [[point]]
 id = "tokoro-ni-yoru-to"
+seq = 489
 pattern = "ところによると"
 forms = ["ところによれば"]
 jlpt = "N2"
@@ -12394,6 +12889,7 @@ examples = [
 
 [[point]]
 id = "kara-ni-wa"
+seq = 490
 pattern = "からには"
 forms = []
 jlpt = "N2"
@@ -12419,6 +12915,7 @@ examples = [
 
 [[point]]
 id = "ijou-wa"
+seq = 491
 pattern = "以上は"
 forms = ["いじょうは", "上は", "うえは"]
 jlpt = "N2"
@@ -12447,6 +12944,7 @@ examples = [
 
 [[point]]
 id = "kara-suru-to"
+seq = 492
 pattern = "からすると"
 forms = ["からすれば"]
 jlpt = "N2"
@@ -12469,6 +12967,7 @@ examples = [
 
 [[point]]
 id = "kara-shite"
+seq = 493
 pattern = "からして"
 forms = []
 jlpt = "N2"
@@ -12491,6 +12990,7 @@ examples = [
 
 [[point]]
 id = "kara-miru-to"
+seq = 494
 pattern = "から見ると"
 forms = ["から見れば", "から見て", "から見ても", "から見たら", "からみると", "からみれば", "からみて"]
 jlpt = "N2"
@@ -12513,6 +13013,7 @@ examples = [
 
 [[point]]
 id = "ni-shitara"
+seq = 495
 pattern = "にしたら"
 forms = ["にすれば", "にしてみれば", "にしてみたら"]
 jlpt = "N2"
@@ -12535,6 +13036,7 @@ examples = [
 
 [[point]]
 id = "tokoro-wo-miru-to"
+seq = 496
 pattern = "ところを見ると"
 forms = ["ところをみると", "ところを見れば"]
 jlpt = "N2"
@@ -12557,6 +13059,7 @@ examples = [
 
 [[point]]
 id = "kara-to-itte"
+seq = 497
 pattern = "からといって"
 forms = ["からって", "からと言って"]
 jlpt = "N2"
@@ -12582,6 +13085,7 @@ examples = [
 
 [[point]]
 id = "no-dakara"
+seq = 498
 pattern = "のだから"
 forms = ["んだから", "のですから", "んですから"]
 jlpt = "N2"
@@ -12608,6 +13112,7 @@ examples = [
 
 [[point]]
 id = "to-iu-koto-wa"
+seq = 499
 pattern = "ということは"
 forms = ["ってことは", "と言うことは"]
 jlpt = "N2"
@@ -12633,6 +13138,7 @@ examples = [
 
 [[point]]
 id = "ue-de"
+seq = 500
 pattern = "上で"
 forms = ["うえで", "の上で", "の上では", "る上で", "る上では"]
 hover = false
@@ -12660,6 +13166,7 @@ examples = [
 
 [[point]]
 id = "no-uchi"
+seq = 501
 pattern = "のうち"
 forms = ["のうちで", "のうちでは", "のうちの", "の内"]
 jlpt = "N2"
@@ -12685,6 +13192,7 @@ examples = [
 
 [[point]]
 id = "mono-no"
+seq = 502
 pattern = "ものの"
 forms = ["とはいうものの", "とは言うものの"]
 jlpt = "N2"
@@ -12714,6 +13222,7 @@ examples = [
 
 [[point]]
 id = "ni-mo-kakawarazu"
+seq = 503
 pattern = "にもかかわらず"
 forms = ["にも関わらず", "にも拘らず", "にも拘わらず"]
 jlpt = "N2"
@@ -12744,6 +13253,7 @@ examples = [
 
 [[point]]
 id = "ni-kakawarazu"
+seq = 504
 pattern = "にかかわらず"
 forms = ["に関わらず", "に拘らず", "に拘わらず", "にかかわりなく", "に関わりなく", "に関係なく", "にかんけいなく"]
 jlpt = "N2"
@@ -12772,6 +13282,7 @@ examples = [
 
 [[point]]
 id = "ni-hanshite"
+seq = 505
 pattern = "に反して"
 forms = ["に反し", "に反する", "に反した", "にはんして", "にはんする"]
 jlpt = "N2"
@@ -12799,6 +13310,7 @@ examples = [
 
 [[point]]
 id = "tatte"
+seq = 506
 pattern = "たって"
 forms = ["くたって", "ったって"]
 hover = false
@@ -12831,6 +13343,7 @@ examples = [
 
 [[point]]
 id = "to-shite-mo"
+seq = 507
 pattern = "としても"
 forms = ["だとしても", "としたって", "にしたとしても"]
 jlpt = "N2"
@@ -12860,6 +13373,7 @@ examples = [
 
 [[point]]
 id = "ni-shite-mo"
+seq = 508
 pattern = "にしても"
 forms = ["にしたって"]
 jlpt = "N2"
@@ -12890,6 +13404,7 @@ examples = [
 
 [[point]]
 id = "ni-shiro"
+seq = 509
 pattern = "にしろ"
 forms = ["にせよ"]
 jlpt = "N2"
@@ -12920,6 +13435,7 @@ examples = [
 
 [[point]]
 id = "wa-tomokaku"
+seq = 510
 pattern = "はともかく"
 forms = ["はともかくとして", "はともかくも", "ならともかく", "ならともかくとして"]
 jlpt = "N2"
@@ -12948,6 +13464,7 @@ examples = [
 
 [[point]]
 id = "wa-betsu-to-shite"
+seq = 511
 pattern = "は別として"
 forms = ["は別にして", "はべつとして", "はべつにして"]
 jlpt = "N2"
@@ -12974,6 +13491,7 @@ examples = [
 
 [[point]]
 id = "wa-mada-shimo"
+seq = 512
 pattern = "はまだしも"
 forms = ["ならまだしも", "ばまだしも", "たらまだしも", "まだしも"]
 jlpt = "N2"
@@ -12999,6 +13517,7 @@ examples = [
 
 [[point]]
 id = "mo-kamawazu"
+seq = 513
 pattern = "も構わず"
 forms = ["もかまわず", "も構わずに", "もかまわずに", "に構わず", "にかまわず"]
 jlpt = "N2"
@@ -13023,6 +13542,7 @@ examples = [
 
 [[point]]
 id = "ni-niawazu"
+seq = 514
 pattern = "に似合わず"
 forms = ["ににあわず", "に似合わない"]
 jlpt = "N2"
@@ -13044,6 +13564,7 @@ examples = [
 
 [[point]]
 id = "sore-nanoni"
+seq = 515
 pattern = "それなのに"
 forms = []
 jlpt = "N2"
@@ -13065,6 +13586,7 @@ examples = [
 
 [[point]]
 id = "shikashi-nagara"
+seq = 516
 pattern = "しかしながら"
 forms = ["しかし乍ら"]
 jlpt = "N2"
@@ -13086,6 +13608,7 @@ examples = [
 
 [[point]]
 id = "nai-koto-ni-wa"
+seq = 517
 pattern = "ないことには"
 forms = ["ないことには〜ない"]
 jlpt = "N2"
@@ -13113,6 +13636,7 @@ examples = [
 
 [[point]]
 id = "te-kara-de-nai-to"
+seq = 518
 pattern = "てからでないと"
 forms = ["でからでないと", "てからでなければ", "でからでなければ", "てからじゃないと", "でからじゃないと"]
 jlpt = "N2"
@@ -13135,6 +13659,7 @@ examples = [
 
 [[point]]
 id = "nai-kagiri"
+seq = 519
 pattern = "ない限り"
 forms = ["ないかぎり", "ない限りは", "ないかぎりは", "でない限り"]
 jlpt = "N2"
@@ -13161,6 +13686,7 @@ examples = [
 
 [[point]]
 id = "kagiri"
+seq = 520
 pattern = "限り"
 forms = ["かぎり", "限りは", "かぎりは", "限りの", "できる限り", "できるかぎり", "限りなく", "限りで"]
 jlpt = "N2"
@@ -13191,6 +13717,7 @@ examples = [
 
 [[point]]
 id = "kagiri-de-wa"
+seq = 521
 pattern = "限りでは"
 forms = ["かぎりでは"]
 jlpt = "N2"
@@ -13213,6 +13740,7 @@ examples = [
 
 [[point]]
 id = "mono-nara"
+seq = 522
 pattern = "ものなら"
 forms = ["もんなら"]
 jlpt = "N2"
@@ -13237,6 +13765,7 @@ examples = [
 
 [[point]]
 id = "you-mono-nara"
+seq = 523
 pattern = "ようものなら"
 forms = ["おうものなら", "ようもんなら", "おうもんなら"]
 jlpt = "N2"
@@ -13259,6 +13788,7 @@ examples = [
 
 [[point]]
 id = "you-de-wa"
+seq = 524
 pattern = "ようでは"
 forms = ["ようじゃ", "ようだったら", "ようなら"]
 hover = false
@@ -13288,6 +13818,7 @@ examples = [
 
 [[point]]
 id = "te-wa"
+seq = 525
 pattern = "ては"
 forms = []
 jlpt = "N2"
@@ -13316,6 +13847,7 @@ examples = [
 
 [[point]]
 id = "te-ite-wa"
+seq = 526
 pattern = "ていては"
 forms = ["でいては", "てては"]
 jlpt = "N2"
@@ -13336,6 +13868,7 @@ examples = [
 
 [[point]]
 id = "te-wa-naranai"
+seq = 527
 pattern = "てはならない"
 forms = ["ではならない", "てはなりません", "ではなりません", "てはならぬ"]
 jlpt = "N2"
@@ -13358,6 +13891,7 @@ examples = [
 
 [[point]]
 id = "ni-koshita-koto-wa-nai"
+seq = 528
 pattern = "に越したことはない"
 forms = ["にこしたことはない", "に越したことはありません", "にこしたことはありません"]
 jlpt = "N2"
@@ -13385,6 +13919,7 @@ examples = [
 
 [[point]]
 id = "ba-ii-to-iu-mono-de-wa-nai"
+seq = 529
 pattern = "ばいいというものではない"
 forms = ["ばいいというものでもない", "ばいいってもんじゃない", "ばいいというわけではない", "ばいいというもんじゃない"]
 jlpt = "N2"
@@ -13406,6 +13941,7 @@ examples = [
 
 [[point]]
 id = "to-iu-mono-de-wa-nai"
+seq = 530
 pattern = "というものではない"
 forms = ["というものでもない", "ってもんじゃない", "というもんじゃない", "というものではありません"]
 jlpt = "N2"
@@ -13431,6 +13967,7 @@ examples = [
 
 [[point]]
 id = "to-naru-to"
+seq = 531
 pattern = "となると"
 forms = ["となれば", "となったら", "ことになると", "こととなると"]
 jlpt = "N2"
@@ -13459,6 +13996,7 @@ examples = [
 
 [[point]]
 id = "ba-sumu"
+seq = 532
 pattern = "ばすむ"
 forms = ["ば済む", "ばすむことだ", "ば済むことだ", "たら済む"]
 jlpt = "N2"
@@ -13481,6 +14019,7 @@ examples = [
 
 [[point]]
 id = "zaru-wo-enai"
+seq = 533
 pattern = "ざるを得ない"
 forms = ["ざるをえない", "ざるを得ません", "ざるをえません", "せざるを得ない", "せざるをえない"]
 jlpt = "N2"
@@ -13509,6 +14048,7 @@ examples = [
 
 [[point]]
 id = "hoka-nai"
+seq = 534
 pattern = "ほかない"
 forms = ["ほかはない", "よりほかない", "よりほかはない", "外ない", "他ない", "ほかありません", "よりしかたがない", "より仕方がない", "より仕方ない", "よりしかたない", "よりない"]
 jlpt = "N2"
@@ -13536,6 +14076,7 @@ examples = [
 
 [[point]]
 id = "you-ga-nai"
+seq = 535
 pattern = "ようがない"
 forms = ["ようもない", "ようがありません", "様がない", "しようがない", "しようもない"]
 jlpt = "N2"
@@ -13561,6 +14102,7 @@ examples = [
 
 [[point]]
 id = "kko-nai"
+seq = 536
 pattern = "っこない"
 forms = ["っこありません"]
 jlpt = "N2"
@@ -13582,6 +14124,7 @@ examples = [
 
 [[point]]
 id = "kaneru"
+seq = 537
 pattern = "かねる"
 forms = ["かねます"]
 jlpt = "N2"
@@ -13608,6 +14151,7 @@ examples = [
 
 [[point]]
 id = "kanenai"
+seq = 538
 pattern = "かねない"
 forms = ["兼ねない", "かねません"]
 jlpt = "N2"
@@ -13632,6 +14176,7 @@ examples = [
 
 [[point]]
 id = "uru"
+seq = 539
 pattern = "得る"
 forms = ["うる", "得ない", "あり得る", "ありうる", "ありえる", "あり得ない", "ありえない", "起こりうる", "起こりえない"]
 jlpt = "N2"
@@ -13660,6 +14205,7 @@ examples = [
 
 [[point]]
 id = "osore-ga-aru"
+seq = 540
 pattern = "おそれがある"
 forms = ["恐れがある", "おそれもある", "恐れもある", "おそれがあります", "恐れがあります"]
 jlpt = "N2"
@@ -13686,6 +14232,7 @@ examples = [
 
 [[point]]
 id = "nai-to-mo-kagiranai"
+seq = 541
 pattern = "ないとも限らない"
 forms = ["ないともかぎらない", "ないとも限りません"]
 jlpt = "N2"
@@ -13708,6 +14255,7 @@ examples = [
 
 [[point]]
 id = "naku-wa-nai"
+seq = 542
 pattern = "なくはない"
 forms = ["なくもない", "なくはありません", "なくもありません"]
 jlpt = "N2"
@@ -13735,6 +14283,7 @@ examples = [
 
 [[point]]
 id = "te-wa-irarenai"
+seq = 543
 pattern = "てはいられない"
 forms = ["ではいられない", "てばかりはいられない", "てばかりもいられない", "でばかりはいられない", "てはいられません"]
 jlpt = "N2"
@@ -13761,6 +14310,7 @@ examples = [
 
 [[point]]
 id = "te-mo-yamu-wo-enai"
+seq = 544
 pattern = "てもやむを得ない"
 forms = ["でもやむを得ない", "てもやむをえない", "でもやむをえない", "やむを得ない", "やむをえない", "やむを得ず", "やむをえず"]
 jlpt = "N2"
@@ -13788,6 +14338,7 @@ examples = [
 
 [[point]]
 id = "te-tamaranai"
+seq = 545
 pattern = "てたまらない"
 forms = ["でたまらない", "てたまりません", "くてたまらない"]
 jlpt = "N2"
@@ -13816,6 +14367,7 @@ examples = [
 
 [[point]]
 id = "te-naranai"
+seq = 546
 pattern = "てならない"
 forms = ["でならない", "てなりません", "でなりません"]
 jlpt = "N2"
@@ -13843,6 +14395,7 @@ examples = [
 
 [[point]]
 id = "de-wa-sumanai"
+seq = 547
 pattern = "では済まされない"
 forms = ["ではすまされない", "では済まない", "ではすまない", "じゃ済まない", "じゃすまない", "じゃ済まされない", "てすむことではない", "て済むことではない", "ですむことではない"]
 jlpt = "N2"
@@ -13869,6 +14422,7 @@ examples = [
 
 [[point]]
 id = "ni-suginai"
+seq = 548
 pattern = "にすぎない"
 forms = ["に過ぎない", "にすぎません", "に過ぎません", "にすぎず", "に過ぎず"]
 jlpt = "N2"
@@ -13896,6 +14450,7 @@ examples = [
 
 [[point]]
 id = "ni-hoka-naranai"
+seq = 549
 pattern = "にほかならない"
 forms = ["に他ならない", "にほかなりません", "に他なりません", "ほかならぬ", "他ならぬ"]
 jlpt = "N2"
@@ -13923,6 +14478,7 @@ examples = [
 
 [[point]]
 id = "de-shika-nai"
+seq = 550
 pattern = "でしかない"
 forms = ["でしかありません"]
 jlpt = "N2"
@@ -13944,6 +14500,7 @@ examples = [
 
 [[point]]
 id = "to-iu-mono-da"
+seq = 551
 pattern = "というものだ"
 forms = ["というものです", "ってもんだ", "というもんだ", "というものでしょう", "というものだろう"]
 jlpt = "N2"
@@ -13968,6 +14525,7 @@ examples = [
 
 [[point]]
 id = "ni-soui-nai"
+seq = 552
 pattern = "に相違ない"
 forms = ["にそういない", "に相違ありません", "にそういありません"]
 jlpt = "N2"
@@ -13992,6 +14550,7 @@ examples = [
 
 [[point]]
 id = "touzen-da"
+seq = 553
 pattern = "て当然だ"
 forms = ["で当然だ", "のも当然だ", "も当然だ", "て当然", "のは当然だ", "て当たり前だ", "のも当たり前だ"]
 jlpt = "N2"
@@ -14019,6 +14578,7 @@ examples = [
 
 [[point]]
 id = "no-mo-mottomo-da"
+seq = 554
 pattern = "のももっともだ"
 forms = ["のはもっともだ", "のももっともです", "ももっともだ"]
 jlpt = "N2"
@@ -14041,6 +14601,7 @@ examples = [
 
 [[point]]
 id = "mono-ga-aru"
+seq = 555
 pattern = "ものがある"
 forms = ["ものがあります"]
 jlpt = "N2"
@@ -14067,6 +14628,7 @@ examples = [
 
 [[point]]
 id = "ni-atai-suru"
+seq = 556
 pattern = "に値する"
 forms = ["に値しない", "にあたいする", "にあたいしない"]
 jlpt = "N2"
@@ -14092,6 +14654,7 @@ examples = [
 
 [[point]]
 id = "to-itte-mo-kagon-de-wa-nai"
+seq = 557
 pattern = "と言っても過言ではない"
 forms = ["といっても過言ではない", "と言っても過言ではありません", "といっても過言ではありません"]
 jlpt = "N2"
@@ -14113,6 +14676,7 @@ examples = [
 
 [[point]]
 id = "to-shika-iiyou-ga-nai"
+seq = 558
 pattern = "としか言いようがない"
 forms = ["としかいいようがない", "としか言えない", "としかいえない"]
 jlpt = "N2"
@@ -14134,6 +14698,7 @@ examples = [
 
 [[point]]
 id = "to-kangaerareru"
+seq = 559
 pattern = "と考えられる"
 forms = ["と考えられます"]
 jlpt = "N2"
@@ -14156,6 +14721,7 @@ examples = [
 
 [[point]]
 id = "no-de-wa-nai-darou-ka"
+seq = 560
 pattern = "のではないだろうか"
 forms = ["んじゃないだろうか", "のではないでしょうか", "んじゃないでしょうか", "ではあるまいか", "のではあるまいか"]
 jlpt = "N2"
@@ -14181,6 +14747,7 @@ examples = [
 
 [[point]]
 id = "mai"
+seq = 561
 pattern = "まい"
 forms = ["まいか", "まいとして", "まいと", "まいとする"]
 jlpt = "N2"
@@ -14212,6 +14779,7 @@ examples = [
 
 [[point]]
 id = "mono-ka"
+seq = 562
 pattern = "ものか"
 forms = ["もんか", "ものですか", "もんですか"]
 jlpt = "N2"
@@ -14239,6 +14807,7 @@ examples = [
 
 [[point]]
 id = "ka-no-you-da"
+seq = 563
 pattern = "かのようだ"
 forms = ["かのように", "かのような", "かのよう", "かのようです"]
 jlpt = "N2"
@@ -14263,6 +14832,7 @@ examples = [
 
 [[point]]
 id = "dake-mashi"
+seq = 564
 pattern = "だけましだ"
 forms = ["だけまし", "だけましです"]
 jlpt = "N2"
@@ -14288,6 +14858,7 @@ examples = [
 
 [[point]]
 id = "dake-no-koto-da"
+seq = 565
 pattern = "だけのことだ"
 forms = ["だけのことです", "だけのことさ", "だけのこと"]
 jlpt = "N2"
@@ -14310,6 +14881,7 @@ examples = [
 
 [[point]]
 id = "ta-mono-de-wa-nai"
+seq = 566
 pattern = "たものではない"
 forms = ["たものじゃない", "たもんじゃない", "たものではありません", "だものではない"]
 jlpt = "N2"
@@ -14333,6 +14905,7 @@ examples = [
 
 [[point]]
 id = "ka-to-omou-to"
+seq = 567
 pattern = "かと思うと"
 forms = ["かと思ったら", "かと思えば", "と思ったら", "かとおもうと", "かとおもったら"]
 jlpt = "N2"
@@ -14359,6 +14932,7 @@ examples = [
 
 [[point]]
 id = "ka-nai-ka-no-uchi-ni"
+seq = 568
 pattern = "か〜ないかのうちに"
 forms = ["かないかのうちに", "ないかのうちに", "か〜ないかのうち"]
 jlpt = "N2"
@@ -14381,6 +14955,7 @@ examples = [
 
 [[point]]
 id = "ageku"
+seq = 569
 pattern = "あげく"
 forms = ["挙句", "挙げ句", "あげくに", "挙句に", "挙げ句に", "あげくの果てに", "挙げ句の果てに", "挙句の果てに"]
 jlpt = "N2"
@@ -14404,6 +14979,7 @@ examples = [
 
 [[point]]
 id = "ori-ni"
+seq = 570
 pattern = "折に"
 forms = ["おりに", "折りに", "折には", "おりには", "の折"]
 jlpt = "N2"
@@ -14427,6 +15003,7 @@ examples = [
 
 [[point]]
 id = "ni-saishite"
+seq = 571
 pattern = "に際して"
 forms = ["に際し", "にさいして", "にさいし", "に際しては", "に際しての"]
 jlpt = "N2"
@@ -14450,6 +15027,7 @@ examples = [
 
 [[point]]
 id = "ni-atatte"
+seq = 572
 pattern = "にあたって"
 forms = ["にあたり", "に当たって", "に当たり", "にあたっては", "に当たっては", "にあたっての"]
 jlpt = "N2"
@@ -14473,6 +15051,7 @@ examples = [
 
 [[point]]
 id = "ni-sakidatte"
+seq = 573
 pattern = "に先立って"
 forms = ["に先立ち", "にさきだって", "にさきだち", "に先立つ", "に先立ちまして"]
 jlpt = "N2"
@@ -14495,6 +15074,7 @@ examples = [
 
 [[point]]
 id = "shitagatte"
+seq = 574
 pattern = "したがって"
 forms = ["従って"]
 jlpt = "N2"
@@ -14516,6 +15096,7 @@ examples = [
 
 [[point]]
 id = "mo-shinai"
+seq = 575
 pattern = "もしない"
 forms = ["もしなかった", "もしません", "もせず", "もしないで"]
 hover = false
@@ -14540,6 +15121,7 @@ examples = [
 
 [[point]]
 id = "n-datta"
+seq = 576
 pattern = "んだった"
 forms = ["のだった", "るんだった"]
 hover = false
@@ -14564,6 +15146,7 @@ examples = [
 
 [[point]]
 id = "omoi-wo-suru"
+seq = 577
 pattern = "思いをする"
 forms = ["思いをした", "思いをしている", "おもいをする", "思いをさせる", "思いをさせた"]
 jlpt = "N2"
@@ -14590,6 +15173,7 @@ examples = [
 
 [[point]]
 id = "ni-sakigakete"
+seq = 578
 pattern = "に先駆けて"
 forms = ["に先駆け", "にさきがけて", "にさきがけ"]
 jlpt = "N1"
@@ -14612,6 +15196,7 @@ examples = [
 
 [[point]]
 id = "tokoro-ni"
+seq = 579
 pattern = "ところに"
 forms = ["ところへ", "ところを"]
 jlpt = "N2"
@@ -14638,6 +15223,7 @@ examples = [
 
 [[point]]
 id = "te-ita-tokoro-da"
+seq = 580
 pattern = "ていたところだ"
 forms = ["でいたところだ", "ていたところです", "でいたところです", "ていたところ"]
 jlpt = "N2"
@@ -14660,6 +15246,7 @@ examples = [
 
 [[point]]
 id = "tsutsu-aru"
+seq = 581
 pattern = "つつある"
 forms = ["つつあります", "つつあった"]
 jlpt = "N2"
@@ -14684,6 +15271,7 @@ examples = [
 
 [[point]]
 id = "gake-ni"
+seq = 582
 pattern = "がけに"
 forms = ["帰りがけに", "出がけに", "行きがけに", "通りがけに"]
 jlpt = "N2"
@@ -14706,6 +15294,7 @@ examples = [
 
 [[point]]
 id = "ni-tsuke"
+seq = 583
 pattern = "につけ"
 forms = ["につけて", "につけても", "何かにつけ", "何かにつけて"]
 jlpt = "N2"
@@ -14730,6 +15319,7 @@ examples = [
 
 [[point]]
 id = "ni-tomonatte"
+seq = 584
 pattern = "に伴って"
 forms = ["に伴い", "に伴う", "にともなって", "にともない", "にともなう"]
 jlpt = "N2"
@@ -14753,6 +15343,7 @@ examples = [
 
 [[point]]
 id = "ni-shitagatte"
+seq = 585
 pattern = "にしたがって"
 forms = ["に従って", "にしたがい", "に従い", "に従う"]
 jlpt = "N2"
@@ -14776,6 +15367,7 @@ examples = [
 
 [[point]]
 id = "kekka"
+seq = 586
 pattern = "結果"
 forms = ["た結果", "の結果", "結果として"]
 jlpt = "N2"
@@ -14797,6 +15389,7 @@ examples = [
 
 [[point]]
 id = "tochuu-de"
+seq = 587
 pattern = "途中で"
 forms = ["途中に", "とちゅうで", "とちゅうに", "の途中で"]
 jlpt = "N2"
@@ -14821,6 +15414,7 @@ examples = [
 
 [[point]]
 id = "naka-wo"
+seq = 588
 pattern = "中を"
 forms = ["の中を", "なかを", "のなかを"]
 jlpt = "N2"
@@ -14846,6 +15440,7 @@ examples = [
 
 [[point]]
 id = "ittan"
+seq = 589
 pattern = "いったん"
 forms = ["一旦"]
 jlpt = "N2"
@@ -14871,6 +15466,7 @@ examples = [
 
 [[point]]
 id = "wo-moto-ni"
+seq = 590
 pattern = "をもとに"
 forms = ["をもとにして", "を基に", "を元に", "を基にして", "を元にして", "をもとにした", "を基にした"]
 jlpt = "N2"
@@ -14895,6 +15491,7 @@ examples = [
 
 [[point]]
 id = "wo-megutte"
+seq = 591
 pattern = "をめぐって"
 forms = ["を巡って", "をめぐる", "を巡る", "をめぐっての", "をめぐり", "を巡り"]
 jlpt = "N2"
@@ -14917,6 +15514,7 @@ examples = [
 
 [[point]]
 id = "wo-towazu"
+seq = 592
 pattern = "を問わず"
 forms = ["をとわず", "は問わず", "も問わず"]
 jlpt = "N2"
@@ -14939,6 +15537,7 @@ examples = [
 
 [[point]]
 id = "wo-keiki-ni"
+seq = 593
 pattern = "を契機に"
 forms = ["を契機として", "を契機にして", "をけいきに", "をけいきとして", "をけいきにして"]
 jlpt = "N2"
@@ -14961,6 +15560,7 @@ examples = [
 
 [[point]]
 id = "wo-nozoite"
+seq = 594
 pattern = "を除いて"
 forms = ["をのぞいて", "を除き", "を除けば", "を除いては", "をのぞけば", "を除く"]
 jlpt = "N2"
@@ -14983,6 +15583,7 @@ examples = [
 
 [[point]]
 id = "wo-kanete"
+seq = 595
 pattern = "をかねて"
 forms = ["を兼ねて", "を兼ねた", "をかねた"]
 jlpt = "N1"
@@ -15005,6 +15606,7 @@ examples = [
 
 [[point]]
 id = "wo-komete"
+seq = 596
 pattern = "を込めて"
 forms = ["をこめて", "を込めた", "をこめた", "のこもった", "の込もった"]
 jlpt = "N2"
@@ -15027,6 +15629,7 @@ examples = [
 
 [[point]]
 id = "wo-tsuujite"
+seq = 597
 pattern = "を通じて"
 forms = ["を通じ", "をつうじて", "を通じた"]
 jlpt = "N2"
@@ -15051,6 +15654,7 @@ examples = [
 
 [[point]]
 id = "wo-tayori-ni"
+seq = 598
 pattern = "を頼りに"
 forms = ["をたよりに", "を頼りにして", "をたよりにして", "を頼りとして", "をたよりとして"]
 jlpt = "N2"
@@ -15073,6 +15677,7 @@ examples = [
 
 [[point]]
 id = "ni-kuwaete"
+seq = 599
 pattern = "に加えて"
 forms = ["に加え", "にくわえて", "にくわえ"]
 jlpt = "N2"
@@ -15096,6 +15701,7 @@ examples = [
 
 [[point]]
 id = "ni-wattate"
+seq = 600
 pattern = "にわたって"
 forms = ["にわたり", "にわたる", "に渡って", "に亘って", "にわたった", "に渡る"]
 jlpt = "N2"
@@ -15120,6 +15726,7 @@ examples = [
 
 [[point]]
 id = "ni-kotaete"
+seq = 601
 pattern = "に応えて"
 forms = ["に応え", "に応える", "にこたえて", "にこたえる"]
 jlpt = "N2"
@@ -15142,6 +15749,7 @@ examples = [
 
 [[point]]
 id = "ni-oujite"
+seq = 602
 pattern = "に応じて"
 forms = ["に応じ", "に応じた", "におうじて", "におうじた"]
 jlpt = "N2"
@@ -15164,6 +15772,7 @@ examples = [
 
 [[point]]
 id = "ni-sotte"
+seq = 603
 pattern = "に沿って"
 forms = ["に沿い", "に沿った", "にそって", "に沿う", "にそった"]
 jlpt = "N2"
@@ -15188,6 +15797,7 @@ examples = [
 
 [[point]]
 id = "ni-mukatte"
+seq = 604
 pattern = "に向かって"
 forms = ["に向かい", "に向かう", "にむかって", "にむかい"]
 jlpt = "N2"
@@ -15212,6 +15822,7 @@ examples = [
 
 [[point]]
 id = "no-moto-de"
+seq = 605
 pattern = "のもとで"
 forms = ["のもとに", "の元で", "の元に"]
 jlpt = "N2"
@@ -15235,6 +15846,7 @@ examples = [
 
 [[point]]
 id = "ni-kakawaru"
+seq = 606
 pattern = "にかかわる"
 forms = ["に関わる", "に関わって", "にかかわって", "に関わり", "にかかわり"]
 jlpt = "N2"
@@ -15256,6 +15868,7 @@ examples = [
 
 [[point]]
 id = "ni-tsuki"
+seq = 607
 pattern = "につき"
 forms = ["に付き"]
 jlpt = "N2"
@@ -15279,6 +15892,7 @@ examples = [
 
 [[point]]
 id = "ni-te"
+seq = 608
 pattern = "にて"
 forms = []
 jlpt = "N2"
@@ -15301,6 +15915,7 @@ examples = [
 
 [[point]]
 id = "ni-makaseru"
+seq = 609
 pattern = "に任せる"
 forms = ["に任せて", "にまかせる", "にまかせて", "を任せる"]
 jlpt = "N2"
@@ -15324,6 +15939,7 @@ examples = [
 
 [[point]]
 id = "ue-ni"
+seq = 610
 pattern = "上に"
 forms = ["うえに"]
 jlpt = "N2"
@@ -15349,6 +15965,7 @@ examples = [
 
 [[point]]
 id = "sono-ue"
+seq = 611
 pattern = "その上"
 forms = ["そのうえ"]
 jlpt = "N2"
@@ -15370,6 +15987,7 @@ examples = [
 
 [[point]]
 id = "omake-ni"
+seq = 612
 pattern = "おまけに"
 forms = []
 jlpt = "N2"
@@ -15392,6 +16010,7 @@ examples = [
 
 [[point]]
 id = "shikamo"
+seq = 613
 pattern = "しかも"
 forms = ["然も"]
 jlpt = "N2"
@@ -15415,6 +16034,7 @@ examples = [
 
 [[point]]
 id = "nomi-narazu"
+seq = 614
 pattern = "のみならず"
 forms = ["のみでなく", "のみではなく"]
 jlpt = "N2"
@@ -15436,6 +16056,7 @@ examples = [
 
 [[point]]
 id = "ni-kagirazu"
+seq = 615
 pattern = "に限らず"
 forms = ["にかぎらず", "に限らない", "にかぎらない"]
 jlpt = "N2"
@@ -15458,6 +16079,7 @@ examples = [
 
 [[point]]
 id = "ni-kagitte"
+seq = 616
 pattern = "に限って"
 forms = ["にかぎって", "に限っては", "にかぎっては"]
 jlpt = "N2"
@@ -15481,6 +16103,7 @@ examples = [
 
 [[point]]
 id = "dake-wa"
+seq = 617
 pattern = "だけは"
 forms = []
 jlpt = "N2"
@@ -15504,6 +16127,7 @@ examples = [
 
 [[point]]
 id = "ijou-ni"
+seq = 618
 pattern = "以上に"
 forms = ["以上の"]
 jlpt = "N2"
@@ -15526,6 +16150,7 @@ examples = [
 
 [[point]]
 id = "yara"
+seq = 619
 pattern = "やら"
 forms = ["やら〜やら"]
 jlpt = "N2"
@@ -15550,6 +16175,7 @@ examples = [
 
 [[point]]
 id = "to-itta"
+seq = 620
 pattern = "といった"
 forms = ["といったような", "といった様な"]
 jlpt = "N2"
@@ -15573,6 +16199,7 @@ examples = [
 
 [[point]]
 id = "ka-nanika"
+seq = 621
 pattern = "か何か"
 forms = ["かなにか", "かなんか"]
 jlpt = "N2"
@@ -15595,6 +16222,7 @@ examples = [
 
 [[point]]
 id = "oyobi"
+seq = 622
 pattern = "および"
 forms = ["及び"]
 jlpt = "N2"
@@ -15617,6 +16245,7 @@ examples = [
 
 [[point]]
 id = "mo-mata"
+seq = 623
 pattern = "もまた"
 forms = ["も又", "又〜も"]
 jlpt = "N2"
@@ -15640,6 +16269,7 @@ examples = [
 
 [[point]]
 id = "mo-nara-mo"
+seq = 624
 pattern = "も〜なら〜も"
 forms = []
 jlpt = "N2"
@@ -15662,6 +16292,7 @@ examples = [
 
 [[point]]
 id = "nao"
+seq = 625
 pattern = "なお"
 forms = ["尚", "今なお", "今もなお", "なお、"]
 jlpt = "N2"
@@ -15685,6 +16316,7 @@ examples = [
 
 [[point]]
 id = "ta-bun-dake"
+seq = 626
 pattern = "た分だけ"
 forms = ["分だけ", "たぶんだけ", "だ分だけ"]
 jlpt = "N2"
@@ -15708,6 +16340,7 @@ examples = [
 
 [[point]]
 id = "reru-dake"
+seq = 627
 pattern = "れるだけ"
 forms = ["られるだけ"]
 jlpt = "N2"
@@ -15730,6 +16363,7 @@ examples = [
 
 [[point]]
 id = "ikinari"
+seq = 628
 pattern = "いきなり"
 forms = []
 jlpt = "N2"
@@ -15752,6 +16386,7 @@ examples = [
 
 [[point]]
 id = "itsu-no-ma-ni-ka"
+seq = 629
 pattern = "いつの間にか"
 forms = ["いつのまにか", "いつの間に", "いつのまに"]
 jlpt = "N2"
@@ -15773,6 +16408,7 @@ examples = [
 
 [[point]]
 id = "iyoiyo"
+seq = 630
 pattern = "いよいよ"
 forms = ["愈々"]
 jlpt = "N2"
@@ -15797,6 +16433,7 @@ examples = [
 
 [[point]]
 id = "iwayuru"
+seq = 631
 pattern = "いわゆる"
 forms = ["所謂"]
 jlpt = "N2"
@@ -15819,6 +16456,7 @@ examples = [
 
 [[point]]
 id = "ooyoso"
+seq = 632
 pattern = "おおよそ"
 forms = ["およそ", "凡そ", "大凡"]
 jlpt = "N2"
@@ -15841,6 +16479,7 @@ examples = [
 
 [[point]]
 id = "osoraku"
+seq = 633
 pattern = "おそらく"
 forms = ["恐らく"]
 jlpt = "N2"
@@ -15863,6 +16502,7 @@ examples = [
 
 [[point]]
 id = "sasuga"
+seq = 634
 pattern = "さすが"
 forms = ["流石", "さすがに", "さすがの"]
 jlpt = "N2"
@@ -15886,6 +16526,7 @@ examples = [
 
 [[point]]
 id = "sou-ieba"
+seq = 635
 pattern = "そういえば"
 forms = ["そう言えば"]
 jlpt = "N2"
@@ -15909,6 +16550,7 @@ examples = [
 
 [[point]]
 id = "sore-nara"
+seq = 636
 pattern = "それなら"
 forms = ["それだったら"]
 jlpt = "N2"
@@ -15932,6 +16574,7 @@ examples = [
 
 [[point]]
 id = "sore-ni-shite-mo"
+seq = 637
 pattern = "それにしても"
 forms = []
 jlpt = "N2"
@@ -15954,6 +16597,7 @@ examples = [
 
 [[point]]
 id = "tachimachi"
+seq = 638
 pattern = "たちまち"
 forms = ["忽ち"]
 jlpt = "N2"
@@ -15976,6 +16620,7 @@ examples = [
 
 [[point]]
 id = "tatta"
+seq = 639
 pattern = "たった"
 forms = ["たったの"]
 jlpt = "N2"
@@ -15997,6 +16642,7 @@ examples = [
 
 [[point]]
 id = "tokku-ni"
+seq = 640
 pattern = "とっくに"
 forms = ["とっくの昔に"]
 jlpt = "N2"
@@ -16017,6 +16663,7 @@ examples = [
 
 [[point]]
 id = "douse"
+seq = 641
 pattern = "どうせ"
 forms = []
 jlpt = "N2"
@@ -16040,6 +16687,7 @@ examples = [
 
 [[point]]
 id = "dou-yara"
+seq = 642
 pattern = "どうやら"
 forms = []
 jlpt = "N2"
@@ -16062,6 +16710,7 @@ examples = [
 
 [[point]]
 id = "nani-yara"
+seq = 643
 pattern = "何やら"
 forms = ["なにやら"]
 jlpt = "N2"
@@ -16083,6 +16732,7 @@ examples = [
 
 [[point]]
 id = "yagate"
+seq = 644
 pattern = "やがて"
 forms = []
 jlpt = "N2"
@@ -16104,6 +16754,7 @@ examples = [
 
 [[point]]
 id = "shidai-ni"
+seq = 645
 pattern = "次第に"
 forms = ["しだいに"]
 jlpt = "N2"
@@ -16125,6 +16776,7 @@ examples = [
 
 [[point]]
 id = "ichiou"
+seq = 646
 pattern = "一応"
 forms = ["いちおう"]
 jlpt = "N2"
@@ -16147,6 +16799,7 @@ examples = [
 
 [[point]]
 id = "man-ga-ichi"
+seq = 647
 pattern = "万が一"
 forms = ["万一", "まんがいち", "まんいち"]
 jlpt = "N2"
@@ -16169,6 +16822,7 @@ examples = [
 
 [[point]]
 id = "wazuka-ni"
+seq = 648
 pattern = "僅かに"
 forms = ["わずかに", "わずか", "僅か", "わずかな", "僅かな"]
 jlpt = "N2"
@@ -16192,6 +16846,7 @@ examples = [
 
 [[point]]
 id = "saiwai"
+seq = 649
 pattern = "幸い"
 forms = ["さいわい", "幸いなことに", "幸いにも", "幸いに"]
 jlpt = "N2"
@@ -16213,6 +16868,7 @@ examples = [
 
 [[point]]
 id = "tashika-ni"
+seq = 650
 pattern = "確かに"
 forms = ["たしかに"]
 jlpt = "N2"
@@ -16236,6 +16892,7 @@ examples = [
 
 [[point]]
 id = "seizei"
+seq = 651
 pattern = "せいぜい"
 forms = ["精々"]
 jlpt = "N2"
@@ -16259,6 +16916,7 @@ examples = [
 
 [[point]]
 id = "you-suru-ni"
+seq = 652
 pattern = "要するに"
 forms = ["ようするに"]
 jlpt = "N2"
@@ -16280,6 +16938,7 @@ examples = [
 
 [[point]]
 id = "gyaku-ni"
+seq = 653
 pattern = "逆に"
 forms = ["ぎゃくに"]
 jlpt = "N2"
@@ -16304,6 +16963,7 @@ examples = [
 
 [[point]]
 id = "sara-ni"
+seq = 654
 pattern = "更に"
 forms = ["さらに"]
 jlpt = "N2"
@@ -16327,6 +16987,7 @@ examples = [
 
 [[point]]
 id = "roku-ni"
+seq = 655
 pattern = "ろくに"
 forms = ["碌に", "陸に"]
 jlpt = "N2"
@@ -16350,6 +17011,7 @@ examples = [
 
 [[point]]
 id = "nani-yori"
+seq = 656
 pattern = "何より"
 forms = ["なにより", "何よりも", "なによりも"]
 jlpt = "N2"
@@ -16373,6 +17035,7 @@ examples = [
 
 [[point]]
 id = "nan-to-itte-mo"
+seq = 657
 pattern = "何といっても"
 forms = ["なんといっても", "何と言っても", "なんと言っても"]
 jlpt = "N2"
@@ -16396,6 +17059,7 @@ examples = [
 
 [[point]]
 id = "nani-kara-nani-made"
+seq = 658
 pattern = "何から何まで"
 forms = ["なにからなにまで"]
 jlpt = "N2"
@@ -16417,6 +17081,7 @@ examples = [
 
 [[point]]
 id = "ikkou-ni"
+seq = 659
 pattern = "一向に"
 forms = ["いっこうに"]
 jlpt = "N2"
@@ -16438,6 +17103,7 @@ examples = [
 
 [[point]]
 id = "ima-ni-mo"
+seq = 660
 pattern = "今にも"
 forms = ["いまにも"]
 jlpt = "N2"
@@ -16459,6 +17125,7 @@ examples = [
 
 [[point]]
 id = "ima-de-koso"
+seq = 661
 pattern = "今でこそ"
 forms = ["いまでこそ"]
 jlpt = "N2"
@@ -16479,6 +17146,7 @@ examples = [
 
 [[point]]
 id = "atto-iu-ma"
+seq = 662
 pattern = "あっという間"
 forms = ["あっという間に", "あっというまに", "あっという間だ"]
 jlpt = "N2"
@@ -16500,6 +17168,7 @@ examples = [
 
 [[point]]
 id = "miru-kara-ni"
+seq = 663
 pattern = "見るからに"
 forms = ["みるからに"]
 jlpt = "N2"
@@ -16521,6 +17190,7 @@ examples = [
 
 [[point]]
 id = "omou-you-ni"
+seq = 664
 pattern = "思うように"
 forms = ["思ったように", "思い通りに", "思いどおりに"]
 jlpt = "N2"
@@ -16542,6 +17212,7 @@ examples = [
 
 [[point]]
 id = "keikou-ga-aru"
+seq = 665
 pattern = "傾向がある"
 forms = ["傾向にある", "傾向があります", "傾向にあります"]
 jlpt = "N2"
@@ -16563,6 +17234,7 @@ examples = [
 
 [[point]]
 id = "ga-ki-ni-naru"
+seq = 666
 pattern = "が気になる"
 forms = ["気になる", "が気になります"]
 jlpt = "N2"
@@ -16586,6 +17258,7 @@ examples = [
 
 [[point]]
 id = "ni-ki-wo-tsukeru"
+seq = 667
 pattern = "に気をつける"
 forms = ["に気を付ける", "気をつけて", "気を付けて", "に気をつけて"]
 jlpt = "N2"
@@ -16609,6 +17282,7 @@ examples = [
 
 [[point]]
 id = "nuku"
+seq = 668
 pattern = "抜く"
 forms = ["ぬく"]
 jlpt = "N2"
@@ -16634,6 +17308,7 @@ examples = [
 
 [[point]]
 id = "tsukusu"
+seq = 669
 pattern = "尽くす"
 forms = ["つくす"]
 jlpt = "N2"
@@ -16657,6 +17332,7 @@ examples = [
 
 [[point]]
 id = "nuki-de"
+seq = 670
 pattern = "抜きで"
 forms = ["ぬきで", "抜きに", "ぬきに", "抜きにして", "ぬきにして", "抜きには", "抜きでは", "抜きの"]
 jlpt = "N2"
@@ -16680,6 +17356,7 @@ examples = [
 
 [[point]]
 id = "buru"
+seq = 671
 pattern = "ぶる"
 forms = []
 jlpt = "N2"
@@ -16703,6 +17380,7 @@ examples = [
 
 [[point]]
 id = "me-adjective"
+seq = 672
 pattern = "め"
 forms = ["めに", "めの"]
 jlpt = "N2"
@@ -16728,6 +17406,7 @@ examples = [
 
 [[point]]
 id = "pocchi"
+seq = 673
 pattern = "ぽっち"
 forms = ["っぽっち", "ぽっちも"]
 jlpt = "N2"
@@ -16750,6 +17429,7 @@ examples = [
 
 [[point]]
 id = "kokochi"
+seq = 674
 pattern = "心地"
 forms = ["ここち", "ごこち", "心地よい", "心地良い", "心地いい"]
 jlpt = "N2"
@@ -16773,6 +17453,7 @@ examples = [
 
 [[point]]
 id = "zumi"
+seq = 675
 pattern = "済み"
 forms = ["ずみ", "済"]
 jlpt = "N2"
@@ -16796,6 +17477,7 @@ examples = [
 
 [[point]]
 id = "zaru"
+seq = 676
 pattern = "ざる"
 forms = []
 jlpt = "N2"
@@ -16819,6 +17501,7 @@ examples = [
 
 [[point]]
 id = "jou"
+seq = 677
 pattern = "上"
 forms = []
 jlpt = "N2"
@@ -16842,6 +17525,7 @@ examples = [
 
 [[point]]
 id = "te-koso"
+seq = 678
 pattern = "てこそ"
 forms = ["でこそ"]
 jlpt = "N2"
@@ -16864,6 +17548,7 @@ examples = [
 
 [[point]]
 id = "te-de-mo"
+seq = 679
 pattern = "てでも"
 forms = ["ででも"]
 jlpt = "N2"
@@ -16886,6 +17571,7 @@ examples = [
 
 [[point]]
 id = "te-made"
+seq = 680
 pattern = "てまで"
 forms = ["でまで", "までして"]
 jlpt = "N2"
@@ -16908,6 +17594,7 @@ examples = [
 
 [[point]]
 id = "you-de-wa-nai-ka"
+seq = 681
 pattern = "ようではないか"
 forms = ["うではないか", "ようじゃないか", "うじゃないか", "ようではありませんか", "うではありませんか"]
 jlpt = "N2"
@@ -16931,6 +17618,7 @@ examples = [
 
 [[point]]
 id = "te-miro"
+seq = 682
 pattern = "てみろ"
 forms = ["でみろ"]
 jlpt = "N2"
@@ -16954,6 +17642,7 @@ examples = [
 
 [[point]]
 id = "yoku-mo"
+seq = 683
 pattern = "よくも"
 forms = ["よくもまあ"]
 jlpt = "N2"
@@ -16977,6 +17666,7 @@ examples = [
 
 [[point]]
 id = "o-negau"
+seq = 684
 pattern = "お〜願う"
 forms = ["ご〜願う", "お〜願います", "ご〜願います", "お〜願えますか", "ご〜願えますか"]
 jlpt = "N2"
@@ -17001,6 +17691,7 @@ examples = [
 
 [[point]]
 id = "ba-to-omou"
+seq = 685
 pattern = "ばと思います"
 forms = ["ばと思う", "ばと思っています", "ばと思っている", "ばと存じます", "たらと思います", "たらと思う"]
 jlpt = "N2"
@@ -17025,6 +17716,7 @@ examples = [
 
 [[point]]
 id = "tsumori-de"
+seq = 686
 pattern = "つもりで"
 forms = ["たつもり", "たつもりで", "つもりでいる", "つもりでいた", "たつもりはない"]
 jlpt = "N2"
@@ -17048,6 +17740,7 @@ examples = [
 
 [[point]]
 id = "ato-quantity"
+seq = 687
 pattern = "あと"
 forms = ["後"]
 jlpt = "N2"
@@ -17073,6 +17766,7 @@ examples = [
 
 [[point]]
 id = "koto-naku"
+seq = 688
 pattern = "ことなく"
 forms = ["こともなく", "ことなしに"]
 jlpt = "N2"
@@ -17096,6 +17790,7 @@ examples = [
 
 [[point]]
 id = "koto-ni-wa-naranai"
+seq = 689
 pattern = "ことにはならない"
 forms = ["ことにはなりません", "ということにはならない"]
 jlpt = "N2"
@@ -17118,6 +17813,7 @@ examples = [
 
 [[point]]
 id = "koto-wa-ga"
+seq = 690
 pattern = "ことは〜が"
 forms = ["ことは〜けど"]
 jlpt = "N2"
@@ -17141,6 +17837,7 @@ examples = [
 
 [[point]]
 id = "tamae"
+seq = 691
 pattern = "たまえ"
 forms = []
 jlpt = "N2"
@@ -17162,6 +17859,7 @@ examples = [
 
 [[point]]
 id = "dokoro-de-wa-nai"
+seq = 692
 pattern = "どころではない"
 forms = ["どころじゃない", "どころではありません", "どころじゃありません"]
 jlpt = "N2"
@@ -17185,6 +17883,7 @@ examples = [
 
 [[point]]
 id = "to-shite-wa"
+seq = 693
 pattern = "としては"
 forms = ["としましては", "といたしましては"]
 jlpt = "N2"
@@ -17207,6 +17906,7 @@ examples = [
 
 [[point]]
 id = "uchi-ni-hairanai"
+seq = 694
 pattern = "うちに入らない"
 forms = ["うちに入りません", "うちには入らない", "内に入らない", "うちにはいらない"]
 jlpt = "N2"
@@ -17228,6 +17928,7 @@ examples = [
 
 [[point]]
 id = "kara-naru"
+seq = 695
 pattern = "からなる"
 forms = ["から成る", "からなっている", "から成っている"]
 jlpt = "N2"
@@ -17249,6 +17950,7 @@ examples = [
 
 [[point]]
 id = "to-ka-de"
+seq = 696
 pattern = "とかで"
 forms = []
 jlpt = "N2"
@@ -17271,6 +17973,7 @@ examples = [
 
 [[point]]
 id = "to-iu-ka"
+seq = 697
 pattern = "というか"
 forms = ["っていうか", "ていうか", "と言うか", "というか〜というか"]
 jlpt = "N2"
@@ -17293,6 +17996,7 @@ examples = [
 
 [[point]]
 id = "temae"
+seq = 698
 pattern = "手前"
 forms = ["てまえ", "の手前", "た手前"]
 jlpt = "N2"
@@ -17317,6 +18021,7 @@ examples = [
 
 [[point]]
 id = "ni-yorazu"
+seq = 699
 pattern = "によらず"
 forms = ["に依らず", "によらない", "によらぬ"]
 jlpt = "N2"
@@ -17339,6 +18044,7 @@ examples = [
 
 [[point]]
 id = "tsutsu"
+seq = 700
 pattern = "つつ"
 forms = ["つつも"]
 hover = false
@@ -17363,6 +18069,7 @@ examples = [
 
 [[point]]
 id = "sura"
+seq = 701
 pattern = "すら"
 forms = ["ですら", "にすら", "とすら", "すらも"]
 jlpt = "N1"
@@ -17390,6 +18097,7 @@ examples = [
 
 [[point]]
 id = "dani"
+seq = 702
 pattern = "だに"
 forms = ["だにしない", "だにしなかった"]
 jlpt = "N1"
@@ -17418,6 +18126,7 @@ examples = [
 
 [[point]]
 id = "tari-tomo"
+seq = 703
 pattern = "たりとも"
 forms = ["たりとも〜ない"]
 jlpt = "N1"
@@ -17441,6 +18150,7 @@ examples = [
 
 [[point]]
 id = "ni-shite"
+seq = 704
 pattern = "にして"
 forms = ["にしてようやく", "にして初めて", "にしてはじめて"]
 jlpt = "N1"
@@ -17470,6 +18180,7 @@ examples = [
 
 [[point]]
 id = "koso-sure"
+seq = 705
 pattern = "こそすれ"
 forms = ["こそあれ", "こそなれ"]
 jlpt = "N1"
@@ -17497,6 +18208,7 @@ examples = [
 
 [[point]]
 id = "kara-aru"
+seq = 706
 pattern = "からある"
 forms = ["からする"]
 jlpt = "N1"
@@ -17525,6 +18237,7 @@ examples = [
 
 [[point]]
 id = "atte-no"
+seq = 707
 pattern = "あっての"
 forms = ["があっての", "あってのこと", "あってのことだ"]
 jlpt = "N1"
@@ -17551,6 +18264,7 @@ examples = [
 
 [[point]]
 id = "nara-de-wa"
+seq = 708
 pattern = "ならでは"
 forms = ["ならではの", "ならではだ"]
 jlpt = "N1"
@@ -17577,6 +18291,7 @@ examples = [
 
 [[point]]
 id = "tada-nomi"
+seq = 709
 pattern = "のみ"
 forms = ["ただ〜のみ", "のみだ", "ただ〜のみだ"]
 jlpt = "N1"
@@ -17603,6 +18318,7 @@ examples = [
 
 [[point]]
 id = "ika-naru"
+seq = 710
 pattern = "いかなる"
 forms = ["如何なる", "いかなる〜も", "いかなる〜でも"]
 jlpt = "N1"
@@ -17625,6 +18341,7 @@ examples = [
 
 [[point]]
 id = "ikan"
+seq = 711
 pattern = "いかん"
 forms = ["如何", "いかんで", "いかんでは", "いかんによっては", "いかんによる", "いかんだ", "いかんにかかっている"]
 jlpt = "N1"
@@ -17653,6 +18370,7 @@ examples = [
 
 [[point]]
 id = "ikan-ni-kakawarazu"
+seq = 712
 pattern = "いかんにかかわらず"
 forms = ["いかんに関わらず", "いかんによらず", "いかんを問わず", "いかんをとわず"]
 jlpt = "N1"
@@ -17673,6 +18391,7 @@ examples = [
 
 [[point]]
 id = "mo-nan-to-mo-nai"
+seq = 713
 pattern = "もなんともない"
 forms = ["も何ともない", "でもなんでもない", "でも何でもない", "もなんでもない", "くもなんともない"]
 jlpt = "N1"
@@ -17697,6 +18416,7 @@ examples = [
 
 [[point]]
 id = "de-nakute-nan-darou"
+seq = 714
 pattern = "でなくてなんだろう"
 forms = ["でなくて何だろう", "でなくてなんであろう", "でなくて何であろう", "でなくてなんだろうか"]
 jlpt = "N1"
@@ -17718,6 +18438,7 @@ examples = [
 
 [[point]]
 id = "igai-no-nanimono-de-mo-nai"
+seq = 715
 pattern = "以外の何ものでもない"
 forms = ["以外の何物でもない", "以外のなにものでもない", "以外の何者でもない", "いがいのなにものでもない"]
 jlpt = "N1"
@@ -17738,6 +18459,7 @@ examples = [
 
 [[point]]
 id = "tada-de-sae"
+seq = 716
 pattern = "ただでさえ"
 forms = ["唯でさえ"]
 jlpt = "N1"
@@ -17759,6 +18481,7 @@ examples = [
 
 [[point]]
 id = "takaga"
+seq = 717
 pattern = "たかが"
 forms = ["たかが〜くらいで", "たかが〜ぐらいで", "高が"]
 jlpt = "N1"
@@ -17781,6 +18504,7 @@ examples = [
 
 [[point]]
 id = "kurai-nara"
+seq = 718
 pattern = "くらいなら"
 forms = ["ぐらいなら"]
 jlpt = "N1"
@@ -17802,6 +18526,7 @@ examples = [
 
 [[point]]
 id = "you-ga"
+seq = 719
 pattern = "ようが"
 forms = ["うが", "ようと", "うと", "ようとも", "うとも", "かろうが", "かろうと", "くとも"]
 jlpt = "N1"
@@ -17830,6 +18555,7 @@ examples = [
 
 [[point]]
 id = "you-ga-mai-ga"
+seq = 720
 pattern = "ようが〜まいが"
 forms = ["うが〜まいが", "ようと〜まいと", "うと〜まいと", "まいが"]
 jlpt = "N1"
@@ -17855,6 +18581,7 @@ examples = [
 
 [[point]]
 id = "de-are"
+seq = 721
 pattern = "であれ"
 forms = ["であれ〜であれ", "であろうと", "であろうが", "であろうと〜であろうと"]
 jlpt = "N1"
@@ -17881,6 +18608,7 @@ examples = [
 
 [[point]]
 id = "darou-ga"
+seq = 722
 pattern = "だろうが"
 forms = ["だろうが〜だろうが", "だろうと", "だろうと〜だろうと"]
 jlpt = "N1"
@@ -17906,6 +18634,7 @@ examples = [
 
 [[point]]
 id = "darou-ni"
+seq = 723
 pattern = "だろうに"
 forms = ["でしょうに"]
 jlpt = "N1"
@@ -17929,6 +18658,7 @@ examples = [
 
 [[point]]
 id = "to-iedomo"
+seq = 724
 pattern = "といえども"
 forms = ["と言えども", "と雖も"]
 jlpt = "N1"
@@ -17951,6 +18681,7 @@ examples = [
 
 [[point]]
 id = "to-wa-ie"
+seq = 725
 pattern = "とはいえ"
 forms = ["とは言え", "とは言いながら", "とはいいながら"]
 jlpt = "N1"
@@ -17978,6 +18709,7 @@ examples = [
 
 [[point]]
 id = "ta-tokoro-de"
+seq = 726
 pattern = "たところで"
 forms = ["だところで"]
 jlpt = "N1"
@@ -18002,6 +18734,7 @@ examples = [
 
 [[point]]
 id = "tara-ta-de"
+seq = 727
 pattern = "たら〜たで"
 forms = ["ば〜たで", "なら〜で", "たら〜で"]
 jlpt = "N1"
@@ -18028,6 +18761,7 @@ examples = [
 
 [[point]]
 id = "ga-saigo"
+seq = 728
 pattern = "が最後"
 forms = ["たが最後", "たら最後", "がさいご", "たがさいご", "たらさいご"]
 jlpt = "N1"
@@ -18049,6 +18783,7 @@ examples = [
 
 [[point]]
 id = "nara-iza-shirazu"
+seq = 729
 pattern = "ならいざしらず"
 forms = ["ならいざ知らず", "はいざしらず", "はいざ知らず"]
 jlpt = "N1"
@@ -18070,6 +18805,7 @@ examples = [
 
 [[point]]
 id = "nara-betsu-da"
+seq = 730
 pattern = "なら別だ"
 forms = ["なら話は別だ", "なら別です", "なら話は別です", "ならべつだ"]
 jlpt = "N1"
@@ -18090,6 +18826,7 @@ examples = [
 
 [[point]]
 id = "nai-mono-de-mo-nai"
+seq = 731
 pattern = "ないものでもない"
 forms = ["ないものでもありません", "ないもんでもない"]
 jlpt = "N1"
@@ -18110,6 +18847,7 @@ examples = [
 
 [[point]]
 id = "nai-de-mo-nai"
+seq = 732
 pattern = "ないでもない"
 forms = ["ないでもありません", "ないではない"]
 jlpt = "N1"
@@ -18133,6 +18871,7 @@ examples = [
 
 [[point]]
 id = "naku-shite"
+seq = 733
 pattern = "なくして"
 forms = ["なくしては", "無くして", "無くしては"]
 jlpt = "N1"
@@ -18154,6 +18893,7 @@ examples = [
 
 [[point]]
 id = "to-areba"
+seq = 734
 pattern = "とあれば"
 forms = ["とあらば"]
 jlpt = "N1"
@@ -18175,6 +18915,7 @@ examples = [
 
 [[point]]
 id = "to-atte"
+seq = 735
 pattern = "とあって"
 forms = ["とあっては", "とあってか"]
 jlpt = "N1"
@@ -18198,6 +18939,7 @@ examples = [
 
 [[point]]
 id = "tomo-naru-to"
+seq = 736
 pattern = "ともなると"
 forms = ["ともなれば", "ともなったら"]
 jlpt = "N1"
@@ -18220,6 +18962,7 @@ examples = [
 
 [[point]]
 id = "tomo-arou"
+seq = 737
 pattern = "ともあろう"
 forms = ["ともあろうものが", "ともあろう者が", "ともあろう人が"]
 jlpt = "N1"
@@ -18240,6 +18983,7 @@ examples = [
 
 [[point]]
 id = "to-shita-koto-ga"
+seq = 738
 pattern = "としたことが"
 forms = []
 jlpt = "N1"
@@ -18260,6 +19004,7 @@ examples = [
 
 [[point]]
 id = "ga-hayai-ka"
+seq = 739
 pattern = "が早いか"
 forms = ["がはやいか"]
 jlpt = "N1"
@@ -18282,6 +19027,7 @@ examples = [
 
 [[point]]
 id = "ya-ina-ya"
+seq = 740
 pattern = "や否や"
 forms = ["やいなや"]
 jlpt = "N1"
@@ -18303,6 +19049,7 @@ examples = [
 
 [[point]]
 id = "nari"
+seq = 741
 pattern = "なり"
 forms = []
 jlpt = "N1"
@@ -18327,6 +19074,7 @@ examples = [
 
 [[point]]
 id = "ta-nari"
+seq = 742
 pattern = "たなり"
 forms = ["だなり", "たなりで"]
 jlpt = "N1"
@@ -18349,6 +19097,7 @@ examples = [
 
 [[point]]
 id = "soba-kara"
+seq = 743
 pattern = "そばから"
 forms = ["側から", "傍から"]
 jlpt = "N1"
@@ -18369,6 +19118,7 @@ examples = [
 
 [[point]]
 id = "te-kara-to-iu-mono"
+seq = 744
 pattern = "てからというもの"
 forms = ["でからというもの", "てからというものは"]
 jlpt = "N1"
@@ -18390,6 +19140,7 @@ examples = [
 
 [[point]]
 id = "te-kono-kata"
+seq = 745
 pattern = "てこのかた"
 forms = ["てこの方", "でこのかた"]
 jlpt = "N1"
@@ -18411,6 +19162,7 @@ examples = [
 
 [[point]]
 id = "wo-kawakiri-ni"
+seq = 746
 pattern = "を皮切りに"
 forms = ["を皮切りとして", "を皮切りにして", "をかわきりに"]
 jlpt = "N1"
@@ -18432,6 +19184,7 @@ examples = [
 
 [[point]]
 id = "wo-kagiri-ni"
+seq = 747
 pattern = "を限りに"
 forms = ["をかぎりに", "を限りとして"]
 jlpt = "N1"
@@ -18453,6 +19206,7 @@ examples = [
 
 [[point]]
 id = "wo-sakai-ni"
+seq = 748
 pattern = "を境に"
 forms = ["を境として", "を境にして", "をさかいに"]
 jlpt = "N1"
@@ -18473,6 +19227,7 @@ examples = [
 
 [[point]]
 id = "wo-ki-ni"
+seq = 749
 pattern = "を機に"
 forms = ["を機として", "を機にして", "をきに"]
 jlpt = "N1"
@@ -18493,6 +19248,7 @@ examples = [
 
 [[point]]
 id = "wo-hete"
+seq = 750
 pattern = "を経て"
 forms = ["をへて", "を経た"]
 jlpt = "N1"
@@ -18514,6 +19270,7 @@ examples = [
 
 [[point]]
 id = "wo-mae-ni-shite"
+seq = 751
 pattern = "を前にして"
 forms = ["を前に", "をまえにして", "を前にした", "をまえに"]
 jlpt = "N1"
@@ -18535,6 +19292,7 @@ examples = [
 
 [[point]]
 id = "wo-hikaete"
+seq = 752
 pattern = "を控えて"
 forms = ["を控え", "を控えた", "をひかえて"]
 jlpt = "N1"
@@ -18556,6 +19314,7 @@ examples = [
 
 [[point]]
 id = "yasaki"
+seq = 753
 pattern = "矢先"
 forms = ["矢先に", "やさき", "た矢先", "た矢先に"]
 jlpt = "N1"
@@ -18579,6 +19338,7 @@ examples = [
 
 [[point]]
 id = "katawara"
+seq = 754
 pattern = "かたわら"
 forms = ["傍ら", "のかたわら"]
 jlpt = "N1"
@@ -18605,6 +19365,7 @@ examples = [
 
 [[point]]
 id = "gatera"
+seq = 755
 pattern = "がてら"
 forms = []
 jlpt = "N1"
@@ -18626,6 +19387,7 @@ examples = [
 
 [[point]]
 id = "katagata"
+seq = 756
 pattern = "かたがた"
 forms = []
 jlpt = "N1"
@@ -18646,6 +19408,7 @@ examples = [
 
 [[point]]
 id = "zu-jimai"
+seq = 757
 pattern = "ずじまい"
 forms = ["ずじまいだ", "ず終い", "ずじまいになる"]
 jlpt = "N1"
@@ -18666,6 +19429,7 @@ examples = [
 
 [[point]]
 id = "ni-itaru"
+seq = 758
 pattern = "に至る"
 forms = ["に至った", "に至って", "に至っても", "にいたる", "にいたって", "にいたっても"]
 jlpt = "N1"
@@ -18692,6 +19456,7 @@ examples = [
 
 [[point]]
 id = "ni-itaru-made"
+seq = 759
 pattern = "に至るまで"
 forms = ["にいたるまで"]
 jlpt = "N1"
@@ -18712,6 +19477,7 @@ examples = [
 
 [[point]]
 id = "kagiri-da"
+seq = 760
 pattern = "限りだ"
 forms = ["かぎりだ", "限りです", "かぎりです"]
 jlpt = "N1"
@@ -18737,6 +19503,7 @@ examples = [
 
 [[point]]
 id = "no-itari"
+seq = 761
 pattern = "の至り"
 forms = ["の至りだ", "の至りです", "のいたり"]
 jlpt = "N1"
@@ -18758,6 +19525,7 @@ examples = [
 
 [[point]]
 id = "no-kiwami"
+seq = 762
 pattern = "の極み"
 forms = ["の極みだ", "の極みです", "のきわみ"]
 jlpt = "N1"
@@ -18779,6 +19547,7 @@ examples = [
 
 [[point]]
 id = "kiwamarinai"
+seq = 763
 pattern = "極まりない"
 forms = ["きわまりない", "極まる", "きわまる", "極まりありません"]
 jlpt = "N1"
@@ -18804,6 +19573,7 @@ examples = [
 
 [[point]]
 id = "koto-kono-ue-nai"
+seq = 764
 pattern = "ことこの上ない"
 forms = ["ことこのうえない", "この上ない", "このうえない", "この上なく", "このうえなく"]
 jlpt = "N1"
@@ -18830,6 +19600,7 @@ examples = [
 
 [[point]]
 id = "ttara-nai"
+seq = 765
 pattern = "ったらない"
 forms = ["といったらない", "ったらありゃしない", "といったらありゃしない", "ったらありはしない", "といったらありはしない"]
 hover = false
@@ -18855,6 +19626,7 @@ examples = [
 
 [[point]]
 id = "ni-taenai"
+seq = 766
 pattern = "に堪えない"
 forms = ["にたえない", "に耐えない", "に堪えません"]
 jlpt = "N1"
@@ -18880,6 +19652,7 @@ examples = [
 
 [[point]]
 id = "ni-taeru"
+seq = 767
 pattern = "に堪える"
 forms = ["にたえる"]
 jlpt = "N1"
@@ -18901,6 +19674,7 @@ examples = [
 
 [[point]]
 id = "wo-kinji-enai"
+seq = 768
 pattern = "を禁じ得ない"
 forms = ["を禁じえない", "をきんじえない", "を禁じ得ません"]
 jlpt = "N1"
@@ -18923,6 +19697,7 @@ examples = [
 
 [[point]]
 id = "te-yamanai"
+seq = 769
 pattern = "てやまない"
 forms = ["てやみません", "てやまぬ"]
 jlpt = "N1"
@@ -18944,6 +19719,7 @@ examples = [
 
 [[point]]
 id = "ni-shinobinai"
+seq = 770
 pattern = "に忍びない"
 forms = ["にしのびない"]
 jlpt = "N1"
@@ -18965,6 +19741,7 @@ examples = [
 
 [[point]]
 id = "ni-kataku-nai"
+seq = 771
 pattern = "に難くない"
 forms = ["にかたくない", "に難くありません"]
 jlpt = "N1"
@@ -18985,6 +19762,7 @@ examples = [
 
 [[point]]
 id = "ni-taru"
+seq = 772
 pattern = "に足る"
 forms = ["にたる", "に足りる", "にたりる", "に足りない", "にたりない", "に足らない", "にたらない"]
 jlpt = "N1"
@@ -19011,6 +19789,7 @@ examples = [
 
 [[point]]
 id = "ni-wa-ataranai"
+seq = 773
 pattern = "には当たらない"
 forms = ["にはあたらない", "に当たらない", "にあたらない", "には当たりません", "にはあたりません"]
 jlpt = "N1"
@@ -19032,6 +19811,7 @@ examples = [
 
 [[point]]
 id = "ni-wa-oyobanai"
+seq = 774
 pattern = "には及ばない"
 forms = ["にはおよばない", "に及ばない", "におよばない", "には及びません", "にはおよびません"]
 jlpt = "N1"
@@ -19058,6 +19838,7 @@ examples = [
 
 [[point]]
 id = "made-mo-nai"
+seq = 775
 pattern = "までもない"
 forms = ["までもなく", "までもありません", "までもないことだ"]
 jlpt = "N1"
@@ -19079,6 +19860,7 @@ examples = [
 
 [[point]]
 id = "hodo-no-koto-de-wa-nai"
+seq = 776
 pattern = "ほどのことではない"
 forms = ["ほどのことでもない", "ほどのことはない", "ほどのことじゃない", "ほどのことでもありません"]
 jlpt = "N1"
@@ -19100,6 +19882,7 @@ examples = [
 
 [[point]]
 id = "ni-mo-hodo-ga-aru"
+seq = 777
 pattern = "にもほどがある"
 forms = ["にも程がある", "にもほどがあります"]
 jlpt = "N1"
@@ -19125,6 +19908,7 @@ examples = [
 
 [[point]]
 id = "te-wa-kanawanai"
+seq = 778
 pattern = "てはかなわない"
 forms = ["ちゃかなわない", "ではかなわない", "じゃかなわない", "てはかなわん", "ちゃかなわん", "ては敵わない"]
 jlpt = "N1"
@@ -19151,6 +19935,7 @@ examples = [
 
 [[point]]
 id = "te-wa-yarikirenai"
+seq = 779
 pattern = "てはやりきれない"
 forms = ["ちゃやりきれない", "ではやりきれない", "じゃやりきれない", "てやりきれない"]
 jlpt = "N1"
@@ -19176,6 +19961,7 @@ examples = [
 
 [[point]]
 id = "meku"
+seq = 780
 pattern = "めく"
 forms = ["めいた", "めいて", "めいている"]
 hover = false
@@ -19200,6 +19986,7 @@ examples = [
 
 [[point]]
 id = "biru"
+seq = 781
 pattern = "びる"
 forms = ["びた", "びて", "びている"]
 hover = false
@@ -19223,6 +20010,7 @@ examples = [
 
 [[point]]
 id = "gamashii"
+seq = 782
 pattern = "がましい"
 forms = ["がましく", "がましさ"]
 jlpt = "N1"
@@ -19245,6 +20033,7 @@ examples = [
 
 [[point]]
 id = "zukume"
+seq = 783
 pattern = "ずくめ"
 forms = ["ずくめの", "ずくめだ", "尽くめ"]
 jlpt = "N1"
@@ -19268,6 +20057,7 @@ examples = [
 
 [[point]]
 id = "mamire"
+seq = 784
 pattern = "まみれ"
 forms = ["まみれの", "まみれだ", "まみれになる", "塗れ"]
 jlpt = "N1"
@@ -19289,6 +20079,7 @@ examples = [
 
 [[point]]
 id = "gurumi"
+seq = 785
 pattern = "ぐるみ"
 forms = ["ぐるみで", "ぐるみの"]
 hover = false
@@ -19311,6 +20102,7 @@ examples = [
 
 [[point]]
 id = "kitte-no"
+seq = 786
 pattern = "きっての"
 forms = ["切っての"]
 jlpt = "N1"
@@ -19332,6 +20124,7 @@ examples = [
 
 [[point]]
 id = "kidori"
+seq = 787
 pattern = "気取り"
 forms = ["きどり", "気取りで"]
 jlpt = "N1"
@@ -19353,6 +20146,7 @@ examples = [
 
 [[point]]
 id = "houdai"
+seq = 788
 pattern = "放題"
 forms = ["ほうだい", "放題だ", "放題の"]
 jlpt = "N1"
@@ -19379,6 +20173,7 @@ examples = [
 
 [[point]]
 id = "nami"
+seq = 789
 pattern = "並み"
 forms = ["並みの", "並みに", "並みだ", "並の"]
 hover = false
@@ -19403,6 +20198,7 @@ examples = [
 
 [[point]]
 id = "ttarashii"
+seq = 790
 pattern = "ったらしい"
 forms = ["ったらしく", "たらしい"]
 hover = false
@@ -19425,6 +20221,7 @@ examples = [
 
 [[point]]
 id = "sokonau"
+seq = 791
 pattern = "損なう"
 forms = ["そこなう", "損ねる", "そこねる", "損なった", "損ねた"]
 hover = false
@@ -19449,6 +20246,7 @@ examples = [
 
 [[point]]
 id = "sobireru"
+seq = 792
 pattern = "そびれる"
 forms = ["そびれた", "そびれて"]
 jlpt = "N1"
@@ -19471,6 +20269,7 @@ examples = [
 
 [[point]]
 id = "makuru"
+seq = 793
 pattern = "まくる"
 forms = ["まくった", "まくって", "まくり"]
 hover = false
@@ -19494,6 +20293,7 @@ examples = [
 
 [[point]]
 id = "kirai-ga-aru"
+seq = 794
 pattern = "きらいがある"
 forms = ["嫌いがある", "きらいもある", "嫌いもある"]
 jlpt = "N1"
@@ -19520,6 +20320,7 @@ examples = [
 
 [[point]]
 id = "shimatsu-da"
+seq = 795
 pattern = "始末だ"
 forms = ["しまつだ", "始末です", "始末である", "しまつです"]
 jlpt = "N1"
@@ -19541,6 +20342,7 @@ examples = [
 
 [[point]]
 id = "hame-ni-naru"
+seq = 796
 pattern = "羽目になる"
 forms = ["はめになる", "羽目に陥る", "はめに陥る", "羽目になった", "はめになった"]
 jlpt = "N1"
@@ -19563,6 +20365,7 @@ examples = [
 
 [[point]]
 id = "itto-wo-tadoru"
+seq = 797
 pattern = "一途をたどる"
 forms = ["一途を辿る", "いっとをたどる"]
 jlpt = "N1"
@@ -19584,6 +20387,7 @@ examples = [
 
 [[point]]
 id = "sube-ga-nai"
+seq = 798
 pattern = "術がない"
 forms = ["すべがない", "術もない", "すべもない"]
 jlpt = "N1"
@@ -19604,6 +20408,7 @@ examples = [
 
 [[point]]
 id = "beshi"
+seq = 799
 pattern = "べし"
 forms = ["べからず", "べからざる", "べしと"]
 jlpt = "N1"
@@ -19631,6 +20436,7 @@ examples = [
 
 [[point]]
 id = "beku"
+seq = 800
 pattern = "べく"
 forms = []
 jlpt = "N1"
@@ -19653,6 +20459,7 @@ examples = [
 
 [[point]]
 id = "beku-mo-nai"
+seq = 801
 pattern = "べくもない"
 forms = ["べくもありません"]
 jlpt = "N1"
@@ -19673,6 +20480,7 @@ examples = [
 
 [[point]]
 id = "beku-shite"
+seq = 802
 pattern = "べくして"
 forms = []
 jlpt = "N1"
@@ -19693,6 +20501,7 @@ examples = [
 
 [[point]]
 id = "majiki"
+seq = 803
 pattern = "まじき"
 forms = ["あるまじき", "にあるまじき", "としてあるまじき"]
 jlpt = "N1"
@@ -19717,6 +20526,7 @@ examples = [
 
 [[point]]
 id = "gotoshi"
+seq = 804
 pattern = "ごとし"
 forms = ["ごとく", "ごとき", "如し", "如く", "如き", "がごとし", "がごとく", "がごとき"]
 jlpt = "N1"
@@ -19745,6 +20555,7 @@ examples = [
 
 [[point]]
 id = "yue-ni"
+seq = 805
 pattern = "ゆえに"
 forms = ["故に", "ゆえ", "故", "がゆえに", "が故に", "ゆえの", "故の", "がゆえの", "が故の"]
 hover = false
@@ -19773,6 +20584,7 @@ examples = [
 
 [[point]]
 id = "n-ga-tame"
+seq = 806
 pattern = "んがため"
 forms = ["んがために", "んがための"]
 jlpt = "N1"
@@ -19793,6 +20605,7 @@ examples = [
 
 [[point]]
 id = "n-bakari"
+seq = 807
 pattern = "んばかり"
 forms = ["んばかりに", "んばかりの", "んばかりだ", "と言わんばかりに", "といわんばかりに", "と言わんばかりの", "といわんばかりの"]
 jlpt = "N1"
@@ -19819,6 +20632,7 @@ examples = [
 
 [[point]]
 id = "to-bakari-ni"
+seq = 808
 pattern = "とばかりに"
 forms = ["とばかり"]
 jlpt = "N1"
@@ -19840,6 +20654,7 @@ examples = [
 
 [[point]]
 id = "taru-mono"
+seq = 809
 pattern = "たるもの"
 forms = ["たる者"]
 jlpt = "N1"
@@ -19864,6 +20679,7 @@ examples = [
 
 [[point]]
 id = "neba-naranai"
+seq = 810
 pattern = "ねばならない"
 forms = ["ねばならぬ", "ねばならん", "ねばなりません", "ねばなるまい", "せねば", "ねば"]
 jlpt = "N1"
@@ -19887,6 +20703,7 @@ examples = [
 
 [[point]]
 id = "tsu-tsu"
+seq = 811
 pattern = "つ〜つ"
 forms = ["行きつ戻りつ", "持ちつ持たれつ", "抜きつ抜かれつ", "差しつ差されつ"]
 jlpt = "N1"
@@ -19909,6 +20726,7 @@ examples = [
 
 [[point]]
 id = "kare-kare"
+seq = 812
 pattern = "かれ〜かれ"
 forms = ["遅かれ早かれ", "多かれ少なかれ", "良かれ悪しかれ", "善かれ悪しかれ", "よかれあしかれ"]
 jlpt = "N1"
@@ -19930,6 +20748,7 @@ examples = [
 
 [[point]]
 id = "ni-shiku-wa-nai"
+seq = 813
 pattern = "に如くはない"
 forms = ["にしくはない", "に如くはなし", "にしくはなし"]
 jlpt = "N1"
@@ -19951,6 +20770,7 @@ examples = [
 
 [[point]]
 id = "koto-tote"
+seq = 814
 pattern = "こととて"
 forms = []
 jlpt = "N1"
@@ -19976,6 +20796,7 @@ examples = [
 
 [[point]]
 id = "zu-ni-wa-okanai"
+seq = 815
 pattern = "ずにはおかない"
 forms = ["ずにはおかぬ", "ないではおかない", "ずにはおきません"]
 jlpt = "N1"
@@ -19998,6 +20819,7 @@ examples = [
 
 [[point]]
 id = "zu-ni-wa-sumanai"
+seq = 816
 pattern = "ずにはすまない"
 forms = ["ずには済まない", "ないではすまない", "ないでは済まない", "ずにはすまされない", "ずには済まされない"]
 jlpt = "N1"
@@ -20020,6 +20842,7 @@ examples = [
 
 [[point]]
 id = "n-ja-nakatta"
+seq = 817
 pattern = "んじゃなかった"
 forms = ["のではなかった", "んじゃなかったな"]
 jlpt = "N1"
@@ -20041,6 +20864,7 @@ examples = [
 
 [[point]]
 id = "yashinai"
+seq = 818
 pattern = "やしない"
 forms = ["ゃしない", "やしません", "ゃしません"]
 hover = false
@@ -20067,6 +20891,7 @@ examples = [
 
 [[point]]
 id = "wo-motte"
+seq = 819
 pattern = "をもって"
 forms = ["を以て", "をもちまして", "をもってしても", "を以てしても"]
 jlpt = "N1"
@@ -20096,6 +20921,7 @@ examples = [
 
 [[point]]
 id = "wo-oite"
+seq = 820
 pattern = "をおいて"
 forms = ["を措いて", "をおいてほかにない", "をおいて他にない", "をおいてほかに", "をおいて他に"]
 jlpt = "N1"
@@ -20120,6 +20946,7 @@ examples = [
 
 [[point]]
 id = "wo-yoso-ni"
+seq = 821
 pattern = "をよそに"
 forms = ["を余所に"]
 jlpt = "N1"
@@ -20144,6 +20971,7 @@ examples = [
 
 [[point]]
 id = "wo-mono-tomo-sezu"
+seq = 822
 pattern = "をものともせず"
 forms = ["をものともせずに", "をものともしない", "を物ともせず", "を物ともせずに"]
 jlpt = "N1"
@@ -20166,6 +20994,7 @@ examples = [
 
 [[point]]
 id = "wo-ii-koto-ni"
+seq = 823
 pattern = "をいいことに"
 forms = ["のをいいことに", "を良いことに", "のを良いことに", "をいいことにして", "のをいいことにして"]
 jlpt = "N1"
@@ -20192,6 +21021,7 @@ examples = [
 
 [[point]]
 id = "wo-yogi-naku-sareru"
+seq = 824
 pattern = "を余儀なくされる"
 forms = ["を余儀なくさせる", "をよぎなくされる", "をよぎなくさせる"]
 jlpt = "N1"
@@ -20218,6 +21048,7 @@ examples = [
 
 [[point]]
 id = "wo-fumaete"
+seq = 825
 pattern = "を踏まえて"
 forms = ["を踏まえ", "をふまえて", "をふまえ", "を踏まえた"]
 jlpt = "N1"
@@ -20244,6 +21075,7 @@ examples = [
 
 [[point]]
 id = "wo-oshite"
+seq = 826
 pattern = "を押して"
 forms = ["をおして", "を押し切って", "をおしきって"]
 jlpt = "N1"
@@ -20270,6 +21102,7 @@ examples = [
 
 [[point]]
 id = "wo-kaerimizu"
+seq = 827
 pattern = "を顧みず"
 forms = ["も顧みず", "をかえりみず", "もかえりみず", "を顧みずに", "をかえりみずに"]
 jlpt = "N1"
@@ -20293,6 +21126,7 @@ examples = [
 
 [[point]]
 id = "wo-kasanete"
+seq = 828
 pattern = "を重ねて"
 forms = ["をかさねて", "を重ねた", "を重ね"]
 jlpt = "N1"
@@ -20319,6 +21153,7 @@ examples = [
 
 [[point]]
 id = "wo-furidashi-ni"
+seq = 829
 pattern = "を振り出しに"
 forms = ["を振り出しとして", "をふりだしに"]
 jlpt = "N1"
@@ -20341,6 +21176,7 @@ examples = [
 
 [[point]]
 id = "wo-zentei-ni"
+seq = 830
 pattern = "を前提に"
 forms = ["を前提として", "を前提にして", "を前提とした", "を前提とする"]
 jlpt = "N1"
@@ -20365,6 +21201,7 @@ examples = [
 
 [[point]]
 id = "no-na-no-moto-ni"
+seq = 831
 pattern = "の名のもとに"
 forms = ["の名の下に", "の名のもと", "の名の下"]
 jlpt = "N1"
@@ -20387,6 +21224,7 @@ examples = [
 
 [[point]]
 id = "ni-hikikae"
+seq = 832
 pattern = "にひきかえ"
 forms = ["に引き換え", "に引きかえ", "のにひきかえ", "のに引き換え", "それにひきかえ"]
 jlpt = "N1"
@@ -20414,6 +21252,7 @@ examples = [
 
 [[point]]
 id = "ni-mo-mashite"
+seq = 833
 pattern = "にもまして"
 forms = ["にも増して"]
 jlpt = "N1"
@@ -20439,6 +21278,7 @@ examples = [
 
 [[point]]
 id = "to-aimatte"
+seq = 834
 pattern = "と相まって"
 forms = ["とあいまって", "と相俟って", "も相まって", "もあいまって", "相まって"]
 jlpt = "N1"
@@ -20462,6 +21302,7 @@ examples = [
 
 [[point]]
 id = "wa-oroka"
+seq = 835
 pattern = "はおろか"
 forms = ["はおろか〜も", "はおろか〜さえ"]
 jlpt = "N1"
@@ -20490,6 +21331,7 @@ examples = [
 
 [[point]]
 id = "mo-saru-koto-nagara"
+seq = 836
 pattern = "もさることながら"
 forms = ["も然ることながら"]
 jlpt = "N1"
@@ -20512,6 +21354,7 @@ examples = [
 
 [[point]]
 id = "wa-sateoki"
+seq = 837
 pattern = "はさておき"
 forms = ["はさておいて", "はさて置き", "はさて置いて", "何はさておき"]
 jlpt = "N1"
@@ -20536,6 +21379,7 @@ examples = [
 
 [[point]]
 id = "wa-socchinoke"
+seq = 838
 pattern = "そっちのけ"
 forms = ["はそっちのけで", "をそっちのけで", "そっちのけで", "そっちのけにして", "をそっちのけにして"]
 jlpt = "N1"
@@ -20561,6 +21405,7 @@ examples = [
 
 [[point]]
 id = "ni-nottotte"
+seq = 839
 pattern = "に則って"
 forms = ["にのっとって", "に則り", "にのっとり", "に則った", "にのっとった"]
 jlpt = "N1"
@@ -20587,6 +21432,7 @@ examples = [
 
 [[point]]
 id = "ni-soku-shite"
+seq = 840
 pattern = "に即して"
 forms = ["にそくして", "に即し", "に即した", "に則して", "に則した"]
 jlpt = "N1"
@@ -20611,6 +21457,7 @@ examples = [
 
 [[point]]
 id = "ni-terashite"
+seq = 841
 pattern = "に照らして"
 forms = ["に照らし", "に照らせば", "に照らすと", "にてらして", "に照らしても", "に照らした"]
 jlpt = "N1"
@@ -20633,6 +21480,7 @@ examples = [
 
 [[point]]
 id = "ni-kangamite"
+seq = 842
 pattern = "に鑑みて"
 forms = ["に鑑み", "にかんがみて", "にかんがみ", "に鑑みれば", "に鑑みると"]
 jlpt = "N1"
@@ -20655,6 +21503,7 @@ examples = [
 
 [[point]]
 id = "ni-junjite"
+seq = 843
 pattern = "に準じて"
 forms = ["に準じ", "に準じる", "に準ずる", "に準じた", "にじゅんじて"]
 jlpt = "N1"
@@ -20680,6 +21529,7 @@ examples = [
 
 [[point]]
 id = "ni-matsuwaru"
+seq = 844
 pattern = "にまつわる"
 forms = ["に纏わる", "にまつわって"]
 jlpt = "N1"
@@ -20702,6 +21552,7 @@ examples = [
 
 [[point]]
 id = "ni-iwaseru-to"
+seq = 845
 pattern = "に言わせると"
 forms = ["に言わせれば", "にいわせると", "にいわせれば", "に言わせたら", "に言わせても"]
 jlpt = "N1"
@@ -20726,6 +21577,7 @@ examples = [
 
 [[point]]
 id = "ni-ou-tokoro-ga-ookii"
+seq = 846
 pattern = "に負うところが大きい"
 forms = ["によるところが大きい", "に依るところが大きい", "に負うところが多い", "におうところがおおきい", "に負うところが大", "によるところがおおきい"]
 jlpt = "N1"
@@ -20748,6 +21600,7 @@ examples = [
 
 [[point]]
 id = "ni-todomarazu"
+seq = 847
 pattern = "にとどまらず"
 forms = ["に止まらず", "に留まらず", "にとどまらない", "に止まらない", "に留まらない"]
 jlpt = "N1"
@@ -20774,6 +21627,7 @@ examples = [
 
 [[point]]
 id = "ni-kagitta-koto-de-wa-nai"
+seq = 848
 pattern = "に限ったことではない"
 forms = ["に限ったことじゃない", "にかぎったことではない", "にかぎったことじゃない", "に限ったことではありません", "に限った話ではない"]
 jlpt = "N1"
@@ -20796,6 +21650,7 @@ examples = [
 
 [[point]]
 id = "ni-atte"
+seq = 849
 pattern = "にあって"
 forms = ["にあっては", "にあっても"]
 jlpt = "N1"
@@ -20820,6 +21675,7 @@ examples = [
 
 [[point]]
 id = "ni-itatte-wa"
+seq = 850
 pattern = "に至っては"
 forms = ["にいたっては"]
 jlpt = "N1"
@@ -20842,6 +21698,7 @@ examples = [
 
 [[point]]
 id = "ni-kakatte-iru"
+seq = 851
 pattern = "にかかっている"
 forms = ["にかかってる", "にかかっています", "に掛かっている", "に懸かっている"]
 jlpt = "N1"
@@ -20866,6 +21723,7 @@ examples = [
 
 [[point]]
 id = "ni-kakatte-wa"
+seq = 852
 pattern = "にかかっては"
 forms = ["にかかったら", "にかかると", "にかかれば", "の手にかかると", "の手にかかれば"]
 jlpt = "N1"
@@ -20889,6 +21747,7 @@ examples = [
 
 [[point]]
 id = "ni-shita-tokoro-de"
+seq = 853
 pattern = "にしたところで"
 forms = ["にしたところが", "としたところで", "にしたところで〜ない"]
 jlpt = "N1"
@@ -20913,6 +21772,7 @@ examples = [
 
 [[point]]
 id = "ni-hajinai"
+seq = 854
 pattern = "に恥じない"
 forms = ["に恥じず", "に恥じぬ", "にはじない"]
 jlpt = "N1"
@@ -20938,6 +21798,7 @@ examples = [
 
 [[point]]
 id = "ni-wa-muri-ga-aru"
+seq = 855
 pattern = "には無理がある"
 forms = ["に無理がある", "には無理があります", "に無理があった", "にはむりがある"]
 jlpt = "N1"
@@ -20963,6 +21824,7 @@ examples = [
 
 [[point]]
 id = "u-ni-mo"
+seq = 856
 pattern = "ようにも"
 forms = ["うにも", "ようにも〜ない", "うにも〜ない"]
 hover = false
@@ -20986,6 +21848,7 @@ examples = [
 
 [[point]]
 id = "you-ni-yotte-wa"
+seq = 857
 pattern = "ようによっては"
 forms = ["ようによって", "方によっては"]
 jlpt = "N1"
@@ -21008,6 +21871,7 @@ examples = [
 
 [[point]]
 id = "kara-ii-you-na-mono-no"
+seq = 858
 pattern = "からいいようなものの"
 forms = ["からよかったものの", "からいいものの", "からよいようなものの", "からよかったようなものの"]
 jlpt = "N1"
@@ -21030,6 +21894,7 @@ examples = [
 
 [[point]]
 id = "to-kitara"
+seq = 859
 pattern = "ときたら"
 forms = ["と来たら", "ときては", "と来ては"]
 jlpt = "N1"
@@ -21053,6 +21918,7 @@ examples = [
 
 [[point]]
 id = "to-omoiki-ya"
+seq = 860
 pattern = "と思いきや"
 forms = ["かと思いきや", "とおもいきや", "かとおもいきや"]
 jlpt = "N1"
@@ -21076,6 +21942,7 @@ examples = [
 
 [[point]]
 id = "to-wa-utte-kawatte"
+seq = 861
 pattern = "とは打って変わって"
 forms = ["と打って変わって", "とはうってかわって", "とは打って変わった", "打って変わって", "うってかわって"]
 jlpt = "N1"
@@ -21102,6 +21969,7 @@ examples = [
 
 [[point]]
 id = "to-wa-kurabemono-ni-naranai"
+seq = 862
 pattern = "とは比べものにならない"
 forms = ["とは比べ物にならない", "と比べものにならない", "と比べ物にならない", "比べものにならない", "比べ物にならない", "比べものにならないほど"]
 jlpt = "N1"
@@ -21127,6 +21995,7 @@ examples = [
 
 [[point]]
 id = "to-made-wa-ikanai-ga"
+seq = 863
 pattern = "とまではいかないが"
 forms = ["とまではいかなくても", "とまではいかないまでも", "とまではいかないとしても", "とまでは言わないが", "とまではいわないが", "とまでは言えないが", "とまでは言わなくても", "とまでは言わなくとも"]
 jlpt = "N1"
@@ -21149,6 +22018,7 @@ examples = [
 
 [[point]]
 id = "to-iwazu"
+seq = 864
 pattern = "といわず"
 forms = ["と言わず", "といわず〜といわず"]
 jlpt = "N1"
@@ -21174,6 +22044,7 @@ examples = [
 
 [[point]]
 id = "to-ii-to-ii"
+seq = 865
 pattern = "といい〜といい"
 forms = ["といい"]
 hover = false
@@ -21197,6 +22068,7 @@ examples = [
 
 [[point]]
 id = "to-iu-tokoro-da"
+seq = 866
 pattern = "といったところだ"
 forms = ["というところだ", "と言ったところだ", "といったところです", "というところです", "といったところ", "というところ"]
 jlpt = "N1"
@@ -21219,6 +22091,7 @@ examples = [
 
 [[point]]
 id = "to-iu-mono"
+seq = 867
 pattern = "というもの"
 forms = ["と言うもの", "というもの、"]
 hover = false
@@ -21243,6 +22116,7 @@ examples = [
 
 [[point]]
 id = "to-iou-ka"
+seq = 868
 pattern = "といおうか"
 forms = ["と言おうか", "といおうか〜といおうか", "と言いますか", "といいますか"]
 jlpt = "N1"
@@ -21268,6 +22142,7 @@ examples = [
 
 [[point]]
 id = "to-ienaku-mo-nai"
+seq = 869
 pattern = "といえなくもない"
 forms = ["と言えなくもない", "といえないこともない", "と言えないこともない", "といえなくはない", "と言えなくはない"]
 jlpt = "N1"
@@ -21291,6 +22166,7 @@ examples = [
 
 [[point]]
 id = "to-mo-naku"
+seq = 870
 pattern = "ともなく"
 forms = ["ともなしに", "からともなく"]
 hover = false
@@ -21320,6 +22196,7 @@ examples = [
 
 [[point]]
 id = "to-shite-nai"
+seq = 871
 pattern = "として〜ない"
 forms = ["一人として", "誰一人として", "一つとして", "何一つとして", "一度として", "一日として", "一瞬として"]
 jlpt = "N1"
@@ -21342,6 +22219,7 @@ examples = [
 
 [[point]]
 id = "kore-to-itte"
+seq = 872
 pattern = "これといって"
 forms = ["これといった", "これと言って", "これと言った"]
 jlpt = "N1"
@@ -21365,6 +22243,7 @@ examples = [
 
 [[point]]
 id = "to-kite-iru"
+seq = 873
 pattern = "ときている"
 forms = ["ときてる", "ときているから", "ときているので", "ときた"]
 hover = false
@@ -21389,6 +22268,7 @@ examples = [
 
 [[point]]
 id = "to-wa-surprise"
+seq = 874
 pattern = "とは"
 forms = []
 hover = false
@@ -21411,6 +22291,7 @@ examples = [
 
 [[point]]
 id = "made-da"
+seq = 875
 pattern = "までだ"
 forms = ["までのことだ", "たまでだ", "たまでのことだ", "るまでだ", "までです"]
 hover = false
@@ -21440,6 +22321,7 @@ examples = [
 
 [[point]]
 id = "ba-sore-made-da"
+seq = 876
 pattern = "ばそれまでだ"
 forms = ["たらそれまでだ", "ばそれまで", "たらそれまで", "ばそれまでです", "それまでだ"]
 jlpt = "N1"
@@ -21464,6 +22346,7 @@ examples = [
 
 [[point]]
 id = "mono-wo"
+seq = 877
 pattern = "ものを"
 forms = ["もんを"]
 hover = false
@@ -21491,6 +22374,7 @@ examples = [
 
 [[point]]
 id = "mono-to-omou"
+seq = 878
 pattern = "ものと思う"
 forms = ["ものと思っていた", "ものと思われる", "ものとおもう", "ものと思います", "ものと思っている", "ものとおもわれる"]
 jlpt = "N1"
@@ -21514,6 +22398,7 @@ examples = [
 
 [[point]]
 id = "mono-to-suru"
+seq = 879
 pattern = "ものとする"
 forms = ["ものとして", "ものとします", "ものとみなす"]
 jlpt = "N1"
@@ -21539,6 +22424,7 @@ examples = [
 
 [[point]]
 id = "te-shikaru-beki-da"
+seq = 880
 pattern = "てしかるべきだ"
 forms = ["て然るべきだ", "てしかるべき", "で然るべきだ", "でしかるべきだ", "て然るべき"]
 jlpt = "N1"
@@ -21563,6 +22449,7 @@ examples = [
 
 [[point]]
 id = "te-mo-sashitsukaenai"
+seq = 881
 pattern = "ても差し支えない"
 forms = ["てもさしつかえない", "ても差し支えありません", "でも差し支えない", "でもさしつかえない", "ても差し支えありませんか", "差し支えなければ", "さしつかえなければ"]
 jlpt = "N1"
@@ -21588,6 +22475,7 @@ examples = [
 
 [[point]]
 id = "te-wa-te-wa"
+seq = 882
 pattern = "ては〜ては"
 forms = ["ては〜、〜ては", "では〜では"]
 hover = false
@@ -21610,6 +22498,7 @@ examples = [
 
 [[point]]
 id = "te-habakaranai"
+seq = 883
 pattern = "て憚らない"
 forms = ["てはばからない", "で憚らない", "ではばからない", "てはばかりません"]
 jlpt = "N1"
@@ -21631,6 +22520,7 @@ examples = [
 
 [[point]]
 id = "te-motomoto-da"
+seq = 884
 pattern = "て元々だ"
 forms = ["てもともとだ", "で元々", "でもともと", "て元々", "てもともと", "ダメで元々", "だめでもともと", "ダメ元"]
 jlpt = "N1"
@@ -21655,6 +22545,7 @@ examples = [
 
 [[point]]
 id = "te-mo-hajimaranai"
+seq = 885
 pattern = "ても始まらない"
 forms = ["てもはじまらない", "でも始まらない", "でもはじまらない", "ても始まりません"]
 jlpt = "N1"
@@ -21676,6 +22567,7 @@ examples = [
 
 [[point]]
 id = "te-mo-shiranai"
+seq = 886
 pattern = "ても知らない"
 forms = ["てもしらない", "でも知らない", "ても知らないよ", "ても知らないから", "ても知らないぞ", "ても知らんぞ"]
 jlpt = "N1"
@@ -21698,6 +22590,7 @@ examples = [
 
 [[point]]
 id = "te-miseru"
+seq = 887
 pattern = "てみせる"
 forms = ["てみせます", "でみせる", "でみせます", "て見せる", "てみせた"]
 jlpt = "N1"
@@ -21719,6 +22612,7 @@ examples = [
 
 [[point]]
 id = "te-yaru"
+seq = 888
 pattern = "てやる"
 forms = ["てやった", "でやる", "でやった", "てやろう", "てやります"]
 jlpt = "N1"
@@ -21743,6 +22637,7 @@ examples = [
 
 [[point]]
 id = "nai-mono-ka"
+seq = 889
 pattern = "ないものか"
 forms = ["ないものだろうか", "ないものでしょうか", "ないもんか", "ないもんだろうか", "ないものかと"]
 jlpt = "N1"
@@ -21766,6 +22661,7 @@ examples = [
 
 [[point]]
 id = "ja-aru-mai-shi"
+seq = 890
 pattern = "じゃあるまいし"
 forms = ["ではあるまいし", "でもあるまいし", "じゃないんだから"]
 jlpt = "N1"
@@ -21788,6 +22684,7 @@ examples = [
 
 [[point]]
 id = "mo-douzen-da"
+seq = 891
 pattern = "も同然だ"
 forms = ["も同然", "も同然の", "もどうぜんだ", "も同然です", "も同然である"]
 jlpt = "N1"
@@ -21813,6 +22710,7 @@ examples = [
 
 [[point]]
 id = "no-mo-muri-wa-nai"
+seq = 892
 pattern = "のも無理はない"
 forms = ["のも無理もない", "のもむりはない", "のは無理もない", "のも無理はありません", "無理もない"]
 jlpt = "N1"
@@ -21834,6 +22732,7 @@ examples = [
 
 [[point]]
 id = "te-no-koto-da"
+seq = 893
 pattern = "てのことだ"
 forms = ["てのこと", "でのことだ", "てのことです"]
 hover = false
@@ -21856,6 +22755,7 @@ examples = [
 
 [[point]]
 id = "ta-tameshi-ga-nai"
+seq = 894
 pattern = "ためしがない"
 forms = ["たためしがない", "た試しがない", "試しがない", "ためしはない", "ためしがありません"]
 jlpt = "N1"
@@ -21876,6 +22776,7 @@ examples = [
 
 [[point]]
 id = "dano"
+seq = 895
 pattern = "だの"
 forms = ["だの〜だの", "だのなんだの", "だの何だの"]
 hover = false
@@ -21902,6 +22803,7 @@ examples = [
 
 [[point]]
 id = "yare"
+seq = 896
 pattern = "やれ〜やれ"
 forms = ["やれ〜だ、やれ〜だ", "やれ"]
 hover = false
@@ -21924,6 +22826,7 @@ examples = [
 
 [[point]]
 id = "nari-nari"
+seq = 897
 pattern = "なり〜なり"
 forms = ["なり〜なりして", "なり〜なりする"]
 hover = false
@@ -21950,6 +22853,7 @@ examples = [
 
 [[point]]
 id = "nari-ni"
+seq = 898
 pattern = "なりに"
 forms = ["なりの", "それなりに", "それなりの"]
 hover = false
@@ -21975,6 +22879,7 @@ examples = [
 
 [[point]]
 id = "nari-tomo"
+seq = 899
 pattern = "なりとも"
 forms = ["少しなりとも", "多少なりとも", "一目なりとも"]
 jlpt = "N1"
@@ -21995,6 +22900,7 @@ examples = [
 
 [[point]]
 id = "wa-wa"
+seq = 900
 pattern = "わ〜わ"
 forms = ["わ〜わで", "わで"]
 hover = false
@@ -22017,6 +22923,7 @@ examples = [
 
 [[point]]
 id = "no-nan-no"
+seq = 901
 pattern = "のなんの"
 forms = ["のなんのって", "の何の", "のなんのと"]
 jlpt = "N1"
@@ -22039,6 +22946,7 @@ examples = [
 
 [[point]]
 id = "ttara"
+seq = 902
 pattern = "ったら"
 forms = []
 hover = false
@@ -22063,6 +22971,7 @@ examples = [
 
 [[point]]
 id = "tteba"
+seq = 903
 pattern = "ってば"
 forms = []
 hover = false
@@ -22087,6 +22996,7 @@ examples = [
 
 [[point]]
 id = "kiri-ga-nai"
+seq = 904
 pattern = "きりがない"
 forms = ["切りがない", "キリがない", "きりがありません", "たらきりがない", "ばきりがない", "ときりがない"]
 jlpt = "N1"
@@ -22112,6 +23022,7 @@ examples = [
 
 [[point]]
 id = "de-motte"
+seq = 905
 pattern = "でもって"
 forms = ["で以て"]
 jlpt = "N1"
@@ -22136,6 +23047,7 @@ examples = [
 
 [[point]]
 id = "de-mo-shitara"
+seq = 906
 pattern = "でもしたら"
 forms = ["でもすれば", "でもしたらどうする"]
 hover = false
@@ -22161,6 +23073,7 @@ examples = [
 
 [[point]]
 id = "koto-da-shi"
+seq = 907
 pattern = "ことだし"
 forms = ["ことですし"]
 jlpt = "N1"
@@ -22186,6 +23099,7 @@ examples = [
 
 [[point]]
 id = "koto-no-nai-you"
+seq = 908
 pattern = "ことのないよう"
 forms = ["ことのないように", "ことがないよう", "ことがないように", "ことのないようお願いします"]
 jlpt = "N1"
@@ -22206,6 +23120,7 @@ examples = [
 
 [[point]]
 id = "koto-mo-atte"
+seq = 909
 pattern = "こともあって"
 forms = ["こともあり", "ということもあって", "こともあってか"]
 jlpt = "N1"
@@ -22230,6 +23145,7 @@ examples = [
 
 [[point]]
 id = "kurai-de-nai-to"
+seq = 910
 pattern = "くらいでないと"
 forms = ["ぐらいでないと", "くらいでなければ", "ぐらいでなければ", "くらいじゃないと", "ぐらいじゃないと"]
 jlpt = "N1"
@@ -22255,6 +23171,7 @@ examples = [
 
 [[point]]
 id = "sareru-mama"
+seq = 911
 pattern = "されるまま"
 forms = ["られるまま", "されるがまま", "られるがまま", "されるままに", "られるままに", "言われるまま", "言われるままに"]
 jlpt = "N1"
@@ -22277,6 +23194,7 @@ examples = [
 
 [[point]]
 id = "nan-to-iu"
+seq = 912
 pattern = "なんという"
 forms = ["何という", "なんと"]
 jlpt = "N1"
@@ -22299,6 +23217,7 @@ examples = [
 
 [[point]]
 id = "okotoba-ni-amaete"
+seq = 913
 pattern = "お言葉に甘えて"
 forms = ["おことばにあまえて", "お言葉に甘え", "お言葉に甘えまして", "ご好意に甘えて"]
 jlpt = "N1"
@@ -22320,6 +23239,7 @@ examples = [
 
 [[point]]
 id = "akumade"
+seq = 914
 pattern = "あくまで"
 forms = ["あくまでも", "飽くまで", "飽くまでも"]
 jlpt = "N1"
@@ -22342,6 +23262,7 @@ examples = [
 
 [[point]]
 id = "iza"
+seq = 915
 pattern = "いざ"
 forms = ["いざとなると", "いざとなれば", "いざという時", "いざというとき", "いざとなったら", "いざ〜となると"]
 jlpt = "N1"
@@ -22367,6 +23288,7 @@ examples = [
 
 [[point]]
 id = "izure-ni-shite-mo"
+seq = 916
 pattern = "いずれにしても"
 forms = ["いずれにせよ", "いずれにしろ", "いずれにしましても"]
 jlpt = "N1"
@@ -22388,6 +23310,7 @@ examples = [
 
 [[point]]
 id = "sazo"
+seq = 917
 pattern = "さぞ"
 forms = ["さぞかし", "さぞや"]
 jlpt = "N1"
@@ -22410,6 +23333,7 @@ examples = [
 
 [[point]]
 id = "dou-ni-ka"
+seq = 918
 pattern = "どうにか"
 forms = ["どうにかして", "どうにかなる", "どうにかする", "どうにかこうにか"]
 jlpt = "N1"
@@ -22435,6 +23359,7 @@ examples = [
 
 [[point]]
 id = "dou-ni-mo"
+seq = 919
 pattern = "どうにも"
 forms = ["どうにもならない", "どうにもできない", "どうにもならぬ", "てもどうにもならない"]
 jlpt = "N1"
@@ -22458,6 +23383,7 @@ examples = [
 
 [[point]]
 id = "ichigai-ni"
+seq = 920
 pattern = "一概に"
 forms = ["いちがいに", "一概には", "一概に〜ない"]
 jlpt = "N1"
@@ -22479,6 +23405,7 @@ examples = [
 
 [[point]]
 id = "an-no-jou"
+seq = 921
 pattern = "案の定"
 forms = ["あんのじょう"]
 jlpt = "N1"
@@ -22500,6 +23427,7 @@ examples = [
 
 [[point]]
 id = "izen"
+seq = 922
 pattern = "以前"
 forms = ["以前の問題", "以前の話", "以前のことだ", "いぜん"]
 hover = false
@@ -22525,6 +23453,7 @@ examples = [
 
 [[point]]
 id = "ima-hitotsu"
+seq = 923
 pattern = "今ひとつ"
 forms = ["今一つ", "いまひとつ", "いまいち", "イマイチ"]
 jlpt = "N1"
@@ -22549,6 +23478,7 @@ examples = [
 
 [[point]]
 id = "iwazu-mo-gana"
+seq = 924
 pattern = "言わずもがな"
 forms = ["いわずもがな", "言わずもがなの"]
 jlpt = "N1"
@@ -22573,6 +23503,7 @@ examples = [
 
 [[point]]
 id = "nani-wo-oite-mo"
+seq = 925
 pattern = "何をおいても"
 forms = ["なにをおいても", "何はおいても", "何をさておいても"]
 jlpt = "N1"
@@ -22594,6 +23525,7 @@ examples = [
 
 [[point]]
 id = "ka-ina-ka"
+seq = 926
 pattern = "か否か"
 forms = ["かいなか", "か否かは", "か否かを", "か否かで"]
 jlpt = "N1"
@@ -22619,6 +23551,7 @@ examples = [
 
 [[point]]
 id = "ta-hyoushi-ni"
+seq = 927
 pattern = "た拍子に"
 forms = ["たひょうしに", "た拍子で", "たはずみに", "たはずみで", "た弾みに", "た弾みで", "はずみで", "弾みで", "はずみに", "弾みに", "の拍子に", "のはずみで", "何かの拍子に", "何かのはずみで", "たひょうしで"]
 jlpt = "N1"
@@ -22648,6 +23581,7 @@ examples = [
 
 [[point]]
 id = "nagara-ni"
+seq = 928
 pattern = "ながらに"
 forms = ["ながらの", "ながらにして", "生まれながら", "涙ながら", "昔ながら", "いながらにして"]
 jlpt = "N1"
@@ -22674,6 +23608,7 @@ examples = [
 
 [[point]]
 id = "ni-okaremashite-wa"
+seq = 929
 pattern = "におかれましては"
 forms = ["におかれては", "にもおかれましては"]
 jlpt = "N1"
@@ -22696,6 +23631,7 @@ examples = [
 
 [[point]]
 id = "ni-kakotsukete"
+seq = 930
 pattern = "にかこつけて"
 forms = ["に託けて", "にかこつけ"]
 jlpt = "N1"
@@ -22721,6 +23657,7 @@ examples = [
 
 [[point]]
 id = "ni-kamakete"
+seq = 931
 pattern = "にかまけて"
 forms = ["にかまけ"]
 jlpt = "N1"
@@ -22743,6 +23680,7 @@ examples = [
 
 [[point]]
 id = "no-yara"
+seq = 932
 pattern = "のやら"
 forms = ["ものやら", "のやら〜のやら", "んだか"]
 jlpt = "N1"
@@ -22766,6 +23704,7 @@ examples = [
 
 [[point]]
 id = "mo-sokosoko-ni"
+seq = 933
 pattern = "もそこそこに"
 forms = ["もそこそこで"]
 jlpt = "N1"
@@ -22788,6 +23727,7 @@ examples = [
 
 [[point]]
 id = "ni-nai-repeat"
+seq = 934
 pattern = "に〜ない"
 forms = ["泣くに泣けない", "笑うに笑えない", "言うに言えない", "引くに引けない", "行くに行けない", "寝るに寝られない"]
 jlpt = "N1"
@@ -22809,6 +23749,7 @@ examples = [
 
 [[point]]
 id = "ika-ni"
+seq = 935
 pattern = "いかに"
 forms = ["如何に", "いかに〜か", "いかに〜ても"]
 jlpt = "N1"
@@ -22834,6 +23775,7 @@ examples = [
 
 [[point]]
 id = "ni-hitoshii"
+seq = 936
 pattern = "に等しい"
 forms = ["にひとしい", "に等しく", "ないに等しい"]
 jlpt = "N1"
@@ -22858,6 +23800,7 @@ examples = [
 
 [[point]]
 id = "nai-made-mo"
+seq = 937
 pattern = "ないまでも"
 forms = ["と言わないまでも", "とは言わないまでも", "とはいわないまでも", "ないまでも〜せめて"]
 jlpt = "N1"

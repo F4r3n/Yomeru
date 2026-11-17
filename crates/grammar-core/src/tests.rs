@@ -5,13 +5,28 @@
 use crate::types::{Span, parse_marked, plain};
 use crate::{GrammarDict, compile};
 
-/// One `[[point]]`, the fields the tests vary given, the rest filled in.
+/// A `grammar.toml` of `points`: each `seq = @` numbered in order from 1,
+/// and `next_seq` above them all.
+fn numbered(points: &str) -> String {
+    let mut out = String::from("next_seq = 1000\n");
+    for (i, part) in points.split("seq = @").enumerate() {
+        if i > 0 {
+            out.push_str(&format!("seq = {i}"));
+        }
+        out.push_str(part);
+    }
+    out
+}
+
+/// One `[[point]]`, the fields the tests vary given, the rest filled in;
+/// [`numbered`] gives it its `seq`.
 fn point(id: &str, pattern: &str, forms: &[&str], extra: &str) -> String {
     let forms: Vec<String> = forms.iter().map(|f| format!("{f:?}")).collect();
     format!(
         r#"
 [[point]]
 id = "{id}"
+seq = @
 pattern = "{pattern}"
 forms = [{forms}]
 jlpt = "N4"
@@ -31,7 +46,7 @@ examples = [
 }
 
 fn sample() -> String {
-    [
+    let points = [
         point(
             "you-ni-suru",
             "ようにする",
@@ -52,7 +67,8 @@ fn sample() -> String {
             r#"homographs = ["shidai"]"#,
         ),
     ]
-    .concat()
+    .concat();
+    numbered(&points)
 }
 
 fn sample_dict() -> GrammarDict {
@@ -100,9 +116,13 @@ fn compiles_every_field() {
     assert_eq!(e.examples[1].tatoeba, "");
     assert!(!dict.by_id("tte").unwrap().hover);
     assert!(dict.by_id("missing").is_none());
-    let seq = crate::grammar_seq("you-ni-suru");
-    assert_eq!(dict.by_seq(seq).unwrap().id, "you-ni-suru");
-    assert!(dict.by_seq(crate::grammar_seq("missing")).is_none());
+    // Numbered in file order: you-ni-suru is the first.
+    assert_eq!(e.seq, 1);
+    assert_eq!(dict.by_seq(1).unwrap().id, "you-ni-suru");
+    assert_eq!(dict.by_seq(3).unwrap().id, "you-ni");
+    assert!(dict.by_seq(999).is_none());
+    // A card's sequence (top bit set) finds the entry too, for now.
+    assert_eq!(dict.by_seq(crate::card_sequence(1)).unwrap().id, "you-ni-suru");
 }
 
 #[test]
@@ -171,7 +191,7 @@ fn hover_fills_the_gap_of_honorific_patterns() {
         point("ni-naru", "になる", &[], ""),
     ]
     .concat();
-    let dict = GrammarDict::from_bytes(&compile(&src).unwrap().bytes).unwrap();
+    let dict = GrammarDict::from_bytes(&compile(&numbered(&src)).unwrap().bytes).unwrap();
     let hover = |t| dict.hover_match(t, 24).map(|(e, n)| (ids(&e).join(","), n));
     assert_eq!(hover("お待ちですか"), Some(("o-da".into(), 5)));
     assert_eq!(hover("お出かけですか"), Some(("o-da".into(), 6)));
@@ -237,9 +257,25 @@ fn refuses_what_a_lookup_would_get_wrong() {
         (format!("{base}\nunknown = 1"), "parsing"),
     ];
     for (toml, want) in cases {
+        let err = format!("{:#}", compile(&numbered(&toml)).err().unwrap());
+        assert!(err.contains(want), "{want}: {err}");
+    }
+    // The numbers: given by hand here, [`numbered`] would fix them.
+    let a = point("a", "あい", &[], "");
+    let b = point("b", "うえ", &[], "");
+    let cases = [
+        (format!("next_seq = 5\n{}{}", a.replace("@", "1"), b.replace("@", "1")), "already a's"),
+        (format!("next_seq = 5\n{}", a.replace("@", "5")), "next_seq"),
+        (format!("next_seq = 5\n{}", a.replace("@", "0")), "from 1"),
+        (a.replace("@", "1"), "next_seq"),
+        (format!("next_seq = 5\n{}", a.replace("seq = @\n", "")), "seq"),
+    ];
+    for (toml, want) in cases {
         let err = format!("{:#}", compile(&toml).err().unwrap());
         assert!(err.contains(want), "{want}: {err}");
     }
+    // A gap is fine: that number was a removed entry's.
+    assert!(compile(&format!("next_seq = 9\n{}", a.replace("@", "7"))).is_ok());
 }
 
 #[test]

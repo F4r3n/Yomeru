@@ -1523,10 +1523,10 @@ async fn an_undone_drill_leaves_the_log_and_its_count_reaches_zero() {
 
 // ---- grammar cards and older clients --------------------------------------
 
-/// A grammar card as the app uploads it: `sequence` is `grammar_seq` of the
-/// point's id, and only that number and the SRS fields travel.
+/// A grammar card as the app uploads it: `sequence` is `card_sequence` of the
+/// entry's `seq`, and only that number and the SRS fields travel.
 fn grammar_card() -> db::Card {
-    let seq = grammar_core::grammar_seq("te-wa-ikenai");
+    let seq = grammar_core::card_sequence(7);
     db::Card {
         id: format!("{seq}::grammar"),
         sequence: i64::from(seq),

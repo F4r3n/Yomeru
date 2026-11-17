@@ -29,8 +29,11 @@ const EXAMPLE_COUNT: usize = 7;
 const PREFIX_FILLER: u32 = 40;
 
 const GRAMMAR_TOML: &str = r#"
+next_seq = 2
+
 [[point]]
 id = "te-mo-ii"
+seq = 1
 pattern = "てもいい"
 forms = ["でもいい"]
 jlpt = "N5"

@@ -176,8 +176,13 @@ a Read first, and the file is thousands of lines. Instead:
 
 - **id**: a lowercase romaji slug of the pattern (`te-mo-ii`,
   `wake-de-wa-nai`), with a suffix when two patterns share a spelling
-  (`sou-da-appearance`, `sou-da-hearsay`). Cards point at ids: never rename
-  one once committed.
+  (`sou-da-appearance`, `sou-da-hearsay`). Links use ids: don't rename
+  one without fixing the `related` and `homographs` that name it.
+- **seq**: right after `id`. Review cards key on it. A new entry takes the
+  file's `next_seq` (`grep -n '^next_seq' data/grammar.toml`), and the batch
+  raises `next_seq` past the last number it used, so a batch of 20 at
+  `next_seq = 938` gets 938…957 and leaves `next_seq = 958`. Never change
+  an entry's seq, and never reuse a removed entry's: a gap is fine.
 - **pattern**: the form learners look up. **forms**: other spellings and
   variants the lookup should find (でもいい, ていい, わけじゃない,
   に違いありません). The lookup deinflects, so conjugations it can reach
