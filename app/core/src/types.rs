@@ -272,6 +272,22 @@ struct WireCard {
     updated_ms: f64,
 }
 
+/// Whether `card` (a stored or downloaded card, of any kind) has the shape
+/// every card has: text `id`, `kind`, `item` and `direction`, none empty, the
+/// id being `"<kind>:<item>:<direction>"`. A card without it can't be stored
+/// under its key or sent back (the server refuses it), so it is dropped;
+/// one with it but of a kind this build doesn't know is kept, unread.
+/// Mirrors `isWellFormedCard` in `extension/src/shared/types.ts`.
+pub fn is_well_formed_card(card: &serde_json::Value) -> bool {
+    let field = |k: &str| card.get(k).and_then(serde_json::Value::as_str).filter(|s| !s.is_empty());
+    match (field("id"), field("kind"), field("item"), field("direction")) {
+        (Some(id), Some(kind), Some(item), Some(direction)) => {
+            id == format!("{kind}:{item}:{direction}")
+        }
+        _ => false,
+    }
+}
+
 impl TryFrom<WireCard> for SrsCard {
     type Error = String;
 
@@ -280,6 +296,12 @@ impl TryFrom<WireCard> for SrsCard {
             .ok_or_else(|| format!("card {}: unknown item {}:{}", w.id, w.kind, w.item))?;
         if !item.directions().contains(&w.direction) {
             return Err(format!("card {}: a {} card has no {:?} side", w.id, w.kind, w.direction));
+        }
+        // The id is the store key; one that disagrees with the fields would
+        // file the card where `get_card` and `delete_card` never look.
+        let id = card_id(item, w.direction);
+        if w.id != id {
+            return Err(format!("card {}: its key is {id}", w.id));
         }
         Ok(Self {
             id: w.id,
@@ -576,6 +598,15 @@ impl SrsCard {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_card_whose_id_disagrees_with_its_key_is_refused() {
+        let mut v = serde_json::to_value(SrsCard::new_kanji('猫', 0.0)).unwrap();
+        assert!(serde_json::from_value::<SrsCard>(v.clone()).is_ok());
+        v["id"] = "kanji:犬:meaning".into();
+        assert!(serde_json::from_value::<SrsCard>(v.clone()).is_err());
+        assert!(!is_well_formed_card(&v));
+    }
 
     #[test]
     fn card_ids_name_kind_item_and_direction() {

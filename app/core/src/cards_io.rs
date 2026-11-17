@@ -20,16 +20,18 @@ use crate::types::{CARDS_SCHEMA_VERSION, SrsCard, SrsCardV1, SrsCardV2};
 pub struct Skips {
     /// Id already present in storage.
     existing: usize,
-    /// Not mappable to a current card: a legacy headword not in the
-    /// dictionary, or a schema-2 grammar card (its number was a hash).
+    /// A legacy headword not in the dictionary.
     unresolved: usize,
+    /// A schema-2 grammar card: its number was a hash of the entry's slug,
+    /// which nothing maps back, so the point has to be added again.
+    old_grammar: usize,
     /// Could not be parsed in the expected format.
     invalid: usize,
 }
 
 impl Skips {
     fn total(self) -> usize {
-        self.existing + self.unresolved + self.invalid
+        self.existing + self.unresolved + self.old_grammar + self.invalid
     }
 }
 
@@ -45,6 +47,12 @@ pub fn format_import_result(added: usize, skips: Skips) -> String {
     }
     if skips.unresolved > 0 {
         reasons.push(format!("{} not in dictionary", skips.unresolved));
+    }
+    if skips.old_grammar > 0 {
+        reasons.push(format!(
+            "{} grammar from an older version: add those points again",
+            skips.old_grammar
+        ));
     }
     if skips.invalid > 0 {
         reasons.push(format!("{} invalid", skips.invalid));
@@ -143,8 +151,8 @@ fn parse_current_cards(
 }
 
 /// Parse schema-2 cards and re-key each under `kind` + `item`, every other
-/// field kept. Grammar cards count as unresolved: their number was a hash of
-/// the entry's slug, which nothing maps back.
+/// field kept. Grammar cards are left out (`Skips::old_grammar`): their number
+/// was a hash of the entry's slug, which nothing maps back.
 fn parse_v2_cards(
     cards: &[serde_json::Value],
     existing_ids: &std::collections::HashSet<&str>,
@@ -157,7 +165,7 @@ fn parse_v2_cards(
             continue;
         };
         let Some(card) = v2.upgrade() else {
-            skips.unresolved += 1;
+            skips.old_grammar += 1;
             continue;
         };
         if existing_ids.contains(card.id.as_str()) {
@@ -424,7 +432,7 @@ mod tests {
     fn export_v2_upgrades_every_card_but_grammar() {
         let (_, cards, skips) = read_v2(EXPORT_V2);
         // The grammar card's number was a hash of its slug: nothing maps it.
-        assert_eq!(skips.unresolved, 1);
+        assert_eq!(skips.old_grammar, 1);
         let ids: Vec<&str> = cards.iter().map(|c| c.id.as_str()).collect();
         assert_eq!(
             ids,
@@ -499,7 +507,7 @@ mod tests {
         let (file, cards, skips) = read_v2(&text);
         let raw = file["cards"].as_array().unwrap();
         let grammar = raw.iter().filter(|c| c["direction"] == "grammar").count();
-        assert_eq!(skips.unresolved, grammar, "only grammar cards are left out");
+        assert_eq!(skips.old_grammar, grammar, "only grammar cards are left out");
         let kept: Vec<_> = raw.iter().filter(|c| c["direction"] != "grammar").collect();
         for (old, new) in kept.iter().zip(&cards) {
             assert_eq!(scheduling(old), scheduling(&serde_json::to_value(new).unwrap()), "{}", old["id"]);
@@ -528,11 +536,13 @@ mod tests {
         let skips = Skips {
             existing: 157,
             unresolved: 3,
+            old_grammar: 2,
             invalid: 0,
         };
         assert_eq!(
             format_import_result(0, skips),
-            "Imported 0 card(s); skipped 160 (157 already present, 3 not in dictionary)."
+            "Imported 0 card(s); skipped 162 (157 already present, 3 not in dictionary, \
+             2 grammar from an older version: add those points again)."
         );
     }
 }

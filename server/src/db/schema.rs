@@ -173,7 +173,8 @@ pub(super) async fn init_schema(pool: &SqlitePool) -> anyhow::Result<()> {
 ///   maps back, and none were released.
 /// - `reviews.card_id` is rewritten the same way, so each card keeps its whole
 ///   answer history (the FSRS optimizer's input), including the answers of
-///   cards deleted since. Answers to grammar cards go with their cards.
+///   cards deleted since. Answers to grammar cards go with their cards, and
+///   so do answers whose id has no numeric sequence (none in production).
 /// - `deletions` is emptied: its ids name the old keys, and every client
 ///   wipes its cards and pulls them back on its first sync after updating.
 /// - The sync epoch changes, so every cursor is refused and each client gets
@@ -205,8 +206,12 @@ async fn migrate_card_keys(pool: &SqlitePool) -> anyhow::Result<()> {
         "DROP TABLE cards".to_string(),
         "ALTER TABLE cards_rekeyed RENAME TO cards".to_string(),
         "CREATE INDEX IF NOT EXISTS cards_by_rev ON cards (email, rev)".to_string(),
+        // Answers that can't be mapped go: grammar cards' (see above), and
+        // any whose sequence isn't a number, which would all collapse into
+        // `word:0` and could collide on the primary key.
         format!(
-            "DELETE FROM reviews WHERE instr(card_id, '::') = 0
+            "DELETE FROM reviews WHERE instr(card_id, '::') < 2
+                 OR substr(card_id, 1, instr(card_id, '::') - 1) GLOB '*[^0-9]*'
                  OR {DIR} NOT IN ('recognition', 'recall', 'kanji')"
         ),
         format!(

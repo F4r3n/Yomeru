@@ -28,6 +28,7 @@ const TOKEN = "test-token";
 
 const WORD = 1_467_640;
 const CAT = 1_001;
+const DOG_SEQ = 1_002;
 /** A card from a newer client: a kind this build doesn't know. */
 const UNKNOWN = {
   ...makeCard(),
@@ -372,6 +373,28 @@ describe("sync", () => {
       await sync.handleSyncCards();
 
       expect(await idb.getAllTombstones()).toHaveLength(0);
+    });
+
+    it("drops a malformed card instead of keeping it", async () => {
+      // Kept, it would go up on every full sync and get each one refused.
+      const old = { ...makeCard({ sequence: WORD }), id: "1467640::recognition", sequence: WORD };
+      const misfiled = { ...makeCard({ sequence: WORD }), id: "word:1:recognition" };
+      respondWith({ cards: [old, misfiled], deletions: [] });
+
+      await sync.handleSyncCards();
+
+      expect(await idb.getAllRawCards()).toEqual([]);
+    });
+
+    it("never uploads a malformed card already stored", async () => {
+      await idb.putCard(makeCard({ sequence: CAT }));
+      await idb.putCardsSynced([{ ...makeCard({ sequence: DOG_SEQ }), id: "1002::recall" }]);
+
+      respondWith({ cards: [], deletions: [] });
+      await sync.handleSyncCards();
+
+      const ids = (sent[0].cards as SrsCard[]).map((c) => c.id);
+      expect(ids).toEqual([cardId(wordKey(CAT), "recognition")]);
     });
 
     it("keeps a card of a kind this build doesn't know, out of sight", async () => {

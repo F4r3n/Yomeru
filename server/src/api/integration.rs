@@ -255,12 +255,20 @@ impl Device {
 
 /// A card as a client would hold it: `added_ms` and the merge version are set
 /// explicitly, because every guard under test compares one against the other.
+///
+/// `kind`, `item` and `direction` are read off `id`, which the server checks
+/// them against; an id that isn't one gets a word's.
 fn card(id: &str, added_ms: f64, updated_ms: f64) -> db::Card {
+    let mut parts = id.splitn(3, ':');
+    let (kind, item, direction) = match (parts.next(), parts.next(), parts.next()) {
+        (Some(k), Some(i), Some(d)) => (k, i, d),
+        _ => ("word", "1467640", "recognition"),
+    };
     db::Card {
         id: id.to_string(),
-        kind: "word".to_string(),
-        item: "1467640".to_string(),
-        direction: "recognition".to_string(),
+        kind: kind.to_string(),
+        item: item.to_string(),
+        direction: direction.to_string(),
         due_ms: 0.0,
         stability: 0.0,
         difficulty: 0.0,
@@ -1568,4 +1576,36 @@ async fn a_client_from_before_the_card_key_change_is_refused() {
         .post("/api/sync", Some(&h.token), &json!({ "cards": [] }))
         .await;
     assert_eq!(body["cards"], json!([]));
+}
+
+#[tokio::test]
+async fn old_ids_in_answers_or_deletions_are_refused_too() {
+    // An old client that only answered or deleted sends no card, so nothing
+    // fails to parse; its old ids would land in the log after the migration.
+    let h = Harness::new().await;
+    for body in [
+        json!({ "cards": [], "reviews": [{
+            "card_id": "1467640::recall", "kind": "drill", "reviewed_ms": 5, "rating": 1
+        }] }),
+        json!({ "cards": [], "deletions": [{ "id": "1467640::recall", "deleted_at": 5 }] }),
+        json!({ "cards": [], "deletions": ["word:1467640"] }),
+    ] {
+        let (status, _) = h.post("/api/sync", Some(&h.token), &body).await;
+        assert_eq!(status, StatusCode::BAD_REQUEST, "{body}");
+    }
+    let n: i64 = sqlx::query_scalar("SELECT count(*) FROM reviews").fetch_one(&h.db).await.unwrap();
+    assert_eq!(n, 0);
+}
+
+#[tokio::test]
+async fn a_card_whose_id_is_not_its_key_is_refused() {
+    let h = Harness::new().await;
+    let misfiled = db::Card {
+        id: "word:1:recognition".to_string(),
+        ..card("unused", T0, T0 + SECOND)
+    };
+    let (status, _) = h
+        .post("/api/sync", Some(&h.token), &json!({ "cards": [misfiled] }))
+        .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
 }

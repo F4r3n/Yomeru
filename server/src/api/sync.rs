@@ -44,6 +44,37 @@ pub struct SyncBody {
     pub since: Option<db::Cursor>,
 }
 
+/// The parts of a card id, `"<kind>:<item>:<direction>"`, none empty. The
+/// item may hold a `:` of its own; kind and direction can't.
+fn card_id_parts(id: &str) -> Option<(&str, &str, &str)> {
+    let (kind, rest) = id.split_once(':')?;
+    let (item, direction) = rest.rsplit_once(':')?;
+    [kind, item, direction].iter().all(|p| !p.is_empty()).then_some((kind, item, direction))
+}
+
+/// Refuses a request naming a card by anything but its current id. A client
+/// from before the card key change sends `"<sequence>::<direction>"` ids:
+/// stored, its answers and deletions would name cards no client has, and the
+/// one-time migration (`db::schema`) has already run. Its cards fail to parse
+/// already; this covers a request with only answers or deletions in it. A
+/// card's id must also be its own fields', or it would be stored under a key
+/// no client looks up.
+fn check_card_ids(body: &SyncBody, deletions: &[db::Deletion]) -> Result<(), ApiError> {
+    let bad = |id: &str| ApiError::BadRequest(format!("not a card id: {id:?}"));
+    for c in &body.cards {
+        if card_id_parts(&c.id) != Some((c.kind.as_str(), c.item.as_str(), c.direction.as_str())) {
+            return Err(bad(&c.id));
+        }
+    }
+    let ids = body.reviews.iter().map(|r| r.card_id.as_str());
+    for id in ids.chain(deletions.iter().map(|d| d.id.as_str())) {
+        if card_id_parts(id).is_none() {
+            return Err(bad(id));
+        }
+    }
+    Ok(())
+}
+
 #[derive(Serialize)]
 pub struct SyncResponse {
     pub cards: Vec<db::Card>,
@@ -90,6 +121,9 @@ pub async fn sync_handler(
         .map_err(|e| db_err("validate_session", e))?
         .ok_or(ApiError::Unauthorized(Some("invalid or expired session")))?;
 
+    let incoming: Vec<db::Deletion> = body.deletions.iter().map(|d| d.to_deletion(now)).collect();
+    check_card_ids(&body, &incoming)?;
+
     // One transaction for the whole round trip. The reads have to see exactly
     // the state the writes just produced: run separately, two devices syncing
     // at once can interleave and each be handed a merged snapshot that never
@@ -105,7 +139,6 @@ pub async fn sync_handler(
         .await
         .map_err(|e| db_err("next_rev", e))?;
 
-    let incoming: Vec<db::Deletion> = body.deletions.iter().map(|d| d.to_deletion(now)).collect();
     db::apply_deletions_tx(&mut tx, &email, &incoming, clock.rev)
         .await
         .map_err(|e| db_err("apply_deletions", e))?;

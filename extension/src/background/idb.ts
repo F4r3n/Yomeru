@@ -2,6 +2,7 @@ import type { CardDirection, CardKey, ReviewLog, SrsCard, WordStatus } from "../
 import {
   cardId,
   isKnownCard,
+  isWellFormedCard,
   isWordCard,
   KIND_DIRECTIONS,
   MAX_PRIORITY,
@@ -597,7 +598,10 @@ export async function applySyncResponse(
  * local copy there would leave it clean yet "newer" than everything the
  * server sends, so it would refuse other devices' edits until edited again.
  */
-async function mergeRemoteCards(remote: SrsCard[], uploaded: SrsCard[]): Promise<void> {
+async function mergeRemoteCards(all: SrsCard[], uploaded: SrsCard[]): Promise<void> {
+  // A malformed card would be stored and then uploaded on every full sync,
+  // each time refused: dropped here instead.
+  const remote = all.filter(isWellFormedCard);
   if (remote.length === 0) return;
   const local = await getAllRawCards();
   const localVersion = new Map<string, number>();

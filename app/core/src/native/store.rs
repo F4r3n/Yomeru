@@ -164,10 +164,10 @@ fn put_card_row(conn: &Connection, card: &SrsCard) -> Result<(), String> {
 /// A card as the server sent it, kept whole because this build can't read it
 /// (see `idb::put_raw_cards`). Rows without an `id` are dropped.
 pub(crate) fn put_raw_card_row(conn: &Connection, card: &serde_json::Value) -> Result<(), String> {
-    let field = |k: &str| card.get(k).and_then(|v| v.as_str()).unwrap_or_default();
-    if field("id").is_empty() {
+    if !crate::types::is_well_formed_card(card) {
         return Ok(());
     }
+    let field = |k: &str| card.get(k).and_then(|v| v.as_str()).unwrap_or_default();
     conn.prepare_cached(
         "INSERT OR REPLACE INTO cards (id, kind, item, json) VALUES (?1, ?2, ?3, ?4)",
     )

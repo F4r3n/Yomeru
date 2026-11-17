@@ -199,17 +199,20 @@ fn complete() -> bool {
 /// doesn't (a kind or direction added since). The second kind is stored as it
 /// came, untouched by any typed read, so an update shows it with no resync;
 /// it can't have been changed here, so the server's copy always applies.
-/// Entries without an `id` are dropped: nothing could store or delete them.
+/// Malformed entries (see [`crate::types::is_well_formed_card`]) are dropped:
+/// nothing could store them under their key, and uploading one would get every
+/// later full sync refused.
 pub fn split_cards(cards: Vec<serde_json::Value>) -> (Vec<SrsCard>, Vec<serde_json::Value>) {
     let mut known = Vec::with_capacity(cards.len());
     let mut unknown = Vec::new();
     for c in cards {
-        match serde_json::from_value::<SrsCard>(c.clone()) {
+        if !crate::types::is_well_formed_card(&c) {
+            tracing::warn!("sync: dropping a malformed card: {c}");
+            continue;
+        }
+        match SrsCard::deserialize(&c) {
             Ok(card) => known.push(card),
-            Err(_) if c.get("id").and_then(|v| v.as_str()).is_some_and(|id| !id.is_empty()) => {
-                unknown.push(c);
-            }
-            Err(e) => tracing::warn!("sync: dropping a card without an id: {e}"),
+            Err(_) => unknown.push(c),
         }
     }
     (known, unknown)
@@ -590,6 +593,8 @@ mod tests {
             let mut later = resp["cards"][0].clone();
             later["id"] = "sentence:12:production".into();
             later["kind"] = "sentence".into();
+            later["item"] = "12".into();
+            later["direction"] = "production".into();
             let nameless = serde_json::json!({ "kind": "sentence" });
             for c in [cloze.clone(), later.clone(), nameless] {
                 resp["cards"].as_array_mut().unwrap().push(c);
@@ -598,6 +603,24 @@ mod tests {
             let (cards, unknown) = split_cards(resp.cards);
             assert_eq!(cards.len(), 1);
             assert_eq!(unknown, vec![cloze, later]);
+        }
+
+        #[test]
+        fn a_malformed_card_is_dropped_not_kept() {
+            // Kept, it would be uploaded on every full sync and refused there.
+            let word = fixture("response.json")["cards"][0].clone();
+            let mut old = word.clone();
+            old.as_object_mut().unwrap().remove("kind");
+            old["id"] = "1467640::recognition".into();
+            old["sequence"] = 1_467_640.into();
+            let mut misfiled = word.clone();
+            misfiled["id"] = "word:1:recognition".into();
+            let mut empty_item = word.clone();
+            empty_item["item"] = "".into();
+            empty_item["id"] = "word::recognition".into();
+            let (cards, unknown) = split_cards(vec![word, old, misfiled, empty_item]);
+            assert_eq!(cards.len(), 1);
+            assert!(unknown.is_empty());
         }
 
         #[test]

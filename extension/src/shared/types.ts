@@ -101,13 +101,26 @@ export function isWordCard(c: { kind: string }): boolean {
   return c.kind === "word";
 }
 
+/** Whether `raw` (a stored or downloaded card, of any kind) has the shape
+ * every card has: text `id`, `kind`, `item` and `direction`, none empty, the
+ * id being `"<kind>:<item>:<direction>"`. One without it can't be stored
+ * under its key or sent back (the server refuses it), so it is dropped.
+ * Mirrors `is_well_formed_card` in `app/core/src/types.rs`. */
+export function isWellFormedCard(raw: unknown): boolean {
+  const c = raw as Record<string, unknown> | null;
+  if (!c) return false;
+  const parts = [c.kind, c.item, c.direction];
+  if (!parts.every((p) => typeof p === "string" && p !== "")) return false;
+  return c.id === parts.join(":");
+}
+
 /** Whether `raw` (a stored or downloaded card) is one this build reads: a
  * known kind with one of that kind's directions. Others, from a newer
  * client, are kept and synced but never shown. Mirrors `WireCard`'s
  * `TryFrom`. */
 export function isKnownCard(raw: unknown): raw is SrsCard {
-  const c = raw as { kind?: unknown; item?: unknown; direction?: unknown } | null;
-  if (!c || typeof c.item !== "string" || typeof c.kind !== "string") return false;
+  if (!isWellFormedCard(raw)) return false;
+  const c = raw as { kind: string; direction: string };
   const dirs = (KIND_DIRECTIONS as Record<string, CardDirection[] | undefined>)[c.kind];
   return !!dirs && dirs.includes(c.direction as CardDirection);
 }

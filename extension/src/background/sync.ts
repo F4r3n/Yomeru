@@ -39,6 +39,7 @@ import {
 import { syncCardsBackup, writeCardsBackup } from "./cards-backup";
 import { hasSyncConsent, NO_CONSENT_ERROR } from "./consent";
 import type { SrsCard } from "../shared/types.ts";
+import { isWellFormedCard } from "../shared/types.ts";
 
 export async function bumpDbVersion(): Promise<void> {
   await Promise.all([
@@ -141,9 +142,11 @@ async function doSync(): Promise<{ synced: number; sent: number } | { error: str
     const dirty = await getDirty();
     // Raw: a card of a kind this build doesn't know still goes up on a full
     // sync, so a server that lost its copy gets it back.
-    const upload = cursor
-      ? await getCardsByIds(dirty.map((d) => d.id))
-      : await getAllRawCards();
+    // Malformed rows (none should be stored) stay out: the server refuses a
+    // request with one, and would refuse every later one too.
+    const upload = (
+      cursor ? await getCardsByIds(dirty.map((d) => d.id)) : await getAllRawCards()
+    ).filter(isWellFormedCard);
     const localTombstones = await getAllTombstones();
     // Oldest first: the store's key order is by card id, not by time.
     const pending = (await getOutbox()).sort((a, b) => a.reviewed_ms - b.reviewed_ms);

@@ -197,6 +197,27 @@ async fn a_start_rekeys_todays_cards_and_their_answers() {
 }
 
 #[tokio::test]
+async fn answers_without_a_numeric_sequence_are_dropped_not_collided() {
+    // From the era cards keyed on the word itself: none in production, but
+    // two at one instant would both become `word:0:recall` and abort the
+    // migration on the primary key.
+    let pool = fixture_db().await;
+    sqlx::raw_sql(
+        "INSERT INTO reviews (user_id, kind, card_id, reviewed_ms, rating, rev) VALUES
+             (1, 0, '猫::recall', 1760000000000, 3, 1),
+             (1, 0, '犬::recall', 1760000000000, 3, 1),
+             (1, 0, '::recall', 1760000000001, 3, 1)",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    init_schema(&pool).await.unwrap();
+
+    assert_eq!(answers(&pool).await.values().map(Vec::len).sum::<usize>(), 8);
+}
+
+#[tokio::test]
 async fn migrated_cards_read_back_through_the_api() {
     let pool = fixture_db().await;
     init_schema(&pool).await.unwrap();
