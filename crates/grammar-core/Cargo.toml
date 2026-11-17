@@ -1,6 +1,6 @@
 [package]
 name = "grammar-core"
-version = "0.22.0"
+version = "0.23.0"
 license.workspace = true
 edition = "2024"
 
