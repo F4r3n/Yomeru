@@ -12,6 +12,27 @@ const MAX_PATTERN_CHARS: usize = 24;
 /// particles and endings (は, た) that would come up on almost every word.
 pub const HOVER_MIN_CHARS: usize = 2;
 
+/// The longest word an お〜 / ご〜 pattern's 〜 stands for, in chars.
+const MAX_STEM_CHARS: usize = 6;
+
+fn is_kanji(c: char) -> bool {
+    matches!(c, '\u{3400}'..='\u{4DBF}' | '\u{4E00}'..='\u{9FFF}' | '々')
+}
+
+/// A ます-stem after お: kanji, then at most three kana, the last an i- or
+/// e-row sound (待ち, 出かけ, 見え).
+fn is_verb_stem(stem: &str) -> bool {
+    let kana: String = stem.chars().skip_while(|&c| is_kanji(c)).collect();
+    let head = stem.chars().count() - kana.chars().count();
+    head > 0
+        && (1..=3).contains(&kana.chars().count())
+        && kana.chars().all(|c| matches!(c, 'ぁ'..='ゖ'))
+        && kana
+            .chars()
+            .last()
+            .is_some_and(|c| "いきぎしじちぢにひびぴみりえけげせぜてでねへべぺめれ".contains(c))
+}
+
 pub struct GrammarDict {
     fst: fst::Map<Vec<u8>>,
     groups: Vec<Vec<u32>>,
@@ -88,11 +109,80 @@ impl GrammarDict {
         })
     }
 
+    /// The longer of the match as written and the honorific one
+    /// ([`Self::honorific_match`]).
     fn longest_match_where(
         &self,
         text: &str,
         max_chars: usize,
         keep: impl Fn(&GrammarEntry, usize) -> bool,
+    ) -> Option<(Vec<GrammarEntry>, usize)> {
+        let plain = self.plain_match(text, max_chars, &keep);
+        match self.honorific_match(text, max_chars, &keep) {
+            Some(h) if plain.as_ref().is_none_or(|p| h.1 > p.1) => Some(h),
+            _ => plain,
+        }
+    }
+
+    /// お〜 / ご〜 patterns (お〜です, お〜になる) hold a 〜 where text has a
+    /// word: お待ちです tries お〜です. The word after お is a verb stem,
+    /// kanji then kana ending in an i- or e-row sound (待ち, 出かけ), so
+    /// お茶です or おいしいです don't match; after ご it is a kanji compound
+    /// (利用). ご + noun + です is left out: ご家族です is just a noun.
+    fn honorific_match(
+        &self,
+        text: &str,
+        max_chars: usize,
+        keep: &impl Fn(&GrammarEntry, usize) -> bool,
+    ) -> Option<(Vec<GrammarEntry>, usize)> {
+        let mut chars = text.char_indices();
+        let (_, prefix) = chars.next()?;
+        if prefix != 'お' && prefix != 'ご' {
+            return None;
+        }
+        let mut best: Option<(Vec<GrammarEntry>, usize)> = None;
+        // `stem_len`: chars between お and `i`.
+        for (stem_len, (i, _)) in chars.enumerate().take(MAX_STEM_CHARS + 1) {
+            let (Some(stem), Some(rest)) = (text.get(prefix.len_utf8()..i), text.get(i..)) else {
+                continue;
+            };
+            let ok = match prefix {
+                'お' => is_verb_stem(stem),
+                _ => {
+                    stem.chars().count() >= 2
+                        && stem.chars().all(is_kanji)
+                        && !rest.starts_with(['で', 'だ'])
+                }
+            };
+            if !ok {
+                continue;
+            }
+            // お〜 + rest: a match of n chars covers n - 1 + stem_len of text.
+            let keyed = format!("{prefix}〜{rest}");
+            let Some((entries, n)) =
+                self.plain_match(&keyed, (max_chars + 1).saturating_sub(stem_len), &|e, n| {
+                    keep(e, n + stem_len - 1)
+                })
+            else {
+                continue;
+            };
+            // It must reach past the 〜 into `rest`.
+            if n <= 2 {
+                continue;
+            }
+            let len = n + stem_len - 1;
+            if best.as_ref().is_none_or(|b| len > b.1) {
+                best = Some((entries, len));
+            }
+        }
+        best
+    }
+
+    fn plain_match(
+        &self,
+        text: &str,
+        max_chars: usize,
+        keep: &impl Fn(&GrammarEntry, usize) -> bool,
     ) -> Option<(Vec<GrammarEntry>, usize)> {
         let boundaries: Vec<usize> = text
             .char_indices()

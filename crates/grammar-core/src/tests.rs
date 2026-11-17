@@ -157,6 +157,36 @@ fn hover_skips_search_only_and_one_char_points() {
     assert_eq!((ids(&entries), len), (vec!["you-ni-suru"], 5));
 }
 
+/// お〜 patterns match the word their 〜 stands for, conjugated too, but not
+/// a noun or an adjective after お / ご.
+#[test]
+fn hover_fills_the_gap_of_honorific_patterns() {
+    let src = [
+        point("o-da", "お〜だ", &["お〜です", "ご〜です"], ""),
+        point("o-ni-naru", "お〜になる", &["ご〜になる"], ""),
+        point("o-kudasai", "お〜ください", &["ご〜ください"], ""),
+        point("ni-naru", "になる", &[], ""),
+    ]
+    .concat();
+    let dict = GrammarDict::from_bytes(&compile(&src).unwrap().bytes).unwrap();
+    let hover = |t| dict.hover_match(t, 24).map(|(e, n)| (ids(&e).join(","), n));
+    assert_eq!(hover("お待ちですか"), Some(("o-da".into(), 5)));
+    assert_eq!(hover("お出かけですか"), Some(("o-da".into(), 6)));
+    assert_eq!(hover("お帰りになりました"), Some(("o-ni-naru".into(), 9)));
+    assert_eq!(hover("ご利用ください"), Some(("o-kudasai".into(), 7)));
+    for t in [
+        "お茶です",
+        "おいしいです",
+        "お元気です",
+        "ご家族です",
+        "お金になる",
+    ] {
+        assert_eq!(hover(t), None, "{t}");
+    }
+    // Capped like any match: the whole お帰りになる doesn't fit in 4 chars.
+    assert_eq!(dict.hover_match("お帰りになる", 4), None);
+}
+
 #[test]
 fn search_puts_exact_then_conjugated_then_inner_then_prefix_hits() {
     let dict = sample_dict();
