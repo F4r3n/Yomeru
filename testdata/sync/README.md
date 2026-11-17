@@ -51,9 +51,9 @@ coercing both sides, plus an exact key-set check.
 
 ## Grammar cards
 
-The app sends `grammar_cards: true`: it knows cards whose `direction` is
-`"grammar"`. A client without the flag (older apps, and the extension until
-it learns them) never gets such cards back, since an older Rust client would
+Both clients send `grammar_cards: true`: they know cards whose `direction`
+is `"grammar"`. A client without the flag (older apps and extensions) never
+gets such cards back, since an older Rust client would
 fail to parse the whole response. Its cursor epoch is tagged `~nogrammar`, so
 once that device updates and sends the flag with that cursor, the server
 answers in full and the grammar cards it skipped come down.

@@ -70,8 +70,19 @@ export const MS_PER_DAY = 86_400_000;
 
 /** Mirrors `CardDirection` in `app/shared/src/types.rs`. A `"kanji"` card
  * reviews one kanji, and its `sequence` is the kanji's code point, not a
- * JMdict `ent_seq`. */
-export type CardDirection = "recognition" | "recall" | "kanji";
+ * JMdict `ent_seq`. A `"grammar"` card reviews a grammar point, and its
+ * `sequence` is `grammar_seq` of the point's id (top bit set). */
+export type CardDirection = "recognition" | "recall" | "kanji" | "grammar";
+
+/** Whether a card reviews a JMdict word, so its `sequence` is an `ent_seq`. */
+export function isWordCard(c: { direction: CardDirection }): boolean {
+  return c.direction === "recognition" || c.direction === "recall";
+}
+
+/** Whether `sequence` is a grammar card's (`grammar_core::is_grammar_seq`). */
+export function isGrammarSeq(sequence: number): boolean {
+  return sequence >= 0x8000_0000;
+}
 
 /** Mirrors srs-core's `CardState` enum (serde rename_all = "lowercase"). */
 export type CardState = "new" | "learning" | "review" | "relearning";
@@ -259,6 +270,8 @@ export interface GrammarExample {
  *  `grammar-wasm`. */
 export interface GrammarPopupEntry {
   id: string;
+  /** The `sequence` of the point's review card. */
+  seq: number;
   pattern: string;
   jlpt: string;
   meaning: string;

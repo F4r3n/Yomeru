@@ -16,6 +16,8 @@ const CAT = 1_001;
 const DOG = 1_002;
 const BIRD = 1_003;
 const BOOK = 1_004;
+/** A grammar card's sequence: any number with the top bit set. */
+const GRAMMAR = 0x8000_0000 + 1_234;
 
 describe("idb", () => {
   let idb: IdbModule;
@@ -42,6 +44,15 @@ describe("idb", () => {
       const now = Date.now();
       await idb.putCard(
         makeCard({ sequence: 0x732b, direction: "kanji", due_ms: now - 1000, status: "active" }),
+      );
+
+      expect(await idb.getDueCards(now)).toHaveLength(0);
+    });
+
+    it("excludes grammar cards, which have their own session", async () => {
+      const now = Date.now();
+      await idb.putCard(
+        makeCard({ sequence: GRAMMAR, direction: "grammar", due_ms: now - 1000, status: "active" }),
       );
 
       expect(await idb.getDueCards(now)).toHaveLength(0);
@@ -253,6 +264,16 @@ describe("idb", () => {
       await idb.deleteCard(CAT);
 
       expect(await idb.getCardsBySequence(CAT)).toEqual([]);
+    });
+
+    it("removes a grammar point's one card, with its tombstone", async () => {
+      await idb.putCard(makeCard({ sequence: GRAMMAR, direction: "grammar" }));
+
+      await idb.deleteCard(GRAMMAR);
+
+      expect(await idb.getCardsBySequence(GRAMMAR)).toEqual([]);
+      const tombstones = await idb.getAllTombstones();
+      expect(tombstones.map((t) => t.id)).toEqual([cardId(GRAMMAR, "grammar")]);
     });
 
     it("does not affect other entries' siblings", async () => {

@@ -35,7 +35,7 @@ import type {
   WordEntry,
   WordStatus,
 } from "../shared/types.ts";
-import { cardId, MS_PER_DAY } from "../shared/types.ts";
+import { cardId, isGrammarSeq, isWordCard, MS_PER_DAY } from "../shared/types.ts";
 import {
   mergeReview,
   applyIntervalScale,
@@ -74,6 +74,27 @@ export async function handleAddWord({ sequence }: { sequence: number }) {
     priority: 0,
   };
   await putCards([recognition, recall]);
+  await bumpDbVersion();
+  return { success: true, existing: false };
+}
+
+/** Stages the card of the grammar point whose card `sequence` the popup
+ * got from `popup_lookup`. Its status then comes from `GET_WORD_STATUS`. */
+export async function handleAddGrammar({ sequence }: { sequence: number }) {
+  if (!isGrammarSeq(sequence)) return { error: "not a grammar card" };
+  if ((await getCardsBySequence(sequence)).length > 0) {
+    return { success: true, existing: true };
+  }
+  const srs = await getSrs();
+  const base = srs.new_card(sequence, Date.now()) as WasmCardShape;
+  await putCard({
+    ...base,
+    id: cardId(sequence, "grammar"),
+    sequence,
+    direction: "grammar",
+    status: "staging",
+    priority: 0,
+  });
   await bumpDbVersion();
   return { success: true, existing: false };
 }
@@ -169,11 +190,11 @@ export async function handleDeleteCard({ sequence }: { sequence: number }) {
 }
 
 // The highlighter matches page text by JMdict entry, so it only needs the
-// sequence each card is keyed on — no surface strings. Kanji cards are left
-// out: their `sequence` is a code point, not an entry.
+// sequence each card is keyed on — no surface strings. Kanji and grammar
+// cards are left out: their `sequence` is not an entry.
 export async function handleGetSrsSequences(): Promise<{ sequences: number[] }> {
   const cards = await getAllCards();
-  const words = cards.filter((c) => c.direction !== "kanji");
+  const words = cards.filter(isWordCard);
   return { sequences: [...new Set(words.map((c) => c.sequence))] };
 }
 
@@ -239,6 +260,14 @@ export async function handleLookupBySequence({ sequences }: { sequences: number[
     sequences,
   ) as (WordEntry | null)[]) ?? [];
   return { results };
+}
+
+/** The extension pages' `DictClient::grammar_by_seq`: full entries aligned
+ * with `sequences`, `null` for a point that left the dictionary. */
+export async function handleGrammarBySequence({ sequences }: { sequences: number[] }) {
+  const dict = await getGrammar();
+  if (!dict) return { results: sequences.map(() => null) };
+  return { results: (dict.by_seq(Uint32Array.from(sequences)) as unknown[]) ?? [] };
 }
 
 export async function handleLookupPrefix({ text, max }: { text: string; max: number }) {

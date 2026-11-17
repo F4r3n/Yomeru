@@ -13,6 +13,8 @@ import { warmUp } from "./engines";
 import { bumpDbVersion, storageReady, handleRequestOtp, handleSyncCards, handleVerifyOtp } from "./sync";
 import {
   handleAddWord,
+  handleAddGrammar,
+  handleGrammarBySequence,
   handleDeleteCard,
   handleGetAllCards,
   handleGetDue,
@@ -64,6 +66,8 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
   switch (msg.type) {
     case "ADD_WORD":
       return handleAddWord(msg.payload as { sequence: number });
+    case "ADD_GRAMMAR":
+      return handleAddGrammar(msg.payload as { sequence: number });
     case "REVIEW_CARD":
       return handleReviewCard(
         msg.payload as {
@@ -114,6 +118,8 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
       return handleLookupMany(msg.payload as { words: string[] });
     case "LOOKUP_BY_SEQUENCE":
       return handleLookupBySequence(msg.payload as { sequences: number[] });
+    case "GRAMMAR_BY_SEQUENCE":
+      return handleGrammarBySequence(msg.payload as { sequences: number[] });
     case "LOOKUP_PREFIX":
       return handleLookupPrefix(msg.payload as { text: string; max: number });
     case "BUMP_DB_VERSION":

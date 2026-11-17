@@ -168,6 +168,9 @@ async function doSync(): Promise<{ synced: number; sent: number } | { error: str
         settings: toSettingsPayload(settings),
         reviews: outbox,
         ...(cursor ? { since: cursor } : {}),
+        // This client knows grammar cards; the server keeps them from
+        // older ones (see testdata/sync/README.md).
+        grammar_cards: true,
       }),
     });
     // Must match `SESSION_EXPIRED` in app/shared/src/sync.rs, which keys the

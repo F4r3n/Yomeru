@@ -198,7 +198,7 @@ describe("sync", () => {
       expect(sent[0]).toEqual(expected);
       // toEqual ignores nothing about keys, but say it outright: an extra field
       // (or a renamed one) is a wire change, and the server parses by name.
-      expect(keysOf(sent[0])).toEqual(["cards", "deletions", "reviews", "settings"]);
+      expect(keysOf(sent[0])).toEqual(["cards", "deletions", "grammar_cards", "reviews", "settings"]);
       expect(keysOf((sent[0].reviews as unknown[])[0])).toEqual(
         keysOf((expected.reviews as unknown[])[0]),
       );
@@ -219,7 +219,14 @@ describe("sync", () => {
 
       const expected = fixture("request-delta-extension-client.json") as Record<string, unknown>;
       expect(sent[0]).toEqual(expected);
-      expect(keysOf(sent[0])).toEqual(["cards", "deletions", "reviews", "settings", "since"]);
+      expect(keysOf(sent[0])).toEqual([
+        "cards",
+        "deletions",
+        "grammar_cards",
+        "reviews",
+        "settings",
+        "since",
+      ]);
     });
 
     it("sends tombstones as {id, deleted_at} objects, not bare ids", async () => {
@@ -246,7 +253,7 @@ describe("sync", () => {
       respondWith({ cards: [], deletions: [] });
       await sync.handleSyncCards();
 
-      expect(keysOf(sent[0])).toEqual(["cards", "deletions", "reviews"]);
+      expect(keysOf(sent[0])).toEqual(["cards", "deletions", "grammar_cards", "reviews"]);
     });
 
     it("leaves legacy word-keyed rows out of the upload", async () => {

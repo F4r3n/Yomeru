@@ -1,5 +1,5 @@
 import type { CardDirection, ReviewLog, SrsCard, WordStatus } from "../shared/types.ts";
-import { cardId, MAX_PRIORITY, versionMs } from "../shared/types.ts";
+import { cardId, isGrammarSeq, isWordCard, MAX_PRIORITY, versionMs } from "../shared/types.ts";
 import { debug } from "../shared/debug.ts";
 
 const DB_NAME = "yomeru-db";
@@ -273,9 +273,9 @@ export async function getDueCards(nowMs: number): Promise<SrsCard[]> {
           .getAll(IDBKeyRange.upperBound(nowMs));
         req.onsuccess = () => {
           const all = req.result as SrsCard[];
-          // Word cards only, like the app's `get_due_cards`: kanji cards are
-          // reviewed in their own session.
-          const due = all.filter((c) => c.status === "active" && c.direction !== "kanji");
+          // Word cards only, like the app's `get_due_cards`: kanji and grammar
+          // cards are reviewed in their own sessions.
+          const due = all.filter((c) => c.status === "active" && isWordCard(c));
           // Studied cards first, oldest-due first, then never-reviewed ones,
           // like the app's `order_due`: a new card's due_ms is only when it
           // was added, so it would otherwise crowd out real reviews.
@@ -369,12 +369,14 @@ export async function getWordStatus(sequence: number): Promise<WordStatus> {
   return { status, priority };
 }
 
-/** Deletes both direction siblings for an entry and records tombstones. */
+/** Deletes every card of an entry (a word's two directions, or a grammar
+ * point's one card) and records tombstones. */
 export async function deleteCard(sequence: number): Promise<void> {
-  return deleteIdsWithTombstones([
-    cardId(sequence, "recognition"),
-    cardId(sequence, "recall"),
-  ]);
+  return deleteIdsWithTombstones(
+    isGrammarSeq(sequence)
+      ? [cardId(sequence, "grammar")]
+      : [cardId(sequence, "recognition"), cardId(sequence, "recall")],
+  );
 }
 
 /** Deletes a single sibling by composite id. */
