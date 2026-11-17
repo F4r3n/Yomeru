@@ -139,6 +139,11 @@ pub struct GrammarResponse {
     pub entries: Vec<grammar_core::GrammarEntry>,
 }
 
+#[derive(Serialize)]
+pub struct GrammarBySeqResponse {
+    pub results: Vec<Option<grammar_core::GrammarEntry>>,
+}
+
 pub async fn lookup_handler(
     State(state): State<AppState>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
@@ -287,4 +292,32 @@ pub async fn grammar_handler(
     })
     .await?;
     Ok(Json(GrammarResponse { entries }))
+}
+
+/// The points grammar cards with these `sequence`s review, aligned with the
+/// request; `null` for a point that left the dictionary.
+pub async fn grammar_by_sequence_handler(
+    State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Json(body): Json<LookupBySequenceBody>,
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.lookup_limiter, addr, &headers)?;
+    let sequences = body.sequences;
+    if sequences.len() > MAX_LOOKUP_SEQUENCES {
+        return Err(too_large(
+            "sequences",
+            sequences.len(),
+            MAX_LOOKUP_SEQUENCES,
+        ));
+    }
+    let results = run_blocking("grammar_by_sequence", move || {
+        let dict = crate::dicts::grammar();
+        Ok(sequences
+            .iter()
+            .map(|&s| dict.and_then(|d| d.by_seq(s)))
+            .collect())
+    })
+    .await?;
+    Ok(Json(GrammarBySeqResponse { results }))
 }

@@ -23,6 +23,18 @@ pub enum CardDirection {
     /// `ent_seq`; code points stay below 0x40000 and `ent_seq` starts at
     /// 1,000,000, so the two id spaces never meet.
     Kanji,
+    /// A grammar point, reviewed pattern → meaning. Such a card's `sequence`
+    /// is `grammar_core::grammar_seq` of the point's id: top bit set, above
+    /// both other ranges.
+    Grammar,
+}
+
+/// Which deck, and which Review tab, a card belongs to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CardKind {
+    Word,
+    Kanji,
+    Grammar,
 }
 
 impl CardDirection {
@@ -31,6 +43,7 @@ impl CardDirection {
             Self::Recognition => "recognition",
             Self::Recall => "recall",
             Self::Kanji => "kanji",
+            Self::Grammar => "grammar",
         }
     }
 }
@@ -195,9 +208,34 @@ impl SrsCard {
         }
     }
 
+    /// A new grammar card for point `id`, into staging like words: grammar
+    /// points are added by hand and enter at the user's pace.
+    pub fn new_grammar(id: &str, now_ms: f64) -> Self {
+        Self::new(grammar_core::grammar_seq(id), CardDirection::Grammar, now_ms)
+    }
+
+    pub fn kind(&self) -> CardKind {
+        match self.direction {
+            CardDirection::Recognition | CardDirection::Recall => CardKind::Word,
+            CardDirection::Kanji => CardKind::Kanji,
+            CardDirection::Grammar => CardKind::Grammar,
+        }
+    }
+
+    /// Whether this card reviews a JMdict word, so its `sequence` is an
+    /// `ent_seq`.
+    pub fn is_word(&self) -> bool {
+        self.kind() == CardKind::Word
+    }
+
     /// Whether this card reviews a single kanji rather than a word.
     pub fn is_kanji(&self) -> bool {
         self.direction == CardDirection::Kanji
+    }
+
+    /// Whether this card reviews a grammar point.
+    pub fn is_grammar(&self) -> bool {
+        self.direction == CardDirection::Grammar
     }
 
     /// The kanji a kanji card reviews; `None` for word cards.
@@ -258,5 +296,33 @@ impl SrsCard {
         self.again_count = 0;
         self.state = CardState::New;
         self.last_review_ms = None;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_grammar_card_is_keyed_by_its_point_and_is_no_word() {
+        let c = SrsCard::new_grammar("te-wa-ikenai", 5.0);
+        assert_eq!(c.sequence, grammar_core::grammar_seq("te-wa-ikenai"));
+        assert_eq!(c.id, format!("{}::grammar", c.sequence));
+        assert_eq!(c.status, CardStatus::Staging);
+        assert_eq!(c.kind(), CardKind::Grammar);
+        assert!(c.is_grammar() && !c.is_word() && !c.is_kanji());
+        assert_eq!(c.kanji_char(), None);
+        // The wire form the server stores as free text.
+        let json = serde_json::to_value(&c).unwrap();
+        assert_eq!(json["direction"], "grammar");
+        let back: SrsCard = serde_json::from_value(json).unwrap();
+        assert_eq!(back.id, c.id);
+        assert_eq!(back.direction, CardDirection::Grammar);
+    }
+
+    #[test]
+    fn word_and_kanji_cards_keep_their_kind() {
+        assert!(SrsCard::new(1_000_000, CardDirection::Recall, 0.0).is_word());
+        assert_eq!(SrsCard::new_kanji('猫', 0.0).kind(), CardKind::Kanji);
     }
 }

@@ -207,7 +207,7 @@ fn WordReview() -> Element {
             let mut seen = std::collections::HashSet::new();
             let n = staging
                 .into_iter()
-                .filter(|c| seen.insert(c.sequence))
+                .filter(|c| c.is_word() && seen.insert(c.sequence))
                 .count();
             staging_count.set(n);
             due_cards.set(limited.clone());
@@ -399,7 +399,7 @@ fn WordReview() -> Element {
             if session_over {
                 match get_all_cards().await {
                     Ok(mut all) => {
-                        all.retain(|c| !c.is_kanji());
+                        all.retain(SrsCard::is_word);
                         next_due.set(next_due_message(&all, now_ms()));
                     }
                     Err(e) => warn!("get_all_cards for next-due summary failed: {e}"),

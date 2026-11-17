@@ -125,14 +125,14 @@ fn is_struggling(c: &SrsCard, exit_interval_days: f64) -> bool {
 
 /// Rank words by how often their struggling cards have been failed,
 /// most-failed first. Ties go to the higher FSRS difficulty, then to the
-/// lower sequence so the order is stable across reloads. Kanji cards are
-/// left out; see [`trouble_kanji`].
+/// lower sequence so the order is stable across reloads. Kanji and grammar
+/// cards are left out; see [`trouble_kanji`].
 pub fn trouble_words(
     cards: &[SrsCard],
     min_fails: u32,
     exit_interval_days: f64,
 ) -> Vec<TroubleWord> {
-    rank_trouble(cards, |c| !c.is_kanji(), min_fails, exit_interval_days)
+    rank_trouble(cards, SrsCard::is_word, min_fails, exit_interval_days)
 }
 
 /// [`trouble_words`] for the kanji deck: same ranking, kanji cards only. A
@@ -442,6 +442,16 @@ mod tests {
         assert_eq!(seqs(&trouble(&cards)), vec![1]);
         let kanji = trouble_kanji(&cards, 2, TROUBLE_EXIT_INTERVAL_DAYS);
         assert_eq!(seqs(&kanji), vec![u32::from('猫')]);
+    }
+
+    #[test]
+    fn trouble_lists_leave_grammar_cards_out() {
+        let grammar = SrsCard::new_grammar("te-wa-ikenai", 0.0);
+        let mut g = active(grammar.sequence, CardDirection::Grammar, 5, 5.0);
+        g.id = grammar.id;
+        let cards = [active(1, CardDirection::Recall, 5, 5.0), g];
+        assert_eq!(seqs(&trouble(&cards)), vec![1]);
+        assert!(trouble_kanji(&cards, 2, TROUBLE_EXIT_INTERVAL_DAYS).is_empty());
     }
 
     #[test]

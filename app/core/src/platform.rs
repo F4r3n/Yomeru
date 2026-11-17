@@ -50,6 +50,11 @@ pub trait DictClient: Send + Sync {
     /// The grammar points a search box shows for `text`, at most `max`
     /// (see `grammar_core::GrammarDict::search`).
     async fn grammar_search(&self, text: &str, max: u8) -> Result<Vec<GrammarEntry>, String>;
+    /// The points grammar cards with these `sequence`s review, aligned with
+    /// `sequences`; `None` for a point that left the dictionary (see
+    /// `grammar_core::GrammarDict::by_seq`).
+    async fn grammar_by_seq(&self, sequences: &[u32])
+    -> Result<Vec<Option<GrammarEntry>>, String>;
 }
 
 /// Settings persistence + sync orchestration. `load()` is intentionally
@@ -210,6 +215,10 @@ struct GrammarResponse {
     entries: Vec<GrammarEntry>,
 }
 #[derive(Deserialize)]
+struct GrammarBySeqResponse {
+    results: Vec<Option<GrammarEntry>>,
+}
+#[derive(Deserialize)]
 struct KanjiPartsResponse {
     parts: Vec<PartInfo>,
 }
@@ -284,6 +293,18 @@ impl DictClient for HttpDict {
     async fn grammar_search(&self, text: &str, max: u8) -> Result<Vec<GrammarEntry>, String> {
         let parsed: GrammarResponse = post_json("/api/grammar", &TextMaxBody { text, max }).await?;
         Ok(parsed.entries)
+    }
+
+    async fn grammar_by_seq(
+        &self,
+        sequences: &[u32],
+    ) -> Result<Vec<Option<GrammarEntry>>, String> {
+        let parsed: GrammarBySeqResponse = post_json(
+            "/api/grammar-by-sequence",
+            &LookupBySequenceBody { sequences },
+        )
+        .await?;
+        Ok(parsed.results)
     }
 }
 

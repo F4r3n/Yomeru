@@ -3,7 +3,7 @@ use dioxus::prelude::*;
 use crate::idb::get_all_cards;
 use crate::srs::now_ms;
 use crate::sync::use_reload_on_sync;
-use crate::types::{CardStatus, SrsCard};
+use crate::types::{CardKind, CardStatus, SrsCard};
 
 use super::review_common::TabButton;
 
@@ -126,7 +126,14 @@ pub fn StatsTab() -> Element {
     let all: Vec<SrsCard> = cards
         .read()
         .iter()
-        .filter(|c| c.is_kanji() == show_kanji)
+        .filter(|c| {
+            c.kind()
+                == if show_kanji {
+                    CardKind::Kanji
+                } else {
+                    CardKind::Word
+                }
+        })
         .cloned()
         .collect();
     let active = all

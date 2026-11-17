@@ -88,6 +88,11 @@ struct GrammarResp {
     entries: Vec<GrammarEntry>,
 }
 
+#[derive(Deserialize)]
+struct GrammarBySeqResp {
+    results: Vec<Option<GrammarEntry>>,
+}
+
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl DictClient for ExtensionDict {
@@ -143,5 +148,15 @@ impl DictClient for ExtensionDict {
         let r: GrammarResp =
             crate::send_bg_message("GRAMMAR_SEARCH", TextMaxPayload { text, max }).await?;
         Ok(r.entries)
+    }
+
+    async fn grammar_by_seq(
+        &self,
+        sequences: &[u32],
+    ) -> Result<Vec<Option<GrammarEntry>>, String> {
+        let r: GrammarBySeqResp =
+            crate::send_bg_message("GRAMMAR_BY_SEQUENCE", LookupBySequencePayload { sequences })
+                .await?;
+        Ok(r.results)
     }
 }

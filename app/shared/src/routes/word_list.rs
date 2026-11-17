@@ -109,7 +109,7 @@ pub fn WordListTab() -> Element {
             let mut active: Vec<_> = all
                 .into_iter()
                 .filter(|c| {
-                    !c.is_kanji() && matches!(c.status, CardStatus::Active | CardStatus::Graduated)
+                    c.is_word() && matches!(c.status, CardStatus::Active | CardStatus::Graduated)
                 })
                 .collect();
             let mut seqs: Vec<u32> = active.iter().map(|c| c.sequence).collect();

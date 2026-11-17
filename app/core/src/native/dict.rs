@@ -290,4 +290,16 @@ impl DictClient for LocalDict {
             .map(|d| d.search(text, usize::from(max)))
             .unwrap_or_default())
     }
+
+    async fn grammar_by_seq(
+        &self,
+        sequences: &[u32],
+    ) -> Result<Vec<Option<GrammarEntry>>, String> {
+        self.ensure(Part::Grammar).await?;
+        let dict = GRAMMAR_DICT.get();
+        Ok(sequences
+            .iter()
+            .map(|&s| dict.and_then(|d| d.by_seq(s)))
+            .collect())
+    }
 }

@@ -106,7 +106,7 @@ pub async fn ensure_kanji_cards(
     let mut added: HashMap<u32, f64> = HashMap::new();
     for c in all
         .iter()
-        .filter(|c| !c.is_kanji() && matches!(c.status, CardStatus::Active | CardStatus::Graduated))
+        .filter(|c| c.is_word() && matches!(c.status, CardStatus::Active | CardStatus::Graduated))
     {
         let t = added.entry(c.sequence).or_insert(c.added_ms);
         *t = t.min(c.added_ms);

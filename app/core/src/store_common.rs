@@ -6,7 +6,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::idb::{delete_ids_with_tombstones, get_all_cards, get_cards_by_sequence, put_all};
-use crate::types::{CardDirection, CardStatus, SrsCard, card_id};
+use crate::types::{CardDirection, CardKind, CardStatus, SrsCard, card_id};
 
 /// A local record that the user deleted a card, and when. The time travels to
 /// the server on the next sync so a delete made while offline is ordered by
@@ -41,18 +41,23 @@ pub async fn put_cards_synced(cards: &[SrsCard]) -> Result<(), String> {
 /// Due word cards, ordered by [`crate::srs::order_due`]. Kanji cards have their own session — see
 /// [`get_due_kanji_cards`].
 pub async fn get_due_cards(now_ms: f64) -> Result<Vec<SrsCard>, String> {
-    get_due(now_ms, false).await
+    get_due(now_ms, CardKind::Word).await
 }
 
 /// Due kanji cards, ordered by [`crate::srs::order_due`].
 pub async fn get_due_kanji_cards(now_ms: f64) -> Result<Vec<SrsCard>, String> {
-    get_due(now_ms, true).await
+    get_due(now_ms, CardKind::Kanji).await
 }
 
-async fn get_due(now_ms: f64, kanji: bool) -> Result<Vec<SrsCard>, String> {
+/// Due grammar cards, ordered by [`crate::srs::order_due`].
+pub async fn get_due_grammar_cards(now_ms: f64) -> Result<Vec<SrsCard>, String> {
+    get_due(now_ms, CardKind::Grammar).await
+}
+
+async fn get_due(now_ms: f64, kind: CardKind) -> Result<Vec<SrsCard>, String> {
     let mut all = get_all_cards().await?;
     all.retain(|c| {
-        c.is_kanji() == kanji && matches!(c.status, CardStatus::Active) && c.due_ms <= now_ms
+        c.kind() == kind && matches!(c.status, CardStatus::Active) && c.due_ms <= now_ms
     });
     crate::srs::order_due(&mut all);
     Ok(all)
