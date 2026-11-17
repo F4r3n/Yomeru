@@ -152,13 +152,37 @@ pub async fn promote_card(sequence: u32) -> Result<(), String> {
 }
 
 pub async fn delete_card(sequence: u32) -> Result<(), String> {
-    let ids = [
-        card_id(sequence, CardDirection::Recognition),
-        card_id(sequence, CardDirection::Recall),
-    ];
-    delete_ids_with_tombstones(&ids).await
+    delete_ids_with_tombstones(&sibling_ids(sequence)).await
+}
+
+/// Every card id `sequence` can have: a grammar point's one card, or a
+/// word's two directions.
+fn sibling_ids(sequence: u32) -> Vec<String> {
+    if grammar_core::is_grammar_seq(sequence) {
+        vec![card_id(sequence, CardDirection::Grammar)]
+    } else {
+        vec![
+            card_id(sequence, CardDirection::Recognition),
+            card_id(sequence, CardDirection::Recall),
+        ]
+    }
 }
 
 pub async fn delete_card_by_id(id: &str) -> Result<(), String> {
     delete_ids_with_tombstones(std::slice::from_ref(&id.to_string())).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deleting_a_grammar_point_deletes_its_one_card() {
+        let g = SrsCard::new_grammar("te-wa-ikenai", 0.0);
+        assert_eq!(sibling_ids(g.sequence), vec![g.id]);
+        assert_eq!(
+            sibling_ids(1_467_640),
+            vec!["1467640::recognition", "1467640::recall"]
+        );
+    }
 }
