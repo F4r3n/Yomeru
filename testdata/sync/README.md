@@ -49,14 +49,18 @@ coercing both sides, plus an exact key-set check.
   an upload that lost the merge still learns who won). Clients merge a delta's
   drill counts into their cache instead of replacing it.
 
-## Grammar cards
+## Card keys
 
-Both clients send `grammar_cards: true`: they know cards whose `direction`
-is `"grammar"`. A client without the flag (older apps and extensions) never
-gets such cards back, since an older Rust client would
-fail to parse the whole response. Its cursor epoch is tagged `~nogrammar`, so
-once that device updates and sends the flag with that cursor, the server
-answers in full and the grammar cards it skipped come down.
+A card is keyed by `kind` + `item` + `direction`, all text: `id` is
+`"<kind>:<item>:<direction>"` (`"word:1467640:recognition"`,
+`"kanji:漢:meaning"`, `"grammar:417:recognition"`). The server relays all
+three without interpreting them. A client reads the response card by card
+and keeps a card of a kind or direction it doesn't know, unseen, so a new
+card type needs no server change and no request flag.
+
+A request with cards in the shape from before (a numeric `sequence`, no
+`kind`/`item`) is refused whole (`docs/phase-4-grammar-cards.md`, "Card
+keys").
 
 ## Delta sync
 

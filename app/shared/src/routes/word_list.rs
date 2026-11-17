@@ -8,7 +8,7 @@ use crate::idb::{delete_card, demote_card, get_all_cards, reset_card};
 use crate::romaji::PreparedQuery;
 use crate::srs::now_ms;
 use crate::sync::{schedule_sync, use_reload_on_sync};
-use crate::types::{CardStatus, SrsCard};
+use crate::types::{CardItem, CardStatus, SrsCard};
 use srs_core::CardState;
 
 /// Which words the list shows. A word matches when any of its direction
@@ -112,7 +112,7 @@ pub fn WordListTab() -> Element {
                     c.is_word() && matches!(c.status, CardStatus::Active | CardStatus::Graduated)
                 })
                 .collect();
-            let mut seqs: Vec<u32> = active.iter().map(|c| c.sequence).collect();
+            let mut seqs: Vec<u32> = active.iter().filter_map(SrsCard::word_seq).collect();
             seqs.sort_unstable();
             seqs.dedup();
             let entries = lookup_by_sequence(&seqs).await.unwrap_or_default();
@@ -125,8 +125,9 @@ pub fn WordListTab() -> Element {
                 }
             }
             active.sort_by(|a, b| {
-                let aw = map.get(&a.sequence).map(String::as_str).unwrap_or("");
-                let bw = map.get(&b.sequence).map(String::as_str).unwrap_or("");
+                let word = |c: &SrsCard| c.word_seq().and_then(|s| map.get(&s));
+                let aw = word(a).map(String::as_str).unwrap_or("");
+                let bw = word(b).map(String::as_str).unwrap_or("");
                 aw.cmp(bw)
                     .then_with(|| a.direction.as_str().cmp(b.direction.as_str()))
             });
@@ -148,7 +149,7 @@ pub fn WordListTab() -> Element {
             if !confirmed {
                 return;
             }
-            if let Err(e) = delete_card(seq).await {
+            if let Err(e) = delete_card(CardItem::Word(seq)).await {
                 warn!("delete_card(seq={seq}) failed: {e}");
                 return;
             }
@@ -164,7 +165,7 @@ pub fn WordListTab() -> Element {
             if !confirmed {
                 return;
             }
-            if let Err(e) = reset_card(seq, now_ms()).await {
+            if let Err(e) = reset_card(CardItem::Word(seq), now_ms()).await {
                 warn!("reset_card(seq={seq}) failed: {e}");
                 return;
             }
@@ -181,7 +182,7 @@ pub fn WordListTab() -> Element {
             if !confirmed {
                 return;
             }
-            if let Err(e) = demote_card(seq, now_ms()).await {
+            if let Err(e) = demote_card(CardItem::Word(seq), now_ms()).await {
                 warn!("demote_card(seq={seq}) failed: {e}");
                 return;
             }
@@ -197,8 +198,8 @@ pub fn WordListTab() -> Element {
     let mut words: Vec<(u32, Vec<SrsCard>)> = Vec::new();
     for c in rows {
         match words.last_mut() {
-            Some((seq, cs)) if *seq == c.sequence => cs.push(c),
-            _ => words.push((c.sequence, vec![c])),
+            Some((seq, cs)) if Some(*seq) == c.word_seq() => cs.push(c),
+            _ => words.push((c.word_seq().unwrap_or_default(), vec![c])),
         }
     }
     let total = words.len();

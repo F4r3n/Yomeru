@@ -62,7 +62,7 @@ pub(crate) fn GrammarReview() -> Element {
         spawn(async move {
             let settings = load_settings();
             let cards = get_due_grammar_cards(now_ms()).await.unwrap_or_default();
-            let seqs: Vec<u32> = cards.iter().map(|c| c.sequence).collect();
+            let seqs: Vec<u32> = cards.iter().filter_map(SrsCard::grammar_seq).collect();
             let found = match grammar_by_seq(&seqs).await {
                 Ok(v) => v,
                 Err(e) => {
@@ -77,7 +77,7 @@ pub(crate) fn GrammarReview() -> Element {
                 .collect();
             let cards: Vec<SrsCard> = cards
                 .into_iter()
-                .filter(|c| map.contains_key(&c.sequence))
+                .filter(|c| c.grammar_seq().is_some_and(|s| map.contains_key(&s)))
                 .take(settings.max_session_cards as usize)
                 .collect();
             points.set(map);
@@ -111,7 +111,7 @@ pub(crate) fn GrammarReview() -> Element {
         let Some(card) = due.peek().get(*idx.peek()).cloned() else {
             return;
         };
-        let Some(point) = points.peek().get(&card.sequence).cloned() else {
+        let Some(point) = card.grammar_seq().and_then(|s| points.peek().get(&s).cloned()) else {
             return;
         };
         let i = *idx.peek();
@@ -229,7 +229,10 @@ pub(crate) fn GrammarReview() -> Element {
         };
     }
 
-    let point = cards.get(i).and_then(|c| points.read().get(&c.sequence).cloned());
+    let point = cards
+        .get(i)
+        .and_then(SrsCard::grammar_seq)
+        .and_then(|s| points.read().get(&s).cloned());
     let Some(point) = point else {
         let (forgot, remembered): (Vec<GrammarResult>, Vec<GrammarResult>) =
             results.read().iter().cloned().partition(|r| r.rating == 1);

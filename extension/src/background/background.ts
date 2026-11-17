@@ -40,7 +40,7 @@ import {
   handleReviewCard,
   handleSaveSettings,
 } from "./handlers";
-import type { CardDirection, SrsSettings } from "../shared/types.ts";
+import type { CardDirection, CardKey, CardKind, SrsSettings } from "../shared/types.ts";
 
 warmUp();
 void applyDevConfig();
@@ -67,11 +67,10 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
     case "ADD_WORD":
       return handleAddWord(msg.payload as { sequence: number });
     case "ADD_GRAMMAR":
-      return handleAddGrammar(msg.payload as { sequence: number });
+      return handleAddGrammar(msg.payload as { seq: number });
     case "REVIEW_CARD":
       return handleReviewCard(
-        msg.payload as {
-          sequence: number;
+        msg.payload as CardKey & {
           direction: CardDirection;
           rating: number;
         },
@@ -81,7 +80,7 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
     case "GET_ALL_CARDS":
       return handleGetAllCards();
     case "DELETE_CARD":
-      return handleDeleteCard(msg.payload as { sequence: number });
+      return handleDeleteCard(msg.payload as CardKey);
     case "LOG_LOOKUP":
       return handleLogLookup(msg.payload as { word: string; reading: string });
     case "GET_SRS_SEQUENCES":
@@ -89,13 +88,13 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
     case "GET_STAGING":
       return handleGetStaging();
     case "PROMOTE_CARD":
-      return handlePromoteCard(msg.payload as { sequence: number });
+      return handlePromoteCard(msg.payload as CardKey);
     case "BUMP_PRIORITY":
-      return handleBumpPriority(msg.payload as { sequence: number });
+      return handleBumpPriority(msg.payload as CardKey);
     case "RESET_CARD":
-      return handleResetCard(msg.payload as { sequence: number });
+      return handleResetCard(msg.payload as CardKey);
     case "GET_WORD_STATUS":
-      return handleGetWordStatus(msg.payload as { sequences: number[] });
+      return handleGetWordStatus(msg.payload as { kind: CardKind; items: string[] });
     case "GET_SETTINGS":
       return handleGetSettings();
     case "SAVE_SETTINGS":

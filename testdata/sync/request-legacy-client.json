@@ -1,8 +1,9 @@
 {
   "cards": [
     {
-      "id": "1467640::recognition",
-      "sequence": 1467640,
+      "id": "word:1467640:recognition",
+      "kind": "word",
+      "item": "1467640",
       "direction": "recognition",
       "due_ms": 1757000000000.0,
       "stability": 4.2,
@@ -16,5 +17,5 @@
       "priority": 0
     }
   ],
-  "deletions": ["1467640::recall"]
+  "deletions": ["word:1467640:recall"]
 }

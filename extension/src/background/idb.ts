@@ -1,14 +1,23 @@
-import type { CardDirection, ReviewLog, SrsCard, WordStatus } from "../shared/types.ts";
-import { cardId, isGrammarSeq, isWordCard, MAX_PRIORITY, versionMs } from "../shared/types.ts";
+import type { CardDirection, CardKey, ReviewLog, SrsCard, WordStatus } from "../shared/types.ts";
+import {
+  cardId,
+  isKnownCard,
+  isWordCard,
+  KIND_DIRECTIONS,
+  MAX_PRIORITY,
+  versionMs,
+} from "../shared/types.ts";
 import { debug } from "../shared/debug.ts";
 
 const DB_NAME = "yomeru-db";
 // v7 re-runs the v6 sequence-keyed reset to self-heal any DB left half-migrated
 // by an earlier build that created the store without the `sequence` index.
 // v8 adds the review outbox and the cached drill counts. v9 adds the delta-sync
-// dirty set and the meta store holding the sync cursor. The app opens the same
-// database, so this and `DB_VERSION` in app/shared/src/idb.rs move together.
-const DB_VERSION = 9;
+// dirty set and the meta store holding the sync cursor. v10 keys cards on
+// `kind` + `item` instead of `sequence` and starts every card store over (see
+// the upgrade below). The app opens the same database, so this and
+// `DB_VERSION` in app/core/src/idb.rs move together.
+const DB_VERSION = 10;
 const TOMB_STORE = "tombstones";
 const REVIEW_STORE = "review_outbox";
 /** The server's per-card drill counts as of the last sync, `{card_id, count}`. */
@@ -25,12 +34,19 @@ const CURSOR_KEY = "sync_cursor";
 
 let db: IDBDatabase | null = null;
 
-/** A blank recall sibling, due immediately, in the "new" state. */
-export function freshRecallCard(sequence: number, nowMs: number, addedMs: number): SrsCard {
+/** A blank card of `key` in `direction`, due immediately, in the "new"
+ * state. */
+export function freshCard(
+  key: CardKey,
+  direction: CardDirection,
+  nowMs: number,
+  addedMs: number,
+): SrsCard {
   return {
-    id: cardId(sequence, "recall"),
-    sequence,
-    direction: "recall",
+    id: cardId(key, direction),
+    kind: key.kind,
+    item: key.item,
+    direction,
     due_ms: nowMs,
     stability: 0,
     difficulty: 0,
@@ -62,13 +78,13 @@ export async function openDb(): Promise<IDBDatabase> {
       };
 
       // Fresh DB: create the cards store keyed on the composite id, indexed
-      // by `sequence` (JMdict ent_seq) for sibling/by-entry lookups.
+      // by `[kind, item]` for the cards of one word, kanji or grammar point.
       const createCardsStore = () => {
         const cards = database.createObjectStore("cards", { keyPath: "id" });
         cards.createIndex("due_ms", "due_ms", { unique: false });
         cards.createIndex("added_ms", "added_ms", { unique: false });
         cards.createIndex("status", "status", { unique: false });
-        cards.createIndex("sequence", "sequence", { unique: false });
+        cards.createIndex("item", ["kind", "item"], { unique: false });
       };
 
       if (e.oldVersion < 1) {
@@ -98,7 +114,19 @@ export async function openDb(): Promise<IDBDatabase> {
         }
       }
 
-      // Ensure the tombstone store exists (new DBs and the v6 reset above).
+      // → v10: cards key on `kind` + `item`. Like v7, no migration on the
+      // device: every store holding card ids is dropped and recreated empty.
+      // The server converted its copy, cards and answer history both, and the
+      // first sync (with no cursor left, a full one) pulls the deck back.
+      // Must match the Rust upgrade in app/core/src/idb.rs.
+      if (e.oldVersion >= 7 && e.oldVersion < 10) {
+        for (const name of ["cards", TOMB_STORE, REVIEW_STORE, DRILL_STORE, DIRTY_STORE, META_STORE]) {
+          if (database.objectStoreNames.contains(name)) database.deleteObjectStore(name);
+        }
+        createCardsStore();
+      }
+
+      // Ensure the tombstone store exists (new DBs and the resets above).
       if (!database.objectStoreNames.contains(TOMB_STORE)) {
         database.createObjectStore(TOMB_STORE, { keyPath: "id" });
       }
@@ -230,36 +258,42 @@ async function putAll(cards: SrsCard[], stamp: boolean): Promise<void> {
   });
 }
 
-export async function getCard(
-  sequence: number,
-  direction: CardDirection,
-): Promise<SrsCard | null> {
-  return tx<SrsCard | undefined>("cards", "readonly", (s) =>
-    s.get(cardId(sequence, direction)),
-  ).then((r) => r ?? null);
+export async function getCard(key: CardKey, direction: CardDirection): Promise<SrsCard | null> {
+  return tx<unknown>("cards", "readonly", (s) => s.get(cardId(key, direction))).then((r) =>
+    isKnownCard(r) ? r : null,
+  );
 }
 
-export async function getCardsBySequence(sequence: number): Promise<SrsCard[]> {
+/** The cards of one word, kanji or grammar point: its directions. */
+export async function getCardsOf(key: CardKey): Promise<SrsCard[]> {
   return openDb().then(
     (database) =>
       new Promise((resolve, reject) => {
         const req = database
           .transaction("cards", "readonly")
           .objectStore("cards")
-          .index("sequence")
-          .getAll(IDBKeyRange.only(sequence));
-        req.onsuccess = () => resolve(req.result as SrsCard[]);
+          .index("item")
+          .getAll(IDBKeyRange.only([key.kind, key.item]));
+        req.onsuccess = () => resolve((req.result as unknown[]).filter(isKnownCard));
         req.onerror = () => reject(req.error);
       }),
   );
 }
 
-export async function getAllCards(): Promise<SrsCard[]> {
+/** Every stored card as it is, the ones this build can't read included (a
+ * kind or direction from a newer client): what sync uploads and the
+ * storage.local mirror keeps. */
+export async function getAllRawCards(): Promise<SrsCard[]> {
   const cards = await tx<SrsCard[]>("cards", "readonly", (s) => s.getAll());
   // Cards stored before `updated_ms` existed come back without it. Resolve the
   // fallback here so callers — the sync upload above all — always hand out a
   // real merge version rather than one that loses every comparison.
   return cards.map((c) => ({ ...c, updated_ms: versionMs(c) }));
+}
+
+/** Every card this build can read. */
+export async function getAllCards(): Promise<SrsCard[]> {
+  return (await getAllRawCards()).filter(isKnownCard);
 }
 
 export async function getDueCards(nowMs: number): Promise<SrsCard[]> {
@@ -272,7 +306,7 @@ export async function getDueCards(nowMs: number): Promise<SrsCard[]> {
           .index("due_ms")
           .getAll(IDBKeyRange.upperBound(nowMs));
         req.onsuccess = () => {
-          const all = req.result as SrsCard[];
+          const all = (req.result as unknown[]).filter(isKnownCard);
           // Word cards only, like the app's `get_due_cards`: kanji and grammar
           // cards are reviewed in their own sessions.
           const due = all.filter((c) => c.status === "active" && isWordCard(c));
@@ -299,15 +333,15 @@ export async function getStagingCards(): Promise<SrsCard[]> {
           .objectStore("cards")
           .index("status")
           .getAll(IDBKeyRange.only("staging"));
-        req.onsuccess = () => resolve(req.result as SrsCard[]);
+        req.onsuccess = () => resolve((req.result as unknown[]).filter(isKnownCard));
         req.onerror = () => reject(req.error);
       }),
   );
 }
 
 /** Promotes both direction siblings of an entry from staging to active. */
-export async function promoteCard(sequence: number): Promise<void> {
-  const siblings = await getCardsBySequence(sequence);
+export async function promoteCard(key: CardKey): Promise<void> {
+  const siblings = await getCardsOf(key);
   for (const c of siblings) {
     if (c.status === "staging") {
       await putCard({ ...c, status: "active" });
@@ -320,8 +354,8 @@ export async function promoteCard(sequence: number): Promise<void> {
  * `MAX_PRIORITY`, pushing it up the New Words queue. Mirrors `bump_priority`
  * in `app/shared/src/idb.rs`.
  */
-export async function bumpPriority(sequence: number): Promise<void> {
-  const siblings = await getCardsBySequence(sequence);
+export async function bumpPriority(key: CardKey): Promise<void> {
+  const siblings = await getCardsOf(key);
   await putCards(
     siblings
       .filter((c) => c.status === "staging")
@@ -334,8 +368,8 @@ export async function bumpPriority(sequence: number): Promise<void> {
  * the active deck — how a graduated card re-enters Review. Destructive.
  * Mirrors `reset_card` / `SrsCard::reset_progression` in the app.
  */
-export async function resetCard(sequence: number, nowMs: number): Promise<void> {
-  const siblings = await getCardsBySequence(sequence);
+export async function resetCard(key: CardKey, nowMs: number): Promise<void> {
+  const siblings = await getCardsOf(key);
   await putCards(
     siblings
       .filter((c) => c.status === "active" || c.status === "graduated")
@@ -355,8 +389,8 @@ export async function resetCard(sequence: number, nowMs: number): Promise<void> 
 }
 
 /** An entry's SRS standing, summarised over its direction cards. */
-export async function getWordStatus(sequence: number): Promise<WordStatus> {
-  const siblings = await getCardsBySequence(sequence);
+export async function getWordStatus(key: CardKey): Promise<WordStatus> {
+  const siblings = await getCardsOf(key);
   const has = (s: SrsCard["status"]) => siblings.some((c) => c.status === s);
   const status = has("active")
     ? "active"
@@ -371,12 +405,8 @@ export async function getWordStatus(sequence: number): Promise<WordStatus> {
 
 /** Deletes every card of an entry (a word's two directions, or a grammar
  * point's one card) and records tombstones. */
-export async function deleteCard(sequence: number): Promise<void> {
-  return deleteIdsWithTombstones(
-    isGrammarSeq(sequence)
-      ? [cardId(sequence, "grammar")]
-      : [cardId(sequence, "recognition"), cardId(sequence, "recall")],
-  );
+export async function deleteCard(key: CardKey): Promise<void> {
+  return deleteIdsWithTombstones(KIND_DIRECTIONS[key.kind].map((d) => cardId(key, d)));
 }
 
 /** Deletes a single sibling by composite id. */
@@ -538,7 +568,7 @@ export async function applySyncResponse(
   if (resp.deletions && resp.deletions.length > 0) {
     const sent = new Set(sentTombstones);
     const localAdded = new Map<string, number>();
-    for (const c of await getAllCards()) localAdded.set(c.id, c.added_ms);
+    for (const c of await getAllRawCards()) localAdded.set(c.id, c.added_ms);
     const foreign = resp.deletions.filter((id) => {
       if (sent.has(id)) return false;
       const added = localAdded.get(id);
@@ -569,7 +599,7 @@ export async function applySyncResponse(
  */
 async function mergeRemoteCards(remote: SrsCard[], uploaded: SrsCard[]): Promise<void> {
   if (remote.length === 0) return;
-  const local = await getAllCards();
+  const local = await getAllRawCards();
   const localVersion = new Map<string, number>();
   for (const c of local) localVersion.set(c.id, versionMs(c));
   const uploadedVersion = new Map<string, number>();

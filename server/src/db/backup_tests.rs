@@ -1,9 +1,9 @@
-//! The server database as it is in production today, through a server start.
+//! The server database as it was before the card key change, through a start.
 //!
-//! `testdata/backup/server-today.sql` holds today's schema with rows of every
-//! card kind; these tests pin what a start does to it, the starting point of
-//! the card key migration (`docs/phase-4-grammar-cards.md`, "Card keys").
-//! `real_db_survives_a_start` runs the same on a copy of the real database.
+//! `testdata/backup/server-today.sql` holds the schema from before the card
+//! key change, with rows of every card kind; these tests pin what the
+//! migration (`schema::migrate_card_keys`) does to it. `real_db_migrates_whole`
+//! runs the same on a copy of the real database.
 
 use super::schema::init_schema;
 use super::Db;
@@ -69,63 +69,150 @@ async fn snapshot(pool: &Db) -> BTreeMap<&'static str, Vec<String>> {
     out
 }
 
+/// The schema as `sqlite_master` and `pragma_table_info` describe it.
+async fn schema(pool: &Db) -> Vec<String> {
+    sqlx::query_scalar(
+        "SELECT m.name || '.' || p.name || ' ' || p.type || ' ' || p.\"notnull\" || ' ' || p.pk
+         FROM sqlite_master m JOIN pragma_table_info(m.name) p
+         WHERE m.type = 'table' ORDER BY 1",
+    )
+    .fetch_all(pool)
+    .await
+    .unwrap()
+}
+
+/// The id an old `<sequence>::<direction>` card id has after the migration;
+/// `None` for a grammar card, which it drops. Written out here rather than
+/// shared with the migration's SQL, so the two check each other.
+fn new_id(old: &str) -> Option<String> {
+    let (seq, dir) = old.split_once("::")?;
+    let seq: u32 = seq.parse().ok()?;
+    match dir {
+        "recognition" | "recall" => Some(format!("word:{seq}:{dir}")),
+        "kanji" => Some(format!("kanji:{}:meaning", char::from_u32(seq)?)),
+        _ => None,
+    }
+}
+
+/// Every non-key field of each card, by id: what the migration must carry over.
+async fn card_fields(pool: &Db) -> BTreeMap<(String, String), String> {
+    let rows: Vec<(String, String, String)> = sqlx::query_as(
+        "SELECT email, id, quote(due_ms) || ' ' || quote(stability) || ' ' || quote(difficulty)
+                || ' ' || reps || ' ' || lapses || ' ' || state || ' ' || quote(last_review_ms)
+                || ' ' || quote(added_ms) || ' ' || status || ' ' || priority || ' '
+                || again_count || ' ' || quote(updated_ms) || ' ' || rev
+         FROM cards",
+    )
+    .fetch_all(pool)
+    .await
+    .unwrap();
+    rows.into_iter().map(|(e, id, f)| ((e, id), f)).collect()
+}
+
+/// Answers per (user, card id), with their times and ratings.
+async fn answers(pool: &Db) -> BTreeMap<(i64, String), Vec<String>> {
+    let rows: Vec<(i64, String, String)> = sqlx::query_as(
+        "SELECT user_id, card_id, kind || ' ' || reviewed_ms || ' ' || rating || ' ' || rev
+         FROM reviews ORDER BY reviewed_ms, kind",
+    )
+    .fetch_all(pool)
+    .await
+    .unwrap();
+    let mut out: BTreeMap<(i64, String), Vec<String>> = BTreeMap::new();
+    for (u, id, a) in rows {
+        out.entry((u, id)).or_default().push(a);
+    }
+    out
+}
+
+/// `before`'s rows under their new ids, the ones without one left out.
+fn rekeyed<K: Ord + Clone, V: Clone>(before: &BTreeMap<(K, String), V>) -> BTreeMap<(K, String), V> {
+    before
+        .iter()
+        .filter_map(|((k, id), v)| Some(((k.clone(), new_id(id)?), v.clone())))
+        .collect()
+}
+
 #[tokio::test]
-async fn fixture_is_todays_schema() {
-    // A fresh start creates the schema the fixture claims to hold, so the
-    // fixture can't drift from the server it stands for.
+async fn the_migrated_schema_is_a_fresh_one() {
     let fresh = one_conn(SqliteConnectOptions::from_str(":memory:").unwrap()).await;
     init_schema(&fresh).await.unwrap();
-    let fixture = fixture_db().await;
-    let columns = "SELECT m.name || '.' || p.name || ' ' || p.type || ' ' || p.\"notnull\" || ' ' || p.pk
-                   FROM sqlite_master m JOIN pragma_table_info(m.name) p
-                   WHERE m.type = 'table' ORDER BY 1";
-    let a: Vec<String> = sqlx::query_scalar(columns).fetch_all(&fresh).await.unwrap();
-    let b: Vec<String> = sqlx::query_scalar(columns).fetch_all(&fixture).await.unwrap();
-    assert_eq!(a, b);
+    let migrated = fixture_db().await;
+    init_schema(&migrated).await.unwrap();
+    assert_eq!(schema(&migrated).await, schema(&fresh).await);
 }
 
 #[tokio::test]
-async fn a_start_leaves_todays_database_as_it_is() {
+async fn a_start_rekeys_todays_cards_and_their_answers() {
     let pool = fixture_db().await;
     let before = snapshot(&pool).await;
-    assert_eq!(before["cards"].len(), 8);
-    assert_eq!(before["reviews"].len(), 8);
-    assert_eq!(before["deletions"].len(), 2);
+    let fields = card_fields(&pool).await;
+    let history = answers(&pool).await;
+    let epoch: String = sqlx::query_scalar("SELECT epoch FROM sync_meta").fetch_one(&pool).await.unwrap();
 
     init_schema(&pool).await.unwrap();
+
+    // Every card but the grammar one, under its new id, every field kept.
+    let after_fields = card_fields(&pool).await;
+    assert_eq!(after_fields, rekeyed(&fields));
+    assert_eq!(after_fields.len(), 7);
+    let keys: Vec<(String, String, String, String)> =
+        sqlx::query_as("SELECT id, kind, item, direction FROM cards WHERE email = 'alice@example.com' ORDER BY id")
+            .fetch_all(&pool)
+            .await
+            .unwrap();
+    let row = |id: &str, kind: &str, item: &str, dir: &str| {
+        (id.to_owned(), kind.to_owned(), item.to_owned(), dir.to_owned())
+    };
+    assert_eq!(
+        keys,
+        [
+            row("kanji:猫:meaning", "kanji", "猫", "meaning"),
+            row("word:1000220:recall", "word", "1000220", "recall"),
+            row("word:1000220:recognition", "word", "1000220", "recognition"),
+            row("word:1206730:recognition", "word", "1206730", "recognition"),
+            row("word:1358280:recall", "word", "1358280", "recall"),
+            row("word:1358280:recognition", "word", "1358280", "recognition"),
+        ]
+    );
+
+    // Each card keeps its whole answer history, a deleted card's too.
+    let after_history = answers(&pool).await;
+    assert_eq!(after_history, rekeyed(&history));
+    assert_eq!(after_history.values().map(Vec::len).sum::<usize>(), 8);
+    assert!(after_history.contains_key(&(1, "word:1500000:recognition".to_owned())));
+
+    // Tombstones name old ids: gone. A new epoch refuses every old cursor.
+    let after = snapshot(&pool).await;
+    assert!(after["deletions"].is_empty());
+    let new_epoch: String = sqlx::query_scalar("SELECT epoch FROM sync_meta").fetch_one(&pool).await.unwrap();
+    assert_ne!(new_epoch, epoch);
+    for t in ["users", "sessions", "settings", "otps"] {
+        assert_eq!(after[t], before[t], "{t}");
+    }
+
+    // Once migrated, a start changes nothing.
     init_schema(&pool).await.unwrap();
-    assert_eq!(snapshot(&pool).await, before);
+    assert_eq!(snapshot(&pool).await, after);
 }
 
 #[tokio::test]
-async fn todays_cards_read_back_through_the_api() {
+async fn migrated_cards_read_back_through_the_api() {
     let pool = fixture_db().await;
     init_schema(&pool).await.unwrap();
-    let cards = super::cards::get_all_cards(&pool, "alice@example.com").await.unwrap();
-    let mut ids: Vec<&str> = cards.iter().map(|c| c.id.as_str()).collect();
-    ids.sort();
-    assert_eq!(
-        ids,
-        [
-            "1000220::recall",
-            "1000220::recognition",
-            "1206730::recognition",
-            "1358280::recall",
-            "1358280::recognition",
-            "29483::kanji",
-            "3444285014::grammar",
-        ]
-    );
-    let grammar = cards.iter().find(|c| c.direction == "grammar").unwrap();
-    assert_eq!(grammar.sequence, 3_444_285_014);
+    let bob = super::cards::get_all_cards(&pool, "bob@example.com").await.unwrap();
+    assert_eq!(bob.len(), 1);
+    assert_eq!(bob[0].id, "word:1358280:recognition");
+    assert_eq!((bob[0].kind.as_str(), bob[0].item.as_str()), ("word", "1358280"));
+    assert_eq!(bob[0].reps, 2);
 }
 
-/// A copy of the production database through a start:
+/// The migration on a copy of the production database:
 /// `YOMERU_DB=path/to/copy.db cargo test -p server real_db -- --ignored --nocapture`.
 /// Works on a temporary copy; the file itself is only read.
 #[tokio::test]
 #[ignore]
-async fn real_db_survives_a_start() {
+async fn real_db_migrates_whole() {
     let src = std::env::var("YOMERU_DB").expect("set YOMERU_DB");
     let tmp = std::env::temp_dir().join(format!("yomeru-real-db-{}.db", std::process::id()));
     std::fs::copy(&src, &tmp).expect("copy YOMERU_DB");
@@ -134,29 +221,37 @@ async fn real_db_survives_a_start() {
     let ok: String = sqlx::query_scalar("PRAGMA integrity_check").fetch_one(&pool).await.unwrap();
     assert_eq!(ok, "ok");
     let before = snapshot(&pool).await;
-    init_schema(&pool).await.unwrap();
-    let after = snapshot(&pool).await;
+    let fields = card_fields(&pool).await;
+    let history = answers(&pool).await;
 
-    let per_user: Vec<(String, i64, i64)> = sqlx::query_as(
-        "SELECT u.email,
-                (SELECT count(*) FROM cards c WHERE c.email = u.email),
-                (SELECT count(*) FROM reviews r WHERE r.user_id = u.id)
-         FROM users u ORDER BY u.id",
-    )
-    .fetch_all(&pool)
-    .await
-    .unwrap();
-    for (i, (_, cards, reviews)) in per_user.iter().enumerate() {
-        println!("account {}: {cards} cards, {reviews} reviews", i + 1);
-    }
-    let directions: Vec<(String, i64)> =
-        sqlx::query_as("SELECT direction, count(*) FROM cards GROUP BY direction ORDER BY 1")
+    init_schema(&pool).await.unwrap();
+
+    let after_fields = card_fields(&pool).await;
+    let after_history = answers(&pool).await;
+    let after = snapshot(&pool).await;
+    let ok: String = sqlx::query_scalar("PRAGMA integrity_check").fetch_one(&pool).await.unwrap();
+    let kinds: Vec<(String, String, i64)> =
+        sqlx::query_as("SELECT kind, direction, count(*) FROM cards GROUP BY 1, 2 ORDER BY 1, 2")
             .fetch_all(&pool)
             .await
             .unwrap();
-    println!("cards by direction: {directions:?}");
-
     pool.close().await;
     let _ = std::fs::remove_file(&tmp);
-    assert_eq!(after, before, "a start changed the real database");
+
+    assert_eq!(ok, "ok");
+    let dropped_cards = fields.len() - rekeyed(&fields).len();
+    let answers_before: usize = history.values().map(Vec::len).sum();
+    let answers_after: usize = after_history.values().map(Vec::len).sum();
+    println!(
+        "cards: {} → {} ({dropped_cards} grammar dropped); answers: {answers_before} → {answers_after}",
+        fields.len(),
+        after_fields.len()
+    );
+    println!("cards by kind: {kinds:?}");
+    assert_eq!(after_fields, rekeyed(&fields), "every card, every field, under its new id");
+    assert_eq!(after_history, rekeyed(&history), "every answer, under its card's new id");
+    assert!(after["deletions"].is_empty());
+    for t in ["users", "sessions", "settings", "otps"] {
+        assert_eq!(after[t], before[t], "{t}");
+    }
 }

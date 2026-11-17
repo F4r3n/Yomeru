@@ -12,15 +12,15 @@ use crate::icons::{Icon, IconName};
 use crate::idb::{delete_card, get_staging_cards, promote_card};
 use crate::romaji::PreparedQuery;
 use crate::sync::{schedule_sync, use_reload_on_sync};
-use crate::types::SrsCard;
+use crate::types::{CardItem, SrsCard};
 
 #[component]
 pub fn NewWordsTab() -> Element {
     let mut cards = use_signal(Vec::<SrsCard>::new);
-    let mut entries = use_signal(HashMap::<u32, WordEntry>::new);
-    // Staged grammar points, by card sequence.
-    let mut points = use_signal(HashMap::<u32, GrammarEntry>::new);
-    let mut expanded = use_signal(HashSet::<u32>::new);
+    let mut entries = use_signal(HashMap::<CardItem, WordEntry>::new);
+    // Staged grammar points.
+    let mut points = use_signal(HashMap::<CardItem, GrammarEntry>::new);
+    let mut expanded = use_signal(HashSet::<CardItem>::new);
     let mut loading = use_signal(|| true);
     let mut err = use_signal(|| Option::<String>::None);
     let mut filter = use_signal(String::new);
@@ -40,17 +40,10 @@ pub fn NewWordsTab() -> Element {
             let result = get_staging_cards().await;
             let result = match result {
                 Ok(c) => {
-                    let deduped = unique_by_sequence(c);
-                    let seqs: Vec<u32> = deduped
-                        .iter()
-                        .filter(|c| c.is_word())
-                        .map(|c| c.sequence)
-                        .collect();
-                    let grammar_seqs: Vec<u32> = deduped
-                        .iter()
-                        .filter(|c| c.is_grammar())
-                        .map(|c| c.sequence)
-                        .collect();
+                    let deduped = unique_by_item(c);
+                    let seqs: Vec<u32> = deduped.iter().filter_map(SrsCard::word_seq).collect();
+                    let grammar_seqs: Vec<u32> =
+                        deduped.iter().filter_map(SrsCard::grammar_seq).collect();
                     let found = match grammar_by_seq(&grammar_seqs).await {
                         Ok(v) => v,
                         Err(e) => {
@@ -58,10 +51,10 @@ pub fn NewWordsTab() -> Element {
                             Vec::new()
                         }
                     };
-                    let grammar: HashMap<u32, GrammarEntry> = grammar_seqs
+                    let grammar: HashMap<CardItem, GrammarEntry> = grammar_seqs
                         .into_iter()
                         .zip(found)
-                        .filter_map(|(s, e)| Some((s, e?)))
+                        .filter_map(|(s, e)| Some((CardItem::Grammar(s), e?)))
                         .collect();
                     let looked_up = match lookup_by_sequence(&seqs).await {
                         Ok(v) => v,
@@ -73,10 +66,10 @@ pub fn NewWordsTab() -> Element {
                             Vec::new()
                         }
                     };
-                    let looked_up: HashMap<u32, WordEntry> = seqs
+                    let looked_up: HashMap<CardItem, WordEntry> = seqs
                         .into_iter()
                         .zip(looked_up)
-                        .filter_map(|(s, e)| Some((s, e?)))
+                        .filter_map(|(s, e)| Some((CardItem::Word(s), e?)))
                         .collect();
                     Ok((deduped, looked_up, grammar))
                 }
@@ -90,7 +83,7 @@ pub fn NewWordsTab() -> Element {
                 Ok((mut deduped, looked_up, grammar)) => {
                     // A grammar point that left the dictionary stays out of
                     // sight, its card kept (see the phase-4 doc).
-                    deduped.retain(|c| !c.is_grammar() || grammar.contains_key(&c.sequence));
+                    deduped.retain(|c| !c.is_grammar() || grammar.contains_key(&c.item));
                     entries.set(looked_up);
                     points.set(grammar);
                     cards.set(deduped);
@@ -108,9 +101,9 @@ pub fn NewWordsTab() -> Element {
     // Drop a promoted/rejected card from the local list instead of
     // re-fetching everything. If a reload is still in flight it may have read
     // the store before our write, so restart it to get a fresh snapshot.
-    let remove_local = move |seq: u32| {
+    let remove_local = move |seq: CardItem| {
         let (mut cards, mut entries, mut points, mut expanded) = (cards, entries, points, expanded);
-        cards.with_mut(|c| c.retain(|c| c.sequence != seq));
+        cards.with_mut(|c| c.retain(|c| c.item != seq));
         entries.with_mut(|m| {
             m.remove(&seq);
         });
@@ -125,10 +118,10 @@ pub fn NewWordsTab() -> Element {
         }
     };
 
-    let promote_one = move |seq: u32| {
+    let promote_one = move |seq: CardItem| {
         spawn(async move {
             if let Err(e) = promote_card(seq).await {
-                warn!("promote_card(seq={seq}) failed: {e}");
+                warn!("promote_card({seq:?}) failed: {e}");
                 return;
             }
             schedule_sync();
@@ -136,10 +129,10 @@ pub fn NewWordsTab() -> Element {
         });
     };
 
-    let reject_one = move |seq: u32| {
+    let reject_one = move |seq: CardItem| {
         spawn(async move {
             if let Err(e) = delete_card(seq).await {
-                warn!("delete_card(seq={seq}) failed: {e}");
+                warn!("delete_card({seq:?}) failed: {e}");
                 return;
             }
             schedule_sync();
@@ -158,10 +151,10 @@ pub fn NewWordsTab() -> Element {
         .filter(|c| {
             query.is_empty()
                 || entries_r
-                    .get(&c.sequence)
+                    .get(&c.item)
                     .is_some_and(|e| query.matches(preferred_headword(e), primary_reading(e)))
                 || points_r
-                    .get(&c.sequence)
+                    .get(&c.item)
                     .is_some_and(|p| query.matches(&p.pattern, &p.pattern))
         })
         .collect();
@@ -208,14 +201,14 @@ pub fn NewWordsTab() -> Element {
                 div { class: "col",
                     for card in filtered.iter().copied() {
                         {
-                            let seq = card.sequence;
+                            let seq = card.item;
                             let priority = card.priority;
                             let entry = entries_r.get(&seq);
                             let point = points_r.get(&seq).cloned();
                             let label = entry
                                 .map(|e| preferred_headword(e).to_string())
                                 .or_else(|| point.as_ref().map(|p| p.pattern.clone()))
-                                .unwrap_or_else(|| format!("(seq {seq})"));
+                                .unwrap_or_else(|| format!("({})", seq.key()));
                             let reading = entry.map(primary_reading).unwrap_or_default();
                             let show_reading = !reading.is_empty() && reading != label;
                             let freq = entry
@@ -310,8 +303,8 @@ fn EntryDetail(entry: WordEntry) -> Element {
     }
 }
 
-fn unique_by_sequence(mut cards: Vec<SrsCard>) -> Vec<SrsCard> {
+fn unique_by_item(mut cards: Vec<SrsCard>) -> Vec<SrsCard> {
     let mut seen = HashSet::with_capacity(cards.len());
-    cards.retain(|c| seen.insert(c.sequence));
+    cards.retain(|c| seen.insert(c.item));
     cards
 }

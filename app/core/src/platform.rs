@@ -572,7 +572,6 @@ async fn do_sync(state: &Mutex<SyncState>) -> Result<String, String> {
             settings: SettingsPayload::from_settings(&s),
             reviews: &outbox,
             since: cursor.as_ref(),
-            grammar_cards: true,
         },
         Some(&s.server_token),
     )
@@ -584,10 +583,15 @@ async fn do_sync(state: &Mutex<SyncState>) -> Result<String, String> {
         return Err(format!("server {}", res.status));
     }
     let resp: SyncResponse = res.json()?;
+    let received = resp.cards.len();
+    let (remote_cards, unknown_cards) = crate::sync::split_cards(resp.cards);
 
-    if !resp.cards.is_empty() {
-        merge_remote_cards(&resp.cards, &local_cards).await?;
+    if !remote_cards.is_empty() {
+        merge_remote_cards(&remote_cards, &local_cards).await?;
     }
+    crate::idb::put_raw_cards(&unknown_cards)
+        .await
+        .map_err(|e| format!("put cards of unknown kinds: {e}"))?;
     // Re-read the local cards: one added while the sync was in flight must be
     // visible here or the deletion filter can't tell it from a stale copy.
     let local_after_merge = crate::idb::get_all_cards()
@@ -658,10 +662,7 @@ async fn do_sync(state: &Mutex<SyncState>) -> Result<String, String> {
     if settled && backlog {
         lock(state).retry = true;
     }
-    Ok(crate::sync::sync_summary(
-        local_cards.len(),
-        resp.cards.len(),
-    ))
+    Ok(crate::sync::sync_summary(local_cards.len(), received))
 }
 
 /// Mirrors the server-side `updated_ms` last-write-wins rule on the client:

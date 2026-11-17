@@ -258,7 +258,8 @@ impl Device {
 fn card(id: &str, added_ms: f64, updated_ms: f64) -> db::Card {
     db::Card {
         id: id.to_string(),
-        sequence: 1_467_640,
+        kind: "word".to_string(),
+        item: "1467640".to_string(),
         direction: "recognition".to_string(),
         due_ms: 0.0,
         stability: 0.0,
@@ -275,7 +276,7 @@ fn card(id: &str, added_ms: f64, updated_ms: f64) -> db::Card {
     }
 }
 
-const X: &str = "1467640::recognition";
+const X: &str = "word:1467640:recognition";
 
 // ---- scenarios ----------------------------------------------------------
 
@@ -380,14 +381,14 @@ async fn a_reset_survives_a_stale_copy_that_still_has_the_reps() {
 
 #[tokio::test]
 async fn a_kanji_card_reaches_the_other_device_unchanged() {
-    // Kanji cards reuse the card shape with a new `direction` and the kanji's
-    // code point as `sequence`. The server relays both without interpreting
-    // them, so no schema change is needed — this pins that down.
-    const NEKO: &str = "29483::kanji";
+    // The server relays `kind`, `item` and `direction` as text, without
+    // interpreting them: a kanji (non-ASCII item) arrives as it was sent.
+    const NEKO: &str = "kanji:猫:meaning";
     let h = Harness::new().await;
     let mut kanji = card(NEKO, T0, T0);
-    kanji.sequence = 0x732b;
-    kanji.direction = "kanji".to_string();
+    kanji.kind = "kanji".to_string();
+    kanji.item = "猫".to_string();
+    kanji.direction = "meaning".to_string();
     kanji.reps = 3;
     let mut a = Device::new(&[kanji]);
     a.sync(&h).await;
@@ -395,8 +396,8 @@ async fn a_kanji_card_reaches_the_other_device_unchanged() {
     let mut b = Device::new(&[]);
     b.sync(&h).await;
     let got = b.get(NEKO);
-    assert_eq!(got.sequence, 0x732b);
-    assert_eq!(got.direction, "kanji");
+    assert_eq!((got.kind.as_str(), got.item.as_str()), ("kanji", "猫"));
+    assert_eq!(got.direction, "meaning");
     assert_eq!(got.reps, 3);
 }
 
@@ -590,7 +591,7 @@ async fn deleting_the_account_erases_every_trace_and_only_that_account() {
     // Alice: a card, a tombstone, a review, settings, a second session.
     let body = json!({
         "cards": [card(X, T0, T0)],
-        "deletions": [{ "id": "1358280::recall", "deleted_at": T0 }],
+        "deletions": [{ "id": "word:1358280:recall", "deleted_at": T0 }],
         "reviews": [{ "card_id": X, "rating": 3, "kind": "review", "reviewed_ms": T0 }],
         "settings": {
             "graduation_interval_days": 30, "interval_scale": 1.0,
@@ -777,13 +778,13 @@ mod wire {
 
         let resp: SyncResp = serde_json::from_value(body).unwrap();
         assert_eq!(resp.cards.len(), 1);
-        assert_eq!(resp.deletions, vec!["1467640::recall".to_string()]);
+        assert_eq!(resp.deletions, vec!["word:1467640:recall".to_string()]);
         assert_eq!(resp.cards[0].again_count, 2, "again_count must round-trip");
         // One drill row and one review row: only the drill counts.
-        assert_eq!(resp.drill_counts.get("1467640::recognition"), Some(&1));
+        assert_eq!(resp.drill_counts.get("word:1467640:recognition"), Some(&1));
         // Float `deleted_at` must survive as a real time, not collapse to
         // receipt time — that is the whole point of sending it.
-        let stored = db::test_support::deleted_at(&h.db, EMAIL, "1467640::recall")
+        let stored = db::test_support::deleted_at(&h.db, EMAIL, "word:1467640:recall")
             .await
             .expect("tombstone recorded");
         assert_eq!(stored, 1_757_000_000_123);
@@ -810,11 +811,11 @@ mod wire {
         let resp: SyncResp = serde_json::from_value(body).unwrap();
         assert_eq!(resp.cards.len(), 1);
         assert_eq!(
-            resp.drill_counts.get("1467640::recognition"),
+            resp.drill_counts.get("word:1467640:recognition"),
             Some(&1),
             "an integer reviewed_ms must be accepted like a float one"
         );
-        let stored = db::test_support::deleted_at(&h.db, EMAIL, "1467640::recall")
+        let stored = db::test_support::deleted_at(&h.db, EMAIL, "word:1467640:recall")
             .await
             .expect("tombstone recorded");
         assert_eq!(
@@ -842,11 +843,11 @@ mod wire {
         );
 
         let resp: SyncResp = serde_json::from_value(body).unwrap();
-        let c = resp.card("1467640::recognition").expect("card stored");
+        let c = resp.card("word:1467640:recognition").expect("card stored");
         // `normalize_version` derives a usable version from the times a legacy
         // client does send, so the card can still win or lose a merge.
         assert_eq!(c.updated_ms, 1_756_000_000_000.0);
-        assert_eq!(resp.deletions, vec!["1467640::recall".to_string()]);
+        assert_eq!(resp.deletions, vec!["word:1467640:recall".to_string()]);
     }
 
     #[tokio::test]
@@ -865,7 +866,7 @@ mod wire {
             .post("/api/sync", Some(&h.token), &json!({ "cards": [] }))
             .await;
         let resp: SyncResp = serde_json::from_value(body).unwrap();
-        assert_eq!(resp.drill_counts.get("1467640::recognition"), Some(&1));
+        assert_eq!(resp.drill_counts.get("word:1467640:recognition"), Some(&1));
     }
 
     #[tokio::test]
@@ -960,7 +961,7 @@ mod wire {
             let resp: SyncResp = serde_json::from_value(body).unwrap();
             assert_eq!(resp.cards.len(), 1, "{name}");
             assert_eq!(
-                resp.drill_counts.get("1467640::recognition"),
+                resp.drill_counts.get("word:1467640:recognition"),
                 Some(&1),
                 "{name}"
             );
@@ -1058,8 +1059,6 @@ mod delta {
                     .map(|(id, at)| json!({ "id": id, "deleted_at": at }))
                     .collect::<Vec<_>>(),
                 "reviews": reviews,
-                // As the app sends it: its cursors carry no grammar tag.
-                "grammar_cards": true,
             });
             if let Some(c) = &self.cursor {
                 body["since"] = c.clone();
@@ -1098,7 +1097,7 @@ mod delta {
         }
     }
 
-    const Y: &str = "1467640::recall";
+    const Y: &str = "word:1467640:recall";
 
     #[tokio::test]
     async fn after_the_first_sync_only_changes_cross_the_wire() {
@@ -1388,7 +1387,7 @@ fn reviewed_deck(n: usize) -> (Vec<db::Card>, Vec<Value>) {
     let mut cards = Vec::new();
     let mut reviews = Vec::new();
     for i in 0..n {
-        let id = format!("{}::recall", 1_000_000 + i);
+        let id = format!("word:{}:recall", 1_000_000 + i);
         let mut c = card(&id, T0, T0 + 30.0 * DAY);
         c.reps = 5;
         cards.push(c);
@@ -1521,99 +1520,52 @@ async fn an_undone_drill_leaves_the_log_and_its_count_reaches_zero() {
     assert_eq!(other["drill_counts"][X], 0);
 }
 
-// ---- grammar cards and older clients --------------------------------------
-
-/// A grammar card as the app uploads it: `sequence` is `card_sequence` of the
-/// entry's `seq`, and only that number and the SRS fields travel.
-fn grammar_card() -> db::Card {
-    let seq = grammar_core::card_sequence(7);
-    db::Card {
-        id: format!("{seq}::grammar"),
-        sequence: i64::from(seq),
-        direction: "grammar".to_string(),
-        ..card("unused", T0, T0 + SECOND)
-    }
-}
+// ---- card kinds -------------------------------------------------------------
 
 #[tokio::test]
-async fn a_grammar_card_round_trips_to_a_client_that_knows_them() {
+async fn a_card_of_any_kind_round_trips_untouched() {
+    // A kind or direction added to the apps later needs no server change:
+    // the server stores and returns what it was sent.
     let h = Harness::new().await;
-    let g = grammar_card();
+    let odd = db::Card {
+        id: "grammar:7:production".to_string(),
+        kind: "grammar".to_string(),
+        item: "7".to_string(),
+        direction: "production".to_string(),
+        ..card("unused", T0, T0 + SECOND)
+    };
     let (status, _) = h
-        .post(
-            "/api/sync",
-            Some(&h.token),
-            &json!({ "cards": [g], "grammar_cards": true }),
-        )
+        .post("/api/sync", Some(&h.token), &json!({ "cards": [odd] }))
         .await;
     assert_eq!(status, StatusCode::OK);
     let (_, body) = h
-        .post(
-            "/api/sync",
-            Some(&h.token),
-            &json!({ "cards": [], "grammar_cards": true }),
-        )
+        .post("/api/sync", Some(&h.token), &json!({ "cards": [] }))
         .await;
     let resp: SyncResp = serde_json::from_value(body).unwrap();
-    let back = resp.card(&g.id).expect("grammar card comes back");
-    assert_eq!(back.sequence, g.sequence);
-    assert_eq!(back.direction, "grammar");
+    let back = resp.card(&odd.id).expect("the card comes back");
+    assert_eq!(
+        (back.kind.as_str(), back.item.as_str(), back.direction.as_str()),
+        ("grammar", "7", "production")
+    );
 }
 
 #[tokio::test]
-async fn older_clients_never_get_grammar_cards_and_catch_up_once_updated() {
+async fn a_client_from_before_the_card_key_change_is_refused() {
+    // Its cards carry `sequence` and no `kind`/`item`. Storing them would
+    // mix two key schemes in one deck, so the request fails whole and the
+    // device syncs again once it updates.
     let h = Harness::new().await;
-    let word = card("1467640::recognition", T0, T0 + SECOND);
-    let g = grammar_card();
-    h.post(
-        "/api/sync",
-        Some(&h.token),
-        &json!({ "cards": [word, g], "grammar_cards": true }),
-    )
-    .await;
-
-    // An older client: no flag. It gets its words, not the grammar card, and
-    // its deltas keep working with the tagged cursor it is handed.
-    let (_, old) = h
+    let old = json!({
+        "id": "word:1467640:recognition", "sequence": 1467640, "direction": "recognition",
+        "due_ms": 0.0, "stability": 0.0, "difficulty": 0.0, "reps": 0, "lapses": 0,
+        "state": "new", "added_ms": 1.0, "status": "active"
+    });
+    let (status, _) = h
+        .post("/api/sync", Some(&h.token), &json!({ "cards": [old] }))
+        .await;
+    assert!(status.is_client_error(), "{status}");
+    let (_, body) = h
         .post("/api/sync", Some(&h.token), &json!({ "cards": [] }))
         .await;
-    assert_eq!(old["full"], true);
-    let ids: Vec<&str> = old["cards"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .map(|c| c["id"].as_str().unwrap())
-        .collect();
-    assert_eq!(ids, vec![word.id.as_str()]);
-    let (_, old_delta) = h
-        .post(
-            "/api/sync",
-            Some(&h.token),
-            &json!({ "cards": [], "since": old["cursor"] }),
-        )
-        .await;
-    assert_eq!(old_delta["full"], false, "the tagged cursor still serves deltas");
-
-    // The same device, updated: it now asks for grammar cards with the
-    // cursor it holds. The delta would have missed the grammar card, so the
-    // server answers in full.
-    let (_, updated) = h
-        .post(
-            "/api/sync",
-            Some(&h.token),
-            &json!({ "cards": [], "since": old_delta["cursor"], "grammar_cards": true }),
-        )
-        .await;
-    assert_eq!(updated["full"], true);
-    let resp: SyncResp = serde_json::from_value(updated.clone()).unwrap();
-    assert!(resp.card(&g.id).is_some());
-    // And its next delta is an ordinary one.
-    let (_, next) = h
-        .post(
-            "/api/sync",
-            Some(&h.token),
-            &json!({ "cards": [], "since": updated["cursor"], "grammar_cards": true }),
-        )
-        .await;
-    assert_eq!(next["full"], false);
+    assert_eq!(body["cards"], json!([]));
 }

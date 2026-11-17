@@ -11,6 +11,7 @@
  * and nothing below `doSync` can see both.
  */
 
+import { wordKey } from "../shared/types.ts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IDBFactory, IDBKeyRange as FakeIDBKeyRange } from "fake-indexeddb";
 import { readFileSync } from "node:fs";
@@ -27,6 +28,15 @@ const TOKEN = "test-token";
 
 const WORD = 1_467_640;
 const CAT = 1_001;
+/** A card from a newer client: a kind this build doesn't know. */
+const UNKNOWN = {
+  ...makeCard(),
+  id: "sentence:9:cloze",
+  kind: "sentence",
+  item: "9",
+  direction: "cloze",
+  updated_ms: 5,
+} as unknown as SrsCard;
 const DOG = 1_002;
 
 function fixture(name: string): unknown {
@@ -126,8 +136,8 @@ describe("sync", () => {
     // the fixture names; putCard would re-stamp it with the wall clock.
     await idb.putCardsSynced([
       {
-        id: cardId(WORD, "recognition"),
-        sequence: WORD,
+        id: cardId(wordKey(WORD), "recognition"),
+        ...wordKey(WORD),
         direction: "recognition",
         due_ms: 1_757_000_000_000,
         stability: 4.2,
@@ -147,16 +157,16 @@ describe("sync", () => {
     // drives its transactions off the real event loop and never settles
     // under them.
     const clock = vi.spyOn(Date, "now").mockReturnValue(1_757_000_000_123);
-    await idb.deleteCardById(cardId(WORD, "recall"));
+    await idb.deleteCardById(cardId(wordKey(WORD), "recall"));
     clock.mockRestore();
     await idb.addReview({
-      card_id: cardId(WORD, "recognition"),
+      card_id: cardId(wordKey(WORD), "recognition"),
       rating: 1,
       kind: "drill",
       reviewed_ms: 1_756_950_000_000,
     });
     await idb.addReview({
-      card_id: cardId(WORD, "recognition"),
+      card_id: cardId(wordKey(WORD), "recognition"),
       rating: 3,
       kind: "review",
       reviewed_ms: 1_756_960_000_000,
@@ -198,7 +208,7 @@ describe("sync", () => {
       expect(sent[0]).toEqual(expected);
       // toEqual ignores nothing about keys, but say it outright: an extra field
       // (or a renamed one) is a wire change, and the server parses by name.
-      expect(keysOf(sent[0])).toEqual(["cards", "deletions", "grammar_cards", "reviews", "settings"]);
+      expect(keysOf(sent[0])).toEqual(["cards", "deletions", "reviews", "settings"]);
       expect(keysOf((sent[0].reviews as unknown[])[0])).toEqual(
         keysOf((expected.reviews as unknown[])[0]),
       );
@@ -212,7 +222,7 @@ describe("sync", () => {
     it("matches the shared delta wire fixture once it holds a cursor", async () => {
       await seedFixtureState();
       await idb.setSyncCursor(CURSOR);
-      await markDirty(cardId(WORD, "recognition"), 1_756_900_000_000);
+      await markDirty(cardId(wordKey(WORD), "recognition"), 1_756_900_000_000);
 
       respondWith({ cards: [], deletions: [] });
       await sync.handleSyncCards();
@@ -222,7 +232,6 @@ describe("sync", () => {
       expect(keysOf(sent[0])).toEqual([
         "cards",
         "deletions",
-        "grammar_cards",
         "reviews",
         "settings",
         "since",
@@ -234,7 +243,7 @@ describe("sync", () => {
       // user actually deleted — a delete made offline last week must not be
       // stamped with today's upload.
       await idb.putCard(makeCard({ sequence: CAT }));
-      await idb.deleteCard(CAT);
+      await idb.deleteCard(wordKey(CAT));
 
       respondWith({ cards: [], deletions: [] });
       await sync.handleSyncCards();
@@ -253,20 +262,20 @@ describe("sync", () => {
       respondWith({ cards: [], deletions: [] });
       await sync.handleSyncCards();
 
-      expect(keysOf(sent[0])).toEqual(["cards", "deletions", "grammar_cards", "reviews"]);
+      expect(keysOf(sent[0])).toEqual(["cards", "deletions", "reviews"]);
     });
 
-    it("leaves legacy word-keyed rows out of the upload", async () => {
+    it("uploads a card of a kind this build doesn't know on a full sync", async () => {
+      // A newer client made it. This build never shows it, but a server that
+      // lost its copy must still get it back from here.
       await idb.putCard(makeCard({ sequence: CAT }));
-      await idb.putCardsSynced([
-        { ...makeCard({ sequence: CAT }), id: "猫::recognition", sequence: NaN } as SrsCard,
-      ]);
+      await idb.putCardsSynced([UNKNOWN]);
 
       respondWith({ cards: [], deletions: [] });
       await sync.handleSyncCards();
 
-      const ids = (sent[0].cards as SrsCard[]).map((c) => c.id);
-      expect(ids).toEqual([cardId(CAT, "recognition")]);
+      const ids = (sent[0].cards as SrsCard[]).map((c) => c.id).sort();
+      expect(ids).toEqual([UNKNOWN.id, cardId(wordKey(CAT), "recognition")].sort());
     });
   });
 
@@ -277,7 +286,7 @@ describe("sync", () => {
       const result = await sync.handleSyncCards();
 
       expect(result).toEqual({ synced: 1, sent: 0 });
-      const card = await idb.getCard(WORD, "recognition");
+      const card = await idb.getCard(wordKey(WORD), "recognition");
       expect(card).not.toBeNull();
       expect(card?.reps).toBe(3);
       // Adopted verbatim: re-stamping would mark it locally modified and bounce
@@ -301,7 +310,7 @@ describe("sync", () => {
 
       await sync.handleSyncCards();
 
-      expect((await idb.getCard(CAT, "recognition"))?.reps).toBe(5);
+      expect((await idb.getCard(wordKey(CAT), "recognition"))?.reps).toBe(5);
     });
 
     it("does not delete a card added while the sync was in flight", async () => {
@@ -316,7 +325,7 @@ describe("sync", () => {
       // uploadedAt`) reads a tie as a card the server had already seen. That
       // boundary is its own question; this test is about the unambiguous case.
       respondWith(
-        { cards: [], deletions: [cardId(DOG, "recognition")] },
+        { cards: [], deletions: [cardId(wordKey(DOG), "recognition")] },
         {
           duringFlight: async () => {
             await idb.putCard(makeCard({ sequence: DOG, added_ms: Date.now() + 1_000 }));
@@ -326,17 +335,17 @@ describe("sync", () => {
 
       await sync.handleSyncCards();
 
-      expect(await idb.getCard(DOG, "recognition")).not.toBeNull();
+      expect(await idb.getCard(wordKey(DOG), "recognition")).not.toBeNull();
     });
 
     it("applies a server deletion for a card it has already ruled on", async () => {
-      const id = cardId(CAT, "recognition");
+      const id = cardId(wordKey(CAT), "recognition");
       await idb.putCardsSynced([makeCard({ sequence: CAT, added_ms: 1_000 })]);
       respondWith({ cards: [], deletions: [id] });
 
       await sync.handleSyncCards();
 
-      expect(await idb.getCard(CAT, "recognition")).toBeNull();
+      expect(await idb.getCard(wordKey(CAT), "recognition")).toBeNull();
     });
 
     it("keeps a card whose tombstone we sent in this very request", async () => {
@@ -344,19 +353,19 @@ describe("sync", () => {
       // how a re-add gets silently eaten: we deleted, re-added, and the echo
       // would delete the new copy before the server ever saw it.
       await idb.putCard(makeCard({ sequence: CAT }));
-      await idb.deleteCard(CAT);
+      await idb.deleteCard(wordKey(CAT));
       const readded = makeCard({ sequence: CAT, added_ms: Date.now() });
       await idb.putCard(readded);
-      respondWith({ cards: [], deletions: [cardId(CAT, "recognition")] });
+      respondWith({ cards: [], deletions: [cardId(wordKey(CAT), "recognition")] });
 
       await sync.handleSyncCards();
 
-      expect(await idb.getCard(CAT, "recognition")).not.toBeNull();
+      expect(await idb.getCard(wordKey(CAT), "recognition")).not.toBeNull();
     });
 
     it("clears the tombstones it forwarded", async () => {
       await idb.putCard(makeCard({ sequence: CAT }));
-      await idb.deleteCard(CAT);
+      await idb.deleteCard(wordKey(CAT));
       expect(await idb.getAllTombstones()).toHaveLength(2);
       respondWith({ cards: [], deletions: [] });
 
@@ -365,18 +374,14 @@ describe("sync", () => {
       expect(await idb.getAllTombstones()).toHaveLength(0);
     });
 
-    it("prunes legacy word-keyed rows the server can never return", async () => {
-      // Never uploaded, so never in the response — merging alone would leave
-      // them forever. They're local-only junk, so no tombstone is written.
-      await idb.putCardsSynced([
-        { ...makeCard({ sequence: CAT }), id: "猫::recognition", sequence: NaN } as SrsCard,
-      ]);
-      respondWith({ cards: [], deletions: [] });
+    it("keeps a card of a kind this build doesn't know, out of sight", async () => {
+      respondWith({ cards: [UNKNOWN], deletions: [] });
 
       await sync.handleSyncCards();
 
-      expect(await idb.getAllCards()).toHaveLength(0);
-      expect(await idb.getAllTombstones()).toHaveLength(0);
+      expect(await idb.getAllRawCards()).toEqual([UNKNOWN]);
+      expect(await idb.getAllCards()).toEqual([]);
+      expect(await idb.getDueCards(Number.MAX_SAFE_INTEGER)).toEqual([]);
     });
 
     it("adopts newer settings from the server", async () => {
@@ -408,13 +413,13 @@ describe("sync", () => {
 
       await sync.handleSyncCards();
 
-      expect(await idb.getCard(CAT, "recognition")).not.toBeNull();
+      expect(await idb.getCard(wordKey(CAT), "recognition")).not.toBeNull();
     });
   });
 
   describe("the review outbox", () => {
     const row = (reviewed_ms: number, kind: "review" | "drill" = "drill") => ({
-      card_id: cardId(CAT, "recall"),
+      card_id: cardId(wordKey(CAT), "recall"),
       rating: 3,
       kind,
       reviewed_ms,
@@ -431,13 +436,13 @@ describe("sync", () => {
 
     it("clears what it sent and caches the server's drill counts", async () => {
       await idb.addReview(row(10));
-      respondWith({ cards: [], deletions: [], drill_counts: { [cardId(CAT, "recall")]: 4 } });
+      respondWith({ cards: [], deletions: [], drill_counts: { [cardId(wordKey(CAT), "recall")]: 4 } });
 
       await sync.handleSyncCards();
 
       expect(sent[0].reviews).toEqual([row(10)]);
       expect(await idb.getOutbox()).toEqual([]);
-      expect(await cachedCounts()).toEqual([{ card_id: cardId(CAT, "recall"), count: 4 }]);
+      expect(await cachedCounts()).toEqual([{ card_id: cardId(wordKey(CAT), "recall"), count: 4 }]);
     });
 
     it("keeps a row logged while the sync was in flight", async () => {
@@ -504,7 +509,7 @@ describe("sync", () => {
       await sync.handleSyncCards();
 
       expect(sent[0].since).toEqual(CURSOR);
-      expect((sent[0].cards as SrsCard[]).map((c) => c.id)).toEqual([cardId(DOG, "recognition")]);
+      expect((sent[0].cards as SrsCard[]).map((c) => c.id)).toEqual([cardId(wordKey(DOG), "recognition")]);
       expect(await idb.getDirty()).toEqual([]);
       expect(await idb.getSyncCursor()).toEqual(next);
 
@@ -530,7 +535,7 @@ describe("sync", () => {
 
       await sync.handleSyncCards();
 
-      expect((await idb.getDirty()).map((d) => d.id)).toEqual([cardId(CAT, "recognition")]);
+      expect((await idb.getDirty()).map((d) => d.id)).toEqual([cardId(wordKey(CAT), "recognition")]);
       respondWith({ cards: [], deletions: [], cursor: { ...CURSOR, rev: 4 }, full: false });
       await sync.handleSyncCards();
       expect((sent[1].cards as SrsCard[])[0].reps).toBe(2);
@@ -547,13 +552,13 @@ describe("sync", () => {
 
       await sync.handleSyncCards();
 
-      expect(await idb.getCard(CAT, "recognition")).not.toBeNull();
+      expect(await idb.getCard(wordKey(CAT), "recognition")).not.toBeNull();
       expect(await idb.getDirty()).toEqual([]);
     });
 
     it("merges delta drill counts instead of replacing the cache", async () => {
-      const a = cardId(CAT, "recall");
-      const b = cardId(DOG, "recall");
+      const a = cardId(wordKey(CAT), "recall");
+      const b = cardId(wordKey(DOG), "recall");
       respondWith({ cards: [], drill_counts: { [a]: 1, [b]: 5 }, cursor: CURSOR, full: true });
       await sync.handleSyncCards();
 
@@ -607,7 +612,7 @@ describe("sync", () => {
 
       await sync.handleSyncCards();
 
-      expect((await idb.getCard(CAT, "recognition"))?.updated_ms).toBe(1_000);
+      expect((await idb.getCard(wordKey(CAT), "recognition"))?.updated_ms).toBe(1_000);
     });
 
     it("forgets the cursor when the server sends none", async () => {
@@ -676,7 +681,7 @@ describe("sync", () => {
   describe("failures", () => {
     it("reports an expired session without touching local cards", async () => {
       await idb.putCard(makeCard({ sequence: CAT }));
-      await idb.deleteCard(CAT);
+      await idb.deleteCard(wordKey(CAT));
       respondWith({}, { status: 401 });
 
       expect(await sync.handleSyncCards()).toEqual({
@@ -703,7 +708,7 @@ describe("sync", () => {
       respondWith({}, { status: 500 });
 
       expect(await sync.handleSyncCards()).toEqual({ error: "server 500" });
-      expect((await idb.getCard(CAT, "recognition"))?.reps).toBe(4);
+      expect((await idb.getCard(wordKey(CAT), "recognition"))?.reps).toBe(4);
     });
 
     it("refuses to sync when no server is configured", async () => {

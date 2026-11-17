@@ -4,7 +4,7 @@
 use srs_core::{CardState, ReviewRating};
 
 use crate::settings::SrsSettings;
-use crate::types::{CardStatus, MS_PER_DAY, SrsCard};
+use crate::types::{CardItem, CardStatus, MS_PER_DAY, SrsCard};
 
 pub enum ReviewOutcome {
     /// Card was rescheduled; persist it.
@@ -100,7 +100,8 @@ pub const TROUBLE_EXIT_INTERVAL_DAYS: f64 = 30.0;
 /// A word the user keeps failing, with the cards still giving them trouble.
 #[derive(Debug, Clone)]
 pub struct TroubleWord {
-    pub sequence: u32,
+    /// The word (or kanji) its cards review.
+    pub item: CardItem,
     /// `again_count` summed over the word's struggling cards, so its
     /// recognition and recall siblings rank as one word.
     pub fails: u32,
@@ -125,7 +126,7 @@ fn is_struggling(c: &SrsCard, exit_interval_days: f64) -> bool {
 
 /// Rank words by how often their struggling cards have been failed,
 /// most-failed first. Ties go to the higher FSRS difficulty, then to the
-/// lower sequence so the order is stable across reloads. Kanji and grammar
+/// lower item so the order is stable across reloads. Kanji and grammar
 /// cards are left out; see [`trouble_kanji`].
 pub fn trouble_words(
     cards: &[SrsCard],
@@ -135,8 +136,8 @@ pub fn trouble_words(
     rank_trouble(cards, SrsCard::is_word, min_fails, exit_interval_days)
 }
 
-/// [`trouble_words`] for the kanji deck: same ranking, kanji cards only. A
-/// kanji card's sequence is its codepoint, so each entry is one kanji.
+/// [`trouble_words`] for the kanji deck: same ranking, kanji cards only, so
+/// each entry is one kanji.
 pub fn trouble_kanji(
     cards: &[SrsCard],
     min_fails: u32,
@@ -151,18 +152,18 @@ fn rank_trouble(
     min_fails: u32,
     exit_interval_days: f64,
 ) -> Vec<TroubleWord> {
-    let mut by_seq: std::collections::BTreeMap<u32, (u32, f64, Vec<SrsCard>)> =
+    let mut by_item: std::collections::BTreeMap<CardItem, (u32, f64, Vec<SrsCard>)> =
         std::collections::BTreeMap::new();
     for c in cards
         .iter()
         .filter(|c| deck(c) && is_struggling(c, exit_interval_days))
     {
-        let e = by_seq.entry(c.sequence).or_insert((0, 0.0, Vec::new()));
+        let e = by_item.entry(c.item).or_insert((0, 0.0, Vec::new()));
         e.0 += c.again_count;
         e.1 = e.1.max(c.difficulty);
         e.2.push(c.clone());
     }
-    let mut ranked: Vec<_> = by_seq
+    let mut ranked: Vec<_> = by_item
         .into_iter()
         .filter(|(_, (fails, _, _))| *fails >= min_fails)
         .collect();
@@ -171,8 +172,8 @@ fn rank_trouble(
     });
     ranked
         .into_iter()
-        .map(|(sequence, (fails, _, cards))| TroubleWord {
-            sequence,
+        .map(|(item, (fails, _, cards))| TroubleWord {
+            item,
             fails,
             cards,
         })
@@ -182,38 +183,33 @@ fn rank_trouble(
 /// The next drill batch: the `batch` words drilled the fewest times, keeping
 /// [`trouble_words`]' most-failed-first order among equals. Repeated drills
 /// therefore rotate through the whole list instead of replaying its head.
-/// `drilled` maps a word's sequence to its drill count; absent means never.
+/// `drilled` maps a word to its drill count; absent means never.
 pub fn pick_drill_batch<'a>(
     words: &'a [TroubleWord],
-    drilled: &std::collections::HashMap<u32, u32>,
+    drilled: &std::collections::HashMap<CardItem, u32>,
     batch: usize,
 ) -> Vec<&'a TroubleWord> {
     let mut order: Vec<&TroubleWord> = words.iter().collect();
     // Stable sort: ties keep their trouble rank.
-    order.sort_by_key(|w| drilled.get(&w.sequence).copied().unwrap_or(0));
+    order.sort_by_key(|w| drilled.get(&w.item).copied().unwrap_or(0));
     order.truncate(batch);
     order
 }
 
-/// Folds per-card drill counts into per-sequence ones: a word's count is the
+/// Folds per-card drill counts into per-item ones: a word's count is the
 /// highest of its cards'. A drill session answers each card at most once, so a
 /// word drilled on both recognition and recall in one session counts once —
-/// and a word drilled on only one of them still counts. Ids that don't start
-/// with a numeric sequence are skipped.
-pub fn drill_counts_by_sequence<S: AsRef<str>>(
+/// and a word drilled on only one of them still counts. Ids that name no item
+/// this build knows are skipped.
+pub fn drill_counts_by_item<S: AsRef<str>>(
     per_card: impl IntoIterator<Item = (S, u32)>,
-) -> std::collections::HashMap<u32, u32> {
+) -> std::collections::HashMap<CardItem, u32> {
     let mut out = std::collections::HashMap::new();
     for (id, n) in per_card {
-        let Some(seq) = id
-            .as_ref()
-            .split("::")
-            .next()
-            .and_then(|s| s.parse::<u32>().ok())
-        else {
+        let Some(item) = CardItem::from_card_id(id.as_ref()) else {
             continue;
         };
-        let e = out.entry(seq).or_insert(0);
+        let e = out.entry(item).or_insert(0);
         *e = (*e).max(n);
     }
     out
@@ -228,6 +224,7 @@ mod tests {
     use super::*;
     use crate::settings::SrsSettings;
     use crate::types::CardDirection;
+    use crate::types::CardItem::{Kanji as K, Word as W};
 
     fn settings_with_graduation(days: u32) -> SrsSettings {
         SrsSettings {
@@ -237,11 +234,11 @@ mod tests {
     }
 
     fn fresh_card() -> SrsCard {
-        SrsCard::new(1_000_001, CardDirection::Recall, 0.0)
+        SrsCard::new(W(1_000_001), CardDirection::Recall, 0.0)
     }
 
     fn due_card(sequence: u32, state: CardState, due_ms: f64) -> SrsCard {
-        let mut c = SrsCard::new(sequence, CardDirection::Recall, 0.0);
+        let mut c = SrsCard::new(W(sequence), CardDirection::Recall, 0.0);
         c.state = state;
         c.due_ms = due_ms;
         c
@@ -257,7 +254,7 @@ mod tests {
             due_card(5, CardState::Learning, 400.0),
         ];
         order_due(&mut cards);
-        let order: Vec<u32> = cards.iter().map(|c| c.sequence).collect();
+        let order: Vec<u32> = cards.iter().filter_map(SrsCard::word_seq).collect();
         assert_eq!(order, vec![4, 5, 2, 3, 1]);
     }
 
@@ -347,8 +344,8 @@ mod tests {
 
     /// An Active card last reviewed at 0, next due in 10 minutes — well
     /// inside the trouble window.
-    fn active(sequence: u32, direction: CardDirection, again: u32, difficulty: f64) -> SrsCard {
-        let mut c = SrsCard::new(sequence, direction, 0.0);
+    fn active(item: CardItem, direction: CardDirection, again: u32, difficulty: f64) -> SrsCard {
+        let mut c = SrsCard::new(item, direction, 0.0);
         c.status = CardStatus::Active;
         c.again_count = again;
         c.difficulty = difficulty;
@@ -361,49 +358,49 @@ mod tests {
         trouble_words(cards, 2, TROUBLE_EXIT_INTERVAL_DAYS)
     }
 
-    fn seqs(t: &[TroubleWord]) -> Vec<u32> {
-        t.iter().map(|w| w.sequence).collect()
+    fn seqs(t: &[TroubleWord]) -> Vec<CardItem> {
+        t.iter().map(|w| w.item).collect()
     }
 
     #[test]
     fn trouble_words_sum_siblings_and_rank_most_failed_first() {
         let cards = [
-            active(1, CardDirection::Recognition, 3, 5.0),
-            active(2, CardDirection::Recognition, 2, 5.0),
-            active(2, CardDirection::Recall, 2, 5.0),
-            active(3, CardDirection::Recall, 2, 5.0),
+            active(W(1), CardDirection::Recognition, 3, 5.0),
+            active(W(2), CardDirection::Recognition, 2, 5.0),
+            active(W(2), CardDirection::Recall, 2, 5.0),
+            active(W(3), CardDirection::Recall, 2, 5.0),
         ];
         let t = trouble(&cards);
-        assert_eq!(seqs(&t), vec![2, 1, 3]);
+        assert_eq!(seqs(&t), vec![W(2), W(1), W(3)]);
         assert_eq!(t[0].fails, 4);
         assert_eq!(t[0].cards.len(), 2);
     }
 
     #[test]
     fn trouble_words_skip_graduated_staging_and_below_threshold() {
-        let mut graduated = active(1, CardDirection::Recall, 9, 5.0);
+        let mut graduated = active(W(1), CardDirection::Recall, 9, 5.0);
         graduated.status = CardStatus::Graduated;
-        let mut staging = active(2, CardDirection::Recall, 9, 5.0);
+        let mut staging = active(W(2), CardDirection::Recall, 9, 5.0);
         staging.status = CardStatus::Staging;
         let cards = [
             graduated,
             staging,
-            active(3, CardDirection::Recall, 1, 5.0),
-            active(4, CardDirection::Recall, 2, 5.0),
+            active(W(3), CardDirection::Recall, 1, 5.0),
+            active(W(4), CardDirection::Recall, 2, 5.0),
         ];
-        assert_eq!(seqs(&trouble(&cards)), vec![4]);
+        assert_eq!(seqs(&trouble(&cards)), vec![W(4)]);
     }
 
     #[test]
     fn a_word_leaves_once_its_interval_reaches_the_exit_threshold() {
         let exit = TROUBLE_EXIT_INTERVAL_DAYS * MS_PER_DAY;
-        let mut learned = active(1, CardDirection::Recall, 5, 5.0);
+        let mut learned = active(W(1), CardDirection::Recall, 5, 5.0);
         learned.last_review_ms = Some(100.0 * MS_PER_DAY);
         learned.due_ms = 100.0 * MS_PER_DAY + exit; // exactly at the threshold
-        let mut almost = active(2, CardDirection::Recall, 5, 5.0);
+        let mut almost = active(W(2), CardDirection::Recall, 5, 5.0);
         almost.last_review_ms = Some(100.0 * MS_PER_DAY);
         almost.due_ms = 100.0 * MS_PER_DAY + exit - 60_000.0;
-        assert_eq!(seqs(&trouble(&[learned, almost])), vec![2]);
+        assert_eq!(seqs(&trouble(&[learned, almost])), vec![W(2)]);
     }
 
     #[test]
@@ -411,23 +408,23 @@ mod tests {
         // Long interval → off the list; one real "Again" collapses the
         // interval to minutes and the word is trouble again.
         let settings = settings_with_graduation(0);
-        let mut c = active(1, CardDirection::Recall, 2, 5.0);
+        let mut c = active(W(1), CardDirection::Recall, 2, 5.0);
         c.last_review_ms = Some(0.0);
         c.due_ms = 2.0 * TROUBLE_EXIT_INTERVAL_DAYS * MS_PER_DAY;
         assert!(trouble(std::slice::from_ref(&c)).is_empty());
         let c = review_once(&c, ReviewRating::Again, c.due_ms, &settings);
-        assert_eq!(seqs(&trouble(&[c])), vec![1]);
+        assert_eq!(seqs(&trouble(&[c])), vec![W(1)]);
     }
 
     #[test]
     fn only_struggling_siblings_count_toward_fails() {
         // Recognition failed a lot but is now learned; recall slipped once.
         // The word ranks on recall alone — 1 fail, below the threshold.
-        let mut recognition = active(1, CardDirection::Recognition, 4, 5.0);
+        let mut recognition = active(W(1), CardDirection::Recognition, 4, 5.0);
         recognition.due_ms = 2.0 * TROUBLE_EXIT_INTERVAL_DAYS * MS_PER_DAY;
-        let recall = active(1, CardDirection::Recall, 1, 5.0);
+        let recall = active(W(1), CardDirection::Recall, 1, 5.0);
         assert!(trouble(&[recognition.clone(), recall]).is_empty());
-        let recall = active(1, CardDirection::Recall, 2, 5.0);
+        let recall = active(W(1), CardDirection::Recall, 2, 5.0);
         let t = trouble(&[recognition, recall]);
         assert_eq!(t[0].fails, 2);
         assert_eq!(t[0].cards.len(), 1);
@@ -436,33 +433,31 @@ mod tests {
     #[test]
     fn trouble_lists_keep_words_and_kanji_apart() {
         let cards = [
-            active(1, CardDirection::Recall, 5, 5.0),
-            active(u32::from('猫'), CardDirection::Kanji, 5, 5.0),
+            active(W(1), CardDirection::Recall, 5, 5.0),
+            active(K('猫'), CardDirection::Meaning, 5, 5.0),
         ];
-        assert_eq!(seqs(&trouble(&cards)), vec![1]);
+        assert_eq!(seqs(&trouble(&cards)), vec![W(1)]);
         let kanji = trouble_kanji(&cards, 2, TROUBLE_EXIT_INTERVAL_DAYS);
-        assert_eq!(seqs(&kanji), vec![u32::from('猫')]);
+        assert_eq!(seqs(&kanji), vec![K('猫')]);
     }
 
     #[test]
     fn trouble_lists_leave_grammar_cards_out() {
-        let grammar = SrsCard::new_grammar(7, 0.0);
-        let mut g = active(grammar.sequence, CardDirection::Grammar, 5, 5.0);
-        g.id = grammar.id;
-        let cards = [active(1, CardDirection::Recall, 5, 5.0), g];
-        assert_eq!(seqs(&trouble(&cards)), vec![1]);
+        let g = active(CardItem::Grammar(7), CardDirection::Recognition, 5, 5.0);
+        let cards = [active(W(1), CardDirection::Recall, 5, 5.0), g];
+        assert_eq!(seqs(&trouble(&cards)), vec![W(1)]);
         assert!(trouble_kanji(&cards, 2, TROUBLE_EXIT_INTERVAL_DAYS).is_empty());
     }
 
     #[test]
     fn trouble_kanji_rank_most_failed_first() {
         let cards = [
-            active(u32::from('犬'), CardDirection::Kanji, 2, 5.0),
-            active(u32::from('猫'), CardDirection::Kanji, 4, 5.0),
-            active(u32::from('鳥'), CardDirection::Kanji, 1, 5.0),
+            active(K('犬'), CardDirection::Meaning, 2, 5.0),
+            active(K('猫'), CardDirection::Meaning, 4, 5.0),
+            active(K('鳥'), CardDirection::Meaning, 1, 5.0),
         ];
         let t = trouble_kanji(&cards, 2, TROUBLE_EXIT_INTERVAL_DAYS);
-        assert_eq!(seqs(&t), vec![u32::from('猫'), u32::from('犬')]);
+        assert_eq!(seqs(&t), vec![K('猫'), K('犬')]);
     }
 
     #[test]
@@ -470,8 +465,8 @@ mod tests {
         // A word whose recall keeps failing but whose recognition is fine
         // drills just the recall card.
         let cards = [
-            active(1, CardDirection::Recognition, 0, 5.0),
-            active(1, CardDirection::Recall, 3, 5.0),
+            active(W(1), CardDirection::Recognition, 0, 5.0),
+            active(W(1), CardDirection::Recall, 3, 5.0),
         ];
         let t = trouble(&cards);
         assert_eq!(t[0].cards.len(), 1);
@@ -481,26 +476,26 @@ mod tests {
     #[test]
     fn trouble_words_break_ties_on_difficulty_then_sequence() {
         let cards = [
-            active(5, CardDirection::Recall, 2, 4.0),
-            active(7, CardDirection::Recall, 2, 8.0),
-            active(6, CardDirection::Recall, 2, 4.0),
+            active(W(5), CardDirection::Recall, 2, 4.0),
+            active(W(7), CardDirection::Recall, 2, 8.0),
+            active(W(6), CardDirection::Recall, 2, 4.0),
         ];
-        assert_eq!(seqs(&trouble(&cards)), vec![7, 5, 6]);
+        assert_eq!(seqs(&trouble(&cards)), vec![W(7), W(5), W(6)]);
     }
 
     fn word(sequence: u32) -> TroubleWord {
         TroubleWord {
-            sequence,
+            item: W(sequence),
             fails: 2,
             cards: vec![],
         }
     }
 
     fn batch_seqs(words: &[TroubleWord], drilled: &[(u32, u32)], n: usize) -> Vec<u32> {
-        let drilled = drilled.iter().copied().collect();
+        let drilled = drilled.iter().map(|&(s, n)| (W(s), n)).collect();
         pick_drill_batch(words, &drilled, n)
             .iter()
-            .map(|w| w.sequence)
+            .filter_map(|w| w.item.word_seq())
             .collect()
     }
 
@@ -521,18 +516,19 @@ mod tests {
 
     #[test]
     fn drill_counts_take_the_max_over_a_words_cards() {
-        let counts = drill_counts_by_sequence([
-            ("1000001::recognition", 2),
-            ("1000001::recall", 3),
-            ("1000002::recall", 1),
-            ("29483::kanji", 4),
+        let counts = drill_counts_by_item([
+            ("word:1000001:recognition", 2),
+            ("word:1000001:recall", 3),
+            ("word:1000002:recall", 1),
+            ("kanji:猫:meaning", 4),
+            ("cloze:1:front", 7),
+            ("1000003::recall", 8),
             ("garbage", 9),
         ]);
         assert_eq!(counts.len(), 3);
-        assert_eq!(counts[&1_000_001], 3);
-        assert_eq!(counts[&1_000_002], 1);
-        // Kanji cards key on their codepoint, which never meets an ent_seq.
-        assert_eq!(counts[&29_483], 4);
+        assert_eq!(counts[&W(1_000_001)], 3);
+        assert_eq!(counts[&W(1_000_002)], 1);
+        assert_eq!(counts[&K('猫')], 4);
     }
 
     #[test]

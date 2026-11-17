@@ -1,39 +1,24 @@
 import type { SrsCard } from "../shared/types.ts";
-import { CARDS_BACKUP_KEY, cardId } from "../shared/types.ts";
-import { freshRecallCard, getAllCards, getCard, putCard } from "./idb";
+import { CARDS_BACKUP_KEY, OLD_CARDS_BACKUP_KEY, cardId } from "../shared/types.ts";
+import { getAllRawCards, getCardsByIds, putCard } from "./idb";
 import { debug } from "../shared/debug.ts";
 
 export { CARDS_BACKUP_KEY };
 
-function num(v: unknown, fallback: number): number {
-  return typeof v === "number" && Number.isFinite(v) ? v : fallback;
-}
-
 /**
- * Normalize an input card to one or two sequence-keyed (FSRS-shaped) siblings.
- *
- * Cards key on JMdict `sequence`; a row without a numeric `sequence` is from
- * the pre-`sequence` (word-keyed) era and cannot be mapped, so it's dropped —
- * this is the clean break, consistent with users re-exporting in the new shape.
- *
- * - With a `direction`: returned as-is, with `id` filled in if missing.
- * - Without a `direction`: becomes a recognition sibling preserving its
- *   scheduling state plus a fresh recall sibling.
+ * An input card as stored, or `null` when it isn't one: cards key on `kind` +
+ * `item` + `direction`, all three text. A card in the shape from before (a
+ * numeric `sequence`, ids `"<sequence>::<direction>"`) is no card here: the
+ * app's import converts those exports (`cards_io::parse_v2_cards`). A kind
+ * or direction this build doesn't know is kept, like sync keeps it.
  */
-export function normalizeImportedCard(card: SrsCard, nowMs: number): SrsCard[] {
-  const raw = card as unknown as Record<string, unknown>;
-  if (typeof raw.sequence !== "number") return [];
-
-  if (card.direction) {
-    return [{ ...card, id: card.id ?? cardId(card.sequence, card.direction) }];
-  }
-  const recognition: SrsCard = {
-    ...card,
-    id: cardId(card.sequence, "recognition"),
-    direction: "recognition",
-    added_ms: num(raw.added_ms, nowMs),
-  };
-  return [recognition, freshRecallCard(card.sequence, nowMs, recognition.added_ms)];
+export function normalizeImportedCard(card: unknown): SrsCard | null {
+  const c = card as Partial<SrsCard> | null;
+  if (!c || typeof c.kind !== "string" || typeof c.item !== "string") return null;
+  if (typeof c.direction !== "string") return null;
+  const id = cardId({ kind: c.kind, item: c.item }, c.direction);
+  if (c.id !== undefined && c.id !== id) return null;
+  return { ...(c as SrsCard), id };
 }
 
 // Mirrors the IDB cards table to storage.local. Called on every mutation so a
@@ -47,7 +32,7 @@ export function normalizeImportedCard(card: SrsCard, nowMs: number): SrsCard[] {
 // a user's deck. The trade-off is that genuine "delete all cards" never trims
 // the backup, which is the right side to err on.
 export async function writeCardsBackup(): Promise<void> {
-  const cards = await getAllCards();
+  const cards = await getAllRawCards();
   if (cards.length === 0) return;
   await browser.storage.local.set({ [CARDS_BACKUP_KEY]: cards });
 }
@@ -56,8 +41,13 @@ export async function writeCardsBackup(): Promise<void> {
 // one before any mutation; if IDB is empty but a backup exists → restore.
 // IDB always wins when both have data — the backup is a strict mirror, never
 // authoritative against a live IDB.
+//
+// A mirror from before the card key change is removed, not restored: its
+// cards are in the old shape, and the server holds the converted deck, which
+// the first sync after the upgrade pulls back.
 export async function syncCardsBackup(): Promise<{ restored: number; backedUp: number }> {
-  const idbCards = await getAllCards();
+  await browser.storage.local.remove(OLD_CARDS_BACKUP_KEY);
+  const idbCards = await getAllRawCards();
   debug(`syncCardsBackup: ${idbCards.length} card(s) in IDB`);
   if (idbCards.length > 0) {
     await browser.storage.local.set({ [CARDS_BACKUP_KEY]: idbCards });
@@ -72,45 +62,35 @@ export async function syncCardsBackup(): Promise<{ restored: number; backedUp: n
   console.warn(
     `[yomeru] IDB empty, restoring ${backup.length} card(s) from storage.local backup`,
   );
-  const now = Date.now();
   let restored = 0;
   for (const c of backup) {
-    for (const sibling of normalizeImportedCard(c, now)) {
-      await putCard(sibling);
-      restored++;
-    }
+    const card = normalizeImportedCard(c);
+    if (!card) continue;
+    await putCard(card);
+    restored++;
   }
-  debug(`syncCardsBackup: restored ${restored} sibling(s) from backup`);
+  debug(`syncCardsBackup: restored ${restored} card(s) from backup`);
   return { restored, backedUp: 0 };
 }
 
 // Skip-existing merge: never clobbers a card the user has been reviewing.
-// Returns counts so the UI can report what happened. Counts are per *input*
-// row, not per sibling — a legacy row that expands to two siblings still
-// counts as one added/skipped, matching the user's mental model of the JSON.
+// Returns counts so the UI can report what happened, one per input row.
 export async function importCards(
   cards: unknown,
 ): Promise<{ added: number; skipped: number; error?: string }> {
   if (!Array.isArray(cards)) {
     return { added: 0, skipped: 0, error: "cards is not an array" };
   }
-  const now = Date.now();
   let added = 0;
   let skipped = 0;
-  for (const card of cards) {
-    if (!card || typeof (card as SrsCard).sequence !== "number") {
+  for (const raw of cards) {
+    const card = normalizeImportedCard(raw);
+    if (!card || (await getCardsByIds([card.id])).length > 0) {
       skipped++;
       continue;
     }
-    const expanded = normalizeImportedCard(card as SrsCard, now);
-    let importedAny = false;
-    for (const sibling of expanded) {
-      if (await getCard(sibling.sequence, sibling.direction)) continue;
-      await putCard(sibling);
-      importedAny = true;
-    }
-    if (importedAny) added++;
-    else skipped++;
+    await putCard(card);
+    added++;
   }
   return { added, skipped };
 }

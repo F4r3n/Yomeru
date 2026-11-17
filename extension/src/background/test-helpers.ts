@@ -2,14 +2,20 @@
 // (background.test.ts, cards-backup.test.ts, idb.test.ts).
 
 import type { SrsCard } from "../shared/types.ts";
-import { cardId } from "../shared/types.ts";
+import { cardId, wordKey } from "../shared/types.ts";
 
-export function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
-  const sequence = overrides.sequence ?? 1_358_280;
-  const direction = overrides.direction ?? "recognition";
+/** A card; a word's (`sequence`, default 1358280) unless `kind`/`item` say
+ * otherwise. */
+export function makeCard(
+  overrides: Partial<SrsCard> & { sequence?: number } = {},
+): SrsCard {
+  const { sequence, ...rest } = overrides;
+  const word = wordKey(sequence ?? 1_358_280);
+  const key = { kind: rest.kind ?? word.kind, item: rest.item ?? word.item };
+  const direction = rest.direction ?? (key.kind === "kanji" ? "meaning" : "recognition");
   return {
-    id: cardId(sequence, direction),
-    sequence,
+    id: cardId(key, direction),
+    ...key,
     direction,
     due_ms: 0,
     stability: 0,
@@ -21,6 +27,6 @@ export function makeCard(overrides: Partial<SrsCard> = {}): SrsCard {
     added_ms: 0,
     status: "active",
     priority: 0,
-    ...overrides,
+    ...rest,
   };
 }

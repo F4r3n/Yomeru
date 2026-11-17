@@ -87,11 +87,8 @@ impl GrammarDict {
 
     /// The entry numbered `seq`, which a grammar card reviews. `None` once
     /// the point left the dictionary.
-    ///
-    /// Until cards key on `kind` + `item`, a card's `sequence` is `seq` with
-    /// [`crate::GRAMMAR_SEQ_BIT`] set; the bit is ignored here so both work.
     pub fn by_seq(&self, seq: u32) -> Option<GrammarEntry> {
-        let &offset = self.seqs.get(&(seq & !crate::GRAMMAR_SEQ_BIT))?;
+        let &offset = self.seqs.get(&seq)?;
         format::entry_at(&self.entries, offset).ok()
     }
 

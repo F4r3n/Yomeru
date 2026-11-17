@@ -1,8 +1,9 @@
 {
   "cards": [
     {
-      "id": "1467640::recognition",
-      "sequence": 1467640,
+      "id": "word:1467640:recognition",
+      "kind": "word",
+      "item": "1467640",
       "direction": "recognition",
       "due_ms": 1757000000000,
       "stability": 4.2,
@@ -19,7 +20,7 @@
   ],
   "deletions": [
     {
-      "id": "1467640::recall",
+      "id": "word:1467640:recall",
       "deleted_at": 1757000000123
     }
   ],
@@ -33,13 +34,13 @@
   },
   "reviews": [
     {
-      "card_id": "1467640::recognition",
+      "card_id": "word:1467640:recognition",
       "rating": 1,
       "kind": "drill",
       "reviewed_ms": 1756950000000
     },
     {
-      "card_id": "1467640::recognition",
+      "card_id": "word:1467640:recognition",
       "rating": 3,
       "kind": "review",
       "reviewed_ms": 1756960000000
@@ -48,6 +49,5 @@
   "since": {
     "epoch": "3f9c0a7d51e2b864.1",
     "rev": 2
-  },
-  "grammar_cards": true
+  }
 }

@@ -8,12 +8,12 @@ use crate::components::{EntryCard, ExampleJp};
 use crate::dict::{self, examples_for, kanji_for, primary_headword};
 use crate::grammar::GrammarEntry;
 use crate::icons::{Icon, IconName};
-use crate::idb::{bump_priority, get_cards_by_sequence, put_cards, reset_card};
+use crate::idb::{bump_priority, get_cards_of, put_cards, reset_card};
 use crate::romaji::{hiragana_to_katakana, is_romaji, romaji_to_hiragana};
 use crate::routes::lookup_grammar::GrammarResults;
 use crate::srs::now_ms;
 use crate::sync::schedule_sync;
-use crate::types::{CardDirection, CardStatus, SrsCard};
+use crate::types::{CardItem, CardStatus, SrsCard};
 
 const HISTORY_KEY: &str = "lookup_history";
 
@@ -131,19 +131,17 @@ async fn add_or_bump(
     mut card_status: Signal<HashMap<u32, CardStatus>>,
     mut card_priority: Signal<HashMap<u32, u32>>,
 ) {
-    let existing = match get_cards_by_sequence(sequence).await {
+    let item = CardItem::Word(sequence);
+    let existing = match get_cards_of(item).await {
         Ok(e) => e,
         Err(e) => {
-            warn!("get_cards_by_sequence({sequence}) failed: {e}");
+            warn!("get_cards_of(word {sequence}) failed: {e}");
             return;
         }
     };
     if existing.is_empty() {
         let now = now_ms();
-        let cards = vec![
-            SrsCard::new(sequence, CardDirection::Recognition, now),
-            SrsCard::new(sequence, CardDirection::Recall, now),
-        ];
+        let cards = SrsCard::new_cards(item, now);
         if let Err(e) = put_cards(&cards).await {
             warn!("put_cards(seq={sequence}) on add failed: {e}");
             return;
@@ -156,14 +154,14 @@ async fn add_or_bump(
         .iter()
         .any(|c| matches!(c.status, CardStatus::Active | CardStatus::Graduated))
     {
-        if let Err(e) = bump_priority(sequence).await {
+        if let Err(e) = bump_priority(item).await {
             warn!("bump_priority(seq={sequence}) failed: {e}");
             return;
         }
         schedule_sync();
         // Re-fetch rather than compute locally so the displayed value always
         // matches what `bump_priority`'s cap actually wrote.
-        let refreshed = get_cards_by_sequence(sequence).await.unwrap_or_default();
+        let refreshed = get_cards_of(item).await.unwrap_or_default();
         if let Some(p) = refreshed.iter().map(|c| c.priority).max() {
             card_priority.with_mut(|m| {
                 m.insert(sequence, p);
@@ -388,7 +386,7 @@ fn LookupListPane() -> Element {
             //TODO: for each result we open IDB to see if the card exists.
             // It's slow, need to do it on batch
             for e in &results {
-                let siblings = get_cards_by_sequence(e.sequence).await.unwrap_or_default();
+                let siblings = get_cards_of(CardItem::Word(e.sequence)).await.unwrap_or_default();
                 if let Some(s) = status_of(&siblings) {
                     statuses.insert(e.sequence, s);
                 }
@@ -467,7 +465,7 @@ fn LookupListPane() -> Element {
             if !confirmed {
                 return;
             }
-            if let Err(e) = reset_card(sequence, now_ms()).await {
+            if let Err(e) = reset_card(CardItem::Word(sequence), now_ms()).await {
                 warn!("reset_card(seq={sequence}) failed: {e}");
                 return;
             }

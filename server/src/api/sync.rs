@@ -42,18 +42,7 @@ pub struct SyncBody {
     /// that predate delta sync, and from any client on its first sync.
     #[serde(default)]
     pub since: Option<db::Cursor>,
-    /// The client knows grammar cards (`direction = "grammar"`). Older
-    /// clients can't parse one, so they never get them back; see
-    /// [`NO_GRAMMAR_EPOCH`].
-    #[serde(default)]
-    pub grammar_cards: bool,
 }
-
-/// Tags the cursor epoch of a client that doesn't take grammar cards. Its
-/// deltas left them out, so once it updates and asks for them, the tagged
-/// cursor no longer matches and the server answers in full: grammar cards
-/// made meanwhile on other devices come down too.
-const NO_GRAMMAR_EPOCH: &str = "~nogrammar";
 
 #[derive(Serialize)]
 pub struct SyncResponse {
@@ -135,14 +124,8 @@ pub async fn sync_handler(
             .map_err(|e| db_err("upsert_settings", e))?;
     }
 
-    let since = body.since.as_ref().map(|c| match c.epoch.strip_suffix(NO_GRAMMAR_EPOCH) {
-        Some(epoch) if !body.grammar_cards => db::Cursor {
-            epoch: epoch.to_string(),
-            rev: c.rev,
-        },
-        _ => c.clone(),
-    });
-    let delta_from = since
+    let delta_from = body
+        .since
         .as_ref()
         .filter(|c| clock.can_serve_delta(c, user_id))
         .map(|c| c.rev);
@@ -192,18 +175,12 @@ pub async fn sync_handler(
         .await
         .map_err(|e| db_err("commit sync tx", e.into()))?;
 
-    let mut cards = cards;
-    let mut cursor = clock.cursor(user_id);
-    if !body.grammar_cards {
-        cards.retain(|c| c.direction != "grammar");
-        cursor.epoch.push_str(NO_GRAMMAR_EPOCH);
-    }
     Ok(Json(SyncResponse {
         cards,
         deletions,
         settings,
         drill_counts,
-        cursor,
+        cursor: clock.cursor(user_id),
         full: delta_from.is_none(),
     }))
 }

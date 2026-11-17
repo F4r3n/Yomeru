@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { wordKey } from "../shared/types.ts";
 import { IDBFactory, IDBKeyRange as FakeIDBKeyRange } from "fake-indexeddb";
 import type { SrsCard } from "../shared/types.ts";
 import { cardId, MAX_PRIORITY } from "../shared/types.ts";
@@ -16,8 +17,8 @@ const CAT = 1_001;
 const DOG = 1_002;
 const BIRD = 1_003;
 const BOOK = 1_004;
-/** A grammar card's sequence: any number with the top bit set. */
-const GRAMMAR = 0x8000_0000 + 1_234;
+/** A grammar point's card key. */
+const GRAMMAR = { kind: "grammar", item: "1234" } as const;
 
 describe("idb", () => {
   let idb: IdbModule;
@@ -37,13 +38,13 @@ describe("idb", () => {
       const due = await idb.getDueCards(now);
 
       expect(due).toHaveLength(1);
-      expect(due[0].sequence).toBe(CAT);
+      expect(Number(due[0].item)).toBe(CAT);
     });
 
     it("excludes kanji cards, which have their own session", async () => {
       const now = Date.now();
       await idb.putCard(
-        makeCard({ sequence: 0x732b, direction: "kanji", due_ms: now - 1000, status: "active" }),
+        makeCard({ kind: "kanji", item: "猫", due_ms: now - 1000, status: "active" }),
       );
 
       expect(await idb.getDueCards(now)).toHaveLength(0);
@@ -52,7 +53,7 @@ describe("idb", () => {
     it("excludes grammar cards, which have their own session", async () => {
       const now = Date.now();
       await idb.putCard(
-        makeCard({ sequence: GRAMMAR, direction: "grammar", due_ms: now - 1000, status: "active" }),
+        makeCard({ ...GRAMMAR, direction: "recognition", due_ms: now - 1000, status: "active" }),
       );
 
       expect(await idb.getDueCards(now)).toHaveLength(0);
@@ -85,7 +86,7 @@ describe("idb", () => {
       const due = await idb.getDueCards(now);
 
       expect(due).toHaveLength(2);
-      expect(due.map((c) => c.sequence)).toEqual(expect.arrayContaining([CAT, DOG]));
+      expect(due.map((c) => Number(c.item))).toEqual(expect.arrayContaining([CAT, DOG]));
     });
 
     it("puts studied cards before new ones, oldest-due first", async () => {
@@ -96,7 +97,7 @@ describe("idb", () => {
 
       const due = await idb.getDueCards(now);
 
-      expect(due.map((c) => c.sequence)).toEqual([BIRD, DOG, CAT]);
+      expect(due.map((c) => Number(c.item))).toEqual([BIRD, DOG, CAT]);
     });
   });
 
@@ -108,7 +109,7 @@ describe("idb", () => {
       const staging = await idb.getStagingCards();
 
       expect(staging).toHaveLength(1);
-      expect(staging[0].sequence).toBe(CAT);
+      expect(Number(staging[0].item)).toBe(CAT);
     });
 
     it("returns empty array when no staging cards exist", async () => {
@@ -123,23 +124,23 @@ describe("idb", () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition", status: "staging" }));
       await idb.putCard(makeCard({ sequence: CAT, direction: "recall", status: "staging" }));
 
-      await idb.promoteCard(CAT);
+      await idb.promoteCard(wordKey(CAT));
 
-      expect((await idb.getCard(CAT, "recognition"))?.status).toBe("active");
-      expect((await idb.getCard(CAT, "recall"))?.status).toBe("active");
+      expect((await idb.getCard(wordKey(CAT), "recognition"))?.status).toBe("active");
+      expect((await idb.getCard(wordKey(CAT), "recall"))?.status).toBe("active");
     });
 
     it("is a no-op for a non-existent sequence", async () => {
-      await expect(idb.promoteCard(999_999)).resolves.toBeUndefined();
+      await expect(idb.promoteCard(wordKey(999_999))).resolves.toBeUndefined();
     });
 
     it("does not affect other entries", async () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition", status: "staging" }));
       await idb.putCard(makeCard({ sequence: DOG, direction: "recognition", status: "staging" }));
 
-      await idb.promoteCard(CAT);
+      await idb.promoteCard(wordKey(CAT));
 
-      expect((await idb.getCard(DOG, "recognition"))?.status).toBe("staging");
+      expect((await idb.getCard(wordKey(DOG), "recognition"))?.status).toBe("staging");
     });
   });
 
@@ -148,26 +149,26 @@ describe("idb", () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition", status: "staging", priority: 2 }));
       await idb.putCard(makeCard({ sequence: CAT, direction: "recall", status: "staging", priority: 2 }));
 
-      await idb.bumpPriority(CAT);
+      await idb.bumpPriority(wordKey(CAT));
 
-      expect((await idb.getCard(CAT, "recognition"))?.priority).toBe(3);
-      expect((await idb.getCard(CAT, "recall"))?.priority).toBe(3);
+      expect((await idb.getCard(wordKey(CAT), "recognition"))?.priority).toBe(3);
+      expect((await idb.getCard(wordKey(CAT), "recall"))?.priority).toBe(3);
     });
 
     it("stops at MAX_PRIORITY", async () => {
       await idb.putCard(makeCard({ sequence: CAT, status: "staging", priority: MAX_PRIORITY }));
 
-      await idb.bumpPriority(CAT);
+      await idb.bumpPriority(wordKey(CAT));
 
-      expect((await idb.getCard(CAT, "recognition"))?.priority).toBe(MAX_PRIORITY);
+      expect((await idb.getCard(wordKey(CAT), "recognition"))?.priority).toBe(MAX_PRIORITY);
     });
 
     it("leaves active cards alone", async () => {
       await idb.putCard(makeCard({ sequence: CAT, status: "active", priority: 0 }));
 
-      await idb.bumpPriority(CAT);
+      await idb.bumpPriority(wordKey(CAT));
 
-      expect((await idb.getCard(CAT, "recognition"))?.priority).toBe(0);
+      expect((await idb.getCard(wordKey(CAT), "recognition"))?.priority).toBe(0);
     });
   });
 
@@ -186,9 +187,9 @@ describe("idb", () => {
         }),
       );
 
-      await idb.resetCard(CAT, 1_000);
+      await idb.resetCard(wordKey(CAT), 1_000);
 
-      const c = await idb.getCard(CAT, "recognition");
+      const c = await idb.getCard(wordKey(CAT), "recognition");
       expect(c).toMatchObject({
         status: "active",
         due_ms: 1_000,
@@ -204,22 +205,22 @@ describe("idb", () => {
     it("does not promote staged cards", async () => {
       await idb.putCard(makeCard({ sequence: CAT, status: "staging" }));
 
-      await idb.resetCard(CAT, 1_000);
+      await idb.resetCard(wordKey(CAT), 1_000);
 
-      expect((await idb.getCard(CAT, "recognition"))?.status).toBe("staging");
+      expect((await idb.getCard(wordKey(CAT), "recognition"))?.status).toBe("staging");
     });
   });
 
   describe("getWordStatus", () => {
     it("is none for a word not in the deck", async () => {
-      expect(await idb.getWordStatus(CAT)).toEqual({ status: "none", priority: 0 });
+      expect(await idb.getWordStatus(wordKey(CAT))).toEqual({ status: "none", priority: 0 });
     });
 
     it("ranks active over graduated and reports the highest priority", async () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition", status: "graduated", priority: 1 }));
       await idb.putCard(makeCard({ sequence: CAT, direction: "recall", status: "active", priority: 3 }));
 
-      expect(await idb.getWordStatus(CAT)).toEqual({ status: "active", priority: 3 });
+      expect(await idb.getWordStatus(wordKey(CAT))).toEqual({ status: "active", priority: 3 });
     });
   });
 
@@ -228,31 +229,31 @@ describe("idb", () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition", reps: 3 }));
       await idb.putCard(makeCard({ sequence: CAT, direction: "recall", reps: 7 }));
 
-      expect((await idb.getCard(CAT, "recognition"))?.reps).toBe(3);
-      expect((await idb.getCard(CAT, "recall"))?.reps).toBe(7);
+      expect((await idb.getCard(wordKey(CAT), "recognition"))?.reps).toBe(3);
+      expect((await idb.getCard(wordKey(CAT), "recall"))?.reps).toBe(7);
     });
 
     it("returns null when the direction is missing even if the other exists", async () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
 
-      expect(await idb.getCard(CAT, "recall")).toBeNull();
+      expect(await idb.getCard(wordKey(CAT), "recall")).toBeNull();
     });
   });
 
-  describe("getCardsBySequence", () => {
+  describe("getCardsOf", () => {
     it("returns both direction siblings", async () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
       await idb.putCard(makeCard({ sequence: CAT, direction: "recall" }));
       await idb.putCard(makeCard({ sequence: DOG, direction: "recognition" }));
 
-      const siblings = await idb.getCardsBySequence(CAT);
+      const siblings = await idb.getCardsOf(wordKey(CAT));
 
       expect(siblings).toHaveLength(2);
       expect(siblings.map((c) => c.direction).sort()).toEqual(["recall", "recognition"]);
     });
 
     it("returns an empty array for an unknown sequence", async () => {
-      expect(await idb.getCardsBySequence(999_999)).toEqual([]);
+      expect(await idb.getCardsOf(wordKey(999_999))).toEqual([]);
     });
   });
 
@@ -261,19 +262,19 @@ describe("idb", () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
       await idb.putCard(makeCard({ sequence: CAT, direction: "recall" }));
 
-      await idb.deleteCard(CAT);
+      await idb.deleteCard(wordKey(CAT));
 
-      expect(await idb.getCardsBySequence(CAT)).toEqual([]);
+      expect(await idb.getCardsOf(wordKey(CAT))).toEqual([]);
     });
 
     it("removes a grammar point's one card, with its tombstone", async () => {
-      await idb.putCard(makeCard({ sequence: GRAMMAR, direction: "grammar" }));
+      await idb.putCard(makeCard({ ...GRAMMAR, direction: "recognition" }));
 
       await idb.deleteCard(GRAMMAR);
 
-      expect(await idb.getCardsBySequence(GRAMMAR)).toEqual([]);
+      expect(await idb.getCardsOf(GRAMMAR)).toEqual([]);
       const tombstones = await idb.getAllTombstones();
-      expect(tombstones.map((t) => t.id)).toEqual([cardId(GRAMMAR, "grammar")]);
+      expect(tombstones.map((t) => t.id)).toEqual([cardId(GRAMMAR, "recognition")]);
     });
 
     it("does not affect other entries' siblings", async () => {
@@ -281,9 +282,9 @@ describe("idb", () => {
       await idb.putCard(makeCard({ sequence: DOG, direction: "recognition" }));
       await idb.putCard(makeCard({ sequence: DOG, direction: "recall" }));
 
-      await idb.deleteCard(CAT);
+      await idb.deleteCard(wordKey(CAT));
 
-      expect((await idb.getCardsBySequence(DOG))).toHaveLength(2);
+      expect((await idb.getCardsOf(wordKey(DOG)))).toHaveLength(2);
     });
   });
 
@@ -294,7 +295,7 @@ describe("idb", () => {
         makeCard({ sequence: CAT, direction: "recall" }),
       ]);
 
-      expect(await idb.getCardsBySequence(CAT)).toHaveLength(2);
+      expect(await idb.getCardsOf(wordKey(CAT))).toHaveLength(2);
     });
 
     it("is a no-op for an empty array", async () => {
@@ -309,10 +310,10 @@ describe("idb", () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
       await idb.putCard(makeCard({ sequence: CAT, direction: "recall" }));
 
-      await idb.deleteCardById(cardId(CAT, "recognition"));
+      await idb.deleteCardById(cardId(wordKey(CAT), "recognition"));
 
-      expect(await idb.getCard(CAT, "recognition")).toBeNull();
-      expect(await idb.getCard(CAT, "recall")).not.toBeNull();
+      expect(await idb.getCard(wordKey(CAT), "recognition")).toBeNull();
+      expect(await idb.getCard(wordKey(CAT), "recall")).not.toBeNull();
     });
   });
 
@@ -326,11 +327,11 @@ describe("idb", () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
       await idb.putCard(makeCard({ sequence: CAT, direction: "recall" }));
 
-      await idb.deleteCard(CAT);
+      await idb.deleteCard(wordKey(CAT));
 
       const tombs = await idb.getAllTombstones();
       expect(tombs.map((t) => t.id).sort()).toEqual(
-        [cardId(CAT, "recognition"), cardId(CAT, "recall")].sort(),
+        [cardId(wordKey(CAT), "recognition"), cardId(wordKey(CAT), "recall")].sort(),
       );
       // The delete time travels to the server so an offline delete is ordered
       // by when it happened, not when it was finally uploaded.
@@ -340,15 +341,15 @@ describe("idb", () => {
     it("deleteCardById writes exactly one tombstone", async () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
 
-      await idb.deleteCardById(cardId(CAT, "recognition"));
+      await idb.deleteCardById(cardId(wordKey(CAT), "recognition"));
 
       expect((await idb.getAllTombstones()).map((t) => t.id)).toEqual([
-        cardId(CAT, "recognition"),
+        cardId(wordKey(CAT), "recognition"),
       ]);
     });
 
     it("clearTombstones removes the given ids", async () => {
-      await idb.deleteCard(CAT);
+      await idb.deleteCard(wordKey(CAT));
       const before = await idb.getAllTombstones();
       expect(before).toHaveLength(2);
 
@@ -358,7 +359,7 @@ describe("idb", () => {
     });
 
     it("clearTombstones is a no-op for an empty array", async () => {
-      await idb.deleteCard(CAT);
+      await idb.deleteCard(wordKey(CAT));
       await expect(idb.clearTombstones([])).resolves.toBeUndefined();
       expect(await idb.getAllTombstones()).toHaveLength(2);
     });
@@ -369,10 +370,10 @@ describe("idb", () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
       await idb.putCard(makeCard({ sequence: DOG, direction: "recognition" }));
 
-      await idb.applyRemoteDeletions([cardId(CAT, "recognition")]);
+      await idb.applyRemoteDeletions([cardId(wordKey(CAT), "recognition")]);
 
-      expect(await idb.getCard(CAT, "recognition")).toBeNull();
-      expect(await idb.getCard(DOG, "recognition")).not.toBeNull();
+      expect(await idb.getCard(wordKey(CAT), "recognition")).toBeNull();
+      expect(await idb.getCard(wordKey(DOG), "recognition")).not.toBeNull();
       expect(await idb.getAllTombstones()).toEqual([]);
     });
 
@@ -399,7 +400,7 @@ describe("idb", () => {
         UPLOADED_AT,
       );
 
-      const stored = await idb.getCard(BOOK, "recognition");
+      const stored = await idb.getCard(wordKey(BOOK), "recognition");
       expect(stored?.stability).toBe(4.2);
     });
 
@@ -407,19 +408,19 @@ describe("idb", () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
 
       await idb.applySyncResponse(
-        { cards: [], deletions: [cardId(CAT, "recognition")] },
+        { cards: [], deletions: [cardId(wordKey(CAT), "recognition")] },
         [],
         UPLOADED_AT,
       );
 
-      expect(await idb.getCard(CAT, "recognition")).toBeNull();
+      expect(await idb.getCard(wordKey(CAT), "recognition")).toBeNull();
     });
 
     it("does not re-tombstone server-reported deletions (tombstone set converges)", async () => {
       // If the server tells us "X is deleted", we shouldn't write a new
       // local tombstone — we'd just send it back next sync forever.
       await idb.applySyncResponse(
-        { cards: [], deletions: [cardId(CAT, "recognition")] },
+        { cards: [], deletions: [cardId(wordKey(CAT), "recognition")] },
         [],
         UPLOADED_AT,
       );
@@ -429,7 +430,7 @@ describe("idb", () => {
 
     it("clears tombstones we successfully forwarded", async () => {
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
-      await idb.deleteCard(CAT);
+      await idb.deleteCard(wordKey(CAT));
       const sent = (await idb.getAllTombstones()).map((t) => t.id);
       expect(sent.length).toBeGreaterThan(0);
 
@@ -449,14 +450,14 @@ describe("idb", () => {
 
       await idb.applySyncResponse({ cards: [], deletions: [] }, [], UPLOADED_AT);
 
-      expect(await idb.getCard(CAT, "recognition")).not.toBeNull();
+      expect(await idb.getCard(wordKey(CAT), "recognition")).not.toBeNull();
     });
 
     it("tolerates a missing 'deletions' field for backwards-compat", async () => {
       // Older servers may not send the field at all.
       const card = makeCard({ sequence: BOOK });
       await idb.applySyncResponse({ cards: [card] }, [], UPLOADED_AT);
-      expect(await idb.getCard(BOOK, "recognition")).not.toBeNull();
+      expect(await idb.getCard(wordKey(BOOK), "recognition")).not.toBeNull();
     });
 
     it("survives re-add during sync (Bug 1 regression)", async () => {
@@ -467,7 +468,7 @@ describe("idb", () => {
       //   4. server response arrives with deletions = [id]
       // We must NOT delete the re-added card. The id was in sentTombstones,
       // so apply_remote_deletions should skip it.
-      const id = cardId(CAT, "recognition");
+      const id = cardId(wordKey(CAT), "recognition");
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
       // Simulate the re-add: tombstone gone (cleared after delete-and-readd
       // would have happened in real flow), card present.
@@ -480,19 +481,19 @@ describe("idb", () => {
       );
 
       // Card must survive.
-      expect(await idb.getCard(CAT, "recognition")).not.toBeNull();
+      expect(await idb.getCard(wordKey(CAT), "recognition")).not.toBeNull();
     });
 
     it("still applies deletions that another device originated", async () => {
       // Same shape as the race test, but this time we did NOT send a
       // tombstone for the id → the server is telling us about a foreign
       // delete, which we should apply.
-      const id = cardId(CAT, "recognition");
+      const id = cardId(wordKey(CAT), "recognition");
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
 
       await idb.applySyncResponse({ cards: [], deletions: [id] }, [], UPLOADED_AT);
 
-      expect(await idb.getCard(CAT, "recognition")).toBeNull();
+      expect(await idb.getCard(wordKey(CAT), "recognition")).toBeNull();
     });
 
     it("does not clobber a card with a newer local updated_ms", async () => {
@@ -516,7 +517,7 @@ describe("idb", () => {
         UPLOADED_AT,
       );
 
-      const local = await idb.getCard(CAT, "recognition");
+      const local = await idb.getCard(wordKey(CAT), "recognition");
       expect(local?.stability).toBe(9.0);
     });
 
@@ -537,7 +538,7 @@ describe("idb", () => {
         UPLOADED_AT,
       );
 
-      const local = await idb.getCard(CAT, "recognition");
+      const local = await idb.getCard(wordKey(CAT), "recognition");
       expect(local?.stability).toBe(9.0);
     });
 
@@ -556,14 +557,14 @@ describe("idb", () => {
         UPLOADED_AT,
       );
 
-      const stored = await idb.getCard(BOOK, "recognition");
+      const stored = await idb.getCard(wordKey(BOOK), "recognition");
       expect(stored?.updated_ms).toBe(fromServer.updated_ms);
     });
 
     it("keeps a card added after the upload went out", async () => {
       // The card was never in the payload the server ruled on, so its tombstone
       // can't be a verdict on it. Deleting it here would eat the re-add.
-      const id = cardId(CAT, "recognition");
+      const id = cardId(wordKey(CAT), "recognition");
       await idb.putCard(
         makeCard({
           sequence: CAT,
@@ -574,7 +575,7 @@ describe("idb", () => {
 
       await idb.applySyncResponse({ cards: [], deletions: [id] }, [], UPLOADED_AT);
 
-      expect(await idb.getCard(CAT, "recognition")).not.toBeNull();
+      expect(await idb.getCard(wordKey(CAT), "recognition")).not.toBeNull();
     });
   });
 
@@ -591,7 +592,7 @@ describe("idb", () => {
 
       await idb.putCard({ ...stale, reps: 1 });
 
-      const stored = await idb.getCard(CAT, "recognition");
+      const stored = await idb.getCard(wordKey(CAT), "recognition");
       expect(stored?.updated_ms).toBeGreaterThan(1_000);
     });
 
@@ -679,7 +680,7 @@ describe("idb", () => {
       v5.close();
 
       await idb.putCard(makeCard({ sequence: CAT, direction: "recognition" }));
-      const siblings = await idb.getCardsBySequence(CAT);
+      const siblings = await idb.getCardsOf(wordKey(CAT));
       expect(siblings).toHaveLength(1);
     });
 
@@ -690,11 +691,11 @@ describe("idb", () => {
 
   describe("putCardLogged", () => {
     it("saves the card and queues its answer together", async () => {
-      const row = { card_id: cardId(CAT, "recall"), rating: 3, kind: "review" as const, reviewed_ms: 7 };
+      const row = { card_id: cardId(wordKey(CAT), "recall"), rating: 3, kind: "review" as const, reviewed_ms: 7 };
       await idb.putCardLogged(makeCard({ sequence: CAT, direction: "recall", reps: 2 }), row);
-      expect((await idb.getCard(CAT, "recall"))?.reps).toBe(2);
+      expect((await idb.getCard(wordKey(CAT), "recall"))?.reps).toBe(2);
       expect(await idb.getOutbox()).toEqual([row]);
-      expect((await idb.getDirty()).map((d) => d.id)).toEqual([cardId(CAT, "recall")]);
+      expect((await idb.getDirty()).map((d) => d.id)).toEqual([cardId(wordKey(CAT), "recall")]);
     });
   });
 
@@ -704,20 +705,20 @@ describe("idb", () => {
       await idb.putCards([makeCard({ sequence: DOG })]);
       await idb.putCardsSynced([makeCard({ sequence: BIRD })]);
       const ids = (await idb.getDirty()).map((d) => d.id).sort();
-      expect(ids).toEqual([cardId(CAT, "recognition"), cardId(DOG, "recognition")].sort());
+      expect(ids).toEqual([cardId(wordKey(CAT), "recognition"), cardId(wordKey(DOG), "recognition")].sort());
     });
 
     it("records the stamp the card was written with", async () => {
       await idb.putCard(makeCard({ sequence: CAT }));
       const [entry] = await idb.getDirty();
-      expect(entry.v).toBe((await idb.getCard(CAT, "recognition"))?.updated_ms);
+      expect(entry.v).toBe((await idb.getCard(wordKey(CAT), "recognition"))?.updated_ms);
     });
 
     it("clears only entries unchanged since the snapshot", async () => {
       await idb.putCard(makeCard({ sequence: CAT }));
       await idb.putCard(makeCard({ sequence: DOG }));
       const snapshot = await idb.getDirty();
-      const dog = snapshot.find((d) => d.id === cardId(DOG, "recognition"))!;
+      const dog = snapshot.find((d) => d.id === cardId(wordKey(DOG), "recognition"))!;
       // Re-stamped after the snapshot, as an edit during the sync would be.
       const database = await idb.openDb();
       await new Promise<void>((resolve) => {
@@ -733,22 +734,34 @@ describe("idb", () => {
 
     it("skips ids whose card is gone", async () => {
       await idb.putCard(makeCard({ sequence: CAT }));
-      await idb.deleteCard(CAT);
+      await idb.deleteCard(wordKey(CAT));
       const ids = (await idb.getDirty()).map((d) => d.id);
       expect(await idb.getCardsByIds(ids)).toEqual([]);
     });
   });
 
-  describe("v7 → current upgrade", () => {
-    it("adds the review and delta-sync stores without touching existing cards", async () => {
-      // A v7 database as the previous release left it, holding one card.
+  describe("v9 → v10 upgrade", () => {
+    it("starts every store holding card ids over, empty", async () => {
+      // A v9 database as the last release left it: cards keyed on `sequence`,
+      // a tombstone, an unsent answer, a cursor. The server converted its copy
+      // of all of it; the device drops its own and pulls the deck back.
       await new Promise<void>((resolve, reject) => {
-        const req = indexedDB.open("yomeru-db", 7);
+        const req = indexedDB.open("yomeru-db", 9);
         req.onupgradeneeded = () => {
           const database = req.result;
           database.createObjectStore("cards", { keyPath: "id" }).createIndex("sequence", "sequence");
           database.createObjectStore("tombstones", { keyPath: "id" });
-          req.transaction!.objectStore("cards").put(makeCard({ sequence: CAT }));
+          database.createObjectStore("review_outbox", { keyPath: ["card_id", "reviewed_ms"] });
+          database.createObjectStore("drill_counts", { keyPath: "card_id" });
+          database.createObjectStore("dirty", { keyPath: "id" });
+          database.createObjectStore("meta");
+          const t = req.transaction!;
+          t.objectStore("cards").put({ ...makeCard(), id: "1001::recognition", sequence: 1001 });
+          t.objectStore("tombstones").put({ id: "1002::recall", deleted_at: 1 });
+          t.objectStore("review_outbox").put({ card_id: "1001::recognition", reviewed_ms: 5, rating: 3, kind: "review" });
+          t.objectStore("drill_counts").put({ card_id: "1001::recognition", count: 2 });
+          t.objectStore("dirty").put({ id: "1001::recognition", v: 1 });
+          t.objectStore("meta").put({ epoch: "e", rev: 3 }, "sync_cursor");
         };
         req.onsuccess = () => {
           req.result.close();
@@ -759,16 +772,16 @@ describe("idb", () => {
 
       const database = await idb.openDb();
 
-      expect(database.version).toBe(9);
-      expect([...database.objectStoreNames]).toEqual(
-        expect.arrayContaining(["cards", "tombstones", "review_outbox", "drill_counts", "dirty", "meta"]),
-      );
-      expect(await idb.getSyncCursor()).toBeNull();
+      expect(database.version).toBe(10);
+      expect(await idb.getAllRawCards()).toEqual([]);
+      expect(await idb.getAllTombstones()).toEqual([]);
+      expect(await idb.getOutbox()).toEqual([]);
       expect(await idb.getDirty()).toEqual([]);
-      expect((await idb.getAllCards()).map((c) => c.sequence)).toEqual([CAT]);
-      const row = { card_id: cardId(CAT, "recall"), rating: 1, kind: "drill" as const, reviewed_ms: 5 };
-      await idb.addReview(row);
-      expect(await idb.getOutbox()).toEqual([row]);
+      expect(await idb.getSyncCursor()).toBeNull();
+      expect([...database.transaction("cards").objectStore("cards").indexNames]).toContain("item");
+      // And the new key works.
+      await idb.putCard(makeCard({ sequence: CAT }));
+      expect(await idb.getCardsOf(wordKey(CAT))).toHaveLength(1);
     });
   });
 });

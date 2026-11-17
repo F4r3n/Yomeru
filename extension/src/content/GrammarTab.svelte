@@ -7,18 +7,18 @@
 
     let { entries }: { entries: GrammarPopupEntry[] } = $props();
 
-    // Deck standing per point, by card sequence. Missing = not fetched yet.
+    // Deck standing per point, by entry number. Missing = not fetched yet.
     let statuses = $state<Record<number, WordStatus>>({});
     let busy = $state<number | null>(null);
 
     $effect(() => {
-        const sequences = entries.map((e) => e.seq);
+        const items = entries.map((e) => String(e.seq));
         statuses = {};
         browser.runtime
-            .sendMessage({ type: "GET_WORD_STATUS", payload: { sequences } })
-            .then((r: { statuses: Record<number, WordStatus> }) => {
+            .sendMessage({ type: "GET_WORD_STATUS", payload: { kind: "grammar", items } })
+            .then((r: { statuses: Record<string, WordStatus> }) => {
                 // Only if the popup still shows these points.
-                if (entries.map((e) => e.seq).join(",") === sequences.join(",")) {
+                if (entries.map((e) => e.seq).join(",") === items.join(",")) {
                     statuses = r.statuses;
                 }
             })
@@ -32,14 +32,14 @@
             if (staged) {
                 const st = (await browser.runtime.sendMessage({
                     type: "BUMP_PRIORITY",
-                    payload: { sequence: seq },
+                    payload: { kind: "grammar", item: String(seq) },
                 })) as WordStatus;
                 statuses = { ...statuses, [seq]: st };
             } else {
-                await browser.runtime.sendMessage({ type: "ADD_GRAMMAR", payload: { sequence: seq } });
+                await browser.runtime.sendMessage({ type: "ADD_GRAMMAR", payload: { seq } });
                 const fresh = await browser.runtime.sendMessage({
                     type: "GET_WORD_STATUS",
-                    payload: { sequences: [seq] },
+                    payload: { kind: "grammar", items: [String(seq)] },
                 });
                 statuses = { ...statuses, ...fresh.statuses };
             }

@@ -244,8 +244,10 @@ export function applyCardsChange(cards: unknown): boolean {
   const next = new Set<number>();
   if (Array.isArray(cards)) {
     for (const c of cards) {
-      const seq = (c as { sequence?: unknown } | null)?.sequence;
-      if (typeof seq === "number" && Number.isFinite(seq)) next.add(seq);
+      const card = c as { kind?: unknown; item?: unknown } | null;
+      if (card?.kind !== "word" || typeof card.item !== "string") continue;
+      const seq = Number(card.item);
+      if (Number.isInteger(seq)) next.add(seq);
     }
   }
   const same =

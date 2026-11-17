@@ -18,14 +18,19 @@ use super::Db;
 /// column. The server owns this shape now: adding a field on the client means
 /// adding a column to `CARDS_DDL` (plus an `ALTER TABLE` shim in `schema.rs`
 /// for existing databases), or the field is dropped on round-trip.
-/// Enum-typed client fields (`direction`, `state`, `status`) are kept as their
-/// lowercase string form — the server is a relay and doesn't interpret them.
+/// Enum-typed client fields (`kind`, `direction`, `state`, `status`) are kept
+/// as their lowercase string form — the server is a relay and doesn't
+/// interpret them, so a card kind added to the apps needs no server change.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Card {
+    /// `"<kind>:<item>:<direction>"`, the client's key.
     pub id: String,
-    /// JMdict ent_seq of the entry this card reviews. Stable across dictionary
-    /// rebuilds, unlike the surface string the card used to key on.
-    pub sequence: i64,
+    /// What the card reviews: `word`, `kanji`, `grammar`, or a kind added
+    /// since.
+    pub kind: String,
+    /// Which one, within its kind: a JMdict ent_seq, a kanji, a grammar
+    /// entry's number. Text, whatever the kind.
+    pub item: String,
     pub direction: String,
     pub due_ms: f64,
     pub stability: f64,
@@ -154,14 +159,15 @@ pub async fn upsert_cards_tx(
     for chunk in accepted.chunks(UPSERT_CHUNK) {
         let mut q = QueryBuilder::<Sqlite>::new(
             "INSERT INTO cards
-                 (email, id, sequence, direction, due_ms, stability, difficulty,
+                 (email, id, kind, item, direction, due_ms, stability, difficulty,
                   reps, lapses, state, last_review_ms, added_ms, status, priority,
                   again_count, updated_ms, rev) ",
         );
         q.push_values(chunk, |mut b, c| {
             b.push_bind(email)
                 .push_bind(&c.id)
-                .push_bind(c.sequence)
+                .push_bind(&c.kind)
+                .push_bind(&c.item)
                 .push_bind(&c.direction)
                 .push_bind(c.due_ms)
                 .push_bind(c.stability)
@@ -179,7 +185,8 @@ pub async fn upsert_cards_tx(
         });
         q.push(
             " ON CONFLICT(email, id) DO UPDATE SET
-                 sequence = excluded.sequence,
+                 kind = excluded.kind,
+                 item = excluded.item,
                  direction = excluded.direction,
                  due_ms = excluded.due_ms,
                  stability = excluded.stability,
@@ -218,18 +225,19 @@ pub async fn upsert_cards_tx(
     Ok(())
 }
 
-/// Rows per multi-row upsert: 17 binds each keeps a statement well under
+/// Rows per multi-row upsert: 18 binds each keeps a statement well under
 /// SQLite's 32766-parameter limit.
 const UPSERT_CHUNK: usize = 500;
 
-const CARD_COLUMNS: &str = "id, sequence, direction, due_ms, stability, difficulty,
+const CARD_COLUMNS: &str = "id, kind, item, direction, due_ms, stability, difficulty,
      reps, lapses, state, last_review_ms, added_ms, status, priority,
      again_count, updated_ms";
 
 fn card_from_row(r: &sqlx::sqlite::SqliteRow) -> Card {
     Card {
         id: r.get("id"),
-        sequence: r.get("sequence"),
+        kind: r.get("kind"),
+        item: r.get("item"),
         direction: r.get("direction"),
         due_ms: r.get("due_ms"),
         stability: r.get("stability"),
@@ -330,10 +338,10 @@ mod tests {
             .await
             .unwrap();
         let mut newer = card("a::recognition", Some(200.0));
-        newer.sequence = 1_586_270;
+        newer.item = "1586270".to_string();
         upsert_cards(&db, ALICE, &[newer], NOW).await.unwrap();
         let stored = get_all_cards(&db, ALICE).await.unwrap();
-        assert_eq!(stored[0].sequence, 1_586_270);
+        assert_eq!(stored[0].item, "1586270");
         assert_eq!(stored[0].last_review_ms, Some(200.0));
     }
 
@@ -528,18 +536,12 @@ mod tests {
         // the other or one user seeing the other's data.
         let db = fresh_db().await;
         let mut alice_card = card("shared::id", Some(100.0));
-        alice_card.sequence = 1_467_640;
+        alice_card.item = "1467640".to_string();
         let mut bob_card = card("shared::id", Some(100.0));
-        bob_card.sequence = 1_586_270;
+        bob_card.item = "1586270".to_string();
         upsert_cards(&db, ALICE, &[alice_card], NOW).await.unwrap();
         upsert_cards(&db, BOB, &[bob_card], NOW).await.unwrap();
-        assert_eq!(
-            get_all_cards(&db, ALICE).await.unwrap()[0].sequence,
-            1_467_640
-        );
-        assert_eq!(
-            get_all_cards(&db, BOB).await.unwrap()[0].sequence,
-            1_586_270
-        );
+        assert_eq!(get_all_cards(&db, ALICE).await.unwrap()[0].item, "1467640");
+        assert_eq!(get_all_cards(&db, BOB).await.unwrap()[0].item, "1586270");
     }
 }

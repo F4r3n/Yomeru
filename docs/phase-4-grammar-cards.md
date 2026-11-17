@@ -97,9 +97,9 @@ match them.
 4. ~~UI: Add button on the Lookup page; Grammar review section with the
    recognition faces.~~
 5. ~~Extension: `ADD_GRAMMAR`, status, button on the popup's Grammar tab.~~
-6. Next, before grammar cards ship in a release: the card key migration
-   ([Card keys](#card-keys)), which also replaces `grammar_seq` with the
-   `seq` counter and removes the `grammar_cards` flag.
+6. ~~The card key migration ([Card keys](#card-keys)), which also
+   replaces `grammar_seq` with the `seq` counter and removes the
+   `grammar_cards` flag.~~ Rolled out by hand: see [Rollout](#rollout).
 7. Later: production reviews (below), then maybe cloze.
 
 Gap: the Stats page has Words and Kanji tabs only; grammar cards show in
@@ -128,7 +128,7 @@ scratch, with one migration and a backup.
 
 ### Before and after
 
-| | Today | After |
+| | Before | After |
 |---|---|---|
 | Key | `sequence: u32`, kind told apart by range (`ent_seq`, code point, top bit) | `kind` + `item` (text) + `direction` |
 | Card id | `"1358280::recognition"`, `"28450::kanji"`, `"2147484065::grammar"` | `"word:1358280:recognition"`, `"kanji:漢:meaning"`, `"grammar:417:recognition"` |
@@ -155,8 +155,9 @@ behind `is_word()`, `sibling_ids` guessing the kind from the number, the
   everything. Unsynced local changes are lost: hence the rollout order.
 - **Extension auto-backup** (`storage.local`, `cards-backup.ts`): when the
   store is empty and a snapshot exists, `syncCardsBackup` restores it. After
-  the wipe it would restore old-format cards, so the upgrade converts the
-  snapshot or clears it.
+  the wipe it would restore old-format cards, so the snapshot moves to a new
+  key and the old one is removed, never restored. A card without `kind` and
+  `item` is never restored either.
 - **Export**: schema 3. Import still reads schema 2 (today's files) and
   converts it, so the backups taken before the migration import again.
 
@@ -176,9 +177,11 @@ anything changes:
 3. Extension: an old-format `storage.local` snapshot is never restored as
    is into the new store.
 4. Ignored, on the real files (like `real_dict`):
-   `YOMERU_DB=copy.sqlite YOMERU_EXPORT=deck.json cargo test --ignored`
-   migrates a copy of the server database, imports a real export, and
-   compares counts. Both files stay outside the repo.
+   `YOMERU_DB=copy.db cargo test -p server real_db -- --ignored --nocapture`
+   migrates a copy of the server database and checks every card and answer
+   under its new id; `YOMERU_EXPORT=deck.json cargo test -p yomeru-core
+   real_export -- --ignored` imports a real export. Both files stay
+   outside the repo.
 
 ### Rollout
 

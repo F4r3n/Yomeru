@@ -121,8 +121,6 @@ fn compiles_every_field() {
     assert_eq!(dict.by_seq(1).unwrap().id, "you-ni-suru");
     assert_eq!(dict.by_seq(3).unwrap().id, "you-ni");
     assert!(dict.by_seq(999).is_none());
-    // A card's sequence (top bit set) finds the entry too, for now.
-    assert_eq!(dict.by_seq(crate::card_sequence(1)).unwrap().id, "you-ni-suru");
 }
 
 #[test]

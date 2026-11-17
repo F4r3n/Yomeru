@@ -5,8 +5,8 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::idb::{delete_ids_with_tombstones, get_all_cards, get_cards_by_sequence, put_all};
-use crate::types::{CardDirection, CardKind, CardStatus, SrsCard, card_id};
+use crate::idb::{delete_ids_with_tombstones, get_all_cards, get_cards_of, put_all};
+use crate::types::{CardItem, CardKind, CardStatus, SrsCard};
 
 /// A local record that the user deleted a card, and when. The time travels to
 /// the server on the next sync so a delete made while offline is ordered by
@@ -76,11 +76,11 @@ pub async fn get_staging_cards() -> Result<Vec<SrsCard>, String> {
     Ok(all)
 }
 
-/// Bumps the priority score of every staging sibling of `sequence` by 1, up
+/// Bumps the priority score of every staging sibling of `item` by 1, up
 /// to [`crate::types::MAX_PRIORITY`]. Called when the user re-clicks "Add"
 /// on an already-staged word.
-pub async fn bump_priority(sequence: u32) -> Result<(), String> {
-    let siblings = get_cards_by_sequence(sequence).await?;
+pub async fn bump_priority(item: CardItem) -> Result<(), String> {
+    let siblings = get_cards_of(item).await?;
     let to_put: Vec<SrsCard> = siblings
         .into_iter()
         .filter(|c| matches!(c.status, CardStatus::Staging))
@@ -92,11 +92,11 @@ pub async fn bump_priority(sequence: u32) -> Result<(), String> {
     put_cards(&to_put).await
 }
 
-/// Resets every active or graduated sibling of `sequence` back to a fresh
+/// Resets every active or graduated sibling of `item` back to a fresh
 /// "New" FSRS state in the active word list — the mechanism by which a
 /// graduated card can re-enter Review. Destructive.
-pub async fn reset_card(sequence: u32, now_ms: f64) -> Result<(), String> {
-    let siblings = get_cards_by_sequence(sequence).await?;
+pub async fn reset_card(item: CardItem, now_ms: f64) -> Result<(), String> {
+    let siblings = get_cards_of(item).await?;
     let to_put: Vec<SrsCard> = siblings
         .into_iter()
         .filter(|c| matches!(c.status, CardStatus::Active | CardStatus::Graduated))
@@ -121,11 +121,11 @@ pub async fn reactivate_graduated() -> Result<usize, String> {
     Ok(cards.len())
 }
 
-/// Sends every active or graduated sibling of `sequence` back to the New
+/// Sends every active or graduated sibling of `item` back to the New
 /// Words tab: progress reset, status back to Staging. The inverse of
 /// [`promote_card`]; `added_ms` and `priority` are kept. Destructive.
-pub async fn demote_card(sequence: u32, now_ms: f64) -> Result<(), String> {
-    let siblings = get_cards_by_sequence(sequence).await?;
+pub async fn demote_card(item: CardItem, now_ms: f64) -> Result<(), String> {
+    let siblings = get_cards_of(item).await?;
     let to_put: Vec<SrsCard> = siblings
         .into_iter()
         .filter(|c| matches!(c.status, CardStatus::Active | CardStatus::Graduated))
@@ -138,8 +138,8 @@ pub async fn demote_card(sequence: u32, now_ms: f64) -> Result<(), String> {
     put_cards(&to_put).await
 }
 
-pub async fn promote_card(sequence: u32) -> Result<(), String> {
-    let siblings = get_cards_by_sequence(sequence).await?;
+pub async fn promote_card(item: CardItem) -> Result<(), String> {
+    let siblings = get_cards_of(item).await?;
     let to_put: Vec<SrsCard> = siblings
         .into_iter()
         .filter(|c| matches!(c.status, CardStatus::Staging))
@@ -151,38 +151,12 @@ pub async fn promote_card(sequence: u32) -> Result<(), String> {
     put_cards(&to_put).await
 }
 
-pub async fn delete_card(sequence: u32) -> Result<(), String> {
-    delete_ids_with_tombstones(&sibling_ids(sequence)).await
-}
-
-/// Every card id `sequence` can have: a grammar point's one card, or a
-/// word's two directions.
-fn sibling_ids(sequence: u32) -> Vec<String> {
-    if grammar_core::is_grammar_seq(sequence) {
-        vec![card_id(sequence, CardDirection::Grammar)]
-    } else {
-        vec![
-            card_id(sequence, CardDirection::Recognition),
-            card_id(sequence, CardDirection::Recall),
-        ]
-    }
+/// Deletes every card of `item` (a word's two directions, a kanji's or a
+/// grammar point's one), with tombstones.
+pub async fn delete_card(item: CardItem) -> Result<(), String> {
+    delete_ids_with_tombstones(&item.card_ids()).await
 }
 
 pub async fn delete_card_by_id(id: &str) -> Result<(), String> {
     delete_ids_with_tombstones(std::slice::from_ref(&id.to_string())).await
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn deleting_a_grammar_point_deletes_its_one_card() {
-        let g = SrsCard::new_grammar(7, 0.0);
-        assert_eq!(sibling_ids(g.sequence), vec![g.id]);
-        assert_eq!(
-            sibling_ids(1_467_640),
-            vec!["1467640::recognition", "1467640::recall"]
-        );
-    }
 }

@@ -16,7 +16,7 @@ use crate::srs::{
     apply_review, now_ms, pick_drill_batch, rating_from_u8, trouble_words,
 };
 use crate::sync::{schedule_sync, use_reload_on_sync};
-use crate::types::{CardDirection, CardStatus, ReviewKind as LogKind, SrsCard};
+use crate::types::{CardDirection, CardItem, CardStatus, ReviewKind as LogKind, SrsCard};
 
 use super::review_common::{
     Answered, RateButtons, ShowAnswerButton, TabButton, UndoButton, rating_label, undo_answer,
@@ -53,11 +53,17 @@ pub(crate) fn shuffle<T>(mut v: Vec<T>) -> Vec<T> {
     v
 }
 
+/// The JMdict `ent_seq` of a word card; 0 (no entry) for any other.
+fn word_seq(c: &SrsCard) -> u32 {
+    c.word_seq().unwrap_or_default()
+}
+
 async fn attach_entries(cards: Vec<SrsCard>) -> (Vec<SrsCard>, Vec<WordEntry>, Vec<String>) {
     if cards.is_empty() {
         return (vec![], vec![], vec![]);
     }
-    let seqs: Vec<u32> = cards.iter().map(|c| c.sequence).collect();
+    // Word cards only reach here, so each has an ent_seq.
+    let seqs: Vec<u32> = cards.iter().map(word_seq).collect();
     let hits = lookup_by_sequence(&seqs).await.unwrap_or_default();
     let mut kept = Vec::new();
     let mut entries = Vec::new();
@@ -65,11 +71,11 @@ async fn attach_entries(cards: Vec<SrsCard>) -> (Vec<SrsCard>, Vec<WordEntry>, V
     for (c, entry) in cards.into_iter().zip(hits) {
         if entry.is_none() && matches!(c.direction, CardDirection::Recall) {
             // Recall front needs glosses; without them the card is unreviewable.
-            skipped.push(format!("(seq {}) recall", c.sequence));
+            skipped.push(format!("(seq {}) recall", word_seq(&c)));
             continue;
         }
         entries.push(entry.unwrap_or_else(|| WordEntry {
-            sequence: c.sequence,
+            sequence: word_seq(&c),
             kanji_forms: vec![],
             reading_forms: vec![],
             senses: vec![],
@@ -178,7 +184,7 @@ fn WordReview() -> Element {
     // ratings feed the recap and nothing else.
     let mut drill = use_signal(|| false);
     // Drill counts from the answer log, which rotate the batch a drill picks.
-    let mut drilled = use_signal(std::collections::HashMap::<u32, u32>::new);
+    let mut drilled = use_signal(std::collections::HashMap::<CardItem, u32>::new);
     let mut show_all_trouble = use_signal(|| false);
     let mut results = use_signal(Vec::<SessionResult>::new);
     // Set while a rating is being saved: the card only advances once the write
@@ -209,11 +215,11 @@ fn WordReview() -> Element {
             if !current() {
                 return;
             }
-            // Unique by sequence — recognition and recall siblings count once.
+            // Unique by word — recognition and recall siblings count once.
             let mut seen = std::collections::HashSet::new();
             let n = staging
                 .into_iter()
-                .filter(|c| c.is_word() && seen.insert(c.sequence))
+                .filter(|c| c.is_word() && seen.insert(c.item))
                 .count();
             staging_count.set(n);
             due_cards.set(limited.clone());
@@ -246,7 +252,7 @@ fn WordReview() -> Element {
             let all = get_all_cards().await.unwrap_or_default();
             let words = trouble_words(&all, TROUBLE_MIN_FAILS, TROUBLE_EXIT_INTERVAL_DAYS);
             let counts = drill_log::load().await;
-            let seqs: Vec<u32> = words.iter().map(|w| w.sequence).collect();
+            let seqs: Vec<u32> = words.iter().filter_map(|w| w.item.word_seq()).collect();
             let hits = if seqs.is_empty() {
                 vec![]
             } else {
@@ -336,7 +342,7 @@ fn WordReview() -> Element {
             results.with_mut(|v| {
                 v.push(SessionResult {
                     id: card.id.clone(),
-                    sequence: card.sequence,
+                    sequence: word_seq(&card),
                     direction: card.direction,
                     entry,
                     rating: r,
@@ -388,7 +394,7 @@ fn WordReview() -> Element {
                     let label = entry_for_label
                         .as_ref()
                         .map(|e| preferred_headword(e).to_string())
-                        .unwrap_or_else(|| format!("seq {}", card.sequence));
+                        .unwrap_or_else(|| format!("seq {}", word_seq(&card)));
                     graduated_msg.set(Some(format!(
                         "「{}」 ({}) graduated — kept in Word List, hidden from Review.",
                         label,
@@ -550,7 +556,7 @@ fn WordReview() -> Element {
                             .iter()
                             .take(shown)
                             .map(|(w, e)| {
-                                let n = drilled.read().get(&w.sequence).copied().unwrap_or(0);
+                                let n = drilled.read().get(&w.item).copied().unwrap_or(0);
                                 (w.clone(), e.clone(), n)
                             })
                             .collect();
@@ -575,8 +581,8 @@ fn WordReview() -> Element {
                             div { class: "word-rows",
                                 for (w, e, n) in rows {
                                     WordRow {
-                                        key: "{w.sequence}",
-                                        sequence: w.sequence,
+                                        key: "{w.item.key()}",
+                                        sequence: w.item.word_seq().unwrap_or_default(),
                                         entry: e,
                                         note: (n > 0).then(|| format!("drilled {n}×")),
                                         badge: format!("failed {}×", w.fails),
@@ -604,7 +610,7 @@ fn WordReview() -> Element {
                     let front_word = entry
                         .as_ref()
                         .map(|e| preferred_headword(e).to_string())
-                        .unwrap_or_else(|| format!("(seq {})", c.sequence));
+                        .unwrap_or_else(|| format!("(seq {})", word_seq(c)));
                     // When the word is shown as its kana reading (kana-preferred),
                     // surface the kanji writing underneath in smaller text.
                     let sub_kanji = if front_word == reading {

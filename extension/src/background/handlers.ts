@@ -7,7 +7,7 @@ import {
   putCard,
   putCards,
   getCard,
-  getCardsBySequence,
+  getCardsOf,
   getAllCards,
   getDueCards,
   getStagingCards,
@@ -25,6 +25,8 @@ import { getSrs, getKanji, getExamples, getJmdict, getGrammar } from "./engines"
 import { bumpDbVersion } from "./sync";
 import type {
   CardDirection,
+  CardKey,
+  CardKind,
   ExampleEntry,
   GrammarPopupMatch,
   KanjiEntry,
@@ -35,7 +37,7 @@ import type {
   WordEntry,
   WordStatus,
 } from "../shared/types.ts";
-import { cardId, isGrammarSeq, isWordCard, MS_PER_DAY } from "../shared/types.ts";
+import { cardId, isWordCard, KIND_DIRECTIONS, MS_PER_DAY, wordKey } from "../shared/types.ts";
 import {
   mergeReview,
   applyIntervalScale,
@@ -44,76 +46,62 @@ import {
 } from "./review-utils.ts";
 
 // The Rust SrsCard the WASM works with is the FSRS scheduling subset plus
-// `sequence` + `added_ms` — no id/direction/status. We never trust the
-// JS-typed shape after a WASM round-trip; mergeReview reattaches the JS-only
-// fields from the original card.
-type WasmCardShape = SrsSchedFields & Pick<SrsCard, "sequence" | "added_ms">;
+// `sequence` + `added_ms` — no id/kind/item/direction/status. Its `sequence`
+// is unused by the scheduler: 0 goes in, and it is dropped on the way out. We
+// never trust the JS-typed shape after a WASM round-trip; mergeReview
+// reattaches the JS-only fields from the original card.
+type WasmCardShape = SrsSchedFields & Pick<SrsCard, "added_ms"> & { sequence?: number };
 
-export async function handleAddWord({ sequence }: { sequence: number }) {
-  const srs = await getSrs();
-  const siblings = await getCardsBySequence(sequence);
-  if (siblings.length > 0) {
+/** Stages the cards of `key`, one per direction of its kind, unless it has
+ * some already. */
+async function addItem(key: CardKey) {
+  if ((await getCardsOf(key)).length > 0) {
     return { success: true, existing: true };
   }
-  const now = Date.now();
-  const base = srs.new_card(sequence, now) as WasmCardShape;
-  const recognition: SrsCard = {
-    ...base,
-    id: cardId(sequence, "recognition"),
-    sequence,
-    direction: "recognition",
-    status: "staging",
-    priority: 0,
-  };
-  const recall: SrsCard = {
-    ...base,
-    id: cardId(sequence, "recall"),
-    sequence,
-    direction: "recall",
-    status: "staging",
-    priority: 0,
-  };
-  await putCards([recognition, recall]);
+  const srs = await getSrs();
+  const { sequence: _unused, ...base } = srs.new_card(0, Date.now()) as WasmCardShape;
+  await putCards(
+    KIND_DIRECTIONS[key.kind].map((direction) => ({
+      ...base,
+      id: cardId(key, direction),
+      kind: key.kind,
+      item: key.item,
+      direction,
+      status: "staging" as const,
+      priority: 0,
+    })),
+  );
   await bumpDbVersion();
   return { success: true, existing: false };
 }
 
-/** Stages the card of the grammar point whose card `sequence` the popup
- * got from `popup_lookup`. Its status then comes from `GET_WORD_STATUS`. */
-export async function handleAddGrammar({ sequence }: { sequence: number }) {
-  if (!isGrammarSeq(sequence)) return { error: "not a grammar card" };
-  if ((await getCardsBySequence(sequence)).length > 0) {
-    return { success: true, existing: true };
-  }
-  const srs = await getSrs();
-  const base = srs.new_card(sequence, Date.now()) as WasmCardShape;
-  await putCard({
-    ...base,
-    id: cardId(sequence, "grammar"),
-    sequence,
-    direction: "grammar",
-    status: "staging",
-    priority: 0,
-  });
-  await bumpDbVersion();
-  return { success: true, existing: false };
+/** Stages the word with JMdict `ent_seq` `sequence`, both directions. */
+export async function handleAddWord({ sequence }: { sequence: number }) {
+  return addItem(wordKey(sequence));
+}
+
+/** Stages the card of the grammar point numbered `seq`, which the popup got
+ * from `popup_lookup`. Its status then comes from `GET_WORD_STATUS`. */
+export async function handleAddGrammar({ seq }: { seq: number }) {
+  if (!Number.isInteger(seq) || seq <= 0) return { error: "not a grammar point" };
+  return addItem({ kind: "grammar", item: String(seq) });
 }
 
 export async function handleReviewCard({
-  sequence,
+  kind,
+  item,
   direction,
   rating,
-}: {
-  sequence: number;
+}: CardKey & {
   direction: CardDirection;
   rating: number;
 }) {
   const srs = await getSrs();
-  const card = await getCard(sequence, direction);
+  const card = await getCard({ kind, item }, direction);
   if (!card) return { error: "Card not found" };
   const settings = await getSettings();
   const now_ms = Date.now();
-  const wasmOut = srs.review_card(card, rating, now_ms) as WasmCardShape;
+  const wasmOut = srs.review_card({ ...card, sequence: 0 }, rating, now_ms) as WasmCardShape;
   const scaled = applyIntervalScale(wasmOut, settings.intervalScale, now_ms);
   const intervalDays = (scaled.due_ms - now_ms) / MS_PER_DAY;
   const reviewed = mergeReview(card, scaled);
@@ -141,32 +129,35 @@ export async function handleGetStaging() {
   return { cards: await getStagingCards() };
 }
 
-export async function handlePromoteCard({ sequence }: { sequence: number }) {
-  await promoteCard(sequence);
+export async function handlePromoteCard(key: CardKey) {
+  await promoteCard(key);
   await bumpDbVersion();
   return { success: true };
 }
 
-export async function handleBumpPriority({ sequence }: { sequence: number }) {
-  await bumpPriority(sequence);
+export async function handleBumpPriority(key: CardKey) {
+  await bumpPriority(key);
   await bumpDbVersion();
-  return getWordStatus(sequence);
+  return getWordStatus(key);
 }
 
-export async function handleResetCard({ sequence }: { sequence: number }) {
-  await resetCard(sequence, Date.now());
+export async function handleResetCard(key: CardKey) {
+  await resetCard(key, Date.now());
   await bumpDbVersion();
-  return getWordStatus(sequence);
+  return getWordStatus(key);
 }
 
-/** SRS standing of each entry the hover popup is showing, keyed by sequence. */
+/** SRS standing of each word or grammar point the hover popup is showing,
+ * keyed by item. */
 export async function handleGetWordStatus({
-  sequences,
+  kind,
+  items,
 }: {
-  sequences: number[];
-}): Promise<{ statuses: Record<number, WordStatus> }> {
-  const statuses: Record<number, WordStatus> = {};
-  for (const seq of sequences) statuses[seq] = await getWordStatus(seq);
+  kind: CardKind;
+  items: string[];
+}): Promise<{ statuses: Record<string, WordStatus> }> {
+  const statuses: Record<string, WordStatus> = {};
+  for (const item of items) statuses[item] = await getWordStatus({ kind, item });
   return { statuses };
 }
 
@@ -183,19 +174,19 @@ export async function handleGetAllCards() {
   return { cards: await getAllCards() };
 }
 
-export async function handleDeleteCard({ sequence }: { sequence: number }) {
-  await deleteCard(sequence);
+export async function handleDeleteCard(key: CardKey) {
+  await deleteCard(key);
   await bumpDbVersion();
   return { success: true };
 }
 
 // The highlighter matches page text by JMdict entry, so it only needs the
-// sequence each card is keyed on — no surface strings. Kanji and grammar
-// cards are left out: their `sequence` is not an entry.
+// ent_seq of each word card — no surface strings. Kanji and grammar cards
+// are left out: they are no entry.
 export async function handleGetSrsSequences(): Promise<{ sequences: number[] }> {
   const cards = await getAllCards();
   const words = cards.filter(isWordCard);
-  return { sequences: [...new Set(words.map((c) => c.sequence))] };
+  return { sequences: [...new Set(words.map((c) => Number(c.item)))] };
 }
 
 export async function handleLogLookup({

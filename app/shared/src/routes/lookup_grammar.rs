@@ -9,10 +9,10 @@ use dioxus::prelude::*;
 
 use crate::grammar::{Example, GrammarEntry, Span};
 use crate::icons::{Icon, IconName};
-use crate::idb::{bump_priority, get_cards_by_sequence, put_card, reset_card};
+use crate::idb::{bump_priority, get_cards_of, put_card, reset_card};
 use crate::srs::now_ms;
 use crate::sync::schedule_sync;
-use crate::types::{CardStatus, MAX_PRIORITY, SrsCard};
+use crate::types::{CardItem, CardStatus, MAX_PRIORITY, SrsCard};
 
 /// Examples a closed card previews.
 const PREVIEW_EXAMPLES: usize = 2;
@@ -154,23 +154,23 @@ fn bee_search_url(pattern: &str) -> String {
 
 /// The point's card in the deck: Add, then the staging priority like a
 /// word, then its state. The card is `SrsCard::new_grammar` of the entry's
-/// `seq`, so `get_cards_by_sequence` finds exactly that one.
+/// `seq`, so `get_cards_of` finds exactly that one.
 #[component]
 fn GrammarDeckButton(id: String, seq: u32) -> Element {
-    let sequence = crate::grammar::card_sequence(seq);
+    let item = CardItem::Grammar(seq);
     let mut card = use_signal(|| None::<SrsCard>);
     let mut busy = use_signal(|| false);
-    use_effect(use_reactive!(|sequence| {
+    use_effect(use_reactive!(|item| {
         spawn(async move {
-            match get_cards_by_sequence(sequence).await {
+            match get_cards_of(item).await {
                 Ok(cards) => card.set(cards.into_iter().next()),
-                Err(e) => warn!("get_cards_by_sequence(grammar {sequence}) failed: {e}"),
+                Err(e) => warn!("get_cards_of(grammar {seq}) failed: {e}"),
             }
         });
     }));
 
     let refresh = move || async move {
-        let cards = get_cards_by_sequence(sequence).await.unwrap_or_default();
+        let cards = get_cards_of(item).await.unwrap_or_default();
         card.set(cards.into_iter().next());
     };
     let id_for_add = id.clone();
@@ -185,7 +185,7 @@ fn GrammarDeckButton(id: String, seq: u32) -> Element {
             let current = card.peek().clone();
             let res = match current {
                 None => put_card(&SrsCard::new_grammar(seq, now_ms())).await,
-                Some(_) => bump_priority(sequence).await,
+                Some(_) => bump_priority(item).await,
             };
             match res {
                 Ok(()) => schedule_sync(),
@@ -205,9 +205,9 @@ fn GrammarDeckButton(id: String, seq: u32) -> Element {
             if !confirmed {
                 return;
             }
-            match reset_card(sequence, now_ms()).await {
+            match reset_card(item, now_ms()).await {
                 Ok(()) => schedule_sync(),
-                Err(e) => warn!("reset_card(grammar {sequence}) failed: {e}"),
+                Err(e) => warn!("reset_card(grammar {seq}) failed: {e}"),
             }
             refresh().await;
         });

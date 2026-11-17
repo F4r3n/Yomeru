@@ -163,14 +163,13 @@ pub(crate) struct SyncBody<'a> {
     /// Absent on a first sync, which uploads every card and gets every card.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) since: Option<&'a SyncCursor>,
-    /// Always true: this client knows grammar cards, which the server keeps
-    /// from older ones.
-    pub(crate) grammar_cards: bool,
 }
 
 #[derive(Deserialize)]
 pub(crate) struct SyncResponse {
-    pub(crate) cards: Vec<SrsCard>,
+    /// Parsed one by one with [`split_cards`]: a card of a kind this build
+    /// doesn't know must not fail the whole response.
+    pub(crate) cards: Vec<serde_json::Value>,
     #[serde(default)]
     pub(crate) deletions: Vec<String>,
     #[serde(default)]
@@ -194,6 +193,26 @@ pub(crate) struct SyncResponse {
 
 fn complete() -> bool {
     true
+}
+
+/// The server's cards, split into those this build reads and those it
+/// doesn't (a kind or direction added since). The second kind is stored as it
+/// came, untouched by any typed read, so an update shows it with no resync;
+/// it can't have been changed here, so the server's copy always applies.
+/// Entries without an `id` are dropped: nothing could store or delete them.
+pub fn split_cards(cards: Vec<serde_json::Value>) -> (Vec<SrsCard>, Vec<serde_json::Value>) {
+    let mut known = Vec::with_capacity(cards.len());
+    let mut unknown = Vec::new();
+    for c in cards {
+        match serde_json::from_value::<SrsCard>(c.clone()) {
+            Ok(card) => known.push(card),
+            Err(_) if c.get("id").and_then(|v| v.as_str()).is_some_and(|id| !id.is_empty()) => {
+                unknown.push(c);
+            }
+            Err(e) => tracing::warn!("sync: dropping a card without an id: {e}"),
+        }
+    }
+    (known, unknown)
 }
 
 /// Picks which server cards to write over the local copies: those whose merge
@@ -281,23 +300,23 @@ mod tests {
 
     #[test]
     fn ids_we_sent_are_excluded_from_remote_deletions() {
-        let resp = ids(&["1000001::recognition", "1000002::recognition"]);
-        let sent = ids(&["1000001::recognition"]);
+        let resp = ids(&["word:1000001:recognition", "word:1000002:recognition"]);
+        let sent = ids(&["word:1000001:recognition"]);
         assert_eq!(
             deletions_to_apply(&resp, &sent, &[], UPLOADED_AT),
-            vec!["1000002::recognition".to_string()]
+            vec!["word:1000002:recognition".to_string()]
         );
     }
 
     #[test]
     fn empty_sent_means_all_remote_deletions_apply() {
-        let resp = ids(&["1000001::recognition", "1000002::recognition"]);
+        let resp = ids(&["word:1000001:recognition", "word:1000002:recognition"]);
         assert_eq!(deletions_to_apply(&resp, &[], &[], UPLOADED_AT).len(), 2);
     }
 
     #[test]
     fn empty_resp_means_nothing_to_apply() {
-        let sent = ids(&["1000001::recognition"]);
+        let sent = ids(&["word:1000001:recognition"]);
         assert!(deletions_to_apply(&[], &sent, &[], UPLOADED_AT).is_empty());
     }
 
@@ -306,8 +325,8 @@ mod tests {
         // Re-added while the request was in flight, so it wasn't in the payload
         // the server ruled on. Deleting it here would silently eat the re-add;
         // the next sync uploads it and the server clears the tombstone.
-        let resp = ids(&["a::recognition"]);
-        let mut re_added = card("a::recognition", 6_000.0);
+        let resp = ids(&["word:1:recognition"]);
+        let mut re_added = card("word:1:recognition", 6_000.0);
         re_added.added_ms = UPLOADED_AT + 1.0;
         assert!(deletions_to_apply(&resp, &[], &[re_added], UPLOADED_AT).is_empty());
     }
@@ -316,19 +335,19 @@ mod tests {
     fn card_the_server_already_saw_is_removed() {
         // Uploaded in this very request and the server still tombstoned it, so
         // the delete stands and the local copy goes.
-        let resp = ids(&["a::recognition"]);
-        let mut stale = card("a::recognition", 1_000.0);
+        let resp = ids(&["word:1:recognition"]);
+        let mut stale = card("word:1:recognition", 1_000.0);
         stale.added_ms = 1_000.0;
         assert_eq!(
             deletions_to_apply(&resp, &[], &[stale], UPLOADED_AT),
-            vec!["a::recognition".to_string()]
+            vec!["word:1:recognition".to_string()]
         );
     }
 
     fn card(id: &str, updated_ms: f64) -> SrsCard {
         SrsCard {
             id: id.to_string(),
-            sequence: 1_000_001,
+            item: crate::types::CardItem::Word(1_000_001),
             direction: CardDirection::Recognition,
             due_ms: 0.0,
             stability: 0.0,
@@ -347,8 +366,8 @@ mod tests {
 
     #[test]
     fn newer_remote_card_is_applied() {
-        let remote = [card("a::recognition", 2_000.0)];
-        let local = [card("a::recognition", 1_000.0)];
+        let remote = [card("word:1:recognition", 2_000.0)];
+        let local = [card("word:1:recognition", 1_000.0)];
         let applied = cards_to_apply(&remote, &local, &[]);
         assert_eq!(applied.len(), 1);
         assert_eq!(applied[0].updated_ms, 2_000.0);
@@ -358,8 +377,8 @@ mod tests {
     fn newer_local_card_is_kept() {
         // A review (or promotion, or reset) landed locally while the sync was
         // in flight — the server's older copy must not overwrite it.
-        let remote = [card("a::recognition", 1_000.0)];
-        let local = [card("a::recognition", 2_000.0)];
+        let remote = [card("word:1:recognition", 1_000.0)];
+        let local = [card("word:1:recognition", 2_000.0)];
         assert!(cards_to_apply(&remote, &local, &[]).is_empty());
     }
 
@@ -367,18 +386,18 @@ mod tests {
     fn the_servers_ruling_on_an_untouched_upload_is_adopted() {
         // This device's clock runs fast: it uploaded at 9_000, the server
         // clamped that to its own 5_000 and echoed it back.
-        let uploaded = [card("a::recognition", 9_000.0)];
-        let remote = [card("a::recognition", 5_000.0)];
+        let uploaded = [card("word:1:recognition", 9_000.0)];
+        let remote = [card("word:1:recognition", 5_000.0)];
         assert_eq!(cards_to_apply(&remote, &uploaded, &uploaded).len(), 1);
 
         // Edited again while the sync was in flight: the local edit stands.
-        let edited = [card("a::recognition", 9_500.0)];
+        let edited = [card("word:1:recognition", 9_500.0)];
         assert!(cards_to_apply(&remote, &edited, &uploaded).is_empty());
     }
 
     #[test]
     fn card_we_do_not_have_is_applied() {
-        let remote = [card("a::recognition", 1_000.0)];
+        let remote = [card("word:1:recognition", 1_000.0)];
         let local: [SrsCard; 0] = [];
         assert_eq!(cards_to_apply(&remote, &local, &[]).len(), 1);
     }
@@ -389,10 +408,10 @@ mod tests {
         // touches `last_review_ms`, so under the old merge key a stale copy
         // carrying any review time reverted the promotion. Keyed on
         // `updated_ms`, the promotion wins on being the later write.
-        let mut promoted = card("a::recognition", 5_000.0);
+        let mut promoted = card("word:1:recognition", 5_000.0);
         promoted.status = CardStatus::Active;
 
-        let mut stale = card("a::recognition", 3_000.0);
+        let mut stale = card("word:1:recognition", 3_000.0);
         stale.last_review_ms = Some(9_000.0);
 
         assert!(cards_to_apply(&[stale.clone()], &[promoted.clone()], &[]).is_empty());
@@ -406,9 +425,9 @@ mod tests {
         // Cards written before `updated_ms` existed deserialize with 0. The
         // fallback has to order them by something both devices already agree
         // on, or the first sync after upgrading is an arbitrary coin flip.
-        let mut reviewed = card("a::recognition", 0.0);
+        let mut reviewed = card("word:1:recognition", 0.0);
         reviewed.last_review_ms = Some(8_000.0);
-        let mut unreviewed = card("a::recognition", 0.0);
+        let mut unreviewed = card("word:1:recognition", 0.0);
         unreviewed.last_review_ms = None;
 
         assert_eq!(reviewed.version_ms(), 8_000.0);
@@ -442,8 +461,8 @@ mod tests {
 
         fn fixture_card() -> SrsCard {
             SrsCard {
-                id: "1467640::recognition".to_string(),
-                sequence: 1_467_640,
+                id: "word:1467640:recognition".to_string(),
+                item: crate::types::CardItem::Word(1_467_640),
                 direction: CardDirection::Recognition,
                 due_ms: 1_757_000_000_000.0,
                 stability: 4.2,
@@ -464,7 +483,7 @@ mod tests {
         fn the_request_body_matches_the_fixture_exactly() {
             let cards = [fixture_card()];
             let deletions = [Tombstone {
-                id: "1467640::recall".to_string(),
+                id: "word:1467640:recall".to_string(),
                 deleted_at: 1_757_000_000_123.0,
             }];
             let body = SyncBody {
@@ -480,14 +499,14 @@ mod tests {
                 },
                 reviews: &[
                     ReviewLog {
-                        card_id: "1467640::recognition".to_string(),
+                        card_id: "word:1467640:recognition".to_string(),
                         rating: 1,
                         kind: ReviewKind::Drill,
                         reviewed_ms: 1_756_950_000_000.0,
                         undoes_ms: None,
                     },
                     ReviewLog {
-                        card_id: "1467640::recognition".to_string(),
+                        card_id: "word:1467640:recognition".to_string(),
                         rating: 3,
                         kind: ReviewKind::Review,
                         reviewed_ms: 1_756_960_000_000.0,
@@ -495,7 +514,6 @@ mod tests {
                     },
                 ],
                 since: None,
-                grammar_cards: true,
             };
             let sent: Value = serde_json::to_value(&body).expect("serialize body");
             assert_eq!(sent, fixture("request-app-client.json"));
@@ -536,20 +554,21 @@ mod tests {
         fn the_response_fixture_parses_into_what_the_merge_consumes() {
             let resp: SyncResponse =
                 serde_json::from_value(fixture("response.json")).expect("parse response");
-            assert_eq!(resp.cards.len(), 1);
-            let c = resp.cards.first().expect("one card");
-            assert_eq!(c.id, "1467640::recognition");
-            assert_eq!(c.sequence, 1_467_640);
+            let (cards, unknown) = split_cards(resp.cards);
+            assert_eq!((cards.len(), unknown.len()), (1, 0));
+            let c = cards.first().expect("one card");
+            assert_eq!(c.id, "word:1467640:recognition");
+            assert_eq!(c.word_seq(), Some(1_467_640));
             assert_eq!(c.reps, 3);
             assert_eq!(c.last_review_ms, Some(1_756_900_000_000.0));
             // The merge key, not the review time: a promotion carries no review.
             assert_eq!(c.version_ms(), 1_756_900_000_000.0);
-            assert_eq!(resp.deletions, vec!["1467640::recall".to_string()]);
+            assert_eq!(resp.deletions, vec!["word:1467640:recall".to_string()]);
             let s = resp.settings.expect("settings");
             assert_eq!(s.graduation_interval_days, 365);
             assert_eq!(s.updated_ms, 1_756_000_000_000.0);
             let counts = resp.drill_counts.expect("drill counts");
-            assert_eq!(counts.get("1467640::recognition"), Some(&1));
+            assert_eq!(counts.get("word:1467640:recognition"), Some(&1));
             assert!(resp.full);
             assert_eq!(
                 resp.cursor,
@@ -558,6 +577,27 @@ mod tests {
                     rev: 2,
                 })
             );
+        }
+
+        #[test]
+        fn a_card_of_an_unknown_kind_is_kept_aside_not_fatal() {
+            let mut resp = fixture("response.json");
+            let mut cloze = resp["cards"][0].clone();
+            cloze["id"] = "grammar:7:cloze".into();
+            cloze["kind"] = "grammar".into();
+            cloze["item"] = "7".into();
+            cloze["direction"] = "cloze".into();
+            let mut later = resp["cards"][0].clone();
+            later["id"] = "sentence:12:production".into();
+            later["kind"] = "sentence".into();
+            let nameless = serde_json::json!({ "kind": "sentence" });
+            for c in [cloze.clone(), later.clone(), nameless] {
+                resp["cards"].as_array_mut().unwrap().push(c);
+            }
+            let resp: SyncResponse = serde_json::from_value(resp).expect("one odd card fails nothing");
+            let (cards, unknown) = split_cards(resp.cards);
+            assert_eq!(cards.len(), 1);
+            assert_eq!(unknown, vec![cloze, later]);
         }
 
         #[test]

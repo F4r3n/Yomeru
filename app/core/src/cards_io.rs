@@ -6,21 +6,22 @@
 //! triggered from Settings, and keeping it here means the format handling can
 //! be tested without standing up a component.
 //!
-//! Two on-disk formats are read. The current one (`schema >= CARDS_SCHEMA_VERSION`)
-//! deserializes straight into [`SrsCard`]; the legacy one keyed cards by headword
-//! rather than JMdict `sequence`, so it has to resolve each word through the
-//! dictionary first.
+//! Three on-disk formats are read. The current one (`schema >= 3`) deserializes
+//! straight into [`SrsCard`]. Schema 2 keyed cards by a `u32` `sequence` and is
+//! converted card by card ([`SrsCardV2::upgrade`]). The legacy one keyed cards
+//! by headword, so it has to resolve each word through the dictionary first.
 
 use crate::idb::{get_all_cards, put_cards};
 use crate::platform::Platform;
-use crate::types::{CARDS_SCHEMA_VERSION, SrsCard, SrsCardV1};
+use crate::types::{CARDS_SCHEMA_VERSION, SrsCard, SrsCardV1, SrsCardV2};
 
 /// Breakdown of cards that were not imported, by reason.
 #[derive(Default, Clone, Copy)]
 pub struct Skips {
     /// Id already present in storage.
     existing: usize,
-    /// Legacy headword not found in the dictionary (no `sequence` to key by).
+    /// Not mappable to a current card: a legacy headword not in the
+    /// dictionary, or a schema-2 grammar card (its number was a hash).
     unresolved: usize,
     /// Could not be parsed in the expected format.
     invalid: usize,
@@ -81,12 +82,14 @@ pub async fn import_cards_json(platform: &Platform, text: &str) -> Result<(usize
         existing.iter().map(|c| c.id.as_str()).collect();
 
     // Route by the explicit `schema` version. Legacy exports predate this field
-    // (or carry a lower number) and keyed cards by the headword string rather
-    // than the JMdict `sequence`. Note: the human-facing `version` field cannot
-    // discriminate — it's the crate version and is identical across formats.
+    // and keyed cards by the headword string; schema 2 by a `u32` `sequence`.
+    // Note: the human-facing `version` field cannot discriminate — it's the
+    // crate version and is identical across formats.
     let schema = v.get("schema").and_then(|s| s.as_u64()).unwrap_or(1);
     let (to_put, skips) = if schema >= CARDS_SCHEMA_VERSION {
         parse_current_cards(arr, &existing_ids)
+    } else if schema == 2 {
+        parse_v2_cards(arr, &existing_ids)
     } else {
         let word_seq = resolve_legacy_words(platform, arr).await?;
         parse_legacy_cards(arr, &word_seq, &existing_ids)
@@ -128,6 +131,33 @@ fn parse_current_cards(
     for c in cards {
         let Ok(card) = serde_json::from_value::<SrsCard>(c.clone()) else {
             skips.invalid += 1;
+            continue;
+        };
+        if existing_ids.contains(card.id.as_str()) {
+            skips.existing += 1;
+            continue;
+        }
+        to_put.push(card);
+    }
+    (to_put, skips)
+}
+
+/// Parse schema-2 cards and re-key each under `kind` + `item`, every other
+/// field kept. Grammar cards count as unresolved: their number was a hash of
+/// the entry's slug, which nothing maps back.
+fn parse_v2_cards(
+    cards: &[serde_json::Value],
+    existing_ids: &std::collections::HashSet<&str>,
+) -> (Vec<SrsCard>, Skips) {
+    let mut to_put = Vec::new();
+    let mut skips = Skips::default();
+    for c in cards {
+        let Ok(v2) = serde_json::from_value::<SrsCardV2>(c.clone()) else {
+            skips.invalid += 1;
+            continue;
+        };
+        let Some(card) = v2.upgrade() else {
+            skips.unresolved += 1;
             continue;
         };
         if existing_ids.contains(card.id.as_str()) {
@@ -201,11 +231,12 @@ mod tests {
     use serde_json::json;
     use std::collections::{HashMap, HashSet};
 
-    /// A new-format card: keyed by numeric `sequence`, id is `{seq}::{dir}`.
+    /// A current-format word card: `kind` + `item`, id `word:{seq}:{dir}`.
     fn new_format_card(sequence: u32, direction: &str) -> serde_json::Value {
         json!({
-            "id": format!("{sequence}::{direction}"),
-            "sequence": sequence,
+            "id": format!("word:{sequence}:{direction}"),
+            "kind": "word",
+            "item": sequence.to_string(),
             "direction": direction,
             "due_ms": 1.0,
             "stability": 2.0,
@@ -245,8 +276,8 @@ mod tests {
         let (to_put, skips) = parse_current_cards(&cards, &HashSet::new());
         assert_eq!(skips.total(), 0);
         assert_eq!(to_put.len(), 1);
-        assert_eq!(to_put[0].sequence, 1001);
-        assert_eq!(to_put[0].id, "1001::recall");
+        assert_eq!(to_put[0].word_seq(), Some(1001));
+        assert_eq!(to_put[0].id, "word:1001:recall");
     }
 
     #[test]
@@ -255,20 +286,22 @@ mod tests {
             new_format_card(1001, "recall"),
             new_format_card(1002, "recall"),
         ];
-        let existing = HashSet::from(["1001::recall"]);
+        let existing = HashSet::from(["word:1001:recall"]);
         let (to_put, skips) = parse_current_cards(&cards, &existing);
         assert_eq!(skips.existing, 1);
         assert_eq!(skips.total(), 1);
         assert_eq!(to_put.len(), 1);
-        assert_eq!(to_put[0].sequence, 1002);
+        assert_eq!(to_put[0].word_seq(), Some(1002));
     }
 
     #[test]
     fn current_unparseable_card_is_invalid() {
-        // Missing the required `sequence` field => unparseable as SrsCard.
-        let cards = vec![json!({ "id": "x", "direction": "recall" })];
+        // Missing the required `kind` and `item` => unparseable as SrsCard.
+        let mut card = new_format_card(1001, "recall");
+        card.as_object_mut().unwrap().remove("kind");
+        let cards = vec![card, json!({ "id": "x", "direction": "recall" })];
         let (to_put, skips) = parse_current_cards(&cards, &HashSet::new());
-        assert_eq!(skips.invalid, 1);
+        assert_eq!(skips.invalid, 2);
         assert!(to_put.is_empty());
     }
 
@@ -303,9 +336,9 @@ mod tests {
         assert_eq!(skips.total(), 0);
         assert_eq!(to_put.len(), 1);
         let card = &to_put[0];
-        assert_eq!(card.sequence, 1583460);
-        // id is rebuilt from sequence, not the legacy `word::dir` form.
-        assert_eq!(card.id, "1583460::recall");
+        assert_eq!(card.word_seq(), Some(1583460));
+        // id is rebuilt from the resolved item, not the legacy `word::dir` form.
+        assert_eq!(card.id, "word:1583460:recall");
         assert_eq!(card.direction, CardDirection::Recall);
         // Other fields survive the upgrade.
         assert_eq!(card.stability, 2.0);
@@ -327,7 +360,7 @@ mod tests {
         let cards = vec![old_format_card("一発", "recall")];
         let word_seq = HashMap::from([("一発".to_string(), 1583460u32)]);
         // The *rebuilt* (sequence-keyed) id already exists.
-        let existing = HashSet::from(["1583460::recall"]);
+        let existing = HashSet::from(["word:1583460:recall"]);
         let (to_put, skips) = parse_legacy_cards(&cards, &word_seq, &existing);
         assert_eq!(skips.existing, 1);
         assert!(to_put.is_empty());
@@ -361,88 +394,101 @@ mod tests {
 
     // --- backup files -----------------------------------------------------------
 
-    /// A schema-2 export as today's app writes it: words in both directions,
-    /// a staged pair, a graduated card, a kanji and a grammar card.
+    /// A schema-2 export as the app wrote it before the card key change:
+    /// words in both directions, a staged pair, a graduated card, a kanji and
+    /// a grammar card.
     const EXPORT_V2: &str =
         include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../testdata/backup/export-v2.json"));
 
-    /// Every card a backup file holds, read the way import reads it, with
-    /// nothing skipped.
-    fn read_backup(text: &str) -> (serde_json::Value, Vec<SrsCard>) {
+    /// A backup file's cards, read the way import reads a schema-2 file.
+    fn read_v2(text: &str) -> (serde_json::Value, Vec<SrsCard>, Skips) {
         let file: serde_json::Value = serde_json::from_str(text).expect("backup is JSON");
+        assert_eq!(file["schema"], 2);
         let raw = file["cards"].as_array().expect("backup has a cards array");
-        let (cards, skips) = parse_current_cards(raw, &HashSet::new());
-        assert_eq!(skips.total(), 0, "every card of the backup parses");
-        (file, cards)
+        let (cards, skips) = parse_v2_cards(raw, &HashSet::new());
+        assert_eq!(skips.invalid + skips.existing, 0, "every card of the backup parses");
+        (file, cards, skips)
+    }
+
+    /// Every field but the key, as the JSON of a card holds it, so a
+    /// schema-2 card and its upgrade compare field for field.
+    fn scheduling(card: &serde_json::Value) -> serde_json::Value {
+        let mut c = card.clone();
+        for key in ["id", "sequence", "kind", "item", "direction"] {
+            c.as_object_mut().unwrap().remove(key);
+        }
+        c
     }
 
     #[test]
-    fn export_v2_reads_every_field() {
-        let (file, cards) = read_backup(EXPORT_V2);
-        assert_eq!(file["schema"], 2);
-        assert_eq!(cards.len(), 7);
-
+    fn export_v2_upgrades_every_card_but_grammar() {
+        let (_, cards, skips) = read_v2(EXPORT_V2);
+        // The grammar card's number was a hash of its slug: nothing maps it.
+        assert_eq!(skips.unresolved, 1);
         let ids: Vec<&str> = cards.iter().map(|c| c.id.as_str()).collect();
         assert_eq!(
             ids,
             [
-                "1358280::recognition",
-                "1358280::recall",
-                "1000220::recognition",
-                "1000220::recall",
-                "1206730::recognition",
-                "29483::kanji",
-                "3444285014::grammar",
+                "word:1358280:recognition",
+                "word:1358280:recall",
+                "word:1000220:recognition",
+                "word:1000220:recall",
+                "word:1206730:recognition",
+                "kanji:猫:meaning",
             ]
         );
-        for c in &cards {
-            assert_eq!(c.id, crate::types::card_id(c.sequence, c.direction));
-        }
+        assert_eq!(cards[1].direction, CardDirection::Recall);
+        assert_eq!(cards[5].direction, CardDirection::Meaning);
+        assert_eq!(cards[5].kanji_char(), Some('猫'));
 
         let rec = &cards[0];
-        assert_eq!(rec.direction, CardDirection::Recognition);
         assert_eq!(rec.state, srs_core::CardState::Review);
         assert_eq!(rec.status, crate::types::CardStatus::Active);
         assert_eq!(rec.due_ms, 1_763_640_000_000.0);
-        assert_eq!(rec.stability, 12.5);
-        assert_eq!(rec.difficulty, 4.75);
+        assert_eq!((rec.stability, rec.difficulty), (12.5, 4.75));
         assert_eq!((rec.reps, rec.lapses, rec.again_count), (6, 1, 1));
         assert_eq!(rec.last_review_ms, Some(1_762_560_000_000.0));
         assert_eq!(rec.added_ms, 1_760_000_000_000.0);
         assert_eq!(rec.updated_ms, 1_762_560_000_000.0);
-
-        assert_eq!(cards[1].state, srs_core::CardState::Learning);
-        assert_eq!(cards[1].again_count, 2);
-
-        let staged = &cards[2];
-        assert_eq!(staged.status, crate::types::CardStatus::Staging);
-        assert_eq!(staged.state, srs_core::CardState::New);
-        assert_eq!(staged.priority, 2);
-        assert_eq!(staged.last_review_ms, None);
-
+        assert_eq!(cards[2].priority, 2);
+        assert_eq!(cards[2].last_review_ms, None);
         assert_eq!(cards[4].status, crate::types::CardStatus::Graduated);
-        assert!(cards[5].is_kanji());
-        assert_eq!(cards[5].sequence, u32::from('猫'));
-        assert!(cards[6].is_grammar());
-        // The number grammar cards had before entries were numbered: a hash
-        // of the id "te-mo-ii", top bit set.
-        assert_eq!(cards[6].sequence, 3_444_285_014);
     }
 
-    /// Writing the cards back gives the same file: the fixture is what
-    /// today's export writes, and no field is lost on the way in.
+    /// Nothing but the key changes on the way: every other field of every
+    /// card is as the file had it.
     #[test]
-    fn export_v2_is_what_export_writes() {
-        let (file, cards) = read_backup(EXPORT_V2);
-        let written = export_payload(
-            &cards,
-            file["version"].as_str().unwrap(),
-            file["exportedAt"].as_f64().unwrap(),
-        );
-        assert_eq!(written, file);
+    fn export_v2_keeps_every_field_but_the_key() {
+        let (file, cards, _) = read_v2(EXPORT_V2);
+        let raw: Vec<_> = file["cards"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|c| c["direction"] != "grammar")
+            .collect();
+        assert_eq!(raw.len(), cards.len());
+        for (old, new) in raw.iter().zip(&cards) {
+            let new = serde_json::to_value(new).unwrap();
+            assert_eq!(scheduling(old), scheduling(&new), "{}", old["id"]);
+            assert_eq!(crate::types::v2_card_id(old["id"].as_str().unwrap()), Some(new["id"].as_str().unwrap().to_owned()));
+        }
     }
 
-    /// The same checks on a real export, kept outside the repo:
+    /// An export written now is schema 3 and reads back the same cards.
+    #[test]
+    fn a_new_export_reads_back_whole() {
+        let (_, cards, _) = read_v2(EXPORT_V2);
+        let written = export_payload(&cards, "0.23.0", 5.0);
+        assert_eq!(written["schema"], 3);
+        let (back, skips) = parse_current_cards(written["cards"].as_array().unwrap(), &HashSet::new());
+        assert_eq!(skips.total(), 0);
+        assert_eq!(
+            serde_json::to_value(&back).unwrap(),
+            serde_json::to_value(&cards).unwrap()
+        );
+    }
+
+    /// The same checks on a real schema-2 export, kept outside the repo:
     /// `YOMERU_EXPORT=path/to/yomeru-cards.json cargo test -p yomeru-core
     /// real_export -- --ignored --nocapture`.
     #[test]
@@ -450,25 +496,20 @@ mod tests {
     fn real_export_reads_whole() {
         let path = std::env::var("YOMERU_EXPORT").expect("set YOMERU_EXPORT");
         let text = std::fs::read_to_string(&path).expect("read YOMERU_EXPORT");
-        let (file, cards) = read_backup(&text);
-        assert_eq!(file["schema"], CARDS_SCHEMA_VERSION);
-        for c in &cards {
-            assert_eq!(c.id, crate::types::card_id(c.sequence, c.direction), "id of {c:?}");
+        let (file, cards, skips) = read_v2(&text);
+        let raw = file["cards"].as_array().unwrap();
+        let grammar = raw.iter().filter(|c| c["direction"] == "grammar").count();
+        assert_eq!(skips.unresolved, grammar, "only grammar cards are left out");
+        let kept: Vec<_> = raw.iter().filter(|c| c["direction"] != "grammar").collect();
+        for (old, new) in kept.iter().zip(&cards) {
+            assert_eq!(scheduling(old), scheduling(&serde_json::to_value(new).unwrap()), "{}", old["id"]);
         }
-        let written = export_payload(
-            &cards,
-            file["version"].as_str().unwrap(),
-            file["exportedAt"].as_f64().unwrap(),
-        );
-        assert_eq!(written["cards"], file["cards"], "no field lost reading the export");
-
         let count = |k: crate::types::CardKind| cards.iter().filter(|c| c.kind() == k).count();
         println!(
-            "{} cards: {} word, {} kanji, {} grammar",
+            "{} cards: {} word, {} kanji, {grammar} grammar left out",
             cards.len(),
             count(crate::types::CardKind::Word),
             count(crate::types::CardKind::Kanji),
-            count(crate::types::CardKind::Grammar),
         );
     }
 

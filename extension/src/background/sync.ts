@@ -15,7 +15,7 @@
  */
 
 import {
-  getAllCards,
+  getAllRawCards,
   getAllTombstones,
   applyRemoteDeletions,
   applySyncResponse,
@@ -139,19 +139,15 @@ async function doSync(): Promise<{ synced: number; sent: number } | { error: str
     // Read before the cards, so a card changed after this snapshot either
     // misses the upload *and* stays dirty, or is in both.
     const dirty = await getDirty();
-    const allLocal = cursor
+    // Raw: a card of a kind this build doesn't know still goes up on a full
+    // sync, so a server that lost its copy gets it back.
+    const upload = cursor
       ? await getCardsByIds(dirty.map((d) => d.id))
-      : await getAllCards();
+      : await getAllRawCards();
     const localTombstones = await getAllTombstones();
     // Oldest first: the store's key order is by card id, not by time.
     const pending = (await getOutbox()).sort((a, b) => a.reviewed_ms - b.reviewed_ms);
     const outbox = pending.slice(0, OUTBOX_BATCH);
-    // Only sequence-keyed cards can be represented server-side. Legacy
-    // word-keyed rows (no numeric `sequence`) are left out of the upload so
-    // they can't 422 the request.
-    const syncable = (c: SrsCard) =>
-      typeof c.sequence === "number" && Number.isFinite(c.sequence);
-    const upload = allLocal.filter(syncable);
     const res = await fetch(`${settings.serverUrl}/api/sync`, {
       method: "POST",
       headers: {
@@ -168,9 +164,6 @@ async function doSync(): Promise<{ synced: number; sent: number } | { error: str
         settings: toSettingsPayload(settings),
         reviews: outbox,
         ...(cursor ? { since: cursor } : {}),
-        // This client knows grammar cards; the server keeps them from
-        // older ones (see testdata/sync/README.md).
-        grammar_cards: true,
       }),
     });
     // Must match `SESSION_EXPIRED` in app/shared/src/sync.rs, which keys the
@@ -200,12 +193,6 @@ async function doSync(): Promise<{ synced: number; sent: number } | { error: str
       uploadedAt,
       upload,
     );
-    // The one thing replacement did that merging doesn't: drop legacy
-    // word-keyed rows the server can never return, since they were never
-    // uploaded. They're local-only junk, so no tombstone — nothing else has a
-    // copy to resurrect.
-    const legacy = allLocal.filter((c) => !syncable(c)).map((c) => c.id);
-    await applyRemoteDeletions(legacy);
     if (resp.settings) await adoptRemoteSettings(resp.settings);
     // A server without the review log sends no counts and kept none of the
     // rows, so the outbox waits for one that does.

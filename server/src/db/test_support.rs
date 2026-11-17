@@ -58,7 +58,8 @@ pub async fn deleted_ids(db: &Db, email: &str) -> Vec<String> {
 pub fn card(id: &str, last_review_ms: Option<f64>) -> Card {
     Card {
         id: id.to_string(),
-        sequence: 1_467_640,
+        kind: "word".to_string(),
+        item: "1467640".to_string(),
         direction: "recognition".to_string(),
         due_ms: 0.0,
         stability: 0.0,

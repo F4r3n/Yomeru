@@ -20,18 +20,20 @@ use serde::de::DeserializeOwned;
 
 pub use crate::store_common::*;
 use crate::sync::SyncCursor;
-use crate::types::{CardDirection, ReviewLog, SrsCard, card_id};
+use crate::types::{CardDirection, CardItem, ReviewLog, SrsCard, card_id};
 
-const SCHEMA_VERSION: i64 = 1;
+/// 2: cards keyed on `kind` + `item` instead of a `u32` `sequence`.
+const SCHEMA_VERSION: i64 = 2;
 const CURSOR_KEY: &str = "sync_cursor";
 
 const SCHEMA: &str = "
     CREATE TABLE IF NOT EXISTS cards (
-        id       TEXT PRIMARY KEY,
-        sequence INTEGER NOT NULL,
-        json     TEXT NOT NULL
+        id   TEXT PRIMARY KEY,
+        kind TEXT NOT NULL,
+        item TEXT NOT NULL,
+        json TEXT NOT NULL
     );
-    CREATE INDEX IF NOT EXISTS cards_sequence ON cards(sequence);
+    CREATE INDEX IF NOT EXISTS cards_item ON cards(kind, item);
     CREATE TABLE IF NOT EXISTS tombstones (
         id         TEXT PRIMARY KEY,
         deleted_at REAL NOT NULL
@@ -60,13 +62,26 @@ fn err(e: impl std::fmt::Display) -> String {
     e.to_string()
 }
 
-/// Creates the tables on a fresh database. Future schema changes branch on
-/// `user_version` here, the way `idb.rs` branches on the old IDB version.
+/// Creates the tables on a fresh database, and upgrades an older one the way
+/// `idb.rs` upgrades IndexedDB.
+///
+/// 1 → 2: every card id changed (`"<sequence>::<direction>"` became
+/// `"<kind>:<item>:<direction>"`). Nothing is converted: the card data and
+/// everything keyed by card id is dropped with the sync cursor, so the next
+/// sync is a full one that pulls every card back from the server.
 pub(crate) fn migrate(conn: &Connection) -> Result<(), String> {
     let version: i64 = conn
         .query_row("PRAGMA user_version", [], |r| r.get(0))
         .map_err(err)?;
     if version < SCHEMA_VERSION {
+        if version == 1 {
+            conn.execute_batch(
+                "DROP TABLE IF EXISTS cards; DROP TABLE IF EXISTS tombstones;
+                 DROP TABLE IF EXISTS review_outbox; DROP TABLE IF EXISTS drill_counts;
+                 DROP TABLE IF EXISTS dirty; DROP TABLE IF EXISTS meta;",
+            )
+            .map_err(err)?;
+        }
         conn.execute_batch(SCHEMA).map_err(err)?;
         conn.pragma_update(None, "user_version", SCHEMA_VERSION)
             .map_err(err)?;
@@ -132,10 +147,33 @@ fn query_json<T: DeserializeOwned>(
 // ── Sync helpers on a connection (tested directly) ──────────────────
 
 fn put_card_row(conn: &Connection, card: &SrsCard) -> Result<(), String> {
-    conn.prepare_cached("INSERT OR REPLACE INTO cards (id, sequence, json) VALUES (?1, ?2, ?3)")
-        .map_err(err)?
-        .execute(params![card.id, card.sequence, to_json(card)?])
-        .map_err(err)?;
+    conn.prepare_cached(
+        "INSERT OR REPLACE INTO cards (id, kind, item, json) VALUES (?1, ?2, ?3, ?4)",
+    )
+    .map_err(err)?
+    .execute(params![
+        card.id,
+        card.item.kind().as_str(),
+        card.item.key(),
+        to_json(card)?
+    ])
+    .map_err(err)?;
+    Ok(())
+}
+
+/// A card as the server sent it, kept whole because this build can't read it
+/// (see `idb::put_raw_cards`). Rows without an `id` are dropped.
+pub(crate) fn put_raw_card_row(conn: &Connection, card: &serde_json::Value) -> Result<(), String> {
+    let field = |k: &str| card.get(k).and_then(|v| v.as_str()).unwrap_or_default();
+    if field("id").is_empty() {
+        return Ok(());
+    }
+    conn.prepare_cached(
+        "INSERT OR REPLACE INTO cards (id, kind, item, json) VALUES (?1, ?2, ?3, ?4)",
+    )
+    .map_err(err)?
+    .execute(params![field("id"), field("kind"), field("item"), to_json(card)?])
+    .map_err(err)?;
     Ok(())
 }
 
@@ -343,12 +381,20 @@ pub(crate) async fn put_all(cards: &[SrsCard], stamp: bool) -> Result<(), String
     with_tx(|tx| put_all_on(tx, cards, stamp, now))
 }
 
-pub async fn get_card(sequence: u32, direction: CardDirection) -> Result<Option<SrsCard>, String> {
+/// Writes cards this build can't read, unstamped. See `idb::put_raw_cards`.
+pub(crate) async fn put_raw_cards(cards: &[serde_json::Value]) -> Result<(), String> {
+    if cards.is_empty() {
+        return Ok(());
+    }
+    with_tx(|tx| cards.iter().try_for_each(|c| put_raw_card_row(tx, c)))
+}
+
+pub async fn get_card(item: CardItem, direction: CardDirection) -> Result<Option<SrsCard>, String> {
     let conn = conn()?;
     let json: Option<String> = conn
         .query_row(
             "SELECT json FROM cards WHERE id = ?1",
-            [card_id(sequence, direction)],
+            [card_id(item, direction)],
             |r| r.get(0),
         )
         .optional()
@@ -356,19 +402,24 @@ pub async fn get_card(sequence: u32, direction: CardDirection) -> Result<Option<
     Ok(json.and_then(|j| parse(&j)))
 }
 
-pub async fn get_cards_by_sequence(sequence: u32) -> Result<Vec<SrsCard>, String> {
+/// Every card of `item`. See `idb::get_cards_of`.
+pub async fn get_cards_of(item: CardItem) -> Result<Vec<SrsCard>, String> {
+    get_cards_of_on(&*conn()?, item)
+}
+
+pub(crate) fn get_cards_of_on(conn: &Connection, item: CardItem) -> Result<Vec<SrsCard>, String> {
     query_json(
-        &*conn()?,
-        "SELECT json FROM cards WHERE sequence = ?1",
-        [sequence],
+        conn,
+        "SELECT json FROM cards WHERE kind = ?1 AND item = ?2",
+        params![item.kind().as_str(), item.key()],
     )
 }
 
-pub async fn has_card(sequence: u32) -> Result<bool, String> {
+pub async fn has_card(item: CardItem) -> Result<bool, String> {
     conn()?
         .query_row(
-            "SELECT EXISTS (SELECT 1 FROM cards WHERE sequence = ?1)",
-            [sequence],
+            "SELECT EXISTS (SELECT 1 FROM cards WHERE kind = ?1 AND item = ?2)",
+            params![item.kind().as_str(), item.key()],
             |r| r.get(0),
         )
         .map_err(err)
@@ -523,7 +574,7 @@ mod tests {
     }
 
     fn card(sequence: u32, direction: CardDirection) -> SrsCard {
-        let mut c = SrsCard::new(sequence, direction, 1_000.0);
+        let mut c = SrsCard::new(CardItem::Word(sequence), direction, 1_000.0);
         c.status = CardStatus::Active;
         c
     }
@@ -542,6 +593,84 @@ mod tests {
     fn migrate_is_idempotent() {
         let conn = db();
         migrate(&conn).unwrap();
+    }
+
+    #[test]
+    fn version_1_card_data_is_dropped() {
+        // A version-1 database: cards keyed on `sequence`, a review waiting
+        // and a cursor. All of it is keyed by old card ids, so it goes; the
+        // next sync is a full one and pulls the cards back.
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE cards (id TEXT PRIMARY KEY, sequence INTEGER NOT NULL, json TEXT NOT NULL);
+             CREATE TABLE tombstones (id TEXT PRIMARY KEY, deleted_at REAL NOT NULL);
+             CREATE TABLE review_outbox (card_id TEXT NOT NULL, reviewed_ms REAL NOT NULL,
+                                         json TEXT NOT NULL, PRIMARY KEY (card_id, reviewed_ms));
+             CREATE TABLE drill_counts (card_id TEXT PRIMARY KEY, count INTEGER NOT NULL);
+             CREATE TABLE dirty (id TEXT PRIMARY KEY, v REAL NOT NULL);
+             CREATE TABLE meta (key TEXT PRIMARY KEY, json TEXT NOT NULL);
+             INSERT INTO cards VALUES ('1358280::recall', 1358280, '{}');
+             INSERT INTO review_outbox VALUES ('1358280::recall', 5.0, '{}');
+             INSERT INTO meta VALUES ('sync_cursor', '{\"epoch\":\"e\",\"rev\":3}');
+             PRAGMA user_version = 1;",
+        )
+        .unwrap();
+        migrate(&conn).unwrap();
+
+        let count = |t: &str| -> i64 {
+            conn.query_row(&format!("SELECT count(*) FROM {t}"), [], |r| r.get(0)).unwrap()
+        };
+        for t in ["cards", "tombstones", "review_outbox", "drill_counts", "dirty", "meta"] {
+            assert_eq!(count(t), 0, "{t}");
+        }
+        assert_eq!(get_cursor_on(&conn).unwrap(), None);
+        let v: i64 = conn.query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
+        assert_eq!(v, SCHEMA_VERSION);
+        // The new table takes new cards.
+        let a = card(1_358_280, CardDirection::Recall);
+        put_all_on(&conn, std::slice::from_ref(&a), false, 0.0).unwrap();
+        assert_eq!(get_cards_of_on(&conn, CardItem::Word(1_358_280)).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn cards_of_an_item_are_its_directions_only() {
+        let conn = db();
+        let rec = card(1_000_001, CardDirection::Recognition);
+        let rec_other = card(1_000_002, CardDirection::Recognition);
+        let kanji = SrsCard::new_kanji('猫', 0.0);
+        let grammar = SrsCard::new_grammar(1_000_001, 0.0);
+        put_all_on(&conn, &[rec.clone(), rec_other, kanji.clone(), grammar.clone()], false, 0.0)
+            .unwrap();
+        let ids = |item| -> Vec<String> {
+            get_cards_of_on(&conn, item).unwrap().into_iter().map(|c| c.id).collect()
+        };
+        assert_eq!(ids(CardItem::Word(1_000_001)), vec![rec.id]);
+        // A grammar entry numbered like a word's ent_seq is another item.
+        assert_eq!(ids(CardItem::Grammar(1_000_001)), vec![grammar.id]);
+        assert_eq!(ids(CardItem::Kanji('猫')), vec![kanji.id]);
+    }
+
+    #[test]
+    fn a_card_this_build_cannot_read_is_kept_but_never_read() {
+        let conn = db();
+        let known = card(1_000_001, CardDirection::Recognition);
+        put_all_on(&conn, std::slice::from_ref(&known), false, 0.0).unwrap();
+        let mut odd = serde_json::to_value(SrsCard::new_grammar(7, 0.0)).unwrap();
+        odd["id"] = "grammar:7:production".into();
+        odd["direction"] = "production".into();
+        put_raw_card_row(&conn, &odd).unwrap();
+        put_raw_card_row(&conn, &serde_json::json!({ "kind": "x" })).unwrap();
+
+        let rows: i64 = conn.query_row("SELECT count(*) FROM cards", [], |r| r.get(0)).unwrap();
+        assert_eq!(rows, 2, "the odd card is stored, the id-less one dropped");
+        let all = get_all_cards_on(&conn).unwrap();
+        assert_eq!(all.iter().map(|c| c.id.as_str()).collect::<Vec<_>>(), [known.id.as_str()]);
+        assert!(get_cards_of_on(&conn, CardItem::Grammar(7)).unwrap().is_empty());
+        // Kept as it came, for the build that knows its direction.
+        let json: String = conn
+            .query_row("SELECT json FROM cards WHERE id = 'grammar:7:production'", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(serde_json::from_str::<serde_json::Value>(&json).unwrap(), odd);
     }
 
     #[test]

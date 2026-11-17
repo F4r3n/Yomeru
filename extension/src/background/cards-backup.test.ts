@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { wordKey } from "../shared/types.ts";
 import { IDBFactory, IDBKeyRange as FakeIDBKeyRange } from "fake-indexeddb";
 import type { SrsCard } from "../shared/types.ts";
-import { cardId } from "../shared/types.ts";
+import { OLD_CARDS_BACKUP_KEY } from "../shared/types.ts";
 import { makeCard } from "./test-helpers.ts";
 import { readFileSync } from "node:fs";
 
-/** The cards of a schema-2 export as today's app writes them; the extension's
- * storage.local snapshot holds the same card shape. */
-const EXPORT_V2: SrsCard[] = JSON.parse(
+/** The cards of a schema-2 export, keyed on `sequence`: the shape the
+ * storage.local snapshot held before the card key change. */
+const EXPORT_V2: unknown[] = JSON.parse(
   readFileSync(new URL("../../../testdata/backup/export-v2.json", import.meta.url), "utf8"),
 ).cards;
 
@@ -38,6 +39,9 @@ describe("cards-backup", () => {
           },
           set: async (obj: Record<string, unknown>) => {
             for (const [k, v] of Object.entries(obj)) storage.set(k, v);
+          },
+          remove: async (key: string) => {
+            storage.delete(key);
           },
         },
       },
@@ -70,9 +74,9 @@ describe("cards-backup", () => {
 
       const stored = storage.get(backup.CARDS_BACKUP_KEY) as SrsCard[];
       expect(stored).toHaveLength(2);
-      expect(stored.map((c) => c.sequence).sort()).toEqual([CAT, DOG]);
-      expect(stored.find((c) => c.sequence === CAT)?.reps).toBe(3);
-      expect(stored.find((c) => c.sequence === DOG)?.status).toBe("staging");
+      expect(stored.map((c) => Number(c.item)).sort()).toEqual([CAT, DOG]);
+      expect(stored.find((c) => Number(c.item) === CAT)?.reps).toBe(3);
+      expect(stored.find((c) => Number(c.item) === DOG)?.status).toBe("staging");
     });
 
     it("overwrites a previous backup with the current IDB contents", async () => {
@@ -83,7 +87,7 @@ describe("cards-backup", () => {
 
       const stored = storage.get(backup.CARDS_BACKUP_KEY) as SrsCard[];
       expect(stored).toHaveLength(1);
-      expect(stored[0].sequence).toBe(CAT);
+      expect(Number(stored[0].item)).toBe(CAT);
     });
   });
 
@@ -100,9 +104,9 @@ describe("cards-backup", () => {
       expect(result).toEqual({ restored: 2, backedUp: 0 });
       const restored = await idb.getAllCards();
       expect(restored).toHaveLength(2);
-      expect(restored.find((c) => c.sequence === CAT)?.reps).toBe(5);
-      expect(restored.find((c) => c.sequence === CAT)?.stability).toBe(12);
-      expect(restored.find((c) => c.sequence === DOG)?.status).toBe("staging");
+      expect(restored.find((c) => Number(c.item) === CAT)?.reps).toBe(5);
+      expect(restored.find((c) => Number(c.item) === CAT)?.stability).toBe(12);
+      expect(restored.find((c) => Number(c.item) === DOG)?.status).toBe("staging");
     });
 
     it("refreshes the backup from IDB when IDB has cards (IDB always wins)", async () => {
@@ -114,11 +118,11 @@ describe("cards-backup", () => {
       expect(result).toEqual({ restored: 0, backedUp: 1 });
       const stored = storage.get(backup.CARDS_BACKUP_KEY) as SrsCard[];
       expect(stored).toHaveLength(1);
-      expect(stored[0].sequence).toBe(CAT);
+      expect(Number(stored[0].item)).toBe(CAT);
       expect(stored[0].reps).toBe(9);
       const idbCards = await idb.getAllCards();
       expect(idbCards).toHaveLength(1);
-      expect(idbCards[0].sequence).toBe(CAT);
+      expect(Number(idbCards[0].item)).toBe(CAT);
     });
 
     it("seeds the backup on first run when IDB has cards but no backup exists", async () => {
@@ -128,7 +132,7 @@ describe("cards-backup", () => {
       const result = await backup.syncCardsBackup();
 
       expect(result).toEqual({ restored: 0, backedUp: 1 });
-      expect((storage.get(backup.CARDS_BACKUP_KEY) as SrsCard[])[0].sequence).toBe(CAT);
+      expect(Number((storage.get(backup.CARDS_BACKUP_KEY) as SrsCard[])[0].item)).toBe(CAT);
     });
 
     it("is a no-op when IDB and backup are both empty", async () => {
@@ -176,31 +180,60 @@ describe("cards-backup", () => {
     });
   });
 
-  describe("today's snapshot format", () => {
-    it("restores every card of a today-format snapshot field for field", async () => {
-      storage.set(backup.CARDS_BACKUP_KEY, EXPORT_V2);
+  describe("the card key change", () => {
+    /** One card of each kind, and one of a kind from a newer client. */
+    const deck = (): SrsCard[] => [
+      makeCard({ sequence: CAT, reps: 5, stability: 12, state: "review", updated_ms: 7 }),
+      makeCard({ sequence: CAT, direction: "recall", again_count: 2 }),
+      makeCard({ kind: "kanji", item: "猫", reps: 4 }),
+      makeCard({ kind: "grammar", item: "417", status: "staging", priority: 3 }),
+      { ...makeCard(), id: "sentence:9:cloze", kind: "sentence", item: "9", direction: "cloze" } as unknown as SrsCard,
+    ];
+
+    it("removes the old snapshot and restores nothing from it", async () => {
+      storage.set(OLD_CARDS_BACKUP_KEY, EXPORT_V2);
 
       const result = await backup.syncCardsBackup();
 
-      expect(result).toEqual({ restored: EXPORT_V2.length, backedUp: 0 });
-      const restored = (await idb.getAllCards()).sort(byId);
-      const expected = [...EXPORT_V2].sort(byId);
+      expect(result).toEqual({ restored: 0, backedUp: 0 });
+      expect(storage.has(OLD_CARDS_BACKUP_KEY)).toBe(false);
+      expect(await idb.getAllRawCards()).toEqual([]);
+    });
+
+    it("never restores an old-shape card put under the new key", async () => {
+      storage.set(backup.CARDS_BACKUP_KEY, EXPORT_V2);
+
+      expect(await backup.syncCardsBackup()).toEqual({ restored: 0, backedUp: 0 });
+      expect(await idb.getAllRawCards()).toEqual([]);
+    });
+
+    it("restores every card of a snapshot field for field, unknown kinds too", async () => {
+      storage.set(backup.CARDS_BACKUP_KEY, deck());
+
+      const result = await backup.syncCardsBackup();
+
+      expect(result).toEqual({ restored: 5, backedUp: 0 });
+      const restored = (await idb.getAllRawCards()).sort(byId);
       // putCard stamps every write, so a restored card's merge key moves
       // forward; every other field comes back as it was.
       const unstamped = (c: SrsCard) => ({ ...c, updated_ms: 0 });
-      expect(restored.map(unstamped)).toEqual(expected.map(unstamped));
-      restored.forEach((c, i) => expect(c.updated_ms).toBeGreaterThanOrEqual(expected[i].updated_ms ?? 0));
+      expect(restored.map(unstamped)).toEqual(deck().sort(byId).map(unstamped));
+      // Only the four this build reads are shown.
+      expect((await idb.getAllCards()).map((c) => c.id).sort()).toEqual([
+        "grammar:417:recognition",
+        "kanji:猫:meaning",
+        "word:1001:recall",
+        "word:1001:recognition",
+      ]);
     });
 
-    it("writes the snapshot in the same shape as the export", async () => {
-      for (const c of EXPORT_V2) await idb.putCard(c);
+    it("snapshots the cards this build can't read too", async () => {
+      for (const c of deck()) await idb.putCard(c);
 
       await backup.writeCardsBackup();
 
-      const snapshot = (storage.get(backup.CARDS_BACKUP_KEY) as SrsCard[]).sort(byId);
-      const keys = (c: SrsCard) => Object.keys(c).sort();
-      expect(snapshot.map(keys)).toEqual([...EXPORT_V2].sort(byId).map(keys));
-      expect(snapshot.map((c) => c.id)).toEqual(EXPORT_V2.map((c) => c.id).sort());
+      const ids = (storage.get(backup.CARDS_BACKUP_KEY) as SrsCard[]).map((c) => c.id).sort();
+      expect(ids).toEqual(deck().map((c) => c.id).sort());
     });
   });
 
@@ -215,14 +248,14 @@ describe("cards-backup", () => {
       expect(await backup.importCards("not an array")).toMatchObject({ error: expect.any(String) });
     });
 
-    it("imports a kanji card as-is, without inventing a recall sibling", async () => {
-      const neko = makeCard({ sequence: 0x732b, direction: "kanji", reps: 4 });
+    it("imports a kanji card as-is", async () => {
+      const neko = makeCard({ kind: "kanji", item: "猫", reps: 4 });
 
       expect(await backup.importCards([neko])).toEqual({ added: 1, skipped: 0 });
 
       const all = await idb.getAllCards();
       expect(all).toHaveLength(1);
-      expect(all[0]).toMatchObject({ id: "29483::kanji", direction: "kanji", reps: 4 });
+      expect(all[0]).toMatchObject({ id: "kanji:猫:meaning", direction: "meaning", reps: 4 });
     });
 
     it("adds every card when none exist", async () => {
@@ -243,103 +276,27 @@ describe("cards-backup", () => {
       const result = await backup.importCards([importedCat, makeCard({ sequence: DOG })]);
 
       expect(result).toEqual({ added: 1, skipped: 1 });
-      const cat = await idb.getCard(CAT, "recognition");
+      const cat = await idb.getCard(wordKey(CAT), "recognition");
       expect(cat?.reps).toBe(9);
       expect(cat?.stability).toBe(30);
       expect(cat?.due_ms).toBe(12345);
     });
 
-    it("skips entries missing a numeric `sequence`", async () => {
+    it("skips entries not in the current shape", async () => {
       const result = await backup.importCards([
         null,
-        { sequence: "nope" },
-        { word: "猫" },
+        { kind: "word", item: 1001, direction: "recognition" },
+        { ...makeCard({ sequence: DOG }), id: "word:9:recognition" },
+        EXPORT_V2[0],
         makeCard({ sequence: CAT }),
       ]);
 
-      expect(result).toEqual({ added: 1, skipped: 3 });
-      expect((await idb.getAllCards())[0].sequence).toBe(CAT);
+      expect(result).toEqual({ added: 1, skipped: 4 });
+      expect((await idb.getAllCards()).map((c) => c.id)).toEqual(["word:1001:recognition"]);
     });
 
     it("returns 0/0 for an empty array (no error)", async () => {
       expect(await backup.importCards([])).toEqual({ added: 0, skipped: 0 });
-    });
-
-    // An export row without a `direction` is expanded into both siblings,
-    // preserving the row's scheduling state on the recognition sibling and
-    // spawning a fresh recall sibling.
-    it("expands a directionless row into recognition + recall siblings", async () => {
-      const row = {
-        sequence: CAT,
-        due_ms: 100,
-        stability: 4,
-        difficulty: 5,
-        reps: 3,
-        lapses: 0,
-        state: "review",
-        last_review_ms: null,
-        added_ms: 50,
-        status: "active",
-      } as unknown as SrsCard;
-
-      const before = Date.now();
-      const result = await backup.importCards([row]);
-      const after = Date.now();
-
-      expect(result).toEqual({ added: 1, skipped: 0 });
-
-      const recognition = await idb.getCard(CAT, "recognition");
-      expect(recognition?.reps).toBe(3);
-      expect(recognition?.stability).toBe(4);
-      expect(recognition?.state).toBe("review");
-      expect(recognition?.due_ms).toBe(100);
-
-      const recall = await idb.getCard(CAT, "recall");
-      expect(recall?.reps).toBe(0);
-      expect(recall?.stability).toBe(0);
-      expect(recall?.state).toBe("new");
-      expect(recall?.status).toBe("active");
-      expect(recall?.due_ms).toBeGreaterThanOrEqual(before);
-      expect(recall?.due_ms).toBeLessThanOrEqual(after);
-    });
-
-    it("imports a single direction sibling for a row that carries a direction", async () => {
-      const row = makeCard({ sequence: CAT, direction: "recognition", reps: 2, stability: 6, state: "review" });
-
-      const result = await backup.importCards([row]);
-
-      expect(result).toEqual({ added: 1, skipped: 0 });
-      const recognition = await idb.getCard(CAT, "recognition");
-      expect(recognition?.reps).toBe(2);
-      expect(recognition?.stability).toBe(6);
-      expect(recognition?.state).toBe("review");
-      // No recall sibling spawned — the row named its direction.
-      expect(await idb.getCard(CAT, "recall")).toBeNull();
-    });
-
-    it("does not clobber an existing recognition card when re-importing a directionless row", async () => {
-      await idb.putCard(makeCard({ sequence: CAT, direction: "recognition", reps: 9, stability: 30 }));
-      const row = {
-        sequence: CAT,
-        due_ms: 0,
-        stability: 0,
-        difficulty: 0,
-        reps: 0,
-        lapses: 0,
-        state: "new",
-        last_review_ms: null,
-        added_ms: 0,
-        status: "active",
-      } as unknown as SrsCard;
-
-      const result = await backup.importCards([row]);
-
-      // The recall sibling didn't exist yet, so it gets added.
-      expect(result).toEqual({ added: 1, skipped: 0 });
-      const cat = await idb.getCard(CAT, "recognition");
-      expect(cat?.reps).toBe(9);
-      expect(cat?.stability).toBe(30);
-      expect(await idb.getCard(CAT, "recall")).not.toBeNull();
     });
   });
 });

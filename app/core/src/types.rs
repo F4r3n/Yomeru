@@ -4,37 +4,146 @@ use srs_core::CardState;
 pub const MS_PER_DAY: f64 = 86_400_000.0;
 
 /// Schema version of the card export/import format. Bump whenever the on-disk
-/// [`SrsCard`] shape changes. Exports without this field (or with a lower value)
-/// are the legacy v1 format ([`SrsCardV1`]), keyed by headword rather than
-/// JMdict `sequence`.
-pub const CARDS_SCHEMA_VERSION: u64 = 2;
+/// [`SrsCard`] shape changes. Exports without this field are the legacy v1
+/// format ([`SrsCardV1`], keyed by headword); schema 2 ([`SrsCardV2`]) keyed
+/// cards by a `u32` `sequence`; schema 3 by `kind` + `item`.
+pub const CARDS_SCHEMA_VERSION: u64 = 3;
 
 /// Ceiling on [`SrsCard::priority`] — re-clicking "Add" on an already-staged
 /// word bumps it, but stops moving the needle past this.
 pub const MAX_PRIORITY: u32 = 10;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+/// Which deck, and which Review tab, a card belongs to. On the wire as the
+/// card's `kind`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum CardDirection {
-    Recognition,
-    Recall,
-    /// A single kanji, reviewed kanji → meaning + readings. Such a card's
-    /// `sequence` is the kanji's Unicode code point rather than a JMdict
-    /// `ent_seq`; code points stay below 0x40000 and `ent_seq` starts at
-    /// 1,000,000, so the two id spaces never meet.
-    Kanji,
-    /// A grammar point, reviewed pattern → meaning. Such a card's `sequence`
-    /// is `grammar_core::card_sequence` of the entry's `seq`: top bit set,
-    /// above both other ranges.
-    Grammar,
-}
-
-/// Which deck, and which Review tab, a card belongs to.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CardKind {
     Word,
     Kanji,
     Grammar,
+}
+
+impl CardKind {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Word => "word",
+            Self::Kanji => "kanji",
+            Self::Grammar => "grammar",
+        }
+    }
+
+    fn parse(s: &str) -> Option<Self> {
+        match s {
+            "word" => Some(Self::Word),
+            "kanji" => Some(Self::Kanji),
+            "grammar" => Some(Self::Grammar),
+            _ => None,
+        }
+    }
+}
+
+/// What a card reviews. On the wire as two fields, `kind` and `item` (text):
+/// `"word"` + the JMdict `ent_seq`, `"kanji"` + the kanji itself, `"grammar"`
+/// + the entry's `seq` from `grammar.toml`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum CardItem {
+    /// A JMdict entry, by `ent_seq`. Its headword and reading are looked up on
+    /// demand and not stored, so a JMdict edit propagates.
+    Word(u32),
+    Kanji(char),
+    /// A grammar point, by its `seq`: issued once from `grammar.toml`'s
+    /// `next_seq` and never reused, unlike its slug.
+    Grammar(u32),
+}
+
+impl CardItem {
+    pub fn kind(self) -> CardKind {
+        match self {
+            Self::Word(_) => CardKind::Word,
+            Self::Kanji(_) => CardKind::Kanji,
+            Self::Grammar(_) => CardKind::Grammar,
+        }
+    }
+
+    /// The `item` field: what identifies the item within its kind.
+    pub fn key(self) -> String {
+        match self {
+            Self::Word(n) | Self::Grammar(n) => n.to_string(),
+            Self::Kanji(c) => c.to_string(),
+        }
+    }
+
+    /// The item a `kind` + `item` pair names; `None` for a kind this build
+    /// doesn't know, or an item that isn't one of that kind.
+    pub fn from_parts(kind: &str, item: &str) -> Option<Self> {
+        match CardKind::parse(kind)? {
+            CardKind::Word => item.parse().ok().map(Self::Word),
+            CardKind::Grammar => item.parse().ok().map(Self::Grammar),
+            CardKind::Kanji => {
+                let mut chars = item.chars();
+                match (chars.next(), chars.next()) {
+                    (Some(c), None) => Some(Self::Kanji(c)),
+                    _ => None,
+                }
+            }
+        }
+    }
+
+    /// The item a card id names, `"<kind>:<item>:<direction>"`.
+    pub fn from_card_id(id: &str) -> Option<Self> {
+        let (kind, rest) = id.split_once(':')?;
+        let (item, _direction) = rest.rsplit_once(':')?;
+        Self::from_parts(kind, item)
+    }
+
+    /// Every direction a card of this item can have, so every card id it
+    /// can have. A word has two cards; a kanji and a grammar point one each.
+    pub fn directions(self) -> &'static [CardDirection] {
+        match self {
+            Self::Word(_) => &[CardDirection::Recognition, CardDirection::Recall],
+            Self::Kanji(_) => &[CardDirection::Meaning],
+            Self::Grammar(_) => &[CardDirection::Recognition],
+        }
+    }
+
+    /// The card ids this item can have.
+    pub fn card_ids(self) -> Vec<String> {
+        self.directions().iter().map(|&d| card_id(self, d)).collect()
+    }
+
+    pub fn word_seq(self) -> Option<u32> {
+        match self {
+            Self::Word(n) => Some(n),
+            _ => None,
+        }
+    }
+
+    pub fn kanji(self) -> Option<char> {
+        match self {
+            Self::Kanji(c) => Some(c),
+            _ => None,
+        }
+    }
+
+    pub fn grammar_seq(self) -> Option<u32> {
+        match self {
+            Self::Grammar(n) => Some(n),
+            _ => None,
+        }
+    }
+}
+
+/// Which side of the item a card asks for. The directions a kind has are
+/// [`CardItem::directions`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum CardDirection {
+    /// Word: Japanese → meaning. Grammar: pattern → meaning.
+    Recognition,
+    /// Word: meaning → Japanese.
+    Recall,
+    /// Kanji: the kanji → its meaning and readings.
+    Meaning,
 }
 
 impl CardDirection {
@@ -42,8 +151,7 @@ impl CardDirection {
         match self {
             Self::Recognition => "recognition",
             Self::Recall => "recall",
-            Self::Kanji => "kanji",
-            Self::Grammar => "grammar",
+            Self::Meaning => "meaning",
         }
     }
 }
@@ -61,16 +169,20 @@ pub enum CardStatus {
     Graduated,
 }
 
-/// A card as persisted in IndexedDB. Wraps the FSRS scheduling fields with
-/// identity (`id`, `direction`) and lifecycle (`status`) metadata.
+/// A card as persisted in the card stores and sent to the server. Wraps the
+/// FSRS scheduling fields with identity (`id`, `item`, `direction`) and
+/// lifecycle (`status`) metadata.
 ///
-/// `sequence` is the JMdict `ent_seq` of the dictionary entry the card was
-/// added from. The display headword/reading are looked up on demand and not
-/// stored here, so renaming an entry in JMdict propagates automatically.
+/// On the wire `item` is two fields, `kind` and `item` (see [`CardItem`]).
+/// A card of a kind or direction this build doesn't know fails to parse:
+/// the stores keep it as it came and every typed read skips it, so it shows
+/// up once the app knows its kind.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(try_from = "WireCard", into = "WireCard")]
 pub struct SrsCard {
+    /// `card_id(item, direction)`; the stores' key.
     pub id: String,
-    pub sequence: u32,
+    pub item: CardItem,
     pub direction: CardDirection,
     pub due_ms: f64,
     pub stability: f64,
@@ -129,13 +241,163 @@ pub struct ReviewLog {
     pub undoes_ms: Option<f64>,
 }
 
-pub fn card_id(sequence: u32, direction: CardDirection) -> String {
-    format!("{sequence}::{}", direction.as_str())
+/// A card's id: `"<kind>:<item>:<direction>"`, e.g. `"word:1358280:recall"`,
+/// `"kanji:漢:meaning"`, `"grammar:417:recognition"`.
+pub fn card_id(item: CardItem, direction: CardDirection) -> String {
+    format!("{}:{}:{}", item.kind().as_str(), item.key(), direction.as_str())
+}
+
+/// [`SrsCard`] as it is on the wire and in the stores: the item as `kind` +
+/// `item` text.
+#[derive(Clone, Serialize, Deserialize)]
+struct WireCard {
+    id: String,
+    kind: String,
+    item: String,
+    direction: CardDirection,
+    due_ms: f64,
+    stability: f64,
+    difficulty: f64,
+    reps: u32,
+    lapses: u32,
+    state: CardState,
+    last_review_ms: Option<f64>,
+    added_ms: f64,
+    status: CardStatus,
+    #[serde(default)]
+    priority: u32,
+    #[serde(default)]
+    again_count: u32,
+    #[serde(default)]
+    updated_ms: f64,
+}
+
+impl TryFrom<WireCard> for SrsCard {
+    type Error = String;
+
+    fn try_from(w: WireCard) -> Result<Self, String> {
+        let item = CardItem::from_parts(&w.kind, &w.item)
+            .ok_or_else(|| format!("card {}: unknown item {}:{}", w.id, w.kind, w.item))?;
+        if !item.directions().contains(&w.direction) {
+            return Err(format!("card {}: a {} card has no {:?} side", w.id, w.kind, w.direction));
+        }
+        Ok(Self {
+            id: w.id,
+            item,
+            direction: w.direction,
+            due_ms: w.due_ms,
+            stability: w.stability,
+            difficulty: w.difficulty,
+            reps: w.reps,
+            lapses: w.lapses,
+            state: w.state,
+            last_review_ms: w.last_review_ms,
+            added_ms: w.added_ms,
+            status: w.status,
+            priority: w.priority,
+            again_count: w.again_count,
+            updated_ms: w.updated_ms,
+        })
+    }
+}
+
+impl From<SrsCard> for WireCard {
+    fn from(c: SrsCard) -> Self {
+        Self {
+            id: c.id,
+            kind: c.item.kind().as_str().to_owned(),
+            item: c.item.key(),
+            direction: c.direction,
+            due_ms: c.due_ms,
+            stability: c.stability,
+            difficulty: c.difficulty,
+            reps: c.reps,
+            lapses: c.lapses,
+            state: c.state,
+            last_review_ms: c.last_review_ms,
+            added_ms: c.added_ms,
+            status: c.status,
+            priority: c.priority,
+            again_count: c.again_count,
+            updated_ms: c.updated_ms,
+        }
+    }
+}
+
+/// The schema-2 card: keyed by a `u32` `sequence` whose range told the kind
+/// apart (an `ent_seq`, a kanji's code point, a grammar hash with the top bit
+/// set), id `"<sequence>::<direction>"`. Read from exports and backups made
+/// before the card key change; see [`SrsCardV2::upgrade`].
+#[derive(Debug, Clone, Deserialize)]
+pub struct SrsCardV2 {
+    pub sequence: u32,
+    pub direction: String,
+    pub due_ms: f64,
+    pub stability: f64,
+    pub difficulty: f64,
+    pub reps: u32,
+    pub lapses: u32,
+    pub state: CardState,
+    #[serde(default)]
+    pub last_review_ms: Option<f64>,
+    pub added_ms: f64,
+    pub status: CardStatus,
+    #[serde(default)]
+    pub priority: u32,
+    #[serde(default)]
+    pub again_count: u32,
+    #[serde(default)]
+    pub updated_ms: f64,
+}
+
+/// The current key of a schema-2 card, from its `sequence` and `direction`.
+/// `None` for a grammar card: its number was a hash of the entry's slug,
+/// which nothing maps back (`docs/phase-4-grammar-cards.md`, "Card keys").
+pub fn v2_key(sequence: u32, direction: &str) -> Option<(CardItem, CardDirection)> {
+    match direction {
+        "recognition" => Some((CardItem::Word(sequence), CardDirection::Recognition)),
+        "recall" => Some((CardItem::Word(sequence), CardDirection::Recall)),
+        "kanji" => char::from_u32(sequence).map(|c| (CardItem::Kanji(c), CardDirection::Meaning)),
+        _ => None,
+    }
+}
+
+/// [`v2_key`] on a whole schema-2 card id, `"<sequence>::<direction>"`: the
+/// current id, or `None` when it has none.
+pub fn v2_card_id(id: &str) -> Option<String> {
+    let (sequence, direction) = id.split_once("::")?;
+    let (item, direction) = v2_key(sequence.parse().ok()?, direction)?;
+    Some(card_id(item, direction))
+}
+
+impl SrsCardV2 {
+    /// The same card under the current key, every field kept; `None` for a
+    /// grammar card ([`v2_key`]).
+    pub fn upgrade(self) -> Option<SrsCard> {
+        let (item, direction) = v2_key(self.sequence, &self.direction)?;
+        Some(SrsCard {
+            id: card_id(item, direction),
+            item,
+            direction,
+            due_ms: self.due_ms,
+            stability: self.stability,
+            difficulty: self.difficulty,
+            reps: self.reps,
+            lapses: self.lapses,
+            state: self.state,
+            last_review_ms: self.last_review_ms,
+            added_ms: self.added_ms,
+            status: self.status,
+            priority: self.priority,
+            again_count: self.again_count,
+            updated_ms: self.updated_ms,
+        })
+    }
 }
 
 /// Card shape used by exports that predate the `version` field. These cards were
 /// keyed by the headword string (`word`) — the `id` was `{word}::{direction}` —
-/// rather than the JMdict `sequence`. Imported by resolving `word` to its
+/// rather than the JMdict `sequence`. Word cards only. Imported by resolving `word` to its
 /// sequence via the dictionary, then [`upgrade`](SrsCardV1::upgrade)-ing.
 #[derive(Debug, Clone, Deserialize)]
 pub struct SrsCardV1 {
@@ -157,9 +419,10 @@ impl SrsCardV1 {
     /// Upgrade to the current [`SrsCard`], re-keying by the resolved JMdict
     /// `sequence` (the legacy `word`-based `id` is discarded).
     pub fn upgrade(self, sequence: u32) -> SrsCard {
+        let item = CardItem::Word(sequence);
         SrsCard {
-            id: card_id(sequence, self.direction),
-            sequence,
+            id: card_id(item, self.direction),
+            item,
             direction: self.direction,
             due_ms: self.due_ms,
             stability: self.stability,
@@ -179,10 +442,11 @@ impl SrsCardV1 {
 
 impl SrsCard {
     /// Build a new staging card from FSRS-fresh scheduling fields.
-    pub fn new(sequence: u32, direction: CardDirection, now_ms: f64) -> Self {
+    pub fn new(item: CardItem, direction: CardDirection, now_ms: f64) -> Self {
+        debug_assert!(item.directions().contains(&direction), "{item:?} has no {direction:?} card");
         Self {
-            id: card_id(sequence, direction),
-            sequence,
+            id: card_id(item, direction),
+            item,
             direction,
             due_ms: now_ms,
             stability: 0.0,
@@ -199,52 +463,61 @@ impl SrsCard {
         }
     }
 
+    /// The new staging cards of `item`, one per direction it has.
+    pub fn new_cards(item: CardItem, now_ms: f64) -> Vec<Self> {
+        item.directions()
+            .iter()
+            .map(|&d| Self::new(item, d, now_ms))
+            .collect()
+    }
+
     /// A new kanji card for `kanji`, straight into the active deck: kanji cards
     /// are derived from words already being reviewed, so there is no staging.
     pub fn new_kanji(kanji: char, now_ms: f64) -> Self {
         Self {
             status: CardStatus::Active,
-            ..Self::new(u32::from(kanji), CardDirection::Kanji, now_ms)
+            ..Self::new(CardItem::Kanji(kanji), CardDirection::Meaning, now_ms)
         }
     }
 
     /// A new grammar card for the entry numbered `seq`, into staging like
     /// words: grammar points are added by hand and enter at the user's pace.
     pub fn new_grammar(seq: u32, now_ms: f64) -> Self {
-        Self::new(grammar_core::card_sequence(seq), CardDirection::Grammar, now_ms)
+        Self::new(CardItem::Grammar(seq), CardDirection::Recognition, now_ms)
     }
 
     pub fn kind(&self) -> CardKind {
-        match self.direction {
-            CardDirection::Recognition | CardDirection::Recall => CardKind::Word,
-            CardDirection::Kanji => CardKind::Kanji,
-            CardDirection::Grammar => CardKind::Grammar,
-        }
+        self.item.kind()
     }
 
-    /// Whether this card reviews a JMdict word, so its `sequence` is an
-    /// `ent_seq`.
+    /// Whether this card reviews a JMdict word.
     pub fn is_word(&self) -> bool {
         self.kind() == CardKind::Word
     }
 
-    /// Whether this card reviews a single kanji rather than a word.
+    /// Whether this card reviews a single kanji.
     pub fn is_kanji(&self) -> bool {
-        self.direction == CardDirection::Kanji
+        self.kind() == CardKind::Kanji
     }
 
     /// Whether this card reviews a grammar point.
     pub fn is_grammar(&self) -> bool {
-        self.direction == CardDirection::Grammar
+        self.kind() == CardKind::Grammar
     }
 
-    /// The kanji a kanji card reviews; `None` for word cards.
+    /// The JMdict `ent_seq` a word card reviews; `None` for other cards.
+    pub fn word_seq(&self) -> Option<u32> {
+        self.item.word_seq()
+    }
+
+    /// The kanji a kanji card reviews; `None` for other cards.
     pub fn kanji_char(&self) -> Option<char> {
-        if self.is_kanji() {
-            char::from_u32(self.sequence)
-        } else {
-            None
-        }
+        self.item.kanji()
+    }
+
+    /// The grammar entry's `seq` a grammar card reviews; `None` for others.
+    pub fn grammar_seq(&self) -> Option<u32> {
+        self.item.grammar_seq()
     }
 
     /// The card's merge version. Falls back to the review/added times for cards
@@ -261,7 +534,8 @@ impl SrsCard {
 
     pub fn to_scheduling(&self) -> srs_core::SrsCard {
         srs_core::SrsCard {
-            sequence: self.sequence,
+            // FSRS doesn't read it; srs-core only carries it through.
+            sequence: 0,
             added_ms: self.added_ms,
             due_ms: self.due_ms,
             stability: self.stability,
@@ -304,25 +578,77 @@ mod tests {
     use super::*;
 
     #[test]
-    fn a_grammar_card_is_keyed_by_its_point_and_is_no_word() {
+    fn card_ids_name_kind_item_and_direction() {
+        assert_eq!(card_id(CardItem::Word(1_358_280), CardDirection::Recall), "word:1358280:recall");
+        assert_eq!(card_id(CardItem::Kanji('漢'), CardDirection::Meaning), "kanji:漢:meaning");
+        assert_eq!(card_id(CardItem::Grammar(417), CardDirection::Recognition), "grammar:417:recognition");
+        for item in [CardItem::Word(1_358_280), CardItem::Kanji('漢'), CardItem::Grammar(417)] {
+            for id in item.card_ids() {
+                assert_eq!(CardItem::from_card_id(&id), Some(item), "{id}");
+            }
+        }
+        assert_eq!(CardItem::Word(1).card_ids(), ["word:1:recognition", "word:1:recall"]);
+        assert_eq!(CardItem::from_card_id("1358280::recall"), None);
+        assert_eq!(CardItem::from_card_id("cloze:3:front"), None);
+        assert_eq!(CardItem::from_parts("kanji", "漢字"), None);
+        assert_eq!(CardItem::from_parts("word", "x"), None);
+    }
+
+    #[test]
+    fn a_card_is_kind_and_item_on_the_wire() {
+        let c = SrsCard::new_kanji('猫', 5.0);
+        let json = serde_json::to_value(&c).unwrap();
+        assert_eq!(json["id"], "kanji:猫:meaning");
+        assert_eq!(json["kind"], "kanji");
+        assert_eq!(json["item"], "猫");
+        assert_eq!(json["direction"], "meaning");
+        assert!(json.get("sequence").is_none());
+        let back: SrsCard = serde_json::from_value(json).unwrap();
+        assert_eq!(back.item, CardItem::Kanji('猫'));
+        assert_eq!(back.id, c.id);
+    }
+
+    #[test]
+    fn a_card_this_build_does_not_know_does_not_parse() {
+        let mut json = serde_json::to_value(SrsCard::new_grammar(7, 0.0)).unwrap();
+        json["direction"] = "production".into();
+        assert!(serde_json::from_value::<SrsCard>(json.clone()).is_err());
+        json["direction"] = "recognition".into();
+        json["kind"] = "cloze".into();
+        assert!(serde_json::from_value::<SrsCard>(json.clone()).is_err());
+        // A known kind with a side it doesn't have.
+        json["kind"] = "kanji".into();
+        json["item"] = "猫".into();
+        assert!(serde_json::from_value::<SrsCard>(json).is_err());
+    }
+
+    #[test]
+    fn a_grammar_card_is_keyed_by_its_entry_and_is_no_word() {
         let c = SrsCard::new_grammar(7, 5.0);
-        assert_eq!(c.sequence, grammar_core::card_sequence(7));
-        assert_eq!(c.id, format!("{}::grammar", c.sequence));
+        assert_eq!(c.item, CardItem::Grammar(7));
+        assert_eq!(c.id, "grammar:7:recognition");
         assert_eq!(c.status, CardStatus::Staging);
         assert_eq!(c.kind(), CardKind::Grammar);
         assert!(c.is_grammar() && !c.is_word() && !c.is_kanji());
-        assert_eq!(c.kanji_char(), None);
-        // The wire form the server stores as free text.
-        let json = serde_json::to_value(&c).unwrap();
-        assert_eq!(json["direction"], "grammar");
-        let back: SrsCard = serde_json::from_value(json).unwrap();
-        assert_eq!(back.id, c.id);
-        assert_eq!(back.direction, CardDirection::Grammar);
+        assert_eq!((c.kanji_char(), c.word_seq(), c.grammar_seq()), (None, None, Some(7)));
     }
 
     #[test]
     fn word_and_kanji_cards_keep_their_kind() {
-        assert!(SrsCard::new(1_000_000, CardDirection::Recall, 0.0).is_word());
+        let words = SrsCard::new_cards(CardItem::Word(1_000_000), 0.0);
+        assert_eq!(words.len(), 2);
+        assert!(words.iter().all(SrsCard::is_word));
         assert_eq!(SrsCard::new_kanji('猫', 0.0).kind(), CardKind::Kanji);
+    }
+
+    #[test]
+    fn schema_2_keys_map_to_the_current_ones() {
+        assert_eq!(v2_card_id("1358280::recognition").as_deref(), Some("word:1358280:recognition"));
+        assert_eq!(v2_card_id("1358280::recall").as_deref(), Some("word:1358280:recall"));
+        assert_eq!(v2_card_id("29483::kanji").as_deref(), Some("kanji:猫:meaning"));
+        // Grammar numbers were hashes of the slug: nothing maps them back.
+        assert_eq!(v2_card_id("3444285014::grammar"), None);
+        assert_eq!(v2_card_id("word:1:recall"), None);
+        assert_eq!(v2_card_id("x::recall"), None);
     }
 }

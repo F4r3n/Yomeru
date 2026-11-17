@@ -106,9 +106,10 @@ pub async fn ensure_kanji_cards(
     let mut added: HashMap<u32, f64> = HashMap::new();
     for c in all
         .iter()
-        .filter(|c| c.is_word() && matches!(c.status, CardStatus::Active | CardStatus::Graduated))
+        .filter(|c| matches!(c.status, CardStatus::Active | CardStatus::Graduated))
     {
-        let t = added.entry(c.sequence).or_insert(c.added_ms);
+        let Some(seq) = c.word_seq() else { continue };
+        let t = added.entry(seq).or_insert(c.added_ms);
         *t = t.min(c.added_ms);
     }
     let sequences: Vec<u32> = added.keys().copied().collect();
@@ -156,9 +157,9 @@ mod tests {
     fn one_active_card_per_kanji_skipping_kana() {
         let cards = missing_kanji_cards(&[word(0.0, "食べる")], &HashSet::new(), 1_000.0);
         assert_eq!(kanji_of(&cards), "食");
-        assert_eq!(cards[0].direction, CardDirection::Kanji);
+        assert_eq!(cards[0].direction, CardDirection::Meaning);
         assert_eq!(cards[0].status, CardStatus::Active);
-        assert_eq!(cards[0].id, format!("{}::kanji", u32::from('食')));
+        assert_eq!(cards[0].id, "kanji:食:meaning");
     }
 
     #[test]
@@ -188,13 +189,6 @@ mod tests {
         let existing: HashSet<&str> = [card.id.as_str()].into();
         let cards = missing_kanji_cards(&[word(0.0, "学校")], &existing, 0.0);
         assert_eq!(kanji_of(&cards), "校");
-    }
-
-    #[test]
-    fn kanji_ids_never_meet_word_ids() {
-        // JMdict ent_seq starts at 1,000,000; the highest kanji is_kanji accepts
-        // sits well below.
-        assert!(u32::from('\u{2B81F}') < 1_000_000);
     }
 
     fn entry(kanji: &[&str], reading: &str, glosses: &[&str]) -> WordEntry {

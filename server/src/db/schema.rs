@@ -19,13 +19,16 @@ const SETTINGS_DDL: &str = "CREATE TABLE IF NOT EXISTS settings (
              fsrs_params               TEXT
          )";
 
-/// New per-column `cards` schema. `updated_ms` is the sync merge key;
+/// Per-column `cards` schema. A card is keyed by `kind` + `item` +
+/// `direction` (`id` = `"<kind>:<item>:<direction>"`), kept as text: the server
+/// relays kinds it doesn't interpret. `updated_ms` is the sync merge key;
 /// `last_review_ms` is scheduling data and is nullable (never-reviewed cards
 /// have no value). Everything else is required.
 const CARDS_DDL: &str = "CREATE TABLE IF NOT EXISTS cards (
              email           TEXT NOT NULL,
              id              TEXT NOT NULL,
-             sequence        INTEGER NOT NULL,
+             kind            TEXT NOT NULL,
+             item            TEXT NOT NULL,
              direction       TEXT NOT NULL,
              due_ms          REAL NOT NULL,
              stability       REAL NOT NULL,
@@ -154,6 +157,73 @@ pub(super) async fn init_schema(pool: &SqlitePool) -> anyhow::Result<()> {
             .context("create rev index")?;
     }
     super::sync_meta::seed(pool).await?;
+    migrate_card_keys(pool).await?;
+    Ok(())
+}
+
+/// The card key change (`docs/phase-4-grammar-cards.md`, "Card keys"): cards
+/// keyed by a `u32` `sequence`, ids `"<sequence>::<direction>"`, become
+/// `kind`, `item` and `direction`, ids `"<kind>:<item>:<direction>"`. Runs
+/// once, on a `cards` table that still has its `sequence` column, in one transaction:
+///
+/// - `cards` is rebuilt under the new key, every other field kept. Word cards
+///   (`recognition`, `recall`) become `word:<ent_seq>`, kanji cards (whose
+///   sequence was the code point) `kanji:<the kanji>:meaning`. Grammar cards
+///   are dropped: their number was a hash of the entry's slug, which nothing
+///   maps back, and none were released.
+/// - `reviews.card_id` is rewritten the same way, so each card keeps its whole
+///   answer history (the FSRS optimizer's input), including the answers of
+///   cards deleted since. Answers to grammar cards go with their cards.
+/// - `deletions` is emptied: its ids name the old keys, and every client
+///   wipes its cards and pulls them back on its first sync after updating.
+/// - The sync epoch changes, so every cursor is refused and each client gets
+///   a full answer.
+async fn migrate_card_keys(pool: &SqlitePool) -> anyhow::Result<()> {
+    if !columns(pool, "cards").await?.iter().any(|c| c == "sequence") {
+        return Ok(());
+    }
+    // The new id of an old one, from its `<sequence>::<direction>` parts.
+    // `instr` finds the `::`; the kanji's code point becomes the character.
+    const SEQ: &str = "CAST(substr(card_id, 1, instr(card_id, '::') - 1) AS INTEGER)";
+    const DIR: &str = "substr(card_id, instr(card_id, '::') + 2)";
+    let mut tx = pool.begin().await.context("begin card key migration")?;
+    for sql in [
+        CARDS_DDL.replace("cards (", "cards_rekeyed ("),
+        "INSERT INTO cards_rekeyed
+             (email, id, kind, item, direction, due_ms, stability, difficulty, reps, lapses,
+              state, last_review_ms, added_ms, status, priority, again_count, updated_ms, rev)
+         SELECT email,
+                CASE WHEN direction = 'kanji' THEN 'kanji:' || char(sequence) || ':meaning'
+                     ELSE 'word:' || sequence || ':' || direction END,
+                CASE WHEN direction = 'kanji' THEN 'kanji' ELSE 'word' END,
+                CASE WHEN direction = 'kanji' THEN char(sequence) ELSE CAST(sequence AS TEXT) END,
+                CASE WHEN direction = 'kanji' THEN 'meaning' ELSE direction END,
+                due_ms, stability, difficulty, reps, lapses, state, last_review_ms, added_ms,
+                status, priority, again_count, updated_ms, rev
+         FROM cards WHERE direction IN ('recognition', 'recall', 'kanji')"
+            .to_string(),
+        "DROP TABLE cards".to_string(),
+        "ALTER TABLE cards_rekeyed RENAME TO cards".to_string(),
+        "CREATE INDEX IF NOT EXISTS cards_by_rev ON cards (email, rev)".to_string(),
+        format!(
+            "DELETE FROM reviews WHERE instr(card_id, '::') = 0
+                 OR {DIR} NOT IN ('recognition', 'recall', 'kanji')"
+        ),
+        format!(
+            "UPDATE reviews SET card_id = CASE
+                 WHEN {DIR} = 'kanji' THEN 'kanji:' || char({SEQ}) || ':meaning'
+                 ELSE 'word:' || {SEQ} || ':' || {DIR} END"
+        ),
+        "DELETE FROM deletions".to_string(),
+        "UPDATE sync_meta SET epoch = lower(hex(randomblob(8)))".to_string(),
+    ] {
+        sqlx::query(&sql)
+            .execute(&mut *tx)
+            .await
+            .with_context(|| format!("card key migration: {sql}"))?;
+    }
+    tx.commit().await.context("commit card key migration")?;
+    tracing::info!("migrated cards and reviews to kind + item keys");
     Ok(())
 }
 
@@ -549,18 +619,18 @@ mod tests {
         .await
         .unwrap();
 
-        init_schema(&pool).await.unwrap(); // drops the legacy table, recreates on sequence
+        init_schema(&pool).await.unwrap(); // drops the legacy table, recreates it
 
         // Table is now on the new layout and empty (legacy rows discarded).
         let cols: Vec<String> = sqlx::query_scalar("SELECT name FROM pragma_table_info('cards')")
             .fetch_all(&pool)
             .await
             .unwrap();
-        assert!(cols.iter().any(|c| c == "sequence"));
+        assert!(cols.iter().any(|c| c == "kind"));
         assert!(!cols.iter().any(|c| c == "word"));
         assert!(get_all_cards(&pool, ALICE).await.unwrap().is_empty());
 
-        // And the recreated table accepts sequence-keyed cards.
+        // And the recreated table accepts today's cards.
         upsert_cards(&pool, ALICE, &[card("猫::recognition", Some(100.0))], NOW)
             .await
             .unwrap();

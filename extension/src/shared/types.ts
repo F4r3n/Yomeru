@@ -68,31 +68,59 @@ export interface WordEntry {
 
 export const MS_PER_DAY = 86_400_000;
 
-/** Mirrors `CardDirection` in `app/shared/src/types.rs`. A `"kanji"` card
- * reviews one kanji, and its `sequence` is the kanji's code point, not a
- * JMdict `ent_seq`. A `"grammar"` card reviews a grammar point, and its
- * `sequence` is the entry's `seq` with the top bit set
- * (`grammar_core::card_sequence`). */
-export type CardDirection = "recognition" | "recall" | "kanji" | "grammar";
+/** What a card reviews. Mirrors `CardKind` in `app/core/src/types.rs`. */
+export type CardKind = "word" | "kanji" | "grammar";
 
-/** Whether a card reviews a JMdict word, so its `sequence` is an `ent_seq`. */
-export function isWordCard(c: { direction: CardDirection }): boolean {
-  return c.direction === "recognition" || c.direction === "recall";
+/** Mirrors `CardDirection` in `app/core/src/types.rs`. Words have
+ * `recognition` and `recall`, kanji `meaning`, grammar points `recognition`. */
+export type CardDirection = "recognition" | "recall" | "meaning";
+
+/** The directions each kind's cards come in, the order they are made in.
+ * Mirrors `CardItem::directions`. */
+export const KIND_DIRECTIONS: Record<CardKind, CardDirection[]> = {
+  word: ["recognition", "recall"],
+  kanji: ["meaning"],
+  grammar: ["recognition"],
+};
+
+/** Which card, within its kind: a JMdict `ent_seq` (`"1358280"`), a kanji
+ * (`"漢"`), a grammar entry's number (`"417"`). Text, whatever the kind,
+ * the way the server and the stores hold it. Mirrors `CardItem`. */
+export interface CardKey {
+  kind: CardKind;
+  item: string;
 }
 
-/** Whether `sequence` is a grammar card's (`grammar_core::is_grammar_seq`). */
-export function isGrammarSeq(sequence: number): boolean {
-  return sequence >= 0x8000_0000;
+/** The key of the word with JMdict `ent_seq` `sequence`. */
+export function wordKey(sequence: number): CardKey {
+  return { kind: "word", item: String(sequence) };
+}
+
+/** Whether a card reviews a JMdict word. */
+export function isWordCard(c: { kind: string }): boolean {
+  return c.kind === "word";
+}
+
+/** Whether `raw` (a stored or downloaded card) is one this build reads: a
+ * known kind with one of that kind's directions. Others, from a newer
+ * client, are kept and synced but never shown. Mirrors `WireCard`'s
+ * `TryFrom`. */
+export function isKnownCard(raw: unknown): raw is SrsCard {
+  const c = raw as { kind?: unknown; item?: unknown; direction?: unknown } | null;
+  if (!c || typeof c.item !== "string" || typeof c.kind !== "string") return false;
+  const dirs = (KIND_DIRECTIONS as Record<string, CardDirection[] | undefined>)[c.kind];
+  return !!dirs && dirs.includes(c.direction as CardDirection);
 }
 
 /** Mirrors srs-core's `CardState` enum (serde rename_all = "lowercase"). */
 export type CardState = "new" | "learning" | "review" | "relearning";
 
 export interface SrsCard {
-  /** Composite key: `${sequence}::${direction}`. */
+  /** `${kind}:${item}:${direction}`, see {@link cardId}. */
   id: string;
-  /** JMdict ent_seq of the entry this card reviews. Stable across dict rebuilds. */
-  sequence: number;
+  kind: CardKind;
+  /** See {@link CardKey}. */
+  item: string;
   direction: CardDirection;
   due_ms: number;
   /** FSRS memory stability (days) — interval is derived from this + retention target. */
@@ -180,10 +208,15 @@ export function versionMs(c: SrsCard): number {
  * every local mutation and every sync, which also makes it the change signal
  * content scripts watch. Lives here so content code needn't import the IDB layer.
  */
-export const CARDS_BACKUP_KEY = "_yomeru_cards_backup";
+export const CARDS_BACKUP_KEY = "_yomeru_cards_backup_v3";
 
-export function cardId(sequence: number, direction: CardDirection): string {
-  return `${sequence}::${direction}`;
+/** Where the mirror lived while cards keyed on `sequence`. Its cards are in
+ * the old shape, so it is removed, never restored: the server holds the
+ * migrated deck (`docs/phase-4-grammar-cards.md`, "Card keys"). */
+export const OLD_CARDS_BACKUP_KEY = "_yomeru_cards_backup";
+
+export function cardId(key: CardKey, direction: CardDirection): string {
+  return `${key.kind}:${key.item}:${direction}`;
 }
 
 export interface SrsSettings {
@@ -271,7 +304,7 @@ export interface GrammarExample {
  *  `grammar-wasm`. */
 export interface GrammarPopupEntry {
   id: string;
-  /** The `sequence` of the point's review card. */
+  /** The entry's number, the `item` of its review card. */
   seq: number;
   pattern: string;
   jlpt: string;

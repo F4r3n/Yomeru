@@ -1,11 +1,11 @@
 //! IndexedDB wrapper for cards. Mirrors `extension/src/background/idb.ts` at
-//! schema v9 (cards keyed on JMdict ent_seq, a tombstones store, a review
-//! outbox, and the delta-sync dirty set and cursor). v6 replaced the old `word` secondary index with
-//! `sequence`; users carrying v5 data are expected to export and re-import.
+//! schema v10 (cards keyed on `kind` + `item`, a tombstones store, a review
+//! outbox, and the delta-sync dirty set and cursor). v10 replaced the `u32`
+//! `sequence` key; see [`open`] for what an upgrade keeps.
 
 pub use crate::store_common::*;
 use crate::sync::SyncCursor;
-use crate::types::{CardDirection, ReviewLog, SrsCard, card_id};
+use crate::types::{CardDirection, CardItem, ReviewLog, SrsCard, card_id};
 use idb::{
     Database, DatabaseEvent, Factory, IndexParams, KeyPath, ObjectStoreParams, Query,
     TransactionMode,
@@ -17,9 +17,10 @@ const DB_NAME: &str = "yomeru-db";
 // v7 re-runs the v6 sequence-keyed reset to self-heal any DB left half-migrated
 // by an earlier build that created the store without the `sequence` index.
 // v8 adds the review outbox. v9 adds the delta-sync dirty set and the meta
-// store holding the sync cursor. The extension opens the same database, so
-// this and `DB_VERSION` in idb.ts must move together.
-const DB_VERSION: u32 = 9;
+// store holding the sync cursor. v10 keys cards on `kind` + `item` instead of
+// `sequence` (see the upgrade below). The extension opens the same database,
+// so this and `DB_VERSION` in idb.ts must move together.
+const DB_VERSION: u32 = 10;
 const STORE: &str = "cards";
 const TOMB_STORE: &str = "tombstones";
 const REVIEW_STORE: &str = "review_outbox";
@@ -57,16 +58,26 @@ async fn open() -> Result<Database, idb::Error> {
         // old_version < 7 so a later bump can't wipe good data. This MUST match
         // the TS side: whichever layer opens yomeru-db first runs the upgrade,
         // and the other then relies on the `sequence` index existing.
-        if (1..7).contains(&old_version) {
-            if db.store_names().iter().any(|n| n == STORE)
-                && let Err(e) = db.delete_object_store(STORE)
+        //
+        // v10 clean break: cards key on `kind` + `item` rather than a `u32`
+        // `sequence`, and every card id changed. Nothing is converted here:
+        // the card data and everything keyed by card id goes, along with the
+        // sync cursor, so the next sync is a full one that pulls every card
+        // back from the server, which converted its copy. Settings live in
+        // localStorage and stay. Unsynced changes are lost, which is why the
+        // rollout syncs every device first (docs/phase-4-grammar-cards.md).
+        let wiped: &[&str] = if (1..7).contains(&old_version) {
+            &[STORE, TOMB_STORE]
+        } else if (7..10).contains(&old_version) {
+            &[STORE, TOMB_STORE, REVIEW_STORE, DRILL_STORE, DIRTY_STORE, META_STORE]
+        } else {
+            &[]
+        };
+        for &name in wiped {
+            if db.store_names().iter().any(|n| n == name)
+                && let Err(e) = db.delete_object_store(name)
             {
-                tracing::error!("idb upgrade: delete_object_store({STORE}) failed: {e:?}");
-            }
-            if db.store_names().iter().any(|n| n == TOMB_STORE)
-                && let Err(e) = db.delete_object_store(TOMB_STORE)
-            {
-                tracing::error!("idb upgrade: delete_object_store({TOMB_STORE}) failed: {e:?}");
+                tracing::error!("idb upgrade: delete_object_store({name}) failed: {e:?}");
             }
         }
         if !db.store_names().iter().any(|n| n == STORE) {
@@ -96,7 +107,7 @@ async fn open() -> Result<Database, idb::Error> {
                 .create_index("status", KeyPath::new_single("status"), Some(idx.clone()))
                 .ok();
             store
-                .create_index("sequence", KeyPath::new_single("sequence"), Some(idx))
+                .create_index("item", KeyPath::new_array(["kind", "item"]), Some(idx))
                 .ok();
         }
         if !db.store_names().iter().any(|n| n == TOMB_STORE) {
@@ -208,13 +219,48 @@ pub(crate) async fn put_all(cards: &[SrsCard], stamp: bool) -> Result<(), String
     Ok(())
 }
 
-pub async fn get_card(sequence: u32, direction: CardDirection) -> Result<Option<SrsCard>, String> {
+/// Writes cards as the server sent them, without stamping: the ones this
+/// build can't read (a kind or direction it doesn't know). They wait in the
+/// store, skipped by every typed read, until an update knows their kind.
+pub(crate) async fn put_raw_cards(cards: &[serde_json::Value]) -> Result<(), String> {
+    if cards.is_empty() {
+        return Ok(());
+    }
+    let db = open().await.map_err(|e| e.to_string())?;
+    let tx = db
+        .transaction(&[STORE], TransactionMode::ReadWrite)
+        .map_err(|e| e.to_string())?;
+    let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
+    for c in cards {
+        store
+            .put(&to_value(c).map_err(|e| e.to_string())?, None)
+            .map_err(|e| e.to_string())?
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+    tx.commit()
+        .map_err(|e| e.to_string())?
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// The `item` index's key for `item`: `[kind, item]`.
+fn item_key(item: CardItem) -> JsValue {
+    js_sys::Array::of2(
+        &JsValue::from_str(item.kind().as_str()),
+        &JsValue::from_str(&item.key()),
+    )
+    .into()
+}
+
+pub async fn get_card(item: CardItem, direction: CardDirection) -> Result<Option<SrsCard>, String> {
     let db = open().await.map_err(|e| e.to_string())?;
     let tx = db
         .transaction(&[STORE], TransactionMode::ReadOnly)
         .map_err(|e| e.to_string())?;
     let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
-    let key = JsValue::from_str(&card_id(sequence, direction));
+    let key = JsValue::from_str(&card_id(item, direction));
     let v = store
         .get(Query::Key(key))
         .map_err(|e| e.to_string())?
@@ -223,14 +269,16 @@ pub async fn get_card(sequence: u32, direction: CardDirection) -> Result<Option<
     Ok(v.and_then(|val| from_value(val).ok()))
 }
 
-pub async fn get_cards_by_sequence(sequence: u32) -> Result<Vec<SrsCard>, String> {
+/// Every card of `item`: a word's two directions, a kanji's or a grammar
+/// point's one.
+pub async fn get_cards_of(item: CardItem) -> Result<Vec<SrsCard>, String> {
     let db = open().await.map_err(|e| e.to_string())?;
     let tx = db
         .transaction(&[STORE], TransactionMode::ReadOnly)
         .map_err(|e| e.to_string())?;
     let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
-    let index = store.index("sequence").map_err(|e| e.to_string())?;
-    let key = JsValue::from_f64(f64::from(sequence));
+    let index = store.index("item").map_err(|e| e.to_string())?;
+    let key = item_key(item);
     let arr = index
         .get_all(Some(Query::Key(key)), None)
         .map_err(|e| e.to_string())?
@@ -239,14 +287,14 @@ pub async fn get_cards_by_sequence(sequence: u32) -> Result<Vec<SrsCard>, String
     Ok(arr.into_iter().filter_map(|v| from_value(v).ok()).collect())
 }
 
-pub async fn has_card(sequence: u32) -> Result<bool, String> {
+pub async fn has_card(item: CardItem) -> Result<bool, String> {
     let db = open().await.map_err(|e| e.to_string())?;
     let tx = db
         .transaction(&[STORE], TransactionMode::ReadOnly)
         .map_err(|e| e.to_string())?;
     let store = tx.object_store(STORE).map_err(|e| e.to_string())?;
-    let index = store.index("sequence").map_err(|e| e.to_string())?;
-    let key = JsValue::from_f64(f64::from(sequence));
+    let index = store.index("item").map_err(|e| e.to_string())?;
+    let key = item_key(item);
     let has_key = index
         .get_key(Query::Key(key))
         .map_err(|e| e.to_string())?

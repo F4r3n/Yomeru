@@ -1,6 +1,7 @@
 <script lang="ts">
     import { popupStore } from "./popup-store";
     import type { WordEntry, ExampleEntry, WordStatus } from "../shared/types.ts";
+    import { wordKey } from "../shared/types.ts";
     import { srsSequenceAdded, hasSrsSequence } from "./srs-highlighter";
     import WordTab from "./WordTab.svelte";
     import KanjiTab from "./KanjiTab.svelte";
@@ -58,8 +59,11 @@
         statuses = initial;
         const key = entriesKey;
         browser.runtime
-            .sendMessage({ type: "GET_WORD_STATUS", payload: { sequences } })
-            .then((res: { statuses: Record<number, WordStatus> }) => {
+            .sendMessage({
+                type: "GET_WORD_STATUS",
+                payload: { kind: "word", items: sequences.map(String) },
+            })
+            .then((res: { statuses: Record<string, WordStatus> }) => {
                 // The popup may have moved to another word meanwhile.
                 if (key === entriesKey && res?.statuses) statuses = { ...statuses, ...res.statuses };
             })
@@ -114,13 +118,14 @@
     /** Runs one SRS action for an entry and adopts the standing it returns. */
     async function act(entry: WordEntry, type: "ADD_WORD" | "BUMP_PRIORITY" | "RESET_CARD") {
         const sequence = entry.sequence;
-        const res = await browser.runtime.sendMessage({ type, payload: { sequence } });
+        const payload = type === "ADD_WORD" ? { sequence } : wordKey(sequence);
+        const res = await browser.runtime.sendMessage({ type, payload });
         if (type === "ADD_WORD") {
             srsSequenceAdded(sequence);
             // Adding is a no-op for a word already in the deck, so re-read it.
             const fresh = await browser.runtime.sendMessage({
                 type: "GET_WORD_STATUS",
-                payload: { sequences: [sequence] },
+                payload: { kind: "word", items: [String(sequence)] },
             });
             statuses = { ...statuses, ...fresh.statuses };
         } else {

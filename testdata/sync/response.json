@@ -1,8 +1,9 @@
 {
   "cards": [
     {
-      "id": "1467640::recognition",
-      "sequence": 1467640,
+      "id": "word:1467640:recognition",
+      "kind": "word",
+      "item": "1467640",
       "direction": "recognition",
       "due_ms": 1757000000000.0,
       "stability": 4.2,
@@ -18,7 +19,7 @@
       "updated_ms": 1756900000000.0
     }
   ],
-  "deletions": ["1467640::recall"],
+  "deletions": ["word:1467640:recall"],
   "settings": {
     "graduation_interval_days": 365,
     "interval_scale": 1.0,
@@ -28,7 +29,7 @@
     "updated_ms": 1756000000000.0
   },
   "drill_counts": {
-    "1467640::recognition": 1
+    "word:1467640:recognition": 1
   },
   "cursor": {
     "epoch": "3f9c0a7d51e2b864.1",

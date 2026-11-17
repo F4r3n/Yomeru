@@ -18,7 +18,7 @@ use crate::srs::{
     apply_review, now_ms, pick_drill_batch, rating_from_u8, trouble_kanji,
 };
 use crate::sync::{schedule_sync, use_reload_on_sync};
-use crate::types::{ReviewKind, SrsCard};
+use crate::types::{CardItem, ReviewKind, SrsCard};
 
 use super::review::{next_due_message, shuffle};
 use super::review_common::{
@@ -68,7 +68,7 @@ pub(crate) fn KanjiReview() -> Element {
     // ratings feed the recap and nothing else.
     let mut drill = use_signal(|| false);
     // Drill counts from the answer log, which rotate the batch a drill picks.
-    let mut drilled = use_signal(HashMap::<u32, u32>::new);
+    let mut drilled = use_signal(HashMap::<CardItem, u32>::new);
     let mut show_all_trouble = use_signal(|| false);
     let mut results = use_signal(Vec::<KanjiResult>::new);
     // Same guard as word review: the card only advances once its write lands,
@@ -308,7 +308,7 @@ pub(crate) fn KanjiReview() -> Element {
                         .iter()
                         .filter_map(|(t, e)| {
                             let kanji = t.cards.first()?.kanji_char()?;
-                            let n = drilled.read().get(&t.sequence).copied().unwrap_or(0);
+                            let n = drilled.read().get(&t.item).copied().unwrap_or(0);
                             Some(TroubleRow { kanji, entry: e.clone(), fails: t.fails, drilled: n })
                         })
                         .collect::<Vec<_>>(),
