@@ -9304,6 +9304,91 @@ examples = [
 ]
 
 [[point]]
+id = "to-suru"
+pattern = "とする"
+forms = ["とします", "だとする", "だとします"]
+jlpt = "N3"
+meaning = "suppose (that), let's say; (formal) decide, rule that"
+formation = [
+  "Verb / ［い］Adjective + とする   (ある → あるとする)",
+  "［な］Adjective / Noun + (だ)とする   (中止とする)",
+]
+explanation = """
+Lays down an assumption to reason from, whatever the real facts are: \
+仮に毎日10ページ読むとする, "say you read ten pages a day". とします is \
+common when explaining or setting up a problem: ここに箱が二つあるとします, \
+"suppose there are two boxes here". 仮に or もし often comes first."""
+notes = """
+In rules and notices, Noun + とする states a decision: 雨の場合は中止とする, \
+"if it rains, it's called off" (in speech, にする). としたら / とすれば \
+go on to a result; plain とする only sets the premise. Don't confuse with \
+ようとする ("try to"), AをBとする ("treat A as B"), or sound words + \
+とする (ほっとする, "feel relieved"), which are vocabulary."""
+related = ["to-shitara", "wo-to-suru", "you-to-suru", "ni-suru", "mono-to-suru"]
+examples = [
+  { source = "yomeru", ja = "ここにりんごが三つある{とします}。", en = "Suppose there are three apples here." },
+  { source = "yomeru", ja = "明日雨が降る{とする}。どうする？", en = "Let's say it rains tomorrow. What will you do?" },
+  { source = "yomeru", ja = "雨の場合、試合は中止{とする}。", en = "In case of rain, the match will be called off." },
+]
+
+[[point]]
+id = "o-da"
+pattern = "お〜だ"
+forms = ["お〜です", "ご〜です", "ご〜だ"]
+jlpt = "N3"
+meaning = "(respectful) is doing, has, is — said of someone above you"
+formation = [
+  "お + Verb［stem］ + です   (待つ → お待ちです)",
+  "ご + Noun (a する-verb noun) + です   (利用 → ご利用です)",
+]
+explanation = """
+A short respectful way to say what someone is doing, has or is about to \
+do, where お〜になる would be long: 部長がお待ちです, "the manager is \
+waiting for you"; 傘をお持ちですか, "do you have an umbrella?". It usually \
+stands for a state or something going on, like 〜ている."""
+notes = """
+Nearly always with です; お〜だ is for narration or talking about a \
+superior among equals. Set uses worth knowing: お持ちですか ("do you \
+have"), お出かけですか ("are you going out?"), お見えです ("has \
+arrived"). It raises the other person, so not for your own actions: \
+those take humble お〜する. お休みです is also a plain polite "is \
+closed / off today", even for a shop."""
+related = ["o-ni-naru", "o-suru", "o-kudasai"]
+examples = [
+  { tatoeba = "276281_136955", ja = "誰かを{お待ちです}か。", en = "Are you waiting for anybody?" },
+  { tatoeba = "29830_192666", ja = "ライターを{お持ちです}か。", en = "Do you have a lighter?" },
+  { tatoeba = "31669_194496", ja = "もう{お見えです}。", en = "They're already here." },
+]
+
+[[point]]
+id = "you-ni-natte-iru"
+pattern = "ようになっている"
+forms = ["ようになっています", "ないようになっている"]
+jlpt = "N3"
+meaning = "is set up so that, is designed to, (works) so that"
+formation = [
+  "Verb［る］ + ようになっている",
+  "Verb［できる］ + ようになっている   (開けられるようになっている)",
+  "Verb［ない］ + ようになっている",
+]
+explanation = """
+Describes how something has been made or arranged to work, a system \
+already in place: このドアは自動で閉まるようになっている, "this door is \
+made to close by itself". Common when explaining machines, rules and \
+procedures."""
+notes = """
+ようになる is a change, "come to (do)"; ようになっている is the finished \
+arrangement. Said of a person, it can simply be the result of that \
+change: 今は泳げるようになっている, "can swim now". ようにしている is a \
+habit you keep up on purpose."""
+related = ["you-ni-naru", "you-ni-suru", "te-aru"]
+examples = [
+  { tatoeba = "18996_180136", ja = "橋でその島へ渡れる{ようになっている}。", en = "A bridge gives access to the island." },
+  { tatoeba = "50208_212923", ja = "そのドアは手前へ折りたためる{ようになっている}。", en = "The doors fold back." },
+  { source = "yomeru", ja = "ボタンを押すと水が出る{ようになっています}。", en = "It's set up so that water comes out when you press the button." },
+]
+
+[[point]]
 id = "to-shite"
 pattern = "として"
 forms = ["としての"]
@@ -12223,6 +12308,88 @@ examples = [
   { tatoeba = "273157_141414", ja = "専門家{だけあって}彼はその分野に詳しい。", en = "As may be expected of an expert, he's well versed in the field." },
   { tatoeba = "304683_99017", ja = "彼は留学した{だけのことはある}。", en = "He hasn't studied abroad for nothing." },
   { source = "yomeru", ja = "高かった{だけあって}、とても丈夫だ。", en = "It was expensive, and it's very sturdy, as you'd expect." },
+]
+
+[[point]]
+id = "ru-ni-wa"
+pattern = "には"
+forms = []
+jlpt = "N2"
+meaning = "to (do), in order to — what it takes to (do)"
+formation = ["Verb［る］ + には   (行くには)"]
+explanation = """
+Names a goal, then says what reaching it takes: a way, a requirement, a \
+cost. 駅に行くには、バスが便利です, "to get to the station, the bus is \
+handy". The second half is usually 必要だ, 〜なければならない, かかる, \
+いい or a method."""
+notes = """
+ために gives the purpose of something you do (勝つために練習する); には \
+asks what the goal requires and often sounds general. のに (〜するのに\
+使う／必要だ) is close but tied to a few words (使う, 必要, かかる). After \
+a noun, には is just に + は: 子どもには難しい, "hard for children"."""
+related = ["tame-ni", "noni-purpose"]
+hover = false
+examples = [
+  { tatoeba = "35400_198207", ja = "バスでそこに行く{には}、どれくらいかかるのでしょうか。", en = "How long will it take me to get there by bus?" },
+  { tatoeba = "35548_198356", ja = "バイオリンを演奏する{には}、多くの練習が必要だ。", en = "Playing the violin requires much practice." },
+  { source = "yomeru", ja = "日本で働く{には}ビザが必要です。", en = "You need a visa to work in Japan." },
+]
+
+[[point]]
+id = "dake-no"
+pattern = "だけの"
+forms = []
+jlpt = "N2"
+meaning = "enough to, worth (doing), as much as it takes to"
+formation = [
+  "Verb + だけの + Noun   (買えるだけのお金)",
+  "Verb + だけの価値がある   (読むだけの価値)",
+]
+explanation = """
+Measures something against an action: as much of it as the action needs. \
+車を買えるだけのお金がある, "I have enough money to buy a car". With 価値 \
+it says something is worth the effort: 行くだけの価値がある, "it's worth \
+going". Often negative: 休むだけの時間もない, "not even enough time to \
+rest"."""
+notes = """
+Not the "only" だけ + の: 二人だけの秘密 is "a secret just between the \
+two of us". What follows tells them apart: amounts and value (お金, 時間, \
+力, 価値) mean "enough to". できるだけ is "as much as possible"; \
+だけあって is "as you'd expect from"."""
+related = ["dake", "dekiru-dake", "dake-atte", "ni-atai-suru"]
+hover = false
+examples = [
+  { tatoeba = "258409_156126", ja = "私は車を買える{だけの}お金がある。", en = "I have enough money to buy a car." },
+  { tatoeba = "56889_219568", ja = "この本は読む{だけの}価値がある。", en = "It is worthwhile to read this book." },
+  { tatoeba = "249817_164688", ja = "私にはその仕事をやる{だけの}力がない。", en = "I'm not equal to doing the task." },
+]
+
+[[point]]
+id = "tokoro-ni-yoru-to"
+pattern = "ところによると"
+forms = ["ところによれば"]
+jlpt = "N2"
+meaning = "according to what (I heard, read), from what"
+formation = [
+  "Verb［た］ / Verb［る］ + ところによると   (聞いたところによると)",
+  "Verb + ところでは   (私の見たところでは)",
+]
+explanation = """
+Gives what follows as something you heard, read or found out: 聞いた\
+ところによると、あの店は閉まるそうだ, "from what I've heard, that shop is \
+closing". 聞く, 調べる, 見る and 知る come before it, often with の for \
+the person: 私の知るところでは. Like によると, it usually ends in そうだ \
+or らしい."""
+notes = """
+によると follows a noun (ニュースによると); ところによると follows a verb \
+and names how you got the information. ところでは is a little softer and \
+often gives your own impression: 私の見たところでは, "as far as I can \
+see". Formal and written-leaning."""
+related = ["ni-yoru-to", "sou-da-hearsay", "rashii"]
+examples = [
+  { source = "yomeru", ja = "聞いた{ところによると}、田中さんは来月結婚するそうだ。", en = "From what I've heard, Tanaka is getting married next month." },
+  { source = "yomeru", ja = "調べた{ところによると}、この店は百年前からあるらしい。", en = "From what I found out, this shop seems to have been here for a hundred years." },
+  { tatoeba = "250780_163731", ja = "私の見た{ところでは}彼は正直者です。", en = "In my estimation, he is an honest man." },
 ]
 
 [[point]]
