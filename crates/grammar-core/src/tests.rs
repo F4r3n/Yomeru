@@ -100,6 +100,9 @@ fn compiles_every_field() {
     assert_eq!(e.examples[1].tatoeba, "");
     assert!(!dict.by_id("tte").unwrap().hover);
     assert!(dict.by_id("missing").is_none());
+    let seq = crate::grammar_seq("you-ni-suru");
+    assert_eq!(dict.by_seq(seq).unwrap().id, "you-ni-suru");
+    assert!(dict.by_seq(crate::grammar_seq("missing")).is_none());
 }
 
 #[test]

@@ -69,6 +69,7 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
     let mut warnings = Vec::new();
 
     let mut ids: HashSet<&str> = HashSet::new();
+    let mut seqs: HashMap<u32, &str> = HashMap::new();
     for p in &file.point {
         let slug = !p.id.is_empty()
             && p.id
@@ -79,6 +80,11 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
         }
         if !ids.insert(&p.id) {
             bail!("{}: duplicate id", p.id);
+        }
+        // Review cards key on this number, which can't change: rename the
+        // newer id instead.
+        if let Some(other) = seqs.insert(crate::grammar_seq(&p.id), &p.id) {
+            bail!("{}: same card number as {other}, pick another id", p.id);
         }
         if !matches!(p.jlpt.as_str(), "N5" | "N4" | "N3" | "N2" | "N1") {
             bail!("{}: jlpt must be one of N5…N1, not {:?}", p.id, p.jlpt);

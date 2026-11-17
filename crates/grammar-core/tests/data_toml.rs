@@ -18,6 +18,10 @@ fn the_checked_in_dictionary_compiles_and_answers() {
 
     let te_mo_ii = dict.by_id("te-mo-ii").unwrap();
     assert_eq!(te_mo_ii.pattern, "てもいい");
+    // A card's number leads back to its point (compile refused collisions).
+    let by_seq = dict.by_seq(grammar_core::grammar_seq("te-mo-ii")).unwrap();
+    assert_eq!(by_seq.id, "te-mo-ii");
+    assert!(dict.by_seq(grammar_core::grammar_seq("no-such-point")).is_none());
     assert!(dict.lookup("てもいい").iter().any(|e| e.id == "te-mo-ii"));
     let (entries, len) = dict.hover_match("てもいいですか。", 24).unwrap();
     assert!(entries.iter().any(|e| e.id == "te-mo-ii"), "{entries:?}");

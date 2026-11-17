@@ -6,6 +6,7 @@
 mod compile;
 mod dict;
 mod format;
+mod seq;
 pub mod types;
 
 #[cfg(all(test, feature = "build"))]
@@ -15,4 +16,5 @@ mod tests;
 pub use compile::{Compiled, compile};
 pub use dict::{GrammarDict, HOVER_MIN_CHARS};
 pub use format::FORMAT_VERSION;
+pub use seq::{GRAMMAR_SEQ_BIT, grammar_seq, is_grammar_seq};
 pub use types::{Example, GrammarEntry, Related, Rich, Span};

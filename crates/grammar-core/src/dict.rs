@@ -1,5 +1,7 @@
 //! A loaded `grammar.bin` and its lookups.
 
+use std::collections::HashMap;
+
 use fst::{IntoStreamer, Streamer};
 
 use crate::format;
@@ -38,6 +40,8 @@ pub struct GrammarDict {
     groups: Vec<Vec<u32>>,
     /// Sorted by id.
     ids: Vec<(String, u32)>,
+    /// [`crate::grammar_seq`] of each id → its index in `ids`.
+    seqs: HashMap<u32, usize>,
     entries: Vec<u8>,
 }
 
@@ -47,10 +51,17 @@ impl GrammarDict {
         // Structure only: `compile` already decoded every entry of the file
         // it wrote, and the version byte refuses files of other builds.
         let parts = format::read(bytes)?;
+        let seqs = parts
+            .ids
+            .iter()
+            .enumerate()
+            .map(|(i, (id, _))| (crate::grammar_seq(id), i))
+            .collect();
         Ok(Self {
             fst: fst::Map::new(parts.fst.to_vec())?,
             groups: parts.groups,
             ids: parts.ids,
+            seqs,
             entries: parts.entries.to_vec(),
         })
     }
@@ -75,6 +86,14 @@ impl GrammarDict {
             .ids
             .binary_search_by(|(k, _)| k.as_str().cmp(id))
             .ok()?;
+        let &(_, offset) = self.ids.get(i)?;
+        format::entry_at(&self.entries, offset).ok()
+    }
+
+    /// The entry a grammar card with this `sequence` reviews (see
+    /// [`crate::grammar_seq`]). `None` once the point left the dictionary.
+    pub fn by_seq(&self, sequence: u32) -> Option<GrammarEntry> {
+        let &i = self.seqs.get(&sequence)?;
         let &(_, offset) = self.ids.get(i)?;
         format::entry_at(&self.entries, offset).ok()
     }

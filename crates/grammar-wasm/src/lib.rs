@@ -61,6 +61,13 @@ impl GrammarDictionary {
         Ok(GrammarDictionary { inner })
     }
 
+    /// The full entries grammar cards with these `sequence`s review, `null`
+    /// for a point that left the dictionary (`GrammarDict::by_seq`).
+    pub fn by_seq(&self, sequences: &[u32]) -> Result<JsValue, JsError> {
+        let found: Vec<_> = sequences.iter().map(|&s| self.inner.by_seq(s)).collect();
+        to_js(&found)
+    }
+
     /// Entries whose pattern or a form is exactly `text`.
     pub fn lookup(&self, text: &str) -> Result<JsValue, JsError> {
         to_js(&self.inner.lookup(text))
@@ -113,4 +120,11 @@ impl GrammarDictionary {
     pub fn search(&self, text: &str, max: usize) -> Result<JsValue, JsError> {
         to_js(&self.inner.search(text, max))
     }
+}
+
+/// The `sequence` of the review card for grammar point `id`
+/// (`grammar_core::grammar_seq`).
+#[wasm_bindgen]
+pub fn grammar_seq(id: &str) -> u32 {
+    grammar_core::grammar_seq(id)
 }
