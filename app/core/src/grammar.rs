@@ -3,7 +3,7 @@
 //! [`crate::platform::DictClient::grammar_search`]: the server, the
 //! Android app's bundled copy, or the extension's background.
 
-pub use grammar_core::{Example, GrammarEntry, Related, Rich, Span};
+pub use grammar_core::{Example, GrammarEntry, Related, Rich, Span, grammar_seq, is_grammar_seq};
 
 /// Deletes the grammar dictionary earlier versions downloaded and converted
 /// on the device (bee-san's, never ours to keep around). Once per device;

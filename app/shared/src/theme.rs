@@ -846,6 +846,10 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 }
 .review-card .face .word { font-size: 36px; font-weight: 600; letter-spacing: 1px; }
 .review-card .face .kanji-face { font-size: 72px; font-weight: 500; line-height: 1.1; }
+.review-card .face .grammar-face { font-size: 32px; }
+.grammar-back { margin-top: 12px; }
+.grammar-back-meaning { font-size: 17px; margin-bottom: 8px; }
+.grammar-back .link { margin-top: 12px; font-size: 13px; }
 .kanji-back { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; font-size: 15px; }
 .kanji-back .meanings { font-size: 18px; font-weight: 600; }
 .kanji-back .kanji-parts { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 8px; margin-top: 6px; }
@@ -954,6 +958,7 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .grammar-card.open .grammar-meaning { display: block; }
+.grammar-deck { margin-top: 8px; }
 .grammar-structure {
     display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 6px;
     font-size: 13px; color: var(--subtext); background: color-mix(in srgb, var(--border) 35%, transparent);

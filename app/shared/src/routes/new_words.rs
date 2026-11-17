@@ -4,7 +4,10 @@ use dioxus::prelude::*;
 use jmdict_types::WordEntry;
 
 use crate::components::pos_list;
-use crate::dict::{frequency_label, lookup_by_sequence, preferred_headword, primary_reading};
+use crate::dict::{
+    frequency_label, grammar_by_seq, lookup_by_sequence, preferred_headword, primary_reading,
+};
+use crate::grammar::GrammarEntry;
 use crate::icons::{Icon, IconName};
 use crate::idb::{delete_card, get_staging_cards, promote_card};
 use crate::romaji::PreparedQuery;
@@ -15,6 +18,8 @@ use crate::types::SrsCard;
 pub fn NewWordsTab() -> Element {
     let mut cards = use_signal(Vec::<SrsCard>::new);
     let mut entries = use_signal(HashMap::<u32, WordEntry>::new);
+    // Staged grammar points, by card sequence.
+    let mut points = use_signal(HashMap::<u32, GrammarEntry>::new);
     let mut expanded = use_signal(HashSet::<u32>::new);
     let mut loading = use_signal(|| true);
     let mut err = use_signal(|| Option::<String>::None);
@@ -36,7 +41,28 @@ pub fn NewWordsTab() -> Element {
             let result = match result {
                 Ok(c) => {
                     let deduped = unique_by_sequence(c);
-                    let seqs: Vec<u32> = deduped.iter().map(|c| c.sequence).collect();
+                    let seqs: Vec<u32> = deduped
+                        .iter()
+                        .filter(|c| c.is_word())
+                        .map(|c| c.sequence)
+                        .collect();
+                    let grammar_seqs: Vec<u32> = deduped
+                        .iter()
+                        .filter(|c| c.is_grammar())
+                        .map(|c| c.sequence)
+                        .collect();
+                    let found = match grammar_by_seq(&grammar_seqs).await {
+                        Ok(v) => v,
+                        Err(e) => {
+                            warn!("grammar_by_seq({} staged cards) failed: {e}", grammar_seqs.len());
+                            Vec::new()
+                        }
+                    };
+                    let grammar: HashMap<u32, GrammarEntry> = grammar_seqs
+                        .into_iter()
+                        .zip(found)
+                        .filter_map(|(s, e)| Some((s, e?)))
+                        .collect();
                     let looked_up = match lookup_by_sequence(&seqs).await {
                         Ok(v) => v,
                         Err(e) => {
@@ -47,7 +73,12 @@ pub fn NewWordsTab() -> Element {
                             Vec::new()
                         }
                     };
-                    Ok((deduped, looked_up))
+                    let looked_up: HashMap<u32, WordEntry> = seqs
+                        .into_iter()
+                        .zip(looked_up)
+                        .filter_map(|(s, e)| Some((s, e?)))
+                        .collect();
+                    Ok((deduped, looked_up, grammar))
                 }
                 Err(e) => Err(e),
             };
@@ -56,13 +87,12 @@ pub fn NewWordsTab() -> Element {
             }
             applied_gen.set(my_gen);
             match result {
-                Ok((deduped, looked_up)) => {
-                    let map: HashMap<u32, WordEntry> = deduped
-                        .iter()
-                        .zip(looked_up)
-                        .filter_map(|(card, entry)| Some((card.sequence, entry?)))
-                        .collect();
-                    entries.set(map);
+                Ok((mut deduped, looked_up, grammar)) => {
+                    // A grammar point that left the dictionary stays out of
+                    // sight, its card kept (see the phase-4 doc).
+                    deduped.retain(|c| !c.is_grammar() || grammar.contains_key(&c.sequence));
+                    entries.set(looked_up);
+                    points.set(grammar);
                     cards.set(deduped);
                     err.set(None);
                 }
@@ -79,9 +109,12 @@ pub fn NewWordsTab() -> Element {
     // re-fetching everything. If a reload is still in flight it may have read
     // the store before our write, so restart it to get a fresh snapshot.
     let remove_local = move |seq: u32| {
-        let (mut cards, mut entries, mut expanded) = (cards, entries, expanded);
+        let (mut cards, mut entries, mut points, mut expanded) = (cards, entries, points, expanded);
         cards.with_mut(|c| c.retain(|c| c.sequence != seq));
         entries.with_mut(|m| {
+            m.remove(&seq);
+        });
+        points.with_mut(|m| {
             m.remove(&seq);
         });
         expanded.with_mut(|s| {
@@ -116,6 +149,7 @@ pub fn NewWordsTab() -> Element {
 
     let cards_r = cards.read();
     let entries_r = entries.read();
+    let points_r = points.read();
     let count = cards_r.len();
     let filter_s = filter.read().to_lowercase();
     let query = PreparedQuery::new(&filter_s);
@@ -126,6 +160,9 @@ pub fn NewWordsTab() -> Element {
                 || entries_r
                     .get(&c.sequence)
                     .is_some_and(|e| query.matches(preferred_headword(e), primary_reading(e)))
+                || points_r
+                    .get(&c.sequence)
+                    .is_some_and(|p| query.matches(&p.pattern, &p.pattern))
         })
         .collect();
 
@@ -174,12 +211,17 @@ pub fn NewWordsTab() -> Element {
                             let seq = card.sequence;
                             let priority = card.priority;
                             let entry = entries_r.get(&seq);
+                            let point = points_r.get(&seq).cloned();
                             let label = entry
                                 .map(|e| preferred_headword(e).to_string())
+                                .or_else(|| point.as_ref().map(|p| p.pattern.clone()))
                                 .unwrap_or_else(|| format!("(seq {seq})"));
                             let reading = entry.map(primary_reading).unwrap_or_default();
                             let show_reading = !reading.is_empty() && reading != label;
-                            let freq = entry.and_then(frequency_label);
+                            let freq = entry
+                                .and_then(frequency_label)
+                                .map(str::to_string)
+                                .or_else(|| point.as_ref().map(|p| format!("Grammar · {}", p.jlpt)));
                             let is_open = expanded.read().contains(&seq);
                             let item_class = if is_open { "card staged-item open" } else { "card staged-item" };
                             rsx! {
@@ -215,6 +257,14 @@ pub fn NewWordsTab() -> Element {
                                     }
                                     if is_open && let Some(e) = entry {
                                         EntryDetail { entry: e.clone() }
+                                    }
+                                    if is_open && let Some(p) = point {
+                                        div { class: "entry-detail",
+                                            div { class: "gloss", "{p.meaning}" }
+                                            for (i, line) in p.formation.iter().enumerate() {
+                                                div { key: "{i}", class: "pos", lang: "ja", "{line}" }
+                                            }
+                                        }
                                     }
                                 }
                             }

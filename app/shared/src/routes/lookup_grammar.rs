@@ -9,6 +9,10 @@ use dioxus::prelude::*;
 
 use crate::grammar::{Example, GrammarEntry, Span};
 use crate::icons::{Icon, IconName};
+use crate::idb::{bump_priority, get_cards_by_sequence, put_card, reset_card};
+use crate::srs::now_ms;
+use crate::sync::schedule_sync;
+use crate::types::{CardStatus, MAX_PRIORITY, SrsCard};
 
 /// Examples a closed card previews.
 const PREVIEW_EXAMPLES: usize = 2;
@@ -65,6 +69,7 @@ fn GrammarEntryCard(entry: GrammarEntry, on_search: EventHandler<String>) -> Ele
                     }
                 }
                 div { class: "gloss grammar-meaning", "{entry.meaning}" }
+                GrammarDeckButton { id: entry.id.clone() }
                 if !is_open {
                     if let Some(first) = entry.formation.first() {
                         div { class: "grammar-structure", lang: "ja", "{first}" }
@@ -147,6 +152,91 @@ fn bee_search_url(pattern: &str) -> String {
     url
 }
 
+/// The point's card in the deck: Add, then the staging priority like a
+/// word, then its state. The card is `SrsCard::new_grammar`, keyed by
+/// `grammar_seq`, so `get_cards_by_sequence` finds exactly that one.
+#[component]
+fn GrammarDeckButton(id: String) -> Element {
+    let sequence = crate::grammar::grammar_seq(&id);
+    let mut card = use_signal(|| None::<SrsCard>);
+    let mut busy = use_signal(|| false);
+    use_effect(use_reactive!(|sequence| {
+        spawn(async move {
+            match get_cards_by_sequence(sequence).await {
+                Ok(cards) => card.set(cards.into_iter().next()),
+                Err(e) => warn!("get_cards_by_sequence(grammar {sequence}) failed: {e}"),
+            }
+        });
+    }));
+
+    let refresh = move || async move {
+        let cards = get_cards_by_sequence(sequence).await.unwrap_or_default();
+        card.set(cards.into_iter().next());
+    };
+    let id_for_add = id.clone();
+    let on_add = move |e: MouseEvent| {
+        e.stop_propagation();
+        if *busy.peek() {
+            return;
+        }
+        busy.set(true);
+        let id = id_for_add.clone();
+        spawn(async move {
+            let current = card.peek().clone();
+            let res = match current {
+                None => put_card(&SrsCard::new_grammar(&id, now_ms())).await,
+                Some(_) => bump_priority(sequence).await,
+            };
+            match res {
+                Ok(()) => schedule_sync(),
+                Err(e) => warn!("adding grammar card {id} failed: {e}"),
+            }
+            refresh().await;
+            busy.set(false);
+        });
+    };
+    let on_reset = move |e: MouseEvent| {
+        e.stop_propagation();
+        spawn(async move {
+            let confirmed = crate::rt::confirm(
+                "Reset this grammar point's SRS progress? This can't be undone.",
+            )
+            .await;
+            if !confirmed {
+                return;
+            }
+            match reset_card(sequence, now_ms()).await {
+                Ok(()) => schedule_sync(),
+                Err(e) => warn!("reset_card(grammar {sequence}) failed: {e}"),
+            }
+            refresh().await;
+        });
+    };
+
+    let current = card.read().clone();
+    let disabled = *busy.read();
+    rsx! {
+        div { class: "grammar-deck",
+            match current {
+                None => rsx! {
+                    button { class: "primary", disabled, onclick: on_add, "+ Add to deck" }
+                },
+                Some(c) if c.status == CardStatus::Staging && c.priority >= MAX_PRIORITY => rsx! {
+                    button { class: "success", disabled: true, "★ Staged · Priority maxed ({MAX_PRIORITY})" }
+                },
+                Some(c) if c.status == CardStatus::Staging => rsx! {
+                    button { class: "success", disabled, onclick: on_add, "☆ Staged · +Priority (★{c.priority})" }
+                },
+                Some(c) => rsx! {
+                    button { class: "success", onclick: on_reset,
+                        if c.status == CardStatus::Graduated { "✓ Graduated · Reset" } else { "✓ In deck · Reset" }
+                    }
+                },
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::bee_search_url;
@@ -165,7 +255,7 @@ mod tests {
 }
 
 #[component]
-fn ExampleList(examples: Vec<Example>) -> Element {
+pub(crate) fn ExampleList(examples: Vec<Example>) -> Element {
     rsx! {
         div { class: "grammar-examples",
             for (i, ex) in examples.into_iter().enumerate() {

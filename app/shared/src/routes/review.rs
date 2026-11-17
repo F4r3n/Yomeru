@@ -22,6 +22,7 @@ use super::review_common::{
     Answered, RateButtons, ShowAnswerButton, TabButton, UndoButton, rating_label, undo_answer,
     use_review_shortcuts,
 };
+use super::review_grammar::GrammarReview;
 use super::review_kanji::KanjiReview;
 
 #[derive(Clone, Copy, PartialEq)]
@@ -105,15 +106,18 @@ const REVIEW_TAB_KEY: &str = "yomeru.review_tab";
 enum ReviewKind {
     Words,
     Kanji,
+    Grammar,
 }
 
-/// The Review page: word and kanji reviews as separate sessions, one tab each.
+/// The Review page: word, kanji and grammar reviews as separate sessions, one
+/// tab each.
 /// Only the open tab is mounted, so only its keyboard shortcuts are live.
 #[component]
 pub fn ReviewTab() -> Element {
     let mut kind = use_signal(
         || match crate::rt::kv_get::<String>(REVIEW_TAB_KEY).as_deref() {
             Some("kanji") => ReviewKind::Kanji,
+            Some("grammar") => ReviewKind::Grammar,
             _ => ReviewKind::Words,
         },
     );
@@ -121,10 +125,10 @@ pub fn ReviewTab() -> Element {
         kind.set(k);
         let _ = crate::rt::kv_set(
             REVIEW_TAB_KEY,
-            &if k == ReviewKind::Kanji {
-                "kanji"
-            } else {
-                "words"
+            &match k {
+                ReviewKind::Words => "words",
+                ReviewKind::Kanji => "kanji",
+                ReviewKind::Grammar => "grammar",
             },
         );
     };
@@ -134,10 +138,12 @@ pub fn ReviewTab() -> Element {
             div { class: "subtabs", style: "margin-bottom: 14px;",
                 TabButton { active: current == ReviewKind::Words, onclick: move |_| select(ReviewKind::Words), label: "Words" }
                 TabButton { active: current == ReviewKind::Kanji, onclick: move |_| select(ReviewKind::Kanji), label: "Kanji" }
+                TabButton { active: current == ReviewKind::Grammar, onclick: move |_| select(ReviewKind::Grammar), label: "Grammar" }
             }
             match current {
                 ReviewKind::Words => rsx! { WordReview {} },
                 ReviewKind::Kanji => rsx! { KanjiReview {} },
+                ReviewKind::Grammar => rsx! { GrammarReview {} },
             }
         }
     }

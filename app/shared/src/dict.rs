@@ -75,3 +75,15 @@ pub async fn grammar_search(text: &str, max: u8) -> Result<Vec<GrammarEntry>, St
         .grammar_search(text, max)
         .await
 }
+
+/// The points grammar cards with these `sequence`s review, aligned with
+/// `sequences`; `None` for a point that left the dictionary.
+pub async fn grammar_by_seq(sequences: &[u32]) -> Result<Vec<Option<GrammarEntry>>, String> {
+    if sequences.is_empty() {
+        return Ok(vec![]);
+    }
+    consume_context::<Platform>()
+        .dict
+        .grammar_by_seq(sequences)
+        .await
+}
