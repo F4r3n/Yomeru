@@ -3,6 +3,15 @@ import { IDBFactory, IDBKeyRange as FakeIDBKeyRange } from "fake-indexeddb";
 import type { SrsCard } from "../shared/types.ts";
 import { cardId } from "../shared/types.ts";
 import { makeCard } from "./test-helpers.ts";
+import { readFileSync } from "node:fs";
+
+/** The cards of a schema-2 export as today's app writes them; the extension's
+ * storage.local snapshot holds the same card shape. */
+const EXPORT_V2: SrsCard[] = JSON.parse(
+  readFileSync(new URL("../../../testdata/backup/export-v2.json", import.meta.url), "utf8"),
+).cards;
+
+const byId = (a: SrsCard, b: SrsCard) => a.id.localeCompare(b.id);
 
 type IdbModule = typeof import("./idb.ts");
 type CardsBackupModule = typeof import("./cards-backup.ts");
@@ -164,6 +173,34 @@ describe("cards-backup", () => {
 
       expect(result).toEqual({ restored: 0, backedUp: 0 });
       expect(await idb.getAllCards()).toHaveLength(0);
+    });
+  });
+
+  describe("today's snapshot format", () => {
+    it("restores every card of a today-format snapshot field for field", async () => {
+      storage.set(backup.CARDS_BACKUP_KEY, EXPORT_V2);
+
+      const result = await backup.syncCardsBackup();
+
+      expect(result).toEqual({ restored: EXPORT_V2.length, backedUp: 0 });
+      const restored = (await idb.getAllCards()).sort(byId);
+      const expected = [...EXPORT_V2].sort(byId);
+      // putCard stamps every write, so a restored card's merge key moves
+      // forward; every other field comes back as it was.
+      const unstamped = (c: SrsCard) => ({ ...c, updated_ms: 0 });
+      expect(restored.map(unstamped)).toEqual(expected.map(unstamped));
+      restored.forEach((c, i) => expect(c.updated_ms).toBeGreaterThanOrEqual(expected[i].updated_ms ?? 0));
+    });
+
+    it("writes the snapshot in the same shape as the export", async () => {
+      for (const c of EXPORT_V2) await idb.putCard(c);
+
+      await backup.writeCardsBackup();
+
+      const snapshot = (storage.get(backup.CARDS_BACKUP_KEY) as SrsCard[]).sort(byId);
+      const keys = (c: SrsCard) => Object.keys(c).sort();
+      expect(snapshot.map(keys)).toEqual([...EXPORT_V2].sort(byId).map(keys));
+      expect(snapshot.map((c) => c.id)).toEqual(EXPORT_V2.map((c) => c.id).sort());
     });
   });
 

@@ -55,6 +55,18 @@ pub fn format_import_result(added: usize, skips: Skips) -> String {
     )
 }
 
+/// The export file for `cards`: what Settings' export button writes and
+/// [`import_cards_json`] reads back. `version` is the app's crate version,
+/// for people reading the file; `schema` is what import routes on.
+pub fn export_payload(cards: &[SrsCard], version: &str, exported_at_ms: f64) -> serde_json::Value {
+    serde_json::json!({
+        "schema": CARDS_SCHEMA_VERSION,
+        "version": version,
+        "exportedAt": exported_at_ms,
+        "cards": cards,
+    })
+}
+
 /// Imports a deck exported as JSON, resolving legacy cards through
 /// `platform`'s dictionary and arming a sync when anything was added.
 pub async fn import_cards_json(platform: &Platform, text: &str) -> Result<(usize, Skips), String> {
@@ -345,6 +357,117 @@ mod tests {
         let (to_put, skips) = parse_legacy_cards(&[card], &word_seq, &HashSet::new());
         assert_eq!(skips.total(), 0);
         assert_eq!(to_put[0].last_review_ms, None);
+    }
+
+    // --- backup files -----------------------------------------------------------
+
+    /// A schema-2 export as today's app writes it: words in both directions,
+    /// a staged pair, a graduated card, a kanji and a grammar card.
+    const EXPORT_V2: &str =
+        include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../testdata/backup/export-v2.json"));
+
+    /// Every card a backup file holds, read the way import reads it, with
+    /// nothing skipped.
+    fn read_backup(text: &str) -> (serde_json::Value, Vec<SrsCard>) {
+        let file: serde_json::Value = serde_json::from_str(text).expect("backup is JSON");
+        let raw = file["cards"].as_array().expect("backup has a cards array");
+        let (cards, skips) = parse_current_cards(raw, &HashSet::new());
+        assert_eq!(skips.total(), 0, "every card of the backup parses");
+        (file, cards)
+    }
+
+    #[test]
+    fn export_v2_reads_every_field() {
+        let (file, cards) = read_backup(EXPORT_V2);
+        assert_eq!(file["schema"], 2);
+        assert_eq!(cards.len(), 7);
+
+        let ids: Vec<&str> = cards.iter().map(|c| c.id.as_str()).collect();
+        assert_eq!(
+            ids,
+            [
+                "1358280::recognition",
+                "1358280::recall",
+                "1000220::recognition",
+                "1000220::recall",
+                "1206730::recognition",
+                "29483::kanji",
+                "3444285014::grammar",
+            ]
+        );
+        for c in &cards {
+            assert_eq!(c.id, crate::types::card_id(c.sequence, c.direction));
+        }
+
+        let rec = &cards[0];
+        assert_eq!(rec.direction, CardDirection::Recognition);
+        assert_eq!(rec.state, srs_core::CardState::Review);
+        assert_eq!(rec.status, crate::types::CardStatus::Active);
+        assert_eq!(rec.due_ms, 1_763_640_000_000.0);
+        assert_eq!(rec.stability, 12.5);
+        assert_eq!(rec.difficulty, 4.75);
+        assert_eq!((rec.reps, rec.lapses, rec.again_count), (6, 1, 1));
+        assert_eq!(rec.last_review_ms, Some(1_762_560_000_000.0));
+        assert_eq!(rec.added_ms, 1_760_000_000_000.0);
+        assert_eq!(rec.updated_ms, 1_762_560_000_000.0);
+
+        assert_eq!(cards[1].state, srs_core::CardState::Learning);
+        assert_eq!(cards[1].again_count, 2);
+
+        let staged = &cards[2];
+        assert_eq!(staged.status, crate::types::CardStatus::Staging);
+        assert_eq!(staged.state, srs_core::CardState::New);
+        assert_eq!(staged.priority, 2);
+        assert_eq!(staged.last_review_ms, None);
+
+        assert_eq!(cards[4].status, crate::types::CardStatus::Graduated);
+        assert!(cards[5].is_kanji());
+        assert_eq!(cards[5].sequence, u32::from('猫'));
+        assert!(cards[6].is_grammar());
+        assert_eq!(cards[6].sequence, crate::grammar::grammar_seq("te-mo-ii"));
+    }
+
+    /// Writing the cards back gives the same file: the fixture is what
+    /// today's export writes, and no field is lost on the way in.
+    #[test]
+    fn export_v2_is_what_export_writes() {
+        let (file, cards) = read_backup(EXPORT_V2);
+        let written = export_payload(
+            &cards,
+            file["version"].as_str().unwrap(),
+            file["exportedAt"].as_f64().unwrap(),
+        );
+        assert_eq!(written, file);
+    }
+
+    /// The same checks on a real export, kept outside the repo:
+    /// `YOMERU_EXPORT=path/to/yomeru-cards.json cargo test -p yomeru-core
+    /// real_export -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn real_export_reads_whole() {
+        let path = std::env::var("YOMERU_EXPORT").expect("set YOMERU_EXPORT");
+        let text = std::fs::read_to_string(&path).expect("read YOMERU_EXPORT");
+        let (file, cards) = read_backup(&text);
+        assert_eq!(file["schema"], CARDS_SCHEMA_VERSION);
+        for c in &cards {
+            assert_eq!(c.id, crate::types::card_id(c.sequence, c.direction), "id of {c:?}");
+        }
+        let written = export_payload(
+            &cards,
+            file["version"].as_str().unwrap(),
+            file["exportedAt"].as_f64().unwrap(),
+        );
+        assert_eq!(written["cards"], file["cards"], "no field lost reading the export");
+
+        let count = |k: crate::types::CardKind| cards.iter().filter(|c| c.kind() == k).count();
+        println!(
+            "{} cards: {} word, {} kanji, {} grammar",
+            cards.len(),
+            count(crate::types::CardKind::Word),
+            count(crate::types::CardKind::Kanji),
+            count(crate::types::CardKind::Grammar),
+        );
     }
 
     // --- result message ------------------------------------------------------

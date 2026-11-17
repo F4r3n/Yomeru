@@ -1,5 +1,4 @@
 use dioxus::prelude::*;
-use serde_json::json;
 
 use crate::api;
 use crate::app::Route;
@@ -8,7 +7,6 @@ use crate::idb::get_all_cards;
 use crate::platform::Platform;
 use crate::settings::{load, save};
 use crate::sync::{SyncHealth, bump_sync_generation, clear_sync_health, sync_now};
-use crate::types::CARDS_SCHEMA_VERSION;
 
 /// localStorage key holding the email a pending OTP was sent to. Survives a
 /// popup close (extension popups are destroyed on blur), so reopening returns
@@ -287,12 +285,11 @@ pub fn SettingsTab() -> Element {
         spawn(async move {
             let cards = get_all_cards().await.unwrap_or_default();
             let n = cards.len();
-            let payload = json!({
-                "schema": CARDS_SCHEMA_VERSION,
-                "version": env!("CARGO_PKG_VERSION"),
-                "exportedAt": crate::rt::now_ms(),
-                "cards": cards,
-            });
+            let payload = yomeru_core::cards_io::export_payload(
+                &cards,
+                env!("CARGO_PKG_VERSION"),
+                crate::rt::now_ms(),
+            );
             let text = serde_json::to_string_pretty(&payload).unwrap_or_default();
             match trigger_download(&text, "yomeru-cards.json") {
                 Ok(saved_to) => backup_status.set(Some((

@@ -22,6 +22,8 @@ mod settings;
 mod sync_meta;
 #[cfg(test)]
 pub(crate) mod test_support;
+#[cfg(test)]
+mod backup_tests;
 
 /// Lowercase hex, two digits per byte.
 pub(crate) fn hex(bytes: &[u8]) -> String {
