@@ -850,6 +850,9 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 .grammar-back { margin-top: 12px; }
 .grammar-back-meaning { font-size: 17px; margin-bottom: 8px; }
 .grammar-back .link { margin-top: 12px; font-size: 13px; }
+/* The full explanation unfolds on the card, like the lookup expansion panel. */
+.grammar-full { animation: expand-in 0.18s ease-out; }
+@media (prefers-reduced-motion: reduce) { .grammar-full { animation: none; } }
 .kanji-back { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; font-size: 15px; }
 .kanji-back .meanings { font-size: 18px; font-weight: 600; }
 .kanji-back .kanji-parts { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 8px; margin-top: 6px; }
