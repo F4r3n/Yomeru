@@ -1058,6 +1058,8 @@ mod delta {
                     .map(|(id, at)| json!({ "id": id, "deleted_at": at }))
                     .collect::<Vec<_>>(),
                 "reviews": reviews,
+                // As the app sends it: its cursors carry no grammar tag.
+                "grammar_cards": true,
             });
             if let Some(c) = &self.cursor {
                 body["since"] = c.clone();
@@ -1517,4 +1519,101 @@ async fn an_undone_drill_leaves_the_log_and_its_count_reaches_zero() {
         .await;
     assert_eq!(other["full"], false);
     assert_eq!(other["drill_counts"][X], 0);
+}
+
+// ---- grammar cards and older clients --------------------------------------
+
+/// A grammar card as the app uploads it: `sequence` is `grammar_seq` of the
+/// point's id, and only that number and the SRS fields travel.
+fn grammar_card() -> db::Card {
+    let seq = grammar_core::grammar_seq("te-wa-ikenai");
+    db::Card {
+        id: format!("{seq}::grammar"),
+        sequence: i64::from(seq),
+        direction: "grammar".to_string(),
+        ..card("unused", T0, T0 + SECOND)
+    }
+}
+
+#[tokio::test]
+async fn a_grammar_card_round_trips_to_a_client_that_knows_them() {
+    let h = Harness::new().await;
+    let g = grammar_card();
+    let (status, _) = h
+        .post(
+            "/api/sync",
+            Some(&h.token),
+            &json!({ "cards": [g], "grammar_cards": true }),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    let (_, body) = h
+        .post(
+            "/api/sync",
+            Some(&h.token),
+            &json!({ "cards": [], "grammar_cards": true }),
+        )
+        .await;
+    let resp: SyncResp = serde_json::from_value(body).unwrap();
+    let back = resp.card(&g.id).expect("grammar card comes back");
+    assert_eq!(back.sequence, g.sequence);
+    assert_eq!(back.direction, "grammar");
+}
+
+#[tokio::test]
+async fn older_clients_never_get_grammar_cards_and_catch_up_once_updated() {
+    let h = Harness::new().await;
+    let word = card("1467640::recognition", T0, T0 + SECOND);
+    let g = grammar_card();
+    h.post(
+        "/api/sync",
+        Some(&h.token),
+        &json!({ "cards": [word, g], "grammar_cards": true }),
+    )
+    .await;
+
+    // An older client: no flag. It gets its words, not the grammar card, and
+    // its deltas keep working with the tagged cursor it is handed.
+    let (_, old) = h
+        .post("/api/sync", Some(&h.token), &json!({ "cards": [] }))
+        .await;
+    assert_eq!(old["full"], true);
+    let ids: Vec<&str> = old["cards"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|c| c["id"].as_str().unwrap())
+        .collect();
+    assert_eq!(ids, vec![word.id.as_str()]);
+    let (_, old_delta) = h
+        .post(
+            "/api/sync",
+            Some(&h.token),
+            &json!({ "cards": [], "since": old["cursor"] }),
+        )
+        .await;
+    assert_eq!(old_delta["full"], false, "the tagged cursor still serves deltas");
+
+    // The same device, updated: it now asks for grammar cards with the
+    // cursor it holds. The delta would have missed the grammar card, so the
+    // server answers in full.
+    let (_, updated) = h
+        .post(
+            "/api/sync",
+            Some(&h.token),
+            &json!({ "cards": [], "since": old_delta["cursor"], "grammar_cards": true }),
+        )
+        .await;
+    assert_eq!(updated["full"], true);
+    let resp: SyncResp = serde_json::from_value(updated.clone()).unwrap();
+    assert!(resp.card(&g.id).is_some());
+    // And its next delta is an ordinary one.
+    let (_, next) = h
+        .post(
+            "/api/sync",
+            Some(&h.token),
+            &json!({ "cards": [], "since": updated["cursor"], "grammar_cards": true }),
+        )
+        .await;
+    assert_eq!(next["full"], false);
 }

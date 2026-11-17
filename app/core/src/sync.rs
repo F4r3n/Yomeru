@@ -163,6 +163,9 @@ pub(crate) struct SyncBody<'a> {
     /// Absent on a first sync, which uploads every card and gets every card.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) since: Option<&'a SyncCursor>,
+    /// Always true: this client knows grammar cards, which the server keeps
+    /// from older ones.
+    pub(crate) grammar_cards: bool,
 }
 
 #[derive(Deserialize)]
@@ -492,6 +495,7 @@ mod tests {
                     },
                 ],
                 since: None,
+                grammar_cards: true,
             };
             let sent: Value = serde_json::to_value(&body).expect("serialize body");
             assert_eq!(sent, fixture("request-app-client.json"));

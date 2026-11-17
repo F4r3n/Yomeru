@@ -572,6 +572,7 @@ async fn do_sync(state: &Mutex<SyncState>) -> Result<String, String> {
             settings: SettingsPayload::from_settings(&s),
             reviews: &outbox,
             since: cursor.as_ref(),
+            grammar_cards: true,
         },
         Some(&s.server_token),
     )
