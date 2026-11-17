@@ -623,6 +623,25 @@ mod tests {
         assert_eq!(ex.len(), 2, "got {ex:?}");
     }
 
+    /// A rare spelling that is another word's usual one (一向 for ひたすら,
+    /// the way いっこう is written) brings none of that word's examples; one
+    /// no other word uses (只管) still does.
+    #[test]
+    fn build_ignores_rare_spellings_of_other_words() {
+        let input = "A: 一向に構いません。\tI don't mind.#ID=1\nB: 一向 に 構う{構いません}\n\
+                     A: ひたすら働く。\tworks single-mindedly#ID=2\nB: 只管{ひたすら} 働く\n";
+        let mut hitasura = entry(&["只管", "一向"], &["ひたすら"], true, vec![]);
+        for k in &mut hitasura.kanji_forms {
+            k.info = vec![jmdict_types::KanjiInf::RareKanji];
+        }
+        hitasura.senses[0].misc = vec![jmdict_types::Misc::UsuallyKana];
+        let ikkou = entry(&["一向"], &["いっこう"], true, vec![]);
+        let jp = |w| examples_of(input, &[hitasura.clone(), ikkou.clone()], w);
+        let jp = |w| jp(w).into_iter().map(|(j, _)| j).collect::<Vec<_>>();
+        assert_eq!(jp("ひたすら"), vec!["ひたすら働く。"]);
+        assert_eq!(jp("一向"), vec!["一向に構いません。"]);
+    }
+
     /// A common word the corpus never tags is found in the text, stem included.
     #[test]
     fn build_finds_untagged_common_words() {

@@ -1,13 +1,11 @@
 //! Uses JMdict to reach examples the corpus files under another form of the
 //! word (為る vs する, 事 vs こと), or never tags at all.
 
-use crate::{
-    Candidate, Index, MAX_PER_HEADWORD, Parsed, char_len, commonness, sentence_penalty,
-};
+use crate::{Candidate, Index, MAX_PER_HEADWORD, Parsed, char_len, commonness, sentence_penalty};
 use aho_corasick::AhoCorasick;
 use examples_types::ExampleRef;
-use jmdict_types::{Freq, FreqKind, Misc, PartOfSpeech, WordEntry};
-use std::collections::{BTreeMap, HashMap};
+use jmdict_types::{Freq, FreqKind, KanjiElement, KanjiInf, Misc, PartOfSpeech, WordEntry};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 /// Forms with fewer examples than this are topped up from the word's best form.
 const TOP_UP_BELOW: usize = 5;
@@ -35,6 +33,35 @@ fn rank(e: &WordEntry) -> u32 {
 fn forms(e: &WordEntry) -> impl Iterator<Item = &str> {
     e.kanji_forms
         .iter()
+        .map(|k| k.text.as_str())
+        .chain(e.reading_forms.iter().map(|r| r.text.as_str()))
+}
+
+/// Rare and search-only spellings: too rarely written to find a word by in
+/// running text, and often another word's usual spelling (一向 is a rare
+/// spelling of ひたすら but the way いっこう is written).
+fn is_rare(k: &KanjiElement) -> bool {
+    k.info
+        .iter()
+        .any(|i| matches!(i, KanjiInf::RareKanji | KanjiInf::SearchOnlyKanji))
+}
+
+/// The forms worth searching sentences for: all but rare spellings.
+fn searchable_forms(e: &WordEntry) -> impl Iterator<Item = &str> {
+    e.kanji_forms
+        .iter()
+        .filter(|k| !is_rare(k))
+        .map(|k| k.text.as_str())
+        .chain(e.reading_forms.iter().map(|r| r.text.as_str()))
+}
+
+/// The forms whose examples show this word: all but rare spellings that are
+/// another word's usual one (`usual`: every non-rare kanji spelling). The
+/// corpus tags ひたすら as 只管, which no other word uses.
+fn own_forms<'a>(e: &'a WordEntry, usual: &HashSet<&str>) -> impl Iterator<Item = &'a str> {
+    e.kanji_forms
+        .iter()
+        .filter(|k| !(is_rare(k) && usual.contains(k.text.as_str())))
         .map(|k| k.text.as_str())
         .chain(e.reading_forms.iter().map(|r| r.text.as_str()))
 }
@@ -77,7 +104,7 @@ fn conjugates(e: &WordEntry) -> bool {
 fn needles(e: &WordEntry) -> Vec<String> {
     let stem_ok = conjugates(e);
     let mut out = Vec::new();
-    for form in forms(e) {
+    for form in searchable_forms(e) {
         let n = form.chars().count();
         let kana_only = form.chars().all(is_kana);
         if n >= if kana_only { 3 } else { 2 } {
@@ -163,8 +190,9 @@ pub(crate) fn add_literal_candidates(
 }
 
 /// The examples of all forms of a word, best-covered form first.
-fn merged_examples(e: &WordEntry, index: &Index) -> Option<Vec<ExampleRef>> {
-    let mut lists: Vec<&Vec<ExampleRef>> = forms(e).filter_map(|f| index.get(f)).collect();
+fn merged_examples(e: &WordEntry, index: &Index, usual: &HashSet<&str>) -> Option<Vec<ExampleRef>> {
+    let mut lists: Vec<&Vec<ExampleRef>> =
+        own_forms(e, usual).filter_map(|f| index.get(f)).collect();
     lists.sort_by_key(|l| std::cmp::Reverse(l.len()));
     let mut out: Vec<ExampleRef> = Vec::new();
     for r in lists.into_iter().flatten() {
@@ -180,10 +208,19 @@ fn merged_examples(e: &WordEntry, index: &Index) -> Option<Vec<ExampleRef>> {
 
 /// Every form of a word without (enough) examples of its own gets those of
 /// all its forms. Kanji forms and kana headwords claim a key first, then
-/// readings of kanji words, the more common word first (箸 and 橋 share はし).
+/// readings of kanji words and rare spellings, the more common word first
+/// (箸 and 橋 share はし).
 pub(crate) fn add_aliases(entries: &[WordEntry], index: &mut Index) {
-    let sources: Vec<Option<Vec<ExampleRef>>> =
-        entries.iter().map(|e| merged_examples(e, index)).collect();
+    let usual: HashSet<&str> = entries
+        .iter()
+        .flat_map(|e| &e.kanji_forms)
+        .filter(|k| !is_rare(k))
+        .map(|k| k.text.as_str())
+        .collect();
+    let sources: Vec<Option<Vec<ExampleRef>>> = entries
+        .iter()
+        .map(|e| merged_examples(e, index, &usual))
+        .collect();
 
     let mut claims: Vec<(bool, u32, usize, &str)> = Vec::new();
     for (i, e) in entries.iter().enumerate() {
@@ -193,8 +230,9 @@ pub(crate) fn add_aliases(entries: &[WordEntry], index: &mut Index) {
             .first()
             .is_some_and(|s| s.misc.contains(&Misc::UsuallyKana));
         let kana_headword = e.kanji_forms.is_empty() || usually_kana;
+        // A rare spelling only takes a key nobody else has (no top-up).
         for k in &e.kanji_forms {
-            claims.push((false, r, i, &k.text));
+            claims.push((is_rare(k), r, i, &k.text));
         }
         // Readings of rare kanji words are too ambiguous to be worth a key.
         if kana_headword || r != u32::MAX {
