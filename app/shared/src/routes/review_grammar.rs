@@ -7,7 +7,6 @@ use std::collections::HashMap;
 
 use dioxus::prelude::*;
 
-use crate::app::Route;
 use crate::dict::grammar_by_seq;
 use crate::drill_log;
 use crate::grammar::GrammarEntry;
@@ -18,7 +17,7 @@ use crate::srs::{ReviewOutcome, apply_review, now_ms, rating_from_u8};
 use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::{ReviewKind, SrsCard};
 
-use super::lookup_grammar::ExampleList;
+use super::lookup_grammar::{ExampleList, GrammarExplanation};
 use super::review::next_due_message;
 use super::review_common::{
     Answered, RateButtons, ShowAnswerButton, UndoButton, rating_label, undo_answer,
@@ -55,6 +54,9 @@ pub(crate) fn GrammarReview() -> Element {
     let mut rating_in_flight = use_signal(|| false);
     // The last answer, while it can still be taken back.
     let mut last_answer = use_signal(|| Option::<Answered>::None);
+    // The card whose full explanation is open on the back. Keyed by id, so
+    // it closes by itself once the session moves on (or undo steps back).
+    let mut full_for = use_signal(|| Option::<String>::None);
 
     let load_session = move || {
         spawn(async move {
@@ -184,7 +186,6 @@ pub(crate) fn GrammarReview() -> Element {
         undo,
     );
     let can_undo = *started.read() && last_answer.read().is_some();
-    let nav = use_navigator();
 
     if !*loaded.read() {
         return rsx! { div { class: "loading", "Loading grammar…" } };
@@ -268,7 +269,8 @@ pub(crate) fn GrammarReview() -> Element {
 
     let show_back_v = *show_back.read();
     let in_flight = *rating_in_flight.read();
-    let pattern = point.pattern.clone();
+    let card_id = cards.get(i).map(|c| c.id.clone()).unwrap_or_default();
+    let full_open = full_for.read().as_deref() == Some(card_id.as_str());
 
     rsx! {
         div { class: "review-card",
@@ -289,23 +291,27 @@ pub(crate) fn GrammarReview() -> Element {
             if show_back_v {
                 div { class: "grammar-back",
                     div { class: "gloss grammar-back-meaning", "{point.meaning}" }
-                    ul { class: "grammar-patterns", lang: "ja",
-                        for (k, line) in point.formation.iter().enumerate() {
-                            li { key: "{k}", "{line}" }
+                    if full_open {
+                        GrammarExplanation { entry: point.clone() }
+                    } else {
+                        ul { class: "grammar-patterns", lang: "ja",
+                            for (k, line) in point.formation.iter().enumerate() {
+                                li { key: "{k}", "{line}" }
+                            }
                         }
-                    }
-                    if !point.examples.is_empty() {
-                        ExampleList {
-                            examples: point.examples.iter().take(BACK_EXAMPLES).cloned().collect::<Vec<_>>(),
+                        if !point.examples.is_empty() {
+                            ExampleList {
+                                examples: point.examples.iter().take(BACK_EXAMPLES).cloned().collect::<Vec<_>>(),
+                            }
                         }
                     }
                     button {
                         class: "link",
                         onclick: move |_| {
-                            crate::routes::lookup::search_on_open(pattern.clone());
-                            nav.push(Route::Lookup {});
+                            let open = full_for.peek().as_deref() == Some(card_id.as_str());
+                            full_for.set(if open { None } else { Some(card_id.clone()) });
                         },
-                        "Open full explanation →"
+                        if full_open { "Hide full explanation ▴" } else { "Full explanation ▾" }
                     }
                 }
             }

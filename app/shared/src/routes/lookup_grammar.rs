@@ -254,6 +254,55 @@ mod tests {
     }
 }
 
+/// Everything an open entry holds, for the back of a review card: forms,
+/// every construction, the explanation, the notes, all the examples and the
+/// points worth comparing. The comparisons are plain text there, so reading
+/// them never leaves the session.
+#[component]
+pub(crate) fn GrammarExplanation(entry: GrammarEntry) -> Element {
+    let forms = entry.forms.join("、");
+    let related = entry
+        .related
+        .iter()
+        .map(|r| r.pattern.as_str())
+        .collect::<Vec<_>>()
+        .join("、");
+    rsx! {
+        div { class: "grammar-full",
+            if !forms.is_empty() {
+                div { class: "grammar-forms muted", lang: "ja", "Also: {forms}" }
+            }
+            div { class: "grammar-section",
+                div { class: "grammar-section-title", "Formation" }
+                ul { class: "grammar-patterns", lang: "ja",
+                    for (i, line) in entry.formation.iter().enumerate() {
+                        li { key: "{i}", "{line}" }
+                    }
+                }
+            }
+            p { class: "grammar-p", "{entry.explanation}" }
+            if !entry.notes.is_empty() {
+                div { class: "grammar-section",
+                    div { class: "grammar-section-title", "Notes" }
+                    p { class: "grammar-p", "{entry.notes}" }
+                }
+            }
+            if !entry.examples.is_empty() {
+                div { class: "grammar-section",
+                    div { class: "grammar-section-title", "Examples" }
+                    ExampleList { examples: entry.examples.clone() }
+                }
+            }
+            if !related.is_empty() {
+                div { class: "grammar-see",
+                    span { class: "muted", "Compare" }
+                    span { lang: "ja", "{related}" }
+                }
+            }
+        }
+    }
+}
+
 #[component]
 pub(crate) fn ExampleList(examples: Vec<Example>) -> Element {
     rsx! {
