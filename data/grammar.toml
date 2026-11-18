@@ -23431,6 +23431,9 @@ related = ["ni-soku-shite", "ni-sotte", "ni-motozuite", "ni-junjite"]
 examples = [
   { source = "yomeru", id = "y1", ja = "大会は国際ルール{に則って}行われる。", en = "The tournament is held according to international rules." },
   { source = "yomeru", id = "y2", ja = "伝統{に則り}、式は神社で行われた。", en = "Following tradition, the ceremony was held at a shrine." },
+  { source = "yomeru", id = "y3", ja = "法律{に則って}手続きを進めてください。", en = "Please carry out the procedure in accordance with the law." },
+  { source = "yomeru", id = "y4", ja = "ルール{に則った}判断が求められる。", en = "A decision that follows the rules is required." },
+  { source = "yomeru", id = "y5", ja = "二人は古式{に則って}結婚式を挙げた。", en = "The two held their wedding following the ancient rites." },
 ]
 
 [[point]]
@@ -23456,6 +23459,9 @@ related = ["ni-nottotte", "ni-terashite", "ni-oujite"]
 examples = [
   { tatoeba = "287210_116459", ja = "彼の伝記は全くの事実{に即して}書かれたものだ。", en = "His biography is quite true to life." },
   { source = "yomeru", id = "y1", ja = "現実{に即して}考えるべきだ。", en = "We should think in line with reality." },
+  { source = "yomeru", id = "y2", ja = "実態{に即した}対策が必要だ。", en = "We need measures in line with the actual situation." },
+  { source = "yomeru", id = "y3", ja = "状況{に即して}、計画を変えることにした。", en = "We decided to change the plan in line with the situation." },
+  { source = "yomeru", id = "y4", ja = "この本は実際の経験{に即して}書かれている。", en = "This book is written true to real experience." },
 ]
 
 [[point]]
@@ -23479,6 +23485,9 @@ related = ["ni-soku-shite", "wo-fumaete", "kara-miru-to"]
 examples = [
   { tatoeba = "58968_221642", ja = "この事実{に照らして}彼に罪がないことは明らかだ。", en = "In the light of this fact, it is clear that he is innocent." },
   { source = "yomeru", id = "y1", ja = "過去の例{に照らせば}、成功は難しい。", en = "Judging by past cases, success will be hard." },
+  { source = "yomeru", id = "y2", ja = "法律{に照らして}判断すれば、彼は無罪だ。", en = "Judged against the law, he is not guilty." },
+  { source = "yomeru", id = "y3", ja = "常識{に照らしても}、その話はおかしい。", en = "Even judged by common sense, that story is strange." },
+  { source = "yomeru", id = "y4", ja = "自分の経験{に照らして}考えてみた。", en = "I thought it over in light of my own experience." },
 ]
 
 [[point]]
@@ -23502,6 +23511,9 @@ related = ["wo-fumaete", "ni-terashite", "kara-shite"]
 examples = [
   { source = "yomeru", id = "y1", ja = "事故の多さ{に鑑みて}、規則を見直した。", en = "In view of the number of accidents, the rules were reviewed." },
   { source = "yomeru", id = "y2", ja = "現在の状況{に鑑み}、会議は中止とします。", en = "In view of the present situation, the meeting is canceled." },
+  { source = "yomeru", id = "y3", ja = "これまでの経緯{に鑑み}、契約を見直す。", en = "In view of what has happened so far, we will review the contract." },
+  { source = "yomeru", id = "y4", ja = "事の重大さ{に鑑みて}、社長が自ら謝罪した。", en = "In view of the seriousness of the matter, the president apologized in person." },
+  { source = "yomeru", id = "y5", ja = "安全面{に鑑みれば}、延期はやむを得ない。", en = "Considering safety, a postponement can't be helped." },
 ]
 
 [[point]]
@@ -23528,6 +23540,9 @@ related = ["ni-nottotte", "ni-oujite"]
 examples = [
   { source = "yomeru", id = "y1", ja = "パートの給料も正社員{に準じて}決める。", en = "Part-timers' pay is set on the same basis as full-time staff's." },
   { source = "yomeru", id = "y2", ja = "服装は、制服{に準ずる}ものとする。", en = "Clothing shall be equivalent to the uniform." },
+  { source = "yomeru", id = "y3", ja = "費用は参加人数{に準じて}決まります。", en = "The cost is set in proportion to the number of participants." },
+  { source = "yomeru", id = "y4", ja = "細かい点は前回の例{に準じて}行う。", en = "The details will be handled in accordance with the last case." },
+  { source = "yomeru", id = "y5", ja = "これ{に準ずる}資格がある人も応募できる。", en = "People with an equivalent qualification can also apply." },
 ]
 
 [[point]]
@@ -23551,6 +23566,9 @@ related = ["ni-kanshite", "ni-tsuite"]
 examples = [
   { source = "yomeru", id = "y1", ja = "この城{にまつわる}伝説を知っていますか。", en = "Do you know the legend connected with this castle?" },
   { source = "yomeru", id = "y2", ja = "お金{にまつわる}トラブルは多い。", en = "There are many troubles involving money." },
+  { source = "yomeru", id = "y3", ja = "この湖{にまつわる}不思議な話を聞いた。", en = "I heard a strange story connected with this lake." },
+  { source = "yomeru", id = "y4", ja = "祖母は戦争{にまつわる}思い出を語ってくれた。", en = "My grandmother told me her memories connected with the war." },
+  { source = "yomeru", id = "y5", ja = "その事件{にまつわる}うわさが広がっている。", en = "Rumors surrounding that incident are spreading." },
 ]
 
 [[point]]
@@ -23576,6 +23594,9 @@ related = ["ni-yoru-to", "kara-iu-to", "ni-shitara"]
 examples = [
   { tatoeba = "250105_164403", ja = "私{に言わせれば}、彼女は少し変わっている。", en = "If you ask me, she's a little unusual." },
   { source = "yomeru", id = "y1", ja = "母{に言わせると}、私はまだ子どもだそうだ。", en = "According to my mother, I'm still a child." },
+  { source = "yomeru", id = "y2", ja = "専門家{に言わせれば}、この計画は甘い。", en = "If you ask the experts, this plan is naive." },
+  { source = "yomeru", id = "y3", ja = "父{に言わせると}、今の若者は我慢が足りない。", en = "If you ask my father, young people today lack patience." },
+  { source = "yomeru", id = "y4", ja = "彼{に言わせたら}、どの店もまずいだろう。", en = "If you asked him, he'd say every restaurant is bad." },
 ]
 
 [[point]]
@@ -23599,6 +23620,9 @@ related = ["okage-de", "ni-yotte"]
 examples = [
   { tatoeba = "286930_116738", ja = "彼の成功は奥さんの力{によるところが大きい}。", en = "He owes much of his success to his wife." },
   { source = "yomeru", id = "y1", ja = "この成功は、彼の努力{に負うところが大きい}。", en = "This success owes a great deal to his effort." },
+  { source = "yomeru", id = "y2", ja = "町の発展は鉄道{に負うところが大きい}。", en = "The town's growth owes a great deal to the railway." },
+  { source = "yomeru", id = "y3", ja = "今の私は、先生の指導{に負うところが大きい}。", en = "Who I am today owes a great deal to my teacher's guidance." },
+  { source = "yomeru", id = "y4", ja = "事故は運転手の不注意{によるところが大きい}。", en = "The accident was largely due to the driver's carelessness." },
 ]
 
 [[point]]
@@ -23626,6 +23650,9 @@ related = ["ni-kagirazu", "nomi-narazu", "bakari-de-naku"]
 examples = [
   { source = "yomeru", id = "y1", ja = "その歌は国内{にとどまらず}、海外でも人気だ。", en = "The song isn't just popular at home; it's popular abroad too." },
   { source = "yomeru", id = "y2", ja = "被害は町{にとどまらず}、県全体に広がった。", en = "The damage didn't stop at the town; it spread over the whole prefecture." },
+  { source = "yomeru", id = "y3", ja = "彼の研究は日本{にとどまらず}、世界で注目されている。", en = "His research is drawing attention not just in Japan but around the world." },
+  { source = "yomeru", id = "y4", ja = "彼女は歌う{にとどまらず}、自分で曲も作る。", en = "She doesn't stop at singing; she writes her own songs too." },
+  { source = "yomeru", id = "y5", ja = "この問題は一つの会社{にとどまらない}。", en = "This problem isn't limited to one company." },
 ]
 
 [[point]]
@@ -23649,6 +23676,9 @@ related = ["ni-kagirazu", "ni-kagiru", "ni-kagitte"]
 examples = [
   { source = "yomeru", id = "y1", ja = "彼の遅刻は今日{に限ったことではない}。", en = "His being late isn't just today; he's always late." },
   { source = "yomeru", id = "y2", ja = "物価が上がっているのは、この国{に限ったことではない}。", en = "Rising prices aren't something only this country faces." },
+  { source = "yomeru", id = "y3", ja = "人手不足はこの業界{に限ったことではない}。", en = "The labor shortage isn't true of this industry alone." },
+  { source = "yomeru", id = "y4", ja = "彼のわがままは今{に限ったことじゃない}。", en = "It's not only now that he's selfish; he always has been." },
+  { source = "yomeru", id = "y5", ja = "道に迷うのは方向音痴の人{に限ったことではありません}。", en = "Getting lost isn't only true of people with no sense of direction." },
 ]
 
 [[point]]
@@ -23674,6 +23704,9 @@ related = ["ni-oite", "ni-shite", "to-atte"]
 examples = [
   { tatoeba = "296672_107014", ja = "彼は混乱の真っ只中{にあっても}冷静だ。", en = "He is cool amid confusion." },
   { source = "yomeru", id = "y1", ja = "苦しい状況{にあっても}、彼女は笑顔を忘れない。", en = "Even in hard times, she never loses her smile." },
+  { source = "yomeru", id = "y2", ja = "不況の中{にあって}、この会社は売上を伸ばした。", en = "In the midst of a recession, this company grew its sales." },
+  { source = "yomeru", id = "y3", ja = "指導者の立場{にあっては}、発言に注意すべきだ。", en = "In a position of leadership, one should be careful what one says." },
+  { source = "yomeru", id = "y4", ja = "情報があふれる現代{にあって}、選ぶ力が大切だ。", en = "In the present age, flooded with information, the ability to choose matters." },
 ]
 
 [[point]]
@@ -23697,6 +23730,9 @@ related = ["ni-itaru", "ni-itaru-made", "ni-shite-mo"]
 examples = [
   { source = "yomeru", id = "y1", ja = "みんな遅れた。田中さん{に至っては}来なかった。", en = "Everyone was late. As for Tanaka, he didn't come at all." },
   { source = "yomeru", id = "y2", ja = "家族は朝が弱い。父{に至っては}昼まで寝ている。", en = "My family is bad at mornings; as for my father, he sleeps until noon." },
+  { source = "yomeru", id = "y3", ja = "半分が宿題を忘れた。山田{に至っては}教科書もない。", en = "Half forgot their homework; as for Yamada, he doesn't even have his textbook." },
+  { source = "yomeru", id = "y4", ja = "どの店も高い。この店{に至っては}コーヒーが二千円だ。", en = "Every shop is expensive; as for this one, a coffee costs 2,000 yen." },
+  { source = "yomeru", id = "y5", ja = "被害は大きく、農業{に至っては}回復に十年かかる。", en = "The damage is great; as for farming, recovery will take ten years." },
 ]
 
 [[point]]
@@ -23722,6 +23758,9 @@ related = ["shidai-depending", "ni-yotte", "ikan"]
 examples = [
   { tatoeba = "270369_144197", ja = "人質の運命はその交渉の結果{にかかっている}。", en = "The fate of the hostages depends on the result of the negotiation." },
   { tatoeba = "241370_173102", ja = "国家の繁栄は市民の手{にかかっている}。", en = "The prosperity of a country depends upon its citizens." },
+  { tatoeba = "263517_151039", ja = "試合の結果は彼の働き{にかかっている}。", en = "The game's outcome hangs on his performance." },
+  { tatoeba = "273729_140843", ja = "全ては彼の答{にかかっている}。", en = "Everything hangs on his answer." },
+  { source = "yomeru", id = "y1", ja = "勝てるかどうかは、君{にかかってる}よ。", en = "Whether we win depends on you." },
 ]
 
 [[point]]
@@ -23743,9 +23782,11 @@ hard thing is easy". Don't confuse with にかかっている (depends on) \
 or 病気にかかると (catch an illness)."""
 related = ["ni-kakatte-iru", "te-wa-kanawanai"]
 examples = [
-  { tatoeba = "266657_147903", ja = "叔母{にかかったら}私なんかまるで子ども扱いだ。", en = "My aunt treats me as if I were a child." },
   { source = "yomeru", id = "y1", ja = "母{にかかったら}、どんなうそもすぐばれる。", en = "With my mother, any lie is found out at once." },
   { source = "yomeru", id = "y2", ja = "彼の手{にかかれば}、どんな機械も直る。", en = "In his hands, any machine gets fixed." },
+  { source = "yomeru", id = "y3", ja = "祖父{にかかっては}、誰も将棋で勝てない。", en = "Up against my grandfather, nobody can win at shogi." },
+  { source = "yomeru", id = "y4", ja = "彼女{にかかると}、難しい料理も簡単に見える。", en = "In her hands, even difficult dishes look easy." },
+  { source = "yomeru", id = "y5", ja = "あの記者{にかかっては}、政治家も本音を話してしまう。", en = "Up against that reporter, even politicians end up saying what they really think." },
 ]
 
 [[point]]
@@ -23771,6 +23812,9 @@ related = ["ni-shite-mo", "ta-tokoro-de", "ni-shiro"]
 examples = [
   { source = "yomeru", id = "y1", ja = "社長{にしたところで}、この問題は解決できない。", en = "Even the president can't solve this problem." },
   { source = "yomeru", id = "y2", ja = "私{にしたところで}、自信があるわけではない。", en = "I'm no different: it's not that I'm confident either." },
+  { source = "yomeru", id = "y3", ja = "親{にしたところで}、子どもの将来は分からない。", en = "Even parents are no different: they can't know their children's future." },
+  { source = "yomeru", id = "y4", ja = "専門家{にしたところで}、地震の予測は難しい。", en = "Even for experts, predicting earthquakes is hard." },
+  { source = "yomeru", id = "y5", ja = "給料が上がらないのは部長{にしたところで}同じだ。", en = "Even for the manager it's no different: his pay isn't going up either." },
 ]
 
 [[point]]
@@ -23797,6 +23841,9 @@ related = ["ni-taru", "ni-atai-suru", "ni-kotaete"]
 examples = [
   { tatoeba = "322919_80796", ja = "名声{に恥じない}ように行動するのはとてもむずかしい。", en = "It is very hard to live up to your reputation." },
   { source = "yomeru", id = "y1", ja = "チャンピオンの名{に恥じない}試合だった。", en = "It was a match worthy of the title of champion." },
+  { source = "yomeru", id = "y2", ja = "皆さんの期待{に恥じない}よう、頑張ります。", en = "I'll do my best to be worthy of everyone's expectations." },
+  { source = "yomeru", id = "y3", ja = "その店は老舗の名{に恥じない}味を守っている。", en = "The shop keeps a flavor worthy of its name as an old, established store." },
+  { source = "yomeru", id = "y4", ja = "彼は代表選手{に恥じぬ}活躍を見せた。", en = "He gave a performance worthy of a national team player." },
 ]
 
 [[point]]
@@ -23823,6 +23870,9 @@ related = ["wake-ga-nai", "kangaerarenai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "一週間で終わらせるの{には無理がある}。", en = "Finishing it in a week is asking too much." },
   { source = "yomeru", id = "y2", ja = "その説明{には無理がある}よ。", en = "That explanation is a bit of a stretch." },
+  { source = "yomeru", id = "y3", ja = "彼の主張{には無理がある}と思う。", en = "I think his argument doesn't hold up." },
+  { source = "yomeru", id = "y4", ja = "一人で三人分働くの{には無理があります}。", en = "Doing the work of three people alone is unreasonable." },
+  { source = "yomeru", id = "y5", ja = "最初からその計画{には無理があった}。", en = "That plan was a stretch from the start." },
 ]
 
 [[point]]
@@ -23847,6 +23897,9 @@ related = ["you-to-suru", "volitional", "you-ga-nai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "雨がひどくて、出かけ{ようにも}出かけられない。", en = "It's raining so hard that I can't go out even if I want to." },
   { source = "yomeru", id = "y2", ja = "道が雪で埋まって、帰ろ{うにも}帰れない。", en = "The road is buried in snow, so we can't go home even if we want to." },
+  { source = "yomeru", id = "y3", ja = "お金がなくて、買お{うにも}買えない。", en = "I have no money, so I can't buy it even if I want to." },
+  { source = "yomeru", id = "y4", ja = "連絡先を知らないので、謝ろ{うにも}謝れない。", en = "I don't know how to reach her, so I can't apologize even if I want to." },
+  { source = "yomeru", id = "y5", ja = "熱があって、起き{ようにも}起きられなかった。", en = "I had a fever, so I couldn't get up even though I wanted to." },
 ]
 
 [[point]]
@@ -23870,6 +23923,9 @@ related = ["shidai-depending", "kata", "you-ga-nai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "考え{ようによっては}、失敗もいい経験だ。", en = "Depending on how you look at it, failure is a good experience too." },
   { source = "yomeru", id = "y2", ja = "言い{ようによっては}、相手を傷つける。", en = "Depending on how you put it, you could hurt the other person." },
+  { source = "yomeru", id = "y3", ja = "見{ようによっては}、この雲は猫の形だ。", en = "Depending on how you look at it, this cloud is shaped like a cat." },
+  { source = "yomeru", id = "y4", ja = "やり{ようによっては}、一日で終わるかもしれない。", en = "Depending on how you go about it, it might be done in a day." },
+  { source = "yomeru", id = "y5", ja = "この言葉は、取り{ようによっては}失礼になる。", en = "Depending on how it's taken, this remark can sound rude." },
 ]
 
 [[point]]
@@ -23893,6 +23949,9 @@ related = ["mono-no", "ta-tokoro-de"]
 examples = [
   { source = "yomeru", id = "y1", ja = "誰も見ていなかった{からいいようなものの}、危なかった。", en = "Luckily nobody saw, but that was a close call." },
   { source = "yomeru", id = "y2", ja = "間に合った{からよかったものの}、遅刻するところだった。", en = "I made it in time, but I nearly ended up late." },
+  { source = "yomeru", id = "y3", ja = "犬が無事だった{からいいようなものの}、ドアは閉めて。", en = "The dog was safe, so it's all right, but keep the door shut." },
+  { source = "yomeru", id = "y4", ja = "雨がやんだ{からよかったものの}、傘を忘れるなんて。", en = "It's lucky the rain stopped, but how could you forget your umbrella?" },
+  { source = "yomeru", id = "y5", ja = "保険があった{からいいものの}、大損するところだった。", en = "It was fine because I had insurance, but I nearly lost a fortune." },
 ]
 
 [[point]]
