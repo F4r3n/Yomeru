@@ -3740,6 +3740,8 @@ examples = [
   { tatoeba = "237658_176803", ja = "君も一緒に来れ{ばよかったのに}。", en = "I wish you could have come with me." },
   { tatoeba = "66934_229574", ja = "あんなに恐ろしい映画は見{なければよかった}なあ。", en = "I wish I hadn't seen such a horrible film." },
   { tatoeba = "51805_214513", ja = "スペイン語が話せ{たらよかったのに}。", en = "I wish I could have spoken Spanish." },
+  { tatoeba = "63551_226211", ja = "カメラを持ってくれ{ばよかった}。", en = "I should've brought my camera." },
+  { tatoeba = "66938_229578", ja = "あんなにお金を使わ{なければよかった}。", en = "I wish I had not spent so much money." },
 ]
 
 [[point]]
@@ -3764,6 +3766,8 @@ examples = [
   { tatoeba = "53406_216104", ja = "しばらく休ん{だらどう}ですか。", en = "Why don't you have a rest for a while?" },
   { tatoeba = "35619_198428", ja = "パーティーを開い{たらどう}ですか。", en = "Why don't you have a party?" },
   { tatoeba = "308872_94835", ja = "彼女に今電話してみ{たらどう}ですか。", en = "Why not ring her up now?" },
+  { tatoeba = "285143_118520", ja = "彼に電話し{たらどう}ですか。", en = "Why don't you call him up?" },
+  { tatoeba = "62292_224957", ja = "コートを脱い{だらどう}ですか。", en = "Why not take your coat off?" },
 ]
 
 [[point]]
@@ -3789,6 +3793,8 @@ examples = [
   { tatoeba = "31385_194212", ja = "もう行か{ないと}。", en = "Got to go now." },
   { tatoeba = "56586_219270", ja = "この薬を飲ま{ないといけません}か。", en = "Do I have to take this medicine?" },
   { tatoeba = "21566_184439", ja = "学校の決まりは守ら{ないといけない}ぞ。", en = "You must follow school rules." },
+  { tatoeba = "258316_149767", ja = "自分の部屋を掃除し{ないと}ね。", en = "I have to clean my room." },
+  { tatoeba = "66872_229512", ja = "アンに謝ら{ないといけない}。", en = "I must apologize to Ann." },
 ]
 
 [[point]]
@@ -3818,6 +3824,8 @@ examples = [
   { tatoeba = "311077_92632", ja = "彼女はそこへ行か{なければならない}。", en = "She must go there." },
   { tatoeba = "32295_195121", ja = "ミーティングを中止し{なければならない}。", en = "We have to call off the meeting." },
   { tatoeba = "267786_146775", ja = "少し眠ら{なきゃ}。", en = "I've got to catch some Z's." },
+  { tatoeba = "69168_231801", ja = "あなたは正直に答え{なければなりません}。", en = "You must answer honestly." },
+  { tatoeba = "52268_214972", ja = "すぐそれをし{なければなりません}か。", en = "Do I have to do it right away?" },
 ]
 
 [[point]]
@@ -3849,6 +3857,8 @@ examples = [
   { tatoeba = "40764_203526", ja = "たとえ雨が降っ{ても}、私は出発する。", en = "Even if it rains, I'll start." },
   { tatoeba = "66038_228680", ja = "いつ会っ{ても}、彼はにこにこしている。", en = "Every time I see him, he is smiling." },
   { tatoeba = "36732_199530", ja = "どんなに高く{ても}、あの古い時計を買います。", en = "I'll buy that old clock, however expensive it is." },
+  { tatoeba = "40420_203184", ja = "だれが来{ても}ドアを開けてはいけません。", en = "Whoever comes, don't open the door." },
+  { tatoeba = "66531_229173", ja = "いくらたくさん食べ{ても}、彼女は体重が増えない。", en = "However much she eats, she never gains weight." },
 ]
 
 [[point]]
@@ -3876,6 +3886,8 @@ examples = [
   { tatoeba = "28662_173368", ja = "行け{なくて}残念です。", en = "I'm sorry I can't go." },
   { tatoeba = "308531_95175", ja = "彼女が来{なくて}とてもがっかりした。", en = "Much to my disappointment, she did not come." },
   { tatoeba = "64629_227278", ja = "お金が足り{なくて}、それが出来ない。", en = "I can't do it for want of money." },
+  { source = "yomeru", id = "y1", ja = "子どもが野菜を食べ{なくて}、心配です。", en = "My child doesn't eat vegetables, so I'm worried." },
+  { source = "yomeru", id = "y2", ja = "バスが来{なくて}、学校に遅れました。", en = "The bus didn't come, so I was late for school." },
 ]
 
 [[point]]
@@ -4116,6 +4128,8 @@ examples = [
   { tatoeba = "37614_200412", ja = "どのくらい私を{お待ちになって}いましたか。", en = "How long have you been waiting for me?" },
   { tatoeba = "66333_228975", ja = "いつここを{お立ちになります}か。", en = "What time do you leave here?" },
   { source = "yomeru", id = "y1", ja = "先生はもう{お帰りになりました}。", en = "The teacher has already gone home." },
+  { source = "yomeru", id = "y2", ja = "社長は何時に{お着きになります}か。", en = "What time will the company president arrive?" },
+  { source = "yomeru", id = "y3", ja = "先生はこの本を{お読みになりました}か。", en = "Have you read this book, sensei?" },
 ]
 
 [[point]]
@@ -4147,6 +4161,8 @@ examples = [
   { tatoeba = "24133_186996", ja = "家まで車で{お送りしましょう}か。", en = "Shall I drive you home?" },
   { source = "yomeru", id = "y1", ja = "荷物を{お持ちしましょう}か。", en = "Shall I carry your bag?" },
   { source = "yomeru", id = "y2", ja = "あとでメールで{お知らせします}。", en = "I'll let you know by email later." },
+  { source = "yomeru", id = "y3", ja = "先生に旅行の写真を{お見せしました}。", en = "I showed my teacher the photos from my trip." },
+  { source = "yomeru", id = "y4", ja = "先生、傘を{お貸ししましょう}か。", en = "Shall I lend you an umbrella, sensei?" },
 ]
 
 [[point]]
@@ -4177,6 +4193,8 @@ examples = [
   { tatoeba = "64133_226784", ja = "{お入りください}。", en = "Come right in." },
   { tatoeba = "18097_201282", ja = "どうぞ靴を{お脱ぎ下さい}。", en = "Please take off your shoes." },
   { source = "yomeru", id = "y1", ja = "少々{お待ちください}。", en = "Please wait a moment." },
+  { tatoeba = "38827_201617", ja = "どうか電話でその結果を{お知らせ下さい}。", en = "Please let me know the result by telephone." },
+  { source = "yomeru", id = "y2", ja = "こちらにお名前を{お書きください}。", en = "Please write your name here." },
 ]
 
 [[point]]
@@ -4207,6 +4225,8 @@ examples = [
   { tatoeba = "278078_125914", ja = "長く{いらっしゃる}つもりですか。", en = "Are you going to stay long?" },
   { tatoeba = "323324_80392", ja = "明日また{いらっしゃい}。", en = "Come again tomorrow." },
   { source = "yomeru", id = "y1", ja = "先生は今、教室に{いらっしゃいます}。", en = "The teacher is in the classroom now." },
+  { tatoeba = "63957_226613", ja = "お母さんは{いらっしゃいます}か。", en = "Is your mother at home?" },
+  { tatoeba = "68838_152024", ja = "私達と一緒に{いらっしゃいません}か。", en = "Wouldn't you like to come with us, too?" },
 ]
 
 [[point]]
@@ -4234,6 +4254,9 @@ related = ["nasai", "itasu", "irassharu", "o-ni-naru"]
 examples = [
   { tatoeba = "39470_202257", ja = "デザートは何に{なさいます}か？", en = "What would you like for dessert?" },
   { tatoeba = "70157_232787", ja = "あなたはお暇な時には何を{なさいます}？", en = "What do you do in your spare time?" },
+  { tatoeba = "37577_200376", ja = "どのようなスポーツを{なさいます}か。", en = "What sports do you go in for?" },
+  { source = "yomeru", id = "y1", ja = "先生は毎朝散歩を{なさいます}。", en = "The teacher takes a walk every morning." },
+  { source = "yomeru", id = "y2", ja = "お父様はどんなお仕事を{なさって}いますか。", en = "What kind of work does your father do?" },
 ]
 
 [[point]]
@@ -4263,6 +4286,8 @@ examples = [
   { tatoeba = "52790_215488", ja = "ジョンソン氏をご紹介{いたします}。", en = "May I present Mr Johnson to you?" },
   { source = "yomeru", id = "y1", ja = "では、私が説明{いたします}。", en = "Then I will explain." },
   { source = "yomeru", id = "y2", ja = "明日、こちらからお電話{いたします}。", en = "We'll call you tomorrow." },
+  { source = "yomeru", id = "y3", ja = "すぐに準備{いたします}。", en = "I'll get it ready right away." },
+  { source = "yomeru", id = "y4", ja = "では、そう{いたします}。", en = "Then I'll do that." },
 ]
 
 [[point]]
@@ -4292,6 +4317,9 @@ related = ["desu", "ga-aru", "irassharu"]
 examples = [
   { tatoeba = "280025_123970", ja = "当店にはいろいろな種類の本が{ございます}。", en = "We have a wide choice of books." },
   { source = "yomeru", id = "y1", ja = "お手洗いは二階{でございます}。", en = "The restroom is on the second floor." },
+  { tatoeba = "73045_235665", ja = "１泊５０ドルのシングルのお部屋が{ございます}。", en = "We have a single for 50 dollars per night." },
+  { source = "yomeru", id = "y2", ja = "エレベーターはあちら{でございます}。", en = "The elevator is over there." },
+  { source = "yomeru", id = "y3", ja = "何かご質問は{ございます}か。", en = "Do you have any questions?" },
 ]
 
 [[point]]
@@ -4316,6 +4344,8 @@ examples = [
   { tatoeba = "54417_217110", ja = "ご親切に感謝し{ております}。", en = "I appreciate your kindness." },
   { tatoeba = "325835_77853", ja = "良い返事をお待ちし{ております}。", en = "I am looking forward to receiving your favorable answer." },
   { tatoeba = "64339_226991", ja = "お席の上の棚の中に入っ{ております}。", en = "It's in the overhead compartment." },
+  { source = "yomeru", id = "y1", ja = "父は今、出かけ{ております}。", en = "My father is out right now." },
+  { source = "yomeru", id = "y2", ja = "私は東京に住ん{でおります}。", en = "I live in Tokyo." },
 ]
 
 [[point]]
@@ -4373,6 +4403,8 @@ examples = [
   { tatoeba = "27874_202853", ja = "ちょっとお願いしたいことがある{んだけど}。", en = "I have a favor to ask of you." },
   { tatoeba = "246478_1171676", ja = "コンサートに行けるといい{んだけど}。", en = "I wish I could go to the concert." },
   { source = "yomeru", id = "y1", ja = "すみません、駅に行きたい{んですが}…。", en = "Excuse me, I'm trying to get to the station…" },
+  { tatoeba = "57974_220652", ja = "この単語の意味がわからない{のですが}。", en = "I don't understand this word." },
+  { tatoeba = "59403_222077", ja = "この鍵は合わない{のですが}。", en = "I'm afraid this key does not fit." },
 ]
 
 [[point]]
@@ -4402,6 +4434,8 @@ examples = [
   { tatoeba = "257068_157464", ja = "すぐ来{てほしい}。", en = "I want you to come at once." },
   { tatoeba = "17553_178701", ja = "君にその歌を歌っ{てほしい}。", en = "We want you to sing the song." },
   { source = "yomeru", id = "y1", ja = "このことは誰にも言わない{でほしい}。", en = "I'd like you not to tell anyone about this." },
+  { tatoeba = "314135_89580", ja = "彼女は私にいっしょにき{てほしい}と思っている。", en = "She wants me to go with her." },
+  { source = "yomeru", id = "y2", ja = "もっとゆっくり話し{てほしい}です。", en = "I want you to speak more slowly." },
 ]
 
 [[point]]
@@ -4430,6 +4464,8 @@ examples = [
   { tatoeba = "260501_154042", ja = "私は彼に来る{ように言った}。", en = "I told him to come." },
   { tatoeba = "315572_88135", ja = "彼女は息子にちょっと待つ{ように言った}。", en = "She told her son to wait a minute." },
   { tatoeba = "321568_82147", ja = "僕は、彼女にちょっと待ってくれる{ように頼んだ}。", en = "I asked her to wait a minute." },
+  { tatoeba = "290583_113092", ja = "彼はその駅で降りる{ように言われた}。", en = "He was told to get off at the station." },
+  { source = "yomeru", id = "y1", ja = "医者は父にたばこをやめる{ように言いました}。", en = "The doctor told my father to quit smoking." },
 ]
 
 [[point]]
@@ -4459,6 +4495,8 @@ examples = [
   { tatoeba = "284020_119642", ja = "彼が長生きし{ますように}。", en = "May he live long!" },
   { tatoeba = "66697_229340", ja = "いい誕生日を迎えられ{ますように}。", en = "Hope you'll have a great one." },
   { tatoeba = "71357_233985", ja = "あなたが早くよくなる{ように祈って}います。", en = "We are hoping for your quick recovery." },
+  { tatoeba = "70414_140539", ja = "早く病気がよくなり{ますように}。", en = "I hope you'll get well soon." },
+  { source = "yomeru", id = "y1", ja = "試験に合格できる{ように祈って}います。", en = "I'm praying that you'll pass the exam." },
 ]
 
 [[point]]
@@ -4488,6 +4526,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "よく見える{ように}、前に座った。", en = "I sat at the front so I could see well." },
   { tatoeba = "31634_194461", ja = "もうこれ以上太らない{ように}、彼女はケーキを食べない。", en = "She does not eat cake, so as not to put on any more weight." },
   { tatoeba = "257938_156596", ja = "私は始発バスに乗れる{ように}、早めに出かけた。", en = "I made an early start in order to catch the first bus." },
+  { tatoeba = "22531_185401", ja = "会議に間に合う{ように}急ぎましょう。", en = "Let's hurry to be in time for the meeting." },
+  { source = "yomeru", id = "y2", ja = "忘れない{ように}、メモを書きました。", en = "I wrote a note so I wouldn't forget." },
 ]
 
 [[point]]
@@ -4518,6 +4558,8 @@ examples = [
   { tatoeba = "264898_149660", ja = "辞書はことばの意味を調べる{のに}使う。", en = "We use a dictionary to look up the meaning of words." },
   { tatoeba = "23337_186204", ja = "我々の目は暗闇に慣れる{のに}時間がかかる。", en = "Our eyes take time to adjust to the darkness." },
   { source = "yomeru", id = "y1", ja = "駅まで行く{のに}二十分かかります。", en = "It takes twenty minutes to get to the station." },
+  { source = "yomeru", id = "y2", ja = "このはさみは紙を切る{のに}便利です。", en = "These scissors are handy for cutting paper." },
+  { source = "yomeru", id = "y3", ja = "旅行する{のに}お金が必要です。", en = "I need money to travel." },
 ]
 
 [[point]]
