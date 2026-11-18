@@ -1,18 +1,21 @@
-//! The Grammar tab of the Review page: one card per grammar point added from
-//! the Lookup page, shown pattern → meaning, formation and examples (the
-//! recognition face of the phase-4 doc). Scheduling is the same FSRS path
+//! The Grammar tab of the Review page: the grammar points added from the
+//! Lookup page, two cards each. Recognition shows the pattern and asks its
+//! meaning; production shows an example's English and the meaning line, and
+//! the user writes the Japanese (the phase-4 doc). A session takes either
+//! kind, or both mixed ([`GrammarMode`]). Scheduling is the same FSRS path
 //! words use.
 
 use std::collections::HashMap;
 
 use dioxus::prelude::*;
 
-use crate::dict::grammar_by_seq;
+use crate::dict::{grammar_by_seq, grammar_check};
 use crate::drill_log;
-use crate::grammar::GrammarEntry;
+use crate::grammar::{AnswerCheck, Example, GrammarEntry, Verdict};
 use crate::icons::{Icon, IconName};
 use crate::idb::{
-    ensure_grammar_production_cards, get_all_cards, get_due_grammar_cards, put_card_logged,
+    GrammarMode, count_due_grammar, ensure_grammar_production_cards, get_all_cards,
+    get_due_grammar_cards, put_card_logged,
 };
 use crate::settings::load as load_settings;
 use crate::srs::{ReviewOutcome, apply_review, now_ms, rating_from_u8};
@@ -26,8 +29,14 @@ use super::review_common::{
     use_review_shortcuts,
 };
 
-/// Examples the back of a card shows.
+/// Examples the back of a recognition card shows.
 const BACK_EXAMPLES: usize = 2;
+
+/// The session mode last picked, kept on this device.
+const MODE_KEY: &str = "yomeru.grammar_mode";
+/// "Answer in my head": production cards without typing, kept on this
+/// device (typing suits a keyboard, the head a phone).
+const IN_HEAD_KEY: &str = "yomeru.grammar_in_head";
 
 /// One answered grammar card, kept for the end-of-session recap.
 #[derive(Clone, PartialEq)]
@@ -38,14 +47,72 @@ struct GrammarResult {
     rating: u8,
 }
 
+/// Where the production card on screen stands. Reset for each card.
+#[derive(Clone, Default, PartialEq)]
+struct Attempt {
+    answer: String,
+    /// The last check's outcome, for the banner.
+    verdict: Option<Verdict>,
+    /// A check is on its way.
+    checking: bool,
+    /// The formation hint was shown.
+    hinted: bool,
+    /// The check found the point (or the user says the answer was right).
+    accepted: bool,
+}
+
+impl Attempt {
+    /// The highest rating the card can take: any hint caps it at Hard, the
+    /// reference shown before a correct answer at Again.
+    fn max_rating(&self) -> u8 {
+        match (self.accepted, self.hinted) {
+            (true, false) => 4,
+            (true, true) => 2,
+            (false, _) => 1,
+        }
+    }
+}
+
+/// Whether the production card of `point` is answered by typing: not in
+/// "answer in my head", and not for a point the check can't find.
+fn typed(point: &GrammarEntry, in_head: bool) -> bool {
+    !in_head && point.check != AnswerCheck::SelfGraded
+}
+
+fn load_mode() -> GrammarMode {
+    crate::rt::kv_get::<String>(MODE_KEY)
+        .as_deref()
+        .and_then(GrammarMode::parse)
+        .unwrap_or(GrammarMode::Mix)
+}
+
+/// The example a production card prompts with, picked anew each session so
+/// the sentence can't be learned by heart.
+fn pick_example(count: usize, seed: u64, position: usize) -> usize {
+    if count == 0 {
+        return 0;
+    }
+    let mixed = seed
+        .wrapping_add(position as u64)
+        .wrapping_mul(0x9E37_79B9_7F4A_7C15);
+    (mixed >> 32) as usize % count
+}
+
 #[component]
 pub(crate) fn GrammarReview() -> Element {
+    let mut mode = use_signal(load_mode);
+    let mut in_head = use_signal(|| crate::rt::kv_get::<bool>(IN_HEAD_KEY).unwrap_or(false));
     let mut due = use_signal(Vec::<SrsCard>::new);
+    // The example each production card of `due` prompts with, by position.
+    let mut prompts = use_signal(Vec::<usize>::new);
+    // Cards due in each mode, in `GrammarMode::ALL` order.
+    let mut counts = use_signal(|| [0usize; 3]);
     // Card sequence → its point. Cards whose point left the dictionary are
     // kept out of `due` (their schedule is kept).
     let mut points = use_signal(HashMap::<u32, GrammarEntry>::new);
     let mut idx = use_signal(|| 0usize);
     let mut show_back = use_signal(|| false);
+    let mut attempt = use_signal(Attempt::default);
     let mut started = use_signal(|| false);
     let mut loaded = use_signal(|| false);
     let mut has_deck = use_signal(|| false);
@@ -60,13 +127,20 @@ pub(crate) fn GrammarReview() -> Element {
     // it closes by itself once the session moves on (or undo steps back).
     let mut full_for = use_signal(|| Option::<String>::None);
 
+    let next_due_of = move |all: &mut Vec<SrsCard>| {
+        let m = *mode.peek();
+        all.retain(|c| m.takes(c));
+        next_due_message(all, now_ms())
+    };
+
     let load_session = move || {
         spawn(async move {
             let settings = load_settings();
             if let Err(e) = ensure_grammar_production_cards().await {
                 warn!("ensure_grammar_production_cards failed: {e}");
             }
-            let cards = get_due_grammar_cards(now_ms(), CardDirection::Recognition)
+            let m = *mode.peek();
+            let cards = get_due_grammar_cards(now_ms(), m)
                 .await
                 .unwrap_or_default();
             let seqs: Vec<u32> = cards.iter().filter_map(SrsCard::grammar_seq).collect();
@@ -82,22 +156,44 @@ pub(crate) fn GrammarReview() -> Element {
                 .zip(found)
                 .filter_map(|(s, e)| Some((s, e?)))
                 .collect();
+            // A production card needs an example to prompt with.
             let cards: Vec<SrsCard> = cards
                 .into_iter()
-                .filter(|c| c.grammar_seq().is_some_and(|s| map.contains_key(&s)))
+                .filter(|c| {
+                    c.grammar_seq()
+                        .and_then(|s| map.get(&s))
+                        .is_some_and(|p| {
+                            c.direction != CardDirection::Production || !p.examples.is_empty()
+                        })
+                })
                 .take(settings.max_session_cards as usize)
+                .collect();
+            let seed = now_ms() as u64;
+            let picks: Vec<usize> = cards
+                .iter()
+                .enumerate()
+                .map(|(i, c)| {
+                    let n = c
+                        .grammar_seq()
+                        .and_then(|s| map.get(&s))
+                        .map_or(0, |p| p.examples.len());
+                    pick_example(n, seed, i)
+                })
                 .collect();
             points.set(map);
             due.set(cards);
+            prompts.set(picks);
             idx.set(0);
             show_back.set(false);
+            attempt.set(Attempt::default());
             started.set(false);
             results.set(vec![]);
             last_answer.set(None);
+            counts.set(count_due_grammar(now_ms()).await.unwrap_or_default());
             let mut all = get_all_cards().await.unwrap_or_default();
-            all.retain(|c| c.is_grammar() && c.direction == CardDirection::Recognition);
+            all.retain(SrsCard::is_grammar);
             has_deck.set(!all.is_empty());
-            next_due.set(next_due_message(&all, now_ms()));
+            next_due.set(next_due_of(&mut all));
             loaded.set(true);
         });
     };
@@ -109,10 +205,80 @@ pub(crate) fn GrammarReview() -> Element {
         }
     });
 
+    let mut pick_mode = move |m: GrammarMode| {
+        if *mode.peek() == m {
+            return;
+        }
+        mode.set(m);
+        let _ = crate::rt::kv_set(MODE_KEY, &m.as_str().to_string());
+        load_session();
+    };
+
+    // Shows the back. On a production card, before the point was found,
+    // that is the reference shown: the rating is capped at Again.
     let mut reveal = move || show_back.set(true);
 
+    let mut check = move || {
+        let a = attempt.peek().clone();
+        if a.checking || a.answer.trim().is_empty() || *show_back.peek() {
+            return;
+        }
+        let Some(point) = due
+            .peek()
+            .get(*idx.peek())
+            .and_then(SrsCard::grammar_seq)
+            .and_then(|s| points.peek().get(&s).cloned())
+        else {
+            return;
+        };
+        attempt.with_mut(|a| a.checking = true);
+        let card_at = *idx.peek();
+        spawn(async move {
+            let verdict = grammar_check(&point.id, &a.answer).await;
+            // The user moved on (or undid) while the check ran.
+            if *idx.peek() != card_at || *show_back.peek() {
+                return;
+            }
+            let verdict = match verdict {
+                Ok(v) => v,
+                Err(e) => {
+                    warn!("grammar_check({}) failed: {e}", point.id);
+                    // No check to go by: the user grades.
+                    Verdict::SelfGraded
+                }
+            };
+            let found = matches!(verdict, Verdict::Accepted | Verdict::SelfGraded);
+            attempt.with_mut(|a| {
+                a.checking = false;
+                a.accepted = found;
+                a.verdict = Some(verdict);
+            });
+            if found {
+                show_back.set(true);
+            }
+        });
+    };
+
+    // The rating cap of the card on screen.
+    let max_rating = move || -> u8 {
+        let cards = due.peek();
+        let Some(card) = cards.get(*idx.peek()) else {
+            return 4;
+        };
+        if card.direction != CardDirection::Production {
+            return 4;
+        }
+        let point = card
+            .grammar_seq()
+            .and_then(|s| points.peek().get(&s).cloned());
+        match point {
+            Some(p) if typed(&p, *in_head.peek()) => attempt.peek().max_rating(),
+            _ => 4,
+        }
+    };
+
     let rate = move |r: u8| {
-        if *rating_in_flight.peek() || !*show_back.peek() {
+        if *rating_in_flight.peek() || !*show_back.peek() || r > max_rating() {
             return;
         }
         let Some(card) = due.peek().get(*idx.peek()).cloned() else {
@@ -151,10 +317,10 @@ pub(crate) fn GrammarReview() -> Element {
             }
             idx += 1;
             show_back.set(false);
+            attempt.set(Attempt::default());
             if *idx.peek() >= due.peek().len() {
                 let mut all = get_all_cards().await.unwrap_or_default();
-                all.retain(|c| c.is_grammar() && c.direction == CardDirection::Recognition);
-                next_due.set(next_due_message(&all, now_ms()));
+                next_due.set(next_due_of(&mut all));
             }
             // Last, so an undo can't run before the summary lands.
             rating_in_flight.set(false);
@@ -177,6 +343,7 @@ pub(crate) fn GrammarReview() -> Element {
                     results.with_mut(|v| v.truncate(last.results));
                     idx.set(last.idx);
                     show_back.set(false);
+                    attempt.set(Attempt::default());
                     next_due.set(None);
                 }
                 Err(e) => warn!("undo of {} failed: {e}", last.row.card_id),
@@ -203,18 +370,57 @@ pub(crate) fn GrammarReview() -> Element {
     let total = cards.len();
 
     if !*started.read() {
+        let current = *mode.read();
+        let counts_v = *counts.read();
+        let any_due = counts_v.iter().any(|&n| n > 0);
         let label = if total == 1 {
-            "1 grammar point ready".to_string()
+            "1 grammar card ready".to_string()
         } else {
-            format!("{total} grammar points ready")
+            format!("{total} grammar cards ready")
+        };
+        let helper = match current {
+            GrammarMode::Mix => "Both kinds of card, one per point.",
+            GrammarMode::Recognition => "See the pattern, recall what it means.",
+            GrammarMode::Production => "Read the English, write the Japanese.",
         };
         return rsx! {
-            if total > 0 {
+            if any_due {
                 div { class: "empty-state",
                     div { class: "glyph", Icon { name: IconName::Play, size: 44 } }
-                    div { class: "headline", "{label}" }
-                    div { class: "helper", "Grammar points you added from the Lookup tab." }
-                    button { class: "primary", onclick: move |_| started.set(true), "Start Review" }
+                    div { class: "headline",
+                        if total > 0 { "{label}" } else { "Nothing due in {current.label()}" }
+                    }
+                    div { class: "seg-tabs grammar-modes",
+                        for (m, n) in GrammarMode::ALL.into_iter().zip(counts_v) {
+                            button {
+                                key: "{m.as_str()}",
+                                class: if m == current { "active" } else { "" },
+                                "aria-pressed": m == current,
+                                disabled: n == 0 && m != current,
+                                onclick: move |_| pick_mode(m),
+                                "{m.label()} · {n}"
+                            }
+                        }
+                    }
+                    div { class: "helper", "{helper}" }
+                    if current != GrammarMode::Recognition {
+                        label { class: "helper grammar-in-head",
+                            input {
+                                r#type: "checkbox",
+                                checked: *in_head.read(),
+                                onchange: move |e| {
+                                    let on = e.checked();
+                                    in_head.set(on);
+                                    let _ = crate::rt::kv_set(IN_HEAD_KEY, &on);
+                                },
+                            }
+                            "Answer in my head (no typing, on this device)"
+                        }
+                    }
+                    button { class: "primary", disabled: total == 0,
+                        onclick: move |_| started.set(true),
+                        "Start Review"
+                    }
                 }
             } else if !*has_deck.read() {
                 div { class: "empty-state",
@@ -236,11 +442,12 @@ pub(crate) fn GrammarReview() -> Element {
         };
     }
 
-    let point = cards
-        .get(i)
+    let card = cards.get(i).cloned();
+    let point = card
+        .as_ref()
         .and_then(SrsCard::grammar_seq)
         .and_then(|s| points.read().get(&s).cloned());
-    let Some(point) = point else {
+    let (Some(card), Some(point)) = (card, point) else {
         let (forgot, remembered): (Vec<GrammarResult>, Vec<GrammarResult>) =
             results.read().iter().cloned().partition(|r| r.rating == 1);
         return rsx! {
@@ -279,22 +486,97 @@ pub(crate) fn GrammarReview() -> Element {
 
     let show_back_v = *show_back.read();
     let in_flight = *rating_in_flight.read();
-    let card_id = cards.get(i).map(|c| c.id.clone()).unwrap_or_default();
-    let full_open = full_for.read().as_deref() == Some(card_id.as_str());
+    let production = card.direction == CardDirection::Production;
+    let full_open = full_for.read().as_deref() == Some(card.id.as_str());
+    let card_id = card.id.clone();
 
-    rsx! {
-        div { class: "review-card",
-            div { class: "row", style: "justify-content: space-between;",
-                span { class: "muted", "Card {i + 1} of {total}" }
-                span { class: "row",
-                    if can_undo {
-                        UndoButton { disabled: in_flight, on_undo: move |_| undo() }
+    let header = rsx! {
+        div { class: "row", style: "justify-content: space-between;",
+            span { class: "muted",
+                "Card {i + 1} of {total}"
+                if production { " · Production" }
+            }
+            span { class: "row",
+                if can_undo {
+                    UndoButton { disabled: in_flight, on_undo: move |_| undo() }
+                }
+                if show_back_v {
+                    span { class: "freq-badge", "{point.jlpt}" }
+                }
+            }
+        }
+    };
+
+    if production {
+        let example = prompts
+            .read()
+            .get(i)
+            .and_then(|&k| point.examples.get(k).cloned())
+            .unwrap_or_default();
+        let typing = typed(&point, *in_head.read());
+        let a = attempt.read().clone();
+        let cap = if typing { a.max_rating() } else { 4 };
+        return rsx! {
+            div { class: "review-card",
+                {header}
+                div { class: "face grammar-prompt",
+                    div { class: "grammar-prompt-en", "{example.en}" }
+                    div { class: "muted grammar-prompt-meaning", "{point.meaning}" }
+                }
+                if a.hinted || show_back_v {
+                    ul { class: "grammar-patterns", lang: "ja",
+                        for (k, line) in point.formation.iter().enumerate() {
+                            li { key: "{k}", "{line}" }
+                        }
                     }
-                    if show_back_v {
-                        span { class: "freq-badge", "{point.jlpt}" }
+                }
+                if !show_back_v {
+                    if typing {
+                        ProductionInput {
+                            attempt,
+                            on_check: move |_| check(),
+                            on_hint: move |_| attempt.with_mut(|a| a.hinted = true),
+                            on_reveal: move |_| reveal(),
+                        }
+                    } else {
+                        div { style: "margin-top: 16px;",
+                            ShowAnswerButton { on_reveal: move |_| reveal() }
+                        }
+                    }
+                } else {
+                    ProductionBack {
+                        point: point.clone(),
+                        example,
+                        answer: if typing { a.answer.clone() } else { String::new() },
+                    }
+                    if typing && !a.accepted && !a.answer.trim().is_empty() {
+                        // The check can miss a valid sentence: the user is
+                        // the judge, and only cheats themselves.
+                        button { class: "link",
+                            onclick: move |_| attempt.with_mut(|a| a.accepted = true),
+                            "My answer was right"
+                        }
+                    }
+                    if cap < 4 {
+                        div { class: "muted grammar-cap",
+                            if cap == 1 {
+                                "The answer was shown: Again."
+                            } else {
+                                "With a hint: Again or Hard."
+                            }
+                        }
+                    }
+                    div { style: "margin-top: 16px;",
+                        RateButtons { disabled: in_flight, max: cap, on_rate: rate }
                     }
                 }
             }
+        };
+    }
+
+    rsx! {
+        div { class: "review-card",
+            {header}
             div { class: "face",
                 div { class: "word grammar-face", lang: "ja", "{point.pattern}" }
             }
@@ -336,6 +618,101 @@ pub(crate) fn GrammarReview() -> Element {
     }
 }
 
+/// The front of a typed production card: the answer field, the check's
+/// banner, the hint and the give-up.
+#[component]
+fn ProductionInput(
+    attempt: Signal<Attempt>,
+    on_check: EventHandler<()>,
+    on_hint: EventHandler<()>,
+    on_reveal: EventHandler<()>,
+) -> Element {
+    let a = attempt.read().clone();
+    let banner = a.verdict.as_ref().and_then(|v| match v {
+        Verdict::Close { related } => Some((
+            "close",
+            format!(
+                "{} works here too, but this card practises another point. Try again.",
+                related.pattern
+            ),
+        )),
+        Verdict::Other { found } => {
+            let used: Vec<&str> = found.iter().map(|r| r.pattern.as_str()).collect();
+            Some((
+                "miss",
+                format!(
+                    "You used {}. This card asks for another point.",
+                    used.join(", ")
+                ),
+            ))
+        }
+        Verdict::NotFound => Some(("miss", "The card's point isn't in your answer yet.".into())),
+        Verdict::Accepted | Verdict::SelfGraded => None,
+    });
+    rsx! {
+        div { class: "grammar-answer",
+            input {
+                r#type: "text",
+                lang: "ja",
+                class: "grammar-answer-input",
+                placeholder: "Write it in Japanese",
+                autocomplete: "off",
+                autofocus: true,
+                "aria-label": "Your answer in Japanese",
+                value: "{a.answer}",
+                oninput: move |e| {
+                    let text = e.value();
+                    attempt.with_mut(|a| a.answer = text);
+                },
+                onkeydown: move |e| {
+                    // Enter also ends an IME composition: that one isn't a
+                    // submit.
+                    if e.key() == Key::Enter && !e.is_composing() {
+                        e.prevent_default();
+                        on_check.call(());
+                    }
+                },
+            }
+            if let Some((class, text)) = banner {
+                div { class: "grammar-verdict {class}", role: "status", "{text}" }
+            }
+            div { class: "row grammar-answer-actions",
+                if !a.hinted {
+                    button { class: "outline", onclick: move |_| on_hint.call(()), "Hint" }
+                }
+                button { class: "link", onclick: move |_| on_reveal.call(()), "Show answer" }
+                button { class: "primary",
+                    disabled: a.checking || a.answer.trim().is_empty(),
+                    onclick: move |_| on_check.call(()),
+                    if a.checking { "Checking…" } else { "Check" }
+                    kbd { "aria-hidden": "true", "Enter" }
+                }
+            }
+        }
+    }
+}
+
+/// The back of a production card: the user's answer, the reference with the
+/// point marked, and the point.
+#[component]
+fn ProductionBack(point: GrammarEntry, example: Example, answer: String) -> Element {
+    rsx! {
+        div { class: "grammar-back",
+            if !answer.trim().is_empty() {
+                div { class: "grammar-your-answer",
+                    span { class: "muted", "Your answer " }
+                    span { lang: "ja", "{answer}" }
+                }
+            }
+            ExampleList { examples: vec![example] }
+            div { class: "grammar-back-point",
+                span { class: "w", lang: "ja", "{point.pattern}" }
+                span { class: "muted", " · {point.meaning}" }
+            }
+        }
+    }
+}
+
 /// One column of the end-of-session recap.
 #[component]
 fn GrammarRecapList(
@@ -364,5 +741,35 @@ fn GrammarRecapList(
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn hints_cap_the_rating() {
+        let a = |accepted, hinted| Attempt {
+            accepted,
+            hinted,
+            ..Attempt::default()
+        };
+        assert_eq!(a(true, false).max_rating(), 4);
+        assert_eq!(a(true, true).max_rating(), 2);
+        assert_eq!(a(false, false).max_rating(), 1);
+        assert_eq!(a(false, true).max_rating(), 1);
+    }
+
+    #[test]
+    fn the_example_is_one_of_the_points() {
+        for seed in [0, 1, 1_700_000_000_000, u64::MAX] {
+            for pos in 0..20 {
+                assert!(pick_example(5, seed, pos) < 5);
+            }
+        }
+        assert_eq!(pick_example(0, 7, 3), 0);
+        // Not always the first.
+        assert!((0..20).any(|p| pick_example(5, 1_700_000_000_000, p) != 0));
     }
 }

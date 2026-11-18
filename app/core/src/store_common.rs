@@ -51,14 +51,77 @@ pub async fn get_due_kanji_cards(now_ms: f64) -> Result<Vec<SrsCard>, String> {
     get_due(now_ms, CardKind::Kanji, None).await
 }
 
-/// Due grammar cards of one `direction`, ordered by
-/// [`crate::srs::order_due`]: recognition and production are separate
-/// sessions.
-pub async fn get_due_grammar_cards(
-    now_ms: f64,
-    direction: CardDirection,
-) -> Result<Vec<SrsCard>, String> {
-    get_due(now_ms, CardKind::Grammar, Some(direction)).await
+/// What a Grammar review session takes: recognition cards, production
+/// cards, or both mixed.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GrammarMode {
+    Mix,
+    Recognition,
+    Production,
+}
+
+impl GrammarMode {
+    pub const ALL: [GrammarMode; 3] = [Self::Mix, Self::Recognition, Self::Production];
+
+    /// The one direction the session takes; `None` for both.
+    pub fn direction(self) -> Option<CardDirection> {
+        match self {
+            Self::Mix => None,
+            Self::Recognition => Some(CardDirection::Recognition),
+            Self::Production => Some(CardDirection::Production),
+        }
+    }
+
+    /// Whether `card` belongs in a session of this mode.
+    pub fn takes(self, card: &SrsCard) -> bool {
+        card.is_grammar() && self.direction().is_none_or(|d| card.direction == d)
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Mix => "mix",
+            Self::Recognition => "recognition",
+            Self::Production => "production",
+        }
+    }
+
+    pub fn parse(s: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|m| m.as_str() == s)
+    }
+
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Mix => "Mix",
+            Self::Recognition => "Recognition",
+            Self::Production => "Production",
+        }
+    }
+}
+
+/// Due grammar cards of a `mode`'s session, ordered by
+/// [`crate::srs::order_due`], one per point: in a mix, a point's other card
+/// waits for the next session.
+pub async fn get_due_grammar_cards(now_ms: f64, mode: GrammarMode) -> Result<Vec<SrsCard>, String> {
+    get_due(now_ms, CardKind::Grammar, mode.direction()).await
+}
+
+/// How many cards each [`GrammarMode`]'s session would take now, in
+/// [`GrammarMode::ALL`] order, from one read of the store.
+pub async fn count_due_grammar(now_ms: f64) -> Result<[usize; 3], String> {
+    Ok(grammar_due_counts(get_all_cards().await?, now_ms))
+}
+
+fn grammar_due_counts(mut due: Vec<SrsCard>, now_ms: f64) -> [usize; 3] {
+    due.retain(|c| c.is_grammar() && is_due(c, now_ms));
+    crate::srs::order_due(&mut due);
+    GrammarMode::ALL.map(|m| {
+        let of_mode: Vec<SrsCard> = due.iter().filter(|c| m.takes(c)).cloned().collect();
+        crate::srs::hold_siblings(of_mode).len()
+    })
+}
+
+fn is_due(c: &SrsCard, now_ms: f64) -> bool {
+    matches!(c.status, CardStatus::Active) && c.due_ms <= now_ms
 }
 
 async fn get_due(
@@ -68,10 +131,7 @@ async fn get_due(
 ) -> Result<Vec<SrsCard>, String> {
     let mut due = get_all_cards().await?;
     due.retain(|c| {
-        c.kind() == kind
-            && direction.is_none_or(|d| c.direction == d)
-            && matches!(c.status, CardStatus::Active)
-            && c.due_ms <= now_ms
+        c.kind() == kind && direction.is_none_or(|d| c.direction == d) && is_due(c, now_ms)
     });
     crate::srs::order_due(&mut due);
     Ok(crate::srs::hold_siblings(due))
@@ -213,6 +273,32 @@ pub async fn delete_card_by_id(id: &str) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_mix_takes_one_card_per_point() {
+        let due = |item, d| {
+            let mut c = SrsCard::new(item, d, 0.0);
+            c.status = CardStatus::Active;
+            c
+        };
+        let cards = vec![
+            // Both cards of point 1 due, one of point 2, one of each kind.
+            due(CardItem::Grammar(1), CardDirection::Recognition),
+            due(CardItem::Grammar(1), CardDirection::Production),
+            due(CardItem::Grammar(2), CardDirection::Production),
+            due(CardItem::Word(1_000_001), CardDirection::Recognition),
+            {
+                let mut later = due(CardItem::Grammar(3), CardDirection::Recognition);
+                later.due_ms = 5_000.0;
+                later
+            },
+        ];
+        // Mix, recognition, production.
+        assert_eq!(grammar_due_counts(cards, 1_000.0), [2, 1, 2]);
+        for m in GrammarMode::ALL {
+            assert_eq!(GrammarMode::parse(m.as_str()), Some(m));
+        }
+    }
 
     #[test]
     fn each_grammar_point_gets_one_production_card_older_than_any_edit() {

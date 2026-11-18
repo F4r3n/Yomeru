@@ -196,13 +196,18 @@ pub(crate) fn ShowAnswerButton(on_reveal: EventHandler<()>) -> Element {
 }
 
 /// Again/Hard/Good/Easy, with their shortcut hints. `disabled` while a rating
-/// is being saved.
+/// is being saved; ratings above `max` are off (a production card answered
+/// with a hint).
 #[component]
-pub(crate) fn RateButtons(disabled: bool, on_rate: EventHandler<u8>) -> Element {
+pub(crate) fn RateButtons(
+    disabled: bool,
+    #[props(default = 4)] max: u8,
+    on_rate: EventHandler<u8>,
+) -> Element {
     rsx! {
         div { class: "rate-grid",
             for (r, class) in [(1u8, "danger"), (2, "warning"), (3, "success"), (4, "primary")] {
-                button { key: "{r}", class, disabled,
+                button { key: "{r}", class, disabled: disabled || r > max,
                     onclick: move |_| on_rate.call(r),
                     "{rating_label(r)}"
                     kbd { "aria-hidden": "true", "{r}" }

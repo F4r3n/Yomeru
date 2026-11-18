@@ -240,11 +240,19 @@ learned by heart. Before writing examples at scale, the format grows:
   review and New Words screens) stages the missing production card,
   written as synced and stamped with the recognition card's `added_ms`, so
   another device's real copy always wins the merge.
-- Sessions: recognition and production are separate Grammar sessions
-  (`get_due_grammar_cards(now, direction)`). A session takes one card per
-  item (`srs::hold_siblings`); the other stays due for the next session.
-  This holds for a word's recognition and recall cards too, in the app and
-  the extension.
+- Sessions: the Grammar tab's start screen picks a mode, Mix,
+  Recognition or Production (`GrammarMode`, remembered on the device),
+  each with its due count (`count_due_grammar`). A session takes one card
+  per item (`srs::hold_siblings`); the other stays due for the next
+  session. This holds for a word's recognition and recall cards too, in
+  the app and the extension.
+- ~~Done~~ (branch `grammar-production`): the face below, the check on
+  every platform (`DictClient::grammar_check`: local on Android, `POST
+  /api/grammar-check` for the web, grammar-wasm calling back into
+  jmdict-wasm in the extension), the hint, the caps, "answer in my head"
+  on the start screen. A "My answer was right" link on the back lifts the
+  Again cap when the check missed a valid answer; it sends no report yet
+  (part 4).
 - Front: the English sentence, and under it the point's `meaning` line
   ("prohibition: must not"), so the user knows which point to use without
   seeing the pattern. The vocabulary hints are behind a button.
