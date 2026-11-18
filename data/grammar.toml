@@ -5841,6 +5841,8 @@ examples = [
   { tatoeba = "275291_137945", ja = "待たせ{てごめん}。", en = "Sorry to have kept you waiting." },
   { tatoeba = "64416_148903", ja = "邪魔し{てすみません}。", en = "I'm sorry to bother you." },
   { tatoeba = "54635_125913", ja = "長くお待たせし{てすみませんでした}。", en = "I am sorry to have kept you waiting so long." },
+  { tatoeba = "277407_126671", ja = "遅刻し{てすみません}。", en = "Excuse me for being late." },
+  { source = "yomeru", id = "y1", ja = "昨日は行け{なくてごめん}ね。", en = "Sorry I couldn't go yesterday." },
 ]
 
 [[point]]
@@ -5868,6 +5870,8 @@ examples = [
   { tatoeba = "257511_157023", ja = "私は今週{ずっと}忙しかった。", en = "I have been busy all this week." },
   { tatoeba = "254333_160188", ja = "私はその後{ずっと}彼に会っていません。", en = "I have not seen him ever since." },
   { tatoeba = "303768_99929", ja = "彼は僕より{ずっと}背が高い。", en = "He is much taller than I am." },
+  { tatoeba = "277500_126490", ja = "中国は日本より{ずっと}広い。", en = "China is much larger than Japan." },
+  { source = "yomeru", id = "y1", ja = "子どもの時から{ずっと}この町に住んでいます。", en = "I've lived in this town ever since I was a child." },
 ]
 
 [[point]]
@@ -5890,7 +5894,9 @@ related = ["dondon", "naru", "te-kuru", "te-iku"]
 examples = [
   { tatoeba = "281096_122906", ja = "日は{だんだん}長くなる。", en = "The day is getting longer and longer." },
   { tatoeba = "40299_203064", ja = "{だんだん}寒くなってきている。", en = "It's getting colder and colder." },
-  { tatoeba = "263417_151139", ja = "試験が{だんだん}近づいています。", en = "The examination is drawing nearer." },
+  { tatoeba = "18288_179431", ja = "空は{だんだん}暗くなった。", en = "The sky became darker and darker." },
+  { source = "yomeru", id = "y1", ja = "日本語が{だんだん}わかるようになりました。", en = "Little by little, I've come to understand Japanese." },
+  { source = "yomeru", id = "y2", ja = "学生が{だんだん}増えてきた。", en = "The number of students has gradually increased." },
 ]
 
 [[point]]
@@ -5914,6 +5920,9 @@ related = ["dandan"]
 examples = [
   { tatoeba = "268533_146029", ja = "状況は{どんどん}ひどくなる。", en = "The situation gets worse and worse." },
   { source = "yomeru", id = "y1", ja = "たくさんあるから、{どんどん}食べてね。", en = "There's plenty, so eat as much as you like." },
+  { source = "yomeru", id = "y2", ja = "質問があれば、{どんどん}聞いてください。", en = "If you have questions, feel free to ask." },
+  { source = "yomeru", id = "y3", ja = "客が{どんどん}入ってきた。", en = "Customers came in one after another." },
+  { source = "yomeru", id = "y4", ja = "子どもは{どんどん}大きくなる。", en = "Children grow up fast." },
 ]
 
 [[point]]
@@ -5940,6 +5949,8 @@ examples = [
   { tatoeba = "38443_201236", ja = "{とうとう}その赤ん坊は眠りについた。", en = "At last, the baby fell asleep." },
   { tatoeba = "38439_201232", ja = "{とうとう}我々はカリフォルニアに着いた。", en = "At last, we reached California." },
   { source = "yomeru", id = "y1", ja = "一時間待ったが、{とうとう}彼は来なかった。", en = "I waited an hour, but in the end he never came." },
+  { tatoeba = "38426_201219", ja = "{とうとう}彼が現れた。", en = "At last he appeared." },
+  { source = "yomeru", id = "y2", ja = "古い車が{とうとう}動かなくなった。", en = "The old car finally stopped running." },
 ]
 
 [[point]]
@@ -5964,6 +5975,8 @@ examples = [
   { tatoeba = "41218_203976", ja = "{だいたい}どのくらいの時間がかかりますか。", en = "About how long will it take?" },
   { tatoeba = "311507_92204", ja = "彼女は{だいたい}私と同じ年だ。", en = "She is about my age." },
   { tatoeba = "245373_169114", ja = "仕事は{だいたい}終わった。", en = "The work is mostly done." },
+  { source = "yomeru", id = "y1", ja = "駅まで{だいたい}十分ぐらいです。", en = "It's roughly ten minutes to the station." },
+  { source = "yomeru", id = "y2", ja = "話は{だいたい}わかりました。", en = "I understood most of what you said." },
 ]
 
 [[point]]
@@ -5986,6 +5999,9 @@ related = ["ya-particle", "nado"]
 examples = [
   { tatoeba = "252384_162131", ja = "{例えば}、猫や犬のような動物が好きです。", en = "I like animals, for example, cats and dogs." },
   { tatoeba = "326009_77709", ja = "{例えば}、ロンドンは今は朝７時です。", en = "For example, it is 7:00 a.m. in London now." },
+  { tatoeba = "326011_77707", ja = "{例えば}、君は英語が好きですか。", en = "For example, do you like English?" },
+  { source = "yomeru", id = "y1", ja = "果物、{たとえば}りんごやみかんなどをよく食べます。", en = "I often eat fruit, for example apples and oranges." },
+  { source = "yomeru", id = "y2", ja = "{たとえば}百万円あったら、何を買いますか。", en = "Say you had a million yen, what would you buy?" },
 ]
 
 [[point]]
@@ -6009,9 +6025,11 @@ ending. Not the もし in もしもし (hello on the \
 phone) or かもしれない; for that reason this entry is search-only."""
 related = ["tara", "ba", "nara", "to-conditional"]
 examples = [
-  { tatoeba = "30773_193606", ja = "{もし}時間があれば来ます。", en = "I will come, time permitting." },
   { tatoeba = "30584_193419", ja = "{もし}明日雪がたくさん降れば、雪だるまを作ろう。", en = "If it snows much tomorrow, let's make a snowman." },
   { source = "yomeru", id = "y1", ja = "{もし}行くなら、私も行きます。", en = "If you're going, I'll go too." },
+  { source = "yomeru", id = "y2", ja = "{もし}雨が降ったら、家にいます。", en = "If it rains, I'll stay home." },
+  { source = "yomeru", id = "y3", ja = "{もし}失敗しても、またやればいい。", en = "Even if you fail, you can just try again." },
+  { source = "yomeru", id = "y4", ja = "{もしも}道がわからなかったら、電話してください。", en = "If by any chance you get lost, give me a call." },
 ]
 
 [[point]]
@@ -6036,6 +6054,8 @@ examples = [
   { tatoeba = "32768_195593", ja = "{まず}出席を取ります。", en = "I'll take attendance first." },
   { tatoeba = "32801_195627", ja = "{まず}どこに行きたいですか。", en = "Where would you like to go first?" },
   { tatoeba = "32773_195599", ja = "{まず}私に話させてください。", en = "Please let me speak first." },
+  { source = "yomeru", id = "y1", ja = "家に帰ったら、{まず}手を洗いなさい。", en = "When you get home, wash your hands first." },
+  { source = "yomeru", id = "y2", ja = "明日は{まず}雨は降らないだろう。", en = "It almost certainly won't rain tomorrow." },
 ]
 
 [[point]]
@@ -6060,6 +6080,8 @@ examples = [
   { tatoeba = "323324_80393", ja = "明日{また}来なさい。", en = "Come again tomorrow." },
   { tatoeba = "32634_195460", ja = "{また}会えて嬉しいわ。", en = "Glad to see you again." },
   { tatoeba = "304902_98797", ja = "彼も{また}来ない。", en = "He is not coming, either." },
+  { source = "yomeru", id = "y1", ja = "{また}財布を忘れてしまった。", en = "I forgot my wallet again." },
+  { source = "yomeru", id = "y2", ja = "この部屋は広い。{また}、駅にも近い。", en = "This room is spacious. Moreover, it's close to the station." },
 ]
 
 [[point]]
@@ -6082,6 +6104,9 @@ related = ["ka-particle", "soretomo", "mata"]
 examples = [
   { tatoeba = "813321_173494", ja = "紅茶{または}コーヒーはいかが？", en = "Would you like some tea or coffee?" },
   { source = "yomeru", id = "y1", ja = "黒{または}青のペンで書いてください。", en = "Please write in black or blue pen." },
+  { tatoeba = "304261_99437", ja = "彼は野球{または}フットボールのどちらかが好きだ。", en = "He likes either baseball or football." },
+  { source = "yomeru", id = "y2", ja = "電話{または}メールで連絡してください。", en = "Please contact us by phone or email." },
+  { source = "yomeru", id = "y3", ja = "月曜日{または}火曜日に来てください。", en = "Please come on Monday or Tuesday." },
 ]
 
 [[point]]
@@ -6104,6 +6129,9 @@ related = ["demo", "shikashi", "noni"]
 examples = [
   { tatoeba = "308751_87985", ja = "彼女は沢山欠点がある。{それでも}私は彼女が好きです。", en = "She has a lot of faults. Still, I like her." },
   { tatoeba = "302937_100760", ja = "彼は疲れていたが、{それでも}彼らの手伝いに行った。", en = "He was tired, and yet he went to help them." },
+  { source = "yomeru", id = "y1", ja = "雨が強かった。{それでも}試合は続いた。", en = "It was raining hard. Even so, the game went on." },
+  { source = "yomeru", id = "y2", ja = "何度も説明した。{それでも}彼はわからなかった。", en = "I explained many times. Still, he didn't understand." },
+  { source = "yomeru", id = "y3", ja = "高いけど、{それでも}買いたい。", en = "It's expensive, but I still want to buy it." },
 ]
 
 [[point]]
@@ -6127,6 +6155,9 @@ related = ["demo", "shikashi", "kedo", "ga-particle"]
 examples = [
   { source = "yomeru", id = "y1", ja = "この店は高い。{だが}、とてもおいしい。", en = "This restaurant is expensive. But it's very good." },
   { source = "yomeru", id = "y2", ja = "兄は医者{だが}、病院が嫌いだ。", en = "My brother is a doctor, but he hates hospitals." },
+  { tatoeba = "52940_215638", ja = "ジョージは貧乏{だが}いつも幸せである。", en = "George is poor, but he's always happy." },
+  { source = "yomeru", id = "y3", ja = "試験は難しかった。{だが}、全部答えた。", en = "The exam was hard. But I answered every question." },
+  { source = "yomeru", id = "y4", ja = "約束の時間は過ぎた。{だが}、彼はまだ来ない。", en = "The agreed time has passed. But he still hasn't come." },
 ]
 
 [[point]]
@@ -6152,6 +6183,8 @@ examples = [
   { tatoeba = "54729_217424", ja = "{こんなに}待たせてごめんなさい。", en = "I'm sorry to have kept you waiting so long." },
   { tatoeba = "328741_74978", ja = "{そんなに}緊張しなくてもいいですよ。", en = "There's no need to be that tense." },
   { source = "yomeru", id = "y1", ja = "「高かった？」「{そんなに}高くなかったよ。」", en = "\"Was it expensive?\" \"Not that expensive.\"" },
+  { tatoeba = "41493_204251", ja = "{そんなに}騒ぐな。", en = "Don't make so much noise." },
+  { source = "yomeru", id = "y2", ja = "{そんなに}食べたら、おなかが痛くなるよ。", en = "If you eat that much, you'll get a stomachache." },
 ]
 
 [[point]]
@@ -6174,6 +6207,8 @@ examples = [
   { tatoeba = "306869_96835", ja = "彼らは{少しも}仕事をしない。", en = "They don't do a lick of work." },
   { tatoeba = "66787_229428", ja = "いいえ、{少しも}。", en = "Not at all." },
   { source = "yomeru", id = "y1", ja = "このコートは{少しも}暖かくない。", en = "This coat isn't warm at all." },
+  { tatoeba = "255536_158986", ja = "フランス語は{少しも}知らない。", en = "I don't know any French." },
+  { source = "yomeru", id = "y2", ja = "彼の話は{少しも}面白くなかった。", en = "His story wasn't interesting at all." },
 ]
 
 [[point]]
@@ -6198,6 +6233,8 @@ examples = [
   { tatoeba = "324578_79139", ja = "ゆうべは{ちっとも}眠れなかった。", en = "I did not sleep at all last night." },
   { tatoeba = "73539_236163", ja = "「疲れたか」「いいや、{ちっとも}」", en = "\"Are you tired?\" \"No, not at all.\"" },
   { tatoeba = "303341_100348", ja = "彼は父親の言うことを{ちっとも}聞かない。", en = "He never takes any notice of what his father says." },
+  { tatoeba = "241801_172674", ja = "今は{ちっとも}うれしくない。", en = "I'm not in the least bit happy now." },
+  { tatoeba = "10296455_222863", ja = "この夏は{ちっとも}雨が降りません。", en = "This summer, it hasn't rained at all." },
 ]
 
 [[point]]
@@ -6221,6 +6258,8 @@ examples = [
   { tatoeba = "311631_92080", ja = "彼女は{できるだけ}速く走った。", en = "She ran as fast as possible." },
   { tatoeba = "39522_202310", ja = "{できるだけ}早く手紙をくださいね。", en = "Please write to me as soon as possible." },
   { source = "yomeru", id = "y1", ja = "{できるだけ}毎日歩くようにしています。", en = "I try to walk every day as much as I can." },
+  { tatoeba = "497986_202343", ja = "{できるだけ}たくさんの本を読みなさい。", en = "Read as many books as possible." },
+  { source = "yomeru", id = "y2", ja = "{できるだけ}のことはしました。", en = "I did everything I could." },
 ]
 
 [[point]]
@@ -6243,6 +6282,9 @@ related = ["dekiru-dake", "you-ni-suru"]
 examples = [
   { tatoeba = "36260_199062", ja = "{なるべく}ゆっくり話してもらえますか。", en = "Could you speak as slowly as possible?" },
   { source = "yomeru", id = "y1", ja = "夜は{なるべく}早く寝るようにしています。", en = "I try to go to bed early at night when I can." },
+  { source = "yomeru", id = "y2", ja = "{なるべく}甘いものを食べないようにしている。", en = "I try not to eat sweets if I can help it." },
+  { source = "yomeru", id = "y3", ja = "明日は{なるべく}早く来てください。", en = "Please come as early as you can tomorrow." },
+  { source = "yomeru", id = "y4", ja = "荷物は{なるべく}少なくしてください。", en = "Please keep your luggage as light as possible." },
 ]
 
 [[point]]
@@ -6265,8 +6307,10 @@ is a separate point."""
 related = ["kitto", "zehi", "kesshite"]
 examples = [
   { tatoeba = "303624_100073", ja = "彼は母の誕生日には{必ず}電話をかける。", en = "He never fails to call his mother on her birthday." },
-  { tatoeba = "270047_144518", ja = "人は皆{必ず}死ぬ。", en = "All men must die." },
   { source = "yomeru", id = "y1", ja = "明日は{必ず}来てください。", en = "Be sure to come tomorrow." },
+  { tatoeba = "425748_425745", ja = "彼は{必ず}最後に「冗談ですよ」と言います。", en = "He always says, \"only kidding!\" at the end." },
+  { tatoeba = "1190094_204890", ja = "それは{必ず}自分でしなさい。", en = "Make sure that you do it yourself." },
+  { source = "yomeru", id = "y2", ja = "頑張れば{必ず}できるよ。", en = "If you work hard, you can definitely do it." },
 ]
 
 [[point]]
@@ -6289,6 +6333,9 @@ related = ["daitai"]
 examples = [
   { tatoeba = "281755_122247", ja = "日本人は{主に}米を食べる。", en = "The Japanese live mainly on rice." },
   { source = "yomeru", id = "y1", ja = "このかばんは{主に}旅行で使います。", en = "I mainly use this bag for travel." },
+  { source = "yomeru", id = "y2", ja = "この町の人は{主に}バスを使います。", en = "People in this town mainly get around by bus." },
+  { source = "yomeru", id = "y3", ja = "このクラスの学生は{主に}アジアから来ています。", en = "The students in this class mostly come from Asia." },
+  { source = "yomeru", id = "y4", ja = "週末は{主に}家で本を読んでいます。", en = "On weekends, I mostly read at home." },
 ]
 
 [[point]]
