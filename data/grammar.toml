@@ -15358,6 +15358,8 @@ examples = [
   { tatoeba = "291542_112136", ja = "彼はそんなことをやり{かねない}。", en = "He is capable of doing such a thing." },
   { tatoeba = "58684_221359", ja = "この手の雑誌は若者に害を与え{かねない}。", en = "This kind of magazine can do harm to young people." },
   { source = "yomeru", id = "y1", ja = "スピードを出しすぎると、事故を起こし{かねない}。", en = "Driving too fast could well cause an accident." },
+  { tatoeba = "279547_124447", ja = "奴はうそもつき{かねない}男だ。", en = "The man is quite capable of telling lies." },
+  { source = "yomeru", id = "y2", ja = "そんなに働くと、体を壊し{かねません}よ。", en = "If you work that hard, you could well ruin your health." },
 ]
 
 [[point]]
@@ -15387,6 +15389,8 @@ examples = [
   { tatoeba = "42797_205552", ja = "それはあり{得る}ことだ。", en = "It's a possible story." },
   { tatoeba = "54794_217485", ja = "こんなこと、日本では{起こりえない}。", en = "Such a thing can't happen in Japan." },
   { tatoeba = "307965_95740", ja = "彼女が、佐藤君と結婚するなんて{ありえない}よ。", en = "There's no way she'll ever marry Sato." },
+  { tatoeba = "284303_119360", ja = "彼が来ることは{ありえない}。", en = "There's no possibility of his coming." },
+  { source = "yomeru", id = "y1", ja = "考え{得る}方法はすべて試した。", en = "We tried every method we could possibly think of." },
 ]
 
 [[point]]
@@ -15414,6 +15418,8 @@ examples = [
   { tatoeba = "26854_189700", ja = "雨が降る{恐れがある}。", en = "It's threatening to rain." },
   { tatoeba = "51214_213926", ja = "そういう事故は再発する{おそれがある}。", en = "Such an accident is likely to happen again." },
   { source = "yomeru", id = "y1", ja = "台風で電車が遅れる{おそれがあります}。", en = "Trains may be delayed because of the typhoon." },
+  { tatoeba = "31280_194111", ja = "もう少し雨がひどくなると、洪水の{恐れがある}。", en = "A little heavier rain might cause a flood." },
+  { source = "yomeru", id = "y2", ja = "このままでは個人情報が漏れる{おそれがある}。", en = "As things stand, there's a risk that personal data will leak." },
 ]
 
 [[point]]
@@ -15437,6 +15443,9 @@ related = ["to-wa-kagiranai", "osore-ga-aru", "kamoshirenai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "山の天気は変わりやすい。雪が降ら{ないとも限らない}。", en = "Mountain weather changes fast. It could even snow." },
   { source = "yomeru", id = "y2", ja = "誰かに聞かれ{ないとも限らない}。", en = "You never know, someone might overhear." },
+  { source = "yomeru", id = "y3", ja = "事故に遭わ{ないとも限らない}から、保険に入ろう。", en = "You never know, we might have an accident, so let's get insurance." },
+  { source = "yomeru", id = "y4", ja = "彼が来{ないとも限らない}ので、席を一つ空けておいた。", en = "He just might come, so I kept a seat free." },
+  { source = "yomeru", id = "y5", ja = "忘れ{ないとも限らない}から、メモしておきなさい。", en = "You might forget, so write it down." },
 ]
 
 [[point]]
@@ -15465,6 +15474,9 @@ related = ["nai-koto-wa-nai", "nai-de-mo-nai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "辛い料理も食べられ{なくはない}けど、好きじゃない。", en = "I can eat spicy food if I have to, but I don't like it." },
   { source = "yomeru", id = "y2", ja = "少し遠いが、歩け{なくはない}。", en = "It's a bit far, but it's not impossible to walk." },
+  { source = "yomeru", id = "y3", ja = "君の気持ちも分から{なくもない}。", en = "I can sort of understand how you feel." },
+  { source = "yomeru", id = "y4", ja = "時間が{なくもない}けど、今日は行きたくない。", en = "It's not as if I have no time, but I don't want to go today." },
+  { source = "yomeru", id = "y5", ja = "日本語の新聞も読め{なくはありません}。", en = "I could read a Japanese newspaper, more or less." },
 ]
 
 [[point]]
@@ -15492,6 +15504,9 @@ related = ["zu-ni-wa-irarenai", "te-iru"]
 examples = [
   { tatoeba = "19742_182602", ja = "急いで。ぐずぐずし{てはいられない}。", en = "Hurry up. We've little time to waste." },
   { source = "yomeru", id = "y1", ja = "試験が近いから、遊ん{でばかりはいられない}。", en = "The exam is close, so I can't just keep having fun." },
+  { source = "yomeru", id = "y2", ja = "社会人になったら、親に甘え{てはいられない}。", en = "Once you're working, you can't keep depending on your parents." },
+  { source = "yomeru", id = "y3", ja = "バスが出るので、ゆっくり食べ{てはいられない}。", en = "The bus is leaving, so I can't take my time eating." },
+  { source = "yomeru", id = "y4", ja = "失敗したけど、泣い{てばかりもいられない}。", en = "I failed, but I can't just keep crying." },
 ]
 
 [[point]]
@@ -15520,6 +15535,8 @@ examples = [
   { tatoeba = "42602_205358", ja = "それは{やむを得ない}ね。", en = "I can't help it." },
   { tatoeba = "255841_158687", ja = "私は{やむを得ず}そこへ行った。", en = "I went there of necessity." },
   { source = "yomeru", id = "y1", ja = "病気なら、休ん{でもやむを得ない}。", en = "If you're ill, taking time off can't be helped." },
+  { tatoeba = "318416_85297", ja = "病気のため、彼は{やむを得ず}退学した。", en = "Illness forced him to give up school." },
+  { source = "yomeru", id = "y2", ja = "台風なら、試合が中止になっ{てもやむを得ない}。", en = "If there's a typhoon, cancelling the match can't be helped." },
 ]
 
 [[point]]
@@ -15549,6 +15566,8 @@ examples = [
   { tatoeba = "433760_147456", ja = "暑{くてたまらない}。", en = "I can't stand this heat." },
   { tatoeba = "68717_231351", ja = "あのカメラが欲し{くてたまらない}。", en = "I'm dying for that camera." },
   { tatoeba = "35890_198697", ja = "ニューヨークへ行きた{くてたまらない}。", en = "I'm dying to go to New York." },
+  { tatoeba = "267489_147072", ja = "将来の事が心配{でたまらない}。", en = "I am full of anxiety about the future." },
+  { source = "yomeru", id = "y1", ja = "試験の結果が気になっ{てたまらない}。", en = "I can't stop worrying about the exam results." },
 ]
 
 [[point]]
@@ -15577,6 +15596,9 @@ related = ["te-tamaranai", "te-shikata-ga-nai", "te-wa-ikenai"]
 examples = [
   { tatoeba = "250001_164507", ja = "私には父がまだ生きていると思え{てならない}。", en = "I can't help thinking Father is still alive." },
   { source = "yomeru", id = "y1", ja = "何か悪いことが起こる気がし{てならない}。", en = "I can't shake the feeling something bad will happen." },
+  { source = "yomeru", id = "y2", ja = "試合に負けて、悔し{くてならない}。", en = "We lost the match, and I'm terribly frustrated." },
+  { source = "yomeru", id = "y3", ja = "彼が来なかったのが残念{でなりません}。", en = "It's a terrible shame that he didn't come." },
+  { source = "yomeru", id = "y4", ja = "母の言葉が思い出され{てならない}。", en = "I can't help recalling my mother's words." },
 ]
 
 [[point]]
@@ -15604,6 +15626,8 @@ examples = [
   { tatoeba = "268195_146367", ja = "笑いごと{ではすまなく}なる。", en = "That goes beyond a joke." },
   { source = "yomeru", id = "y1", ja = "ごめんなさい{では済まされない}よ。", en = "Saying sorry won't be enough." },
   { source = "yomeru", id = "y2", ja = "知らなかった{では済まされない}。", en = "\"I didn't know\" is no excuse." },
+  { tatoeba = "17742_178888", ja = "君が彼女に言ったことは、冗談{では済まされない}。", en = "What you said to her isn't accepted as a joke." },
+  { source = "yomeru", id = "y3", ja = "これは謝っ{て済むことではない}。", en = "This isn't something an apology will settle." },
 ]
 
 [[point]]
@@ -15632,6 +15656,8 @@ examples = [
   { tatoeba = "16231_177381", ja = "君は学生{にすぎない}。", en = "You are nothing but a student." },
   { tatoeba = "42252_205009", ja = "それは怠ける口実{にすぎない}。", en = "That is a mere excuse for idleness." },
   { source = "yomeru", id = "y1", ja = "これは私の意見{にすぎません}。", en = "This is only my opinion." },
+  { tatoeba = "288797_114874", ja = "彼はアマチュア{にすぎない}。", en = "He is just an amateur." },
+  { source = "yomeru", id = "y2", ja = "私は言われたことをやった{にすぎません}。", en = "I merely did what I was told." },
 ]
 
 [[point]]
@@ -15660,6 +15686,8 @@ examples = [
   { tatoeba = "41657_204417", ja = "そんなことするなんて、彼は泥棒{に他ならない}。", en = "He is nothing less than a thief to do such a thing." },
   { tatoeba = "255582_158944", ja = "私は{ほかならぬ}大統領に会った。", en = "I met the president himself." },
   { source = "yomeru", id = "y1", ja = "合格できたのは、毎日の努力{にほかならない}。", en = "Passing was nothing other than the result of daily effort." },
+  { source = "yomeru", id = "y2", ja = "彼が怒ったのは、君を心配しているから{にほかならない}。", en = "He got angry precisely because he worries about you." },
+  { source = "yomeru", id = "y3", ja = "{ほかならぬ}親友の頼みだから、断れない。", en = "It's a request from none other than my best friend, so I can't say no." },
 ]
 
 [[point]]
@@ -15682,6 +15710,9 @@ related = ["ni-suginai", "shika-nai", "ni-hoka-naranai"]
 examples = [
   { tatoeba = "301414_102280", ja = "彼は単なる愚か者{でしかない}。", en = "He is nothing but a fool." },
   { tatoeba = "58686_221361", ja = "この取り決めは一時的なもの{でしかない}。", en = "This arrangement is only temporary." },
+  { source = "yomeru", id = "y1", ja = "それは言い訳{でしかない}。", en = "That's nothing but an excuse." },
+  { source = "yomeru", id = "y2", ja = "私は一社員{でしかない}から、決められない。", en = "I'm only an ordinary employee, so I can't decide." },
+  { source = "yomeru", id = "y3", ja = "お金は道具{でしかありません}。", en = "Money is no more than a tool." },
 ]
 
 [[point]]
@@ -15704,9 +15735,11 @@ use sounds strong, so soften it with でしょう or だろう. \
 は). というものではない is a separate point: "it doesn't follow that"."""
 related = ["to-iu-no-wa", "to-iu-mono-de-wa-nai", "mono-da"]
 examples = [
-  { tatoeba = "71323_233951", ja = "あなたが彼に援助を求めても、無駄{というものだ}。", en = "It's no use your begging him for help." },
-  { tatoeba = "32809_195635", ja = "まずご両親に話してみるのが順序{というものだろう}。", en = "First of all, you should talk it over with your parents." },
   { source = "yomeru", id = "y1", ja = "うまくいかない日もある。それが人生{というものだ}。", en = "Some days things go wrong. That's life." },
+  { source = "yomeru", id = "y2", ja = "一人で全部やれなんて、無理{というものだ}。", en = "Telling me to do it all alone is just unreasonable." },
+  { source = "yomeru", id = "y3", ja = "困ったときに助けるのが友達{というものだ}。", en = "Helping when someone's in trouble: that's what friends are." },
+  { source = "yomeru", id = "y4", ja = "約束を何度も破るのは、失礼{というものでしょう}。", en = "Breaking promises again and again is just rude, surely." },
+  { source = "yomeru", id = "y5", ja = "好きな人のことばかり考える。それが恋{というものだ}。", en = "Thinking only of the one you love: that's what love is." },
 ]
 
 [[point]]
@@ -15732,6 +15765,9 @@ related = ["ni-chigai-nai", "hazu"]
 examples = [
   { source = "yomeru", id = "y1", ja = "犯人はあの男{に相違ない}。", en = "The culprit must be that man." },
   { source = "yomeru", id = "y2", ja = "これは本物{に相違ありません}。", en = "This is without a doubt the real thing." },
+  { source = "yomeru", id = "y3", ja = "明かりがついているから、彼は家にいる{に相違ない}。", en = "The light is on, so he must be home." },
+  { source = "yomeru", id = "y4", ja = "先生も迷うのだから、この問題は難しい{に相違ない}。", en = "If even the teacher hesitates, this problem must be hard." },
+  { source = "yomeru", id = "y5", ja = "彼の話は事実{に相違ない}。", en = "There's no doubt his story is true." },
 ]
 
 [[point]]
@@ -15760,6 +15796,8 @@ examples = [
   { tatoeba = "322711_81005", ja = "眠い{のは当然だ}。", en = "No wonder I'm sleepy." },
   { tatoeba = "284048_119614", ja = "彼が怒る{のは当然だ}と思う。", en = "I think it natural for him to get angry." },
   { source = "yomeru", id = "y1", ja = "あんなに働いたら、疲れ{て当然だ}。", en = "Working that hard, of course you're tired." },
+  { tatoeba = "283979_119683", ja = "彼が息子を自慢する{のも当然だ}。", en = "He is justly proud of his son." },
+  { source = "yomeru", id = "y2", ja = "人の物を壊したら、謝っ{て当然だ}。", en = "If you break someone's things, you ought to apologise, naturally." },
 ]
 
 [[point]]
@@ -15783,6 +15821,9 @@ related = ["touzen-da", "wake-da"]
 examples = [
   { tatoeba = "51091_213804", ja = "そう言う{のももっともだ}。", en = "You have every reason to say so." },
   { tatoeba = "308460_95246", ja = "彼女が彼を悪く言う{のももっともだ}。", en = "She may well speak ill of him." },
+  { tatoeba = "17776_233970", ja = "あなたが怒る{のももっともだ}。", en = "You have good reason to be angry." },
+  { tatoeba = "283056_120950", ja = "彼がそうする{のももっともだった}。", en = "He had every reason for doing so." },
+  { source = "yomeru", id = "y1", ja = "あの仕事なら、彼女が辞めたがる{のももっともだ}。", en = "Given that job, it's understandable that she wants to quit." },
 ]
 
 [[point]]
@@ -15810,6 +15851,9 @@ related = ["mono-da"]
 examples = [
   { source = "yomeru", id = "y1", ja = "この写真には見る人を引きつける{ものがある}。", en = "There's something about this photo that draws people in." },
   { source = "yomeru", id = "y2", ja = "古い友だちと会えないのは寂しい{ものがある}。", en = "Not being able to see old friends is rather sad." },
+  { source = "yomeru", id = "y3", ja = "彼の努力には感心させられる{ものがある}。", en = "There's something truly admirable about his efforts." },
+  { source = "yomeru", id = "y4", ja = "子供の成長の早さには驚く{ものがある}。", en = "There's something astonishing about how fast children grow." },
+  { source = "yomeru", id = "y5", ja = "彼女の歌声には不思議な{ものがあります}。", en = "There's something mysterious about her singing voice." },
 ]
 
 [[point]]
@@ -15836,6 +15880,8 @@ examples = [
   { tatoeba = "291033_112643", ja = "彼はその賞{に値する}。", en = "He deserves the prize." },
   { tatoeba = "287707_115962", ja = "彼の勇敢さは尊敬{に値する}。", en = "His bravery is worth respecting." },
   { source = "yomeru", id = "y1", ja = "この本は読む{に値しない}。", en = "This book isn't worth reading." },
+  { tatoeba = "44487_230496", ja = "あの博物館はくる{に値する}。", en = "That museum is worth visiting." },
+  { source = "yomeru", id = "y2", ja = "この問題は真剣に考える{に値する}。", en = "This question deserves serious thought." },
 ]
 
 [[point]]
@@ -15858,6 +15904,9 @@ related = ["to-shika-iiyou-ga-nai"]
 examples = [
   { tatoeba = "301762_101931", ja = "彼は天才だ{と言っても過言ではない}。", en = "It is no exaggeration to say that he is a genius." },
   { tatoeba = "241830_172645", ja = "今は車の時代だ{と言っても過言ではない}。", en = "It is not too much to say that this is the age of cars." },
+  { tatoeba = "293843_109847", ja = "彼は一流の作家である{と言っても過言ではない}。", en = "It is no exaggeration to say that he is a first-rate writer." },
+  { source = "yomeru", id = "y1", ja = "この店のラーメンは日本一だ{と言っても過言ではない}。", en = "It's no exaggeration to say this shop's ramen is the best in Japan." },
+  { source = "yomeru", id = "y2", ja = "この本が私の人生を変えた{と言っても過言ではない}。", en = "It's no exaggeration to say this book changed my life." },
 ]
 
 [[point]]
