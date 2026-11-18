@@ -233,6 +233,34 @@ learned by heart. Before writing examples at scale, the format grows:
   unseen until they update.
 - Code that assumes one card per point takes both, as words do:
   promote / demote / reset / delete and the Add button's status.
+  ~~Done~~ (branch `grammar-production`): `CardItem::directions`, the
+  extension's `KIND_DIRECTIONS`; Add makes both; the button shows the
+  recognition card.
+- Points added before: `ensure_grammar_production_cards` (on the Grammar
+  review and New Words screens) stages the missing production card,
+  written as synced and stamped with the recognition card's `added_ms`, so
+  another device's real copy always wins the merge.
+- Sessions: the Grammar tab's start screen picks a mode, Mix,
+  Recognition or Production (`GrammarMode`, remembered on the device),
+  each with its due count (`count_due_grammar`). A session takes one card
+  per item (`srs::hold_siblings`); the other stays due for the next
+  session. This holds for a word's recognition and recall cards too, in
+  the app and the extension.
+- ~~Done~~ (branch `grammar-production`): the face below, the check on
+  every platform (`DictClient::grammar_check`: local on Android, `POST
+  /api/grammar-check` for the web, grammar-wasm calling back into
+  jmdict-wasm in the extension), the hint, the caps, "answer in my head"
+  on the start screen. A "My answer was right" link on the back lifts the
+  Again cap when the check missed a valid answer; it sends no report yet
+  (part 4).
+- ~~Done~~: the back marks where the answer and the reference differ
+  (`grammar::answer_diff`, char-level, punctuation left out), and notes a
+  politer or plainer answer (`grammar::register`), never as a miss.
+- ~~Done~~: the vocabulary hint, a **Words** button
+  (`DictClient::sentence_words` over `jmdict_core::vocab::sentence_words`,
+  then `grammar::hint_words`): dictionary forms, readings and a meaning,
+  without the point's words, particles or short kana words. A hint like
+  the formation: capped at Hard. No `hints = […]` override yet.
 - Front: the English sentence, and under it the point's `meaning` line
   ("prohibition: must not"), so the user knows which point to use without
   seeing the pattern. The vocabulary hints are behind a button.
@@ -271,11 +299,14 @@ and leaves the rest to the user.
    - `{ inflection = [...] }`: a point that is a verb form (passive,
      potential, causative, causative-passive, volitional, imperative). A
      verb of the answer must deinflect through one of them, so
-     食べさせた counts for the causative. The deinflector's rules already
-     name their form ("causative", "passive/potential"); it has to return
-     them, mapped onto `Inflection`, and gain the volitional (行こう) it
-     lacks. The ichidan られる is both passive and potential and counts
-     for either card;
+     食べさせた counts for the causative. ~~The deinflector returns the
+     rules' reasons and has the volitional~~ (done:
+     `deinflect_with_reasons`, a `Reasons` bitset per form, joined over
+     every path), mapped onto `Inflection` by
+     `GrammarDict::check_answer` (grammar-core `answer.rs`), which takes a
+     `Vocabulary` (JMdict in the apps) for "is this base a verb" and the
+     word boundaries a one-char kana point needs. The ichidan られる
+     is both passive and potential and counts for either card;
    - `"self"`: none of this finds it reliably (the く adverb, the て join,
      自動詞・他動詞). No check and none of the three cases: the user rates
      against the reference, as in "answer in my head".

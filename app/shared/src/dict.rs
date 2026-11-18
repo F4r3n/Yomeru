@@ -11,11 +11,11 @@ use dioxus::prelude::consume_context;
 use examples_types::ExampleEntry;
 use jmdict_types::WordEntry;
 use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
-use yomeru_core::grammar::GrammarEntry;
+use yomeru_core::grammar::{GrammarEntry, Verdict};
 
 pub use yomeru_core::dict::*;
 
-use crate::platform::Platform;
+use crate::platform::{Platform, SentenceWord};
 
 /// Exact lookup of a single headword/reading.
 pub async fn lookup(word: &str) -> Result<Vec<WordEntry>, String> {
@@ -85,5 +85,21 @@ pub async fn grammar_by_seq(sequences: &[u32]) -> Result<Vec<Option<GrammarEntry
     consume_context::<Platform>()
         .dict
         .grammar_by_seq(sequences)
+        .await
+}
+
+/// The words of `sentence`, for a production card's vocabulary hint.
+pub async fn sentence_words(sentence: &str) -> Result<Vec<SentenceWord>, String> {
+    consume_context::<Platform>()
+        .dict
+        .sentence_words(sentence)
+        .await
+}
+
+/// Whether a typed production `answer` uses the point `id`.
+pub async fn grammar_check(id: &str, answer: &str) -> Result<Verdict, String> {
+    consume_context::<Platform>()
+        .dict
+        .grammar_check(id, answer)
         .await
 }

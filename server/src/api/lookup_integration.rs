@@ -40,7 +40,7 @@ jlpt = "N5"
 meaning = "may, it's okay to"
 formation = ["Verb［て］ + もいい"]
 explanation = "Permission."
-examples = [{ source = "yomeru", ja = "行っ{てもいい}。", en = "You may go." }]
+examples = [{ source = "yomeru", id = "y1", ja = "行っ{てもいい}。", en = "You may go." }]
 "#;
 
 fn ensure_dicts() {
@@ -294,6 +294,59 @@ async fn grammar_returns_the_points_for_the_text() {
     assert_eq!(body["entries"], json!([]), "no points is []");
 }
 
+#[tokio::test]
+async fn grammar_check_says_whether_the_answer_uses_the_point() {
+    let h = harness().await;
+    for (answer, kind) in [("行ってもいいですか", "accepted"), ("行きます", "not-found")] {
+        let (status, body) = h
+            .post(
+                "/api/grammar-check",
+                None,
+                &json!({ "id": "te-mo-ii", "answer": answer }),
+            )
+            .await;
+        assert_eq!(status, StatusCode::OK, "{body}");
+        assert_eq!(body["verdict"]["kind"], kind, "{answer}");
+    }
+    // A point that left the dictionary: the user grades.
+    let (_, body) = h
+        .post(
+            "/api/grammar-check",
+            None,
+            &json!({ "id": "gone", "answer": "行く" }),
+        )
+        .await;
+    assert_eq!(body["verdict"]["kind"], "self-graded");
+}
+
+#[tokio::test]
+async fn sentence_words_reads_a_sentence_into_its_words() {
+    let h = harness().await;
+    let (status, body) = h
+        .post("/api/sentence-words", None, &json!({ "text": "人を食べた" }))
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let words = body["words"].as_array().expect("words");
+    let found: Vec<(u64, u64)> = words
+        .iter()
+        .map(|w| (w["start"].as_u64().unwrap(), w["len"].as_u64().unwrap()))
+        .collect();
+    assert!(found.contains(&(2, 3)), "食べた as one word: {body}");
+}
+
+#[tokio::test]
+async fn grammar_check_takes_answers_of_at_most_100_chars() {
+    let h = harness().await;
+    assert_limit(
+        &h,
+        "/api/grammar-check",
+        json!({ "id": "te-mo-ii", "answer": kana(100) }),
+        json!({ "id": "te-mo-ii", "answer": kana(101) }),
+        "answer too large: 101 (max 100)",
+    )
+    .await;
+}
+
 // ---- defaults for an omitted `max` -------------------------------------------
 
 #[tokio::test]
@@ -358,6 +411,7 @@ async fn text_inputs_take_at_most_256_chars() {
         ("/api/kanji", "word"),
         ("/api/examples", "word"),
         ("/api/grammar", "text"),
+        ("/api/sentence-words", "text"),
     ] {
         assert_limit(
             &h,
@@ -407,6 +461,10 @@ async fn the_lookup_routes_share_one_rate_limit() {
         ("/api/kanji-by-parts", json!({ "parts": "良" })),
         ("/api/examples", json!({ "word": EXAMPLE_WORD })),
         ("/api/grammar", json!({ "text": "てもいい" })),
+        (
+            "/api/grammar-check",
+            json!({ "id": "te-mo-ii", "answer": "てもいい" }),
+        ),
     ] {
         let (status, _) = h.post(path, None, &body).await;
         assert_eq!(status, StatusCode::TOO_MANY_REQUESTS, "{path}");

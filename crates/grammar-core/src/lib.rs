@@ -2,6 +2,7 @@
 //! `grammar.bin` at build time (feature `build`) and shipped with the app
 //! like JMdict, then loaded and looked up in text here.
 
+mod answer;
 #[cfg(feature = "build")]
 mod compile;
 mod dict;
@@ -11,6 +12,9 @@ pub mod types;
 #[cfg(all(test, feature = "build"))]
 mod tests;
 
+#[cfg(feature = "jmdict")]
+pub use answer::JmdictVocabulary;
+pub use answer::{Verdict, Vocabulary};
 #[cfg(feature = "build")]
 pub use compile::{Compiled, compile};
 pub use dict::{GrammarDict, HOVER_MIN_CHARS};

@@ -9,10 +9,10 @@ use dioxus::prelude::*;
 
 use crate::grammar::{Example, GrammarEntry, Span};
 use crate::icons::{Icon, IconName};
-use crate::idb::{bump_priority, get_cards_of, put_card, reset_card};
+use crate::idb::{bump_priority, get_cards_of, put_cards, reset_card};
 use crate::srs::now_ms;
 use crate::sync::schedule_sync;
-use crate::types::{CardItem, CardStatus, MAX_PRIORITY, SrsCard};
+use crate::types::{CardDirection, CardItem, CardStatus, MAX_PRIORITY, SrsCard};
 
 /// Examples a closed card previews.
 const PREVIEW_EXAMPLES: usize = 2;
@@ -152,9 +152,15 @@ fn bee_search_url(pattern: &str) -> String {
     url
 }
 
-/// The point's card in the deck: Add, then the staging priority like a
-/// word, then its state. The card is `SrsCard::new_grammar` of the entry's
-/// `seq`, so `get_cards_of` finds exactly that one.
+/// The point's cards in the deck: Add, then the staging priority like a
+/// word, then its state. Add makes both cards of the entry's `seq`
+/// (recognition and production); the button shows the recognition card's
+/// state, which the production card's follows on Add, promote and reset.
+/// The recognition card among a point's cards, the one its button shows.
+fn recognition(cards: Vec<SrsCard>) -> Option<SrsCard> {
+    cards.into_iter().find(|c| c.direction == CardDirection::Recognition)
+}
+
 #[component]
 fn GrammarDeckButton(id: String, seq: u32) -> Element {
     let item = CardItem::Grammar(seq);
@@ -163,7 +169,7 @@ fn GrammarDeckButton(id: String, seq: u32) -> Element {
     use_effect(use_reactive!(|item| {
         spawn(async move {
             match get_cards_of(item).await {
-                Ok(cards) => card.set(cards.into_iter().next()),
+                Ok(cards) => card.set(recognition(cards)),
                 Err(e) => warn!("get_cards_of(grammar {seq}) failed: {e}"),
             }
         });
@@ -171,7 +177,7 @@ fn GrammarDeckButton(id: String, seq: u32) -> Element {
 
     let refresh = move || async move {
         let cards = get_cards_of(item).await.unwrap_or_default();
-        card.set(cards.into_iter().next());
+        card.set(recognition(cards));
     };
     let id_for_add = id.clone();
     let on_add = move |e: MouseEvent| {
@@ -184,7 +190,7 @@ fn GrammarDeckButton(id: String, seq: u32) -> Element {
         spawn(async move {
             let current = card.peek().clone();
             let res = match current {
-                None => put_card(&SrsCard::new_grammar(seq, now_ms())).await,
+                None => put_cards(&SrsCard::new_cards(item, now_ms())).await,
                 Some(_) => bump_priority(item).await,
             };
             match res {

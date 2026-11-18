@@ -512,3 +512,24 @@ fn same_answers_as_the_reference() {
         );
     }
 }
+
+// ── vocab::sentence_words ─────────────────────────────────────────────────────
+
+#[test]
+fn a_sentence_is_read_into_its_words() {
+    ensure_test_dict();
+    let words: Vec<(usize, usize, String)> = crate::vocab::sentence_words("日本で本を飲みました")
+        .into_iter()
+        .map(|(start, len, e)| (start, len, e.headword().to_string()))
+        .collect();
+    // で and を are no words of the test dictionary: skipped.
+    assert_eq!(
+        words,
+        [
+            (0, 2, "日本".to_string()),
+            (3, 1, "本".to_string()),
+            (5, 5, "飲む".to_string()),
+        ]
+    );
+    assert!(crate::vocab::sentence_words("").is_empty());
+}

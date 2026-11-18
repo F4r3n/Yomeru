@@ -850,6 +850,39 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 .grammar-back { margin-top: 12px; }
 .grammar-back-meaning { font-size: 17px; margin-bottom: 8px; }
 .grammar-back .link { margin-top: 12px; font-size: 13px; }
+/* Grammar session modes on the start screen. */
+.grammar-modes { justify-content: center; margin: 12px 0 6px; }
+.grammar-modes button { font-size: 13px; padding: 6px 12px; }
+.grammar-modes button:disabled { opacity: 0.5; }
+.grammar-in-head { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; cursor: pointer; }
+.grammar-in-head input { width: auto; }
+/* Production: English prompt, typed answer, the check's banner. */
+.review-card .face.grammar-prompt { padding: 28px 12px; }
+.grammar-prompt-en { font-size: 22px; line-height: 1.4; }
+.grammar-prompt-meaning { margin-top: 10px; font-size: 14px; }
+.grammar-answer { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.grammar-answer-input { font-size: 20px; padding: 10px 14px; }
+.grammar-answer-actions { justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.grammar-verdict { border-radius: 8px; padding: 8px 12px; font-size: 14px; border-left: 3px solid var(--border); background: color-mix(in srgb, var(--subtext) 10%, transparent); }
+.grammar-verdict.close { border-left-color: var(--yellow); }
+.grammar-verdict.miss { border-left-color: var(--red); }
+.grammar-verdict.register { border-left-color: var(--blue); margin-top: 8px; }
+.grammar-your-answer { font-size: 18px; margin-bottom: 8px; }
+.grammar-your-answer .muted { font-size: 13px; }
+/* What the answer has and the reference lacks, and the other way round. */
+.diff-extra { background: color-mix(in srgb, var(--red) 25%, transparent); border-radius: 3px; text-decoration: line-through; text-decoration-color: var(--red); }
+.diff-missing { text-decoration: underline wavy var(--yellow); text-underline-offset: 4px; }
+.grammar-example .muted { font-size: 13px; }
+.grammar-back-point { margin-top: 10px; font-size: 15px; }
+.grammar-back-point .w { font-size: 18px; font-weight: 600; }
+.grammar-cap { margin-top: 10px; font-size: 13px; }
+/* The words hint: word, reading, meaning, one per line. */
+.grammar-words { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 4px; }
+.grammar-words li { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.grammar-words .w { font-size: 17px; font-weight: 600; }
+.grammar-words .r { color: var(--subtext); font-size: 13px; }
+.grammar-words .g { font-size: 14px; }
+.grammar-words-none { margin-top: 10px; font-size: 13px; }
 /* The full explanation unfolds on the card, like the lookup expansion panel. */
 .grammar-full { animation: expand-in 0.18s ease-out; }
 @media (prefers-reduced-motion: reduce) { .grammar-full { animation: none; } }

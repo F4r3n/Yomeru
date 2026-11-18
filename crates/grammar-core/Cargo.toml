@@ -7,6 +7,9 @@ edition = "2024"
 [features]
 # The TOML → grammar.bin compiler, for xtask and the tests.
 build = ["dep:toml"]
+# `JmdictVocabulary`: the answer check over jmdict-core, for the app and
+# the server (the extension asks its own JMdict module instead).
+jmdict = ["dep:jmdict-core"]
 
 [dependencies]
 deinflect  = { path = "../deinflect" }
@@ -17,9 +20,12 @@ serde      = { version = "1", features = ["derive"] }
 # Pure-Rust deflate only: the lookups run in WASM too, so no zlib.
 flate2     = { version = "1", default-features = false, features = ["rust_backend"] }
 toml       = { version = "0.8", optional = true }
+jmdict-core = { path = "../jmdict-core", optional = true }
 
 [dev-dependencies]
-grammar-core = { path = ".", features = ["build"] }
+grammar-core = { path = ".", features = ["build", "jmdict"] }
+jmdict-core  = { path = "../jmdict-core" }
+serde_json   = "1"
 
 [lints]
 workspace = true

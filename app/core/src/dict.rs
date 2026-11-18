@@ -128,5 +128,6 @@ pub fn direction_label(d: CardDirection) -> &'static str {
         CardDirection::Recognition => "Recognition",
         CardDirection::Recall => "Recall",
         CardDirection::Meaning => "Kanji",
+        CardDirection::Production => "Production",
     }
 }

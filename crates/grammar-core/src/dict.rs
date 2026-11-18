@@ -8,7 +8,7 @@ use crate::format;
 use crate::types::GrammarEntry;
 
 /// The longest pattern a lookup inside text tries, in chars.
-const MAX_PATTERN_CHARS: usize = 24;
+pub(crate) const MAX_PATTERN_CHARS: usize = 24;
 
 /// Shortest match and pattern the hover popup offers: one-char ones are
 /// particles and endings (は, た) that would come up on almost every word.
@@ -51,7 +51,11 @@ impl GrammarDict {
         // Structure only: `compile` already decoded every entry of the file
         // it wrote, and the version byte refuses files of other builds.
         let parts = format::read(bytes)?;
-        let seqs = parts.ids.iter().map(|&(_, seq, offset)| (seq, offset)).collect();
+        let seqs = parts
+            .ids
+            .iter()
+            .map(|&(_, seq, offset)| (seq, offset))
+            .collect();
         Ok(Self {
             fst: fst::Map::new(parts.fst.to_vec())?,
             groups: parts.groups,
@@ -124,7 +128,7 @@ impl GrammarDict {
 
     /// The longer of the match as written and the honorific one
     /// ([`Self::honorific_match`]).
-    fn longest_match_where(
+    pub(crate) fn longest_match_where(
         &self,
         text: &str,
         max_chars: usize,

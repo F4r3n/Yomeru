@@ -24,6 +24,13 @@ struct LookupAtResult {
 /// in `jmdict-core`; the handle itself only carries the known-word set that
 /// `find_in_text` matches against, so it is built once per change to the
 /// user's cards instead of once per scanned text node.
+#[derive(Serialize)]
+struct SentenceWord {
+    start: usize,
+    len: usize,
+    entry: &'static ArchivedWordEntry,
+}
+
 #[wasm_bindgen]
 pub struct Dictionary {
     known: HashSet<u32>,
@@ -97,6 +104,28 @@ impl Dictionary {
     pub fn lookup_prefix(&self, text: &str, max_results: u8) -> Result<JsValue, JsError> {
         let entries = jmdict_core::lookup_prefix(text, max_results);
         serde_wasm_bindgen::to_value(&entries).map_err(|e| JsError::new(&e.to_string()))
+    }
+
+    /// Whether `base`, a dictionary form, is a verb
+    /// (`jmdict_core::vocab::is_verb`). For grammar-wasm's answer check.
+    pub fn is_verb(&self, base: &str) -> bool {
+        jmdict_core::vocab::is_verb(base)
+    }
+
+    /// Chars of the longest word at `char_offset` of `text`, 1 when none
+    /// (`jmdict_core::vocab::word_len_at`). For grammar-wasm's answer check.
+    pub fn word_len_at(&self, text: &str, char_offset: usize) -> usize {
+        jmdict_core::vocab::word_len_at(text, char_offset)
+    }
+
+    /// `[{start, len, entry}]`: the words of `sentence`, in chars
+    /// (`jmdict_core::vocab::sentence_words`).
+    pub fn sentence_words(&self, sentence: &str) -> Result<JsValue, JsError> {
+        let words: Vec<SentenceWord> = jmdict_core::vocab::sentence_words(sentence)
+            .into_iter()
+            .map(|(start, len, entry)| SentenceWord { start, len, entry })
+            .collect();
+        serde_wasm_bindgen::to_value(&words).map_err(|e| JsError::new(&e.to_string()))
     }
 
     pub fn is_loaded(&self) -> bool {

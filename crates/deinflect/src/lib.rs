@@ -1,6 +1,8 @@
+mod reason;
 mod rules;
 mod suffix_trie;
 
+pub use reason::{Reason, Reasons};
 use rules::RULES;
 
 /// Result of deinflecting a word.
@@ -8,6 +10,16 @@ use rules::RULES;
 pub struct Deinflected {
     /// Candidate dictionary form (e.g. "食べる").
     pub text: String,
+}
+
+/// A [`Deinflected`] form with the rules that reach it.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct DeinflectedWithReasons {
+    /// Candidate dictionary form (e.g. "食べる").
+    pub text: String,
+    /// Every step of every path from the input to `text`: 食べさせられた →
+    /// 食べる is causative, passive and past. Empty for the input itself.
+    pub reasons: Reasons,
 }
 
 /// Return every plausible dictionary form of `text` by repeatedly applying
@@ -20,6 +32,19 @@ pub fn deinflect(text: &str) -> Vec<Deinflected> {
     Deinflector::default()
         .run(text)
         .map(|t| Deinflected { text: t.to_owned() })
+        .collect()
+}
+
+/// [`deinflect`], with the reasons of each form. Most callers only need the
+/// forms: this one is for asking which form a word is in (is 食べさせた a
+/// causative?).
+pub fn deinflect_with_reasons(text: &str) -> Vec<DeinflectedWithReasons> {
+    Deinflector::default()
+        .run_with_reasons(text)
+        .map(|(t, reasons)| DeinflectedWithReasons {
+            text: t.to_owned(),
+            reasons,
+        })
         .collect()
 }
 
@@ -44,6 +69,9 @@ pub struct Deinflector {
     buf: String,
     /// (start, end, depth) of each candidate in `buf`, in the order found.
     forms: Vec<(u32, u32, u8)>,
+    /// The reasons of each of `forms`, kept by [`Deinflector::run_with_reasons`]
+    /// only.
+    reasons: Vec<Reasons>,
     /// The rules matching the candidate being expanded.
     matched: Vec<u16>,
 }
@@ -55,17 +83,42 @@ impl Deinflector {
     /// The forms of `text`, itself first, then each new form in the order
     /// found (least transformed first).
     pub fn run(&mut self, text: &str) -> impl Iterator<Item = &str> + '_ {
+        self.walk::<false>(text);
+        self.forms.iter().map(|&(s, e, _)| slice(&self.buf, s, e))
+    }
+
+    /// The forms of [`Deinflector::run`], in the same order, each with its
+    /// reasons.
+    pub fn run_with_reasons(&mut self, text: &str) -> impl Iterator<Item = (&str, Reasons)> + '_ {
+        self.walk::<true>(text);
+        self.merge_paths();
+        self.forms
+            .iter()
+            .zip(&self.reasons)
+            .map(|(&(s, e, _), &r)| (slice(&self.buf, s, e), r))
+    }
+
+    /// The breadth-first search. Without `REASONS`, a form found again is
+    /// dropped. With it, a form found again by a path that adds reasons is
+    /// kept and expanded as well (its own forms carry those reasons too);
+    /// [`Deinflector::merge_paths`] then folds the copies into the first.
+    fn walk<const REASONS: bool>(&mut self, text: &str) {
         self.buf.clear();
         self.forms.clear();
+        self.reasons.clear();
         // Don't produce single-kana candidates from multi-char input (avoids
         // garbage like "い" matching half a word).
         let min_chars = if text.chars().count() > 2 { 2 } else { 1 };
         self.buf.push_str(text);
         self.forms.push((0, text.len() as u32, 0));
+        if REASONS {
+            self.reasons.push(Reasons::EMPTY);
+        }
 
         let trie = suffix_trie::rules_trie();
         let mut next = 0;
         while let Some(&(start, end, depth)) = self.forms.get(next) {
+            let parent = next;
             next += 1;
             if depth >= MAX_DEPTH {
                 continue;
@@ -91,18 +144,68 @@ impl Deinflector {
                 self.buf.push_str(rule.suffix_out);
                 let new_end = self.buf.len() as u32;
                 let new = slice(&self.buf, new_start as u32, new_end);
-                let known = self
-                    .forms
-                    .iter()
-                    .any(|&(s, e, _)| slice(&self.buf, s, e) == new);
+                let reasons = if REASONS {
+                    self.reasons
+                        .get(parent)
+                        .copied()
+                        .unwrap_or_default()
+                        .union(rule.reasons)
+                } else {
+                    Reasons::EMPTY
+                };
+                let known = self.forms.iter().enumerate().any(|(i, &(s, e, _))| {
+                    slice(&self.buf, s, e) == new
+                        && (!REASONS
+                            || self.reasons.get(i).is_some_and(|r| r.contains_all(reasons)))
+                });
                 if known || new.chars().count() < min_chars {
                     self.buf.truncate(new_start);
                     continue;
                 }
                 self.forms.push((new_start as u32, new_end, depth + 1));
+                if REASONS {
+                    self.reasons.push(reasons);
+                }
             }
         }
-        self.forms.iter().map(|&(s, e, _)| slice(&self.buf, s, e))
+    }
+
+    /// Folds each form found again into its first copy, joining their
+    /// reasons, so every text is listed once and in [`Deinflector::run`]'s
+    /// order: a copy is always found after the first, and its own forms
+    /// after the first's.
+    fn merge_paths(&mut self) {
+        let mut kept = 0;
+        for i in 0..self.forms.len() {
+            let (Some(&form), Some(&reasons)) = (self.forms.get(i), self.reasons.get(i)) else {
+                continue;
+            };
+            let text = slice(&self.buf, form.0, form.1);
+            let first = self
+                .forms
+                .get(..kept)
+                .unwrap_or_default()
+                .iter()
+                .position(|&(s, e, _)| slice(&self.buf, s, e) == text);
+            match first {
+                Some(j) => {
+                    if let Some(r) = self.reasons.get_mut(j) {
+                        *r = r.union(reasons);
+                    }
+                }
+                None => {
+                    if let Some(f) = self.forms.get_mut(kept) {
+                        *f = form;
+                    }
+                    if let Some(r) = self.reasons.get_mut(kept) {
+                        *r = reasons;
+                    }
+                    kept += 1;
+                }
+            }
+        }
+        self.forms.truncate(kept);
+        self.reasons.truncate(kept);
     }
 }
 
@@ -236,6 +339,136 @@ mod tests {
     fn without_doing_zuni_chains_through_zu() {
         assert!(forms("食べずに").contains(&"食べる".to_owned()));
         assert!(forms("言わずに").contains(&"言う".to_owned()));
+    }
+
+    /// The reasons `text` reaches `base` with.
+    fn reasons(text: &str, base: &str) -> Reasons {
+        deinflect_with_reasons(text)
+            .into_iter()
+            .find(|d| d.text == base)
+            .unwrap_or_else(|| panic!("{text} should deinflect to {base}"))
+            .reasons
+    }
+
+    #[test]
+    fn volitional() {
+        for (surface, base) in [
+            ("食べよう", "食べる"),
+            ("行こう", "行く"),
+            ("泳ごう", "泳ぐ"),
+            ("話そう", "話す"),
+            ("待とう", "待つ"),
+            ("死のう", "死ぬ"),
+            ("遊ぼう", "遊ぶ"),
+            ("飲もう", "飲む"),
+            ("帰ろう", "帰る"),
+            ("買おう", "買う"),
+            ("勉強しよう", "勉強する"),
+            ("こよう", "くる"),
+            ("来よう", "来る"),
+            ("食べましょう", "食べる"),
+            ("行きましょう", "行く"),
+            ("しましょう", "する"),
+        ] {
+            assert!(
+                reasons(surface, base).contains(Reason::Volitional),
+                "{surface} → {base} should be volitional"
+            );
+        }
+        assert!(reasons("行きましょう", "行く").contains(Reason::Polite));
+    }
+
+    #[test]
+    fn short_causative_passive_imperatives_and_nasai() {
+        for (surface, base, want) in [
+            (
+                "待たされた",
+                "待つ",
+                Reasons::of(&[Reason::Causative, Reason::Passive, Reason::Past]),
+            ),
+            (
+                "歌わされる",
+                "歌う",
+                Reasons::of(&[Reason::Causative, Reason::Passive]),
+            ),
+            ("来い", "来る", Reasons::of(&[Reason::Imperative])),
+            ("こい", "くる", Reasons::of(&[Reason::Imperative])),
+            ("勉強しろ", "勉強する", Reasons::of(&[Reason::Imperative])),
+            ("せよ", "する", Reasons::of(&[Reason::Imperative])),
+            ("食べなさい", "食べる", Reasons::of(&[Reason::Nasai])),
+            ("読み返しなさい", "読み返す", Reasons::of(&[Reason::Nasai])),
+            ("勉強しなさい", "勉強する", Reasons::of(&[Reason::Nasai])),
+            ("忘れていった", "忘れていく", Reasons::of(&[Reason::Past])),
+            ("飛んでいって", "飛んでいく", Reasons::of(&[Reason::TeForm])),
+        ] {
+            assert!(
+                reasons(surface, base).contains_all(want),
+                "{surface} → {base}"
+            );
+        }
+    }
+
+    #[test]
+    fn reasons_join_along_the_chain() {
+        let r = reasons("食べさせられなかった", "食べる");
+        for want in [
+            Reason::Causative,
+            Reason::Passive,
+            Reason::Negative,
+            Reason::Past,
+        ] {
+            assert!(r.contains(want), "{want:?} missing from {r:?}");
+        }
+        assert!(!r.contains(Reason::Polite));
+        assert_eq!(
+            reasons("書かせた", "書く"),
+            Reasons::of(&[Reason::Causative, Reason::Past])
+        );
+        assert_eq!(reasons("書ける", "書く"), Reasons::of(&[Reason::Potential]));
+        assert_eq!(
+            reasons("勉強できる", "勉強する"),
+            Reasons::of(&[Reason::Potential])
+        );
+        assert_eq!(reasons("書け", "書く"), Reasons::of(&[Reason::Imperative]));
+        assert!(reasons("取られる", "取る").contains(Reason::Passive));
+        assert_eq!(reasons("食べる", "食べる"), Reasons::EMPTY);
+    }
+
+    #[test]
+    fn a_form_reached_twice_keeps_the_reasons_of_both_paths() {
+        // させられる → る is causative-passive; られる → る then させる → る
+        // also reaches 食べる, through the passive/potential られる.
+        let r = reasons("食べさせられる", "食べる");
+        assert!(r.contains_all(Reasons::of(&[
+            Reason::Causative,
+            Reason::Passive,
+            Reason::Potential
+        ])));
+    }
+
+    #[test]
+    fn with_reasons_gives_the_forms_of_run_in_the_same_order() {
+        let mut words: Vec<String> = [
+            "食べさせられなかった",
+            "食べさせられる",
+            "行きましょう",
+            "hello",
+            "",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+        for r in RULES {
+            words.push(r.suffix_in.to_string());
+            words.push(format!("食べ{}", r.suffix_in));
+            words.push(format!("書{}", r.suffix_in));
+        }
+        let mut d = Deinflector::default();
+        for w in &words {
+            let plain: Vec<String> = d.run(w).map(str::to_owned).collect();
+            let with: Vec<String> = d.run_with_reasons(w).map(|(t, _)| t.to_owned()).collect();
+            assert_eq!(with, plain, "forms of {w:?}");
+        }
     }
 
     #[test]
