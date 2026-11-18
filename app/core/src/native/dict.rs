@@ -10,7 +10,7 @@
 //! a blocking thread; every later call finds the cores ready.
 
 use examples_types::ExampleEntry;
-use grammar_core::{GrammarDict, GrammarEntry};
+use grammar_core::{GrammarDict, GrammarEntry, JmdictVocabulary, Verdict};
 use jmdict_types::{ArchivedWordEntry, WordEntry};
 use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
 use std::sync::{Arc, OnceLock};
@@ -301,5 +301,16 @@ impl DictClient for LocalDict {
             .iter()
             .map(|&s| dict.and_then(|d| d.by_seq(s)))
             .collect())
+    }
+
+    async fn grammar_check(&self, id: &str, answer: &str) -> Result<Verdict, String> {
+        // The words around the point come from JMdict.
+        self.ensure(Part::Words).await?;
+        self.ensure(Part::Grammar).await?;
+        Ok(GRAMMAR_DICT
+            .get()
+            .map_or(Verdict::SelfGraded, |d| {
+                d.check_answer(id, answer, &JmdictVocabulary)
+            }))
     }
 }

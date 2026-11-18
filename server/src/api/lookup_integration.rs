@@ -294,6 +294,44 @@ async fn grammar_returns_the_points_for_the_text() {
     assert_eq!(body["entries"], json!([]), "no points is []");
 }
 
+#[tokio::test]
+async fn grammar_check_says_whether_the_answer_uses_the_point() {
+    let h = harness().await;
+    for (answer, kind) in [("行ってもいいですか", "accepted"), ("行きます", "not-found")] {
+        let (status, body) = h
+            .post(
+                "/api/grammar-check",
+                None,
+                &json!({ "id": "te-mo-ii", "answer": answer }),
+            )
+            .await;
+        assert_eq!(status, StatusCode::OK, "{body}");
+        assert_eq!(body["verdict"]["kind"], kind, "{answer}");
+    }
+    // A point that left the dictionary: the user grades.
+    let (_, body) = h
+        .post(
+            "/api/grammar-check",
+            None,
+            &json!({ "id": "gone", "answer": "行く" }),
+        )
+        .await;
+    assert_eq!(body["verdict"]["kind"], "self-graded");
+}
+
+#[tokio::test]
+async fn grammar_check_takes_answers_of_at_most_100_chars() {
+    let h = harness().await;
+    assert_limit(
+        &h,
+        "/api/grammar-check",
+        json!({ "id": "te-mo-ii", "answer": kana(100) }),
+        json!({ "id": "te-mo-ii", "answer": kana(101) }),
+        "answer too large: 101 (max 100)",
+    )
+    .await;
+}
+
 // ---- defaults for an omitted `max` -------------------------------------------
 
 #[tokio::test]
@@ -407,6 +445,10 @@ async fn the_lookup_routes_share_one_rate_limit() {
         ("/api/kanji-by-parts", json!({ "parts": "良" })),
         ("/api/examples", json!({ "word": EXAMPLE_WORD })),
         ("/api/grammar", json!({ "text": "てもいい" })),
+        (
+            "/api/grammar-check",
+            json!({ "id": "te-mo-ii", "answer": "てもいい" }),
+        ),
     ] {
         let (status, _) = h.post(path, None, &body).await;
         assert_eq!(status, StatusCode::TOO_MANY_REQUESTS, "{path}");

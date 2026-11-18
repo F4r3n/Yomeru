@@ -6,13 +6,15 @@
 //! is ignored:
 //!
 //! ```sh
-//! JMDICT_BIN=extension/data/jmdict.bin cargo test --release -p grammar-core \
+//! JMDICT_BIN=$PWD/extension/data/jmdict.bin cargo test --release -p grammar-core \
 //!     --test answer_check -- --ignored --nocapture
 //! ```
 
 #![allow(clippy::unwrap_used, clippy::panic, clippy::print_stderr)]
 
-use grammar_core::{AnswerCheck, GrammarDict, Verdict, Vocabulary, compile, types::plain};
+use grammar_core::{
+    AnswerCheck, GrammarDict, JmdictVocabulary, Verdict, Vocabulary, compile, types::plain,
+};
 
 fn dict() -> GrammarDict {
     let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../data/grammar.toml");
@@ -96,64 +98,12 @@ fn forms_points_find_their_own_examples() {
     assert!(checked > 4000, "{checked}");
 }
 
-/// JMdict as the apps would use it.
-struct Jmdict;
-impl Vocabulary for Jmdict {
-    fn is_verb(&self, base: &str) -> bool {
-        use jmdict_types::ArchivedPartOfSpeech as P;
-        let verb = |text: &str| {
-            jmdict_core::lookup(text).iter().any(|e| {
-                e.senses.iter().any(|s| {
-                    s.pos.iter().any(|p| {
-                        matches!(
-                            p,
-                            P::VerbIchidan
-                                | P::VerbIchidanS
-                                | P::VerbGodanBu
-                                | P::VerbGodanGu
-                                | P::VerbGodanKu
-                                | P::VerbGodanKuS
-                                | P::VerbGodanMu
-                                | P::VerbGodanNu
-                                | P::VerbGodanRu
-                                | P::VerbGodanRuIrr
-                                | P::VerbGodanSu
-                                | P::VerbGodanTsu
-                                | P::VerbGodanU
-                                | P::VerbGodanUS
-                                | P::VerbGodanUru
-                                | P::VerbSuru
-                                | P::VerbSuruS
-                                | P::VerbSuruC
-                                | P::VerbKuru
-                                | P::VerbNu
-                                | P::VerbRu
-                                | P::VerbUnclassified
-                        )
-                    })
-                })
-            })
-        };
-        verb(base)
-            || base
-                .strip_suffix("する")
-                .is_some_and(|n| !n.is_empty() && verb(n))
-    }
-
-    fn word_len_at(&self, text: &str, char_offset: usize) -> usize {
-        let Some((i, _)) = text.char_indices().nth(char_offset) else {
-            return 1;
-        };
-        jmdict_core::lookup_longest_match(&text[i..], 20).map_or(1, |(_, n)| n.max(1))
-    }
-}
-
 #[test]
 #[ignore = "needs JMDICT_BIN"]
 fn every_point_finds_its_own_examples_with_jmdict() {
     let path = std::env::var("JMDICT_BIN").expect("set JMDICT_BIN");
     jmdict_core::init(&std::fs::read(&path).unwrap()).unwrap();
     let dict = dict();
-    let (checked, m) = misses(&dict, &Jmdict, |_| true);
+    let (checked, m) = misses(&dict, &JmdictVocabulary, |_| true);
     report(checked, &m);
 }

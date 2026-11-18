@@ -12,6 +12,8 @@ pub mod types;
 #[cfg(all(test, feature = "build"))]
 mod tests;
 
+#[cfg(feature = "jmdict")]
+pub use answer::JmdictVocabulary;
 pub use answer::{Verdict, Vocabulary};
 #[cfg(feature = "build")]
 pub use compile::{Compiled, compile};

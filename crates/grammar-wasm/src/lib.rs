@@ -2,7 +2,7 @@
 //! background script. It loads the `data/grammar.bin` shipped with the
 //! extension.
 
-use grammar_core::GrammarDict;
+use grammar_core::{GrammarDict, Vocabulary};
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
@@ -18,6 +18,40 @@ fn to_js<T: Serialize + ?Sized>(value: &T) -> Result<JsValue, JsError> {
     value
         .serialize(&ser)
         .map_err(|e| JsError::new(&e.to_string()))
+}
+
+/// The answer check's words, from the JMdict module through two JS
+/// callbacks: the two WASM modules don't share memory.
+struct JsVocabulary<'a> {
+    is_verb: &'a js_sys::Function,
+    word_len_at: &'a js_sys::Function,
+}
+
+impl Vocabulary for JsVocabulary<'_> {
+    fn is_verb(&self, base: &str) -> bool {
+        self.is_verb
+            .call1(&JsValue::NULL, &JsValue::from_str(base))
+            .is_ok_and(|v| v.as_bool() == Some(true))
+    }
+
+    fn word_len_at(&self, text: &str, char_offset: usize) -> usize {
+        let len = self
+            .word_len_at
+            .call2(
+                &JsValue::NULL,
+                &JsValue::from_str(text),
+                &JsValue::from(char_offset as u32),
+            )
+            .ok()
+            .and_then(|v| v.as_f64())
+            .unwrap_or(1.0);
+        // A JS number: whole and at least 1, or the check's ranges break.
+        if len.is_finite() && len >= 1.0 {
+            len as usize
+        } else {
+            1
+        }
+    }
 }
 
 #[wasm_bindgen]
@@ -119,9 +153,26 @@ impl GrammarDictionary {
         to_js(&self.inner.lookup_prefix(prefix, max))
     }
 
+    /// The production answer check (`GrammarDict::check_answer`) of
+    /// `answer` for the point `id`: a `Verdict` (`{kind, …}`).
+    /// `is_verb(base) -> bool` and `word_len_at(text, charOffset) -> number`
+    /// answer from JMdict.
+    pub fn check_answer(
+        &self,
+        id: &str,
+        answer: &str,
+        is_verb: &js_sys::Function,
+        word_len_at: &js_sys::Function,
+    ) -> Result<JsValue, JsError> {
+        let vocab = JsVocabulary {
+            is_verb,
+            word_len_at,
+        };
+        to_js(&self.inner.check_answer(id, answer, &vocab))
+    }
+
     /// What the Lookup page's search shows for `text` (`GrammarDict::search`).
     pub fn search(&self, text: &str, max: usize) -> Result<JsValue, JsError> {
         to_js(&self.inner.search(text, max))
     }
 }
-

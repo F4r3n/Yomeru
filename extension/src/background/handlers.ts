@@ -267,6 +267,32 @@ export async function handleLookupPrefix({ text, max }: { text: string; max: num
   return { results };
 }
 
+/** The longest production answer checked, as on the server. */
+const MAX_ANSWER_CHARS = 100;
+
+/** The extension pages' `DictClient::grammar_check`: whether a typed
+ * production `answer` uses the point `id`. JMdict answers the check's word
+ * questions through callbacks: the two WASM modules don't share memory. */
+export async function handleGrammarCheck({
+  id,
+  answer,
+}: {
+  id: string;
+  answer: string;
+}): Promise<{ verdict: unknown }> {
+  const [dict, jmdict] = await Promise.all([getGrammar(), getJmdict()]);
+  if (!dict || [...answer].length > MAX_ANSWER_CHARS) {
+    return { verdict: { kind: "self-graded" } };
+  }
+  const verdict = dict.check_answer(
+    id,
+    answer,
+    (base: string) => jmdict.is_verb(base),
+    (text: string, at: number) => jmdict.word_len_at(text, at),
+  );
+  return { verdict };
+}
+
 /** Longest grammar pattern hovered `text` starts with. */
 const GRAMMAR_MAX_CHARS = 24;
 /** Examples per grammar point in the popup. */

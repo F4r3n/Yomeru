@@ -6,6 +6,7 @@
 //! dictionary ([`Vocabulary`]), so this crate stays free of JMdict.
 
 use deinflect::{Reason, Reasons};
+use serde::{Deserialize, Serialize};
 
 use crate::dict::{GrammarDict, MAX_PATTERN_CHARS};
 use crate::types::{AnswerCheck, GrammarEntry, Inflection, Related};
@@ -27,8 +28,26 @@ pub trait Vocabulary {
     fn word_len_at(&self, text: &str, char_offset: usize) -> usize;
 }
 
-/// The outcome of [`GrammarDict::check_answer`].
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// [`Vocabulary`] over the loaded jmdict-core dictionary
+/// (`jmdict_core::vocab`).
+#[cfg(feature = "jmdict")]
+pub struct JmdictVocabulary;
+
+#[cfg(feature = "jmdict")]
+impl Vocabulary for JmdictVocabulary {
+    fn is_verb(&self, base: &str) -> bool {
+        jmdict_core::vocab::is_verb(base)
+    }
+    fn word_len_at(&self, text: &str, char_offset: usize) -> usize {
+        jmdict_core::vocab::word_len_at(text, char_offset)
+    }
+}
+
+/// The outcome of [`GrammarDict::check_answer`]. Serialized
+/// `{"kind": "close", "related": …}`, to travel from the server or the
+/// extension's background.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "kebab-case")]
 pub enum Verdict {
     /// The answer uses the card's point.
     Accepted,

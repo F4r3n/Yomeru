@@ -99,6 +99,18 @@ impl Dictionary {
         serde_wasm_bindgen::to_value(&entries).map_err(|e| JsError::new(&e.to_string()))
     }
 
+    /// Whether `base`, a dictionary form, is a verb
+    /// (`jmdict_core::vocab::is_verb`). For grammar-wasm's answer check.
+    pub fn is_verb(&self, base: &str) -> bool {
+        jmdict_core::vocab::is_verb(base)
+    }
+
+    /// Chars of the longest word at `char_offset` of `text`, 1 when none
+    /// (`jmdict_core::vocab::word_len_at`). For grammar-wasm's answer check.
+    pub fn word_len_at(&self, text: &str, char_offset: usize) -> usize {
+        jmdict_core::vocab::word_len_at(text, char_offset)
+    }
+
     pub fn is_loaded(&self) -> bool {
         jmdict_core::dictionary::is_loaded()
     }

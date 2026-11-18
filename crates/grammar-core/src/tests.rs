@@ -547,4 +547,21 @@ mod answers {
             Verdict::Accepted
         );
     }
+
+    #[test]
+    fn a_verdict_travels_as_json() {
+        let v = Verdict::Close {
+            related: related("ta-ato-de", "たあとで"),
+        };
+        let json = serde_json::to_string(&v).unwrap();
+        assert_eq!(
+            json,
+            r#"{"kind":"close","related":{"id":"ta-ato-de","pattern":"たあとで"}}"#
+        );
+        assert_eq!(serde_json::from_str::<Verdict>(&json).unwrap(), v);
+        assert_eq!(
+            serde_json::to_string(&Verdict::NotFound).unwrap(),
+            r#"{"kind":"not-found"}"#
+        );
+    }
 }

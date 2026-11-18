@@ -36,6 +36,9 @@ const MAX_LOOKUP_WORDS: usize = 1_000;
 const MAX_LOOKUP_SEQUENCES: usize = 20_000;
 
 const MAX_QUERY_CHARS: usize = 256;
+/// The longest production answer checked: a sentence, not a text. The
+/// check looks up words at every char, so it grows faster than the answer.
+const MAX_ANSWER_CHARS: usize = 100;
 
 /// More parts than any kanji holds: past this the answer is empty anyway.
 const MAX_PARTS: usize = 16;
@@ -142,6 +145,18 @@ pub struct GrammarResponse {
 #[derive(Serialize)]
 pub struct GrammarBySeqResponse {
     pub results: Vec<Option<grammar_core::GrammarEntry>>,
+}
+
+#[derive(Deserialize)]
+pub struct GrammarCheckBody {
+    /// The point's id.
+    pub id: String,
+    pub answer: String,
+}
+
+#[derive(Serialize)]
+pub struct GrammarCheckResponse {
+    pub verdict: grammar_core::Verdict,
 }
 
 pub async fn lookup_handler(
@@ -320,4 +335,28 @@ pub async fn grammar_by_sequence_handler(
     })
     .await?;
     Ok(Json(GrammarBySeqResponse { results }))
+}
+
+/// Whether a typed production answer uses the point `id`. Only the web app
+/// asks: it has no dictionaries of its own. The verdict is a help for the
+/// user's rating, so it is never kept or checked again.
+pub async fn grammar_check_handler(
+    State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Json(body): Json<GrammarCheckBody>,
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.lookup_limiter, addr, &headers)?;
+    let GrammarCheckBody { id, answer } = body;
+    let chars = answer.chars().count();
+    if chars > MAX_ANSWER_CHARS {
+        return Err(too_large("answer", chars, MAX_ANSWER_CHARS));
+    }
+    let verdict = run_blocking("grammar_check", move || {
+        Ok(crate::dicts::grammar().map_or(grammar_core::Verdict::SelfGraded, |d| {
+            d.check_answer(&id, &answer, &grammar_core::JmdictVocabulary)
+        }))
+    })
+    .await?;
+    Ok(Json(GrammarCheckResponse { verdict }))
 }

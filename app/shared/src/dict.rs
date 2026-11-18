@@ -11,7 +11,7 @@ use dioxus::prelude::consume_context;
 use examples_types::ExampleEntry;
 use jmdict_types::WordEntry;
 use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
-use yomeru_core::grammar::GrammarEntry;
+use yomeru_core::grammar::{GrammarEntry, Verdict};
 
 pub use yomeru_core::dict::*;
 
@@ -85,5 +85,13 @@ pub async fn grammar_by_seq(sequences: &[u32]) -> Result<Vec<Option<GrammarEntry
     consume_context::<Platform>()
         .dict
         .grammar_by_seq(sequences)
+        .await
+}
+
+/// Whether a typed production `answer` uses the point `id`.
+pub async fn grammar_check(id: &str, answer: &str) -> Result<Verdict, String> {
+    consume_context::<Platform>()
+        .dict
+        .grammar_check(id, answer)
         .await
 }

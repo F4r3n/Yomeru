@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use examples_types::ExampleEntry;
 use jmdict_types::WordEntry;
 use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
-use yomeru_shared::grammar::GrammarEntry;
+use yomeru_shared::grammar::{GrammarEntry, Verdict};
 use yomeru_shared::platform::DictClient;
 pub struct ExtensionDict;
 
@@ -93,6 +93,17 @@ struct GrammarBySeqResp {
     results: Vec<Option<GrammarEntry>>,
 }
 
+#[derive(Serialize)]
+struct GrammarCheckPayload<'a> {
+    id: &'a str,
+    answer: &'a str,
+}
+
+#[derive(Deserialize)]
+struct GrammarCheckResp {
+    verdict: Verdict,
+}
+
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl DictClient for ExtensionDict {
@@ -158,5 +169,11 @@ impl DictClient for ExtensionDict {
             crate::send_bg_message("GRAMMAR_BY_SEQUENCE", LookupBySequencePayload { sequences })
                 .await?;
         Ok(r.results)
+    }
+
+    async fn grammar_check(&self, id: &str, answer: &str) -> Result<Verdict, String> {
+        let r: GrammarCheckResp =
+            crate::send_bg_message("GRAMMAR_CHECK", GrammarCheckPayload { id, answer }).await?;
+        Ok(r.verdict)
     }
 }

@@ -50,6 +50,8 @@ jmdict-core   = { path = "../../crates/jmdict-core" }
 kanjidic-core = { path = "../../crates/kanjidic-core" }
 examples-core = { path = "../../crates/examples-core" }
 rkyv          = { version = "0.8", default-features = false, features = ["alloc"] }
+# The production answer check, over the JMdict above.
+grammar-core  = { path = "../../crates/grammar-core", features = ["jmdict"] }
 anyhow        = "1"
 
 

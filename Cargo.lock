@@ -3946,9 +3946,9 @@ dependencies = [
  "fst",
  "grammar-core",
  "jmdict-core",
- "jmdict-types",
  "postcard",
  "serde",
+ "serde_json",
  "toml",
 ]
 
@@ -3958,6 +3958,7 @@ version = "0.23.0"
 dependencies = [
  "console_error_panic_hook",
  "grammar-core",
+ "js-sys",
  "serde",
  "serde-wasm-bindgen",
  "wasm-bindgen",

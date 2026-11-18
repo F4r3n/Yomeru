@@ -10,7 +10,7 @@
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use examples_types::ExampleEntry;
-use grammar_core::GrammarEntry;
+use grammar_core::{GrammarEntry, Verdict};
 use jmdict_types::WordEntry;
 use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
 use serde::{Deserialize, Serialize};
@@ -55,6 +55,10 @@ pub trait DictClient: Send + Sync {
     /// `grammar_core::GrammarDict::by_seq`).
     async fn grammar_by_seq(&self, sequences: &[u32])
     -> Result<Vec<Option<GrammarEntry>>, String>;
+    /// Whether a typed production `answer` uses the point `id` (see
+    /// `grammar_core::GrammarDict::check_answer`). Only a help for the
+    /// user's own rating, so nothing checks it again.
+    async fn grammar_check(&self, id: &str, answer: &str) -> Result<Verdict, String>;
 }
 
 /// Settings persistence + sync orchestration. `load()` is intentionally
@@ -218,6 +222,15 @@ struct GrammarResponse {
 struct GrammarBySeqResponse {
     results: Vec<Option<GrammarEntry>>,
 }
+#[derive(Serialize)]
+struct GrammarCheckBody<'a> {
+    id: &'a str,
+    answer: &'a str,
+}
+#[derive(Deserialize)]
+struct GrammarCheckResponse {
+    verdict: Verdict,
+}
 #[derive(Deserialize)]
 struct KanjiPartsResponse {
     parts: Vec<PartInfo>,
@@ -305,6 +318,12 @@ impl DictClient for HttpDict {
         )
         .await?;
         Ok(parsed.results)
+    }
+
+    async fn grammar_check(&self, id: &str, answer: &str) -> Result<Verdict, String> {
+        let parsed: GrammarCheckResponse =
+            post_json("/api/grammar-check", &GrammarCheckBody { id, answer }).await?;
+        Ok(parsed.verdict)
     }
 }
 

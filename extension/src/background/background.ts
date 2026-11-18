@@ -15,6 +15,7 @@ import {
   handleAddWord,
   handleAddGrammar,
   handleGrammarBySequence,
+  handleGrammarCheck,
   handleDeleteCard,
   handleGetAllCards,
   handleGetDue,
@@ -119,6 +120,8 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
       return handleLookupBySequence(msg.payload as { sequences: number[] });
     case "GRAMMAR_BY_SEQUENCE":
       return handleGrammarBySequence(msg.payload as { sequences: number[] });
+    case "GRAMMAR_CHECK":
+      return handleGrammarCheck(msg.payload as { id: string; answer: string });
     case "LOOKUP_PREFIX":
       return handleLookupPrefix(msg.payload as { text: string; max: number });
     case "BUMP_DB_VERSION":
