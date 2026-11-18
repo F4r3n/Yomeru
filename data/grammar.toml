@@ -19148,6 +19148,9 @@ related = ["te-de-mo", "kara-made"]
 examples = [
   { tatoeba = "280157_123838", ja = "頭を下げ{てまで}金を借りたくない。", en = "I wouldn't lower myself to borrow money." },
   { tatoeba = "261542_153003", ja = "私は父に反対し{てまで}彼女の味方になった。", en = "I supported her even against my father." },
+  { tatoeba = "298475_105214", ja = "彼は自尊心を犠牲にし{てまで}それを得ようとした。", en = "He tried to get it at the expense of self-respect." },
+  { tatoeba = "264659_149899", ja = "自分の家を売っ{てまで}フェラーリは欲しくないよ。", en = "I don't want a Ferrari bad enough to sell my house to get one." },
+  { source = "yomeru", id = "y1", ja = "借金{までして}車を買う必要はない。", en = "There's no need to go as far as borrowing money to buy a car." },
 ]
 
 [[point]]
@@ -19172,6 +19175,8 @@ examples = [
   { tatoeba = "56468_219152", ja = "この論議はやめ{ようではないか}。", en = "Let's put a stop to this discussion." },
   { tatoeba = "239605_174862", ja = "現実を直視し{ようじゃないか}。", en = "Let's face the facts!" },
   { tatoeba = "60098_222768", ja = "この歌を歌{おうじゃないか}。", en = "Let's sing this song, shall we?" },
+  { tatoeba = "8069411_224248", ja = "ここらで１０分、休憩し{ようじゃないか}。", en = "Why don't we take a 10-minute break here?" },
+  { tatoeba = "50460_213174", ja = "そのことについてはあとで話し合{おうではないか}。", en = "Let's discuss the matter later." },
 ]
 
 [[point]]
@@ -19196,6 +19201,9 @@ related = ["te-miru", "te-goran", "command-form"]
 examples = [
   { tatoeba = "56754_219434", ja = "この問題が解けるならやっ{てみろ}。", en = "I defy you to solve this problem." },
   { source = "yomeru", id = "y1", ja = "もう一度言っ{てみろ}。", en = "Say that again, I dare you." },
+  { tatoeba = "27220_190064", ja = "一歩でも動い{てみろ}、おまえの命はないぞ。", en = "Move a step, and you'll be a dead man!" },
+  { source = "yomeru", id = "y3", ja = "できるものなら、俺に勝っ{てみろ}。", en = "Beat me if you can, I dare you." },
+  { source = "yomeru", id = "y2", ja = "文句があるなら、自分でやっ{てみろ}。", en = "If you have complaints, try doing it yourself!" },
 ]
 
 [[point]]
@@ -19220,6 +19228,9 @@ related = ["mono-da"]
 examples = [
   { tatoeba = "29968_192802", ja = "{よくも}私のことを笑えるものだ。", en = "How dare you laugh at me!" },
   { tatoeba = "29973_192808", ja = "{よくもまあ}そんなことが言えますね。", en = "How dare you say such a thing!" },
+  { tatoeba = "293259_110428", ja = "彼は{よくも}私の手紙を開封したものだな。", en = "How dare he open my letters!" },
+  { source = "yomeru", id = "y1", ja = "{よくも}私のケーキを食べたな。", en = "How dare you eat my cake!" },
+  { source = "yomeru", id = "y2", ja = "{よくも}約束を破ったね。", en = "How could you break your promise!" },
 ]
 
 [[point]]
@@ -19245,6 +19256,9 @@ related = ["o-kudasai", "o-suru", "te-itadakemasen-ka"]
 examples = [
   { tatoeba = "61939_224633", ja = "ここでのおタバコは{ご遠慮願います}。", en = "Please refrain from smoking here." },
   { tatoeba = "73506_236130", ja = "バスの中へ{お詰め願います}。", en = "Please move to the rear of the bus." },
+  { source = "yomeru", id = "y1", ja = "しばらくこのまま{お待ち願います}。", en = "I must ask you to wait here a little while." },
+  { source = "yomeru", id = "y2", ja = "こちらに{ご記入願います}。", en = "Please fill this in here." },
+  { source = "yomeru", id = "y3", ja = "結果が出たら{ご連絡願えますか}。", en = "Could I ask you to contact me when the results are out?" },
 ]
 
 [[point]]
@@ -19270,6 +19284,9 @@ related = ["ba", "tara-ii", "to-omou"]
 examples = [
   { tatoeba = "25265_188126", ja = "何かお役に立て{ればと思います}。", en = "I hope I can be of some help to you." },
   { tatoeba = "54774_217465", ja = "こんなすばらしい天気が続け{ばと思う}。", en = "I hope this fine weather holds." },
+  { tatoeba = "58010_220688", ja = "この贈り物を気に入ってくださ{ればと思います}。", en = "I hope you will be pleased with this present." },
+  { tatoeba = "255677_158850", ja = "私はまもなくあなたに再会でき{ればと思っています}。", en = "I hope to see you again before long." },
+  { source = "yomeru", id = "y1", ja = "皆さんと一緒に働け{たらと思います}。", en = "I hope I can work together with all of you." },
 ]
 
 [[point]]
@@ -19294,6 +19311,8 @@ examples = [
   { tatoeba = "268449_146113", ja = "冗談の{つもりで}いった。", en = "I said so by way of a joke." },
   { tatoeba = "32117_194943", ja = "みんな宇宙人になった{つもりで}。", en = "Let's pretend we are aliens." },
   { source = "yomeru", id = "y1", ja = "鍵をかけ{たつもり}だったが、開いていた。", en = "I thought I'd locked it, but it was open." },
+  { source = "yomeru", id = "y2", ja = "一年で帰る{つもりで}日本に来た。", en = "I came to Japan intending to go back after a year." },
+  { source = "yomeru", id = "y3", ja = "旅行に行った{つもりで}、そのお金を貯金した。", en = "Pretending I'd gone on a trip, I saved that money instead." },
 ]
 
 [[point]]
@@ -19317,9 +19336,11 @@ Here あと comes before the amount. もう + amount also means "more" \
 also". Search-only, as あと is everywhere."""
 related = ["ta-ato-de", "mou"]
 examples = [
-  { tatoeba = "72283_234907", ja = "９時まで{あと}５分だ。", en = "It is five minutes to nine." },
   { tatoeba = "71694_234319", ja = "{あと}２週間で期末試験だ。", en = "Final exams are two weeks from now." },
   { tatoeba = "51285_213997", ja = "せめて{あと}十分待ってくれませんか。", en = "Can't you wait just ten more minutes?" },
+  { tatoeba = "24303_187166", ja = "夏休みまで{あと}５日です。", en = "We have five days to go before the summer vacation." },
+  { tatoeba = "71699_234324", ja = "{あと}１０分で手が空く。", en = "I will be free in ten minutes." },
+  { tatoeba = "71693_234318", ja = "{あと}２通手紙を書かなくてはならない。", en = "I have another two letters to write." },
 ]
 
 [[point]]
@@ -19342,8 +19363,10 @@ written or formal, often in news, speeches and stories. Search-only: \
 related = ["zu-ni", "naide"]
 examples = [
   { tatoeba = "302655_101042", ja = "彼は彼女に気づく{ことなく}走り過ぎた。", en = "He ran past without noticing her." },
-  { tatoeba = "27408_190250", ja = "一日中、雨は止む{ことなく}降り続いた。", en = "It rained continuously all day." },
   { tatoeba = "291687_111991", ja = "彼はためらう{ことなく}妻に真実を語った。", en = "He didn't hesitate to tell his wife the truth." },
+  { tatoeba = "314025_89690", ja = "彼女は止める{ことなく}何時間も泣き続けた。", en = "She cried for hours without ceasing." },
+  { tatoeba = "256794_157737", ja = "私は気づかれる{ことなく}彼の後ろを通りすぎた。", en = "I passed behind him without being noticed." },
+  { source = "yomeru", id = "y1", ja = "彼は一度も休む{こともなく}働き続けた。", en = "He kept working without taking a single break." },
 ]
 
 [[point]]
@@ -19363,10 +19386,13 @@ notes = """
 ことになる is "it amounts to, it means": これで三回目ということになる. \
 ことにはならない denies that conclusion. わけではない is a softer "it's \
 not that…"."""
-related = ["koto-ni-naru", "kara-to-itte", "wake-de-wa-nai"]
+related = ["koto-ni-naru", "kara-to-itte", "wake-de-wa-nai", "uchi-ni-hairanai"]
 examples = [
   { tatoeba = "284140_119523", ja = "彼が貧しいからといって不幸だという{ことにはならない}。", en = "Just because he is poor, it does not follow that he is unhappy." },
   { source = "yomeru", id = "y1", ja = "一回練習しても、練習した{ことにはならない}。", en = "Practicing once doesn't really count as practicing." },
+  { source = "yomeru", id = "y2", ja = "黙っていても、賛成した{ことにはならない}。", en = "Staying silent doesn't mean you agreed." },
+  { source = "yomeru", id = "y3", ja = "高い薬だからよく効く{ということにはならない}。", en = "An expensive medicine doesn't necessarily mean it works well." },
+  { source = "yomeru", id = "y4", ja = "一度会っただけで、彼を知った{ことにはならない}。", en = "Meeting him once doesn't mean you've got to know him." },
 ]
 
 [[point]]
@@ -19391,6 +19417,9 @@ related = ["tashika-ni", "kedo"]
 examples = [
   { source = "yomeru", id = "y1", ja = "行く{ことは}行くが、少し遅れる。", en = "I'll go, sure, but I'll be a bit late." },
   { source = "yomeru", id = "y2", ja = "おいしい{ことは}おいしいけど、高すぎる。", en = "It is tasty, but it's too expensive." },
+  { source = "yomeru", id = "y3", ja = "ピアノは弾ける{ことは}弾けるが、上手ではない。", en = "I can play the piano, sure, but not well." },
+  { source = "yomeru", id = "y4", ja = "その映画は見た{ことは}見たけど、あまり覚えていない。", en = "I did see that movie, but I don't remember much of it." },
+  { source = "yomeru", id = "y5", ja = "彼の部屋はきれいな{ことは}きれいだが、狭い。", en = "His room is clean, I'll give it that, but it's small." },
 ]
 
 [[point]]
@@ -19413,6 +19442,9 @@ related = ["nasai", "command-form"]
 examples = [
   { tatoeba = "54223_216917", ja = "さあ、来{たまえ}。", en = "Come along." },
   { tatoeba = "17188_178337", ja = "君の好きなようにし{たまえ}。", en = "Do as you like." },
+  { tatoeba = "56732_219412", ja = "この問題に注意し{たまえ}。", en = "Concentrate your attention on this problem." },
+  { tatoeba = "269668_144896", ja = "神よわれわれを守り{たまえ}！", en = "God preserve us!" },
+  { source = "yomeru", id = "y1", ja = "遠慮しないで、座り{たまえ}。", en = "Don't be shy; sit down." },
 ]
 
 [[point]]
@@ -19437,6 +19469,9 @@ related = ["dokoroka", "te-iru-baai-ja-nai"]
 examples = [
   { tatoeba = "321187_82529", ja = "忙しくてそれ{どころじゃない}よ。", en = "I've got no time for that now." },
   { source = "yomeru", id = "y1", ja = "熱があって、旅行{どころではない}。", en = "I have a fever, so a trip is out of the question." },
+  { source = "yomeru", id = "y2", ja = "明日は試験なので、遊ぶ{どころではない}。", en = "I have an exam tomorrow, so going out to play is out of the question." },
+  { source = "yomeru", id = "y3", ja = "雨がひどくて、花見{どころじゃなかった}。", en = "The rain was so bad that cherry-blossom viewing was out of the question." },
+  { source = "yomeru", id = "y4", ja = "心配で、食事{どころではありません}。", en = "I'm so worried that eating is the last thing on my mind." },
 ]
 
 [[point]]
@@ -19460,6 +19495,9 @@ related = ["to-shite", "ni-shite-wa", "to-shite-mo", "ni-totte"]
 examples = [
   { tatoeba = "249583_164924", ja = "私{としては}家にいたい。", en = "For my part I prefer to stay at home." },
   { tatoeba = "69214_231847", ja = "あなたは初心者{としては}テニスがうまい。", en = "You are a good tennis player, as beginners go." },
+  { tatoeba = "249574_164933", ja = "私{としては}、彼が来ても来なくても関係ない。", en = "For my part, it doesn't matter whether he comes or not." },
+  { tatoeba = "268662_145900", ja = "食べ物は、ホテルの食事{としては}悪くなかった。", en = "The food was not bad, as hotel food goes." },
+  { source = "yomeru", id = "y1", ja = "会社{としては}、その計画に賛成できない。", en = "As a company, we can't support that plan." },
 ]
 
 [[point]]
@@ -19482,6 +19520,9 @@ related = ["koto-ni-wa-naranai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "五キロなんて、走った{うちに入らない}。", en = "Five kilometers hardly counts as running." },
   { source = "yomeru", id = "y2", ja = "こんなの料理の{うちに入らない}よ。", en = "This can't be called cooking." },
+  { source = "yomeru", id = "y3", ja = "二、三分なんて遅刻の{うちに入らない}。", en = "Two or three minutes doesn't count as being late." },
+  { source = "yomeru", id = "y4", ja = "これくらいの雨は、雨の{うちに入りません}。", en = "Rain like this hardly counts as rain." },
+  { source = "yomeru", id = "y5", ja = "一回会っただけじゃ、友達の{うちに入らない}よ。", en = "Meeting once doesn't make someone count as a friend." },
 ]
 
 [[point]]
@@ -19504,6 +19545,9 @@ related = ["kara-made"]
 examples = [
   { tatoeba = "59507_222182", ja = "この劇は三幕{からなる}。", en = "This play has three acts." },
   { tatoeba = "247632_166870", ja = "私たちの大学は８つの学部{から成っている}。", en = "Our university consists of eight departments." },
+  { tatoeba = "241325_173147", ja = "合衆国は５０州{から成る}。", en = "The United States comprises 50 states." },
+  { tatoeba = "28247_191087", ja = "委員会は十人{から成っている}。", en = "Our committee consists of ten members." },
+  { source = "yomeru", id = "y1", ja = "この本は十の章{からなる}。", en = "This book is made up of ten chapters." },
 ]
 
 [[point]]
@@ -19527,6 +19571,9 @@ related = ["toka", "sou-da-hearsay", "to-no-koto-da"]
 examples = [
   { source = "yomeru", id = "y1", ja = "用事がある{とかで}、彼は早く帰った。", en = "He left early, something about having errands." },
   { source = "yomeru", id = "y2", ja = "熱が出た{とかで}、田中さんは休んでいる。", en = "Tanaka is off, apparently because of a fever." },
+  { source = "yomeru", id = "y3", ja = "電車が止まった{とかで}、彼女は遅れて来た。", en = "She came late, something about the trains having stopped." },
+  { source = "yomeru", id = "y4", ja = "親が病気だ{とかで}、山田さんは国に帰った。", en = "Yamada went back home, apparently because a parent is ill." },
+  { source = "yomeru", id = "y5", ja = "店は工事中だ{とかで}閉まっていた。", en = "The shop was closed, something about construction work." },
 ]
 
 [[point]]
@@ -19550,6 +19597,9 @@ related = ["to-iu-yori", "to-iu"]
 examples = [
   { source = "yomeru", id = "y1", ja = "好き{というか}、尊敬している。", en = "It's not so much that I like him; I'd say I respect him." },
   { source = "yomeru", id = "y2", ja = "あの店は安い{というか}、ほぼ無料だ。", en = "That shop is cheap, or rather, practically free." },
+  { source = "yomeru", id = "y3", ja = "静か{というか}、さびしい町だ。", en = "It's a quiet town, or rather, a lonely one." },
+  { source = "yomeru", id = "y4", ja = "{っていうか}、もう帰らない？", en = "I mean, why don't we just go home?" },
+  { source = "yomeru", id = "y5", ja = "優しい{というか、厳しいというか}、不思議な先生だ。", en = "Kind or strict, I can't say which: he's an odd teacher." },
 ]
 
 [[point]]
@@ -19575,6 +19625,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "みんなに約束した{手前}、やめられない。", en = "Having promised everyone, I can't back out." },
   { source = "yomeru", id = "y2", ja = "子供の{手前}、泣くわけにはいかなかった。", en = "In front of the kids, I couldn't cry." },
   { tatoeba = "68194_230827", ja = "あの信号の{手前}で降ろしてください。", en = "Please let me off on this side of that traffic light." },
+  { source = "yomeru", id = "y3", ja = "先輩の{手前}、文句は言えなかった。", en = "Out of regard for my senior, I couldn't complain." },
+  { source = "yomeru", id = "y4", ja = "「できる」と言った{手前}、今さら断れない。", en = "Having said I could do it, I can't refuse now." },
 ]
 
 [[point]]
@@ -19598,6 +19650,9 @@ related = ["ni-kakawarazu", "wo-towazu", "ni-yotte"]
 examples = [
   { tatoeba = "313478_90236", ja = "彼女は見かけ{によらず}頑張りやだ。", en = "She is persistent though she doesn't look so." },
   { source = "yomeru", id = "y1", ja = "年齢{によらず}、誰でも参加できます。", en = "Anyone can take part, whatever their age." },
+  { source = "yomeru", id = "y2", ja = "何事{によらず}、最初は難しい。", en = "Whatever it is, the beginning is always hard." },
+  { source = "yomeru", id = "y3", ja = "彼は見かけ{によらず}、とても力が強い。", en = "He's very strong, though you wouldn't think so from his looks." },
+  { source = "yomeru", id = "y4", ja = "経験{によらず}、能力で給料を決める。", en = "We set pay by ability, regardless of experience." },
 ]
 
 [[point]]
