@@ -12279,6 +12279,8 @@ examples = [
   { tatoeba = "301509_102184", ja = "彼は遅刻し{がちだ}。", en = "He is apt to be late." },
   { tatoeba = "251389_163123", ja = "うちの息子は病気{がちだ}。", en = "My son is subject to ill health." },
   { tatoeba = "275853_137383", ja = "大都会に住んでいる人は運動不足になり{がちだ}。", en = "People living in a big city tend to lack exercise." },
+  { tatoeba = "248547_165957", ja = "私たちは間違いをし{がちです}。", en = "We are apt to make mistakes." },
+  { source = "yomeru", id = "y1", ja = "この季節は曇り{がちな}日が多い。", en = "This season has a lot of days that tend to be cloudy." },
 ]
 
 [[point]]
@@ -12303,6 +12305,8 @@ examples = [
   { tatoeba = "242973_171504", ja = "今日は風邪{気味だ}。", en = "I have a touch of a cold today." },
   { tatoeba = "288992_114679", ja = "彼はいくぶん太り{気味だ}。", en = "He is on the heavy side." },
   { tatoeba = "253313_161205", ja = "風邪{気味だった}ので、早く寝たよ。", en = "Having a slight cold, I went to bed early." },
+  { source = "yomeru", id = "y1", ja = "最近ちょっと疲れ{気味だ}。", en = "I've been feeling a bit tired lately." },
+  { source = "yomeru", id = "y2", ja = "電車が遅れ{気味な}ので、早めに出よう。", en = "The trains are running a little late, so let's leave early." },
 ]
 
 [[point]]
@@ -12329,6 +12333,8 @@ examples = [
   { tatoeba = "17226_178373", ja = "君の言うことは信じ{がたい}。", en = "I find it difficult to believe." },
   { tatoeba = "49428_212149", ja = "その音楽は、年輩の人たちには理解し{がたい}。", en = "The music is difficult for grownups to understand." },
   { source = "yomeru", id = "y1", ja = "あの人のうそは許し{がたい}。", en = "His lies are hard to forgive." },
+  { source = "yomeru", id = "y2", ja = "あの日のことは忘れ{がたい}。", en = "That day is hard to forget." },
+  { source = "yomeru", id = "y3", ja = "彼がそんなことを言ったとは考え{がたい}。", en = "It's hard to believe he said such a thing." },
 ]
 
 [[point]]
@@ -12354,6 +12360,8 @@ examples = [
   { tatoeba = "303687_100010", ja = "彼は忘れ{っぽい}。", en = "He is apt to forget." },
   { tatoeba = "243247_171230", ja = "今晩は少し熱{っぽい}のです。", en = "I feel a bit feverish tonight." },
   { tatoeba = "249207_165298", ja = "私たちは彼の行為を子供{っぽい}と思った。", en = "We regarded his behavior as childish." },
+  { tatoeba = "296725_106961", ja = "彼は最近怒り{っぽい}。", en = "He easily gets angry nowadays." },
+  { source = "yomeru", id = "y1", ja = "その服、ちょっと大人{っぽい}ね。", en = "That outfit looks a little grown-up." },
 ]
 
 [[point]]
@@ -12378,6 +12386,8 @@ examples = [
   { tatoeba = "56975_219654", ja = "この本は間違い{だらけ}だ。", en = "This book is full of mistakes." },
   { tatoeba = "320272_83444", ja = "壁は落書き{だらけ}だ。", en = "The wall was covered with graffiti." },
   { tatoeba = "39592_202381", ja = "テーブルはほこり{だらけ}だった。", en = "The table was covered with dust." },
+  { tatoeba = "301723_101972", ja = "彼は泥{だらけ}だった。", en = "He was covered with mud." },
+  { tatoeba = "65437_228083", ja = "うわぁ、観光客{だらけ}。", en = "Wow, it's swarming with tourists!" },
 ]
 
 [[point]]
@@ -12402,6 +12412,8 @@ examples = [
   { tatoeba = "253411_161107", ja = "私はクリスマスを楽し{み}に待っています。", en = "I am looking forward to Christmas." },
   { tatoeba = "282466_121539", ja = "背中に痛{み}を感じる。", en = "I feel a pain in the back." },
   { tatoeba = "274737_138498", ja = "他人の弱{み}に付け込むな。", en = "Don't take advantage of others' weakness." },
+  { source = "yomeru", id = "y1", ja = "このスープは甘{み}が足りない。", en = "This soup needs more sweetness." },
+  { source = "yomeru", id = "y2", ja = "彼女は悲し{み}を忘れようとした。", en = "She tried to forget her sorrow." },
 ]
 
 [[point]]
@@ -12426,6 +12438,8 @@ examples = [
   { tatoeba = "68485_231119", ja = "あの学者は、科学{的な}大発見をした。", en = "That scholar made a great scientific discovery." },
   { tatoeba = "250830_163681", ja = "私の個人{的な}問題に干渉しないで下さい。", en = "Don't stick your nose into my personal affairs." },
   { tatoeba = "18363_179505", ja = "具体{的に}話して欲しい。", en = "I want specific information." },
+  { tatoeba = "49089_211812", ja = "その会社は教育{的な}本を出版する。", en = "The firm publishes educational books." },
+  { source = "yomeru", id = "y1", ja = "この町は国際{的に}有名だ。", en = "This town is internationally famous." },
 ]
 
 [[point]]
@@ -12449,6 +12463,8 @@ examples = [
   { tatoeba = "58722_221397", ja = "この車は最新{型}です。", en = "This car is the latest model." },
   { tatoeba = "70730_233360", ja = "あなたの血液{型}は何ですか。", en = "What's your blood group?" },
   { tatoeba = "321972_81743", ja = "僕は夜{型}なんだ。", en = "I'm a night owl." },
+  { tatoeba = "275664_137572", ja = "大{型}車はガソリンを食う。", en = "Large cars use lots of gas." },
+  { tatoeba = "58354_221032", ja = "この新{型}自動車はとても人気がある。", en = "This new model of car is so popular." },
 ]
 
 [[point]]
@@ -12472,6 +12488,8 @@ examples = [
   { tatoeba = "68747_231380", ja = "あの２人の少年はいとこ{同士}です。", en = "Those two boys are cousins." },
   { tatoeba = "278698_125295", ja = "敵{同士}が面と向かい合った。", en = "The enemies stood face to face." },
   { tatoeba = "73405_236025", ja = "１０代の友だち{同士}が徹夜でおしゃべりした。", en = "The teenage friends stayed up talking all night." },
+  { source = "yomeru", id = "y1", ja = "子供{同士}のけんかに親は口を出すな。", en = "Parents shouldn't butt into fights between children." },
+  { source = "yomeru", id = "y2", ja = "日本人{同士}では日本語で話します。", en = "Among fellow Japanese, we talk in Japanese." },
 ]
 
 [[point]]
@@ -12496,6 +12514,8 @@ examples = [
   { tatoeba = "60835_223500", ja = "このテレビショーは子供{向けだ}。", en = "This TV show is aimed at children." },
   { tatoeba = "267054_147506", ja = "初心者{向けの}コースはありますか。", en = "Do you have a course for beginners?" },
   { tatoeba = "291262_112415", ja = "彼はその物語を子供{向けに}書き直した。", en = "He adapted the story for children." },
+  { source = "yomeru", id = "y1", ja = "これは外国人{向けの}日本語の本です。", en = "This is a Japanese book made for foreigners." },
+  { source = "yomeru", id = "y2", ja = "この商品は若い女性{向けに}作られた。", en = "This product was made for young women." },
 ]
 
 [[point]]
@@ -12519,6 +12539,8 @@ examples = [
   { tatoeba = "49537_212256", ja = "その映画は子供{向きだ}。", en = "This movie is suitable for children." },
   { tatoeba = "55588_218276", ja = "これは若者{向きの}車です。", en = "This is a car for young people." },
   { tatoeba = "49336_212057", ja = "その家は南{向き}なので、とても日当たりがよい。", en = "As the house has a southern aspect, it is very sunny." },
+  { tatoeba = "56917_219595", ja = "この本は初心者{向き}である。", en = "This book is suitable for beginners." },
+  { tatoeba = "62368_225033", ja = "こういう本は若い読者{向き}ではない。", en = "These books are not fit for young readers." },
 ]
 
 [[point]]
@@ -12540,11 +12562,13 @@ equivalent. To share things out, use ずつ instead: 一人二つずつ取る, \
 "take two each". \
 あたり after a place or time is another word, "around": 駅のあたり, \
 明日あたり. 日当たり is "sunlight a room gets"."""
-related = ["goto-ni", "zutsu"]
+related = ["goto-ni", "zutsu", "ni-tsuki"]
 examples = [
   { tatoeba = "27663_190502", ja = "一人{あたり}千ドル払った。", en = "Each individual paid 1,000 dollars." },
   { tatoeba = "36969_199766", ja = "トヨタの１日{あたり}の料金は？", en = "What's the daily rate for a Toyota?" },
   { source = "yomeru", id = "y1", ja = "この店のランチは一人{当たり}千円ぐらいだ。", en = "Lunch at this shop is about 1,000 yen per person." },
+  { source = "yomeru", id = "y2", ja = "この車は１リットル{当たり}２０キロ走る。", en = "This car does 20 km per liter." },
+  { source = "yomeru", id = "y3", ja = "１時間{当たり}の料金はいくらですか。", en = "How much is the fee per hour?" },
 ]
 
 [[point]]
@@ -12571,6 +12595,8 @@ examples = [
   { tatoeba = "72491_235113", ja = "５年{ぶりに}吉田君に会った。", en = "I saw Yoshida for the first time in five years." },
   { tatoeba = "57669_220349", ja = "この冬は２０年{ぶりの}寒さだった。", en = "This was the coldest winter in twenty years." },
   { tatoeba = "19844_182717", ja = "久し{ぶりに}彼は帰ってきた。", en = "After a long absence he came back." },
+  { tatoeba = "260780_153763", ja = "私は彼の話し{ぶり}が好きではない。", en = "I don't like the way he talks." },
+  { source = "yomeru", id = "y1", ja = "彼女の仕事{ぶり}はすばらしい。", en = "The way she works is wonderful." },
 ]
 
 [[point]]
@@ -12596,6 +12622,8 @@ examples = [
   { tatoeba = "310109_93598", ja = "彼女は１日{おきに}訪ねてくる。", en = "She visits us every other day." },
   { tatoeba = "326483_77236", ja = "六時間{おきに}体温を測った。", en = "I took my temperature every six hours." },
   { tatoeba = "27794_190635", ja = "一行{おきに}書け。", en = "Write on every other line." },
+  { tatoeba = "72578_235200", ja = "４時間{おきに}この薬をのみなさい。", en = "Take this medicine every four hours." },
+  { source = "yomeru", id = "y1", ja = "この祭りは一年{おきに}行われる。", en = "This festival is held every other year." },
 ]
 
 [[point]]
@@ -12622,6 +12650,8 @@ examples = [
   { tatoeba = "293705_109983", ja = "彼は一人{きりで}朝食を摂った。", en = "He had breakfast all alone." },
   { tatoeba = "288553_115118", ja = "彼は３年前に家を出た{きり}全然消息がない。", en = "He went away from home three years ago, and has never been heard of since." },
   { source = "yomeru", id = "y1", ja = "今日は家に一人{っきり}だ。", en = "I'm home all alone today." },
+  { source = "yomeru", id = "y2", ja = "彼とは去年会った{きり}だ。", en = "I saw him last year, and never since." },
+  { source = "yomeru", id = "y3", ja = "チャンスは一度{きり}だ。", en = "There's only one chance." },
 ]
 
 [[point]]
@@ -12644,6 +12674,8 @@ examples = [
   { tatoeba = "33526_160740", ja = "私はこれ{だけしか}知りません。", en = "I know nothing but this." },
   { tatoeba = "252597_161919", ja = "私は５千円{だけしか}持っていません。", en = "I have only five thousand yen." },
   { tatoeba = "40844_203606", ja = "ただ霧{だけしか}見えなかった。", en = "I could see nothing but fog." },
+  { source = "yomeru", id = "y1", ja = "テストまで三日{だけしか}ない。", en = "There are only three days until the test." },
+  { source = "yomeru", id = "y2", ja = "この店は現金{だけしか}使えません。", en = "This shop only takes cash." },
 ]
 
 [[point]]
@@ -12668,6 +12700,8 @@ examples = [
   { tatoeba = "28693_191530", ja = "愛情{だけでは}生きてはいけない。", en = "You cannot live by love alone." },
   { source = "yomeru", id = "y1", ja = "見ている{だけでは}上手にならないよ。", en = "Just watching won't make you any better." },
   { source = "yomeru", id = "y2", ja = "薬を飲む{だけじゃ}治らないよ。", en = "Just taking medicine won't cure it." },
+  { source = "yomeru", id = "y3", ja = "才能{だけでは}成功できない。", en = "Talent alone won't make you successful." },
+  { source = "yomeru", id = "y4", ja = "一回聞いた{だけでは}分からなかった。", en = "I couldn't understand it from hearing it just once." },
 ]
 
 [[point]]
@@ -12694,6 +12728,8 @@ examples = [
   { tatoeba = "44850_207597", ja = "その{点では}君に賛成できない。", en = "I can't agree with you here." },
   { tatoeba = "281765_122238", ja = "日本人は多くの{点で}アメリカ人と違う。", en = "Japanese differ from Americans in many respects." },
   { tatoeba = "310330_93378", ja = "彼女はあらゆる{点で}君に追いついた。", en = "She has caught up with you in every respect." },
+  { source = "yomeru", id = "y1", ja = "値段の{点では}、この店がいちばんだ。", en = "In terms of price, this shop is the best." },
+  { source = "yomeru", id = "y2", ja = "安全{という点から考えると}、この車がいい。", en = "From a safety point of view, this car is better." },
 ]
 
 [[point]]
@@ -12720,6 +12756,8 @@ examples = [
   { tatoeba = "270060_144505", ja = "人は空気{なしでは}生きられない。", en = "Men can not exist without air." },
   { tatoeba = "245324_169163", ja = "仕事{なしで}どうやって生活していくのか。", en = "How will you manage without a job?" },
   { tatoeba = "325331_78385", ja = "利用条件を予告{なしに}変更することがあります。", en = "Terms of use may be changed without notice." },
+  { source = "yomeru", id = "y1", ja = "砂糖{なしの}コーヒーをください。", en = "Coffee without sugar, please." },
+  { source = "yomeru", id = "y2", ja = "彼は連絡{なしに}会社を休んだ。", en = "He missed work without letting anyone know." },
 ]
 
 [[point]]
@@ -12741,9 +12779,11 @@ Its opposite is なし: 駐車場なし, "no parking". In casual speech, \
 それもありだね means "that works too, that's acceptable"."""
 related = ["nashi"]
 examples = [
-  { tatoeba = "18397_179538", ja = "苦あれば楽{あり}。", en = "No sweet without sweat." },
   { source = "yomeru", id = "y1", ja = "駐車場{あり}。", en = "Parking available." },
   { source = "yomeru", id = "y2", ja = "それも{あり}だね。", en = "That works too." },
+  { source = "yomeru", id = "y3", ja = "朝食{あり}、一泊五千円。", en = "Breakfast included, 5,000 yen a night." },
+  { source = "yomeru", id = "y4", ja = "冷蔵庫{ありの}部屋がいい。", en = "I'd like a room with a fridge." },
+  { source = "yomeru", id = "y5", ja = "明日は雨の可能性{あり}。", en = "Chance of rain tomorrow." },
 ]
 
 [[point]]
