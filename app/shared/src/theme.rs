@@ -866,6 +866,7 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 .grammar-verdict { border-radius: 8px; padding: 8px 12px; font-size: 14px; border-left: 3px solid var(--border); background: color-mix(in srgb, var(--subtext) 10%, transparent); }
 .grammar-verdict.close { border-left-color: var(--yellow); }
 .grammar-verdict.miss { border-left-color: var(--red); }
+.grammar-verdict.register { border-left-color: var(--blue); margin-top: 8px; }
 .grammar-your-answer { font-size: 18px; margin-bottom: 8px; }
 .grammar-your-answer .muted { font-size: 13px; }
 /* What the answer has and the reference lacks, and the other way round. */

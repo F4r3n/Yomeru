@@ -69,6 +69,24 @@ fn ignored(c: char) -> bool {
     c.is_whitespace() || c.is_ascii_punctuation() || "。、！？「」『』（）・…〜～".contains(c)
 }
 
+/// How polite a sentence is, by its verbs and copula: です/ます or plain.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Register {
+    Polite,
+    Plain,
+}
+
+/// The [`Register`] of `sentence`: polite when a です or ます form is in it
+/// (ます, ました, ません, ましょう, です, でした, でしょう) or ください.
+pub fn register(sentence: &str) -> Register {
+    // ますます, "more and more", isn't a ます.
+    let s = sentence.replace("ますます", "");
+    let polite = ["ます", "ました", "ません", "ましょう", "です", "でした", "でしょう", "ください"]
+        .iter()
+        .any(|p| s.contains(p));
+    if polite { Register::Polite } else { Register::Plain }
+}
+
 /// Deletes the grammar dictionary earlier versions downloaded and converted
 /// on the device (bee-san's, never ours to keep around). Once per device;
 /// harmless when there is none.
@@ -139,6 +157,25 @@ mod tests {
         let (a, b) = answer_diff(answer, reference);
         assert_eq!(marked(answer, &a), "かない");
         assert_eq!(marked(reference, &b), "きません");
+    }
+
+    #[test]
+    fn polite_and_plain_sentences() {
+        use super::{Register::*, register};
+        for (s, r) in [
+            ("学生です。", Polite),
+            ("昨日は雨でした。", Polite),
+            ("明日行きます。", Polite),
+            ("行きませんでした。", Polite),
+            ("一緒に帰りましょう。", Polite),
+            ("学生だ。", Plain),
+            ("傘を持ってきてよかった。", Plain),
+            ("ますます寒くなる。", Plain),
+            ("窓を閉めてください。", Polite),
+            ("窓を閉めて。", Plain),
+        ] {
+            assert_eq!(register(s), r, "{s}");
+        }
     }
 
     #[test]

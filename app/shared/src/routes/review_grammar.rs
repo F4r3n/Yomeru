@@ -11,7 +11,9 @@ use dioxus::prelude::*;
 
 use crate::dict::{grammar_by_seq, grammar_check};
 use crate::drill_log;
-use crate::grammar::{AnswerCheck, Example, GrammarEntry, Span, Verdict, answer_diff, plain};
+use crate::grammar::{
+    AnswerCheck, Example, GrammarEntry, Register, Span, Verdict, answer_diff, plain, register,
+};
 use crate::icons::{Icon, IconName};
 use crate::idb::{
     GrammarMode, count_due_grammar, ensure_grammar_production_cards, get_all_cards,
@@ -713,6 +715,20 @@ fn ProductionBack(point: GrammarEntry, example: Example, answer: String) -> Elem
             std::iter::repeat_n(on, span.text().chars().count())
         })
         .collect();
+    // The English rarely says how polite to be: only a note, never a miss.
+    let register_note = if !typed {
+        None
+    } else {
+        match (register(&answer), register(&reference)) {
+            (Register::Polite, Register::Plain) => Some(
+                "The reference is casual (plain forms, だ); you wrote it politely (です/ます). Both are right.",
+            ),
+            (Register::Plain, Register::Polite) => Some(
+                "The reference is polite (です/ます); you wrote it casually (plain forms, だ). Both are right.",
+            ),
+            _ => None,
+        }
+    };
     let answer_runs = runs(&answer, |k| (extra.get(k).copied().unwrap_or(false), false));
     let reference_runs = runs(&reference, |k| {
         (
@@ -754,6 +770,9 @@ fn ProductionBack(point: GrammarEntry, example: Example, answer: String) -> Elem
                     }
                     div { class: "en", "{example.en}" }
                 }
+            }
+            if let Some(note) = register_note {
+                div { class: "grammar-verdict register", "{note}" }
             }
             div { class: "grammar-back-point",
                 span { class: "w", lang: "ja", "{point.pattern}" }
