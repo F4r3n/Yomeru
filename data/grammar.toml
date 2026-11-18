@@ -8193,6 +8193,8 @@ examples = [
   { tatoeba = "63595_227281", ja = "お金が幸福をもたらす{とは限らない}。", en = "Money does not always bring happiness." },
   { tatoeba = "275229_138006", ja = "体の大きい人が強い{とは限らない}。", en = "Big men are not always strong." },
   { source = "yomeru", id = "y1", ja = "日本人がみんな寿司が好きだ{とは限らない}。", en = "Not every Japanese person likes sushi." },
+  { tatoeba = "266943_147617", ja = "春の日はいつも暖かい{とは限らない}。", en = "Spring days are not always warm." },
+  { source = "yomeru", id = "y2", ja = "先生がいつも正しい{とは限りません}。", en = "Teachers aren't always right." },
 ]
 
 [[point]]
@@ -8223,6 +8225,8 @@ examples = [
   { tatoeba = "25325_188185", ja = "仮に戦争が起こる{としたら}どうしますか。", en = "What would you do if war were to break out?" },
   { tatoeba = "73480_236104", ja = "１００万円持っている{としたら}どうしますか。", en = "Supposing you had one million yen, what would you do with it?" },
   { tatoeba = "25334_188194", ja = "仮に海外へ行く{としたら}、フランスへ行くだろう。", en = "If I were to go abroad, I would go to France." },
+  { source = "yomeru", id = "y1", ja = "その話が本当{だとしたら}、大変だ。", en = "If that story is true, it's serious." },
+  { source = "yomeru", id = "y2", ja = "家を買う{とすれば}、どこがいいですか。", en = "Supposing we bought a house, where would be good?" },
 ]
 
 [[point]]
@@ -8252,6 +8256,8 @@ examples = [
   { tatoeba = "40688_203450", ja = "{たとえ両親が反対しても}私は留学したい。", en = "I want to study abroad, even if my parents are against it." },
   { tatoeba = "40738_203500", ja = "{たとえ君が何を言っても}私の意見は変わらない。", en = "Whatever you may say, I will not change my opinion." },
   { tatoeba = "40785_203547", ja = "{たとえどんなにお金があっても}、幸せは買えません。", en = "No amount of money can buy happiness." },
+  { source = "yomeru", id = "y1", ja = "{たとえ雨が降っても}、明日は出かけます。", en = "Even if it rains, I'm going out tomorrow." },
+  { source = "yomeru", id = "y2", ja = "{たとえ冗談でも}、人の悪口を言うのはよくない。", en = "Even if it's a joke, it's not nice to speak ill of people." },
 ]
 
 [[point]]
@@ -8281,6 +8287,8 @@ examples = [
   { tatoeba = "66519_229161", ja = "{いくら呼んでも}返事がない。", en = "I've called and called, but there's no answer." },
   { tatoeba = "36746_199544", ja = "{どんなに寒くても}、彼は決してコートを着なかった。", en = "No matter how cold it was, he never wore an overcoat." },
   { source = "yomeru", id = "y1", ja = "{いくら食べても}太らない。", en = "No matter how much I eat, I don't gain weight." },
+  { tatoeba = "36742_199540", ja = "{どんなに急いで運転しても}、時間通りに着けないよ。", en = "No matter how fast you drive, you won't get there on time." },
+  { source = "yomeru", id = "y2", ja = "{いくら安くても}、こんな服は買わない。", en = "No matter how cheap they are, I won't buy clothes like these." },
 ]
 
 [[point]]
@@ -8305,11 +8313,13 @@ The same verb is repeated; with する verbs the second one is just \
 same way: 晴れても雨でも, "rain or shine". Compare 〜かどう\
 か, which asks whether something happens rather than saying it \
 doesn't matter."""
-related = ["temo", "ka-dou-ka", "te-mo-kamawanai"]
+related = ["temo", "ka-dou-ka", "te-mo-kamawanai", "ni-kakawarazu"]
 examples = [
   { tatoeba = "283681_120328", ja = "彼が賛成し{てもしなくても}かまわない。", en = "It doesn't matter whether he agrees or not." },
   { tatoeba = "308017_95688", ja = "彼女がここに来{ても来なくても}私には関係ない。", en = "It doesn't matter to me whether she comes here or not." },
   { source = "yomeru", id = "y1", ja = "雨が降っ{ても降らなくても}、試合はあります。", en = "The game is on whether it rains or not." },
+  { source = "yomeru", id = "y2", ja = "薬を飲ん{でも飲まなくても}、同じだった。", en = "Whether I took the medicine or not, it made no difference." },
+  { source = "yomeru", id = "y3", ja = "信じ{ても信じなくても}、本当の話です。", en = "Whether you believe it or not, it's a true story." },
 ]
 
 [[point]]
@@ -8341,6 +8351,8 @@ examples = [
   { tatoeba = "245798_168693", ja = "子供{でさえ}これを読むことが出来る。", en = "Even a child can read this." },
   { tatoeba = "297630_106056", ja = "彼は私に謝り{さえ}しなかった。", en = "He did not so much as apologize to me." },
   { source = "yomeru", id = "y1", ja = "忙しくて、昼ご飯を食べる時間{さえ}ない。", en = "I'm so busy I don't even have time to eat lunch." },
+  { tatoeba = "327826_75892", ja = "誰が、何を盗んだのか{さえ}分からない。", en = "I don't even know who has stolen what." },
+  { source = "yomeru", id = "y2", ja = "この問題は先生{にさえ}分からなかった。", en = "Even the teacher couldn't work out this problem." },
 ]
 
 [[point]]
@@ -8366,11 +8378,13 @@ The ending is usually ば, sometimes たら. With a verb, さえ goes between \
 the stem and すれば (行きさえすれば), or between て and いれば. The \
 result is often good news (大丈夫, いい), or, with のに, regret about \
 what's missing. Without ば, さえ is just "even" (see さえ)."""
-related = ["sae", "ba", "dake"]
+related = ["sae", "ba", "dake", "kagiri"]
 examples = [
   { tatoeba = "28736_191572", ja = "愛{さえあれば}僕らは大丈夫だよ。", en = "As long as we love each other, we'll be all right." },
   { tatoeba = "272554_142016", ja = "雪{さえ降らなければ}ね！", en = "As long as it doesn't snow!" },
   { source = "yomeru", id = "y1", ja = "この薬を飲み{さえすれば}、すぐ治りますよ。", en = "Just take this medicine and you'll get better soon." },
+  { tatoeba = "16707_177855", ja = "ここに来{さえすれば}いい。", en = "You have only to come here." },
+  { source = "yomeru", id = "y2", ja = "天気{さえよければ}、山が見えます。", en = "As long as the weather is good, you can see the mountain." },
 ]
 
 [[point]]
@@ -8400,6 +8414,8 @@ examples = [
   { tatoeba = "2308_139697", ja = "{早ければ早いほど}いい。", en = "The sooner, the better." },
   { tatoeba = "282186_121819", ja = "年を{取れば取るほど}記憶力が悪くなる。", en = "The older we become, the worse our memory gets." },
   { tatoeba = "239250_175216", ja = "研究{すればするほど}、好奇心が強くなるでしょう。", en = "The more you study, the more curious you will become." },
+  { tatoeba = "275314_137922", ja = "{待てば待つほど}彼はいらいらした。", en = "The more he waited, the more irritated he became." },
+  { source = "yomeru", id = "y1", ja = "説明は簡単{なら簡単なほど}いい。", en = "The simpler the explanation, the better." },
 ]
 
 [[point]]
@@ -8429,6 +8445,8 @@ examples = [
   { tatoeba = "324793_78923", ja = "幼い{ながらも}、その子供は勇敢だった。", en = "Child as he was, he was brave." },
   { tatoeba = "267200_147360", ja = "女{ながらも}彼女は勇敢だった。", en = "Woman as she was, she was brave." },
   { source = "yomeru", id = "y1", ja = "彼は疲れてい{ながらも}、最後まで走った。", en = "Although he was tired, he ran to the end." },
+  { source = "yomeru", id = "y2", ja = "悪いと知り{ながらも}、うそをついてしまった。", en = "Although I knew it was wrong, I told a lie." },
+  { source = "yomeru", id = "y3", ja = "狭い{ながらも}、きれいな部屋です。", en = "It's a small room, but a clean one." },
 ]
 
 [[point]]
@@ -8458,6 +8476,8 @@ examples = [
   { tatoeba = "20618_183495", ja = "嬉しい{くせに}。素直に喜びなよ。", en = "I know you're happy about it. Why don't you just show it?" },
   { tatoeba = "238088_176375", ja = "警官の{くせに}泥棒を怖がるなんて。", en = "Even though he's a policeman, he's afraid of thieves." },
   { source = "yomeru", id = "y1", ja = "何も知らない{くせに}、文句を言わないで。", en = "Don't complain when you don't know anything." },
+  { source = "yomeru", id = "y2", ja = "自分では何もしない{くせに}、人には厳しい。", en = "He does nothing himself, and yet he's hard on others." },
+  { source = "yomeru", id = "y3", ja = "お金がない{くせに}、高い物ばかり買う。", en = "She has no money, and yet she keeps buying expensive things." },
 ]
 
 [[point]]
@@ -8488,6 +8508,8 @@ examples = [
   { tatoeba = "72449_235070", ja = "６月{にしては}寒い朝だ。", en = "It is a cold morning for June." },
   { tatoeba = "297115_106571", ja = "彼は、子供{にしては}なかなか物わかりがよい。", en = "He has a good deal of intelligence for a child." },
   { source = "yomeru", id = "y1", ja = "初めて作った{にしては}、おいしいね。", en = "For your first try, it's pretty good." },
+  { source = "yomeru", id = "y2", ja = "この店は駅前{にしては}静かだ。", en = "This shop is quiet for one right by the station." },
+  { source = "yomeru", id = "y3", ja = "三年も日本にいた{にしては}、日本語が下手だ。", en = "For someone who lived in Japan for three years, his Japanese is poor." },
 ]
 
 [[point]]
@@ -8517,6 +8539,8 @@ examples = [
   { tatoeba = "282145_101369", ja = "彼は年の{割には}若く見える。", en = "He looks young considering his age." },
   { tatoeba = "57398_220078", ja = "この布は値段の{割に}品質が良い。", en = "This cloth is good in quality for its price." },
   { source = "yomeru", id = "y1", ja = "よく勉強した{割に}、点数が悪かった。", en = "I studied a lot, but my score was low for it." },
+  { tatoeba = "46433_209172", ja = "その少女は年の{割に}小さい。", en = "The girl is small for her age." },
+  { source = "yomeru", id = "y2", ja = "この店は安い{割に}おいしい。", en = "This restaurant is good considering how cheap it is." },
 ]
 
 [[point]]
@@ -8540,6 +8564,8 @@ examples = [
   { tatoeba = "39570_202359", ja = "{できたら}火曜日に来なさい。", en = "Come on Tuesday if possible." },
   { tatoeba = "39481_202269", ja = "{できれば}飛行機では行きたくない。", en = "I don't want to go by plane, if I can help it." },
   { tatoeba = "39483_202271", ja = "{できれば}今週末ですね。", en = "This weekend, if possible." },
+  { tatoeba = "266891_147669", ja = "{出来れば}、釣りに行きたい。", en = "I'd like to go fishing if possible." },
+  { source = "yomeru", id = "y1", ja = "{できれば}、窓を閉めてもらえますか。", en = "Could you close the window, if possible?" },
 ]
 
 [[point]]
@@ -8569,6 +8595,8 @@ examples = [
   { tatoeba = "30004_192838", ja = "{よかったら}一緒にいらっしゃい。", en = "Come along with us if you like." },
   { source = "yomeru", id = "y1", ja = "私{でよければ}、手伝いますよ。", en = "If I'm of any use, I'll help you." },
   { source = "yomeru", id = "y2", ja = "古い自転車{でよければ}、あげます。", en = "If an old bike is OK, you can have it." },
+  { source = "yomeru", id = "y3", ja = "{よかったら}、このケーキを食べてください。", en = "Please have some of this cake if you like." },
+  { source = "yomeru", id = "y4", ja = "私の辞書{でよかったら}、使ってください。", en = "If my dictionary will do, please use it." },
 ]
 
 [[point]]
@@ -8596,6 +8624,8 @@ examples = [
   { tatoeba = "30859_193691", ja = "もし健康{なら研究を続けられるのに}。", en = "If I were in good health, I could pursue my studies." },
   { source = "yomeru", id = "y1", ja = "時間があっ{たら手伝えるのに}。", en = "If I had time, I could help." },
   { source = "yomeru", id = "y2", ja = "車があ{れば、すぐ行けるのに}。", en = "If I had a car, I could go right away." },
+  { source = "yomeru", id = "y3", ja = "お金があれ{ば、新しいパソコンが買えるのに}。", en = "If I had money, I could buy a new computer." },
+  { source = "yomeru", id = "y4", ja = "もっと早く起きてい{たら、間に合ったのに}。", en = "If I had got up earlier, I would have made it." },
 ]
 
 [[point]]
@@ -8655,6 +8685,8 @@ examples = [
   { tatoeba = "281989_122014", ja = "濡れ{てもかまわない}。", en = "I don't mind if I get wet." },
   { tatoeba = "65959_228602", ja = "いつ来{てもかまわない}よ。", en = "It doesn't matter when you come." },
   { tatoeba = "40190_202956", ja = "チャンネルを替え{てもかまわない}？", en = "Do you mind if I change the channel?" },
+  { tatoeba = "40627_203389", ja = "たばこを吸っ{てもかまいません}よ。", en = "I don't mind if you smoke." },
+  { source = "yomeru", id = "y1", ja = "狭い部屋{でもかまいません}。", en = "Even a small room is all right." },
 ]
 
 [[point]]
@@ -8684,6 +8716,8 @@ examples = [
   { tatoeba = "280455_123542", ja = "道理で、君が喜ぶ{わけだ}。", en = "No wonder you are so happy." },
   { tatoeba = "51245_213957", ja = "そういう{わけだ}から私は出席できなかったのです。", en = "Such being the case, I could not be present." },
   { source = "yomeru", id = "y1", ja = "毎日練習しているんだ。上手な{わけだ}ね。", en = "So she practises every day. No wonder she's good." },
+  { source = "yomeru", id = "y2", ja = "窓が開いている。寒い{わけだ}。", en = "The window is open. No wonder it's cold." },
+  { source = "yomeru", id = "y3", ja = "一日三時間なら、一週間で二十一時間になる{わけだ}。", en = "Three hours a day means twenty-one hours a week." },
 ]
 
 [[point]]
@@ -8709,9 +8743,11 @@ conclusion ("it's not that…"). わけない alone can also mean "easy, no \
 trouble": そんなのわけないよ, "that's nothing"."""
 related = ["hazu-ga-nai", "wake-de-wa-nai", "wake-da"]
 examples = [
-  { tatoeba = "25498_204428", ja = "そんなこと、分かる{わけない}でしょう。", en = "How should I know?" },
   { source = "yomeru", id = "y1", ja = "一日で覚えられる{わけがない}。", en = "There's no way I can learn it in one day." },
   { source = "yomeru", id = "y2", ja = "あの優しい人が怒る{わけがない}よ。", en = "There's no way that kind person would get angry." },
+  { source = "yomeru", id = "y3", ja = "こんな簡単な問題を間違える{わけがない}。", en = "There's no way I'd get such an easy question wrong." },
+  { source = "yomeru", id = "y4", ja = "彼女が私のことを忘れる{わけはない}。", en = "There's no way she'd forget me." },
+  { source = "yomeru", id = "y5", ja = "日曜日に学校が開いている{わけがありません}。", en = "There's no way the school is open on Sunday." },
 ]
 
 [[point]]
@@ -8741,6 +8777,8 @@ examples = [
   { tatoeba = "18018_157461", ja = "それをさせる{わけにはいかない}。", en = "I can't allow you to do that." },
   { tatoeba = "322194_81520", ja = "本当に捨てる{わけにはいかない}よ。", en = "We can't really throw it away!" },
   { source = "yomeru", id = "y1", ja = "友だちの結婚式だから、出ない{わけにはいかない}。", en = "It's my friend's wedding, so I can't not attend." },
+  { tatoeba = "17007_233115", ja = "あなたの贈り物を受け取る{わけにはいきません}。", en = "I cannot accept your gift." },
+  { source = "yomeru", id = "y2", ja = "明日は試験だから、遊ぶ{わけにはいかない}。", en = "I have an exam tomorrow, so I can't very well go out and play." },
 ]
 
 [[point]]
@@ -8768,6 +8806,8 @@ examples = [
   { tatoeba = "41397_204155", ja = "そんな計画は失敗する{に決まっている}。", en = "Such a plan is bound to fail." },
   { tatoeba = "65512_228158", ja = "うちの母はノーと言う{に決まっている}。", en = "My mother is certain to say no." },
   { tatoeba = "25033_187894", ja = "何か別の方法がある{に決まってる}。", en = "There must be another way." },
+  { source = "yomeru", id = "y1", ja = "彼が犯人{に決まっている}。", en = "He's the culprit, for sure." },
+  { source = "yomeru", id = "y2", ja = "あんなに練習したんだから、合格する{に決まってます}よ。", en = "You practised that hard, so of course you'll pass." },
 ]
 
 [[point]]
