@@ -13357,6 +13357,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "今は寝{ている場合じゃない}。", en = "This is no time to be sleeping." },
   { source = "yomeru", id = "y2", ja = "笑っ{ている場合ではありません}。", en = "This is no time to laugh." },
   { source = "yomeru", id = "y3", ja = "そんなことを言っ{てる場合じゃない}よ。", en = "This is no time to say things like that." },
+  { source = "yomeru", id = "y4", ja = "遊ん{でいる場合じゃない}。もうすぐ試験だ。", en = "This is no time to be playing around. The exam is soon." },
+  { source = "yomeru", id = "y5", ja = "今はけんかし{ている場合ではない}。", en = "Now is no time to be fighting." },
 ]
 
 [[point]]
@@ -13383,6 +13385,8 @@ examples = [
   { tatoeba = "269047_145516", ja = "慎重に運転することが大切{である}。", en = "It is important to drive carefully." },
   { tatoeba = "282896_121111", ja = "彼がアメリカにいることは本当{である}。", en = "It's true that he is in America." },
   { source = "yomeru", id = "y1", ja = "彼は医者であり、作家{でもある}。", en = "He is a doctor and also a writer." },
+  { tatoeba = "293546_110142", ja = "彼は偉大な音楽家{であった}。", en = "He was a great musician." },
+  { source = "yomeru", id = "y2", ja = "医者{である}父は、いつも忙しい。", en = "My father, who is a doctor, is always busy." },
 ]
 
 [[point]]
@@ -13406,6 +13410,8 @@ examples = [
   { tatoeba = "503835_145761", ja = "食料はまだ{いくらでも}ある。", en = "We still have a lot of food left." },
   { tatoeba = "240687_173783", ja = "好きな花を{いくらでも}選びなさい。", en = "Choose any flowers you like." },
   { source = "yomeru", id = "y1", ja = "ご飯は{いくらでも}食べていいよ。", en = "You can eat as much rice as you like." },
+  { tatoeba = "288994_114677", ja = "彼は{いくらでも}お金を出せる。", en = "He can come up with any amount of money." },
+  { source = "yomeru", id = "y2", ja = "質問があれば、{いくらでも}聞いてください。", en = "If you have questions, ask as many as you like." },
 ]
 
 [[point]]
@@ -13434,6 +13440,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "経験{から言って}、それは無理だと思う。", en = "Speaking from experience, I don't think that's possible." },
   { source = "yomeru", id = "y2", ja = "値段{から言うと}、こっちのほうがいいね。", en = "In terms of price, this one is better." },
   { source = "yomeru", id = "y3", ja = "十五歳は、日本{で言うと}中学三年生だ。", en = "Fifteen is, in Japan, the third year of junior high." },
+  { source = "yomeru", id = "y4", ja = "味{から言えば}、この店が一番だ。", en = "In terms of taste, this restaurant is the best." },
+  { source = "yomeru", id = "y5", ja = "大きさ{から言って}、この箱には入らないだろう。", en = "Judging by its size, it probably won't fit in this box." },
 ]
 
 [[point]]
@@ -13461,6 +13469,8 @@ examples = [
   { tatoeba = "17692_178837", ja = "君{こそ}私が探していた人だ。", en = "You are the man I've been looking for." },
   { tatoeba = "56128_218813", ja = "これ{こそ}求めていたものですよ。", en = "That's just what I wanted." },
   { source = "yomeru", id = "y1", ja = "今度{こそ}試験に合格するぞ。", en = "This time I'll pass the exam for sure." },
+  { source = "yomeru", id = "y2", ja = "「ありがとう」「こちら{こそ}」", en = "\"Thank you.\" \"No, thank you.\"" },
+  { source = "yomeru", id = "y3", ja = "お前{こそ}うそをついただろう。", en = "You're the one who lied!" },
 ]
 
 [[point]]
@@ -13486,6 +13496,8 @@ examples = [
   { tatoeba = "21507_184379", ja = "学校{への}近道だよ。", en = "It's a shortcut to the school." },
   { tatoeba = "279715_124279", ja = "東京{での}生活には慣れましたか？", en = "Have you got used to living in Tokyo?" },
   { tatoeba = "25998_188851", ja = "駅{までの}道を教えて下さい。", en = "Could you please tell me how to get to the station?" },
+  { tatoeba = "55548_218236", ja = "これは昔の先生{からの}手紙です。", en = "This is a letter from my old teacher." },
+  { source = "yomeru", id = "y1", ja = "友達{との}旅行はとても楽しかった。", en = "The trip with my friends was a lot of fun." },
 ]
 
 [[point]]
@@ -13514,7 +13526,9 @@ related = ["n-desu", "to-iu-no-wa", "koto-nominalizer"]
 examples = [
   { tatoeba = "275788_137448", ja = "大切な{ことなんだ}から。", en = "Now, this is really important." },
   { tatoeba = "25065_187926", ja = "何か深刻な{ことなのです}か。", en = "Is it anything serious?" },
-  { tatoeba = "271236_143331", ja = "これはいったいどういう{ことなの}。", en = "What does all this add up to?" },
+  { source = "yomeru", id = "y1", ja = "一番大事なのは、毎日続ける{ことなんです}。", en = "The most important thing is to keep at it every day." },
+  { source = "yomeru", id = "y2", ja = "先生が辞めるって、どういう{ことなの}？", en = "What do you mean the teacher is quitting?" },
+  { source = "yomeru", id = "y3", ja = "私が言いたいのは、早く寝ろって{ことなの}。", en = "What I'm trying to say is that you should go to bed earlier." },
 ]
 
 [[point]]
@@ -13544,6 +13558,8 @@ examples = [
   { tatoeba = "328794_74925", ja = "何かいいこと{ないかな}。", en = "I wish something nice would happen." },
   { tatoeba = "272061_142509", ja = "静かになら{ないかなぁ}。いらいらするな。", en = "I wish that noise would stop. It gets on my nerves." },
   { tatoeba = "64696_227344", ja = "お願いを聞いてもらえ{ないかな}。", en = "I wonder if you could do me a favor." },
+  { tatoeba = "68605_231238", ja = "ラジオをとめてくれ{ないかなぁ}。", en = "I wish they would turn off the radio." },
+  { source = "yomeru", id = "y1", ja = "駅まで車で送ってくれ{ないかな}。", en = "Could you drive me to the station?" },
 ]
 
 [[point]]
@@ -13569,6 +13585,8 @@ examples = [
   { tatoeba = "254881_486397", ja = "そんなところで彼女と会うなんて、思っ{てもみなかった}。", en = "Never did I expect to see her in such a place." },
   { tatoeba = "50198_212913", ja = "そのときは、母親のことなど考え{てもみなかった}。", en = "At the time, she gave no thought to her mother." },
   { source = "yomeru", id = "y1", ja = "日本に住むなんて、思っ{てもみなかった}。", en = "I never even imagined I'd live in Japan." },
+  { source = "yomeru", id = "y2", ja = "こんなに簡単だとは考え{てもみなかった}。", en = "I never even thought it would be this easy." },
+  { source = "yomeru", id = "y3", ja = "旅行中に思っ{てもみない}ことが起きた。", en = "Something I'd never even imagined happened during the trip." },
 ]
 
 [[point]]
@@ -13595,8 +13613,10 @@ its own."""
 related = ["hodo-nai", "kurai-extent", "to-iu"]
 examples = [
   { tatoeba = "324396_79321", ja = "友達{というほどではない}が知り合いだ。", en = "He is not a friend, but an acquaintance." },
-  { tatoeba = "49875_212592", ja = "そのホテルは評判{ほどではない}。", en = "That hotel is not all it's cracked up to be." },
-  { tatoeba = "65840_228482", ja = "いやそれ{ほどでもない}よ。何か用かい？", en = "Not really. What's up?" },
+  { source = "yomeru", id = "y1", ja = "少し寒いけど、コートを着る{ほどではない}。", en = "It's a bit cold, but not cold enough for a coat." },
+  { source = "yomeru", id = "y2", ja = "心配する{ほどじゃない}よ。ただの風邪だ。", en = "It's nothing to worry about. It's just a cold." },
+  { source = "yomeru", id = "y3", ja = "料理は好きだけど、得意{というほどではない}。", en = "I like cooking, but I wouldn't say I'm good at it." },
+  { source = "yomeru", id = "y4", ja = "歌は好きだが、歌手になりたい{というほどではない}。", en = "I like singing, but not to the point of wanting to be a singer." },
 ]
 
 [[point]]
@@ -13627,6 +13647,8 @@ examples = [
   { tatoeba = "36133_198936", ja = "{なんて}きれいな夕焼けだろう。", en = "What a beautiful sunset!" },
   { tatoeba = "311883_91829", ja = "彼女は{なんて}速く走っているのでしょう。", en = "How fast she is running!" },
   { tatoeba = "308312_95373", ja = "彼女が私達に加わる{なんて}、思ってもいなかった。", en = "I never expected that she would join us." },
+  { tatoeba = "24880_187741", ja = "{なんて}大きなスーパーだ。", en = "What a big supermarket!" },
+  { source = "yomeru", id = "y1", ja = "彼女が会社を辞める{なんて}信じられない。", en = "I can't believe she's quitting the company." },
 ]
 
 [[point]]
@@ -13649,6 +13671,9 @@ related = ["wa-tomokaku", "nanishiro", "izure-ni-shite-mo"]
 examples = [
   { tatoeba = "37670_200469", ja = "{とにかく}最善を尽くします。", en = "In any event, I will do my best." },
   { tatoeba = "37664_200463", ja = "{とにかく}その問題を解いてみよう。", en = "I will try to solve the problem at any rate." },
+  { tatoeba = "37651_200450", ja = "{とにかく}原因を調べなければならない。", en = "We have to investigate the cause at any rate." },
+  { source = "yomeru", id = "y1", ja = "今日は{とにかく}暑い。", en = "It's just so hot today." },
+  { source = "yomeru", id = "y2", ja = "遅れてもいいから、{とにかく}来てください。", en = "Even if you're late, just come anyway." },
 ]
 
 [[point]]
@@ -13671,6 +13696,9 @@ related = ["wazawaza"]
 examples = [
   { tatoeba = "293413_110275", ja = "彼は{わざと}間違えた。", en = "He made a mistake on purpose." },
   { tatoeba = "46378_209117", ja = "その少年は{わざと}私の足を踏んだ。", en = "The boy stepped on my foot on purpose." },
+  { tatoeba = "49985_212702", ja = "そのピエロは{わざと}転んだ。", en = "The clown fell down on purpose." },
+  { tatoeba = "293412_110276", ja = "彼は{わざと}その質問に答えなかった。", en = "He didn't answer the question on purpose." },
+  { source = "yomeru", id = "y1", ja = "ごめん、{わざと}じゃないんだ。", en = "Sorry, I didn't do it on purpose." },
 ]
 
 [[point]]
@@ -13692,6 +13720,9 @@ related = ["chanto"]
 examples = [
   { tatoeba = "63388_226047", ja = "{きちんと}座りなさい。", en = "Sit up straight." },
   { tatoeba = "264784_149774", ja = "自分の部屋は{きちんと}片づけておきなさい。", en = "Keep your room neat and tidy." },
+  { tatoeba = "287454_116215", ja = "彼の部屋はいつも{きちんと}している。", en = "His room is always tidy." },
+  { source = "yomeru", id = "y1", ja = "彼は毎月{きちんと}家賃を払っている。", en = "He pays his rent properly every month." },
+  { source = "yomeru", id = "y2", ja = "面接には{きちんとした}服で行きなさい。", en = "Wear proper clothes to the interview." },
 ]
 
 [[point]]
