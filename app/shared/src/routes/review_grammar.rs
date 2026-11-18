@@ -11,7 +11,7 @@ use dioxus::prelude::*;
 
 use crate::dict::{grammar_by_seq, grammar_check};
 use crate::drill_log;
-use crate::grammar::{AnswerCheck, Example, GrammarEntry, Verdict};
+use crate::grammar::{AnswerCheck, Example, GrammarEntry, Span, Verdict, answer_diff, plain};
 use crate::icons::{Icon, IconName};
 use crate::idb::{
     GrammarMode, count_due_grammar, ensure_grammar_production_cards, get_all_cards,
@@ -692,25 +692,88 @@ fn ProductionInput(
     }
 }
 
-/// The back of a production card: the user's answer, the reference with the
-/// point marked, and the point.
+/// The back of a production card: the user's answer and the reference,
+/// with what one has and the other lacks marked ([`answer_diff`]), the
+/// point marked in the reference, and the point.
 #[component]
 fn ProductionBack(point: GrammarEntry, example: Example, answer: String) -> Element {
+    let reference = plain(&example.ja);
+    let typed = !answer.trim().is_empty();
+    let (extra, missing) = if typed {
+        answer_diff(&answer, &reference)
+    } else {
+        (vec![], vec![false; reference.chars().count()])
+    };
+    // The point's chars in the reference.
+    let in_point: Vec<bool> = example
+        .ja
+        .iter()
+        .flat_map(|span| {
+            let on = matches!(span, Span::Highlight { .. });
+            std::iter::repeat_n(on, span.text().chars().count())
+        })
+        .collect();
+    let answer_runs = runs(&answer, |k| (extra.get(k).copied().unwrap_or(false), false));
+    let reference_runs = runs(&reference, |k| {
+        (
+            missing.get(k).copied().unwrap_or(false),
+            in_point.get(k).copied().unwrap_or(false),
+        )
+    });
     rsx! {
         div { class: "grammar-back",
-            if !answer.trim().is_empty() {
+            if typed {
                 div { class: "grammar-your-answer",
-                    span { class: "muted", "Your answer " }
-                    span { lang: "ja", "{answer}" }
+                    div { class: "muted", "Your answer" }
+                    div { class: "jp", lang: "ja",
+                        for (k, (text, (diff, _))) in answer_runs.into_iter().enumerate() {
+                            if diff {
+                                span { key: "{k}", class: "diff-extra", "{text}" }
+                            } else {
+                                span { key: "{k}", "{text}" }
+                            }
+                        }
+                    }
                 }
             }
-            ExampleList { examples: vec![example] }
+            div { class: "grammar-examples",
+                div { class: "grammar-example",
+                    if typed {
+                        div { class: "muted", "Reference" }
+                    }
+                    div { class: "jp", lang: "ja",
+                        for (k, (text, (diff, point_part))) in reference_runs.into_iter().enumerate() {
+                            if point_part {
+                                mark { key: "{k}", class: if diff { "diff-missing" } else { "" }, "{text}" }
+                            } else if diff {
+                                span { key: "{k}", class: "diff-missing", "{text}" }
+                            } else {
+                                span { key: "{k}", "{text}" }
+                            }
+                        }
+                    }
+                    div { class: "en", "{example.en}" }
+                }
+            }
             div { class: "grammar-back-point",
                 span { class: "w", lang: "ja", "{point.pattern}" }
                 span { class: "muted", " · {point.meaning}" }
             }
         }
     }
+}
+
+/// `text` cut into runs of chars sharing `style(char index)`.
+fn runs<S: PartialEq + Copy>(text: &str, style: impl Fn(usize) -> S) -> Vec<(String, S)> {
+    let mut out: Vec<(String, S)> = Vec::new();
+    for (k, c) in text.chars().enumerate() {
+        let st = style(k);
+        match out.last_mut() {
+            Some((run, last)) if *last == st => run.push(c),
+            _ => out.push((c.to_string(), st)),
+        }
+    }
+    out
 }
 
 /// One column of the end-of-session recap.
