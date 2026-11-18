@@ -16506,8 +16506,10 @@ is a guess from what one sees."""
 related = ["ru-tokoro", "te-iru-tokoro", "ta-tokoro", "naka-wo", "tokoro-wo-miru-to"]
 examples = [
   { tatoeba = "245339_169148", ja = "仕事に出かけようとしている{ところへ}電話が鳴った。", en = "I was about to leave for work when the telephone rang." },
-  { tatoeba = "307330_96375", ja = "彼らは彼が盗んでいる{ところを}見つけた。", en = "They caught him stealing." },
   { source = "yomeru", id = "y1", ja = "お忙しい{ところを}、ありがとうございます。", en = "Thank you for your time, when you're so busy." },
+  { source = "yomeru", id = "y2", ja = "寝ようとしている{ところに}、友達が来た。", en = "A friend showed up just when I was about to sleep." },
+  { source = "yomeru", id = "y3", ja = "ご飯を食べている{ところへ}、上司から電話が来た。", en = "My boss called just when I was in the middle of eating." },
+  { source = "yomeru", id = "y4", ja = "家に帰ってきた{ところへ}、兄が来た。", en = "My brother turned up just as I got home." },
 ]
 
 [[point]]
@@ -16531,6 +16533,9 @@ related = ["te-iru-tokoro", "ta-tokoro", "tokoro-ni"]
 examples = [
   { tatoeba = "40175_202940", ja = "ちょうどあなたのことをお話しし{ていたところです}。", en = "We were just talking about you." },
   { source = "yomeru", id = "y1", ja = "ちょうど君に電話しようと思っ{ていたところだ}。", en = "I was just thinking of calling you." },
+  { source = "yomeru", id = "y2", ja = "私も同じことを考え{ていたところだ}。", en = "I was just thinking the same thing." },
+  { source = "yomeru", id = "y3", ja = "ちょうど夕飯を作っ{ていたところです}。", en = "I was just making dinner." },
+  { source = "yomeru", id = "y4", ja = "君を探し{ていたところだ}よ。", en = "I was just looking for you." },
 ]
 
 [[point]]
@@ -16551,11 +16556,13 @@ With change verbs ている often means the change is done: 変わっている, 
 "has changed". つつある keeps it in progress. It isn't used for plain \
 activities like 食べる or 読む. つつ alone is a different point: \
 "while" or "even though"."""
-related = ["te-iru", "te-kuru", "tsutsu"]
+related = ["te-iru", "te-kuru", "tsutsu", "ippou-da"]
 examples = [
   { tatoeba = "31599_124388", ja = "冬が近づき{つつある}。", en = "Winter is drawing on." },
   { tatoeba = "64020_226676", ja = "お米の質は下がり{つつある}。", en = "The quality of rice is going down." },
   { tatoeba = "250602_163908", ja = "私の咳はひどくなり{つつあります}。", en = "My cough is getting worse." },
+  { tatoeba = "286575_117091", ja = "彼の車が我々に追いつき{つつある}。", en = "His car is gaining on us." },
+  { source = "yomeru", id = "y1", ja = "この町は少しずつ変わり{つつある}。", en = "This town is gradually changing." },
 ]
 
 [[point]]
@@ -16579,6 +16586,9 @@ related = ["tsuide-ni", "tochuu-de"]
 examples = [
   { tatoeba = "20451_183328", ja = "帰り{がけに}郵便局に寄るよ。", en = "I'll call by the post office on the way home." },
   { tatoeba = "278326_125666", ja = "通り{がけに}本屋によった。", en = "I entered the bookstore on the way." },
+  { source = "yomeru", id = "y1", ja = "{出がけに}雨が降り出した。", en = "It started to rain just as I was going out." },
+  { source = "yomeru", id = "y2", ja = "{行きがけに}、パンを買ってきてくれる？", en = "Can you buy some bread on your way out?" },
+  { source = "yomeru", id = "y3", ja = "{帰りがけに}、先生に声をかけられた。", en = "Just as I was leaving, the teacher called out to me." },
 ]
 
 [[point]]
@@ -16604,6 +16614,9 @@ related = ["tabi-ni"]
 examples = [
   { source = "yomeru", id = "y1", ja = "この写真を見る{につけ}、子どものころを思い出す。", en = "Every time I see this photo, I remember my childhood." },
   { source = "yomeru", id = "y2", ja = "{何かにつけ}、母は私の心配をする。", en = "My mother worries about me at every turn." },
+  { source = "yomeru", id = "y3", ja = "{いいにつけ悪いにつけ}、結果は必ず知らせます。", en = "Good or bad, I will be sure to let you know the result." },
+  { source = "yomeru", id = "y4", ja = "そのニュースを聞く{につけ}、胸が痛む。", en = "My heart aches every time I hear that news." },
+  { source = "yomeru", id = "y5", ja = "父は{何かにつけて}昔の話をする。", en = "My father brings up the old days at every opportunity." },
 ]
 
 [[point]]
@@ -16628,6 +16641,9 @@ related = ["ni-tsurete", "ni-shitagatte", "to-tomo-ni"]
 examples = [
   { tatoeba = "28167_191007", ja = "移転{にともない}５月３０日、３１日は休業いたします。", en = "Due to our office moving, we will be closed from May 30 to 31." },
   { source = "yomeru", id = "y1", ja = "人口が増えるの{に伴って}、町が大きくなった。", en = "As the population grew, the town got bigger." },
+  { source = "yomeru", id = "y2", ja = "気温の上昇{に伴って}、電気代が上がった。", en = "As temperatures rose, electricity bills went up." },
+  { source = "yomeru", id = "y3", ja = "工事{に伴い}、この道は通れません。", en = "Due to construction work, this road is closed." },
+  { source = "yomeru", id = "y4", ja = "引っ越し{に伴う}手続きは面倒だ。", en = "The paperwork that comes with moving is a pain." },
 ]
 
 [[point]]
@@ -16652,6 +16668,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "上に行く{にしたがって}、空気が薄くなる。", en = "The higher you go, the thinner the air gets." },
   { tatoeba = "63223_116958", ja = "彼の助言{に従って}行動すべきだ。", en = "You had better act upon his advice." },
   { tatoeba = "248798_165707", ja = "私たちは時間割{に従って}勉強する。", en = "We study according to the schedule." },
+  { source = "yomeru", id = "y2", ja = "年をとる{にしたがって}、記憶力が落ちる。", en = "As you get older, your memory gets worse." },
+  { source = "yomeru", id = "y3", ja = "係の人の指示{に従って}ください。", en = "Please follow the staff's instructions." },
 ]
 
 [[point]]
@@ -16674,6 +16692,9 @@ related = ["sono-kekka", "ageku", "sue-ni"]
 examples = [
   { tatoeba = "275820_137416", ja = "大雪{の結果}、彼女は遅れた。", en = "She was late as a result of the heavy snow." },
   { source = "yomeru", id = "y1", ja = "よく話し合っ{た結果}、引っ越すことにした。", en = "After talking it over carefully, we decided to move." },
+  { source = "yomeru", id = "y2", ja = "検査{の結果}、病気ではないとわかった。", en = "As a result of the tests, I found out I wasn't ill." },
+  { source = "yomeru", id = "y3", ja = "毎日練習し{た結果}、試合に勝てた。", en = "As a result of practicing every day, we won the match." },
+  { source = "yomeru", id = "y4", ja = "急い{だ結果}、ミスが増えてしまった。", en = "As a result of rushing, I made more mistakes." },
 ]
 
 [[point]]
@@ -16699,6 +16720,8 @@ examples = [
   { tatoeba = "256496_158034", ja = "私は家に帰る{途中で}嵐にあった。", en = "I got caught in a storm on my way home." },
   { tatoeba = "257755_156779", ja = "私は昨日家に帰る{途中に}トニー君に出会った。", en = "I met Tony on my way home yesterday." },
   { source = "yomeru", id = "y1", ja = "映画の{途中で}寝てしまった。", en = "I fell asleep in the middle of the film." },
+  { tatoeba = "265548_149009", ja = "車はそこへ行く{途中で}故障してしまった。", en = "Our car broke down on our way there." },
+  { source = "yomeru", id = "y2", ja = "マラソンを{途中で}やめた。", en = "I gave up partway through the marathon." },
 ]
 
 [[point]]
@@ -16725,6 +16748,8 @@ examples = [
   { tatoeba = "293869_109821", ja = "彼は雨の{中を}出ていった。", en = "He went out in the rain." },
   { tatoeba = "293868_109822", ja = "彼は雨の{中を}傘もささずに歩きつづけた。", en = "He went on walking in the rain without an umbrella." },
   { source = "yomeru", id = "y1", ja = "お忙しい{中を}お越しいただき、ありがとうございます。", en = "Thank you for coming when you're so busy." },
+  { source = "yomeru", id = "y2", ja = "人ごみの{中を}、子どもを探して歩いた。", en = "I walked through the crowd looking for my child." },
+  { source = "yomeru", id = "y3", ja = "寒い{中を}来てくれて、ありがとう。", en = "Thanks for coming out in this cold." },
 ]
 
 [[point]]
@@ -16751,6 +16776,8 @@ examples = [
   { tatoeba = "66241_228883", ja = "{いったん}悪い癖がつくと、なおすのは難しい。", en = "Once a bad habit is formed, it is hard to get rid of it." },
   { tatoeba = "16781_177930", ja = "君は{いったん}始めたら、続けなければいけません。", en = "Once you begin, you must continue." },
   { source = "yomeru", id = "y1", ja = "{いったん}家に帰ってから、また来ます。", en = "I'll go home for now and come back later." },
+  { tatoeba = "66239_228881", ja = "{いったん}駅に着けば、大丈夫道が分かりますよ。", en = "You'll find the way all right once you get to the station." },
+  { source = "yomeru", id = "y2", ja = "ここで{いったん}休憩しましょう。", en = "Let's take a break here for now." },
 ]
 
 [[point]]
@@ -16776,6 +16803,8 @@ examples = [
   { tatoeba = "60243_222913", ja = "この映画は小説{をもとに}している。", en = "This film is an adaptation of a novel." },
   { tatoeba = "48377_211103", ja = "その結論はこれらの事実{を基にして}だされた。", en = "The conclusion was formed on the basis of these facts." },
   { source = "yomeru", id = "y1", ja = "祖母の話{をもとに}、絵本を書いた。", en = "I wrote a picture book based on my grandmother's stories." },
+  { source = "yomeru", id = "y2", ja = "アンケートの結果{をもとに}、新しい商品を作った。", en = "We made a new product based on the survey results." },
+  { source = "yomeru", id = "y3", ja = "実際の事件{をもとにした}映画を見た。", en = "I watched a film based on a real incident." },
 ]
 
 [[point]]
@@ -16799,6 +16828,9 @@ related = ["ni-tsuite", "ni-kanshite"]
 examples = [
   { tatoeba = "28258_191098", ja = "委員会はその計画{をめぐって}意見が分かれた。", en = "The committee was split over the project." },
   { tatoeba = "305164_98536", ja = "彼らの間でつまらないこと{をめぐって}けんかが始まった。", en = "A fight started about nothing between them." },
+  { source = "yomeru", id = "y1", ja = "土地{をめぐって}、隣の家ともめている。", en = "We are in a dispute with our neighbours over the land." },
+  { source = "yomeru", id = "y2", ja = "新しい駅{をめぐる}議論が続いている。", en = "The debate over the new station goes on." },
+  { source = "yomeru", id = "y3", ja = "優勝{をめぐって}、二つのチームが競っている。", en = "Two teams are battling it out over the championship." },
 ]
 
 [[point]]
@@ -16822,6 +16854,9 @@ related = ["ni-kakawarazu"]
 examples = [
   { tatoeba = "282227_121778", ja = "年齢{を問わず}人々はこの歌が好きだ。", en = "People of all ages like this song." },
   { tatoeba = "263539_151017", ja = "試合は晴雨{を問わず}行われます。", en = "The game will be held rain or shine." },
+  { tatoeba = "629093_629091", ja = "それは今でも男女{を問わず}愛読されている本です。", en = "It is, even now, a book loved by men and women alike." },
+  { source = "yomeru", id = "y1", ja = "経験{を問わず}、誰でも応募できます。", en = "Anyone can apply, regardless of experience." },
+  { source = "yomeru", id = "y2", ja = "この店は昼夜{を問わず}開いている。", en = "This shop is open regardless of the hour, day or night." },
 ]
 
 [[point]]
@@ -16845,6 +16880,9 @@ related = ["wo-kikkake-ni"]
 examples = [
   { tatoeba = "327815_75903", ja = "退職{を契機に}茶道を始めた。", en = "I took the opportunity of retirement to begin studying the tea ceremony." },
   { source = "yomeru", id = "y1", ja = "病気{を契機として}、生活を見直した。", en = "My illness prompted me to rethink how I live." },
+  { source = "yomeru", id = "y2", ja = "結婚{を契機に}、仕事を辞めた。", en = "Getting married prompted me to quit my job." },
+  { source = "yomeru", id = "y3", ja = "オリンピック{を契機として}、町が大きく変わった。", en = "The Olympics prompted big changes in the town." },
+  { source = "yomeru", id = "y4", ja = "留学したの{を契機に}、外国の文化に興味を持った。", en = "Studying abroad was the opportunity that got me interested in foreign cultures." },
 ]
 
 [[point]]
@@ -16868,6 +16906,9 @@ related = ["igai"]
 examples = [
   { tatoeba = "525709_190451", ja = "一人{を除いて}みんな帰った。", en = "Except for one person, everybody went home." },
   { tatoeba = "36987_199783", ja = "トム{を除いては}だれもレポートを提出しなかった。", en = "No one but Tom handed in the report." },
+  { tatoeba = "302273_101422", ja = "彼は日曜日{を除いて}毎日働いている。", en = "He works every day save Sundays." },
+  { source = "yomeru", id = "y1", ja = "祝日{を除く}毎日、営業しています。", en = "We are open every day except holidays." },
+  { source = "yomeru", id = "y2", ja = "少し遠いこと{を除けば}、いい部屋だ。", en = "Apart from being a bit far, it's a nice room." },
 ]
 
 [[point]]
@@ -16914,6 +16955,8 @@ examples = [
   { tatoeba = "268979_145583", ja = "心{を込めて}祈りなさい。", en = "Pray with all your heart." },
   { tatoeba = "315552_88155", ja = "彼女は憎しみ{をこめて}彼を見た。", en = "She looked at him with hatred." },
   { source = "yomeru", id = "y1", ja = "先生に感謝{を込めて}、花を贈った。", en = "I sent our teacher flowers to show our thanks." },
+  { tatoeba = "315119_88588", ja = "彼女は心{をこめて}美しい歌を歌った。", en = "She sang her sweet song with feeling." },
+  { source = "yomeru", id = "y2", ja = "心{のこもった}手紙をもらった。", en = "I received a letter full of feeling." },
 ]
 
 [[point]]
@@ -16939,6 +16982,8 @@ examples = [
   { tatoeba = "280635_123364", ja = "読書{を通じて}多くの言葉が習得される。", en = "Many words are acquired through reading." },
   { tatoeba = "37377_200176", ja = "トムとマイクはお互いの友人{を通じて}知り合った。", en = "Tom and Mike became acquainted through their mutual friends." },
   { source = "yomeru", id = "y1", ja = "この地方は一年{を通じて}雨が多い。", en = "It rains a lot in this region all year round." },
+  { source = "yomeru", id = "y2", ja = "ラジオ{を通じて}、そのニュースを知った。", en = "I learned the news through the radio." },
+  { source = "yomeru", id = "y3", ja = "夏休み{を通じて}、毎日プールに通った。", en = "I went to the pool every day throughout the summer holidays." },
 ]
 
 [[point]]
@@ -16962,6 +17007,9 @@ related = ["wo-moto-ni"]
 examples = [
   { source = "yomeru", id = "y1", ja = "地図{を頼りに}、ホテルを探した。", en = "I found my way to the hotel with only a map to go on." },
   { tatoeba = "237705_176757", ja = "君{を頼りにして}いるよ。", en = "I am counting on you." },
+  { tatoeba = "324223_79496", ja = "薬だけ{を頼りにして}も治らないよ。", en = "You can't rely on medicine alone if you want to get well." },
+  { source = "yomeru", id = "y2", ja = "記憶{を頼りに}、昔の家を探した。", en = "Relying on my memory, I looked for my old house." },
+  { source = "yomeru", id = "y3", ja = "月の光{を頼りに}、山道を歩いた。", en = "Guided only by the moonlight, we walked along the mountain path." },
 ]
 
 [[point]]
@@ -16986,6 +17034,9 @@ related = ["ue-ni", "dake-de-naku", "bakari-de-naku"]
 examples = [
   { tatoeba = "256210_158320", ja = "私は英語{に加えて}、ドイツ語も勉強したい。", en = "I want to study German in addition to English." },
   { tatoeba = "315012_88695", ja = "彼女は小説や詩{に加えて}エッセイも書く。", en = "She writes essays in addition to novels and poetry." },
+  { tatoeba = "247346_167155", ja = "私たちには材料{に加えて}見本も必要だ。", en = "We need a sample in addition to materials." },
+  { source = "yomeru", id = "y1", ja = "寒さ{に加えて}、雪で電車が止まった。", en = "On top of the cold, the snow stopped the trains." },
+  { source = "yomeru", id = "y2", ja = "彼は仕事{に加え}、親の世話もしている。", en = "On top of his job, he also looks after his parents." },
 ]
 
 [[point]]
