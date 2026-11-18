@@ -320,6 +320,21 @@ async fn grammar_check_says_whether_the_answer_uses_the_point() {
 }
 
 #[tokio::test]
+async fn sentence_words_reads_a_sentence_into_its_words() {
+    let h = harness().await;
+    let (status, body) = h
+        .post("/api/sentence-words", None, &json!({ "text": "人を食べた" }))
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let words = body["words"].as_array().expect("words");
+    let found: Vec<(u64, u64)> = words
+        .iter()
+        .map(|w| (w["start"].as_u64().unwrap(), w["len"].as_u64().unwrap()))
+        .collect();
+    assert!(found.contains(&(2, 3)), "食べた as one word: {body}");
+}
+
+#[tokio::test]
 async fn grammar_check_takes_answers_of_at_most_100_chars() {
     let h = harness().await;
     assert_limit(
@@ -396,6 +411,7 @@ async fn text_inputs_take_at_most_256_chars() {
         ("/api/kanji", "word"),
         ("/api/examples", "word"),
         ("/api/grammar", "text"),
+        ("/api/sentence-words", "text"),
     ] {
         assert_limit(
             &h,

@@ -253,6 +253,14 @@ learned by heart. Before writing examples at scale, the format grows:
   on the start screen. A "My answer was right" link on the back lifts the
   Again cap when the check missed a valid answer; it sends no report yet
   (part 4).
+- ~~Done~~: the back marks where the answer and the reference differ
+  (`grammar::answer_diff`, char-level, punctuation left out), and notes a
+  politer or plainer answer (`grammar::register`), never as a miss.
+- ~~Done~~: the vocabulary hint, a **Words** button
+  (`DictClient::sentence_words` over `jmdict_core::vocab::sentence_words`,
+  then `grammar::hint_words`): dictionary forms, readings and a meaning,
+  without the point's words, particles or short kana words. A hint like
+  the formation: capped at Hard. No `hints = […]` override yet.
 - Front: the English sentence, and under it the point's `meaning` line
   ("prohibition: must not"), so the user knows which point to use without
   seeing the pattern. The vocabulary hints are behind a button.

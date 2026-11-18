@@ -148,6 +148,23 @@ pub struct GrammarBySeqResponse {
 }
 
 #[derive(Deserialize)]
+pub struct SentenceBody {
+    pub text: String,
+}
+
+#[derive(Serialize)]
+pub struct SentenceWord {
+    pub start: usize,
+    pub len: usize,
+    pub entry: &'static ArchivedWordEntry,
+}
+
+#[derive(Serialize)]
+pub struct SentenceWordsResponse {
+    pub words: Vec<SentenceWord>,
+}
+
+#[derive(Deserialize)]
 pub struct GrammarCheckBody {
     /// The point's id.
     pub id: String,
@@ -359,4 +376,26 @@ pub async fn grammar_check_handler(
     })
     .await?;
     Ok(Json(GrammarCheckResponse { verdict }))
+}
+
+/// The words of a sentence, for a production card's vocabulary hint.
+pub async fn sentence_words_handler(
+    State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Json(body): Json<SentenceBody>,
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.lookup_limiter, addr, &headers)?;
+    let text = body.text;
+    if text.chars().count() > MAX_QUERY_CHARS {
+        return Err(too_large("text", text.chars().count(), MAX_QUERY_CHARS));
+    }
+    let words = run_blocking("sentence_words", move || {
+        Ok(jmdict_core::vocab::sentence_words(&text)
+            .into_iter()
+            .map(|(start, len, entry)| SentenceWord { start, len, entry })
+            .collect::<Vec<_>>())
+    })
+    .await?;
+    Ok(Json(SentenceWordsResponse { words }))
 }

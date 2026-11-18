@@ -6,7 +6,7 @@ use examples_types::ExampleEntry;
 use jmdict_types::WordEntry;
 use kanjidic_types::{KanjiEntry, PartInfo, PartSearch};
 use yomeru_shared::grammar::{GrammarEntry, Verdict};
-use yomeru_shared::platform::DictClient;
+use yomeru_shared::platform::{DictClient, SentenceWord};
 pub struct ExtensionDict;
 
 #[derive(Serialize)]
@@ -104,6 +104,16 @@ struct GrammarCheckResp {
     verdict: Verdict,
 }
 
+#[derive(Serialize)]
+struct TextPayload<'a> {
+    text: &'a str,
+}
+
+#[derive(Deserialize)]
+struct SentenceWordsResp {
+    words: Vec<SentenceWord>,
+}
+
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl DictClient for ExtensionDict {
@@ -175,5 +185,11 @@ impl DictClient for ExtensionDict {
         let r: GrammarCheckResp =
             crate::send_bg_message("GRAMMAR_CHECK", GrammarCheckPayload { id, answer }).await?;
         Ok(r.verdict)
+    }
+
+    async fn sentence_words(&self, sentence: &str) -> Result<Vec<SentenceWord>, String> {
+        let r: SentenceWordsResp =
+            crate::send_bg_message("SENTENCE_WORDS", TextPayload { text: sentence }).await?;
+        Ok(r.words)
     }
 }

@@ -16,6 +16,7 @@ import {
   handleAddGrammar,
   handleGrammarBySequence,
   handleGrammarCheck,
+  handleSentenceWords,
   handleDeleteCard,
   handleGetAllCards,
   handleGetDue,
@@ -120,6 +121,8 @@ function dispatch(msg: { type: string; payload?: unknown }): Promise<unknown> {
       return handleLookupBySequence(msg.payload as { sequences: number[] });
     case "GRAMMAR_BY_SEQUENCE":
       return handleGrammarBySequence(msg.payload as { sequences: number[] });
+    case "SENTENCE_WORDS":
+      return handleSentenceWords(msg.payload as { text: string });
     case "GRAMMAR_CHECK":
       return handleGrammarCheck(msg.payload as { id: string; answer: string });
     case "LOOKUP_PREFIX":

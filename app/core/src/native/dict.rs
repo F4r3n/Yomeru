@@ -17,7 +17,7 @@ use std::sync::{Arc, OnceLock};
 
 use tokio::sync::OnceCell;
 
-use crate::platform::DictClient;
+use crate::platform::{DictClient, SentenceWord};
 use async_trait::async_trait;
 
 /// One of the bundled data files.
@@ -312,5 +312,13 @@ impl DictClient for LocalDict {
             .map_or(Verdict::SelfGraded, |d| {
                 d.check_answer(id, answer, &JmdictVocabulary)
             }))
+    }
+
+    async fn sentence_words(&self, sentence: &str) -> Result<Vec<SentenceWord>, String> {
+        self.ensure(Part::Words).await?;
+        Ok(jmdict_core::vocab::sentence_words(sentence)
+            .into_iter()
+            .filter_map(|(start, len, e)| Some(SentenceWord { start, len, entry: owned(e)? }))
+            .collect())
     }
 }

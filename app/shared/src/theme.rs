@@ -876,6 +876,13 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 .grammar-back-point { margin-top: 10px; font-size: 15px; }
 .grammar-back-point .w { font-size: 18px; font-weight: 600; }
 .grammar-cap { margin-top: 10px; font-size: 13px; }
+/* The words hint: word, reading, meaning, one per line. */
+.grammar-words { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 4px; }
+.grammar-words li { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.grammar-words .w { font-size: 17px; font-weight: 600; }
+.grammar-words .r { color: var(--subtext); font-size: 13px; }
+.grammar-words .g { font-size: 14px; }
+.grammar-words-none { margin-top: 10px; font-size: 13px; }
 /* The full explanation unfolds on the card, like the lookup expansion panel. */
 .grammar-full { animation: expand-in 0.18s ease-out; }
 @media (prefers-reduced-motion: reduce) { .grammar-full { animation: none; } }

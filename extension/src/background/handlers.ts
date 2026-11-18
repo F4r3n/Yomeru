@@ -293,6 +293,14 @@ export async function handleGrammarCheck({
   return { verdict };
 }
 
+/** The extension pages' `DictClient::sentence_words`: the words of a
+ * production card's reference sentence, for its vocabulary hint. */
+export async function handleSentenceWords({ text }: { text: string }): Promise<{ words: unknown[] }> {
+  const jmdict = await getJmdict();
+  if (!text) return { words: [] };
+  return { words: (jmdict.sentence_words(text) as unknown[]) ?? [] };
+}
+
 /** Longest grammar pattern hovered `text` starts with. */
 const GRAMMAR_MAX_CHARS = 24;
 /** Examples per grammar point in the popup. */

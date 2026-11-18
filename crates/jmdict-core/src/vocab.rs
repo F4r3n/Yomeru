@@ -63,3 +63,57 @@ pub fn word_len_at(text: &str, char_offset: usize) -> usize {
     };
     crate::lookup_longest_match(rest, MAX_WORD_CHARS).map_or(1, |(_, n)| n.max(1))
 }
+
+/// The words of `sentence` in order, for a production card's vocabulary
+/// hint: `(start, len, entry)` in chars, the likeliest entry of each
+/// ([`best_entry`]). Read
+/// left to right taking the longest word at each point, as the hover popup
+/// does; a char no word starts on is skipped.
+pub fn sentence_words(
+    sentence: &str,
+) -> Vec<(usize, usize, &'static jmdict_types::ArchivedWordEntry)> {
+    let starts: Vec<usize> = sentence.char_indices().map(|(i, _)| i).collect();
+    let mut out = Vec::new();
+    let mut at = 0;
+    while let Some(&byte) = starts.get(at) {
+        let found = sentence
+            .get(byte..)
+            .and_then(|rest| crate::lookup_longest_match(rest, MAX_WORD_CHARS));
+        match found {
+            Some((entries, len)) if len > 0 => {
+                let surface: String = sentence.chars().skip(at).take(len).collect();
+                if let Some(best) = best_entry(&entries, &surface) {
+                    out.push((at, len, best));
+                }
+                at += len;
+            }
+            _ => at += 1,
+        }
+    }
+    out
+}
+
+/// The entry a word of a sentence most likely is, of those its text
+/// matched: one whose headword (or, for kana, reading) starts as the text
+/// does (本 is ほん, not the 元 it can also spell), then a common one.
+/// Ties keep the dictionary's order.
+fn best_entry(
+    entries: &[&'static jmdict_types::ArchivedWordEntry],
+    surface: &str,
+) -> Option<&'static jmdict_types::ArchivedWordEntry> {
+    let first = surface.chars().next()?;
+    let kana = japanese_utils::is_kana(first);
+    let score = |e: &jmdict_types::ArchivedWordEntry| {
+        let starts = |t: &str| t.starts_with(first);
+        let written_so = starts(e.headword()) || (kana && starts(e.primary_reading()));
+        let common = e.kanji_forms.iter().any(|k| !k.priorities.is_empty())
+            || e.reading_forms.iter().any(|r| !r.priorities.is_empty());
+        (written_so, common)
+    };
+    entries
+        .iter()
+        .copied()
+        .enumerate()
+        .max_by_key(|&(i, e)| (score(e), std::cmp::Reverse(i)))
+        .map(|(_, e)| e)
+}

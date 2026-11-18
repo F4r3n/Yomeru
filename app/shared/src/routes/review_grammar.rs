@@ -9,10 +9,11 @@ use std::collections::HashMap;
 
 use dioxus::prelude::*;
 
-use crate::dict::{grammar_by_seq, grammar_check};
+use crate::dict::{grammar_by_seq, grammar_check, sentence_words};
 use crate::drill_log;
 use crate::grammar::{
-    AnswerCheck, Example, GrammarEntry, Register, Span, Verdict, answer_diff, plain, register,
+    AnswerCheck, Example, GrammarEntry, Register, Span, Verdict, WordHint, answer_diff,
+    hint_words, plain, register,
 };
 use crate::icons::{Icon, IconName};
 use crate::idb::{
@@ -57,8 +58,14 @@ struct Attempt {
     verdict: Option<Verdict>,
     /// A check is on its way.
     checking: bool,
-    /// The formation hint was shown.
+    /// A hint was shown: the formation or the words.
     hinted: bool,
+    /// The formation hint is showing.
+    formation: bool,
+    /// The words hint: `Some` once loaded.
+    words: Option<Vec<WordHint>>,
+    /// The words hint is on its way.
+    words_loading: bool,
     /// The check found the point (or the user says the answer was right).
     accepted: bool,
 }
@@ -258,6 +265,48 @@ pub(crate) fn GrammarReview() -> Element {
             if found {
                 show_back.set(true);
             }
+        });
+    };
+
+    // Loads the words hint of the card on screen.
+    let mut show_words = move || {
+        let a = attempt.peek().clone();
+        if a.words.is_some() || a.words_loading || *show_back.peek() {
+            return;
+        }
+        let i = *idx.peek();
+        let example = due
+            .peek()
+            .get(i)
+            .and_then(SrsCard::grammar_seq)
+            .and_then(|s| points.peek().get(&s).cloned())
+            .and_then(|p| {
+                let k = *prompts.peek().get(i)?;
+                p.examples.get(k).cloned()
+            });
+        let Some(example) = example else {
+            return;
+        };
+        attempt.with_mut(|a| {
+            a.hinted = true;
+            a.words_loading = true;
+        });
+        spawn(async move {
+            let words = sentence_words(&plain(&example.ja)).await;
+            if *idx.peek() != i {
+                return;
+            }
+            let hints = match words {
+                Ok(w) => hint_words(&w, &example),
+                Err(e) => {
+                    warn!("sentence_words failed: {e}");
+                    Vec::new()
+                }
+            };
+            attempt.with_mut(|a| {
+                a.words_loading = false;
+                a.words = Some(hints);
+            });
         });
     };
 
@@ -525,19 +574,26 @@ pub(crate) fn GrammarReview() -> Element {
                     div { class: "grammar-prompt-en", "{example.en}" }
                     div { class: "muted grammar-prompt-meaning", "{point.meaning}" }
                 }
-                if a.hinted || show_back_v {
+                if a.formation || show_back_v {
                     ul { class: "grammar-patterns", lang: "ja",
                         for (k, line) in point.formation.iter().enumerate() {
                             li { key: "{k}", "{line}" }
                         }
                     }
                 }
+                if let Some(words) = a.words.clone() {
+                    WordHints { words }
+                }
                 if !show_back_v {
                     if typing {
                         ProductionInput {
                             attempt,
                             on_check: move |_| check(),
-                            on_hint: move |_| attempt.with_mut(|a| a.hinted = true),
+                            on_hint: move |_| attempt.with_mut(|a| {
+                                a.hinted = true;
+                                a.formation = true;
+                            }),
+                            on_words: move |_| show_words(),
                             on_reveal: move |_| reveal(),
                         }
                     } else {
@@ -627,6 +683,7 @@ fn ProductionInput(
     attempt: Signal<Attempt>,
     on_check: EventHandler<()>,
     on_hint: EventHandler<()>,
+    on_words: EventHandler<()>,
     on_reveal: EventHandler<()>,
 ) -> Element {
     let a = attempt.read().clone();
@@ -679,8 +736,14 @@ fn ProductionInput(
                 div { class: "grammar-verdict {class}", role: "status", "{text}" }
             }
             div { class: "row grammar-answer-actions",
-                if !a.hinted {
-                    button { class: "outline", onclick: move |_| on_hint.call(()), "Hint" }
+                if !a.formation {
+                    button { class: "outline", onclick: move |_| on_hint.call(()), "Formation" }
+                }
+                if a.words.is_none() {
+                    button { class: "outline", disabled: a.words_loading,
+                        onclick: move |_| on_words.call(()),
+                        if a.words_loading { "Words…" } else { "Words" }
+                    }
                 }
                 button { class: "link", onclick: move |_| on_reveal.call(()), "Show answer" }
                 button { class: "primary",
@@ -688,6 +751,28 @@ fn ProductionInput(
                     onclick: move |_| on_check.call(()),
                     if a.checking { "Checking…" } else { "Check" }
                     kbd { "aria-hidden": "true", "Enter" }
+                }
+            }
+        }
+    }
+}
+
+/// The words hint: each word's dictionary form, reading and meaning.
+#[component]
+fn WordHints(words: Vec<WordHint>) -> Element {
+    rsx! {
+        if words.is_empty() {
+            div { class: "muted grammar-words-none", "No words to hint here." }
+        } else {
+            ul { class: "grammar-words",
+                for (k, w) in words.into_iter().enumerate() {
+                    li { key: "{k}",
+                        span { class: "w", lang: "ja", "{w.word}" }
+                        if !w.reading.is_empty() {
+                            span { class: "r", lang: "ja", "{w.reading}" }
+                        }
+                        span { class: "g", "{w.gloss}" }
+                    }
                 }
             }
         }
