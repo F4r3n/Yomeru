@@ -50,7 +50,7 @@ cd extension && npm install && npm run build
 | `japanese-utils` | Char classification, `extract_japanese_run(text, char_offset)` — returns from offset forward |
 | `jmdict-types` | `WordEntry`, `Sense`, `PartOfSpeech` — shared serde types |
 | `jmdict-build` | Offline CLI: JMdict XML → binary index; lookup table stores **byte offsets**, not element indices |
-| `deinflect` | BFS suffix-replacement, depth ≤ 3; returns `Vec<Deinflected { text, reason }>` |
+| `deinflect` | BFS suffix-replacement, depth ≤ 3; `deinflect` / `Deinflector::run` give the forms, `deinflect_with_reasons` / `run_with_reasons` add each form's `Reasons` (bitset of `Reason`: causative, passive, volitional…) |
 | `jmdict-core` | Pure-Rust JMdict runtime: `init`, `lookup`, `lookup_longest_match` (returns `(entries, match_len)` where `match_len` = chars in surface form), `lookup_prefix`, `find_in_text` |
 | `jmdict-wasm` | Thin `#[wasm_bindgen]` shim over `jmdict-core` (exposes the `Dictionary` JS class) |
 | `kanjidic-core` / `kanjidic-wasm` | Same core/shim split: core exposes `init_from_bytes`, `lookup_one`, `lookup_many`; wasm adds the JS class |

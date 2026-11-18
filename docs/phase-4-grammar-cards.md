@@ -271,11 +271,11 @@ and leaves the rest to the user.
    - `{ inflection = [...] }`: a point that is a verb form (passive,
      potential, causative, causative-passive, volitional, imperative). A
      verb of the answer must deinflect through one of them, so
-     食べさせた counts for the causative. The deinflector's rules already
-     name their form ("causative", "passive/potential"); it has to return
-     them, mapped onto `Inflection`, and gain the volitional (行こう) it
-     lacks. The ichidan られる is both passive and potential and counts
-     for either card;
+     食べさせた counts for the causative. ~~The deinflector returns the
+     rules' reasons and has the volitional~~ (done:
+     `deinflect_with_reasons`, a `Reasons` bitset per form, joined over
+     every path); left: mapping them onto `Inflection`. The ichidan られる
+     is both passive and potential and counts for either card;
    - `"self"`: none of this finds it reliably (the く adverb, the て join,
      自動詞・他動詞). No check and none of the three cases: the user rates
      against the reference, as in "answer in my head".

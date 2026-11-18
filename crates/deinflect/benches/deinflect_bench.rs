@@ -21,6 +21,23 @@ fn bench_deinflect(c: &mut Criterion) {
         b.iter(|| deinflect::deinflect(black_box("hello")))
     });
 
+    // The hot path: jmdict-core and grammar hover keep one Deinflector.
+    let words = [
+        "食べる",
+        "食べられなかった",
+        "飲んでいなかった",
+        "勉強しました",
+        "hello",
+    ];
+    g.bench_function("run_reused", |b| {
+        let mut d = deinflect::Deinflector::default();
+        b.iter(|| {
+            for w in words {
+                black_box(d.run(black_box(w)).count());
+            }
+        })
+    });
+
     g.finish();
 }
 
