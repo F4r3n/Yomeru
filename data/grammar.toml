@@ -9416,6 +9416,8 @@ examples = [
   { tatoeba = "53868_216564", ja = "ジェインが東京に引っ越し{て以来}、連絡がないんだ。", en = "I haven't heard from Jane since she moved to Tokyo." },
   { tatoeba = "41725_204483", ja = "それ{以来}彼から一度も便りがない。", en = "We have never heard from him since." },
   { tatoeba = "28315_191155", ja = "{以来}ずっと友人です。", en = "We've been friends ever since." },
+  { tatoeba = "241263_173208", ja = "高校を卒業し{て以来}彼は何もしていない。", en = "Since he graduated from high school, he hasn't been doing anything." },
+  { tatoeba = "72637_4955", ja = "３年前に東京へ来{て以来}ここに住んでいる。", en = "I came to Tokyo three years ago and have been living here ever since." },
 ]
 
 [[point]]
@@ -9442,8 +9444,10 @@ notices: 確認の上でご連絡ください. The で often drops: 相談の上
 related = ["te-kara", "ta-ato-de", "sue-ni"]
 examples = [
   { tatoeba = "70534_233165", ja = "あなたの申し出はよく調べ{た上で}ご返事しましょう。", en = "I'll give you our answer after we go into your proposal in greater detail." },
-  { tatoeba = "274929_138306", ja = "多くの買い物は注意深く考え{た上で}行われている。", en = "Many purchases are carefully thought out." },
   { source = "yomeru", id = "y1", ja = "家族と相談し{たうえで}決めます。", en = "I'll decide after talking it over with my family." },
+  { source = "yomeru", id = "y2", ja = "よく読ん{だ上で}、ここにサインしてください。", en = "Please sign here after reading it carefully." },
+  { source = "yomeru", id = "y3", ja = "値段を確かめ{た上で}買うつもりだ。", en = "I plan to buy it after checking the price." },
+  { source = "yomeru", id = "y4", ja = "説明をよく聞い{た上で}、申し込んでください。", en = "Please apply once you have listened carefully to the explanation." },
 ]
 
 [[point]]
@@ -9468,6 +9472,8 @@ examples = [
   { tatoeba = "238542_175922", ja = "決まり{次第}教えてください。", en = "Please let me know as soon as it's decided." },
   { tatoeba = "20128_183007", ja = "あなたの用意が出来{次第}出発しましょう。", en = "We'll leave as soon as you are ready." },
   { tatoeba = "266386_148173", ja = "終わり{次第}すぐにこの質問用紙を送ります。", en = "I'll mail this questionnaire as soon as I finish." },
+  { tatoeba = "240623_173847", ja = "向こうに着き{しだい}知らせてください。", en = "Let me know it as soon as you get there." },
+  { source = "yomeru", id = "y1", ja = "雨がやみ{次第}、出発しよう。", en = "Let's set off as soon as the rain stops." },
 ]
 
 [[point]]
@@ -9493,6 +9499,8 @@ examples = [
   { tatoeba = "237713_231410", ja = "あなた{次第です}。", en = "It's up to you." },
   { tatoeba = "17798_178944", ja = "君が成功できるかは君の努力{次第だ}。", en = "Your success depends on your efforts." },
   { source = "yomeru", id = "y1", ja = "天気{次第で}、行くかどうか決めよう。", en = "Let's decide whether to go depending on the weather." },
+  { tatoeba = "250858_163654", ja = "私の幸せはあなた{次第です}。", en = "My happiness depends on you." },
+  { source = "yomeru", id = "y2", ja = "結果{次第では}、もう一度試験を受けるかもしれない。", en = "Depending on the results, I might take the exam again." },
 ]
 
 [[point]]
@@ -9517,6 +9525,8 @@ examples = [
   { tatoeba = "278034_125950", ja = "長い議論{の末}、彼らは一つの計画を出した。", en = "They came up with a plan after a long discussion." },
   { tatoeba = "29944_192778", ja = "よく考え{た末}、私は家にいることに決めた。", en = "After some careful thought, I elected to stay at home." },
   { source = "yomeru", id = "y1", ja = "何度も失敗し{た末に}、やっと合格した。", en = "After failing again and again, I finally passed." },
+  { source = "yomeru", id = "y2", ja = "三時間待っ{た末に}、やっとチケットが買えた。", en = "After waiting three hours, I was finally able to buy a ticket." },
+  { source = "yomeru", id = "y3", ja = "いろいろ迷っ{た末}、赤いかばんにした。", en = "After a lot of hesitation, I went with the red bag." },
 ]
 
 [[point]]
@@ -9543,8 +9553,10 @@ pattern."""
 related = ["toki", "ni-atatte"]
 examples = [
   { tatoeba = "23823_186687", ja = "火事{の際は}１１９番に電話してください。", en = "In the case of fire, dial 119." },
-  { tatoeba = "61508_224171", ja = "こちらに立ち寄った{際には}電話をかけてね。", en = "If you're ever in the area, give me a call." },
   { tatoeba = "325393_78324", ja = "離陸{の際は}、シートベルトを締めなくてはならない。", en = "You must fasten your seat belts during take-off." },
+  { tatoeba = "278377_125615", ja = "通りを横断する{際に}彼は足を滑らせた。", en = "He slipped while crossing the street." },
+  { source = "yomeru", id = "y1", ja = "お帰りの{際は}、忘れ物にご注意ください。", en = "When you leave, please take care not to forget anything." },
+  { source = "yomeru", id = "y2", ja = "日本に来た{際に}、京都を訪ねました。", en = "When I came to Japan, I visited Kyoto." },
 ]
 
 [[point]]
@@ -9571,8 +9583,10 @@ add. If both matter equally, use し or て instead. In speech, Noun + \
 related = ["nagara"]
 examples = [
   { tatoeba = "39921_202687", ja = "{ついでに}、私にもコーヒーを淹れてください。", en = "While you are about it, please make some coffee for me." },
-  { tatoeba = "17930_179074", ja = "君が飲む{ついでに}、僕の分も入れてくれないかな。", en = "Would you mind making an extra cup of coffee whenever you decide to have some?" },
   { source = "yomeru", id = "y1", ja = "散歩{のついでに}郵便局に寄った。", en = "I dropped by the post office on my walk." },
+  { source = "yomeru", id = "y2", ja = "駅に行く{ついでに}、この手紙を出してくれる？", en = "Since you're going to the station anyway, could you post this letter?" },
+  { source = "yomeru", id = "y3", ja = "部屋を掃除した{ついでに}、窓も拭いた。", en = "While I was cleaning my room, I wiped the windows too." },
+  { source = "yomeru", id = "y4", ja = "東京に出張した{ついでに}、友達に会ってきた。", en = "While I was in Tokyo on business, I took the chance to see a friend." },
 ]
 
 [[point]]
@@ -9604,6 +9618,8 @@ examples = [
   { tatoeba = "270095_142816", ja = "生まれる{と同時に}死は始まる。", en = "As soon as man is born, he begins to die." },
   { tatoeba = "296054_107631", ja = "彼は厳しい{と同時に}優しい。", en = "He is at once stern and tender." },
   { source = "yomeru", id = "y1", ja = "ドアが開く{と同時に}、子供たちが走り出した。", en = "The moment the door opened, the children ran out." },
+  { source = "yomeru", id = "y2", ja = "大学の卒業{と同時に}、東京で働き始めた。", en = "As soon as I graduated from university, I started working in Tokyo." },
+  { source = "yomeru", id = "y3", ja = "この仕事は大変である{と同時に}、楽しい。", en = "This job is hard, but at the same time it's fun." },
 ]
 
 [[point]]
@@ -9628,6 +9644,8 @@ examples = [
   { tatoeba = "270120_144445", ja = "人は年を取る{につれて}忘れっぽくなる。", en = "The older we grow, the more forgetful we become." },
   { tatoeba = "282181_121824", ja = "年を取る{につれて}寒がるものです。", en = "They'll be more sensitive to the cold as they grow older." },
   { tatoeba = "25926_188780", ja = "演説が進む{につれて}ますます退屈になった。", en = "I got more and more bored as the speech went on." },
+  { tatoeba = "279607_124387", ja = "冬が近づく{につれて}昼間は短くなる。", en = "The days grow shorter as winter approaches." },
+  { source = "yomeru", id = "y1", ja = "町が大きくなる{につれて}、車も多くなった。", en = "As the town grew, so did the traffic." },
 ]
 
 [[point]]
@@ -9651,6 +9669,8 @@ examples = [
   { tatoeba = "319932_11451466", ja = "物価は上がる{一方だ}。", en = "Prices go on rising." },
   { source = "yomeru", id = "y1", ja = "仕事は増える{一方です}。", en = "My work just keeps increasing." },
   { source = "yomeru", id = "y2", ja = "この町の人口は減る{一方だ}。", en = "This town's population keeps going down." },
+  { source = "yomeru", id = "y3", ja = "外国から来る観光客は増える{一方だ}。", en = "The number of tourists from abroad just keeps growing." },
+  { source = "yomeru", id = "y4", ja = "日本語の勉強は楽しくなる{一方です}。", en = "Studying Japanese just keeps getting more fun." },
 ]
 
 [[point]]
@@ -9675,6 +9695,8 @@ examples = [
   { tatoeba = "319927_83789", ja = "物価は安くなるどころか、高くな{るばかりだった}。", en = "Far from falling, the prices of commodities went on rising." },
   { source = "yomeru", id = "y1", ja = "病気は悪くな{るばかりだ}。", en = "The illness just keeps getting worse." },
   { source = "yomeru", id = "y2", ja = "雪は強くな{るばかりだった}。", en = "The snow only got heavier." },
+  { tatoeba = "40859_203621", ja = "ただ見守{るばかりだった}。", en = "He could do nothing but watch." },
+  { source = "yomeru", id = "y3", ja = "心配は大きくな{るばかりだった}。", en = "My worries only kept growing." },
 ]
 
 [[point]]
@@ -9701,6 +9723,8 @@ examples = [
   { tatoeba = "283346_120662", ja = "彼がリー嬢に結婚を申し込ん{だところ}、彼女は承諾した。", en = "He proposed to Miss Lee and she accepted." },
   { source = "yomeru", id = "y1", ja = "店に電話し{たところ}、もう閉まっていた。", en = "When I called the shop, it was already closed." },
   { source = "yomeru", id = "y2", ja = "先生に聞いてみ{たところ}、すぐ教えてくれた。", en = "When I asked the teacher, they told me right away." },
+  { source = "yomeru", id = "y3", ja = "箱を開けてみ{たところ}、中は空だった。", en = "When I opened the box, I found it was empty." },
+  { source = "yomeru", id = "y4", ja = "新しい薬を飲ん{だところ}、すぐに熱が下がった。", en = "When I took the new medicine, my fever went down right away." },
 ]
 
 [[point]]
@@ -9728,6 +9752,8 @@ examples = [
   { tatoeba = "20720_183598", ja = "危うく溺れ{るところだった}。", en = "I came near to being drowned." },
   { tatoeba = "293099_110587", ja = "彼はもう少しでひかれ{るところだった}。", en = "He came near to being run over." },
   { source = "yomeru", id = "y1", ja = "母が起こしてくれなければ、寝坊する{ところだった}。", en = "If Mum hadn't woken me, I would have overslept." },
+  { tatoeba = "279188_124805", ja = "電車に傘を忘れ{るところだった}。", en = "I almost left my umbrella in the train." },
+  { tatoeba = "255780_158748", ja = "私はもう少しで皿を落と{すところだった}。", en = "I almost dropped the plates." },
 ]
 
 [[point]]
@@ -9756,6 +9782,8 @@ examples = [
   { tatoeba = "256446_158084", ja = "私は何度も幽霊{について}考えたことがある。", en = "I have thought about ghosts many times." },
   { tatoeba = "305748_97955", ja = "彼らはその件{について}私に尋ねた。", en = "They inquired of me about the matter." },
   { source = "yomeru", id = "y1", ja = "日本の文化{についての}レポートを書いた。", en = "I wrote a report on Japanese culture." },
+  { tatoeba = "43958_206710", ja = "その本{について}どう思いますか。", en = "What do you think about the book?" },
+  { source = "yomeru", id = "y2", ja = "将来{について}、両親と話した。", en = "I talked with my parents about my future." },
 ]
 
 [[point]]
@@ -9786,6 +9814,8 @@ examples = [
   { tatoeba = "259004_142484", ja = "税金{に関する}あなたの意見に同感です。", en = "I agree with your opinion about taxes." },
   { tatoeba = "59005_221679", ja = "この事{に関しては}あなたの意見に賛成です。", en = "In this regard, I agree with you." },
   { source = "yomeru", id = "y1", ja = "新しい規則{に関して}、質問がありますか。", en = "Are there any questions about the new rules?" },
+  { tatoeba = "259710_154830", ja = "私は動物{に関する}本を読んでいる。", en = "I am reading a book about animals." },
+  { tatoeba = "48345_211071", ja = "その件{に関して}あなたに同意しません。", en = "I don't agree with you on the matter." },
 ]
 
 [[point]]
@@ -9818,6 +9848,8 @@ examples = [
   { tatoeba = "302931_100766", ja = "彼は批評{に対して}たいへん敏感だ。", en = "He is very sensitive to criticism." },
   { tatoeba = "70687_233317", ja = "あなたの御援助{に対して}私達は感謝しています。", en = "We are grateful to you for your help." },
   { source = "yomeru", id = "y1", ja = "兄は背が高い{のに対して}、弟は低い。", en = "My older brother is tall, whereas my younger brother is short." },
+  { tatoeba = "255276_159248", ja = "私はトムがしたこと{に対して}責任はない。", en = "I'm not responsible for what Tom did." },
+  { source = "yomeru", id = "y2", ja = "田中先生は学生{に対して}とても優しい。", en = "Mr. Tanaka is very kind to his students." },
 ]
 
 [[point]]
@@ -9847,6 +9879,8 @@ examples = [
   { tatoeba = "270812_143754", ja = "水は人間{にとって}大切だ。", en = "Water is important for humans." },
   { tatoeba = "42390_205148", ja = "それは私{にとって}むずかしすぎます。", en = "It's too difficult for me." },
   { source = "yomeru", id = "y1", ja = "この写真は私{にとって}宝物です。", en = "This photo is a treasure to me." },
+  { tatoeba = "249726_164781", ja = "私{にとって}200ドルは大金です。", en = "Two hundred dollars is a lot to me." },
+  { source = "yomeru", id = "y2", ja = "外国人{にとって}、漢字を覚えるのは大変だ。", en = "For foreigners, learning kanji is hard." },
 ]
 
 [[point]]
@@ -9874,11 +9908,13 @@ buildings, discoveries); a plain passive like 先生に叱られた uses に. \
 によっては means "in some cases": 場合によっては, "depending on the \
 situation". により is the written form. によると, "according to", is a \
 different point."""
-related = ["ni-yoru-to", "passive", "ni-motozuite"]
+related = ["ni-yoru-to", "passive", "ni-motozuite", "shidai-depending"]
 examples = [
   { tatoeba = "262979_151577", ja = "私達は経験{によって}多くを学ぶ。", en = "We learn much by experience." },
   { source = "yomeru", id = "y1", ja = "この本は有名な作家{によって}書かれた。", en = "This book was written by a famous author." },
   { source = "yomeru", id = "y2", ja = "国{によって}文化が違う。", en = "Culture differs from country to country." },
+  { source = "yomeru", id = "y3", ja = "台風{によって}、たくさんの木が倒れた。", en = "Many trees fell because of the typhoon." },
+  { source = "yomeru", id = "y4", ja = "場合{によっては}、会議が中止になるかもしれない。", en = "Depending on the situation, the meeting might be cancelled." },
 ]
 
 [[point]]
@@ -9908,6 +9944,8 @@ examples = [
   { tatoeba = "64545_227196", ja = "お兄さんと{比べて}、彼は運動神経が鈍い。", en = "Compared with his brother, he is a poor athlete." },
   { source = "yomeru", id = "y1", ja = "昔{に比べて}、物の値段が高くなった。", en = "Compared to the old days, prices have gone up." },
   { source = "yomeru", id = "y2", ja = "東京{に比べて}、この町は静かだ。", en = "Compared to Tokyo, this town is quiet." },
+  { tatoeba = "275095_138140", ja = "太陽{に比べると}地球は小さい。", en = "The earth is small compared with the sun." },
+  { tatoeba = "244685_169801", ja = "昨年{に比べて}今年は春の訪れが早かった。", en = "Spring has come early this year compared with last year." },
 ]
 
 [[point]]
@@ -9936,6 +9974,8 @@ examples = [
   { tatoeba = "270536_144030", ja = "人生{において}健康ほど大切なものはない。", en = "Nothing is more important in life than health." },
   { tatoeba = "26265_189118", ja = "英語は商業{において}役立つ。", en = "English is useful in commerce." },
   { source = "yomeru", id = "y1", ja = "卒業式は体育館{において}行います。", en = "The graduation ceremony will take place in the gym." },
+  { source = "yomeru", id = "y2", ja = "日本{における}外国人の生活について調べている。", en = "I'm researching the lives of foreigners in Japan." },
+  { source = "yomeru", id = "y3", ja = "スポーツ{において}一番大切なのは練習だ。", en = "In sports, the most important thing is practice." },
 ]
 
 [[point]]
