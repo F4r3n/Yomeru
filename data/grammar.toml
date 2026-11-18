@@ -10601,6 +10601,9 @@ related = ["bakari-de-naku", "dake-de-naku", "dokoroka"]
 examples = [
   { tatoeba = "21382_184254", ja = "学生{はもちろん}先生も来た。", en = "The teacher as well as his students has come." },
   { tatoeba = "293971_109719", ja = "彼は英語とドイツ語{はもちろん}、スペイン語も話す。", en = "He speaks Spanish, not to mention English and German." },
+  { tatoeba = "313505_90209", ja = "彼女は言語{はもちろん}、文学も研究している。", en = "She studies literature as well as language." },
+  { source = "yomeru", id = "y1", ja = "この店は週末{はもちろん}、平日も混んでいる。", en = "This shop is crowded on weekdays, not to mention weekends." },
+  { source = "yomeru", id = "y2", ja = "子ども{はもちろん}、大人も楽しめる映画だ。", en = "It's a movie adults can enjoy too, not to mention children." },
 ]
 
 [[point]]
@@ -10630,6 +10633,8 @@ examples = [
   { tatoeba = "294868_108821", ja = "彼は学問{ばかりでなく}経験もある。", en = "He has experience as well as learning." },
   { tatoeba = "70137_232767", ja = "あなた{ばかりでなく}私もまちがっている。", en = "Not only you but also I am in the wrong." },
   { source = "yomeru", id = "y1", ja = "彼は謝らない{ばかりか}、笑っていた。", en = "Not only did he not apologize, he was laughing." },
+  { tatoeba = "310739_92970", ja = "彼女はきれいな{ばかりでなく}、利口だ。", en = "She is not only pretty, but also bright." },
+  { tatoeba = "36190_198993", ja = "ナンシーはパリ{ばかりでなく}ロンドンへも行った。", en = "Nancy went to London as well as Paris." },
 ]
 
 [[point]]
@@ -10657,6 +10662,9 @@ related = ["wa-mochiron", "bakari-de-naku", "dokoro-de-wa-nai"]
 examples = [
   { tatoeba = "256244_158286", ja = "私はドイツ語{どころか}英語も話せない。", en = "I cannot speak English, much less German." },
   { tatoeba = "26706_189552", ja = "雨はやむ{どころか}いよいよひどくなった。", en = "Instead of stopping, the rain increased." },
+  { tatoeba = "42343_205101", ja = "それは、失敗{どころか}、大成功でした。", en = "Far from being a failure, it was a great success." },
+  { tatoeba = "260961_153583", ja = "私は彼を尊敬する{どころか}、嫌いです。", en = "Far from respecting him, I dislike him." },
+  { tatoeba = "73215_235835", ja = "１ドル{どころか}、１セントも持っていない。", en = "I don't have a cent, let alone a dollar." },
 ]
 
 [[point]]
@@ -10683,6 +10691,9 @@ related = ["to-shite"]
 examples = [
   { tatoeba = "59325_222001", ja = "この公園はバラ{で有名です}。", en = "This park is famous for its roses." },
   { tatoeba = "19296_181636", ja = "京都は古いお寺があるの{で有名だ}。", en = "Kyoto is famous for its old temples." },
+  { tatoeba = "45053_207797", ja = "その町は温泉{で有名です}。", en = "The town is famous for its hot spring." },
+  { source = "yomeru", id = "y1", ja = "この店はおいしいラーメン{で有名だ}。", en = "This shop is known for its delicious ramen." },
+  { source = "yomeru", id = "y2", ja = "北海道は雪{で有名な}所です。", en = "Hokkaido is a place famous for its snow." },
 ]
 
 [[point]]
@@ -10709,6 +10720,9 @@ related = ["naru", "koto-ni-naru"]
 examples = [
   { tatoeba = "46767_209505", ja = "その手紙の日付は１９８７年４月１日{となっている}。", en = "The letter is dated April 1, 1987." },
   { source = "yomeru", id = "y1", ja = "この部屋は禁煙{となっています}。", en = "Smoking is not allowed in this room." },
+  { tatoeba = "281234_122768", ja = "日本では小学校と中学校に通うことは義務{となっている}。", en = "In Japan, attendance at elementary and junior high school is compulsory." },
+  { source = "yomeru", id = "y2", ja = "図書館は月曜日が休み{となっています}。", en = "The library is closed on Mondays." },
+  { source = "yomeru", id = "y3", ja = "会議は三時から{となっています}。", en = "The meeting is set for three o'clock." },
 ]
 
 [[point]]
@@ -10738,6 +10752,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "兄は勉強が得意な{一方で}、スポーツは苦手だ。", en = "My brother is good at studying, but bad at sports." },
   { source = "yomeru", id = "y2", ja = "仕事が増える{一方で}、給料は変わらない。", en = "While the work increases, the pay stays the same." },
   { tatoeba = "27212_190056", ja = "{一方では}彼は親切だが、他方では怠け者だ。", en = "On one hand he is kind, but on the other hand he is lazy." },
+  { source = "yomeru", id = "y3", ja = "彼は働く{一方で}、夜は大学に通っている。", en = "He works, and at the same time goes to university at night." },
+  { source = "yomeru", id = "y4", ja = "姉は料理が好きだ。{その一方で}、妹は全然しない。", en = "My older sister loves cooking. My younger sister, on the other hand, never cooks." },
 ]
 
 [[point]]
@@ -10766,6 +10782,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "都会は便利な{反面}、物価が高い。", en = "The city is convenient, but things are expensive." },
   { source = "yomeru", id = "y2", ja = "この仕事は楽しい{反面}、とても疲れる。", en = "This job is fun, but on the other hand it's very tiring." },
   { tatoeba = "42230_204988", ja = "それは値段は安いが、その{反面}品質がよくない。", en = "It is cheap, but on the other hand it is not good." },
+  { source = "yomeru", id = "y3", ja = "一人暮らしは自由な{反面}、さびしいこともある。", en = "Living alone is free, but on the other hand it can be lonely." },
+  { source = "yomeru", id = "y4", ja = "このアパートは駅に近い{反面}、少しうるさい。", en = "This apartment is close to the station, but on the other hand it's a bit noisy." },
 ]
 
 [[point]]
@@ -10797,6 +10815,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "父はよく食べる{ほうだ}。", en = "My father is a pretty big eater." },
   { source = "yomeru", id = "y2", ja = "私は朝は強い{ほうです}。", en = "I'm fairly good at getting up in the morning." },
   { tatoeba = "28648_191488", ja = "悪いのはきみ{のほうだ}。", en = "It is you who is to blame." },
+  { source = "yomeru", id = "y3", ja = "この店は値段が安い{ほうです}。", en = "This shop's prices are on the cheap side." },
+  { source = "yomeru", id = "y4", ja = "私はあまり寝ない{ほうだ}。", en = "I'm the type who doesn't sleep much." },
 ]
 
 [[point]]
@@ -10828,7 +10848,9 @@ homographs = ["kurai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "泣きたい{くらい}うれしかった。", en = "I was so happy I could cry." },
   { source = "yomeru", id = "y2", ja = "遅れるなら電話{ぐらい}してよ。", en = "If you're going to be late, at least call." },
-  { tatoeba = "282024_121979", ja = "猫の手も借りたい{くらいだ}。", en = "We are so busy we'll take any help we can get." },
+  { source = "yomeru", id = "y3", ja = "疲れて、立てない{くらいだ}。", en = "I'm so tired I can hardly stand." },
+  { source = "yomeru", id = "y4", ja = "皿洗い{ぐらい}手伝ってよ。", en = "At least help with the dishes." },
+  { source = "yomeru", id = "y5", ja = "声が出ない{くらい}驚いた。", en = "I was so surprised I couldn't make a sound." },
 ]
 
 [[point]]
@@ -10857,6 +10879,8 @@ examples = [
   { tatoeba = "61223_223887", ja = "このカメラはあのカメラ{ほど高くない}。", en = "This camera is less expensive than that one." },
   { tatoeba = "324327_79390", ja = "友情{ほど重要なものはない}。", en = "There is nothing so important as friendship." },
   { source = "yomeru", id = "y1", ja = "今日は昨日{ほど寒くない}。", en = "Today isn't as cold as yesterday." },
+  { source = "yomeru", id = "y2", ja = "この映画は前の映画{ほど面白くない}。", en = "This movie isn't as interesting as the last one." },
+  { source = "yomeru", id = "y3", ja = "旅行{くらい楽しいものはない}。", en = "Nothing is as fun as traveling." },
 ]
 
 [[point]]
@@ -10888,6 +10912,8 @@ examples = [
   { tatoeba = "316984_86727", ja = "彼女は帽子をかぶった{まま}部屋に入ってきました。", en = "She came into the room with her hat on." },
   { tatoeba = "35443_198251", ja = "パジャマ{のまま}朝食を食べた。", en = "I had breakfast in pajamas." },
   { tatoeba = "274205_140368", ja = "窓を開けた{ままに}しておいて下さい。", en = "Please keep the windows open." },
+  { tatoeba = "34869_197683", ja = "ヒーターをつけた{まま}外出した。", en = "I went out with the heater on." },
+  { tatoeba = "58032_220710", ja = "この窓は一ヶ月割れた{まま}になっている。", en = "This window has been broken for a month." },
 ]
 
 [[point]]
@@ -10915,6 +10941,8 @@ examples = [
   { tatoeba = "289194_114477", ja = "彼はいつも同じ間違い{ばかり}している。", en = "He keeps making the same mistake." },
   { source = "yomeru", id = "y1", ja = "弟は肉{ばかり}食べる。", en = "My little brother eats nothing but meat." },
   { source = "yomeru", id = "y2", ja = "毎日雨{ばかりで}、どこにも行けない。", en = "It's rain every day, so I can't go anywhere." },
+  { source = "yomeru", id = "y3", ja = "この店は高いもの{ばかり}だ。", en = "This shop has nothing but expensive things." },
+  { source = "yomeru", id = "y4", ja = "クラスは女の子{ばかり}だった。", en = "The class was all girls." },
 ]
 
 [[point]]
@@ -10938,8 +10966,10 @@ it about a superior's work. Compare 全然〜ない (not at all): なかなか\
 related = ["zenzen", "mattaku", "kanari"]
 examples = [
   { tatoeba = "57285_219967", ja = "この風邪が{なかなか}治らない。", en = "I can't get rid of this cold." },
-  { tatoeba = "284706_118957", ja = "彼には{なかなか}会えない。", en = "It is difficult to gain access to him." },
   { source = "yomeru", id = "y1", ja = "このラーメン、{なかなか}おいしいね。", en = "This ramen is pretty good, isn't it?" },
+  { source = "yomeru", id = "y2", ja = "バスが{なかなか}来ない。", en = "The bus just won't come." },
+  { source = "yomeru", id = "y3", ja = "漢字が{なかなか}覚えられない。", en = "I just can't seem to memorize kanji." },
+  { tatoeba = "60825_223490", ja = "このテレビ番組は{なかなか}面白い。", en = "This TV program is really quite interesting." },
 ]
 
 [[point]]
@@ -10964,6 +10994,8 @@ examples = [
   { tatoeba = "26657_189506", ja = "嘘は{決して}つくな！", en = "Never tell a lie!" },
   { tatoeba = "257191_157342", ja = "私は{決して}肉を食べません。", en = "I never eat meat." },
   { tatoeba = "313403_90311", ja = "彼女は{決して}幸せではなかった。", en = "She was by no means happy." },
+  { tatoeba = "271666_142903", ja = "正直な人は{決して}お金を盗まない。", en = "An honest man never steals money." },
+  { source = "yomeru", id = "y1", ja = "このことは{決して}忘れません。", en = "I will never forget this." },
 ]
 
 [[point]]
@@ -10987,6 +11019,8 @@ examples = [
   { tatoeba = "10536829_171386", ja = "今年の夏は{全く}食欲がない。", en = "I have no appetite at all this summer." },
   { tatoeba = "285960_117704", ja = "彼の計画は僕は{まったく}知らない。", en = "I am quite ignorant of his plan." },
   { tatoeba = "70919_233547", ja = "あなたのご意見に{全く}賛成です。", en = "I am in full accord with your view." },
+  { tatoeba = "42369_205127", ja = "それは私の考えと{まったく}同じです。", en = "That is exactly the same idea as I have." },
+  { source = "yomeru", id = "y1", ja = "彼の言うことは{全く}わからなかった。", en = "I didn't understand what he said at all." },
 ]
 
 [[point]]
@@ -11012,6 +11046,8 @@ examples = [
   { tatoeba = "329671_74049", ja = "「何を考えてるの？」「{別に}・・・」", en = "\"What are you thinking about?\" \"Nothin'...\"" },
   { source = "yomeru", id = "y1", ja = "{別に}怒っていないよ。", en = "I'm not particularly angry." },
   { tatoeba = "51049_213762", ja = "ソースを{別に}ください。", en = "I'd like the sauce on the side." },
+  { source = "yomeru", id = "y2", ja = "{別に}行きたくない。", en = "I don't particularly want to go." },
+  { source = "yomeru", id = "y3", ja = "今日は{別に}予定がない。", en = "I don't have any particular plans today." },
 ]
 
 [[point]]
@@ -11035,6 +11071,8 @@ examples = [
   { tatoeba = "293032_110654", ja = "彼は{めったに}テレビを見ない。", en = "He scarcely ever watches TV." },
   { source = "yomeru", id = "y1", ja = "父は{めったに}怒らない。", en = "My father rarely gets angry." },
   { source = "yomeru", id = "y2", ja = "ここでは雪が{めったに}降らない。", en = "It hardly ever snows here." },
+  { tatoeba = "26214_189067", ja = "英語を書くとき、彼女は{めったに}間違えない。", en = "When writing English, she rarely makes a mistake." },
+  { source = "yomeru", id = "y3", ja = "兄は{めったに}電話をくれない。", en = "My older brother hardly ever calls me." },
 ]
 
 [[point]]
@@ -11060,7 +11098,9 @@ related = ["kesshite", "potential-form", "doushitemo"]
 examples = [
   { source = "yomeru", id = "y1", ja = "こんなにたくさん、{とても}一人では食べられない。", en = "I can't possibly eat this much by myself." },
   { source = "yomeru", id = "y2", ja = "明日までには{とても}終わらない。", en = "There's no way it'll be finished by tomorrow." },
-  { tatoeba = "56940_219619", ja = "この本は私には{とても}わからない。", en = "This book is quite above me." },
+  { source = "yomeru", id = "y3", ja = "こんな難しい問題は、私には{とても}解けない。", en = "I can't possibly solve such a hard problem." },
+  { source = "yomeru", id = "y4", ja = "そんな高い車は{とても}買えない。", en = "There's no way I could buy such an expensive car." },
+  { source = "yomeru", id = "y5", ja = "彼の話は{とても}信じられない。", en = "I can't possibly believe his story." },
 ]
 
 [[point]]
@@ -11084,6 +11124,8 @@ examples = [
   { tatoeba = "280961_123038", ja = "{二度と}しません。", en = "I will not do it again." },
   { tatoeba = "259776_154764", ja = "私は{二度と}それをしないつもりです。", en = "I will never do it again." },
   { source = "yomeru", id = "y1", ja = "あの店には{二度と}行かない。", en = "I'll never go to that shop again." },
+  { tatoeba = "2293301_2290031", ja = "あいつには{二度と}会いたくない。", en = "I never want to see that guy again." },
+  { source = "yomeru", id = "y2", ja = "こんなことは{二度と}しないでください。", en = "Please never do this again." },
 ]
 
 [[point]]
@@ -11133,6 +11175,8 @@ examples = [
   { tatoeba = "50946_230351", ja = "{あまりに}早く着いた。", en = "I arrived there too early." },
   { tatoeba = "288807_114864", ja = "彼は{あまりにも}幼いので学校に行けなかった。", en = "He was too young to go to school." },
   { source = "yomeru", id = "y1", ja = "{あまりの}寒さに、外に出られなかった。", en = "It was so cold that I couldn't go outside." },
+  { tatoeba = "67719_230353", ja = "{あまりに}光が強いので彼女は目をつぶった。", en = "She shut her eyes because the light was so strong." },
+  { source = "yomeru", id = "y2", ja = "この服は{あまりに}高すぎて買えない。", en = "These clothes are far too expensive to buy." },
 ]
 
 [[point]]
