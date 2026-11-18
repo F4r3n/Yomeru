@@ -65,6 +65,28 @@ struct RawExample {
     source: Option<String>,
     /// `y<n>`, on our own sentences only: their key within the entry.
     id: Option<String>,
+    #[serde(default)]
+    also: Vec<String>,
+}
+
+/// An example's `also`: plain sentences, each written once and none the
+/// example's own sentence (spaces aside).
+fn check_also(id: &str, ja: &str, also: Vec<String>) -> anyhow::Result<Vec<String>> {
+    let squeeze = |s: &str| s.chars().filter(|c| !c.is_whitespace()).collect::<String>();
+    let mut seen: HashSet<String> = HashSet::from([squeeze(ja)]);
+    for alt in &also {
+        if alt.contains(['{', '}']) {
+            bail!("{id}: `also` sentences are plain, no {{…}} mark: {alt}");
+        }
+        let s = squeeze(alt);
+        if s.is_empty() {
+            bail!("{id}: an empty `also` sentence on: {ja}");
+        }
+        if !seen.insert(s) {
+            bail!("{id}: {alt} is the example or another `also` again");
+        }
+    }
+    Ok(also)
 }
 
 /// What [`compile`] produced.
@@ -198,11 +220,13 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
             if !keys.insert(key.clone()) {
                 bail!("{}: two examples are keyed {key}", p.id);
             }
+            let also = check_also(&p.id, &crate::types::plain(&ja), ex.also)?;
             examples.push(Example {
                 ja,
                 en: ex.en,
                 tatoeba,
                 key,
+                also,
             });
         }
         let check = match p.check {

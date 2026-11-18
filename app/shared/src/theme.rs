@@ -872,6 +872,7 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 /* What the answer has and the reference lacks, and the other way round. */
 .diff-extra { background: color-mix(in srgb, var(--red) 25%, transparent); border-radius: 3px; text-decoration: line-through; text-decoration-color: var(--red); }
 .diff-missing { text-decoration: underline wavy var(--yellow); text-underline-offset: 4px; }
+.diff-optional { opacity: 0.45; }
 .grammar-example .muted { font-size: 13px; }
 .grammar-back-point { margin-top: 10px; font-size: 15px; }
 .grammar-back-point .w { font-size: 18px; font-weight: 600; }

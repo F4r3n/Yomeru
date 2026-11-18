@@ -314,6 +314,8 @@ export interface GrammarExample {
   tatoeba: string;
   /** The example's key within its entry: the `tatoeba` pair, or `y<n>`. */
   key: string;
+  /** Other correct answers to `en`, plain text. */
+  also: string[];
 }
 
 /** What the hover popup shows of a grammar point — `PopupEntry` in

@@ -74,7 +74,7 @@ impl GrammarDict {
             return Verdict::SelfGraded;
         }
         let answer = normalize(answer);
-        let plain = plain_negative(&answer);
+        let plain = plain_register(&answer);
         let uses = |e: &GrammarEntry| {
             [&answer, &plain]
                 .iter()
@@ -200,13 +200,18 @@ fn normalize(answer: &str) -> String {
     answer.chars().filter(|c| !c.is_whitespace()).collect()
 }
 
-/// The answer with the polite negative ありません read as ない, so
-/// ても差し支えありません counts for ても差し支えない. Patterns are written
-/// plain; their polite forms are only sometimes listed.
-fn plain_negative(answer: &str) -> String {
+/// The answer with the polite negative ありません read as ない, and the
+/// polite copula as the plain one, so ても差し支えありません counts for
+/// ても差し支えない and 当然です for 当然だ. Patterns are written plain;
+/// their polite forms are only sometimes listed. (A polite verb is
+/// [`piece_at`]'s.)
+fn plain_register(answer: &str) -> String {
     answer
         .replace("ありませんでした", "なかった")
         .replace("ありません", "ない")
+        .replace("でしょう", "だろう")
+        .replace("でした", "だった")
+        .replace("です", "だ")
 }
 
 fn is_hiragana(c: char) -> bool {
@@ -225,7 +230,9 @@ fn is_o_row(c: char) -> bool {
 }
 
 /// Where `piece` ends when it is found at `start` of `chars`, as written or
-/// conjugated (てもいい in てもいいですか, てしまう in てしまった).
+/// conjugated (てもいい in てもいいですか, てしまう in てしまった), or in
+/// the polite form of its own conjugation (考えられません for
+/// 考えられない, 思いませんでした for 思わなかった).
 ///
 /// Its start also stands for the variants of the verb before it:
 /// - a leading る for any dictionary form (ることがある in 書くことがある);
@@ -255,7 +262,26 @@ fn piece_at(piece: &str, chars: &[char], start: usize) -> Option<usize> {
     if !voiced.is_empty() {
         targets.push(&voiced);
     }
+    // A lone ない (とても〜ない) has no stem to conjugate.
+    match piece {
+        "ない" => targets.push("ません"),
+        "なかった" => targets.push("ませんでした"),
+        _ => {}
+    }
     let mut deinflector = deinflect::Deinflector::default();
+    // The piece's own conjugation, and its variants': 考えられない is
+    // 考えられる + negative.
+    let mut own: Vec<(String, Reasons)> = Vec::new();
+    for t in &targets {
+        own.extend(
+            deinflector
+                .run_with_reasons(t)
+                .skip(1)
+                .filter(|(_, r)| !r.is_empty())
+                .map(|(f, r)| (f.to_owned(), r)),
+        );
+    }
+    let polite = Reasons::of(&[Reason::Polite]);
     let mut longest = None;
     for end in start + 1..=chars.len() {
         let Some(sub) = chars.get(start..end) else {
@@ -271,7 +297,13 @@ fn piece_at(piece: &str, chars: &[char], start: usize) -> Option<usize> {
         if end - start + 1 < piece_chars || end - start > piece_chars + 8 {
             continue;
         }
-        if deinflector.run(&sub).skip(1).any(|f| targets.contains(&f)) {
+        let same = deinflector.run_with_reasons(&sub).skip(1).any(|(f, r)| {
+            targets.contains(&f)
+                || own
+                    .iter()
+                    .any(|(of, or)| of == f && (r == *or || r == or.union(polite)))
+        });
+        if same {
             longest = Some(end);
         }
     }

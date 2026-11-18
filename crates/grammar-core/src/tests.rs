@@ -55,7 +55,8 @@ fn sample() -> String {
         ),
         point("you-ni-naru", "ようになる", &[], ""),
         point("you-ni", "ように", &[], ""),
-        point("te-yokatta", "てよかった", &[], ""),
+        point("te-yokatta", "てよかった", &[], "")
+            .replace("en = \"Ours.\"", "en = \"Ours.\", also = [\"よかったです。\"]"),
         point("yokatta", "よかった", &[], ""),
         point("tte", "って", &[], "hover = false\ncheck = \"self\""),
         point("wa-particle", "は", &[], ""),
@@ -122,6 +123,11 @@ fn compiles_every_field() {
     assert_eq!(e.examples[1].tatoeba, "");
     assert_eq!(e.examples[0].key, "1_2");
     assert_eq!(e.examples[1].key, "y1");
+    assert!(e.examples[1].also.is_empty());
+    assert_eq!(
+        dict.by_id("te-yokatta").unwrap().examples[1].also,
+        ["よかったです。"]
+    );
     assert!(!dict.by_id("tte").unwrap().hover);
     assert_eq!(e.check, AnswerCheck::Forms);
     assert_eq!(dict.by_id("tte").unwrap().check, AnswerCheck::SelfGraded);
@@ -287,6 +293,10 @@ fn refuses_what_a_lookup_would_get_wrong() {
         (format!("{base}\ncheck = \"none\""), "write \"self\""),
         (format!("{base}\ncheck = {{ inflection = [] }}"), "names no form"),
         (format!("{base}\ncheck = {{ inflection = [\"passiv\"] }}"), "unknown inflection"),
+        (base.replace("en = \"Ours.\"", "en = \"Ours.\", also = [\"{あい}よ。\"]"), "plain, no"),
+        (base.replace("en = \"Ours.\"", "en = \"Ours.\", also = [\" \"]"), "empty `also`"),
+        (base.replace("en = \"Ours.\"", "en = \"Ours.\", also = [\"あい だ。\"]"), "again"),
+        (base.replace("en = \"Ours.\"", "en = \"Ours.\", also = [\"あいよ。\", \"あいよ。\"]"), "again"),
     ];
     for (toml, want) in cases {
         let err = format!("{:#}", compile(&numbered(&toml)).err().unwrap());
@@ -374,6 +384,12 @@ mod answers {
             point("shika-nai", "しか〜ない", &[], ""),
             point("koto-wa-nai", "ことはない", &[], ""),
             point("ta-hyoushi-ni", "た拍子に", &[], ""),
+            point("kangaerarenai", "考えられない", &[], ""),
+            point("to-wa-omowanakatta", "とは思わなかった", &[], ""),
+            point("touzen-da", "当然だ", &[], ""),
+            point("totemo-nai", "とても〜ない", &[], ""),
+            point("you-to-shinai", "ようとしない", &[], ""),
+            point("n-datta", "んだった", &[], ""),
             point("sa-particle", "さ", &[], ""),
             point("yo", "よ", &[], ""),
             point("yone", "よね", &[], ""),
@@ -427,6 +443,14 @@ mod answers {
             ("ta-hyoushi-ni", "転んだ拍子に眼鏡が落ちた。"),
             // ありません read as ない.
             ("koto-wa-nai", "心配することはありません。"),
+            // The polite form of the pattern's own conjugation.
+            ("kangaerarenai", "そんなことは考えられません。"),
+            ("to-wa-omowanakatta", "難しいとは思いませんでした。"),
+            // The polite copula for the plain one.
+            ("touzen-da", "怒るのは当然です。"),
+            ("n-datta", "傘を持ってくるんでした。"),
+            ("totemo-nai", "とても買えません。"),
+            ("you-to-shinai", "誰の話も聞こうとしません。"),
         ] {
             assert_eq!(
                 d.check_answer(id, answer, &NONE),

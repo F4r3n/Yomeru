@@ -12,9 +12,10 @@ use dioxus::prelude::*;
 use crate::dict::{grammar_by_seq, grammar_check, sentence_words};
 use crate::drill_log;
 use crate::grammar::{
-    AnswerCheck, Example, GrammarEntry, Register, Span, Verdict, WordHint, answer_diff,
-    hint_words, plain, register,
+    AnswerCheck, Diff, Example, GrammarEntry, Register, Span, Verdict, WordHint, closest_also,
+    hint_words, plain, register, sentence_diff, topic_is_optional,
 };
+use crate::platform::SentenceWord;
 use crate::icons::{Icon, IconName};
 use crate::idb::{
     GrammarMode, count_due_grammar, ensure_grammar_production_cards, get_all_cards,
@@ -780,17 +781,42 @@ fn WordHints(words: Vec<WordHint>) -> Element {
 }
 
 /// The back of a production card: the user's answer and the reference,
-/// with what one has and the other lacks marked ([`answer_diff`]), the
+/// with what one has and the other lacks marked ([`sentence_diff`]), the
 /// point marked in the reference, and the point.
 #[component]
 fn ProductionBack(point: GrammarEntry, example: Example, answer: String) -> Element {
     let reference = plain(&example.ja);
     let typed = !answer.trim().is_empty();
-    let (extra, missing) = if typed {
-        answer_diff(&answer, &reference)
-    } else {
-        (vec![], vec![false; reference.chars().count()])
+    // The words of the answer and of each sentence it is compared with, so
+    // a word is compared by its reading (持って来て, 持ってきて). All or
+    // none: until they come, or if one fails, chars are compared as typed.
+    let (typed_answer, shown) = (answer.clone(), example.clone());
+    let words = use_resource(use_reactive!(|(typed_answer, shown)| async move {
+        let (answer, example) = (typed_answer, shown);
+        if answer.trim().is_empty() {
+            return None;
+        }
+        let sentences = std::iter::once(answer)
+            .chain(std::iter::once(plain(&example.ja)))
+            .chain(example.also);
+        let mut out: HashMap<String, Vec<SentenceWord>> = HashMap::new();
+        for s in sentences {
+            let found = sentence_words(&s).await.ok()?;
+            out.insert(s, found);
+        }
+        Some(out)
+    }));
+    let words = words.read().clone().flatten();
+    let optional_topic = topic_is_optional(&example);
+    let diff = |a: &str, b: &str| -> Diff {
+        let found = |s: &str| words.as_ref().and_then(|w| w.get(s)).map(Vec::as_slice);
+        sentence_diff(a, found(a), b, found(b), optional_topic)
     };
+    // Another correct answer of the example, when the answer is closer to
+    // it: the marks are then against it, and the reference is shown plain.
+    let also = if typed { closest_also(&answer, &example, diff).map(str::to_owned) } else { None };
+    let compared = also.as_deref().unwrap_or(&reference);
+    let d = if typed { diff(&answer, compared) } else { Diff::default() };
     // The point's chars in the reference.
     let in_point: Vec<bool> = example
         .ja
@@ -804,7 +830,7 @@ fn ProductionBack(point: GrammarEntry, example: Example, answer: String) -> Elem
     let register_note = if !typed {
         None
     } else {
-        match (register(&answer), register(&reference)) {
+        match (register(&answer), register(compared)) {
             (Register::Polite, Register::Plain) => Some(
                 "The reference is casual (plain forms, だ); you wrote it politely (です/ます). Both are right.",
             ),
@@ -814,10 +840,21 @@ fn ProductionBack(point: GrammarEntry, example: Example, answer: String) -> Elem
             _ => None,
         }
     };
-    let answer_runs = runs(&answer, |k| (extra.get(k).copied().unwrap_or(false), false));
+    // The class of a char: marked, left out of the comparison, or neither.
+    let class = |flags: &[bool], optional: &Option<std::ops::Range<usize>>, k: usize, marked: &'static str| {
+        if optional.as_ref().is_some_and(|r| r.contains(&k)) {
+            "diff-optional"
+        } else if flags.get(k).copied().unwrap_or(false) {
+            marked
+        } else {
+            ""
+        }
+    };
+    let answer_runs = runs(&answer, |k| class(&d.a, &d.a_optional, k, "diff-extra"));
+    let also_runs = also.as_deref().map(|a| runs(a, |k| class(&d.b, &d.b_optional, k, "diff-missing")));
     let reference_runs = runs(&reference, |k| {
         (
-            missing.get(k).copied().unwrap_or(false),
+            if also.is_none() { class(&d.b, &d.b_optional, k, "diff-missing") } else { "" },
             in_point.get(k).copied().unwrap_or(false),
         )
     });
@@ -827,12 +864,18 @@ fn ProductionBack(point: GrammarEntry, example: Example, answer: String) -> Elem
                 div { class: "grammar-your-answer",
                     div { class: "muted", "Your answer" }
                     div { class: "jp", lang: "ja",
-                        for (k, (text, (diff, _))) in answer_runs.into_iter().enumerate() {
-                            if diff {
-                                span { key: "{k}", class: "diff-extra", "{text}" }
-                            } else {
-                                span { key: "{k}", "{text}" }
-                            }
+                        for (k, (text, class)) in answer_runs.into_iter().enumerate() {
+                            span { key: "{k}", class, "{text}" }
+                        }
+                    }
+                }
+            }
+            if let Some(also_runs) = also_runs {
+                div { class: "grammar-your-answer",
+                    div { class: "muted", "Also correct" }
+                    div { class: "jp", lang: "ja",
+                        for (k, (text, class)) in also_runs.into_iter().enumerate() {
+                            span { key: "{k}", class, "{text}" }
                         }
                     }
                 }
@@ -843,13 +886,11 @@ fn ProductionBack(point: GrammarEntry, example: Example, answer: String) -> Elem
                         div { class: "muted", "Reference" }
                     }
                     div { class: "jp", lang: "ja",
-                        for (k, (text, (diff, point_part))) in reference_runs.into_iter().enumerate() {
+                        for (k, (text, (class, point_part))) in reference_runs.into_iter().enumerate() {
                             if point_part {
-                                mark { key: "{k}", class: if diff { "diff-missing" } else { "" }, "{text}" }
-                            } else if diff {
-                                span { key: "{k}", class: "diff-missing", "{text}" }
+                                mark { key: "{k}", class, "{text}" }
                             } else {
-                                span { key: "{k}", "{text}" }
+                                span { key: "{k}", class, "{text}" }
                             }
                         }
                     }

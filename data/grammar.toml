@@ -34,6 +34,9 @@
 #                their key within the entry (a Tatoeba one is keyed by its
 #                pair): a new one takes the next number up, and a removed
 #                one's number is never given again
+#                also = ["…"], optional on an example: other correct answers
+#                to its English, plain (no {…}), which production reviews
+#                compare an answer with as well
 #   check        optional: how a production review checks the typed answer.
 #                Left out, the pattern and forms are searched in it.
 #                check = { inflection = ["causative"] } for a point that is
@@ -2138,7 +2141,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "早めに家を出{てよかった}。電車が止まっていた。", en = "Good thing I left home early: the trains had stopped." },
   { tatoeba = "20675_183552", ja = "喜んでいただけ{てよかった}です。", en = "I'm glad you enjoyed it." },
   { source = "yomeru", id = "y2", ja = "傘を持ってき{てよかった}。", en = "I'm glad I brought an umbrella." },
-  { source = "yomeru", id = "y3", ja = "時間に間に合っ{てよかった}。", en = "I'm glad we made it in time." },
+  { source = "yomeru", id = "y3", ja = "時間に間に合っ{てよかった}。", en = "I'm glad we made it in time.", also = ["間に合ってよかった。"] },
 ]
 
 [[point]]

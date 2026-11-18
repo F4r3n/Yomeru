@@ -105,6 +105,10 @@ pub struct Example {
     /// The example's key within its entry, which reports and verdicts point
     /// at: the `tatoeba` pair, or `y<n>` for our own sentences.
     pub key: String,
+    /// Other correct answers to the English, plain text: production
+    /// reviews compare an answer with the closest of `ja` and these.
+    #[serde(default)]
+    pub also: Vec<String>,
 }
 
 /// Text with the pattern marked: a run of spans.
