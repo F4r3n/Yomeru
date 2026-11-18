@@ -7621,6 +7621,9 @@ related = ["to-conditional", "sokode", "sorekara"]
 examples = [
   { source = "yomeru", id = "y1", ja = "ボタンを押した。{すると}、ドアが開いた。", en = "I pushed the button, and the door opened." },
   { source = "yomeru", id = "y2", ja = "窓を開けた。{すると}、冷たい風が入ってきた。", en = "I opened the window. Then a cold wind came in." },
+  { source = "yomeru", id = "y3", ja = "駅に着いた。{すると}、電車はもう出ていた。", en = "I got to the station. Then I found the train had already left." },
+  { source = "yomeru", id = "y4", ja = "「明日は祝日です。」「{すると}、学校は休みですね。」", en = "\"Tomorrow is a holiday.\" \"So, then, there's no school?\"" },
+  { source = "yomeru", id = "y5", ja = "橋を渡って。{そうすると}、左に公園があるよ。", en = "Cross the bridge. Then you'll find a park on the left." },
 ]
 
 [[point]]
@@ -7644,6 +7647,9 @@ related = ["kara-reason", "doushite", "no-wa-da"]
 examples = [
   { tatoeba = "36426_199225", ja = "{なぜなら}新聞記者だったからです。", en = "Because I was a newspaper reporter." },
   { tatoeba = "36430_199229", ja = "{なぜなら}私は昨日長い間勉強したからです。", en = "Because I studied for a long time yesterday." },
+  { tatoeba = "36424_199223", ja = "{なぜなら}彼が招待したからです。", en = "Because he invited me." },
+  { tatoeba = "7003123_199220", ja = "{なぜなら}彼女はすばらしい先生だからです。", en = "The reason is that she is a wonderful teacher." },
+  { tatoeba = "36428_199227", ja = "{なぜなら}私は病気の人々を助けたいからです。", en = "It's because I want to help sick people." },
 ]
 
 [[point]]
@@ -7666,6 +7672,9 @@ related = ["tonikaku", "kara-reason"]
 examples = [
   { source = "yomeru", id = "y1", ja = "{なにしろ}初めてなので、よくわかりません。", en = "It's my first time, after all, so I don't really know." },
   { source = "yomeru", id = "y2", ja = "{なにしろ}人が多くて、何も見えなかった。", en = "There were just so many people, I couldn't see anything." },
+  { source = "yomeru", id = "y3", ja = "{なにしろ}忙しくて、昼ご飯を食べる時間もない。", en = "I'm just so busy, I don't even have time for lunch." },
+  { source = "yomeru", id = "y4", ja = "疲れたでしょう。{何しろ}十時間も歩いたんだから。", en = "You must be tired. After all, you walked for ten hours." },
+  { source = "yomeru", id = "y5", ja = "彼は人気があるよ。{なにしろ}優しいからね。", en = "He's popular. He's so kind, you see." },
 ]
 
 [[point]]
@@ -7692,6 +7701,9 @@ related = ["sunawachi"]
 examples = [
   { tatoeba = "305431_98271", ja = "彼らは３日後、{つまり}６月１０日に出発します。", en = "They are leaving in three days, that is to say June 10th." },
   { tatoeba = "18618_179759", ja = "金と私とは他人同士だ。{つまり}、貧しいのだ。", en = "Money and I are strangers; in other words, I am poor." },
+  { tatoeba = "39759_202527", ja = "{つまり}彼女は下手な踊り子だ。", en = "That is, she is a poor dancer." },
+  { tatoeba = "39765_202533", ja = "{つまり}君が責任を取るべきだったのだ。", en = "In brief, you should have accepted the responsibility." },
+  { source = "yomeru", id = "y1", ja = "「明日は雨だって。」「{つまり}、試合は中止？」", en = "\"They say it'll rain tomorrow.\" \"In other words, the game is off?\"" },
 ]
 
 [[point]]
@@ -7713,6 +7725,9 @@ related = ["tsumari"]
 examples = [
   { tatoeba = "42825_205579", ja = "それは３年後、{すなわち}１９６５年に起こった。", en = "It happened three years later, that is in 1965." },
   { tatoeba = "301770_101923", ja = "彼は天文学、{すなわち}星の研究をしている。", en = "He studies astronomy, or the science of stars." },
+  { tatoeba = "313716_89999", ja = "彼女は今度の日曜、{すなわち}１０日に帰ります。", en = "She will return home next Sunday, that is, the tenth." },
+  { tatoeba = "288608_115063", ja = "彼は５年前、{すなわち}、１２歳の時に東京へ来た。", en = "He came to Tokyo five years ago, that is to say, when he was twelve years old." },
+  { source = "yomeru", id = "y1", ja = "日本の首都、{すなわち}東京は人口が多い。", en = "Japan's capital, namely Tokyo, has a large population." },
 ]
 
 [[point]]
@@ -7742,6 +7757,8 @@ examples = [
   { tatoeba = "48271_211000", ja = "その犬はジョン{という}名前です。", en = "The dog answers to the name John." },
   { tatoeba = "58126_220804", ja = "この川は何{という}のですか。", en = "What is the name of this river?" },
   { tatoeba = "71092_233719", ja = "あなたに会いたい{という}人がいます。", en = "There's somebody who wants to meet you." },
+  { tatoeba = "52905_215603", ja = "ジョーンズさん{という}人が外で待っています。", en = "A Mr Jones is waiting for you outside." },
+  { tatoeba = "247399_167103", ja = "私たちのチームが勝った{という}知らせを聴いた。", en = "I heard the news that our team had won." },
 ]
 
 [[point]]
@@ -7770,8 +7787,11 @@ is spoken: なぜなら is its written \
 counterpart."""
 related = ["to-iu", "tte", "naze-nara"]
 examples = [
-  { tatoeba = "284180_119483", ja = "彼が忙しかった{というのは}本当だ。", en = "That he was busy is true." },
   { source = "yomeru", id = "y1", ja = "「ゆうべ」{というのは}昨日の夜のことです。", en = "\"Yuube\" means last night." },
+  { source = "yomeru", id = "y2", ja = "今日は早く帰ります。{というのは}、母が病気だからです。", en = "I'm going home early today. That's because my mother is sick." },
+  { source = "yomeru", id = "y3", ja = "「お疲れ様」{というのは}、どういう意味ですか。", en = "What does \"otsukaresama\" mean?" },
+  { source = "yomeru", id = "y4", ja = "あの店にはもう行かない。{というのは}、高すぎるからだ。", en = "I won't go to that shop again. The reason is that it's too expensive." },
+  { source = "yomeru", id = "y5", ja = "「花見」{というのは}、桜を見に行くことです。", en = "\"Hanami\" means going to see the cherry blossoms." },
 ]
 
 [[point]]
@@ -7796,7 +7816,9 @@ related = ["to-iu", "ka-to-iu-to", "ni-tsuite"]
 examples = [
   { tatoeba = "240332_174138", ja = "交通事故{と言えば}、去年１件見た。", en = "Speaking of traffic accidents, I saw one last year." },
   { tatoeba = "32035_194861", ja = "メアリー{と言えば}、しばらく会ってないな。", en = "Speaking of Mary, I have not seen her for a long time." },
-  { tatoeba = "307277_96428", ja = "彼らは日本{といえば}富士山を想像する。", en = "They often connect Japan with Mt. Fuji." },
+  { tatoeba = "25437_188295", ja = "音楽{といえば}、君はどんな音楽がすきなの。", en = "Talking of music, what kind of music do you like?" },
+  { source = "yomeru", id = "y1", ja = "夏{といったら}、やっぱりかき氷だね。", en = "When it comes to summer, it has to be shaved ice." },
+  { source = "yomeru", id = "y2", ja = "京都{というと}、お寺が有名ですね。", en = "Speaking of Kyoto, it's famous for its temples." },
 ]
 
 [[point]]
@@ -7820,10 +7842,13 @@ notes = """
 it with と言ってもいい, "you could say", where もいい follows, or with \
 the plain "even if you say": やめてといってもやめない, "he won't stop \
 even when told to". 何といっても is a set phrase, "above all"."""
-related = ["to-itte-mo-ii", "temo", "kedo"]
+related = ["to-itte-mo-ii", "temo", "kedo", "to-wa-ie"]
 examples = [
   { source = "yomeru", id = "y1", ja = "旅行{といっても}、近くの町に一泊しただけだ。", en = "I say a trip, but I just stayed one night in a nearby town." },
   { source = "yomeru", id = "y2", ja = "料理ができる{といっても}、カレーくらいです。", en = "I say I can cook, but it's only curry, really." },
+  { source = "yomeru", id = "y3", ja = "休み{といっても}、一日だけです。", en = "I say a holiday, but it's only one day." },
+  { source = "yomeru", id = "y4", ja = "彼の家は駅から近い{といっても}、歩いて二十分かかる。", en = "I say his house is near the station, but it's a twenty-minute walk." },
+  { source = "yomeru", id = "y5", ja = "給料が上がった。{とはいっても}、ほんの少しだ。", en = "My pay went up. That said, only by a tiny bit." },
 ]
 
 [[point]]
@@ -7846,10 +7871,13 @@ notes = """
 Unlike より in a comparison of two things (AはBより大きい), the two \
 words here describe one and the same thing. Casual speech says って\
 いうか to correct oneself: 寒いっていうか、痛い."""
-related = ["yori-hou-ga", "mushiro"]
+related = ["yori-hou-ga", "mushiro", "to-iu-ka"]
 examples = [
   { tatoeba = "52537_215239", ja = "ジョンは天才{というより}努力家だ。", en = "John is not so much a genius as a hard worker." },
   { source = "yomeru", id = "y1", ja = "今日は暖かい{というより}暑い。", en = "Today it's not so much warm as hot." },
+  { tatoeba = "312896_90816", ja = "彼女は歌手{と言うより}はコメディアンだ。", en = "She is not so much a singer as a comedian." },
+  { source = "yomeru", id = "y2", ja = "疲れた{というより}、眠いだけです。", en = "I'm not so much tired as just sleepy." },
+  { source = "yomeru", id = "y3", ja = "この部屋は静か{というより}、さびしい感じがする。", en = "This room feels lonely rather than quiet." },
 ]
 
 [[point]]
@@ -7877,7 +7905,9 @@ related = ["naze-nara", "to-ieba", "to-wa-kagiranai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "どうして遅れた{かというと}、電車が止まったからです。", en = "Why was I late? Because the train stopped." },
   { source = "yomeru", id = "y2", ja = "毎日走る{かというと}、それは無理だ。", en = "Will I run every day? That's impossible." },
-  { tatoeba = "38022_200818", ja = "どちら{かといえば}彼とは離婚したい。", en = "I would rather divorce him." },
+  { source = "yomeru", id = "y3", ja = "何が一番好き{かというと}、やっぱりすしです。", en = "What do I like best? Sushi, of course." },
+  { source = "yomeru", id = "y4", ja = "有名な店はおいしい{かというと}、そうでもない。", en = "Are famous restaurants always good? Not really." },
+  { source = "yomeru", id = "y5", ja = "なぜ日本語を学ぶ{かというと}、アニメが好きだからだ。", en = "Why do I study Japanese? Because I love anime." },
 ]
 
 [[point]]
@@ -7903,6 +7933,8 @@ examples = [
   { tatoeba = "39236_202024", ja = "テレビ{によれば}今日は晴れるそうだ。", en = "According to the TV, it will be fine today." },
   { tatoeba = "269406_145157", ja = "新聞{によれば}ペルーで地震があったそうだ。", en = "According to the paper, there was an earthquake in Peru." },
   { source = "yomeru", id = "y1", ja = "母{の話では}、兄は来月結婚するらしい。", en = "From what my mother says, my brother is getting married next month." },
+  { tatoeba = "278904_125089", ja = "天気予報{によると}、明日は雨だそうだ。", en = "According to the weather forecast, it will rain tomorrow." },
+  { tatoeba = "32958_195783", ja = "マイク{によれば}、マックは新しい車を買ったそうだ。", en = "According to Mike, Mac bought a new car." },
 ]
 
 [[point]]
@@ -7927,6 +7959,8 @@ examples = [
   { tatoeba = "237827_176636", ja = "兄があなたによろしく{とのことです}。", en = "My brother sends you his regards." },
   { tatoeba = "6637251_192626", ja = "ラジオによると、北海で嵐が起こる{とのことだ}。", en = "According to the radio, a storm is imminent in the North Sea." },
   { source = "yomeru", id = "y1", ja = "部長は少し遅れる{とのことです}。", en = "The manager says he'll be a little late." },
+  { source = "yomeru", id = "y2", ja = "田中さんは明日来られない{とのことです}。", en = "I'm told Mr. Tanaka can't come tomorrow." },
+  { source = "yomeru", id = "y3", ja = "会議は三時からに変わった{とのことです}。", en = "I'm told the meeting has been moved to three o'clock." },
 ]
 
 [[point]]
@@ -7955,6 +7989,8 @@ examples = [
   { tatoeba = "9795265_9681804", ja = "明君って毎週金曜日に弓道をする{んだって}。", en = "I hear Akira practices archery every Friday." },
   { tatoeba = "63150_225812", ja = "キャンセル料３割もとられる{んだって}。", en = "Apparently there's a cancellation charge of 30 percent." },
   { source = "yomeru", id = "y1", ja = "あの店、来月閉まる{んだって}。", en = "I heard that shop is closing next month." },
+  { source = "yomeru", id = "y2", ja = "田中さん、仕事を辞めた{んだって}。", en = "I heard Tanaka quit his job." },
+  { source = "yomeru", id = "y3", ja = "明日、先生は休み{なんだって}。", en = "Apparently the teacher is off tomorrow." },
 ]
 
 [[point]]
@@ -7982,6 +8018,9 @@ related = ["n-datte", "tte"]
 examples = [
   { tatoeba = "28001_190841", ja = "医者は何{だって}？", en = "What'd the doctor say?" },
   { source = "yomeru", id = "y1", ja = "試験は明日{だって}？聞いてないよ。", en = "The exam is tomorrow, you say? Nobody told me." },
+  { source = "yomeru", id = "y2", ja = "何{だって}？もう一度言って。", en = "What did you say? Say it again." },
+  { source = "yomeru", id = "y3", ja = "十万円{だって}？高すぎるよ。", en = "A hundred thousand yen, you say? That's way too expensive." },
+  { source = "yomeru", id = "y4", ja = "あの人が先生{だって}？若いね。", en = "That person is a teacher, you say? So young!" },
 ]
 
 [[point]]
@@ -8012,6 +8051,8 @@ examples = [
   { tatoeba = "264279_150277", ja = "次の時間は何だ{っけ}？", en = "What is the next class?" },
   { tatoeba = "24835_187697", ja = "何の話をしていた{っけ}？", en = "What were we talking about?" },
   { tatoeba = "33361_196185", ja = "ホテルの名前は何でした{っけ}。思い出せないんです。", en = "What was the name of the hotel? I can't recall it." },
+  { tatoeba = "251248_163264", ja = "私の新しいムスタングを見せてなかった{っけ}？", en = "Didn't I show you my new Mustang?" },
+  { source = "yomeru", id = "y1", ja = "彼女の誕生日、いつだ{っけ}？", en = "When was her birthday again?" },
 ]
 
 [[point]]
@@ -8036,6 +8077,9 @@ related = ["to-itte-mo-ii", "to-iwarete-iru"]
 examples = [
   { source = "yomeru", id = "y1", ja = "この計画は成功だった{と言える}。", en = "You could say this plan was a success." },
   { source = "yomeru", id = "y2", ja = "このレストランは安い{とは言えない}。", en = "You can't really call this restaurant cheap." },
+  { source = "yomeru", id = "y3", ja = "彼は日本で一番の選手{と言える}だろう。", en = "He could be called the best player in Japan." },
+  { source = "yomeru", id = "y4", ja = "日本語が上手{とは言えません}が、毎日勉強しています。", en = "I can't say my Japanese is good, but I study every day." },
+  { source = "yomeru", id = "y5", ja = "東京は住みやすい町{と言える}。", en = "You could say Tokyo is an easy city to live in." },
 ]
 
 [[point]]
@@ -8063,6 +8107,8 @@ examples = [
   { tatoeba = "17581_178728", ja = "君なしの生活なんて{考えられない}。", en = "I can't think of life without you." },
   { tatoeba = "274645_138590", ja = "他の人は{考えられない}よ。", en = "I can't think of anybody else." },
   { source = "yomeru", id = "y1", ja = "彼がうそをつく{とは考えられない}。", en = "I can't imagine him telling a lie." },
+  { tatoeba = "52820_215518", ja = "ジョンが時間どおりに来るなんて{考えられない}。", en = "I can't imagine John coming on time." },
+  { source = "yomeru", id = "y2", ja = "疲れて、もう何も{考えられない}。", en = "I'm so tired I can't think about anything anymore." },
 ]
 
 [[point]]
@@ -8090,6 +8136,8 @@ examples = [
   { tatoeba = "61900_224565", ja = "ここで君に会う{とは思わなかった}。", en = "Never did I expect to see you here." },
   { tatoeba = "18026_179170", ja = "君がこんなに早くくる{とは思わなかった}よ。", en = "I didn't expect you to get here so soon." },
   { source = "yomeru", id = "y1", ja = "今日は休みだ{とばかり思っていた}。", en = "I was sure today was a day off." },
+  { source = "yomeru", id = "y2", ja = "こんなに難しい{とは思いませんでした}。", en = "I never thought it would be this hard." },
+  { source = "yomeru", id = "y3", ja = "まさか試験に合格する{とは思わなかった}。", en = "I never imagined I'd pass the exam." },
 ]
 
 [[point]]
@@ -8117,6 +8165,8 @@ examples = [
   { tatoeba = "42466_205224", ja = "それは{言うまでもない}。", en = "That goes without saying." },
   { tatoeba = "239690_174778", ja = "{言うまでもない}ことだが、彼は賞を取れなかった。", en = "Needless to say, he did not win the prize." },
   { tatoeba = "40658_203420", ja = "たばこは健康に悪いことは{言うまでもない}。", en = "It goes without saying that smoking is bad for the health." },
+  { tatoeba = "239696_174772", ja = "{言うまでもなく}、早起きは大切です。", en = "Needless to say, getting up early is important." },
+  { tatoeba = "26279_189132", ja = "英語は{言うまでもなく}、彼はドイツ語も話せる。", en = "He speaks German, not to mention English." },
 ]
 
 [[point]]
