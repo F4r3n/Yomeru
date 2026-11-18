@@ -8835,6 +8835,8 @@ examples = [
   { tatoeba = "245079_169408", ja = "山は{必ずしも}緑ではない。", en = "Mountains are not necessarily green." },
   { tatoeba = "18514_236780", ja = "金持ちは{必ずしも}幸せではない。", en = "The rich are not always happy." },
   { tatoeba = "245369_169118", ja = "仕事はおもしろい、が{必ずしも}やさしくはない。", en = "The job is interesting, but not always easy." },
+  { tatoeba = "28297_191137", ja = "偉人が{必ずしも}賢いとは限らない。", en = "Great men are not always wise." },
+  { source = "yomeru", id = "y1", ja = "有名な店が{必ずしも}おいしいわけではない。", en = "A famous restaurant isn't necessarily good." },
 ]
 
 [[point]]
@@ -8860,9 +8862,11 @@ after a plain verb, "there's no need to" (心配することはない): only \
 the ない before こと makes the double negative."""
 related = ["koto-wa-nai", "wake-de-wa-nai"]
 examples = [
-  { tatoeba = "36702_199501", ja = "どんなに年をとっていても学べ{ないことはない}。", en = "No man is so old he cannot learn." },
   { source = "yomeru", id = "y1", ja = "辛い料理は食べられ{ないことはない}けど、好きじゃない。", en = "It's not that I can't eat spicy food, but I don't like it." },
   { source = "yomeru", id = "y2", ja = "明日なら、行け{ないこともない}よ。", en = "Tomorrow, I could go, I suppose." },
+  { source = "yomeru", id = "y3", ja = "高く{ないことはない}けど、買えるよ。", en = "It's not that it isn't expensive, but I can afford it." },
+  { source = "yomeru", id = "y4", ja = "やればでき{ないことはない}よ。", en = "If you try, it's not as if you can't do it." },
+  { source = "yomeru", id = "y5", ja = "運転はでき{ないこともありません}が、下手です。", en = "I can drive, I suppose, but I'm bad at it." },
 ]
 
 [[point]]
@@ -8888,6 +8892,8 @@ examples = [
   { tatoeba = "22108_184978", ja = "皆さんは心配する{ことはありません}。", en = "You don't have to trouble yourselves." },
   { tatoeba = "323686_80032", ja = "黙って悩んでいる{ことはありません}よ。", en = "You needn't suffer in silence." },
   { source = "yomeru", id = "y1", ja = "そんなに急ぐ{ことはない}よ。", en = "There's no need to rush like that." },
+  { source = "yomeru", id = "y2", ja = "わざわざ来る{ことはない}よ。電話でいい。", en = "There's no need to come all the way here. A phone call is fine." },
+  { source = "yomeru", id = "y3", ja = "謝る{ことはありません}。あなたは悪くない。", en = "You don't have to apologize. It's not your fault." },
 ]
 
 [[point]]
@@ -8917,6 +8923,8 @@ examples = [
   { tatoeba = "248556_165947", ja = "私たちは規則に従う{べきだ}。", en = "We should obey the rules." },
   { tatoeba = "265758_148752", ja = "若者は、老人に親切にす{べきです}。", en = "The young should be kind to the old." },
   { source = "yomeru", id = "y1", ja = "人の悪口を言う{べきではない}。", en = "You shouldn't speak ill of others." },
+  { tatoeba = "16370_177518", ja = "もっと気をつける{べきだった}ね。", en = "You ought to have been more careful." },
+  { source = "yomeru", id = "y2", ja = "今日中にす{べき}ことがたくさんある。", en = "I have lots of things I should do today." },
 ]
 
 [[point]]
@@ -8943,9 +8951,11 @@ duty requires; ことだ is advice for this listener and this goal. The \
 plain ことだ after a noun (趣味は踊ることだ) is just "it is doing…"."""
 related = ["mono-da", "beki-da", "ta-hou-ga-ii"]
 examples = [
-  { tatoeba = "39462_202250", ja = "ですから信じる{ことです}。", en = "So you've got to be a believer." },
   { source = "yomeru", id = "y1", ja = "上手になりたければ、毎日練習する{ことだ}。", en = "If you want to get better, practise every day." },
   { source = "yomeru", id = "y2", ja = "風邪のときは、無理をしない{ことです}。", en = "When you have a cold, the best thing is not to push yourself." },
+  { source = "yomeru", id = "y3", ja = "疲れているなら、今日は早く寝る{ことだ}。", en = "If you're tired, the best thing is to go to bed early tonight." },
+  { source = "yomeru", id = "y4", ja = "試験に受かりたければ、もっと勉強する{ことですね}。", en = "If you want to pass the exam, the best thing is to study more." },
+  { source = "yomeru", id = "y5", ja = "道に迷ったら、まず人に聞く{ことです}。", en = "If you get lost, the best thing is to ask someone first." },
 ]
 
 [[point]]
@@ -8976,6 +8986,8 @@ examples = [
   { tatoeba = "245951_168541", ja = "子供は決してじっとしていない{ものだ}。", en = "Children are never at rest." },
   { tatoeba = "270584_143982", ja = "人生は思うようにはいかない{ものだ}。", en = "Life doesn't always go the way we want it to." },
   { source = "yomeru", id = "y1", ja = "人に会ったら、あいさつをする{ものだ}。", en = "When you meet someone, you're supposed to greet them." },
+  { source = "yomeru", id = "y2", ja = "子供が大きくなるのは早い{ものです}ね。", en = "Children sure grow up fast, don't they?" },
+  { source = "yomeru", id = "y3", ja = "夜遅くに人に電話をする{もんじゃない}よ。", en = "You shouldn't phone people late at night." },
 ]
 
 [[point]]
@@ -9000,6 +9012,8 @@ examples = [
   { tatoeba = "248771_165734", ja = "私たちは子供の頃よくこの川で泳い{だものだ}。", en = "We used to bathe in this river in our childhood." },
   { tatoeba = "293293_110394", ja = "彼はよく図書館に行っ{たものだ}。", en = "He would often go to the library." },
   { tatoeba = "272162_142408", ja = "昔はここに広い公園があっ{たものだ}。", en = "There used to be a large park here." },
+  { tatoeba = "260193_154349", ja = "私は彼とよくテニスをし{たものです}。", en = "I would often play tennis with him." },
+  { source = "yomeru", id = "y1", ja = "子供のころ、よく祖母の家に遊びに行っ{たものだった}。", en = "When I was a child, I used to visit my grandmother's house a lot." },
 ]
 
 [[point]]
@@ -9027,6 +9041,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "だって、だれも教えてくれなかったん{だもん}。", en = "Well, nobody told me!" },
   { source = "yomeru", id = "y2", ja = "行きたくないよ。寒い{もん}。", en = "I don't want to go. It's cold." },
   { source = "yomeru", id = "y3", ja = "だって、まだ子供{だもん}。", en = "Well, I'm still a kid." },
+  { source = "yomeru", id = "y4", ja = "仕方ないわ。初めて{ですもの}。", en = "It can't be helped. It's my first time, after all." },
+  { source = "yomeru", id = "y5", ja = "もう食べられないよ。おなかがいっぱいな{んだもん}。", en = "I can't eat any more. I'm full, after all." },
 ]
 
 [[point]]
@@ -9055,6 +9071,8 @@ examples = [
   { tatoeba = "60067_222737", ja = "この花はなんときれいな{ことか}。", en = "How pretty is this flower!" },
   { tatoeba = "24882_187743", ja = "何と素晴らしい時を過ごした{ことか}。", en = "How wonderful a time we have had!" },
   { source = "yomeru", id = "y1", ja = "何度言った{ことか}。", en = "How many times have I told you!" },
+  { source = "yomeru", id = "y2", ja = "試験に合格して、どんなにうれしかった{ことか}。", en = "How happy I was to pass the exam!" },
+  { source = "yomeru", id = "y3", ja = "一人で外国に住むのは、どんなに寂しい{ことでしょう}。", en = "How lonely it must be to live abroad alone!" },
 ]
 
 [[point]]
@@ -9084,6 +9102,8 @@ examples = [
   { tatoeba = "18915_180055", ja = "驚いた{ことに}、彼は歌が上手かった。", en = "To my surprise, he had a beautiful voice." },
   { tatoeba = "53988_216682", ja = "さらに悪い{ことに}、彼の母が病気になった。", en = "To make matters worse, his mother became ill." },
   { tatoeba = "317737_85974", ja = "悲しい{ことに}、父はその会合には出られない。", en = "To my sorrow, my father cannot attend the meeting." },
+  { tatoeba = "20637_85090", ja = "不思議な{ことに}、ドアはひとりでに開いた。", en = "Strange to say, the door opened of itself." },
+  { tatoeba = "245280_169207", ja = "残念な{ことに}カンニングする学生が多いらしい。", en = "To my regret there are many students who cheat." },
 ]
 
 [[point]]
@@ -9111,6 +9131,8 @@ examples = [
   { tatoeba = "320004_83713", ja = "分かる{ような気がする}。", en = "I think I understand." },
   { tatoeba = "313732_89983", ja = "彼女は今日来る{ような気がする}。", en = "I have an idea she will come today." },
   { tatoeba = "28374_191213", ja = "以前、彼女に会った{ような気がする}。", en = "It feels like I've seen her before." },
+  { tatoeba = "321995_81720", ja = "僕らが勝ちそうな{気がする}。", en = "I feel we shall win." },
+  { source = "yomeru", id = "y1", ja = "夢の{ような気がする}。", en = "It feels as if it were a dream." },
 ]
 
 [[point]]
@@ -9137,6 +9159,8 @@ examples = [
   { tatoeba = "32858_195684", ja = "{まさか}、嘘でしょう。", en = "You must be kidding!" },
   { tatoeba = "32857_195682", ja = "{まさか}あれは私たちの探している家じゃないだろう。", en = "That wouldn't be the house we're looking for, surely." },
   { source = "yomeru", id = "y1", ja = "{まさか}彼が来るとは思わなかった。", en = "I never imagined he would come." },
+  { source = "yomeru", id = "y2", ja = "{まさか}、もう帰ったんじゃないでしょうね。", en = "Surely he hasn't gone home already?" },
+  { source = "yomeru", id = "y3", ja = "「来週、結婚するんだ」「{まさか}！」", en = "\"I'm getting married next week.\" \"No way!\"" },
 ]
 
 [[point]]
@@ -9166,6 +9190,8 @@ examples = [
   { tatoeba = "26790_189637", ja = "雨になっちゃう{んじゃないかな}あ。", en = "I'm afraid it will be rainy." },
   { tatoeba = "17256_178404", ja = "君の計画はうまくいかない{のではないか}と思う。", en = "I'm afraid your plan will not work." },
   { tatoeba = "274722_138513", ja = "他人の顔をじろじろ見る{んじゃない}。", en = "Don't stare others in the face." },
+  { source = "yomeru", id = "y1", ja = "あの店はもう閉まっている{んじゃないですか}。", en = "Isn't that shop maybe closed already?" },
+  { source = "yomeru", id = "y2", ja = "廊下を走る{んじゃない}！", en = "Don't run in the hallway!" },
 ]
 
 [[point]]
@@ -9192,6 +9218,9 @@ related = ["you-da", "rashii", "sou-da-appearance"]
 examples = [
   { source = "yomeru", id = "y1", ja = "部屋が暗い。もう寝た{とみえる}。", en = "The room is dark. They seem to be asleep already." },
   { source = "yomeru", id = "y2", ja = "とても疲れていた{とみえて}、彼はすぐ寝てしまった。", en = "He must have been very tired: he fell asleep right away." },
+  { source = "yomeru", id = "y3", ja = "彼は何も言わない。怒っている{とみえる}。", en = "He says nothing. He seems to be angry." },
+  { source = "yomeru", id = "y4", ja = "庭がぬれている。ゆうべ雨が降った{とみえる}。", en = "The garden is wet. Apparently it rained last night." },
+  { source = "yomeru", id = "y5", ja = "あの子は魚が大好きだ{とみえて}、毎日食べている。", en = "That kid apparently loves fish: he eats it every day." },
 ]
 
 [[point]]
@@ -9223,6 +9252,8 @@ examples = [
   { tatoeba = "52330_215034", ja = "スープは熱い{うちに}召し上がれ。", en = "Eat your soup while it is hot." },
   { tatoeba = "240718_125244", ja = "鉄は熱い{うちに}打て。", en = "Strike while the iron is hot." },
   { source = "yomeru", id = "y1", ja = "話している{うちに}、仲良くなった。", en = "As we talked, we became friends." },
+  { tatoeba = "319331_84384", ja = "父は普通私が寝ている{うちに}家を出ます。", en = "My father usually leaves home while I am in bed." },
+  { source = "yomeru", id = "y2", ja = "若い{うちに}、いろいろな国へ行ったほうがいい。", en = "You should visit lots of countries while you're young." },
 ]
 
 [[point]]
@@ -9249,6 +9280,8 @@ examples = [
   { tatoeba = "267108_147452", ja = "暑くなら{ないうちに}出かけよう。", en = "Let's go out before it gets hot." },
   { tatoeba = "41485_204242", ja = "そんなに待た{ないうちに}バスが来た。", en = "I had not waited long before the bus came." },
   { source = "yomeru", id = "y1", ja = "忘れ{ないうちに}メモしておこう。", en = "I'll write it down before I forget." },
+  { tatoeba = "26897_189742", ja = "雨が降り出さ{ないうちに}帰りましょう。", en = "Let's go back before it begins to rain." },
+  { source = "yomeru", id = "y2", ja = "知ら{ないうちに}、寝てしまった。", en = "I fell asleep before I knew it." },
 ]
 
 [[point]]
@@ -9274,6 +9307,8 @@ examples = [
   { tatoeba = "24212_187075", ja = "家に着い{たとたん}嵐になった。", en = "I had barely got home when the storm broke." },
   { tatoeba = "241505_172968", ja = "腰を下ろし{たとたんに}、電話が鳴った。", en = "I had no sooner sat down than the telephone rang." },
   { tatoeba = "24124_186987", ja = "家を出{たとたん}、通りで偶然彼女に会った。", en = "As soon as I left home, I came across her in the street." },
+  { tatoeba = "314432_89274", ja = "彼女は私を見{たとたんに}笑い出しました。", en = "The moment she saw me, she began laughing." },
+  { tatoeba = "26836_189683", ja = "雨が止ん{だとたんに}きれいな虹が出た。", en = "No sooner had it stopped raining than a beautiful rainbow appeared." },
 ]
 
 [[point]]
@@ -9293,11 +9328,13 @@ Not for natural laws or plain conditions: for "when you press it, it \
 opens" use と. The first part is an action or event that comes round \
 again, not a plain stretch of time: for "every two weeks" use ごとに \
 (二週間ごとに)."""
-related = ["to-conditional", "toki"]
+related = ["to-conditional", "toki", "goto-ni"]
 examples = [
   { tatoeba = "58776_221452", ja = "この写真を見る{たびに}私の父を思い出す。", en = "Every time I see this picture, I remember my father." },
   { tatoeba = "255845_158683", ja = "私はやる{たびに}失敗した。", en = "Each time I tried, I failed." },
   { tatoeba = "315478_88229", ja = "彼女は洗い物{のたびに}皿を割る。", en = "She breaks a dish every time she washes dishes." },
+  { tatoeba = "308646_95060", ja = "彼女に会う{たびに}胸がどきどきする。", en = "My heart beats fast each time I see her." },
+  { tatoeba = "62616_225280", ja = "ゲームをやる{たびに}ジョンが勝つ。", en = "John wins every time we play the game." },
 ]
 
 [[point]]
@@ -9326,6 +9363,8 @@ examples = [
   { tatoeba = "26469_189321", ja = "映画の{最中に}彼は震え始めた。", en = "He began to tremble during the movie." },
   { tatoeba = "310737_92972", ja = "彼女はきゅうりを切っている{最中だった}。", en = "She was right in the middle of cutting cucumbers." },
   { source = "yomeru", id = "y1", ja = "食事の{最中に}電話が鳴った。", en = "The phone rang right in the middle of dinner." },
+  { tatoeba = "290319_113354", ja = "彼はスピーチの{最中に}気を失った。", en = "He fainted in the midst of his speech." },
+  { tatoeba = "19988_182867", ja = "議論のまっ{最中に}ベルが鳴った。", en = "The bell went off right in the middle of our discussion." },
 ]
 
 [[point]]
@@ -9351,6 +9390,8 @@ examples = [
   { tatoeba = "326576_77143", ja = "話すのを聞い{て初めて}彼だとわかった。", en = "It wasn't until I heard him speak that I recognized him." },
   { tatoeba = "239016_175449", ja = "健康を失っ{て初めて}健康のありがたみがわかる。", en = "People do not know the blessing of good health until they lose it." },
   { tatoeba = "246744_167755", ja = "私が呼ん{ではじめて}彼は来た。", en = "It was not until I called that he came." },
+  { tatoeba = "49510_237059", ja = "その映画を見{てはじめて}その俳優を知りました。", en = "I didn't know the actor until I saw the movie." },
+  { source = "yomeru", id = "y1", ja = "日本に来{て初めて}、本当のすしの味を知った。", en = "It wasn't until I came to Japan that I knew what real sushi tastes like." },
 ]
 
 [[point]]
