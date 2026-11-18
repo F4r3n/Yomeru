@@ -431,7 +431,7 @@ final する; casual speech sometimes drops する."""
 related = ["te-form-sequence", "shi"]
 examples = [
   { tatoeba = "23925_186788", ja = "歌っ{たり踊ったりし}ましょう。", en = "Let's sing and dance." },
-  { tatoeba = "301688_102006", ja = "彼は通りを行っ{たり来たりし}た。", en = "He walked back and forth on the street." },
+  { source = "yomeru", id = "y4", ja = "夜は音楽を聞い{たり、手紙を書いたりし}ます。", en = "In the evening I listen to music, write letters and so on." },
   { source = "yomeru", id = "y1", ja = "日曜日は本を読ん{だり、映画を見たりし}ます。", en = "On Sundays I do things like read books and watch films." },
   { source = "yomeru", id = "y2", ja = "この町の天気は暑かっ{たり寒かったりし}ます。", en = "The weather in this town is sometimes hot, sometimes cold." },
   { source = "yomeru", id = "y3", ja = "昨日は友達と話し{たり、ゲームをしたりし}た。", en = "Yesterday I did things like chat and play games with friends." },
@@ -542,7 +542,7 @@ ask it can sound nosy. んですが or んですけど opens a request: 道を�
 related = ["node", "kedo"]
 examples = [
   { tatoeba = "280130_123865", ja = "頭が痛い{んです}。頭痛薬がありますか。", en = "My head hurts. Have you got any headache tablets?" },
-  { tatoeba = "66356_228998", ja = "いつから雪が降っている{んです}か。", en = "How long has it been snowing?" },
+  { source = "yomeru", id = "y3", ja = "明日はテストがある{んです}。だから今日は早く寝ます。", en = "The thing is, I have a test tomorrow. So I'm going to bed early tonight." },
   { tatoeba = "36363_199164", ja = "なぜ遅刻した{のです}か。", en = "Why were you late?" },
   { source = "yomeru", id = "y1", ja = "すみません、道が分からない{んです}が…。", en = "Excuse me, the thing is, I don't know the way…" },
   { source = "yomeru", id = "y2", ja = "どうして何も食べない{んです}か。", en = "Why aren't you eating anything?" },
@@ -1474,7 +1474,7 @@ examples = [
   { tatoeba = "56816_219496", ja = "この本を読む{のは}私には簡単です。", en = "It is easy for me to read this book." },
   { tatoeba = "242071_172404", ja = "今私たちに必要な{のは}休息です。", en = "What we need now is a rest." },
   { source = "yomeru", id = "y1", ja = "赤い{のを}一つください。", en = "One red one, please." },
-  { source = "yomeru", id = "y2", ja = "私は本を読む{のが}好きです。", en = "I like reading books." },
+  { source = "yomeru", id = "y4", ja = "あそこに立っている{のは}私の兄です。", en = "The one standing over there is my older brother." },
   { source = "yomeru", id = "y3", ja = "ドアを閉める{のを}忘れました。", en = "I forgot to close the door." },
 ]
 
@@ -1948,7 +1948,7 @@ is a soft, polite question: 駅はどこでしょうか."""
 related = ["kamoshirenai", "sou-da-appearance", "ne"]
 examples = [
   { tatoeba = "274982_138253", ja = "多分今日は雨が降る{でしょう}。", en = "The chances are that it will rain today." },
-  { tatoeba = "48540_211266", ja = "その計画はうまくいく{だろう}。", en = "The plan will work out." },
+  { source = "yomeru", id = "y3", ja = "あの人はたぶん学生{でしょう}。", en = "That person is probably a student." },
   { source = "yomeru", id = "y1", ja = "明日はたぶん晴れる{でしょう}。", en = "It will probably be sunny tomorrow." },
   { tatoeba = "242984_171492", ja = "今日は由利さんの誕生日{でしょう}？", en = "It's your birthday, isn't it, Yuri?" },
   { source = "yomeru", id = "y2", ja = "たぶん先生は知らない{だろう}。", en = "The teacher probably doesn't know." },
