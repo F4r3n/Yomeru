@@ -377,6 +377,28 @@ mod tests {
     }
 
     #[test]
+    fn a_backfilled_production_card_loses_to_any_real_copy() {
+        use crate::types::CardItem;
+        // Another device made this point's production card when the point
+        // was added (at 1_000), then reviewed it.
+        let mut rec = SrsCard::new(CardItem::Grammar(7), CardDirection::Recognition, 1_000.0);
+        rec.updated_ms = 1_000.0;
+        let local = crate::store_common::missing_production_cards(&[rec]);
+        let mut remote = SrsCard::new(CardItem::Grammar(7), CardDirection::Production, 1_000.0);
+        remote.status = CardStatus::Active;
+        remote.reps = 3;
+        remote.updated_ms = 50_000.0;
+        let applied = cards_to_apply(std::slice::from_ref(&remote), &local, &[]);
+        assert_eq!(applied.len(), 1);
+        assert_eq!(applied[0].reps, 3);
+        // Even one the other device made and never touched, at the same
+        // moment the point was added: a tie goes to the server's copy.
+        let mut same = SrsCard::new(CardItem::Grammar(7), CardDirection::Production, 1_000.0);
+        same.updated_ms = 1_000.0;
+        assert_eq!(cards_to_apply(&[same], &local, &[]).len(), 1);
+    }
+
+    #[test]
     fn newer_local_card_is_kept() {
         // A review (or promotion, or reset) landed locally while the sync was
         // in flight — the server's older copy must not overwrite it.

@@ -318,11 +318,24 @@ export async function getDueCards(nowMs: number): Promise<SrsCard[]> {
             (a, b) =>
               Number(a.state === "new") - Number(b.state === "new") || a.due_ms - b.due_ms,
           );
-          resolve(due);
+          resolve(holdSiblings(due));
         };
         req.onerror = () => reject(req.error);
       }),
   );
+}
+
+/** One card per item in a session, like the app's `srs::hold_siblings`: a
+ * word's recognition and recall cards answer each other, so only the first
+ * of `due` is kept; the other stays due for the next session. */
+export function holdSiblings(due: SrsCard[]): SrsCard[] {
+  const seen = new Set<string>();
+  return due.filter((c) => {
+    const key = `${c.kind}:${c.item}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export async function getStagingCards(): Promise<SrsCard[]> {

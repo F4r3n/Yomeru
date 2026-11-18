@@ -11,11 +11,13 @@ use crate::dict::grammar_by_seq;
 use crate::drill_log;
 use crate::grammar::GrammarEntry;
 use crate::icons::{Icon, IconName};
-use crate::idb::{get_all_cards, get_due_grammar_cards, put_card_logged};
+use crate::idb::{
+    ensure_grammar_production_cards, get_all_cards, get_due_grammar_cards, put_card_logged,
+};
 use crate::settings::load as load_settings;
 use crate::srs::{ReviewOutcome, apply_review, now_ms, rating_from_u8};
 use crate::sync::{schedule_sync, use_reload_on_sync};
-use crate::types::{ReviewKind, SrsCard};
+use crate::types::{CardDirection, ReviewKind, SrsCard};
 
 use super::lookup_grammar::{ExampleList, GrammarExplanation};
 use super::review::next_due_message;
@@ -61,7 +63,12 @@ pub(crate) fn GrammarReview() -> Element {
     let load_session = move || {
         spawn(async move {
             let settings = load_settings();
-            let cards = get_due_grammar_cards(now_ms()).await.unwrap_or_default();
+            if let Err(e) = ensure_grammar_production_cards().await {
+                warn!("ensure_grammar_production_cards failed: {e}");
+            }
+            let cards = get_due_grammar_cards(now_ms(), CardDirection::Recognition)
+                .await
+                .unwrap_or_default();
             let seqs: Vec<u32> = cards.iter().filter_map(SrsCard::grammar_seq).collect();
             let found = match grammar_by_seq(&seqs).await {
                 Ok(v) => v,
@@ -88,7 +95,7 @@ pub(crate) fn GrammarReview() -> Element {
             results.set(vec![]);
             last_answer.set(None);
             let mut all = get_all_cards().await.unwrap_or_default();
-            all.retain(SrsCard::is_grammar);
+            all.retain(|c| c.is_grammar() && c.direction == CardDirection::Recognition);
             has_deck.set(!all.is_empty());
             next_due.set(next_due_message(&all, now_ms()));
             loaded.set(true);
@@ -146,7 +153,7 @@ pub(crate) fn GrammarReview() -> Element {
             show_back.set(false);
             if *idx.peek() >= due.peek().len() {
                 let mut all = get_all_cards().await.unwrap_or_default();
-                all.retain(SrsCard::is_grammar);
+                all.retain(|c| c.is_grammar() && c.direction == CardDirection::Recognition);
                 next_due.set(next_due_message(&all, now_ms()));
             }
             // Last, so an undo can't run before the summary lands.

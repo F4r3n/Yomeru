@@ -99,6 +99,17 @@ describe("idb", () => {
 
       expect(due.map((c) => Number(c.item))).toEqual([BIRD, DOG, CAT]);
     });
+
+    it("takes one card per word: its other card waits for tomorrow", async () => {
+      const now = Date.now();
+      await idb.putCard(makeCard({ sequence: CAT, direction: "recognition", due_ms: now - 2000, state: "review", status: "active" }));
+      await idb.putCard(makeCard({ sequence: CAT, direction: "recall", due_ms: now - 1000, state: "review", status: "active" }));
+
+      const due = await idb.getDueCards(now);
+
+      expect(due.map((c) => c.direction)).toEqual(["recognition"]);
+    });
+
   });
 
   describe("getStagingCards", () => {
@@ -267,14 +278,19 @@ describe("idb", () => {
       expect(await idb.getCardsOf(wordKey(CAT))).toEqual([]);
     });
 
-    it("removes a grammar point's one card, with its tombstone", async () => {
+    it("removes a grammar point's cards, with a tombstone for each side", async () => {
+      // Only recognition here: a production card another device made still
+      // gets its tombstone, so the sync deletes it there too.
       await idb.putCard(makeCard({ ...GRAMMAR, direction: "recognition" }));
 
       await idb.deleteCard(GRAMMAR);
 
       expect(await idb.getCardsOf(GRAMMAR)).toEqual([]);
       const tombstones = await idb.getAllTombstones();
-      expect(tombstones.map((t) => t.id)).toEqual([cardId(GRAMMAR, "recognition")]);
+      expect(tombstones.map((t) => t.id).sort()).toEqual([
+        cardId(GRAMMAR, "production"),
+        cardId(GRAMMAR, "recognition"),
+      ]);
     });
 
     it("does not affect other entries' siblings", async () => {

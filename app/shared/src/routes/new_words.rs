@@ -9,7 +9,7 @@ use crate::dict::{
 };
 use crate::grammar::GrammarEntry;
 use crate::icons::{Icon, IconName};
-use crate::idb::{delete_card, get_staging_cards, promote_card};
+use crate::idb::{delete_card, ensure_grammar_production_cards, get_staging_cards, promote_card};
 use crate::romaji::PreparedQuery;
 use crate::sync::{schedule_sync, use_reload_on_sync};
 use crate::types::{CardItem, SrsCard};
@@ -37,6 +37,10 @@ pub fn NewWordsTab() -> Element {
         let my_gen = *load_gen.peek() + 1;
         load_gen.set(my_gen);
         spawn(async move {
+            // Grammar points from before production cards stage theirs here.
+            if let Err(e) = ensure_grammar_production_cards().await {
+                warn!("ensure_grammar_production_cards failed: {e}");
+            }
             let result = get_staging_cards().await;
             let result = match result {
                 Ok(c) => {

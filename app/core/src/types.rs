@@ -97,12 +97,12 @@ impl CardItem {
     }
 
     /// Every direction a card of this item can have, so every card id it
-    /// can have. A word has two cards; a kanji and a grammar point one each.
+    /// can have. A word and a grammar point have two cards, a kanji one.
     pub fn directions(self) -> &'static [CardDirection] {
         match self {
             Self::Word(_) => &[CardDirection::Recognition, CardDirection::Recall],
             Self::Kanji(_) => &[CardDirection::Meaning],
-            Self::Grammar(_) => &[CardDirection::Recognition],
+            Self::Grammar(_) => &[CardDirection::Recognition, CardDirection::Production],
         }
     }
 
@@ -144,6 +144,8 @@ pub enum CardDirection {
     Recall,
     /// Kanji: the kanji → its meaning and readings.
     Meaning,
+    /// Grammar: an English sentence → the Japanese using the point.
+    Production,
 }
 
 impl CardDirection {
@@ -152,6 +154,7 @@ impl CardDirection {
             Self::Recognition => "recognition",
             Self::Recall => "recall",
             Self::Meaning => "meaning",
+            Self::Production => "production",
         }
     }
 }
@@ -502,12 +505,6 @@ impl SrsCard {
         }
     }
 
-    /// A new grammar card for the entry numbered `seq`, into staging like
-    /// words: grammar points are added by hand and enter at the user's pace.
-    pub fn new_grammar(seq: u32, now_ms: f64) -> Self {
-        Self::new(CardItem::Grammar(seq), CardDirection::Recognition, now_ms)
-    }
-
     pub fn kind(&self) -> CardKind {
         self.item.kind()
     }
@@ -641,8 +638,8 @@ mod tests {
 
     #[test]
     fn a_card_this_build_does_not_know_does_not_parse() {
-        let mut json = serde_json::to_value(SrsCard::new_grammar(7, 0.0)).unwrap();
-        json["direction"] = "production".into();
+        let mut json = serde_json::to_value(grammar(7, CardDirection::Recognition)).unwrap();
+        json["direction"] = "cloze".into();
         assert!(serde_json::from_value::<SrsCard>(json.clone()).is_err());
         json["direction"] = "recognition".into();
         json["kind"] = "cloze".into();
@@ -653,15 +650,26 @@ mod tests {
         assert!(serde_json::from_value::<SrsCard>(json).is_err());
     }
 
+    fn grammar(seq: u32, d: CardDirection) -> SrsCard {
+        SrsCard::new(CardItem::Grammar(seq), d, 5.0)
+    }
+
     #[test]
-    fn a_grammar_card_is_keyed_by_its_entry_and_is_no_word() {
-        let c = SrsCard::new_grammar(7, 5.0);
-        assert_eq!(c.item, CardItem::Grammar(7));
-        assert_eq!(c.id, "grammar:7:recognition");
-        assert_eq!(c.status, CardStatus::Staging);
-        assert_eq!(c.kind(), CardKind::Grammar);
-        assert!(c.is_grammar() && !c.is_word() && !c.is_kanji());
-        assert_eq!((c.kanji_char(), c.word_seq(), c.grammar_seq()), (None, None, Some(7)));
+    fn a_grammar_point_has_a_recognition_and_a_production_card() {
+        let cards = SrsCard::new_cards(CardItem::Grammar(7), 5.0);
+        let ids: Vec<&str> = cards.iter().map(|c| c.id.as_str()).collect();
+        assert_eq!(ids, ["grammar:7:recognition", "grammar:7:production"]);
+        for c in &cards {
+            assert_eq!(c.item, CardItem::Grammar(7));
+            assert_eq!(c.status, CardStatus::Staging);
+            assert_eq!(c.kind(), CardKind::Grammar);
+            assert!(c.is_grammar() && !c.is_word() && !c.is_kanji());
+            assert_eq!((c.kanji_char(), c.word_seq(), c.grammar_seq()), (None, None, Some(7)));
+            let json = serde_json::to_value(c).unwrap();
+            let back: SrsCard = serde_json::from_value(json).unwrap();
+            assert_eq!((back.id.as_str(), back.direction), (c.id.as_str(), c.direction));
+        }
+        assert_eq!(cards[1].direction.as_str(), "production");
     }
 
     #[test]

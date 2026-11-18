@@ -233,6 +233,18 @@ learned by heart. Before writing examples at scale, the format grows:
   unseen until they update.
 - Code that assumes one card per point takes both, as words do:
   promote / demote / reset / delete and the Add button's status.
+  ~~Done~~ (branch `grammar-production`): `CardItem::directions`, the
+  extension's `KIND_DIRECTIONS`; Add makes both; the button shows the
+  recognition card.
+- Points added before: `ensure_grammar_production_cards` (on the Grammar
+  review and New Words screens) stages the missing production card,
+  written as synced and stamped with the recognition card's `added_ms`, so
+  another device's real copy always wins the merge.
+- Sessions: recognition and production are separate Grammar sessions
+  (`get_due_grammar_cards(now, direction)`). A session takes one card per
+  item (`srs::hold_siblings`); the other stays due for the next session.
+  This holds for a word's recognition and recall cards too, in the app and
+  the extension.
 - Front: the English sentence, and under it the point's `meaning` line
   ("prohibition: must not"), so the user knows which point to use without
   seeing the pattern. The vocabulary hints are behind a button.

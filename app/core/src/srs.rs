@@ -32,6 +32,23 @@ pub fn order_due(cards: &mut [SrsCard]) {
     });
 }
 
+/// Keeps a session to one card per item: a word's recognition and recall
+/// cards, or a grammar point's recognition and production cards, answer each
+/// other, so only the first of `due` (in session order, [`order_due`]) is
+/// kept. The other stays due and comes up in the next session.
+pub fn hold_siblings(due: Vec<SrsCard>) -> Vec<SrsCard> {
+    let mut seen: Vec<CardItem> = Vec::new();
+    due.into_iter()
+        .filter(|c| {
+            if seen.contains(&c.item) {
+                return false;
+            }
+            seen.push(c.item);
+            true
+        })
+        .collect()
+}
+
 pub fn apply_review(
     card: &SrsCard,
     rating: ReviewRating,
@@ -344,6 +361,29 @@ mod tests {
 
     /// An Active card last reviewed at 0, next due in 10 minutes — well
     /// inside the trouble window.
+    fn due(item: CardItem, direction: CardDirection) -> SrsCard {
+        let mut c = SrsCard::new(item, direction, 0.0);
+        c.status = CardStatus::Active;
+        c
+    }
+
+    #[test]
+    fn a_session_takes_one_card_per_item() {
+        use CardDirection::{Production, Recall, Recognition};
+        let cards = vec![
+            due(W(1), Recognition),
+            due(W(2), Recall),
+            due(W(1), Recall),
+            due(CardItem::Grammar(3), Production),
+            due(CardItem::Grammar(3), Recognition),
+        ];
+        let kept: Vec<String> = hold_siblings(cards).into_iter().map(|c| c.id).collect();
+        assert_eq!(
+            kept,
+            ["word:1:recognition", "word:2:recall", "grammar:3:production"]
+        );
+    }
+
     fn active(item: CardItem, direction: CardDirection, again: u32, difficulty: f64) -> SrsCard {
         let mut c = SrsCard::new(item, direction, 0.0);
         c.status = CardStatus::Active;

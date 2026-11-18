@@ -72,15 +72,16 @@ export const MS_PER_DAY = 86_400_000;
 export type CardKind = "word" | "kanji" | "grammar";
 
 /** Mirrors `CardDirection` in `app/core/src/types.rs`. Words have
- * `recognition` and `recall`, kanji `meaning`, grammar points `recognition`. */
-export type CardDirection = "recognition" | "recall" | "meaning";
+ * `recognition` and `recall`, kanji `meaning`, grammar points `recognition`
+ * and `production`. */
+export type CardDirection = "recognition" | "recall" | "meaning" | "production";
 
 /** The directions each kind's cards come in, the order they are made in.
  * Mirrors `CardItem::directions`. */
 export const KIND_DIRECTIONS: Record<CardKind, CardDirection[]> = {
   word: ["recognition", "recall"],
   kanji: ["meaning"],
-  grammar: ["recognition"],
+  grammar: ["recognition", "production"],
 };
 
 /** Which card, within its kind: a JMdict `ent_seq` (`"1358280"`), a kanji

@@ -638,7 +638,7 @@ mod tests {
         let rec = card(1_000_001, CardDirection::Recognition);
         let rec_other = card(1_000_002, CardDirection::Recognition);
         let kanji = SrsCard::new_kanji('猫', 0.0);
-        let grammar = SrsCard::new_grammar(1_000_001, 0.0);
+        let grammar = SrsCard::new(CardItem::Grammar(1_000_001), CardDirection::Recognition, 0.0);
         put_all_on(&conn, &[rec.clone(), rec_other, kanji.clone(), grammar.clone()], false, 0.0)
             .unwrap();
         let ids = |item| -> Vec<String> {
@@ -655,9 +655,10 @@ mod tests {
         let conn = db();
         let known = card(1_000_001, CardDirection::Recognition);
         put_all_on(&conn, std::slice::from_ref(&known), false, 0.0).unwrap();
-        let mut odd = serde_json::to_value(SrsCard::new_grammar(7, 0.0)).unwrap();
-        odd["id"] = "grammar:7:production".into();
-        odd["direction"] = "production".into();
+        let recognition = SrsCard::new(CardItem::Grammar(7), CardDirection::Recognition, 0.0);
+        let mut odd = serde_json::to_value(recognition).unwrap();
+        odd["id"] = "grammar:7:cloze".into();
+        odd["direction"] = "cloze".into();
         put_raw_card_row(&conn, &odd).unwrap();
         put_raw_card_row(&conn, &serde_json::json!({ "kind": "x" })).unwrap();
 
@@ -668,7 +669,7 @@ mod tests {
         assert!(get_cards_of_on(&conn, CardItem::Grammar(7)).unwrap().is_empty());
         // Kept as it came, for the build that knows its direction.
         let json: String = conn
-            .query_row("SELECT json FROM cards WHERE id = 'grammar:7:production'", [], |r| r.get(0))
+            .query_row("SELECT json FROM cards WHERE id = 'grammar:7:cloze'", [], |r| r.get(0))
             .unwrap();
         assert_eq!(serde_json::from_str::<serde_json::Value>(&json).unwrap(), odd);
     }

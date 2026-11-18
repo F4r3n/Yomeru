@@ -6,7 +6,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::idb::{delete_ids_with_tombstones, get_all_cards, get_cards_of, put_all};
-use crate::types::{CardItem, CardKind, CardStatus, SrsCard};
+use crate::types::{CardDirection, CardItem, CardKind, CardStatus, SrsCard};
 
 /// A local record that the user deleted a card, and when. The time travels to
 /// the server on the next sync so a delete made while offline is ordered by
@@ -33,34 +33,83 @@ pub async fn put_cards(cards: &[SrsCard]) -> Result<(), String> {
 }
 
 /// Writes cards adopted from the server verbatim, keeping the `updated_ms` they
-/// arrived with. Only the sync merge should use this — see `put_all`.
+/// arrived with. Only the sync merge should use this — see `put_all` — and
+/// [`ensure_grammar_production_cards`], whose cards must lose to any real one.
 pub async fn put_cards_synced(cards: &[SrsCard]) -> Result<(), String> {
     put_all(cards, false).await
 }
 
-/// Due word cards, ordered by [`crate::srs::order_due`]. Kanji cards have their own session — see
+/// Due word cards, ordered by [`crate::srs::order_due`], one per word
+/// ([`crate::srs::hold_siblings`]): the other waits for the next session. Kanji cards have their own session — see
 /// [`get_due_kanji_cards`].
 pub async fn get_due_cards(now_ms: f64) -> Result<Vec<SrsCard>, String> {
-    get_due(now_ms, CardKind::Word).await
+    get_due(now_ms, CardKind::Word, None).await
 }
 
 /// Due kanji cards, ordered by [`crate::srs::order_due`].
 pub async fn get_due_kanji_cards(now_ms: f64) -> Result<Vec<SrsCard>, String> {
-    get_due(now_ms, CardKind::Kanji).await
+    get_due(now_ms, CardKind::Kanji, None).await
 }
 
-/// Due grammar cards, ordered by [`crate::srs::order_due`].
-pub async fn get_due_grammar_cards(now_ms: f64) -> Result<Vec<SrsCard>, String> {
-    get_due(now_ms, CardKind::Grammar).await
+/// Due grammar cards of one `direction`, ordered by
+/// [`crate::srs::order_due`]: recognition and production are separate
+/// sessions.
+pub async fn get_due_grammar_cards(
+    now_ms: f64,
+    direction: CardDirection,
+) -> Result<Vec<SrsCard>, String> {
+    get_due(now_ms, CardKind::Grammar, Some(direction)).await
 }
 
-async fn get_due(now_ms: f64, kind: CardKind) -> Result<Vec<SrsCard>, String> {
-    let mut all = get_all_cards().await?;
-    all.retain(|c| {
-        c.kind() == kind && matches!(c.status, CardStatus::Active) && c.due_ms <= now_ms
+async fn get_due(
+    now_ms: f64,
+    kind: CardKind,
+    direction: Option<CardDirection>,
+) -> Result<Vec<SrsCard>, String> {
+    let mut due = get_all_cards().await?;
+    due.retain(|c| {
+        c.kind() == kind
+            && direction.is_none_or(|d| c.direction == d)
+            && matches!(c.status, CardStatus::Active)
+            && c.due_ms <= now_ms
     });
-    crate::srs::order_due(&mut all);
-    Ok(all)
+    crate::srs::order_due(&mut due);
+    Ok(crate::srs::hold_siblings(due))
+}
+
+/// Gives every grammar point in the deck its production card, in staging,
+/// for the points added before production cards existed (or on a build
+/// without them). Run when the grammar screens load; returns how many it
+/// made.
+///
+/// A device can't know whether another one already made and reviewed the
+/// card, so the new one is written as if synced: not uploaded until changed
+/// here, and stamped with the recognition card's `added_ms`, older than any
+/// real edit, so the next sync keeps another device's copy over it.
+pub async fn ensure_grammar_production_cards() -> Result<usize, String> {
+    let all = get_all_cards().await?;
+    let missing = missing_production_cards(&all);
+    if !missing.is_empty() {
+        put_cards_synced(&missing).await?;
+    }
+    Ok(missing.len())
+}
+
+/// The production cards [`ensure_grammar_production_cards`] makes: one per
+/// grammar recognition card without one, staged, priority 0.
+pub fn missing_production_cards(all: &[SrsCard]) -> Vec<SrsCard> {
+    let have: std::collections::HashSet<&str> = all.iter().map(|c| c.id.as_str()).collect();
+    all.iter()
+        .filter(|c| c.is_grammar() && c.direction == CardDirection::Recognition)
+        .filter_map(|rec| {
+            let mut c = SrsCard::new(rec.item, CardDirection::Production, rec.added_ms);
+            if have.contains(c.id.as_str()) {
+                return None;
+            }
+            c.updated_ms = rec.added_ms;
+            Some(c)
+        })
+        .collect()
 }
 
 pub async fn get_staging_cards() -> Result<Vec<SrsCard>, String> {
@@ -159,4 +208,32 @@ pub async fn delete_card(item: CardItem) -> Result<(), String> {
 
 pub async fn delete_card_by_id(id: &str) -> Result<(), String> {
     delete_ids_with_tombstones(std::slice::from_ref(&id.to_string())).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn each_grammar_point_gets_one_production_card_older_than_any_edit() {
+        let mut rec = SrsCard::new(CardItem::Grammar(7), CardDirection::Recognition, 1_000.0);
+        rec.status = CardStatus::Active;
+        rec.updated_ms = 9_000.0;
+        let done = SrsCard::new_cards(CardItem::Grammar(8), 2_000.0);
+        let word = SrsCard::new_cards(CardItem::Word(1_000_001), 3_000.0);
+        let all: Vec<SrsCard> = [vec![rec], done, word].concat();
+
+        let made = missing_production_cards(&all);
+        assert_eq!(made.len(), 1, "{made:?}");
+        let c = &made[0];
+        assert_eq!(c.id, "grammar:7:production");
+        assert_eq!(c.status, CardStatus::Staging);
+        assert_eq!(
+            (c.added_ms, c.updated_ms, c.priority),
+            (1_000.0, 1_000.0, 0)
+        );
+        // Run again with it stored: nothing more.
+        let all: Vec<SrsCard> = [all, made].concat();
+        assert!(missing_production_cards(&all).is_empty());
+    }
 }
