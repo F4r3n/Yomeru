@@ -5202,9 +5202,11 @@ The tone falls; with a rising tone (and often ん before it: 雨なんじゃな�
 いか (行こうじゃないか) is a firm "let's"."""
 related = ["deshou", "desu", "volitional"]
 examples = [
-  { tatoeba = "66081_228724", ja = "いつも言ってる{じゃないか}。", en = "I say it all the time." },
-  { tatoeba = "326520_77199", ja = "話が違う{じゃないか}。", en = "That's not what you said before." },
   { source = "yomeru", id = "y1", ja = "駅は近い{じゃないですか}。歩きましょう。", en = "The station's close, isn't it? Let's walk." },
+  { tatoeba = "20853_183731", ja = "間違えたのは君{じゃないか}！", en = "It was you that made the mistake!" },
+  { tatoeba = "66692_140638", ja = "素晴らしい天気{ではないか}。", en = "Isn't it a lovely day!" },
+  { tatoeba = "250273_164236", ja = "私のお金を少しあげた{じゃありませんか}。", en = "Didn't I give you some money?" },
+  { source = "yomeru", id = "y2", ja = "だから言った{じゃないか}。", en = "See, I told you, didn't I?" },
 ]
 
 [[point]]
@@ -5230,6 +5232,8 @@ examples = [
   { tatoeba = "52270_214974", ja = "すぐそばでかすかな音{がした}。", en = "I heard a faint sound nearby." },
   { source = "yomeru", id = "y1", ja = "この花はいいにおい{がする}。", en = "This flower smells nice." },
   { tatoeba = "25178_188039", ja = "何か甘いものを食べたい気{がする}。", en = "I feel like eating something sweet." },
+  { tatoeba = "60374_223043", ja = "このヨーグルトは変な味{がする}。", en = "This yogurt tastes strange." },
+  { source = "yomeru", id = "y2", ja = "あの人にどこかで会ったような気{がする}。", en = "I feel like I've met that person somewhere." },
 ]
 
 [[point]]
@@ -5259,6 +5263,8 @@ examples = [
   { tatoeba = "56831_219510", ja = "この本を誰が書いた{か}知っていますか。", en = "Do you have any idea who wrote this book?" },
   { tatoeba = "55073_217763", ja = "この本をどこに置いたらいい{か}教えてください。", en = "Tell me where to put these books." },
   { source = "yomeru", id = "y1", ja = "何時に始まる{か}わかりません。", en = "I don't know what time it starts." },
+  { tatoeba = "31428_194255", ja = "もう何をする{か}決めましたか。", en = "Have you decided what to do yet?" },
+  { source = "yomeru", id = "y2", ja = "彼が明日来る{か}聞いてみます。", en = "I'll ask him whether he's coming tomorrow." },
 ]
 
 [[point]]
@@ -5280,9 +5286,11 @@ In the past, るところだった often means "nearly": 遅れるところだ�
 "I almost missed it" (see ところだった)."""
 related = ["te-iru-tokoro", "ta-tokoro", "tsumori", "tokoro-datta"]
 examples = [
-  { tatoeba = "396887_124606", ja = "登校{するところです}。", en = "I am going to school." },
   { source = "yomeru", id = "y1", ja = "これから晩ご飯を食べ{るところだ}。", en = "I'm just about to have dinner." },
   { source = "yomeru", id = "y2", ja = "今から電話をかけ{るところです}。", en = "I'm just about to make a call." },
+  { tatoeba = "40133_202898", ja = "ちょうど出かけ{るところだ}。", en = "I'm about to leave." },
+  { tatoeba = "40166_202931", ja = "ちょうどチェックインす{るところです}。", en = "I'm just about to check in." },
+  { source = "yomeru", id = "y3", ja = "バスが出{るところです}。急いで！", en = "The bus is about to leave. Hurry!" },
 ]
 
 [[point]]
@@ -5308,6 +5316,8 @@ examples = [
   { tatoeba = "268355_146207", ja = "上着を今着{ているところだ}。", en = "He's putting on a coat." },
   { tatoeba = "315806_87901", ja = "彼女は昼ご飯を食べ{ているところだ}。", en = "She is having lunch now." },
   { tatoeba = "320873_82843", ja = "母は夕食の用意をし{ているところです}。", en = "Mother is preparing supper." },
+  { tatoeba = "260962_153582", ja = "私は彼を待っ{ているところです}。", en = "I'm waiting for him." },
+  { tatoeba = "311118_92592", ja = "彼女はそのとき、夕食を作っ{ているところだった}。", en = "She was cooking dinner at that time." },
 ]
 
 [[point]]
@@ -5333,6 +5343,8 @@ examples = [
   { tatoeba = "257506_157028", ja = "今始め{たところです}。", en = "I'm just beginning." },
   { tatoeba = "255024_159499", ja = "私はちょうど仕事を終え{たところです}。", en = "I have just finished my work." },
   { tatoeba = "254666_159510", ja = "ちょうどその本を読み終わっ{たところだ}よ。", en = "I have just finished reading the book." },
+  { tatoeba = "237858_176605", ja = "兄はちょうど今神戸から帰っ{たところだ}。", en = "My brother has just come home from Kobe." },
+  { tatoeba = "254960_159491", ja = "私はちょうど部屋を掃除し{たところです}。", en = "I have just cleaned my room." },
 ]
 
 [[point]]
@@ -5358,6 +5370,8 @@ examples = [
   { tatoeba = "244466_169955", ja = "昨日は曇っ{ていた}。", en = "It was cloudy yesterday." },
   { tatoeba = "73127_235747", ja = "１週間雪が降り続い{ていた}。", en = "It had been snowing for a week." },
   { source = "yomeru", id = "y1", ja = "電話が鳴ったとき、テレビを見{ていた}。", en = "I was watching TV when the phone rang." },
+  { tatoeba = "317175_86536", ja = "彼女は木の下に座っ{ていた}。", en = "She was sitting under a tree." },
+  { tatoeba = "293521_110168", ja = "彼は以前はいつも月曜日にここへ来{ていた}。", en = "He used to come here on Mondays." },
 ]
 
 [[point]]
@@ -5387,6 +5401,8 @@ examples = [
   { tatoeba = "323990_79727", ja = "夜の{間に}雨が降った。", en = "It rained during the night." },
   { tatoeba = "250217_164292", ja = "私のいない{間に}誰か訪ねてきましたか。", en = "Did anyone visit me during my absence?" },
   { tatoeba = "246662_167836", ja = "私が外出している{間}、犬の面倒を見てくれない？", en = "Will you look after my dog while I'm out?" },
+  { tatoeba = "246955_167545", ja = "私が電話で話している{間に}、彼女が会いに来た。", en = "While I was talking over the telephone she came to see me." },
+  { source = "yomeru", id = "y1", ja = "夏休み{の間に}京都へ行った。", en = "I went to Kyoto during the summer holidays." },
 ]
 
 [[point]]
@@ -5412,6 +5428,8 @@ examples = [
   { tatoeba = "262300_152249", ja = "六時{までに}戻る。", en = "I'll be back by six o'clock." },
   { tatoeba = "284232_119431", ja = "彼が戻る{までに}必ず終わらせます。", en = "I will finish it by the time he comes back." },
   { source = "yomeru", id = "y1", ja = "金曜日{までに}レポートを出してください。", en = "Please hand in the report by Friday." },
+  { tatoeba = "238868_175597", ja = "月曜日の１０時{までに}お返し下さい。", en = "Please return it by 10 a.m. Monday." },
+  { tatoeba = "254675_159847", ja = "その本を明日{までに}読み終えなければならないんだ。", en = "I must get through with reading the book by tomorrow." },
 ]
 
 [[point]]
@@ -5467,6 +5485,8 @@ examples = [
   { tatoeba = "26650_189500", ja = "嘘をつく{ことは}悪い。", en = "It is wrong to tell lies." },
   { tatoeba = "251134_6013", ja = "私の趣味は音楽を聞く{こと}です。", en = "My hobby is listening to music." },
   { tatoeba = "286646_117020", ja = "彼の趣味は絵を描く{こと}です。", en = "His hobby is painting pictures." },
+  { tatoeba = "262268_152282", ja = "私は歴史を勉強する{ことが}好きです。", en = "I like studying history." },
+  { source = "yomeru", id = "y1", ja = "毎日少し練習する{ことが}大切です。", en = "Practicing a little every day is important." },
 ]
 
 [[point]]
@@ -5490,6 +5510,8 @@ examples = [
   { tatoeba = "299651_104042", ja = "彼は笑っ{てばかりいる}。", en = "He does nothing but laugh." },
   { tatoeba = "293811_109878", ja = "彼は一日中遊ん{でばかりいる}。", en = "He does nothing but play all day." },
   { tatoeba = "37314_200113", ja = "トムはいつもテレビを見{てばかりいる}。", en = "Tom is always watching television." },
+  { tatoeba = "47535_210269", ja = "その子は１日中泣い{てばかりいた}。", en = "The boy did nothing but cry all day long." },
+  { source = "yomeru", id = "y1", ja = "寝{てばかりいない}で、手伝って。", en = "Don't just sleep all the time, help me." },
 ]
 
 [[point]]
@@ -5538,6 +5560,8 @@ examples = [
   { tatoeba = "68449_231082", ja = "あの橋は石{でできています}。", en = "That bridge is made of stone." },
   { tatoeba = "61234_223900", ja = "このカップは金{でできている}。", en = "The cup is made of gold." },
   { source = "yomeru", id = "y1", ja = "日本酒は米{からできています}。", en = "Sake is made from rice." },
+  { tatoeba = "35200_198012", ja = "バターは牛乳{からできている}。", en = "Butter is made from milk." },
+  { tatoeba = "24986_187847", ja = "何{でできている}の？", en = "What's it made from?" },
 ]
 
 [[point]]
@@ -5562,6 +5586,8 @@ examples = [
   { tatoeba = "52036_214742", ja = "スケートは趣味{の一つだ}。", en = "Skating is one of my hobbies." },
   { tatoeba = "25660_188517", ja = "横浜は日本で最大の都市{の一つだ}。", en = "Yokohama is one of the largest cities in Japan." },
   { source = "yomeru", id = "y1", ja = "すしは私の好きな食べ物{の一つです}。", en = "Sushi is one of my favorite foods." },
+  { tatoeba = "22184_185053", ja = "海外旅行は私の楽しみ{の一つ}なんです。", en = "Traveling abroad is one of my favorite things." },
+  { source = "yomeru", id = "y2", ja = "それは大きな問題{の一つです}。", en = "That is one of the big problems." },
 ]
 
 [[point]]
@@ -5590,6 +5616,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "この歌を知ら{ない人はいない}。", en = "There's no one who doesn't know this song." },
   { tatoeba = "277094_126996", ja = "地球が丸いことを知ら{ない人はいない}。", en = "There is no one but knows that the earth is round." },
   { source = "yomeru", id = "y2", ja = "この店には{ない物はない}。", en = "This shop has everything." },
+  { tatoeba = "320183_83533", ja = "平和を望ま{ない人はいない}。", en = "There is no one but desires peace." },
+  { source = "yomeru", id = "y3", ja = "母に作れ{ない物はない}。", en = "There's no dish my mother can't make." },
 ]
 
 [[point]]
@@ -5618,6 +5646,8 @@ examples = [
   { tatoeba = "47263_210000", ja = "その事を考えた{だけで}楽しくなる。", en = "The mere thought of it is enough to make me happy." },
   { tatoeba = "58194_220872", ja = "この赤いボタンを押す{だけでいい}のです。", en = "You have only to push this red button." },
   { tatoeba = "17622_178769", ja = "君と２人{だけで}話したいのだが。", en = "I would prefer to speak to you in private." },
+  { source = "yomeru", id = "y1", ja = "声を聞く{だけで}元気になる。", en = "Just hearing your voice cheers me up." },
+  { source = "yomeru", id = "y2", ja = "少し{だけでも}食べてください。", en = "Please eat, even just a little." },
 ]
 
 [[point]]
@@ -5645,6 +5675,8 @@ examples = [
   { tatoeba = "464546_187898", ja = "何{が必要}ですか。", en = "What do you need?" },
   { tatoeba = "241648_172825", ja = "今すぐに行く{必要があります}か。", en = "Need I go right now?" },
   { source = "yomeru", id = "y1", ja = "急ぐ{必要はない}よ。", en = "There's no need to hurry." },
+  { tatoeba = "51022_213735", ja = "そこではネクタイをつける{必要があります}。", en = "You need to wear a tie there." },
+  { tatoeba = "21227_226247", ja = "かばん{が必要です}。貸してくれませんか。", en = "I need a bag. Will you lend me one?" },
 ]
 
 [[point]]
@@ -5670,6 +5702,8 @@ examples = [
   { tatoeba = "258494_156044", ja = "私は秋にパリへ行く{予定です}。", en = "I'm going to Paris in the fall." },
   { tatoeba = "24256_187119", ja = "家にいる{予定です}。", en = "I'm just going to stay home." },
   { source = "yomeru", id = "y1", ja = "明日は友だちと会う{予定だ}。", en = "I'm meeting a friend tomorrow." },
+  { tatoeba = "245602_162619", ja = "私の妹は来年、大学を卒業する{予定だ}。", en = "My sister expects to graduate from college next year." },
+  { source = "yomeru", id = "y2", ja = "会議は三時に始まる{予定です}。", en = "The meeting is scheduled to start at three." },
 ]
 
 [[point]]
@@ -5698,6 +5732,8 @@ examples = [
   { tatoeba = "24441_187304", ja = "何分{かかります}か？", en = "How long is the ride?" },
   { tatoeba = "41849_204608", ja = "それを建てるのに何年も{かかった}。", en = "It took many years to build it." },
   { tatoeba = "49402_212123", ja = "その家の維持にはずいぶんとお金が{かかる}。", en = "The maintenance of the house costs a lot." },
+  { tatoeba = "25979_188832", ja = "駅まで歩いてどのくらい{かかります}か。", en = "How long does it take to walk to the station?" },
+  { tatoeba = "42865_205620", ja = "それの修理には２０００円ぐらい{かかります}。", en = "It will cost about 2000 yen to repair it." },
 ]
 
 [[point]]
@@ -5723,6 +5759,8 @@ examples = [
   { tatoeba = "257405_157129", ja = "考え{直して}みます。", en = "I guess I'll have to think it over." },
   { tatoeba = "52322_215025", ja = "スープを温め{直して}くれませんか。", en = "Will you warm up the soup?" },
   { tatoeba = "240121_174348", ja = "後でもう一度かけ{直して}いただけますか。", en = "May I ask you to call me back later?" },
+  { source = "yomeru", id = "y1", ja = "この作文を書き{直して}ください。", en = "Please rewrite this essay." },
+  { source = "yomeru", id = "y2", ja = "最初からやり{直したい}。", en = "I want to do it over from the start." },
 ]
 
 [[point]]
@@ -5748,6 +5786,8 @@ examples = [
   { tatoeba = "19709_182565", ja = "急いで書かれたので、彼の手紙は読み{づらかった}。", en = "Having been written in haste, his letter was hard to read." },
   { source = "yomeru", id = "y1", ja = "この靴は歩き{づらい}。", en = "These shoes are hard to walk in." },
   { source = "yomeru", id = "y2", ja = "先生には聞き{づらい}質問だ。", en = "It's an awkward question to ask the teacher." },
+  { source = "yomeru", id = "y3", ja = "このはしは使い{づらい}。", en = "These chopsticks are hard to use." },
+  { source = "yomeru", id = "y4", ja = "彼にはちょっと言い{づらい}。", en = "It's a little awkward to tell him." },
 ]
 
 [[point]]
