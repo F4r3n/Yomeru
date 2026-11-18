@@ -688,7 +688,7 @@ Casual speech also uses 全然 with positive words, meaning "totally, no \
 problem": 全然大丈夫, "totally fine". Many speakers accept it, but in \
 polite or written language keep it with negatives. On its own, 全然 \
 answers "not at all": 「疲れた？」「全然。」."""
-related = ["amari-nai"]
+related = ["amari-nai", "chittomo", "sukoshimo-nai"]
 examples = [
   { tatoeba = "56905_219584", ja = "この本は{全然}おもしろくない。", en = "This book isn't interesting at all." },
   { tatoeba = "292669_111017", ja = "彼はヘビを{全然}怖がらない。", en = "He's not at all afraid of snakes." },
@@ -3809,8 +3809,8 @@ examples = [
   { tatoeba = "31385_194212", ja = "もう行か{ないと}。", en = "Got to go now." },
   { tatoeba = "56586_219270", ja = "この薬を飲ま{ないといけません}か。", en = "Do I have to take this medicine?" },
   { tatoeba = "21566_184439", ja = "学校の決まりは守ら{ないといけない}ぞ。", en = "You must follow school rules." },
-  { tatoeba = "258316_149767", ja = "自分の部屋を掃除し{ないと}ね。", en = "I have to clean my room." },
-  { tatoeba = "66872_229512", ja = "アンに謝ら{ないといけない}。", en = "I must apologize to Ann." },
+  { source = "yomeru", id = "y1", ja = "早く行か{ないと}、遅れるよ。", en = "If we don't go soon, we'll be late." },
+  { source = "yomeru", id = "y2", ja = "練習し{ないと}、上手になりません。", en = "Unless you practise, you won't get better." },
 ]
 
 [[point]]
@@ -4417,7 +4417,7 @@ of doubt: 間に合うといいんだけど, "I hope we make it…". Without ん
 related = ["n-desu", "kedo"]
 examples = [
   { tatoeba = "27874_202853", ja = "ちょっとお願いしたいことがある{んだけど}。", en = "I have a favor to ask of you." },
-  { tatoeba = "246478_1171676", ja = "コンサートに行けるといい{んだけど}。", en = "I wish I could go to the concert." },
+  { source = "yomeru", id = "y2", ja = "ペンを忘れた{んですが}、貸してくれませんか。", en = "I forgot my pen — could you lend me one?" },
   { source = "yomeru", id = "y1", ja = "すみません、駅に行きたい{んですが}…。", en = "Excuse me, I'm trying to get to the station…" },
   { tatoeba = "57974_220652", ja = "この単語の意味がわからない{のですが}。", en = "I don't understand this word." },
   { tatoeba = "59403_222077", ja = "この鍵は合わない{のですが}。", en = "I'm afraid this key does not fit." },
@@ -5329,7 +5329,7 @@ Before a noun, ところ can simply be a place: 父の働いているところ, 
 place where my father works"."""
 related = ["ru-tokoro", "ta-tokoro", "te-iru"]
 examples = [
-  { tatoeba = "268355_146207", ja = "上着を今着{ているところだ}。", en = "He's putting on a coat." },
+  { source = "yomeru", id = "y1", ja = "今、宿題をし{ているところです}。", en = "I'm in the middle of my homework right now." },
   { tatoeba = "315806_87901", ja = "彼女は昼ご飯を食べ{ているところだ}。", en = "She is having lunch now." },
   { tatoeba = "320873_82843", ja = "母は夕食の用意をし{ているところです}。", en = "Mother is preparing supper." },
   { tatoeba = "260962_153582", ja = "私は彼を待っ{ているところです}。", en = "I'm waiting for him." },
