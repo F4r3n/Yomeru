@@ -1756,7 +1756,7 @@ notes = """
 examples, や. Some verbs take と for the other person: 友達と話す, "talk \
 with a friend"; 彼と結婚する, "marry him". と after a sentence (と言う, \
 と思う) quotes, and Verb［る］ + と is "when, if": later points."""
-related = ["ya-particle", "te-form-sequence"]
+related = ["ya-particle", "te-form-sequence", "to-tomo-ni"]
 homographs = ["to-conditional"]
 examples = [
   { tatoeba = "51931_214638", ja = "スティーブはケート{と一緒に}学校に行く。", en = "Steve goes to school with Kate." },
@@ -10102,7 +10102,7 @@ with". For a gradual change, につれて says much the same, but it \
 only covers change. After an adjective, とともに means "both … and": \
 この町は静かであるとともに、交通も便利だ, "this town is quiet, and \
 convenient too"."""
-related = ["ni-tsurete"]
+related = ["ni-tsurete", "to-particle"]
 examples = [
   { tatoeba = "317269_86442", ja = "彼女は友人達{とともに}立ち去った。", en = "She went off with her friends." },
   { source = "yomeru", id = "y1", ja = "年をとる{とともに}、体が弱くなる。", en = "As we get older, our bodies get weaker." },
@@ -13503,6 +13503,7 @@ for both に and へ. Nor do を and が: the object links with plain の \
 (日本語の勉強, not ×日本語をの勉強). The pair is a link and nothing more: \
 日本での生活 means the same as 日本の生活, with the place stressed."""
 related = ["no-particle", "e-particle", "de-particle", "ni-oite"]
+homographs = ["kara-aru"]
 examples = [
   { tatoeba = "21507_184379", ja = "学校{への}近道だよ。", en = "It's a shortcut to the school." },
   { tatoeba = "279715_124279", ja = "東京{での}生活には慣れましたか？", en = "Have you got used to living in Tokyo?" },
@@ -19848,7 +19849,7 @@ examples = [
 id = "kara-aru"
 seq = 706
 pattern = "からある"
-forms = ["からする"]
+forms = ["からする", "からの"]
 jlpt = "N1"
 hover = false
 meaning = "as much as, no less than (a large amount)"
@@ -19867,6 +19868,7 @@ Formal and written; speech uses もの or も: 百キロもある. Only for \
 large amounts that impress the speaker. Search-only: からある and \
 からする are common word sequences (昔からある)."""
 related = ["number-mo"]
+homographs = ["particle-plus-no"]
 examples = [
   { source = "yomeru", id = "y1", ja = "父は五十キロ{からある}米袋を軽々と持ち上げた。", en = "My father easily lifted a rice sack of a good fifty kilos." },
   { source = "yomeru", id = "y2", ja = "この時計は百万円{からする}そうだ。", en = "I hear this watch costs no less than a million yen." },
