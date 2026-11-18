@@ -119,6 +119,13 @@ no statistics yet.
    `next_seq` counter in `grammar.toml`, not a hash of its slug.
 7. The migration wipes the clients' card stores and pulls everything from
    the migrated server; only the server's data is converted.
+8. Production answers are checked for the point only, in three cases:
+   accepted, close (another point from `related`: free retry), too far
+   (hints in steps). See [Validation](#3-validation).
+9. A hint caps the rating at Hard; seeing the reference means Again.
+10. Typed answers by default; "answer in my head" is a local setting.
+11. Production examples: 5 per point, keyed by `tatoeba` pair or `y<n>`;
+    vocabulary hints computed at runtime.
 
 ## Card keys
 
@@ -202,11 +209,19 @@ the Japanese. Four parts, in order.
 One card shows a different example each time, so the sentence can't be
 learned by heart. Before writing examples at scale, the format grows:
 
-- A stable key per example: the `tatoeba` pair, or an `id` on `yomeru`
-  examples. Reports and verdicts point at it.
-- Vocabulary hints are generated from JMdict (`find_in_text` on `ja` with
-  the `{…}` span left out), plus an optional hand override for the cases
-  where the automatic hint is wrong.
+- ~~A stable key per example: the `tatoeba` pair, or an `id` on `yomeru`
+  examples. Reports and verdicts point at it.~~ Done: `id = "y<n>"`,
+  unique within the entry and never given again; `Example::key`,
+  `grammar.bin` format 5.
+- Vocabulary hints are generated from JMdict at runtime, when the user
+  taps for them (`find_in_text` on `ja` with the `{…}` span left out), so
+  `grammar.bin` and its build don't need JMdict. An optional
+  `hints = […]` on the example overrides them, added only once a
+  generated hint turns out wrong.
+- 5 examples per point, written with the skill's examples batches
+  (`examples.py`). N5 done (2026-11-18); N4–N1 to follow. Each English
+  must lead to the point, but variants are the check's job (below), not
+  the sentences'.
 
 ### 2. The production face
 
@@ -222,20 +237,45 @@ learned by heart. Before writing examples at scale, the format grows:
 
 ### 3. Validation
 
-- The answer is checked in two parts:
-  - automatic: does the target point appear? Run `GrammarDict::hover_match`
-    with the point's `forms` over the answer, so ちゃだめ and
-    てはいけません both count;
-  - self-graded: is the rest right? The user compares with the reference
-    sentence and rates.
-- When the check says "point not found" but the user thinks the sentence
-  is valid (another point that fits the translation, say), a "My answer is
-  valid" button sends a report `{point, example key, answer, time}` to the
-  server. Only on that button, never on its own.
-- Open question: typed answer (better for learning, and needed for the
-  automatic check) or answered in the head and self-graded (fast on a
-  phone). Proposal: typed by default, with a setting "answer in my head"
-  that skips the check.
+Many answers can be right for one prompt: だ or です, plain or polite,
+行きます or 来ます, another word order. The check only asks whether the
+answer uses the card's point, sorts the answer into one of three cases,
+and leaves the rest to the user.
+
+1. **The point is there: accepted.** `GrammarDict::hover_match` over the
+   answer, with the point's pattern and `forms` and the popup's
+   deinflection, so だ and です both count for `desu`, ちゃだめ and
+   てはいけません both count for prohibition. The rest isn't checked: the
+   reference sentence is shown beside the answer and the user rates, as on
+   word cards.
+2. **Another point is there.** The same search over the whole grammar
+   dictionary, keeping matches of two characters or more (the popup's
+   rule, so に, は, を don't count):
+   - a point in the card's `related` list: **close**. "たあとで works here
+     too, but this card practises てから." A free retry: it doesn't count
+     against the grade;
+   - any other point: no nudge, the answer goes to case 3, but the hints
+     name it: "You used てください. This card asks for てから."
+   `related` lists the points that do the same job, so only those earn
+   "works here too". An alternative missing from it comes back through
+   the reports (below) and can be added.
+3. **Too far: hints in steps.** Each tap shows one more: the `meaning`
+   line (already on the front), the formation (`Verb［て］ + から`), the
+   vocabulary hints, then the reference sentence.
+
+Grading:
+- No hint: the user's own rating.
+- Any hint (formation or vocabulary): the rating is capped at Hard.
+- The reference shown before a correct answer: Again.
+- When the check misjudges (a valid sentence it doesn't recognise, or an
+  alternative case 2 should have accepted), a "My answer is valid" button
+  sends a report `{point, example key, answer, time}` to the server. Only
+  on that button, never on its own.
+- Typed answers by default: better for learning, and the check needs
+  them. A local setting (per device, not synced) switches to "answer in
+  my head": the user thinks of the sentence, reveals the reference and
+  rates, with no check and none of the three cases. Typing suits a
+  keyboard, the head a phone, so each device keeps its own choice.
 
 ### 4. Refining the examples with notes
 
