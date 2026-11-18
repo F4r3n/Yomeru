@@ -20750,6 +20750,9 @@ related = ["ya-ina-ya", "nari", "ta-totan-ni", "soba-kara"]
 examples = [
   { source = "yomeru", id = "y1", ja = "授業が終わる{が早いか}、学生たちは校庭へ走っていった。", en = "The instant class ended, the students ran out to the schoolyard." },
   { source = "yomeru", id = "y2", ja = "彼は家に着く{が早いか}、冷蔵庫を開けた。", en = "No sooner had he got home than he opened the fridge." },
+  { tatoeba = "327603_76115", ja = "山の麓に日が昇る{が早いか}ただ一人山を登り始めた。", en = "The sun had barely risen at the foot of the mountain when she set out alone up the slope." },
+  { source = "yomeru", id = "y3", ja = "ベルが鳴る{が早いか}、彼は教室を飛び出した。", en = "The moment the bell rang, he dashed out of the classroom." },
+  { source = "yomeru", id = "y4", ja = "子供たちはおやつを見る{が早いか}、手を伸ばした。", en = "No sooner had the children seen the snacks than they reached for them." },
 ]
 
 [[point]]
@@ -20772,6 +20775,9 @@ related = ["ga-hayai-ka", "nari", "ta-totan-ni"]
 examples = [
   { tatoeba = "256498_158032", ja = "私は家に着く{やいなや}寝た。", en = "The moment I arrived home, I went to bed." },
   { tatoeba = "295754_107930", ja = "彼は警察官を見る{や否や}逃げて行った。", en = "As soon as he caught sight of a policeman, he ran away." },
+  { tatoeba = "308090_95615", ja = "彼女がドアを開ける{やいなや}猫が走り出た。", en = "No sooner had she opened the door than a cat ran out." },
+  { tatoeba = "283402_120607", ja = "彼が駅につく{やいなや}、雨が降り出した。", en = "The moment he arrived at the station, it began to rain." },
+  { tatoeba = "50941_213654", ja = "そこに出かける{やいなや}彼女は病気になった。", en = "No sooner had she gone there than she was taken ill." },
 ]
 
 [[point]]
@@ -20797,6 +20803,9 @@ related = ["ga-hayai-ka", "ya-ina-ya", "ta-nari", "ta-totan-ni"]
 examples = [
   { tatoeba = "281899_122105", ja = "入ってくる{なり}、彼は倒れた。", en = "The instant he came in, he fell down." },
   { source = "yomeru", id = "y1", ja = "彼は手紙を読む{なり}、部屋を出ていった。", en = "The moment he read the letter, he left the room." },
+  { tatoeba = "239201_175265", ja = "犬は私を見る{なり}私に走り寄った。", en = "No sooner had the dog seen me than it ran up to me." },
+  { source = "yomeru", id = "y2", ja = "父は家に帰る{なり}、ソファで寝てしまった。", en = "The minute he got home, my father fell asleep on the sofa." },
+  { source = "yomeru", id = "y3", ja = "男の子は母親を見る{なり}、わっと泣き出した。", en = "The little boy burst into tears the instant he saw his mother." },
 ]
 
 [[point]]
@@ -20820,6 +20829,9 @@ related = ["kiri", "mama", "nari"]
 examples = [
   { tatoeba = "293699_109989", ja = "彼は一週間前に家を出{たなり}帰ってこない。", en = "He hasn't come home since he left last week." },
   { source = "yomeru", id = "y1", ja = "彼は椅子に座っ{たなり}、一言も話さなかった。", en = "He sat down in the chair and never said a word." },
+  { source = "yomeru", id = "y2", ja = "兄は朝出かけ{たなり}、まだ連絡がない。", en = "My brother went out this morning and we haven't heard from him since." },
+  { source = "yomeru", id = "y3", ja = "彼女は部屋に入っ{たなり}、出てこない。", en = "She went into her room and hasn't come out since." },
+  { source = "yomeru", id = "y4", ja = "祖父は寝込ん{だなり}、起き上がれなくなった。", en = "My grandfather took to his bed and never got up again." },
 ]
 
 [[point]]
@@ -20841,6 +20853,9 @@ related = ["ga-hayai-ka", "nari"]
 examples = [
   { source = "yomeru", id = "y1", ja = "覚える{そばから}忘れてしまう。", en = "I forget things as fast as I learn them." },
   { source = "yomeru", id = "y2", ja = "片付ける{そばから}、子供が散らかす。", en = "No sooner do I tidy up than the kids make a mess again." },
+  { source = "yomeru", id = "y3", ja = "掃除した{そばから}、犬が部屋を汚す。", en = "As fast as I clean the room, the dog dirties it again." },
+  { source = "yomeru", id = "y4", ja = "給料が入る{そばから}、使ってしまう。", en = "I spend my pay as fast as it comes in." },
+  { source = "yomeru", id = "y5", ja = "注意する{そばから}、息子はまた同じことをする。", en = "No sooner do I tell my son off than he does it again." },
 ]
 
 [[point]]
@@ -20863,6 +20878,9 @@ related = ["te-irai", "te-kono-kata", "te-kara"]
 examples = [
   { tatoeba = "269262_145301", ja = "新学期が始まっ{てからというもの}、とっても忙しいの。", en = "I've been very busy since the new term started." },
   { source = "yomeru", id = "y1", ja = "犬を飼い始め{てからというもの}、毎朝散歩している。", en = "Ever since we got a dog, I've been walking every morning." },
+  { source = "yomeru", id = "y2", ja = "息子は大学に入っ{てからというもの}、全然家にいない。", en = "Ever since my son started university, he's never at home." },
+  { source = "yomeru", id = "y3", ja = "たばこをやめ{てからというもの}、体の調子がいい。", en = "Ever since I quit smoking, I've been feeling great." },
+  { source = "yomeru", id = "y4", ja = "父が亡くなっ{てからというもの}、母は元気がない。", en = "Ever since my father died, my mother has been in low spirits." },
 ]
 
 [[point]]
@@ -20885,6 +20903,9 @@ related = ["te-irai", "te-kara-to-iu-mono"]
 examples = [
   { tatoeba = "271749_142820", ja = "生まれ{てこのかた}そんなひどい話は聞いたことがない。", en = "Never in my life have I heard such a terrible story!" },
   { source = "yomeru", id = "y1", ja = "日本に来{てこのかた}、一度も国に帰っていない。", en = "I haven't been home once since I came to Japan." },
+  { source = "yomeru", id = "y2", ja = "生まれ{てこのかた}、海を見たことがない。", en = "I've never seen the sea in my whole life." },
+  { source = "yomeru", id = "y3", ja = "大学を出{てこのかた}、ずっと同じ会社で働いている。", en = "Ever since leaving university, I've worked at the same company." },
+  { source = "yomeru", id = "y4", ja = "彼と別れ{てこのかた}、一度も会っていない。", en = "I haven't seen him once since we broke up." },
 ]
 
 [[point]]
@@ -20907,6 +20928,9 @@ related = ["wo-hajime", "ni-itaru-made"]
 examples = [
   { source = "yomeru", id = "y1", ja = "東京{を皮切りに}、全国でコンサートが開かれる。", en = "Starting with Tokyo, concerts will be held all over the country." },
   { source = "yomeru", id = "y2", ja = "彼の発言{を皮切りに}、次々と反対意見が出た。", en = "Starting with his remark, objections came one after another." },
+  { source = "yomeru", id = "y3", ja = "大阪店{を皮切りに}、全国に店を広げた。", en = "Starting with the Osaka store, they spread their shops across the country." },
+  { source = "yomeru", id = "y4", ja = "今夜の公演{を皮切りに}、ツアーが始まる。", en = "The tour starts with tonight's show and goes on from there." },
+  { source = "yomeru", id = "y5", ja = "その記事{を皮切りに}、各新聞が問題を取り上げた。", en = "Starting with that article, every newspaper took up the issue." },
 ]
 
 [[point]]
@@ -20928,7 +20952,9 @@ related = ["kagiri", "wo-sakai-ni"]
 examples = [
   { source = "yomeru", id = "y1", ja = "今日{を限りに}、たばこをやめる。", en = "As of today, I'm giving up smoking." },
   { tatoeba = "329655_74065", ja = "いよいよ今週{を限りに}、しばらくのお休みです。", en = "I've finally got some vacation coming as of the end of this week." },
-  { tatoeba = "315369_88338", ja = "彼女は声{を限りに}叫んだ。", en = "She shouted at the top of her voice." },
+  { source = "yomeru", id = "y2", ja = "今月{を限りに}、この店は閉店します。", en = "As of the end of this month, this shop will close." },
+  { source = "yomeru", id = "y3", ja = "今日の試合{を限りに}、引退します。", en = "I'm retiring as of today's match." },
+  { source = "yomeru", id = "y4", ja = "今年{を限りに}、この大会はなくなる。", en = "After this year, the tournament will be no more." },
 ]
 
 [[point]]
@@ -20950,6 +20976,9 @@ related = ["wo-ki-ni", "wo-kagiri-ni"]
 examples = [
   { source = "yomeru", id = "y1", ja = "あの日{を境に}、彼は変わった。", en = "From that day on, he changed." },
   { source = "yomeru", id = "y2", ja = "四十歳{を境に}、体力が落ちてきた。", en = "Since turning forty, my stamina has been dropping." },
+  { source = "yomeru", id = "y3", ja = "その事件{を境に}、町の雰囲気が変わった。", en = "From that incident on, the mood of the town changed." },
+  { source = "yomeru", id = "y4", ja = "結婚{を境に}、彼女は明るくなった。", en = "Since her marriage, she has become more cheerful." },
+  { source = "yomeru", id = "y5", ja = "梅雨明け{を境に}、暑い日が続いている。", en = "Since the rainy season ended, it's been hot day after day." },
 ]
 
 [[point]]
@@ -20971,6 +21000,9 @@ related = ["wo-keiki-ni", "wo-kikkake-ni", "wo-sakai-ni"]
 examples = [
   { source = "yomeru", id = "y1", ja = "結婚{を機に}、仕事を辞めた。", en = "I quit my job when I got married." },
   { source = "yomeru", id = "y2", ja = "入院{を機に}、たばこをやめた。", en = "Being in hospital was my chance to give up smoking." },
+  { source = "yomeru", id = "y3", ja = "引っ越し{を機に}、古い家具を全部捨てた。", en = "I took the move as a chance to throw out all my old furniture." },
+  { source = "yomeru", id = "y4", ja = "子供が生まれたの{を機に}、車を買った。", en = "We bought a car on the occasion of our child's birth." },
+  { source = "yomeru", id = "y5", ja = "退職{を機に}、田舎へ移ることにした。", en = "I decided to take my retirement as the chance to move to the countryside." },
 ]
 
 [[point]]
@@ -20993,6 +21025,9 @@ related = ["wo-tsuujite", "sue-ni"]
 examples = [
   { source = "yomeru", id = "y1", ja = "三年の交際{を経て}、二人は結婚した。", en = "After three years of dating, the two got married." },
   { source = "yomeru", id = "y2", ja = "この飛行機はソウル{を経て}パリへ向かう。", en = "This plane flies to Paris via Seoul." },
+  { source = "yomeru", id = "y3", ja = "審査{を経た}作品だけが展示される。", en = "Only works that have gone through review are exhibited." },
+  { source = "yomeru", id = "y4", ja = "長い話し合い{を経て}、ようやく結論が出た。", en = "After long discussions, we finally reached a conclusion." },
+  { source = "yomeru", id = "y5", ja = "荷物は香港{を経て}、日本に届いた。", en = "The parcel reached Japan by way of Hong Kong." },
 ]
 
 [[point]]
@@ -21015,6 +21050,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "試験{を前にして}、みんな緊張している。", en = "With the exam just ahead, everyone is nervous." },
   { tatoeba = "275910_137326", ja = "大統領は大衆{を前に}演説した。", en = "The president addressed a large audience." },
   { tatoeba = "295033_108656", ja = "彼は危険{を前にして}も冷静だった。", en = "He remained calm even in the presence of danger." },
+  { source = "yomeru", id = "y2", ja = "卒業{を前に}、先生にお礼の手紙を書いた。", en = "With graduation just ahead, I wrote my teacher a thank-you letter." },
+  { source = "yomeru", id = "y3", ja = "美しい景色{を前にして}、言葉が出なかった。", en = "Faced with the beautiful view, I was lost for words." },
 ]
 
 [[point]]
@@ -21037,6 +21074,9 @@ related = ["wo-mae-ni-shite"]
 examples = [
   { source = "yomeru", id = "y1", ja = "結婚式{を控えて}、彼女は毎日忙しい。", en = "With her wedding coming up, she's busy every day." },
   { source = "yomeru", id = "y2", ja = "入試{を控えた}学生たちは、夜遅くまで勉強している。", en = "Students facing entrance exams study late into the night." },
+  { source = "yomeru", id = "y3", ja = "明日の試合{を控えて}、選手たちは早く寝た。", en = "With the match tomorrow, the players went to bed early." },
+  { source = "yomeru", id = "y4", ja = "選挙{を控え}、候補者たちは町を回っている。", en = "With the election coming up, the candidates are touring the town." },
+  { source = "yomeru", id = "y5", ja = "来月の出産{を控えて}、準備で忙しい。", en = "With the baby due next month, I'm busy getting ready." },
 ]
 
 [[point]]
@@ -21061,6 +21101,9 @@ related = ["tokoro-ni", "ta-tokoro"]
 examples = [
   { tatoeba = "318859_84855", ja = "父が出かけようとした{矢先に}電話が鳴った。", en = "My father was about to leave when the telephone rang." },
   { source = "yomeru", id = "y1", ja = "退院した{矢先に}、また風邪をひいてしまった。", en = "Right after getting out of hospital, I caught a cold again." },
+  { tatoeba = "247081_167420", ja = "私が返事をしようとした{矢先に}、彼が口を出してきた。", en = "I was about to reply, when he boldly cut in." },
+  { source = "yomeru", id = "y2", ja = "新しい仕事に慣れてきた{矢先に}、会社が倒産した。", en = "Just as I was getting used to my new job, the company went bankrupt." },
+  { source = "yomeru", id = "y3", ja = "寝ようとした{矢先に}、友達から電話がかかってきた。", en = "Just as I was about to go to sleep, a friend called." },
 ]
 
 [[point]]
@@ -21088,6 +21131,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "彼は教師の{かたわら}、絵を描き続けている。", en = "Besides teaching, he keeps on painting." },
   { source = "yomeru", id = "y2", ja = "母は子育ての{かたわら}、大学で勉強した。", en = "My mother studied at university while raising us." },
   { tatoeba = "25611_188468", ja = "王妃は王の{かたわら}に立っていた。", en = "The queen stood beside the king." },
+  { source = "yomeru", id = "y3", ja = "姉は仕事の{かたわら}、英語を勉強している。", en = "Alongside her job, my sister studies English." },
+  { source = "yomeru", id = "y4", ja = "彼女は大学で教える{かたわら}、通訳もしている。", en = "Besides teaching at university, she also works as an interpreter." },
 ]
 
 [[point]]
@@ -21110,6 +21155,9 @@ related = ["tsuide-ni", "katagata", "wo-kanete"]
 examples = [
   { source = "yomeru", id = "y1", ja = "散歩{がてら}、パンを買いに行った。", en = "I went for a walk and picked up some bread on the way." },
   { source = "yomeru", id = "y2", ja = "友達を駅まで送り{がてら}、買い物をしてきた。", en = "I saw my friend to the station and did some shopping while I was out." },
+  { source = "yomeru", id = "y3", ja = "買い物{がてら}、新しくできた店をのぞいてみた。", en = "I went shopping and took a look at the new shop while I was at it." },
+  { source = "yomeru", id = "y4", ja = "運動{がてら}、駅まで歩いて行く。", en = "I walk to the station, partly for the exercise." },
+  { source = "yomeru", id = "y5", ja = "郵便局へ行き{がてら}、パン屋に寄った。", en = "On my way to the post office, I dropped by the bakery as well." },
 ]
 
 [[point]]
@@ -21131,6 +21179,9 @@ related = ["gatera", "wo-kanete", "katawara"]
 examples = [
   { source = "yomeru", id = "y1", ja = "お礼{かたがた}、ご挨拶に伺いました。", en = "I've come to greet you, and to thank you as well." },
   { source = "yomeru", id = "y2", ja = "ご報告{かたがた}、お願いに参りました。", en = "I've come with a report, and a request." },
+  { source = "yomeru", id = "y3", ja = "ご挨拶{かたがた}、新しい担当者を連れて参りました。", en = "I've brought our new person in charge, and come to say hello as well." },
+  { source = "yomeru", id = "y4", ja = "お詫び{かたがた}、ご説明に伺いました。", en = "I've come to explain, and to apologize as well." },
+  { source = "yomeru", id = "y5", ja = "まずは、お礼{かたがた}お知らせまで。", en = "This is just to let you know, and to thank you at the same time." },
 ]
 
 [[point]]
@@ -21152,6 +21203,9 @@ related = ["zu-ni", "te-shimau"]
 examples = [
   { source = "yomeru", id = "y1", ja = "忙しくて、結局彼女に会え{ずじまい}だった。", en = "I was so busy I never got to see her in the end." },
   { source = "yomeru", id = "y2", ja = "買った本を、まだ読ま{ずじまい}だ。", en = "I bought that book and still haven't read it." },
+  { source = "yomeru", id = "y3", ja = "旅行中は雨で、富士山を見{ずじまい}だった。", en = "It rained the whole trip, so we never got to see Mt Fuji." },
+  { source = "yomeru", id = "y4", ja = "謝ろうと思ったが、言わ{ずじまいになった}。", en = "I meant to apologize, but I never got round to saying it." },
+  { source = "yomeru", id = "y5", ja = "結局何もせ{ずじまい}で、夏休みが終わった。", en = "Summer vacation ended and I never got round to doing anything." },
 ]
 
 [[point]]
@@ -21179,6 +21233,8 @@ examples = [
   { tatoeba = "314516_89190", ja = "彼女は事実を知る{に至った}。", en = "She came to know the fact." },
   { tatoeba = "291768_111911", ja = "彼はついにその学説を理解する{にいたった}。", en = "At length, he came to understand the theory." },
   { source = "yomeru", id = "y1", ja = "事故が起きる{に至って}、ようやく対策が取られた。", en = "Only when an accident happened were measures finally taken." },
+  { source = "yomeru", id = "y2", ja = "二人はようやく和解{に至った}。", en = "The two finally reached a reconciliation." },
+  { source = "yomeru", id = "y3", ja = "死者が出る{に至っても}、会社は責任を認めなかった。", en = "Even when it came to people dying, the company didn't admit responsibility." },
 ]
 
 [[point]]
