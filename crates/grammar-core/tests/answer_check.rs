@@ -51,11 +51,27 @@ fn misses(
     (checked, out)
 }
 
+/// Misses known and accepted:
+/// - the past かった is no form of its own: it would match inside わかった
+///   and なかった;
+/// - a particle followed by a kana word (はか, もし) reads as part of it.
+const KNOWN: &[(&str, &str)] = &[
+    ("i-adjective-forms", "とても楽しかったです。"),
+    ("number-mo", "新しい自転車は５００００円もした。"),
+    ("number-wa", "駅まで三十分はかかる。"),
+];
+
+/// Prints every miss and fails on one not in [`KNOWN`].
 fn report(checked: usize, misses: &[(String, String, Verdict)]) {
     for (id, ja, v) in misses {
         eprintln!("{id}\t{ja}\t{v:?}");
     }
     eprintln!("{} of {checked} examples missed", misses.len());
+    let new: Vec<_> = misses
+        .iter()
+        .filter(|(id, ja, _)| !KNOWN.contains(&(id.as_str(), ja.as_str())))
+        .collect();
+    assert!(new.is_empty(), "new misses: {new:#?}");
 }
 
 /// No dictionary: no word is longer than a char, nothing is a verb.

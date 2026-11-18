@@ -588,7 +588,7 @@ examples = [
 id = "yori-hou-ga"
 seq = 20
 pattern = "より〜のほうが"
-forms = ["のほうが", "の方が", "より〜の方が", "ほうが"]
+forms = ["のほうが", "の方が", "より〜の方が", "ほうが", "より"]
 jlpt = "N5"
 meaning = "A is more … than B (comparison)"
 formation = [
@@ -1176,7 +1176,7 @@ examples = [
 id = "en-suru"
 seq = 41
 pattern = "円する"
-forms = ["円もする"]
+forms = ["円もする", "分して", "時間して"]
 jlpt = "N5"
 meaning = "cost (a price); (after a time) later"
 formation = ["Price + する   (三千円する)", "Time + して   (一時間して)"]
@@ -3707,7 +3707,7 @@ check = { inflection = ["causative-passive"] }
 id = "sasete-kudasai"
 seq = 129
 pattern = "させてください"
-forms = ["せてください", "させてもらえませんか", "させていただけませんか", "させてくれ"]
+forms = ["せてください", "させてもらえませんか", "させていただけませんか", "させてくれ", "せてくれ"]
 jlpt = "N4"
 meaning = "please let me (do), allow me to"
 formation = ["Verb［causative］［て］ + ください   (行かせてください, 休ませてください)"]
@@ -4930,7 +4930,7 @@ examples = [
 id = "ni-mieru"
 seq = 170
 pattern = "に見える"
-forms = ["にみえる", "に見えます", "そうに見える", "ように見える"]
+forms = ["にみえる", "に見えます", "そうに見える", "ように見える", "く見える", "くみえる"]
 jlpt = "N4"
 meaning = "looks, looks like, appears (to be)"
 formation = [
@@ -8065,7 +8065,7 @@ examples = [
 id = "to-ieru"
 seq = 283
 pattern = "と言える"
-forms = ["といえる", "と言えます"]
+forms = ["といえる", "と言えます", "とは言える", "とは言えます"]
 jlpt = "N3"
 meaning = "one can say that, it can be said that"
 formation = ["Noun / Sentence (plain) + と言える   (成功と言える)"]
@@ -12082,7 +12082,7 @@ examples = [
 id = "toosu"
 seq = 422
 pattern = "通す"
-forms = ["とおす"]
+forms = ["とおす", "通し"]
 jlpt = "N3"
 meaning = "do to the end, keep doing throughout"
 formation = ["Verb［stem］ + 通す   (やり通す)", "Verb［stem］ + 通し   (noun: 泣き通しだ)"]
@@ -13921,7 +13921,7 @@ examples = [
 id = "tokoro-ni-yoru-to"
 seq = 489
 pattern = "ところによると"
-forms = ["ところによれば"]
+forms = ["ところによれば", "ところでは"]
 jlpt = "N2"
 meaning = "according to what (I heard, read), from what"
 formation = [
@@ -14004,7 +14004,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "約束した{以上は}、守らなければならない。", en = "Now that I've promised, I have to keep it." },
   { source = "yomeru", id = "y2", ja = "引き受けた{以上は}、最後までやります。", en = "Since I've taken it on, I'll see it through." },
   { source = "yomeru", id = "y3", ja = "こうなった{上は}、やるしかない。", en = "Now that it's come to this, there's nothing for it but to act." },
-  { source = "yomeru", id = "y4", ja = "学生である{以上}、勉強するのは当然だ。", en = "Since you're a student, it's only natural that you study." },
+  { source = "yomeru", id = "y4", ja = "学生である{以上は}、勉強するのは当然だ。", en = "Since you're a student, it's only natural that you study." },
   { source = "yomeru", id = "y5", ja = "契約にサインした{以上は}、もうやめられない。", en = "Now that you've signed the contract, you can't back out." },
 ]
 
@@ -21697,7 +21697,7 @@ examples = [
 id = "hodo-no-koto-de-wa-nai"
 seq = 776
 pattern = "ほどのことではない"
-forms = ["ほどのことでもない", "ほどのことはない", "ほどのことじゃない", "ほどのことでもありません"]
+forms = ["ほどのことでもない", "ほどのことはない", "ほどのことじゃない", "ほどのことでもありません", "ほどのことは無い", "ほどのこともない"]
 jlpt = "N1"
 meaning = "it's not worth (making a fuss), not a big enough deal to"
 formation = ["Verb［る］ + ほどのことではない   (心配するほどのことではない)"]
@@ -25384,7 +25384,7 @@ examples = [
 id = "sareru-mama"
 seq = 911
 pattern = "されるまま"
-forms = ["られるまま", "されるがまま", "られるがまま", "されるままに", "られるままに", "言われるまま", "言われるままに"]
+forms = ["られるまま", "されるがまま", "られるがまま", "されるままに", "られるままに", "言われるまま", "言われるままに", "言われるがまま", "言われるがままに"]
 jlpt = "N1"
 meaning = "just as (one is told / made to), at the mercy of"
 formation = ["Verb (passive) + まま(に)   (言われるままに)"]
