@@ -6900,6 +6900,8 @@ examples = [
   { tatoeba = "39002_201791", ja = "ドアを{開け}なさい。", en = "Open the door." },
   { tatoeba = "319557_84158", ja = "部屋の電気が{つかない}。", en = "The light doesn't come on in my room." },
   { source = "yomeru", id = "y1", ja = "風でドアが{開きました}。", en = "The door opened in the wind." },
+  { tatoeba = "39148_201938", ja = "テレビを{消して}。", en = "Turn off the TV." },
+  { source = "yomeru", id = "y2", ja = "もうすぐ授業が{始まります}。", en = "Class is about to start." },
 ]
 
 [[point]]
@@ -6924,6 +6926,9 @@ related = ["mieru", "potential-form", "passive"]
 examples = [
   { tatoeba = "243395_171084", ja = "今夜は満月{が見られる}。", en = "A full moon can be seen tonight." },
   { tatoeba = "58344_221022", ja = "この森では多くの動物{が見られる}。", en = "You can see many animals in this forest." },
+  { tatoeba = "243300_171177", ja = "今夜、流れ星{が見られる}だろう。", en = "Shooting stars will be seen tonight." },
+  { tatoeba = "278187_125805", ja = "鳥の巣{が見られる}かもしれない。", en = "We may be able to see birds' nests." },
+  { source = "yomeru", id = "y1", ja = "この地方では今も古い家{が見られる}。", en = "Old houses can still be found in this area." },
 ]
 
 [[point]]
@@ -6945,6 +6950,9 @@ related = []
 examples = [
   { tatoeba = "281694_122306", ja = "日本食が好きな外国人は{少なくない}。", en = "Not a few foreigners like Japanese food." },
   { tatoeba = "286407_117257", ja = "彼の作文は誤りが{少なくない}。", en = "His composition has not a few mistakes." },
+  { tatoeba = "72803_504466", ja = "２台の車をもつ人は{少なくない}。", en = "Not a few people have two cars." },
+  { source = "yomeru", id = "y1", ja = "自転車で会社に行く人は{少なくない}。", en = "Quite a few people go to work by bicycle." },
+  { source = "yomeru", id = "y2", ja = "試験に落ちた学生は{少なくなかった}。", en = "Not a few students failed the exam." },
 ]
 
 [[point]]
@@ -6974,6 +6982,8 @@ examples = [
   { tatoeba = "69043_231677", ja = "彼が家を出て行くのに{気が付き}ましたか？", en = "Did you notice him leave the house?" },
   { tatoeba = "290658_113017", ja = "彼はその危険{に気がつかなかった}。", en = "He was not aware of the danger." },
   { source = "yomeru", id = "y1", ja = "家に帰ってから、かさを忘れたこと{に気がついた}。", en = "After I got home, I realized I had forgotten my umbrella." },
+  { source = "yomeru", id = "y2", ja = "間違い{に気づいたら}、すぐ教えてください。", en = "If you notice a mistake, please tell me right away." },
+  { source = "yomeru", id = "y3", ja = "先生は私の新しいかばん{に気がついて}くれた。", en = "My teacher noticed my new bag." },
 ]
 
 [[point]]
@@ -7003,6 +7013,8 @@ examples = [
   { tatoeba = "32552_195378", ja = "まちがっている{のは}私だ。", en = "It is me that is wrong." },
   { tatoeba = "246656_167842", ja = "私が会いたい{のは}彼女なんです。", en = "It is her that I want to meet." },
   { source = "yomeru", id = "y1", ja = "遅れた{のは}電車が止まったからです。", en = "The reason I was late is that the train stopped." },
+  { source = "yomeru", id = "y2", ja = "私が好きな{のは}夏です。", en = "What I like is summer." },
+  { source = "yomeru", id = "y3", ja = "このケーキを作った{のは}母です。", en = "It was my mother who made this cake." },
 ]
 
 [[point]]
@@ -7026,6 +7038,9 @@ related = ["masen-ka", "mashou", "volitional"]
 examples = [
   { tatoeba = "243401_171078", ja = "今夜映画を見に行か{ないか}。", en = "How about going to the movie tonight?" },
   { tatoeba = "435631_171208", ja = "今晩少し飲ま{ないか}。", en = "Let's have a few drinks tonight." },
+  { tatoeba = "65597_228243", ja = "うちに来{ないか}。", en = "Won't you come over to my place?" },
+  { source = "yomeru", id = "y1", ja = "少し休ま{ないか}。", en = "Why don't we take a short break?" },
+  { source = "yomeru", id = "y2", ja = "週末、一緒にテニスをし{ないか}。", en = "Want to play tennis with me this weekend?" },
 ]
 
 [[point]]
@@ -7054,6 +7069,8 @@ examples = [
   { tatoeba = "27693_190545", ja = "一緒にくる{かい}。", en = "Do you want to come along?" },
   { tatoeba = "63134_225796", ja = "きょうの午後は面白かった{かい}。", en = "Did you have a good time this afternoon?" },
   { tatoeba = "42984_205739", ja = "それで君はどうするん{だい}？", en = "And what do you do?" },
+  { tatoeba = "39342_202130", ja = "デビー！私の声が聞こえる{かい}？", en = "Debbie! Can you hear me?" },
+  { source = "yomeru", id = "y1", ja = "あの人は誰{だい}？", en = "Who's that person?" },
 ]
 
 [[point]]
@@ -7077,6 +7094,9 @@ related = ["ika", "ijou", "igai"]
 examples = [
   { tatoeba = "27750_235776", ja = "１時間{以内}に戻ってきます。", en = "I'll be back within an hour." },
   { tatoeba = "73238_235858", ja = "１ヶ月{以内}に帰ってきなさい。", en = "Come back within a month." },
+  { tatoeba = "72555_235175", ja = "５０語{以内}で書きなさい。", en = "Write in less than 50 words." },
+  { tatoeba = "250202_164307", ja = "私のアパートは駅から歩いて５分{以内}です。", en = "My apartment is located within five minutes' walk of the station." },
+  { tatoeba = "27725_190564", ja = "一週間{以内}にその仕事を終えるでしょう。", en = "I'll finish the work in a week or less." },
 ]
 
 [[point]]
@@ -7102,8 +7122,10 @@ stop understanding". Not 亡くなる, "to pass away", the same sound."""
 related = ["you-ni-naru", "naru"]
 examples = [
   { tatoeba = "18613_227283", ja = "お金が{なくなった}。", en = "I am short of money." },
-  { tatoeba = "296716_106970", ja = "彼は最近あまり見かけ{なくなった}。", en = "He hasn't been much in evidence recently." },
   { tatoeba = "53122_215821", ja = "ジャックは群集の中に見え{なくなった}。", en = "Jack was lost sight of in the crowd." },
+  { source = "yomeru", id = "y1", ja = "薬を飲んだら、頭が痛{くなくなった}。", en = "After I took the medicine, my head stopped hurting." },
+  { source = "yomeru", id = "y2", ja = "兄は肉を食べ{なくなりました}。", en = "My brother has stopped eating meat." },
+  { source = "yomeru", id = "y3", ja = "スマホを買ってから、本を読ま{なくなった}。", en = "Since I bought a smartphone, I don't read books anymore." },
 ]
 
 [[point]]
@@ -7126,6 +7148,9 @@ related = ["kanarazu", "ni-chigai-nai", "deshou"]
 examples = [
   { tatoeba = "243329_171148", ja = "今夜は、{きっと}晴れるよ。", en = "I bet it's fine tonight." },
   { tatoeba = "289651_114021", ja = "彼は{きっと}君を手伝ってくれるよ。", en = "He's sure to help you." },
+  { tatoeba = "289672_114000", ja = "彼は{きっと}明日来るだろう。", en = "He is sure to come tomorrow." },
+  { tatoeba = "63351_226013", ja = "{きっと}手紙くださいね。", en = "Don't fail to write to me." },
+  { source = "yomeru", id = "y1", ja = "彼女は{きっと}来ないだろう。", en = "I'm sure she won't come." },
 ]
 
 [[point]]
@@ -7149,6 +7174,9 @@ related = ["wa-mochiron", "tashika-ni"]
 examples = [
   { tatoeba = "30544_193393", ja = "{もちろん}、いいよ。", en = "Of course, you may." },
   { tatoeba = "30531_193366", ja = "{もちろん}首相に面会するのは難しい。", en = "Of course it's difficult to gain access to the Prime Minister." },
+  { tatoeba = "30533_193368", ja = "{もちろん}私も行きます。", en = "Of course I will go." },
+  { tatoeba = "39326_202114", ja = "でも、{もちろん}、ずっと昔のことだけど。", en = "But of course that was a long time ago." },
+  { source = "yomeru", id = "y1", ja = "「明日のパーティーに来る？」「{もちろん}！」", en = "\"Are you coming to the party tomorrow?\" \"Of course!\"" },
 ]
 
 [[point]]
@@ -7173,9 +7201,11 @@ Only for good, wished-for results. とうとう (N4) also takes bad ones \
 ようやく, the same as やっと but more formal."""
 related = ["toutou", "tsui-ni", "iyoiyo"]
 examples = [
-  { tatoeba = "30234_193069", ja = "{やっと}金曜日だ。", en = "Thank God it's Friday!" },
   { tatoeba = "30246_193082", ja = "{やっと}その意味が分かった。", en = "The meaning dawned upon me at last." },
   { tatoeba = "47490_210225", ja = "その子は靴のひもを結ぶ{のがやっと}だった。", en = "That child could barely manage to tie his shoes." },
+  { tatoeba = "30239_193074", ja = "{やっと}絵を描き終えた。", en = "Finally, I finished a painting." },
+  { tatoeba = "30228_193063", ja = "{やっと}雪がやみ、暖かくなりました。", en = "It has finally stopped snowing and has warmed up." },
+  { tatoeba = "30237_193072", ja = "{やっと}期末試験が終わった。", en = "At last, the end-of-term exams are over." },
 ]
 
 [[point]]
@@ -7198,6 +7228,9 @@ related = ["kitto", "kanarazu", "tai"]
 examples = [
   { tatoeba = "51317_214027", ja = "{ぜひ}、遊びにおいでください。", en = "Do come and visit us." },
   { tatoeba = "38522_214022", ja = "{ぜひ}お願いします。", en = "By all means." },
+  { tatoeba = "51307_236701", ja = "{ぜひ}それをやってみなさい。", en = "Try it by all means." },
+  { source = "yomeru", id = "y1", ja = "いつか{ぜひ}日本に行きたいです。", en = "I'd really love to go to Japan someday." },
+  { source = "yomeru", id = "y2", ja = "今度{ぜひ}一緒に食事しましょう。", en = "Let's definitely have dinner together next time." },
 ]
 
 [[point]]
@@ -7223,6 +7256,9 @@ related = ["darake", "zukume"]
 examples = [
   { tatoeba = "64037_226693", ja = "お腹が{いっぱい}です。", en = "My stomach is full." },
   { tatoeba = "319566_84149", ja = "部屋は煙で{いっぱい}だった。", en = "The room was full of smoke." },
+  { tatoeba = "240448_174022", ja = "公園は人で{いっぱい}だった。", en = "The park was full of people." },
+  { source = "yomeru", id = "y1", ja = "パーティーでケーキを{いっぱい}食べた。", en = "I ate a lot of cake at the party." },
+  { source = "yomeru", id = "y2", ja = "宿題が{いっぱい}あって、遊べない。", en = "I have lots of homework, so I can't play." },
 ]
 
 [[point]]
