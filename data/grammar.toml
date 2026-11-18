@@ -21796,6 +21796,9 @@ related = ["te-wa-kanawanai", "te-tamaranai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "毎日雨{ではやりきれない}。", en = "Rain every single day really gets me down." },
   { source = "yomeru", id = "y2", ja = "こんなに安い給料{じゃやりきれない}よ。", en = "A salary this low is more than I can stand." },
+  { source = "yomeru", id = "y3", ja = "毎日こう暑く{ちゃやりきれない}。", en = "If it stays this hot every day, I can't take it." },
+  { source = "yomeru", id = "y4", ja = "毎晩隣がうるさく{てはやりきれない}。", en = "The neighbours being this noisy every night is unbearable." },
+  { source = "yomeru", id = "y5", ja = "一日中こんな仕事をさせられ{てはやりきれない}。", en = "Being made to do this kind of work all day is more than I can bear." },
 ]
 
 [[point]]
@@ -21821,6 +21824,8 @@ examples = [
   { tatoeba = "46201_208941", ja = "その場所はどこか謎{めいている}。", en = "The place is invested with an air of mystery." },
   { source = "yomeru", id = "y1", ja = "三月に入って、春{めいて}きた。", en = "Now that it's March, spring is in the air." },
   { source = "yomeru", id = "y2", ja = "彼は皮肉{めいた}笑いを浮かべた。", en = "He gave a somewhat sarcastic smile." },
+  { source = "yomeru", id = "y3", ja = "彼は冗談{めいた}口調で言ったが、目は真剣だった。", en = "He said it in a half-joking tone, but his eyes were serious." },
+  { source = "yomeru", id = "y4", ja = "説教{めいた}ことは言いたくないが…", en = "I don't want to sound preachy, but…" },
 ]
 
 [[point]]
@@ -21845,6 +21850,8 @@ examples = [
   { tatoeba = "53721_216417", ja = "ジェーンは年齢以上に大人{びている}。", en = "Jane is mature beyond her years." },
   { tatoeba = "46311_209049", ja = "その少年は大人{びて}見えた。", en = "The boy looked like a grown-up." },
   { source = "yomeru", id = "y1", ja = "駅の前に古{びた}旅館がある。", en = "There's an old, worn-looking inn in front of the station." },
+  { source = "yomeru", id = "y2", ja = "山奥のひな{びた}温泉に泊まった。", en = "We stayed at a rustic hot spring deep in the mountains." },
+  { source = "yomeru", id = "y3", ja = "引き出しから古{びた}写真が一枚出てきた。", en = "An old, faded photo turned up in the drawer." },
 ]
 
 [[point]]
@@ -21868,6 +21875,9 @@ related = ["ppoi", "meku"]
 examples = [
   { source = "yomeru", id = "y1", ja = "そんな恩着せ{がましい}言い方はやめて。", en = "Stop talking as if you've done me some huge favour." },
   { source = "yomeru", id = "y2", ja = "言い訳{がましく}聞こえるかもしれないけど…", en = "This may sound like an excuse, but…" },
+  { source = "yomeru", id = "y3", ja = "彼の親切は少し押し付け{がましい}。", en = "His kindness is a bit pushy." },
+  { source = "yomeru", id = "y4", ja = "差し出{がましい}ようですが、一言よろしいですか。", en = "It may be presumptuous of me, but may I say something?" },
+  { source = "yomeru", id = "y5", ja = "別れた相手に未練{がましく}電話するな。", en = "Don't keep calling your ex like you can't let go." },
 ]
 
 [[point]]
@@ -21892,6 +21902,8 @@ examples = [
   { tatoeba = "313640_90074", ja = "彼女は黒{ずくめ}の服装をしていた。", en = "She was dressed all in black." },
   { source = "yomeru", id = "y1", ja = "引っ越してから、いいこと{ずくめ}だ。", en = "Since I moved, it's been one good thing after another." },
   { source = "yomeru", id = "y2", ja = "この学校は規則{ずくめ}で息が詰まる。", en = "This school is all rules, and it's stifling." },
+  { tatoeba = "68381_231015", ja = "あの黒{ずくめ}の紳士は誰ですか。", en = "Who is the gentleman all dressed in black?" },
+  { source = "yomeru", id = "y3", ja = "今年はめでたいこと{ずくめ}の一年だった。", en = "This year brought nothing but happy events." },
 ]
 
 [[point]]
@@ -21912,8 +21924,11 @@ notes = """
 uses exist (借金まみれ, "buried in debt")."""
 related = ["darake", "zukume"]
 examples = [
-  { tatoeba = "285797_117867", ja = "彼の額は汗{まみれ}だった。", en = "Sweat bathed his forehead." },
   { tatoeba = "300772_102921", ja = "彼は全身泥{まみれ}だった。", en = "He was covered with mud from head to foot." },
+  { tatoeba = "47419_210155", ja = "その子供たちは全身ほこり{まみれ}だった。", en = "Those children were covered with dirt from head to foot." },
+  { source = "yomeru", id = "y1", ja = "練習の後、シャツが汗{まみれ}になった。", en = "After practice, my shirt was soaked with sweat." },
+  { source = "yomeru", id = "y2", ja = "事故の現場で、車は血{まみれ}だった。", en = "At the accident scene, the car was covered in blood." },
+  { source = "yomeru", id = "y3", ja = "彼は借金{まみれ}の生活を送っている。", en = "He's living a life buried in debt." },
 ]
 
 [[point]]
@@ -21935,8 +21950,11 @@ wrongdoing: 会社ぐるみの不正), 身ぐるみ (身ぐるみはがされる
 robbed of everything"). Search-only: ぐるみ also sits in ぬいぐるみ."""
 related = ["zukume"]
 examples = [
-  { tatoeba = "248030_166472", ja = "私たちはすでに家族{ぐるみ}のお付き合いがあります。", en = "We've already had a family commitment." },
   { source = "yomeru", id = "y1", ja = "町{ぐるみ}で祭りの準備をする。", en = "The whole town gets ready for the festival together." },
+  { source = "yomeru", id = "y2", ja = "彼の家とは家族{ぐるみ}で付き合っている。", en = "Our whole family is friends with his whole family." },
+  { source = "yomeru", id = "y3", ja = "会社{ぐるみ}の不正が明らかになった。", en = "Fraud involving the whole company came to light." },
+  { source = "yomeru", id = "y4", ja = "旅行先で身{ぐるみ}はがされた。", en = "I was robbed of everything I had while travelling." },
+  { source = "yomeru", id = "y5", ja = "学校{ぐるみ}でいじめを隠していた。", en = "The whole school was covering up the bullying." },
 ]
 
 [[point]]
@@ -21959,6 +21977,9 @@ related = ["ni-shite"]
 examples = [
   { tatoeba = "328872_74847", ja = "田中くんは省内{きっての}馬鹿者だよ。", en = "Young Tanaka is the stupidest person in the department." },
   { source = "yomeru", id = "y1", ja = "彼は社内{きっての}秀才だ。", en = "He's the brightest person in the whole company." },
+  { source = "yomeru", id = "y2", ja = "ここは町{きっての}老舗だ。", en = "This is the most long-established shop in the whole town." },
+  { source = "yomeru", id = "y3", ja = "彼女は業界{きっての}実力者だ。", en = "She's the most powerful figure in the entire industry." },
+  { source = "yomeru", id = "y4", ja = "金閣寺は京都{きっての}名所だ。", en = "Kinkakuji is the most famous sight in all of Kyoto." },
 ]
 
 [[point]]
@@ -21981,6 +22002,9 @@ related = ["buru", "furi-wo-suru"]
 examples = [
   { source = "yomeru", id = "y1", ja = "一回会っただけで、もう恋人{気取り}だ。", en = "We've met once and he's already acting like my boyfriend." },
   { source = "yomeru", id = "y2", ja = "入って一か月で先輩{気取り}なんて早いよ。", en = "One month in, and already playing the senior? That's a bit soon." },
+  { tatoeba = "307487_96217", ja = "彼らは夫婦{きどり}だ。", en = "They pretend to be man and wife." },
+  { source = "yomeru", id = "y3", ja = "彼はもう社長{気取り}で指示を出している。", en = "He's already giving orders as if he were the boss." },
+  { source = "yomeru", id = "y4", ja = "少し英語ができるだけで通訳{気取り}だ。", en = "He knows a little English and plays the interpreter." },
 ]
 
 [[point]]
@@ -22008,6 +22032,8 @@ examples = [
   { tatoeba = "319570_84145", ja = "部屋は散らかし{放題}だった。", en = "The room was all messed up." },
   { tatoeba = "54264_216956", ja = "さあ、みんなで食べ{放題}の焼き肉屋さんに行こうよ。", en = "Let's all go to an all-you-can-eat Yakiniku restaurant." },
   { source = "yomeru", id = "y1", ja = "彼は会議で言いたい{放題}だった。", en = "He said whatever he liked at the meeting." },
+  { source = "yomeru", id = "y2", ja = "この店は二時間飲み{放題}で三千円だ。", en = "This place does all-you-can-drink for two hours for 3,000 yen." },
+  { source = "yomeru", id = "y3", ja = "空き家の庭は荒れ{放題}になっていた。", en = "The empty house's garden had been left to run wild." },
 ]
 
 [[point]]
@@ -22033,6 +22059,8 @@ examples = [
   { tatoeba = "309088_94617", ja = "彼女の演技はプロ{並み}です。", en = "Her acting is on the level of a professional." },
   { tatoeba = "282306_121699", ja = "農作物は平年{並み}だ。", en = "The crops are up to the average." },
   { tatoeba = "303533_100164", ja = "彼は{並みの}学生ではない。", en = "He is above the ordinary type of student." },
+  { source = "yomeru", id = "y1", ja = "今年の夏は例年{並み}の暑さになりそうだ。", en = "This summer looks like it will be about as hot as usual." },
+  { source = "yomeru", id = "y2", ja = "この部屋の家賃はホテル{並み}に高い。", en = "The rent on this room is as high as a hotel's." },
 ]
 
 [[point]]
@@ -22056,6 +22084,9 @@ related = ["gamashii", "ppoi", "rashii"]
 examples = [
   { source = "yomeru", id = "y1", ja = "そんな長{ったらしい}説明はいらない。", en = "I don't need such a long-winded explanation." },
   { source = "yomeru", id = "y2", ja = "彼女は嫌み{ったらしく}笑った。", en = "She gave a nasty, sneering laugh." },
+  { source = "yomeru", id = "y3", ja = "未練{たらしく}昔の写真ばかり見ている。", en = "He keeps pathetically looking at old photos, unable to let go." },
+  { source = "yomeru", id = "y4", ja = "あの子は本当に憎{ったらしい}ことを言う。", en = "That kid says the most hateful things." },
+  { source = "yomeru", id = "y5", ja = "そんな貧乏{ったらしい}格好はやめなさい。", en = "Stop dressing so shabbily." },
 ]
 
 [[point]]
@@ -22081,6 +22112,8 @@ examples = [
   { tatoeba = "263487_151069", ja = "試験を受け{損なった}。", en = "He failed to take the exam." },
   { tatoeba = "324122_79596", ja = "野手はボールを取り{損ねた}。", en = "The fielder failed to catch the ball." },
   { tatoeba = "27570_190413", ja = "一生懸命走ったが、列車に乗り{そこなった}。", en = "I ran and ran, but missed the train." },
+  { tatoeba = "290978_112698", ja = "彼はその手紙に返事を出し{損なった}。", en = "He failed to answer the letter." },
+  { source = "yomeru", id = "y1", ja = "会議が長引いて、昼ご飯を食べ{損ねた}。", en = "The meeting ran long and I missed lunch." },
 ]
 
 [[point]]
@@ -22104,6 +22137,9 @@ related = ["sokonau", "zu-jimai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "タイミングを逃して、名前を聞き{そびれた}。", en = "I missed my moment and never got to ask her name." },
   { source = "yomeru", id = "y2", ja = "コーヒーを飲みすぎて、寝{そびれた}。", en = "I drank too much coffee and couldn't get to sleep." },
+  { source = "yomeru", id = "y3", ja = "お礼を言い{そびれた}まま、彼は帰ってしまった。", en = "He left before I got the chance to thank him." },
+  { source = "yomeru", id = "y4", ja = "あの映画は、結局見{そびれて}しまった。", en = "In the end I never got round to seeing that film." },
+  { source = "yomeru", id = "y5", ja = "本当のことを言い{そびれて}いる。", en = "I keep missing my chance to tell the truth." },
 ]
 
 [[point]]
@@ -22128,6 +22164,8 @@ examples = [
   { tatoeba = "294486_109204", ja = "彼は歌い{まくった}。", en = "He sang and sang." },
   { tatoeba = "267974_146588", ja = "少年はゴールに向かって走り{まくった}。", en = "The boy ran and ran toward the goal." },
   { source = "yomeru", id = "y1", ja = "休みの間、映画を見{まくった}。", en = "I binged movies all through the holidays." },
+  { source = "yomeru", id = "y2", ja = "試験の前は毎晩問題を解き{まくった}。", en = "Before the exam I did practice problems like crazy every night." },
+  { source = "yomeru", id = "y3", ja = "旅行中は写真を撮り{まくった}。", en = "I took photos nonstop all through the trip." },
 ]
 
 [[point]]
@@ -22155,6 +22193,9 @@ related = ["keikou-ga-aru", "gachi"]
 examples = [
   { tatoeba = "327044_76676", ja = "ジムくんは行き過ぎの{嫌いがある}。", en = "Jim tends to go too far." },
   { source = "yomeru", id = "y1", ja = "若い人は、何でもスマホで済ませる{きらいがある}。", en = "Young people tend to handle everything on their phones." },
+  { source = "yomeru", id = "y2", ja = "部長は人の話を最後まで聞かない{きらいがある}。", en = "The department head tends not to hear people out." },
+  { source = "yomeru", id = "y3", ja = "この会社は前例にこだわる{きらいがある}。", en = "This company is inclined to cling to precedent." },
+  { source = "yomeru", id = "y4", ja = "彼女は悩みを一人で抱え込む{きらいがある}。", en = "She tends to keep her worries to herself." },
 ]
 
 [[point]]
@@ -22177,6 +22218,9 @@ related = ["hame-ni-naru", "kekka"]
 examples = [
   { source = "yomeru", id = "y1", ja = "遅刻ばかりして、ついにクビになる{始末だ}。", en = "He was always late, and in the end he even got fired." },
   { source = "yomeru", id = "y2", ja = "注意したら、逆に怒り出す{始末だ}。", en = "When I warned him, he actually got angry at me." },
+  { source = "yomeru", id = "y3", ja = "息子は全然勉強せず、とうとう留年する{始末だ}。", en = "My son never studied, and now he even has to repeat a year." },
+  { source = "yomeru", id = "y4", ja = "説明書を読まないから、機械を壊す{始末だ}。", en = "He never reads the manual, and now he's even broken the machine." },
+  { source = "yomeru", id = "y5", ja = "何度も注意したのに、この{始末だ}。", en = "I warned him again and again, and look how it turned out." },
 ]
 
 [[point]]
@@ -22200,6 +22244,8 @@ examples = [
   { tatoeba = "310911_92798", ja = "彼女はしまいには入院する{はめになった}。", en = "She ended up in the hospital." },
   { tatoeba = "245359_169128", ja = "仕事の難しい部分は彼がやる{羽目になった}。", en = "He was left to do the difficult part of the work." },
   { source = "yomeru", id = "y1", ja = "終電を逃して、タクシー代を払う{羽目になった}。", en = "I missed the last train and ended up paying for a taxi." },
+  { tatoeba = "41415_204173", ja = "そんな運転をすると入院する{はめになる}だろう。", en = "If you drive your car like that, you'll end up in hospital." },
+  { source = "yomeru", id = "y2", ja = "雨の中、駅で一時間も待つ{羽目になった}。", en = "I ended up having to wait an hour at the station in the rain." },
 ]
 
 [[point]]
@@ -22222,6 +22268,9 @@ related = ["ippou-da", "bakari-da"]
 examples = [
   { source = "yomeru", id = "y1", ja = "景気は悪化の{一途をたどっている}。", en = "The economy keeps getting worse." },
   { source = "yomeru", id = "y2", ja = "この町の人口は減少の{一途をたどる}。", en = "This town's population is steadily falling." },
+  { source = "yomeru", id = "y3", ja = "医療費は上昇の{一途をたどっている}。", en = "Medical costs just keep on rising." },
+  { source = "yomeru", id = "y4", ja = "ネットの利用者は増加の{一途をたどった}。", en = "The number of internet users rose steadily." },
+  { source = "yomeru", id = "y5", ja = "その国の経済は衰退の{一途をたどった}。", en = "That country's economy went into steady decline." },
 ]
 
 [[point]]
@@ -22243,6 +22292,9 @@ related = ["you-ga-nai", "hoka-nai"]
 examples = [
   { tatoeba = "271505_143063", ja = "政府もなす{すべがない}ようだ。", en = "It sounds as if the government doesn't know what to do." },
   { tatoeba = "241706_172768", ja = "今となっては事の真相を知る{すべもない}。", en = "At this distance we cannot hope to know the truth." },
+  { source = "yomeru", id = "y1", ja = "洪水を前に、村人たちはなす{術もなかった}。", en = "Faced with the flood, the villagers were powerless to do anything." },
+  { source = "yomeru", id = "y2", ja = "今では彼の居場所を知る{術がない}。", en = "There's no way now of knowing where he is." },
+  { source = "yomeru", id = "y3", ja = "言葉が通じず、気持ちを伝える{すべがなかった}。", en = "With no common language, I had no way to convey my feelings." },
 ]
 
 [[point]]
