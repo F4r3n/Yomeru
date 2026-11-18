@@ -29,11 +29,14 @@ fn misses(
     let mut checked = 0;
     let mut out = Vec::new();
     let mut ids: Vec<String> = Vec::new();
-    for seq in 0..5000 {
+    // Seqs have gaps (removed points) but stay under next_seq; every
+    // point must be reached, or the bound is too low.
+    for seq in 0..100_000 {
         if let Some(e) = dict.by_seq(seq) {
             ids.push(e.id);
         }
     }
+    assert_eq!(ids.len(), dict.len(), "some points weren't reached by seq");
     for id in ids {
         let e = dict.by_id(&id).unwrap();
         if !keep(&e.check) {

@@ -493,10 +493,19 @@ mod answers {
             d.check_answer("imperative", "早く書け！", &words),
             Verdict::Accepted
         );
-        // まえ → まう is the imperative rule, but まう is not a verb here.
+        // まえ → まう is the imperative rule: it counts only when the
+        // vocabulary knows まう as a verb.
         assert_eq!(
-            d.check_answer("imperative", "駅のまえで", &NONE),
+            d.check_answer("imperative", "駅のまえで", &words),
             Verdict::NotFound
+        );
+        let mau = Words {
+            verbs: &["まう"],
+            words: &[],
+        };
+        assert_eq!(
+            d.check_answer("imperative", "駅のまえで", &mau),
+            Verdict::Accepted
         );
     }
 
