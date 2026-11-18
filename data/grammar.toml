@@ -1233,6 +1233,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "友達に誕生日のプレゼントを{あげました}。", en = "I gave my friend a birthday present." },
   { tatoeba = "261211_153333", ja = "私は彼女に読むための漫画の本を{あげた}。", en = "I gave her a comic book to read." },
   { source = "yomeru", id = "y2", ja = "弟にお菓子を{あげた}。", en = "I gave my little brother some sweets." },
+  { tatoeba = "316265_87443", ja = "彼女は彼にそのお金を{あげました}。", en = "She gave him the money." },
+  { source = "yomeru", id = "y3", ja = "この本を田中さんに{あげます}。", en = "I'll give this book to Mr. Tanaka." },
 ]
 
 [[point]]
@@ -1256,7 +1258,9 @@ related = ["ageru", "morau", "te-kudasai"]
 examples = [
   { tatoeba = "297539_106147", ja = "彼は私にプレゼントを{くれた}。", en = "He gave me a present." },
   { tatoeba = "297538_106148", ja = "彼は私にヒントを{くれた}。", en = "He gave me a hint." },
-  { tatoeba = "33256_196080", ja = "ボブが手伝って{くれた}。", en = "Bob helped me." },
+  { tatoeba = "251685_84506", ja = "父は私に素敵な時計を{くれた}。", en = "My father gave a nice watch to me." },
+  { source = "yomeru", id = "y1", ja = "誰がこの花を{くれた}んですか。", en = "Who gave you these flowers?" },
+  { source = "yomeru", id = "y2", ja = "姉がこのペンを{くれました}。", en = "My older sister gave me this pen." },
 ]
 
 [[point]]
@@ -1287,6 +1291,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "{これ}は私の傘です。", en = "This is my umbrella." },
   { source = "yomeru", id = "y2", ja = "{その}かばんは誰のですか。", en = "Whose bag is that?" },
   { source = "yomeru", id = "y3", ja = "{あの}人は誰ですか。", en = "Who is that person?" },
+  { source = "yomeru", id = "y4", ja = "トイレは{どこ}ですか。", en = "Where is the toilet?" },
+  { source = "yomeru", id = "y5", ja = "{どれ}が田中さんの車ですか。", en = "Which one is Mr. Tanaka's car?" },
 ]
 
 [[point]]
@@ -1311,6 +1317,8 @@ examples = [
   { tatoeba = "281366_122636", ja = "日本の気候{はどうですか}。", en = "How do you like the climate of Japan?" },
   { tatoeba = "62256_224923", ja = "コーヒーのおかわり{はいかがですか}。", en = "Would you like another cup of coffee?" },
   { tatoeba = "245139_169337", ja = "散歩に出かけ{てはどうですか}。", en = "How about going for a walk?" },
+  { source = "yomeru", id = "y1", ja = "新しい学校{はどうですか}。", en = "How is your new school?" },
+  { source = "yomeru", id = "y2", ja = "明日{はどうですか}。", en = "How about tomorrow?" },
 ]
 
 [[point]]
@@ -1335,6 +1343,8 @@ examples = [
   { tatoeba = "38645_201435", ja = "{どうして}髪を乾かしているの。", en = "Why are you drying your hair?" },
   { tatoeba = "36366_199167", ja = "{なぜ}早く来たの。", en = "Why did you come early?" },
   { tatoeba = "36119_198921", ja = "{なんで}そんなに悲しむの。", en = "Why should you be so sad?" },
+  { source = "yomeru", id = "y1", ja = "{どうして}昨日来なかったんですか。", en = "Why didn't you come yesterday?" },
+  { source = "yomeru", id = "y2", ja = "{なぜ}窓を開けたんですか。", en = "Why did you open the window?" },
 ]
 
 [[point]]
@@ -1358,6 +1368,8 @@ examples = [
   { tatoeba = "38354_201148", ja = "{どうやって}私の家を見つけたのですか。", en = "How did you find my house?" },
   { tatoeba = "19277_181525", ja = "競技場には{どうやって}行ったの？", en = "How did you get to the stadium?" },
   { source = "yomeru", id = "y1", ja = "このカメラは{どうやって}使いますか。", en = "How do you use this camera?" },
+  { tatoeba = "38356_201150", ja = "{どうやって}作ったのですか。", en = "How did you make it?" },
+  { tatoeba = "37564_224269", ja = "ここへは{どうやって}来たのですか。", en = "How did you come here?" },
 ]
 
 [[point]]
@@ -1382,6 +1394,8 @@ examples = [
   { tatoeba = "43168_205922", ja = "{それから}家に急いだ。", en = "Then she hurried home." },
   { tatoeba = "43153_205907", ja = "{それから}彼女はまた歩き始めた。", en = "Then she began to walk again." },
   { source = "yomeru", id = "y1", ja = "朝ご飯を食べて、{それから}学校に行きました。", en = "I ate breakfast, and then I went to school." },
+  { source = "yomeru", id = "y2", ja = "宿題をして、{それから}テレビを見ます。", en = "I'll do my homework, and then watch TV." },
+  { source = "yomeru", id = "y3", ja = "{それから}彼に会っていません。", en = "I haven't seen him since then." },
 ]
 
 [[point]]
@@ -1405,6 +1419,8 @@ examples = [
   { tatoeba = "53613_216308", ja = "{しかし}、車は欲しい。", en = "But I want a car." },
   { tatoeba = "53517_216214", ja = "{しかし}彼は英語を読むのは下手だ。", en = "But he is bad at reading English." },
   { tatoeba = "53518_216215", ja = "{しかし}彼もまた興奮していた。", en = "But he was excited too." },
+  { source = "yomeru", id = "y1", ja = "この店は安いです。{しかし}、あまりおいしくないです。", en = "This restaurant is cheap. However, the food isn't very good." },
+  { source = "yomeru", id = "y2", ja = "日本語は難しいです。{しかし}、とても面白いです。", en = "Japanese is difficult. However, it is very interesting." },
 ]
 
 [[point]]
@@ -1428,6 +1444,8 @@ examples = [
   { tatoeba = "294489_109201", ja = "彼は歌う{のが上手}だ。", en = "He is good at singing." },
   { tatoeba = "311649_92062", ja = "彼女はテニスをする{のが上手}です。", en = "She is good at playing tennis." },
   { source = "yomeru", id = "y1", ja = "私は絵を描く{のが下手}です。", en = "I'm bad at drawing." },
+  { tatoeba = "62490_225154", ja = "ケンは泳ぐ{のが上手}です。", en = "Ken is good at swimming." },
+  { tatoeba = "298985_104705", ja = "彼は写真を撮る{のが上手}だ。", en = "He is good at taking photos." },
 ]
 
 [[point]]
@@ -1456,6 +1474,8 @@ examples = [
   { tatoeba = "56816_219496", ja = "この本を読む{のは}私には簡単です。", en = "It is easy for me to read this book." },
   { tatoeba = "242071_172404", ja = "今私たちに必要な{のは}休息です。", en = "What we need now is a rest." },
   { source = "yomeru", id = "y1", ja = "赤い{のを}一つください。", en = "One red one, please." },
+  { source = "yomeru", id = "y2", ja = "私は本を読む{のが}好きです。", en = "I like reading books." },
+  { source = "yomeru", id = "y3", ja = "ドアを閉める{のを}忘れました。", en = "I forgot to close the door." },
 ]
 
 [[point]]
@@ -1486,6 +1506,8 @@ examples = [
   { tatoeba = "42451_205209", ja = "それは高{くない}。", en = "It isn't expensive." },
   { tatoeba = "37833_200632", ja = "とても楽し{かったです}。", en = "I really enjoyed myself." },
   { source = "yomeru", id = "y1", ja = "昨日はあまり寒{くなかった}。", en = "It wasn't very cold yesterday." },
+  { source = "yomeru", id = "y2", ja = "この部屋は大き{くありません}。", en = "This room isn't big." },
+  { source = "yomeru", id = "y3", ja = "天気はよ{くなかった}。", en = "The weather wasn't good." },
 ]
 
 [[point]]
@@ -1512,6 +1534,8 @@ examples = [
   { tatoeba = "238911_175554", ja = "健{は背が高いが、私は}高くない。", en = "Ken is tall, but I'm not." },
   { tatoeba = "17015_178163", ja = "君の声{は聞こえるが、姿は}見えないよ。", en = "I can hear you, but I can't see you." },
   { source = "yomeru", id = "y1", ja = "犬{は好きですが、猫は}苦手です。", en = "I like dogs, but I'm not keen on cats." },
+  { source = "yomeru", id = "y2", ja = "コーヒー{は飲みますが、お茶は}飲みません。", en = "I drink coffee, but I don't drink tea." },
+  { source = "yomeru", id = "y3", ja = "夏{は暑いですが、冬は}寒いです。", en = "Summers are hot, but winters are cold." },
 ]
 
 [[point]]
@@ -1539,6 +1563,8 @@ examples = [
   { tatoeba = "67073_229712", ja = "あれ{は}古いお城です。", en = "That is an old castle." },
   { tatoeba = "18496_179638", ja = "金沢{は}静かな町です。", en = "Kanazawa is a quiet city." },
   { source = "yomeru", id = "y1", ja = "私{は}学生です。", en = "I'm a student." },
+  { source = "yomeru", id = "y2", ja = "今日{は}日曜日です。", en = "Today is Sunday." },
+  { source = "yomeru", id = "y3", ja = "兄{は}銀行で働いています。", en = "My older brother works at a bank." },
 ]
 
 [[point]]
@@ -1567,6 +1593,8 @@ examples = [
   { tatoeba = "276295_136940", ja = "誰{が}英語を話せますか。", en = "Who can speak English?" },
   { source = "yomeru", id = "y1", ja = "雨{が}降っています。", en = "It's raining." },
   { source = "yomeru", id = "y2", ja = "すみません{が}、駅はどこですか。", en = "Excuse me, but where is the station?" },
+  { source = "yomeru", id = "y4", ja = "あ、バス{が}来ました。", en = "Oh, here comes the bus." },
+  { source = "yomeru", id = "y3", ja = "この部屋は狭いです{が}、きれいです。", en = "This room is small, but it's clean." },
 ]
 
 [[point]]
@@ -1596,6 +1624,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "私{も}学生です。", en = "I'm a student too." },
   { source = "yomeru", id = "y2", ja = "弟{も}一緒に行きます。", en = "My little brother is coming too." },
   { tatoeba = "304262_99436", ja = "彼は野球{もフットボールも}好きではない。", en = "He likes neither baseball nor football." },
+  { source = "yomeru", id = "y3", ja = "今日{も}雨です。", en = "It's raining again today." },
+  { source = "yomeru", id = "y4", ja = "肉{も魚も}食べます。", en = "I eat both meat and fish." },
 ]
 
 [[point]]
@@ -1625,6 +1655,8 @@ examples = [
   { tatoeba = "464592_229723", ja = "あれは何です{か}。", en = "What is that?" },
   { tatoeba = "56970_219649", ja = "この本は君のです{か}。", en = "Is this book yours?" },
   { source = "yomeru", id = "y1", ja = "お茶{か}コーヒーを飲みます。", en = "I drink tea or coffee." },
+  { source = "yomeru", id = "y2", ja = "日曜日に何をします{か}。", en = "What will you do on Sunday?" },
+  { source = "yomeru", id = "y3", ja = "電車{か}バスで行きます。", en = "I'll go by train or bus." },
 ]
 
 [[point]]
@@ -1652,6 +1684,8 @@ examples = [
   { tatoeba = "289834_113839", ja = "彼はここ{で}遊んでいます。", en = "He is playing here." },
   { tatoeba = "319359_84356", ja = "父は毎朝バス{で}会社に行きます。", en = "Father takes a bus to his office." },
   { source = "yomeru", id = "y1", ja = "ペン{で}書いてください。", en = "Please write in pen." },
+  { source = "yomeru", id = "y2", ja = "図書館{で}本を読みました。", en = "I read a book at the library." },
+  { source = "yomeru", id = "y3", ja = "日本語{で}話してください。", en = "Please speak in Japanese." },
 ]
 
 [[point]]
@@ -1683,6 +1717,8 @@ examples = [
   { tatoeba = "252455_162060", ja = "私は1時{に}寝た。", en = "I went to bed at one o'clock." },
   { source = "yomeru", id = "y1", ja = "机の上{に}本があります。", en = "There is a book on the desk." },
   { source = "yomeru", id = "y2", ja = "駅で友達{に}会いました。", en = "I met a friend at the station." },
+  { source = "yomeru", id = "y3", ja = "来年日本{に}行きます。", en = "I'm going to Japan next year." },
+  { source = "yomeru", id = "y4", ja = "母{に}手紙を書きました。", en = "I wrote a letter to my mother." },
 ]
 
 [[point]]
@@ -1711,6 +1747,9 @@ homographs = ["to-conditional"]
 examples = [
   { tatoeba = "51931_214638", ja = "スティーブはケート{と一緒に}学校に行く。", en = "Steve goes to school with Kate." },
   { source = "yomeru", id = "y1", ja = "パン{と}牛乳を買いました。", en = "I bought bread and milk." },
+  { source = "yomeru", id = "y2", ja = "友達{と}映画を見ました。", en = "I watched a movie with a friend." },
+  { source = "yomeru", id = "y3", ja = "犬{と}猫がいます。", en = "I have a dog and a cat." },
+  { source = "yomeru", id = "y4", ja = "先生{と}話しました。", en = "I talked with the teacher." },
 ]
 
 [[point]]
@@ -1733,6 +1772,9 @@ related = ["to-particle", "tari-tari"]
 examples = [
   { source = "yomeru", id = "y1", ja = "りんご{や}みかんを買いました。", en = "I bought apples, mandarins and other fruit." },
   { source = "yomeru", id = "y2", ja = "机の上に本{や}ノートがあります。", en = "There are books, notebooks and such on the desk." },
+  { source = "yomeru", id = "y3", ja = "京都{や}奈良に行きました。", en = "I went to Kyoto, Nara and other places." },
+  { source = "yomeru", id = "y4", ja = "朝ご飯にパン{や}果物を食べます。", en = "For breakfast I eat bread, fruit and things like that." },
+  { source = "yomeru", id = "y5", ja = "テニス{や}サッカーをします。", en = "I play tennis, soccer and so on." },
 ]
 
 [[point]]
