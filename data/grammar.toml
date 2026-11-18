@@ -10004,6 +10004,8 @@ examples = [
   { tatoeba = "286465_117200", ja = "彼の思想は彼の体験{に基づいて}いる。", en = "His ideas are based on his experience." },
   { tatoeba = "44141_206892", ja = "その物語は伝説{に基づいて}いる。", en = "The story is founded on tradition." },
   { source = "yomeru", id = "y1", ja = "アンケートの結果{に基づいて}、計画を変えた。", en = "We changed the plan based on the survey results." },
+  { tatoeba = "272089_142481", ja = "税金は収入{に基づく}。", en = "Taxation is based on income." },
+  { source = "yomeru", id = "y2", ja = "先生は自分の経験{に基づいて}アドバイスをくれた。", en = "My teacher gave me advice based on her own experience." },
 ]
 
 [[point]]
@@ -10034,6 +10036,8 @@ examples = [
   { tatoeba = "285123_118540", ja = "彼{に代わって}私が責任を負った。", en = "I undertook responsibility for him." },
   { tatoeba = "48544_211270", ja = "その計画{に代わる}ものが何かありますか。", en = "Do you have any alternatives to the plan?" },
   { source = "yomeru", id = "y1", ja = "社長{に代わって}、私がご挨拶します。", en = "I will give the greeting on behalf of the president." },
+  { tatoeba = "1192593_125469", ja = "弟が私{に代わって}それをやった。", en = "My brother did it on my behalf." },
+  { source = "yomeru", id = "y2", ja = "最近は手紙{に代わって}メールがよく使われる。", en = "These days email is often used in place of letters." },
 ]
 
 [[point]]
@@ -10063,6 +10067,8 @@ examples = [
   { tatoeba = "242181_172295", ja = "今朝はコーヒーの{代わりに}紅茶を飲んだ。", en = "I had tea instead of coffee this morning." },
   { tatoeba = "283734_120275", ja = "彼が私の{代わりに}行った。", en = "He went in place of me." },
   { source = "yomeru", id = "y1", ja = "料理を作る{代わりに}、皿を洗ってね。", en = "I'll cook, so in exchange, you wash the dishes." },
+  { tatoeba = "45531_208274", ja = "その{代わりに}トランプをしようよ。", en = "Let's play cards instead." },
+  { source = "yomeru", id = "y2", ja = "この部屋は安い{代わりに}、駅から遠い。", en = "This room is cheap, but in exchange it's far from the station." },
 ]
 
 [[point]]
@@ -10090,9 +10096,11 @@ only covers change. After an adjective, とともに means "both … and": \
 convenient too"."""
 related = ["ni-tsurete"]
 examples = [
-  { tatoeba = "249621_164886", ja = "私{と共に}来てくれませんか。", en = "Would you mind coming with me?" },
   { tatoeba = "317269_86442", ja = "彼女は友人達{とともに}立ち去った。", en = "She went off with her friends." },
   { source = "yomeru", id = "y1", ja = "年をとる{とともに}、体が弱くなる。", en = "As we get older, our bodies get weaker." },
+  { source = "yomeru", id = "y2", ja = "時代{とともに}、人々の生活は変わった。", en = "People's lives have changed along with the times." },
+  { source = "yomeru", id = "y3", ja = "技術が進む{とともに}、生活は便利になった。", en = "As technology advanced, life became more convenient." },
+  { source = "yomeru", id = "y4", ja = "彼は家族{とともに}アメリカへ引っ越した。", en = "He moved to America together with his family." },
 ]
 
 [[point]]
@@ -10117,6 +10125,8 @@ examples = [
   { tatoeba = "317000_86711", ja = "彼女は僕{と並んで}歩いた。", en = "She walked side by side with me." },
   { source = "yomeru", id = "y1", ja = "すしは天ぷら{と並んで}人気がある日本料理だ。", en = "Along with tempura, sushi is a popular Japanese dish." },
   { source = "yomeru", id = "y2", ja = "京都は奈良{と並んで}古い町として有名だ。", en = "Like Nara, Kyoto is famous as an old city." },
+  { tatoeba = "62468_225133", ja = "ケンは私{と並んで}走った。", en = "Ken was running beside me." },
+  { source = "yomeru", id = "y3", ja = "田中さんは山田さん{と並んで}テニスが上手だ。", en = "Tanaka is on a par with Yamada at tennis." },
 ]
 
 [[point]]
@@ -10143,6 +10153,8 @@ examples = [
   { tatoeba = "23095_151644", ja = "私達は音楽{に合わせて}踊った。", en = "We danced to the music." },
   { tatoeba = "310711_92998", ja = "彼女はギター{に合わせて}歌っている。", en = "She is singing with a guitar." },
   { source = "yomeru", id = "y1", ja = "みんなのペース{に合わせて}ゆっくり歩いた。", en = "I walked slowly to match everyone's pace." },
+  { source = "yomeru", id = "y2", ja = "子どもの年{に合わせて}、本を選んだ。", en = "I chose books to suit the children's ages." },
+  { source = "yomeru", id = "y3", ja = "相手の都合{に合わせて}、会う日を決めた。", en = "I set the day we'd meet to suit the other person's schedule." },
 ]
 
 [[point]]
@@ -10169,6 +10181,8 @@ examples = [
   { tatoeba = "251422_163090", ja = "私の誕生日は日曜日{に当たる}。", en = "My birthday falls on Sunday." },
   { tatoeba = "243126_171349", ja = "今年はお正月は日曜日{にあたる}。", en = "This year New Year's Day falls on Sunday." },
   { source = "yomeru", id = "y1", ja = "父の兄は私のおじ{に当たる}。", en = "My father's older brother is my uncle." },
+  { tatoeba = "73205_235825", ja = "１マイルは約１６００メートル{にあたる}。", en = "A mile is equal to about 1,600 meters." },
+  { source = "yomeru", id = "y2", ja = "「いただきます」{に当たる}言葉は英語にない。", en = "English has no word that corresponds to 'itadakimasu'." },
 ]
 
 [[point]]
@@ -10198,6 +10212,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "先生{をはじめ}、クラスのみんなが喜んでくれた。", en = "The whole class, the teacher first of all, was happy for me." },
   { source = "yomeru", id = "y2", ja = "京都{をはじめ}、日本には古い町が多い。", en = "Japan has many old cities, Kyoto first among them." },
   { source = "yomeru", id = "y3", ja = "すし{をはじめとする}日本料理が好きだ。", en = "I like Japanese food, sushi above all." },
+  { source = "yomeru", id = "y4", ja = "社長{をはじめ}、社員全員が会議に出た。", en = "Everyone in the company, starting with the president, attended the meeting." },
+  { source = "yomeru", id = "y5", ja = "富士山{をはじめとして}、日本には有名な山が多い。", en = "Japan has many famous mountains, Mount Fuji first among them." },
 ]
 
 [[point]]
@@ -10225,6 +10241,8 @@ examples = [
   { tatoeba = "296450_107236", ja = "彼は腰からひざ{にかけて}びしょ濡れになった。", en = "He got wet from the waist to the knees." },
   { source = "yomeru", id = "y1", ja = "今夜から明日{にかけて}雨が降るでしょう。", en = "It will rain from tonight into tomorrow." },
   { source = "yomeru", id = "y2", ja = "九月から十月{にかけて}台風が多い。", en = "There are many typhoons from September through October." },
+  { source = "yomeru", id = "y3", ja = "東京から大阪{にかけて}、大雪が降った。", en = "Heavy snow fell over the area from Tokyo to Osaka." },
+  { source = "yomeru", id = "y4", ja = "週末{にかけて}、天気が悪くなるそうだ。", en = "I hear the weather will turn bad over the weekend." },
 ]
 
 [[point]]
@@ -10249,6 +10267,8 @@ examples = [
   { tatoeba = "315281_88426", ja = "彼女は数学{にかけては}天才です。", en = "She is a genius at mathematics." },
   { tatoeba = "325781_77937", ja = "料理{にかけては}、彼女は名人だ。", en = "She is an expert when it comes to cooking." },
   { tatoeba = "26375_169373", ja = "山田は英語{にかけては}クラスの誰にも負けない。", en = "Yamada is second to none in English in his class." },
+  { tatoeba = "34899_197712", ja = "ピアノを弾くこと{にかけては}、彼にはかなわない。", en = "I'm no match for him when it comes to playing the piano." },
+  { source = "yomeru", id = "y1", ja = "走ること{にかけては}、弟に負けない。", en = "When it comes to running, my brother can't beat me." },
 ]
 
 [[point]]
@@ -10278,6 +10298,8 @@ examples = [
   { tatoeba = "24344_187208", ja = "夏はビール{に限る}ね。", en = "Nothing beats a big glass of beer in summer." },
   { tatoeba = "26719_189566", ja = "雨の日は外に出ない{に限る}。", en = "The best bet on a rainy day is to remain indoors." },
   { source = "yomeru", id = "y1", ja = "疲れた時は早く寝る{に限る}。", en = "When you're tired, there's nothing like an early night." },
+  { tatoeba = "35540_198349", ja = "ハイキングは秋{に限る}。", en = "Autumn is the best season for going on hikes." },
+  { source = "yomeru", id = "y2", ja = "分からないことは先生に聞く{に限る}。", en = "When you don't understand something, it's best to ask the teacher." },
 ]
 
 [[point]]
@@ -10308,6 +10330,8 @@ examples = [
   { tatoeba = "321762_81953", ja = "僕は君{と同じ}カメラを買った。", en = "I have bought the same camera as you have." },
   { tatoeba = "354238_380534", ja = "彼は父{と同じく}、たくさんの本を持っている。", en = "Like his father, he has many books." },
   { source = "yomeru", id = "y1", ja = "去年{と違って}、今年は雪が多い。", en = "Unlike last year, there's a lot of snow this year." },
+  { tatoeba = "53754_216451", ja = "ジェーンは私{と同じ}年齢です。", en = "Jane is as old as I am." },
+  { tatoeba = "55663_218352", ja = "これは私が持っているの{と同じ}本です。", en = "This is the same book as I have." },
 ]
 
 [[point]]
@@ -10336,6 +10360,8 @@ examples = [
   { tatoeba = "328444_75275", ja = "松川先生との出会い{をきっかけに}、私の人生は変わった。", en = "My life changed, sparked by meeting Mr Matsukawa." },
   { source = "yomeru", id = "y1", ja = "留学{をきっかけに}、料理を始めた。", en = "Studying abroad got me started cooking." },
   { source = "yomeru", id = "y2", ja = "友だちの一言{がきっかけで}、ピアノを習い始めた。", en = "A friend's remark got me to start piano lessons." },
+  { source = "yomeru", id = "y3", ja = "結婚{をきっかけに}、たばこをやめた。", en = "Getting married prompted me to quit smoking." },
+  { source = "yomeru", id = "y4", ja = "一緒に旅行したこと{がきっかけで}、二人は仲良くなった。", en = "A trip together was what made the two of them friends." },
 ]
 
 [[point]]
@@ -10363,6 +10389,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "この町は駅{を中心に}広がっている。", en = "This town spreads out around the station." },
   { source = "yomeru", id = "y2", ja = "このゲームは若い人{を中心に}人気がある。", en = "This game is popular, mainly with young people." },
   { source = "yomeru", id = "y3", ja = "会議は新しい計画{を中心に}話し合った。", en = "The meeting focused on the new plan." },
+  { source = "yomeru", id = "y4", ja = "このクラブには大学生{を中心に}三十人ぐらいいる。", en = "This club has about thirty members, mainly university students." },
+  { source = "yomeru", id = "y5", ja = "東京{を中心とした}地域で、大雨が降った。", en = "Heavy rain fell in the area centered on Tokyo." },
 ]
 
 [[point]]
@@ -10390,6 +10418,8 @@ examples = [
   { tatoeba = "59244_221918", ja = "この国は年間{を通して}気温の変化がない。", en = "This country has an even temperature throughout the year." },
   { tatoeba = "240086_174383", ja = "午後{を通して}ずっと雨が降っていた。", en = "It rained all through the afternoon." },
   { source = "yomeru", id = "y1", ja = "インターネット{を通して}友だちができた。", en = "I made friends through the internet." },
+  { source = "yomeru", id = "y2", ja = "友だち{を通して}、彼女と知り合った。", en = "I got to know her through a friend." },
+  { source = "yomeru", id = "y3", ja = "留学{を通して}、いろいろなことを学んだ。", en = "I learned many things through studying abroad." },
 ]
 
 [[point]]
@@ -10418,6 +10448,8 @@ examples = [
   { tatoeba = "317624_86087", ja = "彼女{を秘書として}使ってみよう。", en = "I'll try her out as a secretary." },
   { source = "yomeru", id = "y1", ja = "優勝{を目標として}練習している。", en = "We're training with winning the title as our goal." },
   { source = "yomeru", id = "y2", ja = "彼{をリーダーとする}チームができた。", en = "A team was formed with him as its leader." },
+  { source = "yomeru", id = "y3", ja = "父は山登り{を趣味としている}。", en = "My father has mountain climbing as his hobby." },
+  { source = "yomeru", id = "y4", ja = "この試験は六十点{を合格とする}。", en = "In this exam, sixty points counts as a pass." },
 ]
 
 [[point]]
@@ -10447,6 +10479,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "ここにりんごが三つある{とします}。", en = "Suppose there are three apples here." },
   { source = "yomeru", id = "y2", ja = "明日雨が降る{とする}。どうする？", en = "Let's say it rains tomorrow. What will you do?" },
   { source = "yomeru", id = "y3", ja = "雨の場合、試合は中止{とする}。", en = "In case of rain, the match will be called off." },
+  { source = "yomeru", id = "y4", ja = "百万円もらった{とする}。何を買う？", en = "Say you got a million yen. What would you buy?" },
+  { source = "yomeru", id = "y5", ja = "レポートの締め切りは金曜日{とします}。", en = "We'll set Friday as the deadline for the report." },
 ]
 
 [[point]]
@@ -10477,6 +10511,8 @@ examples = [
   { tatoeba = "276281_136955", ja = "誰かを{お待ちです}か。", en = "Are you waiting for anybody?" },
   { tatoeba = "29830_192666", ja = "ライターを{お持ちです}か。", en = "Do you have a lighter?" },
   { tatoeba = "31669_194496", ja = "もう{お見えです}。", en = "They're already here." },
+  { source = "yomeru", id = "y1", ja = "社長はもう{お帰りです}。", en = "The president has already gone home." },
+  { source = "yomeru", id = "y2", ja = "先生が{お呼びです}よ。", en = "The teacher is asking for you." },
 ]
 
 [[point]]
@@ -10506,6 +10542,8 @@ examples = [
   { tatoeba = "18996_180136", ja = "橋でその島へ渡れる{ようになっている}。", en = "A bridge gives access to the island." },
   { tatoeba = "50208_212923", ja = "そのドアは手前へ折りたためる{ようになっている}。", en = "The doors fold back." },
   { source = "yomeru", id = "y1", ja = "ボタンを押すと水が出る{ようになっています}。", en = "It's set up so that water comes out when you press the button." },
+  { source = "yomeru", id = "y2", ja = "このドアは自動で閉まる{ようになっている}。", en = "This door is designed to close by itself." },
+  { source = "yomeru", id = "y3", ja = "この薬の箱は子どもが開けられない{ようになっている}。", en = "This medicine box is made so that children can't open it." },
 ]
 
 [[point]]
@@ -10535,6 +10573,8 @@ examples = [
   { tatoeba = "295771_107914", ja = "彼は芸人{として}成功した。", en = "He made good as an entertainer." },
   { source = "yomeru", id = "y1", ja = "父は医者{として}働いている。", en = "My father works as a doctor." },
   { source = "yomeru", id = "y2", ja = "パーティーには一人{として}来なかった。", en = "Not a single person came to the party." },
+  { source = "yomeru", id = "y3", ja = "兄はボランティア{として}、毎週公園を掃除している。", en = "My brother cleans the park every week as a volunteer." },
+  { source = "yomeru", id = "y4", ja = "彼は一日{として}練習を休まなかった。", en = "He didn't skip practice for a single day." },
 ]
 
 [[point]]
