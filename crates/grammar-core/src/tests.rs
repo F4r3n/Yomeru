@@ -3,7 +3,7 @@
 #![allow(clippy::unwrap_used, clippy::indexing_slicing, clippy::panic)]
 
 use crate::types::{Span, parse_marked, plain};
-use crate::{GrammarDict, compile};
+use crate::{AnswerCheck, GrammarDict, Inflection, compile};
 
 /// A `grammar.toml` of `points`: each `seq = @` numbered in order from 1,
 /// and `next_seq` above them all.
@@ -57,8 +57,14 @@ fn sample() -> String {
         point("you-ni", "ように", &[], ""),
         point("te-yokatta", "てよかった", &[], ""),
         point("yokatta", "よかった", &[], ""),
-        point("tte", "って", &[], "hover = false"),
+        point("tte", "って", &[], "hover = false\ncheck = \"self\""),
         point("wa-particle", "は", &[], ""),
+        point(
+            "causative",
+            "させる",
+            &[],
+            r#"check = { inflection = ["causative", "causative-passive"] }"#,
+        ),
         point("shidai", "次第", &[], r#"homographs = ["shidai-de"]"#),
         point(
             "shidai-de",
@@ -82,13 +88,13 @@ fn ids(entries: &[crate::GrammarEntry]) -> Vec<&str> {
 #[test]
 fn compiles_every_field() {
     let compiled = compile(&sample()).unwrap();
-    assert_eq!(compiled.entries, 9);
+    assert_eq!(compiled.entries, 10);
     assert_eq!(
         compiled.warnings,
         ["you-ni-suru: related not-written isn't written yet"]
     );
     let dict = GrammarDict::from_bytes(&compiled.bytes).unwrap();
-    assert_eq!(dict.len(), 9);
+    assert_eq!(dict.len(), 10);
     let e = dict.by_id("you-ni-suru").unwrap();
     assert_eq!(e.pattern, "ようにする");
     assert_eq!(e.forms, ["ようにします"]);
@@ -117,6 +123,14 @@ fn compiles_every_field() {
     assert_eq!(e.examples[0].key, "1_2");
     assert_eq!(e.examples[1].key, "y1");
     assert!(!dict.by_id("tte").unwrap().hover);
+    assert_eq!(e.check, AnswerCheck::Forms);
+    assert_eq!(dict.by_id("tte").unwrap().check, AnswerCheck::SelfGraded);
+    assert_eq!(
+        dict.by_id("causative").unwrap().check,
+        AnswerCheck::Inflection {
+            forms: vec![Inflection::Causative, Inflection::CausativePassive]
+        }
+    );
     assert!(dict.by_id("missing").is_none());
     // Numbered in file order: you-ni-suru is the first.
     assert_eq!(e.seq, 1);
@@ -270,6 +284,9 @@ fn refuses_what_a_lookup_would_get_wrong() {
             "doesn't name it back",
         ),
         (format!("{base}\nunknown = 1"), "parsing"),
+        (format!("{base}\ncheck = \"none\""), "write \"self\""),
+        (format!("{base}\ncheck = {{ inflection = [] }}"), "names no form"),
+        (format!("{base}\ncheck = {{ inflection = [\"passiv\"] }}"), "unknown inflection"),
     ];
     for (toml, want) in cases {
         let err = format!("{:#}", compile(&numbered(&toml)).err().unwrap());

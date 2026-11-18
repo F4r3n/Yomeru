@@ -9,7 +9,7 @@ use anyhow::{Context, bail};
 use serde::Deserialize;
 
 use crate::format;
-use crate::types::{Example, GrammarEntry, Related, parse_marked};
+use crate::types::{AnswerCheck, Example, GrammarEntry, Inflection, Related, parse_marked};
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -40,6 +40,16 @@ struct Point {
     examples: Vec<RawExample>,
     #[serde(default = "yes")]
     hover: bool,
+    check: Option<RawCheck>,
+}
+
+/// `check = "self"` or `check = { inflection = ["causative"] }`; left out,
+/// the forms are searched.
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum RawCheck {
+    Word(String),
+    Inflection { inflection: Vec<String> },
 }
 
 fn yes() -> bool {
@@ -195,6 +205,33 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
                 key,
             });
         }
+        let check = match p.check {
+            None => AnswerCheck::Forms,
+            Some(RawCheck::Word(w)) if w == "self" => AnswerCheck::SelfGraded,
+            Some(RawCheck::Word(w)) => bail!(
+                "{}: check = {w:?}: write \"self\" or {{ inflection = [...] }}",
+                p.id
+            ),
+            Some(RawCheck::Inflection { inflection }) => {
+                if inflection.is_empty() {
+                    bail!("{}: check.inflection names no form", p.id);
+                }
+                let mut forms = Vec::with_capacity(inflection.len());
+                for name in inflection {
+                    let Some(form) = Inflection::ALL.into_iter().find(|f| f.as_str() == name)
+                    else {
+                        let known: Vec<&str> = Inflection::ALL.iter().map(|f| f.as_str()).collect();
+                        bail!(
+                            "{}: unknown inflection {name:?}, one of {}",
+                            p.id,
+                            known.join(", ")
+                        );
+                    };
+                    forms.push(form);
+                }
+                AnswerCheck::Inflection { forms }
+            }
+        };
         let mut related = Vec::with_capacity(p.related.len());
         for id in p.related {
             match pattern_of.get(&id) {
@@ -219,6 +256,7 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
             homographs: p.homographs,
             examples,
             hover: p.hover,
+            check,
         });
     }
 

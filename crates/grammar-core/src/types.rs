@@ -33,6 +33,59 @@ pub struct GrammarEntry {
     pub examples: Vec<Example>,
     /// False keeps the entry out of the hover popup: search only.
     pub hover: bool,
+    /// How a production answer is checked for this point.
+    pub check: AnswerCheck,
+}
+
+/// How a production review checks that the typed answer uses the point.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AnswerCheck {
+    /// The pattern or one of its `forms` appears in the answer, conjugated
+    /// or not: てから, ちゃだめ.
+    #[default]
+    Forms,
+    /// A verb of the answer is in one of these forms: 食べさせた for the
+    /// causative. For the points that are a conjugation, not a fixed string.
+    Inflection { forms: Vec<Inflection> },
+    /// No automatic check: the user compares with the reference and rates.
+    /// For what neither finds reliably (the く adverb, the て join).
+    SelfGraded,
+}
+
+/// A verb form an [`AnswerCheck::Inflection`] asks for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum Inflection {
+    Passive,
+    Potential,
+    Causative,
+    CausativePassive,
+    Volitional,
+    Imperative,
+}
+
+impl Inflection {
+    pub const ALL: [Inflection; 6] = [
+        Self::Passive,
+        Self::Potential,
+        Self::Causative,
+        Self::CausativePassive,
+        Self::Volitional,
+        Self::Imperative,
+    ];
+
+    /// The name `grammar.toml` uses.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Passive => "passive",
+            Self::Potential => "potential",
+            Self::Causative => "causative",
+            Self::CausativePassive => "causative-passive",
+            Self::Volitional => "volitional",
+            Self::Imperative => "imperative",
+        }
+    }
 }
 
 /// A related point: its id, and its pattern for the link's label.

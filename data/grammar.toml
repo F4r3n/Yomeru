@@ -34,6 +34,14 @@
 #                their key within the entry (a Tatoeba one is keyed by its
 #                pair): a new one takes the next number up, and a removed
 #                one's number is never given again
+#   check        optional: how a production review checks the typed answer.
+#                Left out, the pattern and forms are searched in it.
+#                check = { inflection = ["causative"] } for a point that is
+#                a verb form (passive, potential, causative,
+#                causative-passive, volitional, imperative): a verb of the
+#                answer must be in one of them. check = "self" when neither
+#                works (the く adverb, the て join): the user compares with
+#                the reference and rates
 #   hover        optional, default true; false keeps the entry out of the
 #                hover popup, reachable by search only (って would match
 #                inside 行って). One-char patterns (は, に, て) never show on
@@ -995,6 +1003,7 @@ examples = [
   { source = "yomeru", id = "y3", ja = "朝ご飯を食べ{て}、学校へ行きます。", en = "I eat breakfast and then go to school." },
   { source = "yomeru", id = "y4", ja = "友達に会っ{て}、映画を見ました。", en = "I met a friend and then saw a movie." },
 ]
+check = "self"
 
 [[point]]
 id = "kute"
@@ -1025,6 +1034,7 @@ examples = [
   { tatoeba = "302409_101287", ja = "彼は背が高{くて}強い人です。", en = "He is tall and strong." },
   { source = "yomeru", id = "y2", ja = "この店は安{くて}おいしいです。", en = "This restaurant is cheap and delicious." },
 ]
+check = "self"
 
 [[point]]
 id = "ne"
@@ -3496,6 +3506,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "日本語が少し話{せます}。", en = "I can speak a little Japanese." },
   { source = "yomeru", id = "y2", ja = "明日は来{られます}か。", en = "Can you come tomorrow?" },
 ]
+check = { inflection = ["potential"] }
 
 [[point]]
 id = "volitional"
@@ -3528,6 +3539,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "一緒に帰{ろう}か。", en = "Shall we go home together?" },
   { source = "yomeru", id = "y3", ja = "窓を開け{よう}。", en = "Let's open the window." },
 ]
+check = { inflection = ["volitional"] }
 
 [[point]]
 id = "you-to-omou"
@@ -3588,6 +3600,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "静かに{しろ}！", en = "Be quiet!" },
   { source = "yomeru", id = "y3", ja = "早く逃{げろ}！", en = "Run, quick!" },
 ]
+check = { inflection = ["imperative"] }
 
 [[point]]
 id = "passive"
@@ -3623,6 +3636,7 @@ examples = [
   { tatoeba = "72388_235011", ja = "７は運のよい数だと言わ{れる}。", en = "Seven is said to be a lucky number." },
   { source = "yomeru", id = "y1", ja = "学校に遅れて、先生にしか{られた}。", en = "I was late for school and got scolded by the teacher." },
 ]
+check = { inflection = ["passive"] }
 
 [[point]]
 id = "causative"
@@ -3656,6 +3670,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "子供たちに好きな物を食べ{させた}。", en = "I let the children eat whatever they liked." },
   { source = "yomeru", id = "y3", ja = "先生は学生に作文を書か{せた}。", en = "The teacher had the students write an essay." },
 ]
+check = { inflection = ["causative"] }
 
 [[point]]
 id = "causative-passive"
@@ -3686,6 +3701,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "子供のころ、野菜を食べ{させられた}。", en = "As a child, I was made to eat vegetables." },
   { source = "yomeru", id = "y2", ja = "部長にお酒を飲ま{された}。", en = "My manager made me drink." },
 ]
+check = { inflection = ["causative-passive"] }
 
 [[point]]
 id = "sasete-kudasai"
@@ -6791,6 +6807,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "字をもっと{大きく}書いてください。", en = "Please write the letters bigger." },
   { source = "yomeru", id = "y3", ja = "妹はピアノを{上手に}ひきます。", en = "My little sister plays the piano well." },
 ]
+check = "self"
 
 [[point]]
 id = "toka"
@@ -6903,6 +6920,7 @@ examples = [
   { tatoeba = "39148_201938", ja = "テレビを{消して}。", en = "Turn off the TV." },
   { source = "yomeru", id = "y2", ja = "もうすぐ授業が{始まります}。", en = "Class is about to start." },
 ]
+check = "self"
 
 [[point]]
 id = "ga-mirareru"

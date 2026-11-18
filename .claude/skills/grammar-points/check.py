@@ -48,6 +48,11 @@ def load_bee():
     return mod
 
 
+# The verb forms `check = { inflection = [...] }` can ask for (grammar-core's
+# `Inflection`).
+INFLECTIONS = {"passive", "potential", "causative", "causative-passive", "volitional", "imperative"}
+
+
 def tatoeba():
     out = {}
     with open(ROOT / "examples.utf", encoding="utf-8") as f:
@@ -123,6 +128,11 @@ def validate(points):
             errors.append(f"{name}: id must be a lowercase ascii slug")
         if not isinstance(p.get("hover", True), bool):
             errors.append(f"{name}: hover must be true or false")
+        check = p.get("check")
+        if check is not None and check != "self":
+            forms = check.get("inflection") if isinstance(check, dict) else None
+            if not forms or set(check) != {"inflection"} or not set(forms) <= INFLECTIONS:
+                errors.append(f"{name}: check is \"self\" or {{ inflection = [...] }} of {sorted(INFLECTIONS)}")
         if p.get("jlpt") not in LEVELS:
             errors.append(f"{name}: jlpt must be one of N5…N1")
         examples = p.get("examples", [])

@@ -247,6 +247,13 @@ a Read first, and the file is thousands of lines. Instead:
   unrelated words: `hover = false` (って, inside 行って) keeps the entry
   search-only. One-char patterns (は, に, て) need nothing: the popup
   already skips matches under two chars.
+- **check**: leave it out when the pattern or a form appears in a correct
+  answer (てから, ちゃだめ): production reviews search for them. A point
+  that is a verb form gets `check = { inflection = ["causative"] }`
+  (passive, potential, causative, causative-passive, volitional,
+  imperative). `check = "self"` when neither finds it reliably (the く
+  adverb, the て join, 自動詞・他動詞): the user rates against the
+  reference. Put it last in the entry, after `examples`.
 - **examples**: 5 (entries written before 2026-11-18 have 2–3 until an
   examples batch extends them), under ~26 chars of Japanese, at the
   entry's level or below in vocabulary; the `{…}` mark covers the pattern

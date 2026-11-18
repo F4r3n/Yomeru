@@ -124,7 +124,10 @@ no statistics yet.
    (hints in steps). See [Validation](#3-validation).
 9. A hint caps the rating at Hard; seeing the reference means Again.
 10. Typed answers by default; "answer in my head" is a local setting.
-11. Production examples: 5 per point, keyed by `tatoeba` pair or `y<n>`;
+11. Points that are a verb form are checked by deinflection
+    (`check = { inflection = [...] }`); those neither finds reliably are
+    self-graded (`check = "self"`).
+12. Production examples: 5 per point, keyed by `tatoeba` pair or `y<n>`;
     vocabulary hints computed at runtime.
 
 ## Card keys
@@ -259,6 +262,19 @@ and leaves the rest to the user.
    `related` lists the points that do the same job, so only those earn
    "works here too". An alternative missing from it comes back through
    the reports (below) and can be added.
+   Each entry says how case 1 finds it, in `check` (`AnswerCheck`):
+   - left out: the pattern and `forms` are searched (most points);
+   - `{ inflection = [...] }`: a point that is a verb form (passive,
+     potential, causative, causative-passive, volitional, imperative). A
+     verb of the answer must deinflect through one of them, so
+     食べさせた counts for the causative. The deinflector's rules already
+     name their form ("causative", "passive/potential"); it has to return
+     them, mapped onto `Inflection`, and gain the volitional (行こう) it
+     lacks. The ichidan られる is both passive and potential and counts
+     for either card;
+   - `"self"`: none of this finds it reliably (the く adverb, the て join,
+     自動詞・他動詞). No check and none of the three cases: the user rates
+     against the reference, as in "answer in my head".
 3. **Too far: hints in steps.** Each tap shows one more: the `meaning`
    line (already on the front), the formation (`Verb［て］ + から`), the
    vocabulary hints, then the reference sentence.
