@@ -14788,6 +14788,9 @@ related = ["te-kara", "nai-koto-ni-wa", "nai-kagiri"]
 examples = [
   { source = "yomeru", id = "y1", ja = "手を洗っ{てからでないと}、食べてはいけません。", en = "You mustn't eat until you've washed your hands." },
   { source = "yomeru", id = "y2", ja = "社長に聞い{てからでないと}、返事できません。", en = "I can't answer until I've asked the president." },
+  { source = "yomeru", id = "y3", ja = "説明書を読ん{でからでないと}、この機械は使えない。", en = "You can't use this machine until you've read the manual." },
+  { source = "yomeru", id = "y4", ja = "実物を見{てからじゃないと}、買うかどうか決められない。", en = "I can't decide whether to buy it until I've seen the real thing." },
+  { source = "yomeru", id = "y5", ja = "予約し{てからでなければ}、入れません。", en = "You can't get in unless you book first." },
 ]
 
 [[point]]
@@ -14815,6 +14818,8 @@ examples = [
   { tatoeba = "26912_189759", ja = "雨が降ら{ない限り}、試合は日曜日に行います。", en = "Unless it rains, the game will be held on Sunday." },
   { tatoeba = "30369_193204", ja = "もっと勉強し{ない限り}落第しますよ。", en = "You will fail unless you work harder." },
   { tatoeba = "272637_141933", ja = "絶対必要{でない限り}タクシーを使わない。", en = "I don't use taxis unless it's absolutely necessary." },
+  { tatoeba = "325005_78711", ja = "来なさいと言わ{ない限り}来ないように。", en = "Don't come unless I tell you to." },
+  { tatoeba = "275486_137750", ja = "大きなイベントが{ない限り}、私はお酒を飲まない。", en = "I never drink unless there's a big event of some kind." },
 ]
 
 [[point]]
@@ -14846,6 +14851,8 @@ examples = [
   { tatoeba = "22862_185730", ja = "我々は生きている{限り}学び続けなければならない。", en = "We must continue to study as long as we live." },
   { tatoeba = "272040_142525", ja = "静かにしている{限り}、ここに居てもよろしい。", en = "You may stay here as long as you keep quiet." },
   { tatoeba = "39492_202280", ja = "{できる限り}手伝います。", en = "I will help as much as I can." },
+  { source = "yomeru", id = "y1", ja = "この店は今月{限りで}閉店します。", en = "This shop will close at the end of this month." },
+  { source = "yomeru", id = "y2", ja = "学生である{限り}、勉強が一番大事だ。", en = "As long as you're a student, studying comes first." },
 ]
 
 [[point]]
@@ -14869,6 +14876,9 @@ related = ["kagiri", "ni-yoru-to", "kara-iu-to"]
 examples = [
   { tatoeba = "251456_163057", ja = "私の知る{限りでは}、これが最新版です。", en = "As far as I know, this is the latest edition." },
   { tatoeba = "251460_163053", ja = "私の知る{限りでは}、まだ彼は到着していない。", en = "As far as I know, he has not arrived yet." },
+  { tatoeba = "251445_163037", ja = "私の知る{限りでは}彼は正直です。", en = "As far as I know, he is honest." },
+  { source = "yomeru", id = "y1", ja = "天気予報で見た{限りでは}、明日は晴れるようだ。", en = "From what I saw on the weather forecast, it looks like it'll be sunny tomorrow." },
+  { source = "yomeru", id = "y2", ja = "友達に聞いた{限りでは}、あの店はおいしいらしい。", en = "As far as I've heard from my friends, that restaurant is good." },
 ]
 
 [[point]]
@@ -14892,8 +14902,11 @@ things follow)": see ようものなら. Plain もの + なら is everywhere too
 point."""
 related = ["you-mono-nara", "potential-form", "nara"]
 examples = [
-  { tatoeba = "43769_206521", ja = "その問題が解ける{ものなら}解いてみろ。", en = "I defy you to solve the problem." },
   { source = "yomeru", id = "y1", ja = "できる{ものなら}、子供のころに戻りたい。", en = "If I could, I'd like to go back to being a child." },
+  { source = "yomeru", id = "y2", ja = "行ける{ものなら}、今すぐ会いに行きたい。", en = "If I could, I'd go and see you right now." },
+  { source = "yomeru", id = "y3", ja = "勝てる{ものなら}勝ってみろ。", en = "Beat me if you can!" },
+  { source = "yomeru", id = "y4", ja = "代われる{ものなら}代わってあげたい。", en = "If I could take your place, I would." },
+  { source = "yomeru", id = "y5", ja = "忘れられる{ものなら}、忘れたい。", en = "I'd forget it if I could." },
 ]
 
 [[point]]
@@ -14917,6 +14930,9 @@ related = ["mono-nara", "volitional", "tara"]
 examples = [
   { source = "yomeru", id = "y1", ja = "少しでも遅れ{ようものなら}、父に叱られる。", en = "If I'm even a little late, my father scolds me." },
   { source = "yomeru", id = "y2", ja = "母に本当のことを言{おうものなら}、大変なことになる。", en = "If I told my mother the truth, there'd be big trouble." },
+  { source = "yomeru", id = "y3", ja = "授業中に居眠りでもし{ようものなら}、教室から出される。", en = "If you dared to doze off in class, you'd be sent out of the room." },
+  { source = "yomeru", id = "y4", ja = "兄のゲームを勝手に使{おうものなら}、ひどく怒られる。", en = "If I used my brother's games without asking, I'd get a real telling-off." },
+  { source = "yomeru", id = "y5", ja = "約束を忘れ{ようものなら}、彼女は口もきいてくれない。", en = "If I ever forget a promise, she won't even speak to me." },
 ]
 
 [[point]]
@@ -14947,6 +14963,9 @@ related = ["te-wa", "te-ite-wa", "you-da"]
 examples = [
   { source = "yomeru", id = "y1", ja = "毎朝遅刻する{ようでは}、仕事は任せられない。", en = "If you're late every morning, I can't trust you with the work." },
   { source = "yomeru", id = "y2", ja = "熱が下がらない{ようなら}、医者に行きなさい。", en = "If the fever doesn't seem to go down, go to the doctor." },
+  { source = "yomeru", id = "y3", ja = "この程度で疲れる{ようでは}、山には登れないよ。", en = "If you get tired from this little, you'll never climb the mountain." },
+  { source = "yomeru", id = "y4", ja = "漢字が読めない{ようじゃ}、新聞は無理だね。", en = "If you can't read kanji, newspapers are out of the question." },
+  { source = "yomeru", id = "y5", ja = "雨が強くなる{ようなら}、試合は中止します。", en = "If it looks like the rain will get heavier, we'll cancel the match." },
 ]
 
 [[point]]
@@ -14976,6 +14995,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "こんなに高{くては}、買えない。", en = "If it's this expensive, I can't buy it." },
   { source = "yomeru", id = "y2", ja = "そんなに食べ{ては}、おなかをこわすよ。", en = "If you eat that much, you'll upset your stomach." },
   { source = "yomeru", id = "y3", ja = "手紙を書い{ては}消し、なかなか終わらない。", en = "I keep writing and erasing the letter, and it never gets done." },
+  { source = "yomeru", id = "y4", ja = "そんなに大きな声で話し{ては}、赤ちゃんが起きてしまう。", en = "If you talk that loudly, you'll wake the baby." },
+  { source = "yomeru", id = "y5", ja = "弟はゲームをし{ては}、母に叱られている。", en = "My brother keeps playing games and getting told off by Mom." },
 ]
 
 [[point]]
@@ -14997,6 +15018,9 @@ related = ["te-wa", "you-de-wa"]
 examples = [
   { source = "yomeru", id = "y1", ja = "毎晩遅くまで起き{ていては}、体をこわすよ。", en = "If you keep staying up late every night, you'll ruin your health." },
   { tatoeba = "18011_179155", ja = "君がそこに立っ{ていては}仕事ができない。", en = "I can't work with you standing there." },
+  { source = "yomeru", id = "y2", ja = "文句ばかり言っ{ていては}、何も変わらないよ。", en = "If you keep complaining, nothing will change." },
+  { tatoeba = "241674_172799", ja = "今そんなに怠け{ていては}、将来きっと後悔するよ。", en = "You are bound to regret it in the future if you are so lazy now." },
+  { source = "yomeru", id = "y3", ja = "そんなにゆっくり歩い{ていては}、電車に遅れますよ。", en = "If you keep walking that slowly, you'll miss the train." },
 ]
 
 [[point]]
@@ -15019,7 +15043,10 @@ general, so it suits signs and principles. 〜ことを忘れてはならない,
 related = ["te-wa-ikenai", "nakute-wa-ikenai", "beki-da"]
 examples = [
   { tatoeba = "321022_82694", ja = "法は破っ{てはならない}。", en = "The law should not be violated." },
-  { tatoeba = "16132_177283", ja = "君は今日外に出{てはならない}。", en = "You must not go out today." },
+  { source = "yomeru", id = "y1", ja = "美術館の中で写真を撮っ{てはならない}。", en = "Photos must not be taken inside the museum." },
+  { source = "yomeru", id = "y2", ja = "人の失敗を笑っ{てはならない}。", en = "We must never laugh at other people's mistakes." },
+  { source = "yomeru", id = "y3", ja = "この悲しい経験を忘れ{てはならない}。", en = "We must not forget this sad experience." },
+  { source = "yomeru", id = "y4", ja = "試験中は、辞書を使っ{てはなりません}。", en = "Dictionaries must not be used during the exam." },
 ]
 
 [[point]]
@@ -15048,6 +15075,9 @@ related = ["ni-kagiru", "ta-hou-ga-ii", "beki-da"]
 examples = [
   { tatoeba = "329093_74626", ja = "警戒する{に越したことはない}。", en = "You can't be too vigilant." },
   { source = "yomeru", id = "y1", ja = "旅行の荷物は軽い{に越したことはない}。", en = "For a trip, the lighter your bags, the better." },
+  { source = "yomeru", id = "y2", ja = "健康のためには、早く寝る{に越したことはない}。", en = "For your health, it's best to go to bed early." },
+  { source = "yomeru", id = "y3", ja = "駅に近い{に越したことはない}が、家賃が高い。", en = "Being close to the station is best, of course, but the rent is high." },
+  { source = "yomeru", id = "y4", ja = "薬は飲まない{に越したことはない}。", en = "It's best not to take medicine if you can avoid it." },
 ]
 
 [[point]]
@@ -15070,6 +15100,9 @@ related = ["to-iu-mono-de-wa-nai", "tara-ii", "wake-de-wa-nai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "料理は高い材料を使え{ばいいというものではない}。", en = "Cooking isn't just about using expensive ingredients." },
   { source = "yomeru", id = "y2", ja = "謝れ{ばいいってもんじゃない}よ。", en = "Saying sorry isn't enough, you know." },
+  { source = "yomeru", id = "y3", ja = "宿題は早く出せ{ばいいというものではない}。", en = "It's not enough just to hand in your homework early." },
+  { source = "yomeru", id = "y4", ja = "お金を渡せ{ばいいというものでもない}。", en = "Just handing over money isn't necessarily enough." },
+  { source = "yomeru", id = "y5", ja = "薬はたくさん飲め{ばいいというものではない}。", en = "With medicine, it's not just a matter of taking a lot." },
 ]
 
 [[point]]
@@ -15094,8 +15127,11 @@ the situation; というものではない argues with a general idea. とは限
 called", in 紳士というもの."""
 related = ["ba-ii-to-iu-mono-de-wa-nai", "wake-de-wa-nai", "to-wa-kagiranai"]
 examples = [
-  { tatoeba = "57418_220099", ja = "この品物はどこにでもある{というものではない}。", en = "You can't find this article everywhere." },
   { source = "yomeru", id = "y1", ja = "年を取れば上手になる{というものではない}。", en = "Getting older doesn't mean you get better at it." },
+  { source = "yomeru", id = "y2", ja = "高い服なら似合う{というものではない}。", en = "Expensive clothes don't necessarily suit you." },
+  { source = "yomeru", id = "y3", ja = "毎日練習すれば勝てる{というものでもない}。", en = "Practising every day doesn't necessarily mean you'll win." },
+  { source = "yomeru", id = "y4", ja = "若ければ何でもできる{ってもんじゃない}よ。", en = "Being young doesn't mean you can do anything." },
+  { source = "yomeru", id = "y5", ja = "便利なら何でもいい{というものではない}。", en = "Just because something is convenient doesn't make it good." },
 ]
 
 [[point]]
@@ -15125,6 +15161,8 @@ examples = [
   { tatoeba = "272499_142071", ja = "折り紙{となると}、私は全く不器用です。", en = "I'm all thumbs when it comes to origami, or paper folding." },
   { tatoeba = "21010_183886", ja = "甘いもの{となると}、自分を抑えられないのです。", en = "When it comes to sweets, I just can't control myself." },
   { source = "yomeru", id = "y1", ja = "引っ越す{となると}、仕事も探さなければ。", en = "If I'm moving, I'll have to look for a job too." },
+  { tatoeba = "39382_202170", ja = "テニスをする{となると}、彼はいつも私に勝つ。", en = "When it comes to playing tennis, he always beats me." },
+  { source = "yomeru", id = "y2", ja = "明日が締め切り{となれば}、今夜は寝られない。", en = "If the deadline is tomorrow, I won't be able to sleep tonight." },
 ]
 
 [[point]]
@@ -15148,6 +15186,9 @@ related = ["zu-ni-sumu", "tara-ii", "ba-ii-to-iu-mono-de-wa-nai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "メール一通送れ{ばすむ}ことだ。", en = "All it takes is sending one email." },
   { source = "yomeru", id = "y2", ja = "謝れ{ば済む}問題じゃない。", en = "This isn't something an apology will fix." },
+  { source = "yomeru", id = "y3", ja = "ボタンを一つ押せ{ば済む}。", en = "All you have to do is press one button." },
+  { source = "yomeru", id = "y4", ja = "足りなければ、また買え{ばすむ}よ。", en = "If there's not enough, we can just buy more." },
+  { source = "yomeru", id = "y5", ja = "一度説明すれ{ばすむ}と思ったが、だめだった。", en = "I thought explaining it once would be enough, but it wasn't." },
 ]
 
 [[point]]
@@ -15177,6 +15218,8 @@ examples = [
   { tatoeba = "265428_149124", ja = "車が故障したので、バスに乗ら{ざるをえなかった}。", en = "My car broke down, so I had to take a bus." },
   { tatoeba = "299435_104255", ja = "彼は書類に署名{せざるを得なかった}。", en = "He was forced to sign the document." },
   { tatoeba = "51069_213782", ja = "そう考え{ざるを得ない}。", en = "I can not but think so." },
+  { tatoeba = "1976363_185786", ja = "我々は出発を延期{せざるを得ない}。", en = "We can't avoid postponing our departure." },
+  { source = "yomeru", id = "y1", ja = "社長の命令なら、従わ{ざるを得ない}。", en = "If it's the president's order, I have no choice but to obey." },
 ]
 
 [[point]]
@@ -15205,6 +15248,8 @@ examples = [
   { tatoeba = "307884_95821", ja = "彼を待つ{より仕方がない}。", en = "All we can do is to wait for him." },
   { tatoeba = "257418_157116", ja = "私は行く{より仕方なかった}。", en = "I had no choice but to go." },
   { source = "yomeru", id = "y1", ja = "終電がないから、歩いて帰る{ほかない}。", en = "There's no last train, so we'll have to walk home." },
+  { source = "yomeru", id = "y2", ja = "誰も手伝ってくれないなら、一人でやる{ほかはない}。", en = "If nobody will help, I'll just have to do it alone." },
+  { source = "yomeru", id = "y3", ja = "薬が効かないので、手術を受ける{よりほかない}。", en = "The medicine isn't working, so there's nothing for it but surgery." },
 ]
 
 [[point]]
@@ -15231,6 +15276,9 @@ related = ["hoka-nai", "kko-nai", "you-ni-suru"]
 examples = [
   { tatoeba = "1288_187759", ja = "何とも言い{ようがない}なあ。", en = "I just don't know what to say." },
   { source = "yomeru", id = "y1", ja = "住所がわからないから、連絡の{しようがない}。", en = "I don't know the address, so there's no way to contact them." },
+  { source = "yomeru", id = "y2", ja = "道具がないので、直し{ようがない}。", en = "There are no tools, so there's no way to fix it." },
+  { source = "yomeru", id = "y3", ja = "答えを知らないから、教え{ようがない}よ。", en = "I don't know the answer, so there's no way I can tell you." },
+  { source = "yomeru", id = "y4", ja = "彼の字は汚くて、読み{ようもない}。", en = "His handwriting is so messy there's no way to read it." },
 ]
 
 [[point]]
@@ -15253,6 +15301,9 @@ related = ["hazu-ga-nai", "wake-ga-nai", "you-ga-nai"]
 examples = [
   { tatoeba = "246557_167939", ja = "私がどんな目にあったか君にはわかり{っこない}。", en = "You will never realize what I went through." },
   { source = "yomeru", id = "y1", ja = "一日で全部覚えられ{っこない}よ。", en = "There's no way you can memorize it all in one day." },
+  { source = "yomeru", id = "y2", ja = "あんな高い車、買え{っこない}よ。", en = "There's no way I can buy such an expensive car." },
+  { source = "yomeru", id = "y3", ja = "彼が約束を守り{っこない}。", en = "There's no way he'll keep his promise." },
+  { tatoeba = "48313_211039", ja = "その建物は右側にあります。見逃し{っこありません}。", en = "The building is on your right. You can't miss it." },
 ]
 
 [[point]]
@@ -15280,6 +15331,8 @@ examples = [
   { tatoeba = "44843_207590", ja = "その点は賛成し{かねる}。", en = "I am unable to agree on that point." },
   { tatoeba = "325350_78366", ja = "理由がわかり{かねます}。", en = "I fail to see the reason." },
   { tatoeba = "1699524_217185", ja = "ご期待に添い{かねます}。", en = "I'm sorry, but we cannot meet your requirements." },
+  { tatoeba = "287598_116071", ja = "彼の無礼には我慢し{かねます}。", en = "I have trouble putting up with his rude manner." },
+  { source = "yomeru", id = "y1", ja = "どちらにするか、まだ決め{かねて}いる。", en = "I still can't make up my mind which one to choose." },
 ]
 
 [[point]]
