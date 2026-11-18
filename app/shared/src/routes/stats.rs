@@ -106,9 +106,9 @@ pub fn StatsTab() -> Element {
     let mut cards = use_signal(Vec::<SrsCard>::new);
     let mut loaded = use_signal(|| false);
     let mut range = use_signal(|| ForecastRange::Day);
-    // Words and kanji are reviewed in separate sessions, so their stats are
-    // kept apart too, one tab each.
-    let mut kanji = use_signal(|| false);
+    // Words, kanji and grammar are reviewed in separate sessions, so their
+    // stats are kept apart too, one tab each.
+    let mut kind = use_signal(|| CardKind::Word);
 
     let load = move || {
         spawn(async move {
@@ -122,18 +122,11 @@ pub fn StatsTab() -> Element {
 
     use_reload_on_sync(load);
 
-    let show_kanji = *kanji.read();
+    let shown = *kind.read();
     let all: Vec<SrsCard> = cards
         .read()
         .iter()
-        .filter(|c| {
-            c.kind()
-                == if show_kanji {
-                    CardKind::Kanji
-                } else {
-                    CardKind::Word
-                }
-        })
+        .filter(|c| c.kind() == shown)
         .cloned()
         .collect();
     let active = all
@@ -159,8 +152,9 @@ pub fn StatsTab() -> Element {
     rsx! {
         div {
             div { class: "subtabs", style: "margin-bottom: 14px;",
-                TabButton { active: !show_kanji, onclick: move |_| kanji.set(false), label: "Words" }
-                TabButton { active: show_kanji, onclick: move |_| kanji.set(true), label: "Kanji" }
+                TabButton { active: shown == CardKind::Word, onclick: move |_| kind.set(CardKind::Word), label: "Words" }
+                TabButton { active: shown == CardKind::Kanji, onclick: move |_| kind.set(CardKind::Kanji), label: "Kanji" }
+                TabButton { active: shown == CardKind::Grammar, onclick: move |_| kind.set(CardKind::Grammar), label: "Grammar" }
             }
 
             div { class: "stat-grid",
@@ -173,7 +167,7 @@ pub fn StatsTab() -> Element {
                     div { class: "stat-label", "Active cards" }
                 }
                 // Kanji cards skip staging: they start active.
-                if !show_kanji {
+                if shown != CardKind::Kanji {
                     div { class: "stat-card warn",
                         div { class: "stat-value", "{staged}" }
                         div { class: "stat-label", "Staged" }
