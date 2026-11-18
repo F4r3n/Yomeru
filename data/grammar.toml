@@ -17061,7 +17061,9 @@ related = ["wo-tsuujite", "kara-made", "kara-ni-kakete"]
 examples = [
   { tatoeba = "45370_208113", ja = "その男は５０年{にわたって}その国を支配した。", en = "The man controlled the country for fifty years." },
   { tatoeba = "240841_173629", ja = "広い地域{にわたって}大雪が降った。", en = "There was heavy snow over a large area." },
-  { tatoeba = "305103_98597", ja = "彼らの７年{にわたる}結婚生活は破たんした。", en = "They broke up after 7 years of marriage." },
+  { tatoeba = "65722_228366", ja = "インドは長年{にわたって}英国に支配されていた。", en = "India was governed by Great Britain for many years." },
+  { tatoeba = "61560_224224", ja = "ここ数年{にわたって}彼らの製品の質は落ちてきた。", en = "The quality of their products has gone down over the years." },
+  { source = "yomeru", id = "y1", ja = "会議は三日間{にわたって}行われた。", en = "The conference was held over three days." },
 ]
 
 [[point]]
@@ -17082,9 +17084,11 @@ on, in line with" adjusts to something; に応えて answers it. 答える \
 (answer a question) and 応える (respond to hopes) are both こたえる."""
 related = ["ni-oujite"]
 examples = [
-  { tatoeba = "49991_212708", ja = "そのピアニストはアンコール{に応えて}２曲弾いた。", en = "The pianist played two encores." },
   { tatoeba = "318238_85475", ja = "必ず期待{に応えて}みせます。", en = "I'll never fail to meet your expectations." },
   { tatoeba = "69451_232083", ja = "あなたは御両親の期待{に応える}べきだ。", en = "You ought to live up to your parents' hopes." },
+  { tatoeba = "303296_100402", ja = "彼は父の期待{にこたえる}だろう。", en = "He will live up to his father's expectations." },
+  { source = "yomeru", id = "y1", ja = "選手はファンの声援{に応えて}手を振った。", en = "The player waved in response to the fans' cheers." },
+  { source = "yomeru", id = "y2", ja = "客の要望{に応えて}、店は営業時間を延ばした。", en = "In response to customer requests, the shop extended its hours." },
 ]
 
 [[point]]
@@ -17108,6 +17112,9 @@ related = ["shidai-depending", "ni-yotte", "ni-kotaete"]
 examples = [
   { tatoeba = "18021_179165", ja = "君がする仕事の量{に応じて}金を払おう。", en = "We will pay you according to the amount of work you do." },
   { tatoeba = "294567_109123", ja = "彼は我々の求め{に応じて}歌った。", en = "He sang at our request." },
+  { tatoeba = "264775_149783", ja = "自分の能力{に応じて}働かなければならない。", en = "You must work according to your ability." },
+  { source = "yomeru", id = "y1", ja = "季節{に応じて}メニューが変わる。", en = "The menu changes depending on the season." },
+  { source = "yomeru", id = "y2", ja = "年齢{に応じた}運動をしましょう。", en = "Let's do exercise suited to our age." },
 ]
 
 [[point]]
@@ -17132,7 +17139,9 @@ related = ["ni-motozuite", "ni-shitagatte"]
 examples = [
   { tatoeba = "259103_141385", ja = "川{に沿って}歩いた。", en = "I walked along the river." },
   { tatoeba = "278349_125643", ja = "通り{に沿って}店が並んでいる。", en = "There are stores along the street." },
-  { source = "yomeru", id = "y1", ja = "計画{に沿って}、準備を進める。", en = "We'll get ready as planned." },
+  { tatoeba = "273451_141121", ja = "船は四国の海岸{にそって}進んだ。", en = "The ship sailed along the coast of Shikoku." },
+  { source = "yomeru", id = "y2", ja = "会社の方針{に沿って}計画を立てた。", en = "We drew up the plan in line with company policy." },
+  { source = "yomeru", id = "y3", ja = "お客様の希望{に沿った}旅行を提案します。", en = "We suggest trips in line with our customers' wishes." },
 ]
 
 [[point]]
@@ -17158,6 +17167,8 @@ examples = [
   { tatoeba = "53007_215706", ja = "ジュディは私{に向かって}微笑んだ。", en = "Judy smiled at me." },
   { tatoeba = "275462_137774", ja = "台風は発達しながら九州方面{に向かって}います。", en = "The typhoon is gaining strength as it heads for Kyushu." },
   { source = "yomeru", id = "y1", ja = "親{に向かって}そんな口をきくな。", en = "Don't talk to your parents like that." },
+  { tatoeba = "239336_175130", ja = "見知らぬ人が私の方{に向かって}きた。", en = "The stranger came toward me." },
+  { source = "yomeru", id = "y2", ja = "夢{に向かって}毎日頑張っている。", en = "I'm working hard every day toward my dream." },
 ]
 
 [[point]]
@@ -17182,6 +17193,9 @@ related = ["wo-moto-ni"]
 examples = [
   { tatoeba = "34229_197050", ja = "ブラウン先生{のもとで}数学を学びました。", en = "I studied mathematics under Dr. Brown." },
   { tatoeba = "321019_82698", ja = "法{のもとで}はすべての人は平等だ。", en = "All men are equal under the law." },
+  { source = "yomeru", id = "y1", ja = "厳しい条件{のもとで}試合が行われた。", en = "The match was played under tough conditions." },
+  { source = "yomeru", id = "y2", ja = "医者の指導{のもとで}ダイエットをした。", en = "I went on a diet under a doctor's guidance." },
+  { source = "yomeru", id = "y3", ja = "平和の名{のもとに}戦争が始まった。", en = "The war was started in the name of peace." },
 ]
 
 [[point]]
@@ -17204,6 +17218,9 @@ related = ["ni-kakawarazu", "ni-kanshite"]
 examples = [
   { tatoeba = "42063_204821", ja = "それは命{にかかわる}問題だ。", en = "It is a matter of life or death." },
   { tatoeba = "72103_234726", ja = "ああいう行動は君の名誉{にかかわる}。", en = "That kind of behaviour affects your honour." },
+  { tatoeba = "55788_218476", ja = "これは我が校の名誉{にかかわる}問題だ。", en = "The problem affects the prestige of our school." },
+  { tatoeba = "322955_80760", ja = "名誉{にかかわる}問題なので、彼は怒った。", en = "He got angry because his honor was at stake." },
+  { tatoeba = "322962_80753", ja = "命{にかかわる}ような病気ではありません。", en = "It's not the sort of illness that puts your life at risk." },
 ]
 
 [[point]]
@@ -17228,6 +17245,8 @@ examples = [
   { tatoeba = "59705_222379", ja = "この牛肉は１ポンド{につき}４ドルです。", en = "This beef is four dollars per pound." },
   { tatoeba = "256046_158483", ja = "私は一時間{につき}十ドルもらっています。", en = "I am paid 10 dollars an hour." },
   { source = "yomeru", id = "y1", ja = "工事中{につき}、通行止め。", en = "Road closed for construction." },
+  { tatoeba = "310114_93593", ja = "彼女は１日{につき}３０ドル稼ぐ。", en = "She earns 30 dollars per day." },
+  { source = "yomeru", id = "y2", ja = "雨天{につき}、試合は中止です。", en = "The game is canceled due to rain." },
 ]
 
 [[point]]
@@ -17251,6 +17270,9 @@ related = ["de-particle"]
 examples = [
   { source = "yomeru", id = "y1", ja = "会場{にて}受付を行います。", en = "Registration takes place at the venue." },
   { source = "yomeru", id = "y2", ja = "結果はメール{にて}お知らせします。", en = "We'll let you know the results by email." },
+  { source = "yomeru", id = "y3", ja = "会議は三階の会議室{にて}行います。", en = "The meeting will be held in the third-floor meeting room." },
+  { source = "yomeru", id = "y4", ja = "お支払いは現金{にて}お願いします。", en = "Please pay in cash." },
+  { source = "yomeru", id = "y5", ja = "受付は五時{にて}締め切ります。", en = "Registration closes at five o'clock." },
 ]
 
 [[point]]
@@ -17275,6 +17297,8 @@ examples = [
   { tatoeba = "17495_178643", ja = "君{にまかせる}よ。", en = "I'm leaving it to you." },
   { tatoeba = "22966_170519", ja = "最終決定は彼{に任せた}。", en = "We left the final decision to him." },
   { source = "yomeru", id = "y1", ja = "怒り{に任せて}、彼は皿を投げた。", en = "Letting his anger take over, he threw a plate." },
+  { tatoeba = "47211_209948", ja = "その事件を警察{に任せる}。", en = "Put the case in the hands of the police." },
+  { tatoeba = "48335_211061", ja = "その件は成り行き{に任せる}しかないな。", en = "You can only let the matter take its own course." },
 ]
 
 [[point]]
@@ -17301,6 +17325,8 @@ examples = [
   { tatoeba = "280391_123606", ja = "道に迷った{上に}、雨にまで降られた。", en = "We lost our way, and what was worse, we were caught in a shower." },
   { tatoeba = "304001_99696", ja = "彼は無知である{上に}、傲慢でもある。", en = "Besides being ignorant, he is too proud." },
   { source = "yomeru", id = "y1", ja = "この店は安い{うえに}、おいしい。", en = "This place is cheap, and the food is good too." },
+  { source = "yomeru", id = "y2", ja = "彼は頭がいい{上に}、性格もいい。", en = "He's smart, and on top of that he's a nice person." },
+  { source = "yomeru", id = "y3", ja = "この部屋は静かな{うえに}、駅から近い。", en = "This room is quiet, and it's close to the station besides." },
 ]
 
 [[point]]
@@ -17323,6 +17349,9 @@ related = ["ue-ni", "omake-ni", "shikamo"]
 examples = [
   { tatoeba = "267097_147463", ja = "暑かった。{その上}湿度が高かった。", en = "It was hot, and in addition, it was humid." },
   { tatoeba = "292146_111537", ja = "彼はとても頭が良い。{そのうえ}よく勉強する。", en = "He is very bright, and what is more, he studies hard." },
+  { tatoeba = "46240_208980", ja = "{その上}雨が降り出している。", en = "Besides, it's starting to rain." },
+  { tatoeba = "293612_110077", ja = "彼は医者であった。{そのうえ}、詩人でもあった。", en = "He was a doctor; moreover, a poet." },
+  { source = "yomeru", id = "y1", ja = "この部屋は広い。{そのうえ}家賃も安い。", en = "This room is big. On top of that, the rent is cheap." },
 ]
 
 [[point]]
@@ -17346,6 +17375,8 @@ examples = [
   { tatoeba = "64860_227507", ja = "{おまけに}雨まで降っていた。", en = "On top of that, it was raining." },
   { tatoeba = "21144_184016", ja = "寒くて{おまけに}風も強かった。", en = "It was cold, and, in addition, it was windy." },
   { tatoeba = "55381_218070", ja = "これは役に立つ本で、{おまけに}高くない。", en = "This is a useful book and, what is more, it is not expensive." },
+  { tatoeba = "261395_153149", ja = "私は疲れていた、{おまけに}眠かった。", en = "I was tired and, what is worse, I was sleepy." },
+  { tatoeba = "45534_208277", ja = "その袋は大きかった。{おまけに}重かった。", en = "The bag was big, and moreover, it was heavy." },
 ]
 
 [[point]]
@@ -17366,10 +17397,13 @@ notes = """
 Often used to sharpen a statement: 彼はそれをやった、しかも彼女の前\
 で, "he did it, and right in front of her". その上 is the plain "in \
 addition". Search-only: しかも hides in しか持っていない."""
-related = ["sono-ue", "omake-ni"]
+related = ["sono-ue", "omake-ni", "ue-ni"]
 examples = [
   { tatoeba = "291464_112197", ja = "彼はそれをやった、{しかも}彼女の前で。", en = "He did it, and in her presence." },
   { source = "yomeru", id = "y1", ja = "この店の料理はおいしくて、{しかも}安い。", en = "The food here is good, and cheap at that." },
+  { tatoeba = "312111_91602", ja = "彼女はフランス語が話せる。{しかも}流ちょうに。", en = "She can speak French, and fluently at that." },
+  { source = "yomeru", id = "y2", ja = "彼女は毎日遅くまで働く。{しかも}文句を言わない。", en = "She works late every day, and yet she never complains." },
+  { source = "yomeru", id = "y3", ja = "このパソコンは軽くて、{しかも}電池が長く持つ。", en = "This laptop is light, and what's more, the battery lasts long." },
 ]
 
 [[point]]
@@ -17392,6 +17426,9 @@ related = ["bakari-de-naku", "dake-de-naku", "ni-kagirazu"]
 examples = [
   { tatoeba = "293984_109706", ja = "彼は英語{のみならず}フランス語も話すことができる。", en = "He can speak not only English but also French." },
   { tatoeba = "309051_94655", ja = "彼女{のみならず}彼女の息子達も幸せだった。", en = "Her sons as well as she were happy." },
+  { source = "yomeru", id = "y1", ja = "この映画は子供{のみならず}大人にも人気がある。", en = "This film is popular not only with children but with adults too." },
+  { source = "yomeru", id = "y2", ja = "彼は遅刻した。{のみならず}宿題も忘れた。", en = "He was late. Not only that, he forgot his homework too." },
+  { source = "yomeru", id = "y3", ja = "彼は試験に合格した{のみならず}、一位になった。", en = "Not only did he pass the exam, he came first." },
 ]
 
 [[point]]
@@ -17415,6 +17452,9 @@ related = ["ni-kagitte", "ni-kagiru", "nomi-narazu", "dake-de-naku"]
 examples = [
   { source = "yomeru", id = "y1", ja = "この問題は日本{に限らず}、どの国にもある。", en = "This problem isn't limited to Japan: every country has it." },
   { source = "yomeru", id = "y2", ja = "この店は週末{に限らず}、いつも混んでいる。", en = "This shop is always crowded, not just on weekends." },
+  { source = "yomeru", id = "y3", ja = "このアプリは学生{に限らず}、だれでも使える。", en = "Not just students: anyone can use this app." },
+  { source = "yomeru", id = "y4", ja = "日本人{に限らず}、すしが好きな人は多い。", en = "Lots of people, not only the Japanese, like sushi." },
+  { source = "yomeru", id = "y5", ja = "成功するのは才能がある人{に限らない}。", en = "Success isn't limited to talented people." },
 ]
 
 [[point]]
@@ -17439,6 +17479,8 @@ examples = [
   { tatoeba = "19734_182594", ja = "急いでいる時{に限って}バスが遅れる。", en = "Our bus comes late, particularly when we are in a hurry." },
   { tatoeba = "44604_207352", ja = "その日{に限って}財布を家に忘れた。", en = "I left my wallet at home on that particular day." },
   { tatoeba = "308869_94838", ja = "彼女{に限って}そんなことはない。", en = "She, of all people, wouldn't do such a thing." },
+  { source = "yomeru", id = "y1", ja = "大事な日{に限って}寝坊してしまう。", en = "I always oversleep on important days, of all days." },
+  { source = "yomeru", id = "y2", ja = "うちの子{に限って}うそをつくはずがない。", en = "My child, of all children, would never lie." },
 ]
 
 [[point]]
@@ -17463,6 +17505,8 @@ examples = [
   { tatoeba = "56101_218786", ja = "これ{だけは}忘れるな。", en = "Just don't forget this." },
   { tatoeba = "242448_172027", ja = "今日{だけは}、議論はよそう。", en = "Just for this once, let's not have an argument." },
   { source = "yomeru", id = "y1", ja = "結果はわからないが、やる{だけは}やった。", en = "I don't know the result, but I did everything I could." },
+  { tatoeba = "241958_172516", ja = "今回{だけは}君の味方をしよう。", en = "I will side with you just this once." },
+  { source = "yomeru", id = "y2", ja = "母の誕生日{だけは}忘れたことがない。", en = "My mother's birthday is the one thing I've never forgotten." },
 ]
 
 [[point]]
@@ -17486,6 +17530,8 @@ examples = [
   { tatoeba = "324701_79015", ja = "予想{以上に}ひどい天気だ。", en = "This bad weather is more than I bargained for." },
   { tatoeba = "52626_215326", ja = "ジョンは期待{以上に}よくやった。", en = "John did even better than was expected." },
   { tatoeba = "249459_165047", ja = "私たちは予想{以上に}たくさんの金を使った。", en = "We spent more money than was expected." },
+  { source = "yomeru", id = "y1", ja = "思った{以上に}試験は難しかった。", en = "The exam was harder than I'd thought." },
+  { source = "yomeru", id = "y2", ja = "期待{以上の}結果が出た。", en = "We got better results than we'd hoped for." },
 ]
 
 [[point]]
@@ -17511,6 +17557,9 @@ related = ["ya-particle", "toka", "nani-yara"]
 examples = [
   { source = "yomeru", id = "y1", ja = "宿題{やらバイトやら}で、毎日忙しい。", en = "What with homework and my part-time job, I'm busy every day." },
   { source = "yomeru", id = "y2", ja = "みんなの前でほめられて、うれしい{やら恥ずかしいやら}。", en = "I was praised in front of everyone: happy and embarrassed at once." },
+  { source = "yomeru", id = "y3", ja = "引っ越し{やら仕事やら}で、休む暇がない。", en = "What with moving house and work, I have no time to rest." },
+  { source = "yomeru", id = "y4", ja = "冷蔵庫にはビール{やらジュースやら}が入っている。", en = "There's beer, juice and so on in the fridge." },
+  { source = "yomeru", id = "y5", ja = "子どもが泣く{やら騒ぐやら}で大変だった。", en = "What with the kids crying and making noise, it was rough." },
 ]
 
 [[point]]
