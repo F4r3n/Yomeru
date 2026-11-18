@@ -22861,6 +22861,8 @@ examples = [
   { tatoeba = "291482_112195", ja = "彼はそれを威厳{をもって}言った。", en = "He said that with dignity." },
   { source = "yomeru", id = "y1", ja = "本日{をもって}受付を終了します。", en = "Applications close as of today." },
   { source = "yomeru", id = "y2", ja = "彼の力{をもってしても}、無理だった。", en = "Even with his ability, it couldn't be done." },
+  { source = "yomeru", id = "y3", ja = "お客様には誠意{をもって}対応いたします。", en = "We will deal with our customers with sincerity." },
+  { source = "yomeru", id = "y4", ja = "当店は今月末{をもちまして}営業を終了します。", en = "Our shop will close for good as of the end of this month." },
 ]
 
 [[point]]
@@ -22886,6 +22888,9 @@ related = ["shika-nai", "igai", "wo-nozoite"]
 examples = [
   { source = "yomeru", id = "y1", ja = "彼{をおいて}、この仕事ができる人はいない。", en = "Apart from him, there's no one who can do this job." },
   { source = "yomeru", id = "y2", ja = "桜を見るなら、京都{をおいてほかにない}。", en = "For cherry blossoms, there's no place but Kyoto." },
+  { source = "yomeru", id = "y3", ja = "この役ができるのは、彼女{をおいて}ほかにいない。", en = "No one other than her can play this role." },
+  { source = "yomeru", id = "y4", ja = "社長の後任は、田中さん{をおいて}考えられない。", en = "I can't think of anyone but Tanaka to succeed the president." },
+  { source = "yomeru", id = "y5", ja = "今話し合うべきは、この問題{をおいてほかにない}。", en = "There is no issue to discuss right now other than this one." },
 ]
 
 [[point]]
@@ -22911,6 +22916,9 @@ related = ["wo-mono-tomo-sezu", "wo-kaerimizu", "mo-kamawazu", "ni-mo-kakawarazu
 examples = [
   { source = "yomeru", id = "y1", ja = "親の心配{をよそに}、彼は一人で旅に出た。", en = "Ignoring his parents' worry, he set off traveling alone." },
   { source = "yomeru", id = "y2", ja = "周りの反対{をよそに}、二人は結婚した。", en = "In spite of everyone's opposition, the two got married." },
+  { source = "yomeru", id = "y3", ja = "住民の不安{をよそに}、工事が始まった。", en = "Paying no attention to the residents' concerns, construction began." },
+  { source = "yomeru", id = "y4", ja = "周囲の期待{をよそに}、彼は歌手をやめた。", en = "Ignoring everyone's expectations, he quit being a singer." },
+  { source = "yomeru", id = "y5", ja = "世間の不景気{をよそに}、その店は繁盛している。", en = "In spite of the recession all around, that shop is thriving." },
 ]
 
 [[point]]
@@ -22934,6 +22942,9 @@ related = ["wo-yoso-ni", "wo-kaerimizu", "wo-oshite"]
 examples = [
   { tatoeba = "27782_190622", ja = "一行は危険{をものともせず}前進した。", en = "The party went forward in the face of danger." },
   { tatoeba = "21127_183999", ja = "寒さ{をものともせずに}、彼は薄着で外出した。", en = "Making nothing of the cold, he went out in thin clothes." },
+  { tatoeba = "238493_175972", ja = "激しい吹雪{をものともせず}、登山家たちは出発した。", en = "The mountaineers set off, paying no heed to the severe blizzard." },
+  { tatoeba = "318319_85394", ja = "氷のような水{をものともせずに}彼は川へ飛びこんだ。", en = "He jumped into the river in defiance of the icy water." },
+  { tatoeba = "295030_108659", ja = "彼は危険{をものともしない}。", en = "He never shrinks from danger." },
 ]
 
 [[point]]
@@ -22961,6 +22972,9 @@ related = ["wo-ki-ni", "wo-kikkake-ni"]
 examples = [
   { tatoeba = "246920_167580", ja = "私が知らない{のをいいことに}彼は私をだました。", en = "He took advantage of my ignorance and deceived me." },
   { source = "yomeru", id = "y1", ja = "先生がいない{のをいいことに}、生徒たちは騒いでいた。", en = "Taking advantage of the teacher's absence, the students were making noise." },
+  { source = "yomeru", id = "y2", ja = "親が留守{なのをいいことに}、彼は友達を呼んで騒いだ。", en = "Taking advantage of his parents being away, he invited friends over and partied." },
+  { source = "yomeru", id = "y3", ja = "人の好意{をいいことに}、彼は何度も金を借りた。", en = "Taking advantage of people's kindness, he borrowed money again and again." },
+  { source = "yomeru", id = "y4", ja = "誰も反対しない{のをいいことに}、部長は話を進めた。", en = "Taking advantage of no one objecting, the manager pushed ahead." },
 ]
 
 [[point]]
@@ -22988,6 +23002,9 @@ related = ["zaru-wo-enai", "te-mo-yamu-wo-enai", "hoka-nai"]
 examples = [
   { tatoeba = "271223_143343", ja = "世論のため彼は引退{を余儀なくされた}。", en = "Public opinion obliged him to retire." },
   { tatoeba = "295918_107734", ja = "彼は健康上の理由で辞任{を余儀なくされた}。", en = "He was compelled to resign on account of ill health." },
+  { source = "yomeru", id = "y1", ja = "台風で、試合は中止{を余儀なくされた}。", en = "Because of the typhoon, the match had to be called off." },
+  { source = "yomeru", id = "y2", ja = "資金不足で、計画の変更{を余儀なくされた}。", en = "Due to a lack of funds, we were forced to change the plan." },
+  { source = "yomeru", id = "y3", ja = "不況が会社に工場の閉鎖{を余儀なくさせた}。", en = "The recession forced the company to close its factory." },
 ]
 
 [[point]]
@@ -23015,6 +23032,9 @@ related = ["wo-moto-ni", "ni-motozuite", "ni-terashite"]
 examples = [
   { source = "yomeru", id = "y1", ja = "前回の反省{を踏まえて}、計画を立て直した。", en = "Taking last time's lessons into account, we redrew the plan." },
   { source = "yomeru", id = "y2", ja = "調査の結果{を踏まえ}、新しい商品を作る。", en = "We'll make a new product based on the survey's results." },
+  { source = "yomeru", id = "y3", ja = "皆さんの意見{を踏まえて}、案を修正しました。", en = "Taking everyone's opinions into account, I revised the proposal." },
+  { source = "yomeru", id = "y4", ja = "現場の声{を踏まえた}改革が必要だ。", en = "We need reforms based on what the people on the ground say." },
+  { source = "yomeru", id = "y5", ja = "過去の失敗{を踏まえ}、今回は慎重に進める。", en = "In light of past failures, we'll proceed carefully this time." },
 ]
 
 [[point]]
@@ -23042,6 +23062,9 @@ related = ["wo-mono-tomo-sezu", "wo-yoso-ni", "wo-kaerimizu"]
 examples = [
   { source = "yomeru", id = "y1", ja = "彼は病気{を押して}会議に出た。", en = "Despite being ill, he attended the meeting." },
   { source = "yomeru", id = "y2", ja = "親の反対{を押し切って}留学した。", en = "I went abroad to study, overriding my parents' objections." },
+  { source = "yomeru", id = "y3", ja = "母は疲れ{を押して}、夜遅くまで働いた。", en = "Despite her fatigue, my mother worked late into the night." },
+  { source = "yomeru", id = "y4", ja = "その選手はけが{を押して}試合に出場した。", en = "The player took part in the match in spite of his injury." },
+  { source = "yomeru", id = "y5", ja = "社長は周囲の反対{を押し切って}、新事業を始めた。", en = "Overriding the objections around him, the president started a new business." },
 ]
 
 [[point]]
@@ -23066,6 +23089,9 @@ related = ["wo-mono-tomo-sezu", "wo-yoso-ni", "mo-kamawazu"]
 examples = [
   { tatoeba = "295029_108660", ja = "彼は危険{をかえりみず}勇気を示した。", en = "He showed courage in the face of danger." },
   { tatoeba = "316573_87135", ja = "彼女は費用{を顧みず}家を飾りたてた。", en = "She decorated her house regardless of cost." },
+  { tatoeba = "301028_102666", ja = "彼は俗事{をかえりみず}研究に没頭した。", en = "He applied himself to his study, without thought for his normal life." },
+  { source = "yomeru", id = "y1", ja = "彼は家族{を顧みず}、仕事ばかりしていた。", en = "Without regard for his family, he did nothing but work." },
+  { source = "yomeru", id = "y2", ja = "身の危険{も顧みず}、彼は火の中に飛び込んだ。", en = "Heedless of the danger to himself, he rushed into the fire." },
 ]
 
 [[point]]
@@ -23093,6 +23119,9 @@ related = ["wo-hete", "sue-ni", "ageku"]
 examples = [
   { source = "yomeru", id = "y1", ja = "努力{を重ねて}、ついに夢をかなえた。", en = "After years of hard work, she finally made her dream come true." },
   { source = "yomeru", id = "y2", ja = "話し合い{を重ねた}結果、意見がまとまった。", en = "After many discussions, we reached agreement." },
+  { source = "yomeru", id = "y3", ja = "練習{を重ねて}、ようやく舞台に立てた。", en = "After repeated practice, I was finally able to perform on stage." },
+  { source = "yomeru", id = "y4", ja = "失敗{を重ねた}末に、新しい薬が完成した。", en = "After repeated failures, the new drug was finally completed." },
+  { source = "yomeru", id = "y5", ja = "苦労{を重ねて}育てた娘が、今年結婚する。", en = "The daughter I raised through many hardships is getting married this year." },
 ]
 
 [[point]]
@@ -23116,6 +23145,9 @@ related = ["wo-kawakiri-ni"]
 examples = [
   { source = "yomeru", id = "y1", ja = "彼は営業{を振り出しに}、社長にまでなった。", en = "Starting out in sales, he rose to company president." },
   { source = "yomeru", id = "y2", ja = "東京{を振り出しに}、全国を回るツアーだ。", en = "It's a tour that starts in Tokyo and goes around the country." },
+  { source = "yomeru", id = "y3", ja = "彼は新聞記者{を振り出しに}、作家になった。", en = "Starting out as a newspaper reporter, he went on to become a writer." },
+  { source = "yomeru", id = "y4", ja = "その会社は小さな店{を振り出しに}、全国に広がった。", en = "Starting from one small shop, the company spread nationwide." },
+  { source = "yomeru", id = "y5", ja = "旅は北海道{を振り出しに}、南へと続いた。", en = "Starting from Hokkaido, the journey continued south." },
 ]
 
 [[point]]
@@ -23141,6 +23173,9 @@ related = ["wo-moto-ni", "ni-motozuite", "wo-fumaete"]
 examples = [
   { tatoeba = "248622_165882", ja = "私たちは結婚{を前提として}交際しています。", en = "We are dating with a view to marriage." },
   { source = "yomeru", id = "y1", ja = "全員が来ること{を前提に}準備した。", en = "We prepared assuming everyone would come." },
+  { source = "yomeru", id = "y2", ja = "これは返済{を前提とした}支援だ。", en = "This is aid given on the premise that it will be repaid." },
+  { source = "yomeru", id = "y3", ja = "雨が降ること{を前提に}、計画を立てよう。", en = "Let's make the plan assuming that it will rain." },
+  { source = "yomeru", id = "y4", ja = "彼は将来の留学{を前提にして}、英語を学んでいる。", en = "He's studying English with a view to studying abroad later." },
 ]
 
 [[point]]
@@ -23164,6 +23199,9 @@ related = ["no-moto-de", "to-shite"]
 examples = [
   { source = "yomeru", id = "y1", ja = "正義{の名のもとに}、多くの人が傷つけられた。", en = "In the name of justice, many people were hurt." },
   { source = "yomeru", id = "y2", ja = "教育{の名のもとに}、子どもを厳しく叱る。", en = "They scold children harshly in the name of education." },
+  { source = "yomeru", id = "y3", ja = "自由{の名のもとに}、他人を傷つけてはいけない。", en = "You mustn't hurt others in the name of freedom." },
+  { source = "yomeru", id = "y4", ja = "開発{の名のもとに}、森が次々と切られた。", en = "In the name of development, forests were cut down one after another." },
+  { source = "yomeru", id = "y5", ja = "科学{の名のもとに}、動物実験が行われてきた。", en = "Animal experiments have been carried out in the name of science." },
 ]
 
 [[point]]
@@ -23192,6 +23230,9 @@ related = ["ni-kurabete", "ni-hanshite", "to-wa-utte-kawatte"]
 examples = [
   { source = "yomeru", id = "y1", ja = "姉が料理上手なの{にひきかえ}、私は卵も焼けない。", en = "Unlike my sister, who's a great cook, I can't even fry an egg." },
   { source = "yomeru", id = "y2", ja = "去年{にひきかえ}、今年の夏は涼しい。", en = "Compared with last year, this summer is cool." },
+  { source = "yomeru", id = "y3", ja = "兄{にひきかえ}、弟はよく勉強する。", en = "Unlike his older brother, the younger one studies hard." },
+  { source = "yomeru", id = "y4", ja = "前の部屋が狭かったの{にひきかえ}、今の部屋は広い。", en = "In contrast to my old room, which was cramped, my new one is spacious." },
+  { source = "yomeru", id = "y5", ja = "優しい父{にひきかえ}、母はとても厳しい。", en = "Unlike my gentle father, my mother is very strict." },
 ]
 
 [[point]]
@@ -23217,7 +23258,10 @@ The も says X itself is already notable, unlike plain より. 以前にも\
 related = ["yori-hou-ga", "nani-yori", "ijou-ni"]
 examples = [
   { tatoeba = "24814_187675", ja = "何もの{にもまして}私は健康になりたい。", en = "Above all, I want to be healthy." },
-  { tatoeba = "37310_200110", ja = "トムはいまや以前{にもまして}勤勉に働いている。", en = "Tom works more diligently now." },
+  { source = "yomeru", id = "y1", ja = "今年の夏は去年{にもまして}暑い。", en = "This summer is even hotter than last year's." },
+  { source = "yomeru", id = "y2", ja = "彼女は以前{にもまして}、練習に励んでいる。", en = "She's practicing even harder than before." },
+  { source = "yomeru", id = "y3", ja = "賞をもらったこと{にもまして}、母の笑顔がうれしかった。", en = "Even more than winning the prize, my mother's smile made me happy." },
+  { source = "yomeru", id = "y4", ja = "彼は誰{にもまして}、チームのことを考えている。", en = "He thinks about the team more than anyone else." },
 ]
 
 [[point]]
@@ -23242,6 +23286,9 @@ related = ["ni-kuwaete", "to-tomo-ni"]
 examples = [
   { tatoeba = "265271_149287", ja = "実用性と芸術性が{相まって}住みよい家ができる。", en = "Practical utility and artistic beauty combine to make a comfortable house to live in." },
   { source = "yomeru", id = "y1", ja = "晴天{も相まって}、会場は大勢の人でにぎわった。", en = "Helped by the fine weather, the venue was crowded." },
+  { source = "yomeru", id = "y2", ja = "彼の才能は努力{と相まって}、大きく花開いた。", en = "His talent, combined with hard work, came into full bloom." },
+  { source = "yomeru", id = "y3", ja = "円安{も相まって}、外国人観光客が増えた。", en = "Coupled with the weak yen, the number of foreign tourists rose." },
+  { source = "yomeru", id = "y4", ja = "寝不足と疲れが{相まって}、熱が出た。", en = "Lack of sleep combined with fatigue gave me a fever." },
 ]
 
 [[point]]
@@ -23271,6 +23318,9 @@ related = ["wa-mochiron", "dokoroka", "sae", "mo-saru-koto-nagara"]
 examples = [
   { tatoeba = "253370_159150", ja = "私はバイオリン{はおろか}ギターも弾けない。", en = "I can't play the guitar, much less the violin." },
   { tatoeba = "45855_208596", ja = "その赤ちゃんは走る事{はおろか}、歩くことさえできない。", en = "The baby cannot even walk, much less run." },
+  { tatoeba = "321588_82127", ja = "僕はイタリア語を書く{のはおろか}読めもしない。", en = "I can't even read Italian, let alone write it." },
+  { source = "yomeru", id = "y1", ja = "この村には病院{はおろか}、コンビニもない。", en = "This village doesn't even have a convenience store, let alone a hospital." },
+  { source = "yomeru", id = "y2", ja = "その歌手は国内{はおろか}、海外でも人気がある。", en = "That singer is popular abroad, not to mention at home." },
 ]
 
 [[point]]
@@ -23294,6 +23344,9 @@ related = ["wa-mochiron", "wa-oroka", "nomi-narazu"]
 examples = [
   { tatoeba = "327665_76053", ja = "失業問題{もさることながら}、環境問題も大切だ。", en = "Although the unemployment problem can't be ignored, the environment problem is also very important." },
   { source = "yomeru", id = "y1", ja = "この店は味{もさることながら}、雰囲気がすばらしい。", en = "This place's food is great, of course, but the atmosphere is wonderful." },
+  { source = "yomeru", id = "y2", ja = "彼は成績{もさることながら}、人柄がすばらしい。", en = "His grades are excellent, of course, but his character is even better." },
+  { source = "yomeru", id = "y3", ja = "デザイン{もさることながら}、使いやすさが人気の理由だ。", en = "The design matters, of course, but ease of use is what makes it popular." },
+  { source = "yomeru", id = "y4", ja = "本人の努力{もさることながら}、家族の支えも大きかった。", en = "His own effort counted, of course, but his family's support also mattered a lot." },
 ]
 
 [[point]]
@@ -23319,6 +23372,9 @@ related = ["wa-tomokaku", "wa-betsu-to-shite"]
 examples = [
   { tatoeba = "268453_146109", ja = "冗談{はさておき}、君は何が言いたいのだ。", en = "Joking aside, what are you trying to say?" },
   { tatoeba = "238595_175870", ja = "結果{はさておき}、あなたの意図はよかった。", en = "Apart from the result, your intention was good." },
+  { tatoeba = "42749_205504", ja = "それ{はさておき}、他に必要なものはないか。", en = "Aside from that, is there anything else you want?" },
+  { tatoeba = "24834_187695", ja = "{何はさておき}もっと健康に注意するべきだ。", en = "Before everything you should take better care of your health." },
+  { tatoeba = "276964_127125", ja = "値段{はさておき}、そのドレスは君には似合わない。", en = "Apart from the cost, the dress doesn't suit you." },
 ]
 
 [[point]]
@@ -23345,6 +23401,9 @@ related = ["wa-sateoki", "bakari-noun", "wo-yoso-ni"]
 examples = [
   { source = "yomeru", id = "y1", ja = "彼は勉強{はそっちのけで}、ゲームばかりしている。", en = "He's neglecting his studies and doing nothing but play games." },
   { source = "yomeru", id = "y2", ja = "子どもたちは宿題{をそっちのけにして}遊びに行った。", en = "The kids left their homework aside and went out to play." },
+  { source = "yomeru", id = "y3", ja = "彼は仕事{そっちのけで}、釣りに夢中になっている。", en = "Neglecting his work, he's completely absorbed in fishing." },
+  { source = "yomeru", id = "y4", ja = "店員たちは客{をそっちのけで}おしゃべりしている。", en = "The clerks are chatting away, ignoring the customers." },
+  { source = "yomeru", id = "y5", ja = "当事者{そっちのけ}の話し合いでは意味がない。", en = "Talks that leave out the people involved are pointless." },
 ]
 
 [[point]]
