@@ -21256,6 +21256,9 @@ related = ["kara-made", "ni-itaru", "wo-kawakiri-ni"]
 examples = [
   { source = "yomeru", id = "y1", ja = "小学生からお年寄り{に至るまで}、このゲームに夢中だ。", en = "From schoolkids to the elderly, everyone is hooked on this game." },
   { source = "yomeru", id = "y2", ja = "服装から言葉遣い{に至るまで}、細かく注意された。", en = "I was picked up on everything, from my clothes right down to my language." },
+  { source = "yomeru", id = "y3", ja = "北海道から沖縄{に至るまで}、全国で雨が降った。", en = "It rained across the whole country, from Hokkaido right down to Okinawa." },
+  { source = "yomeru", id = "y4", ja = "細部{に至るまで}こだわって作られた家だ。", en = "It's a house built with care right down to the smallest detail." },
+  { source = "yomeru", id = "y5", ja = "社長から新入社員{に至るまで}、全員が会議に出た。", en = "Everyone attended the meeting, from the president down to the newest recruits." },
 ]
 
 [[point]]
@@ -21282,6 +21285,9 @@ related = ["kagiri", "no-kiwami", "no-itari", "kiwamarinai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "皆さんに会えて、嬉しい{限りです}。", en = "I'm truly delighted to meet you all." },
   { source = "yomeru", id = "y2", ja = "友達がみんな引っ越して、寂しい{限りだ}。", en = "All my friends have moved away, and I feel so lonely." },
+  { source = "yomeru", id = "y3", ja = "一人で外国に住むのは、心細い{限りだ}。", en = "Living abroad on my own, I feel so helpless." },
+  { source = "yomeru", id = "y4", ja = "試合に出られないとは、残念な{限りです}。", en = "It's such a pity that I can't play in the match." },
+  { source = "yomeru", id = "y5", ja = "毎年海外旅行ができるなんて、羨ましい{限りだ}。", en = "You travel abroad every year? I'm so envious." },
 ]
 
 [[point]]
@@ -21304,6 +21310,9 @@ related = ["no-kiwami", "kagiri-da"]
 examples = [
   { source = "yomeru", id = "y1", ja = "このような賞をいただき、光栄{の至り}です。", en = "Receiving such an award is the greatest honour." },
   { source = "yomeru", id = "y2", ja = "あれは若気{の至り}だった。", en = "That was the folly of youth." },
+  { source = "yomeru", id = "y3", ja = "お忙しいところお越しいただき、恐縮{の至り}です。", en = "I am most obliged to you for coming when you are so busy." },
+  { source = "yomeru", id = "y4", ja = "憧れの先生に褒められ、感激{の至り}だ。", en = "To be praised by the teacher I admire moves me beyond measure." },
+  { source = "yomeru", id = "y5", ja = "人前で間違えてしまい、赤面{の至り}でした。", en = "I made a mistake in front of everyone, to my utmost embarrassment." },
 ]
 
 [[point]]
@@ -21326,6 +21335,9 @@ related = ["no-itari", "kiwamarinai", "kagiri-da"]
 examples = [
   { source = "yomeru", id = "y1", ja = "海を見ながら温泉に入るなんて、贅沢{の極み}だ。", en = "Soaking in a hot spring with a sea view is luxury itself." },
   { source = "yomeru", id = "y2", ja = "三日寝ていなくて、疲労{の極み}だった。", en = "I hadn't slept for three days and was utterly exhausted." },
+  { source = "yomeru", id = "y3", ja = "決勝で負けたのは、痛恨{の極み}だ。", en = "Losing in the final is the bitterest regret of all." },
+  { source = "yomeru", id = "y4", ja = "説明もせずに辞めるとは、無責任{の極み}だ。", en = "Quitting without a word of explanation is the height of irresponsibility." },
+  { source = "yomeru", id = "y5", ja = "この庭園は、まさに美{の極み}だ。", en = "This garden is truly the very height of beauty." },
 ]
 
 [[point]]
@@ -21352,6 +21364,8 @@ examples = [
   { tatoeba = "303202_2287147", ja = "彼は貧乏{極まりない}。", en = "He is as poor as can be." },
   { tatoeba = "48842_211565", ja = "その机は、乱雑{極まりない}状態だ。", en = "The desk is in a state of total disorder." },
   { source = "yomeru", id = "y1", ja = "飲酒運転は危険{極まりない}。", en = "Drunk driving is dangerous in the extreme." },
+  { source = "yomeru", id = "y2", ja = "夜中に大声で騒ぐのは、迷惑{極まりない}。", en = "Making a racket in the middle of the night is a nuisance in the extreme." },
+  { source = "yomeru", id = "y3", ja = "彼の話し方は不愉快{極まる}。", en = "The way he talks is unpleasant in the extreme." },
 ]
 
 [[point]]
@@ -21379,6 +21393,8 @@ examples = [
   { tatoeba = "278873_125120", ja = "天気は{この上なく}いい。", en = "The weather is as fine as can be." },
   { tatoeba = "310833_92876", ja = "彼女は{この上なく}幸せだった。", en = "She was as happy as could be." },
   { source = "yomeru", id = "y1", ja = "毎日同じ作業で、退屈な{ことこの上ない}。", en = "It's the same work every day, and it couldn't be more boring." },
+  { source = "yomeru", id = "y2", ja = "駅から遠くて、不便な{ことこの上ない}。", en = "It's far from the station, so it couldn't be more inconvenient." },
+  { source = "yomeru", id = "y3", ja = "優勝できて、{この上ない}喜びです。", en = "Winning the championship is the greatest joy there could be." },
 ]
 
 [[point]]
@@ -21405,6 +21421,9 @@ related = ["kagiri-da", "te-tamaranai", "to-ieba"]
 examples = [
   { source = "yomeru", id = "y1", ja = "隣の犬がうるさい{ったらない}。", en = "The neighbours' dog is unbearably loud." },
   { source = "yomeru", id = "y2", ja = "山の上の寒さ{といったらなかった}。", en = "The cold at the top of the mountain was beyond words." },
+  { source = "yomeru", id = "y3", ja = "満員電車は暑苦しい{ったらない}。", en = "Packed trains are unbearably stuffy." },
+  { source = "yomeru", id = "y4", ja = "弟の部屋は汚い{ったらありゃしない}。", en = "My brother's room is filthy beyond words." },
+  { source = "yomeru", id = "y5", ja = "合格を知った時の嬉しさ{といったらなかった}。", en = "My joy when I found out I'd passed was beyond words." },
 ]
 
 [[point]]
@@ -21431,6 +21450,9 @@ related = ["ni-taeru", "ni-shinobinai", "wo-kinji-enai"]
 examples = [
   { tatoeba = "259707_154832", ja = "動物がいじめられているのは見る{に堪えない}。", en = "I can't stand to see animals be teased." },
   { source = "yomeru", id = "y1", ja = "皆様のご支援には感謝{に堪えません}。", en = "We are deeply grateful for everyone's support." },
+  { tatoeba = "48057_210787", ja = "その光景は見る{に堪えなかった}。", en = "I could not bear to see the scene." },
+  { source = "yomeru", id = "y2", ja = "彼の歌は下手すぎて、聞く{に堪えない}。", en = "His singing is so bad it's unbearable to listen to." },
+  { source = "yomeru", id = "y3", ja = "突然の訃報に、悲しみ{に堪えません}。", en = "I am overcome with grief at the sudden news of his death." },
 ]
 
 [[point]]
@@ -21453,6 +21475,9 @@ related = ["ni-taenai", "ni-taru"]
 examples = [
   { source = "yomeru", id = "y1", ja = "これは大人の鑑賞{に堪える}作品だ。", en = "This is a work that holds up for adult viewers." },
   { source = "yomeru", id = "y2", ja = "読む{に堪える}文章を書きたい。", en = "I want to write something worth reading." },
+  { source = "yomeru", id = "y3", ja = "この製品は長期間の使用{に堪える}。", en = "This product holds up to long-term use." },
+  { source = "yomeru", id = "y4", ja = "専門家の批判{に堪える}研究をしたい。", en = "I want to do research that can hold up to expert criticism." },
+  { source = "yomeru", id = "y5", ja = "今でも十分見る{に堪える}映画だ。", en = "It's a film still well worth watching today." },
 ]
 
 [[point]]
@@ -21476,6 +21501,9 @@ related = ["zu-ni-wa-irarenai", "ni-taenai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "被害者の話を聞いて、涙{を禁じ得なかった}。", en = "Hearing the victims' story, I couldn't hold back my tears." },
   { source = "yomeru", id = "y2", ja = "彼の無責任な発言には怒り{を禁じ得ない}。", en = "I can't help feeling angry at his irresponsible remarks." },
+  { source = "yomeru", id = "y3", ja = "あまりに急な決定に、驚き{を禁じ得ない}。", en = "I can't help being surprised at such a sudden decision." },
+  { source = "yomeru", id = "y4", ja = "家を失った人々には、同情{を禁じ得ません}。", en = "I can't help feeling sympathy for the people who lost their homes." },
+  { source = "yomeru", id = "y5", ja = "期待していただけに、失望{を禁じ得なかった}。", en = "I had expected so much that I couldn't help feeling disappointed." },
 ]
 
 [[point]]
@@ -21498,6 +21526,9 @@ related = ["kagiri-da", "ni-taenai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "皆様のご健康を願って{やみません}。", en = "I sincerely wish you all good health." },
   { source = "yomeru", id = "y2", ja = "彼は故郷を愛して{やまなかった}。", en = "He loved his hometown all his life." },
+  { source = "yomeru", id = "y3", ja = "皆さんのご活躍を期待して{やみません}。", en = "I sincerely look forward to your continued success." },
+  { source = "yomeru", id = "y4", ja = "世界の平和を祈って{やまない}。", en = "I never stop praying for world peace." },
+  { source = "yomeru", id = "y5", ja = "彼は生涯、恩師を尊敬して{やまなかった}。", en = "All his life, he never stopped looking up to his old teacher." },
 ]
 
 [[point]]
@@ -21520,6 +21551,9 @@ related = ["ni-taenai", "kaneru"]
 examples = [
   { source = "yomeru", id = "y1", ja = "祖母の手紙は捨てる{に忍びない}。", en = "I can't bring myself to throw away my grandmother's letters." },
   { source = "yomeru", id = "y2", ja = "泣いている子を見る{に忍びなかった}。", en = "I couldn't bear to look at the crying child." },
+  { source = "yomeru", id = "y3", ja = "必死に頼まれて、断る{に忍びなかった}。", en = "He begged so desperately that I couldn't bring myself to refuse." },
+  { source = "yomeru", id = "y4", ja = "思い出の詰まった家を売る{に忍びない}。", en = "I can't bring myself to sell a house so full of memories." },
+  { source = "yomeru", id = "y5", ja = "部下の失敗を責める{に忍びなかった}。", en = "I couldn't bring myself to blame my staff member for the mistake." },
 ]
 
 [[point]]
@@ -21541,6 +21575,9 @@ related = ["gatai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "彼の苦労は想像{に難くない}。", en = "It's not hard to imagine what he went through." },
   { source = "yomeru", id = "y2", ja = "親が反対した理由は理解{に難くない}。", en = "It's easy to understand why her parents objected." },
+  { source = "yomeru", id = "y3", ja = "彼女がどれほど悲しんだかは、想像{に難くない}。", en = "It isn't hard to imagine how sad she was." },
+  { source = "yomeru", id = "y4", ja = "この計画が失敗することは、予想{に難くない}。", en = "It isn't hard to predict that this plan will fail." },
+  { source = "yomeru", id = "y5", ja = "犯人が内部の人間なのは、推測{に難くない}。", en = "It isn't hard to guess that the culprit is an insider." },
 ]
 
 [[point]]
@@ -21566,8 +21603,10 @@ the end instead: 信頼に足る人ではない. 足りる also has its plain me
 related = ["ni-taeru", "ni-wa-ataranai"]
 examples = [
   { tatoeba = "42666_205421", ja = "取る{に足らない}問題です。", en = "That is a trivial problem." },
-  { tatoeba = "63257_225919", ja = "きみの意見は私にとって取る{に足りない}。", en = "Your opinion means nothing to me." },
   { source = "yomeru", id = "y1", ja = "彼は信頼{に足る}人物だ。", en = "He's a man worthy of trust." },
+  { source = "yomeru", id = "y2", ja = "彼の話は信じる{に足る}ものではない。", en = "His story isn't worth believing." },
+  { source = "yomeru", id = "y3", ja = "満足{に足る}結果が出せた。", en = "We got results worthy of satisfaction." },
+  { source = "yomeru", id = "y4", ja = "そんな取る{に足りない}ことで悩むな。", en = "Don't worry about such a trivial thing." },
 ]
 
 [[point]]
@@ -21590,6 +21629,9 @@ related = ["ni-wa-oyobanai", "made-mo-nai", "ni-ataru"]
 examples = [
   { tatoeba = "42510_205270", ja = "それは驚く{に当たらない}。", en = "It is not to be wondered at." },
   { source = "yomeru", id = "y1", ja = "一度の失敗で彼を責める{には当たらない}。", en = "There's no reason to blame him for one mistake." },
+  { source = "yomeru", id = "y2", ja = "少し熱があるだけだから、心配する{には当たらない}。", en = "It's only a slight fever, so there's no need to worry." },
+  { source = "yomeru", id = "y3", ja = "誰でもできることで、感心する{には当たらない}。", en = "Anyone could do that; it's nothing to be impressed by." },
+  { source = "yomeru", id = "y4", ja = "彼の行動は非難{には当たらない}。", en = "His actions don't deserve criticism." },
 ]
 
 [[point]]
@@ -21617,6 +21659,8 @@ examples = [
   { tatoeba = "68873_231505", ja = "あなたは来る{にはおよばない}。", en = "You needn't come." },
   { tatoeba = "270989_143579", ja = "数学では、私は彼{には及ばない}。", en = "I am not equal to him in mathematics." },
   { tatoeba = "71904_234528", ja = "あえて休暇を取りやめる{には及ばない}。", en = "You don't have to cancel your vacation." },
+  { tatoeba = "16195_177345", ja = "君は靴を脱ぐ{には及ばない}。", en = "You need not take off your shoes." },
+  { source = "yomeru", id = "y1", ja = "体力では、若い選手{には及ばない}。", en = "In stamina, I'm no match for the younger players." },
 ]
 
 [[point]]
@@ -21639,6 +21683,9 @@ related = ["iu-made-mo-nai", "ni-wa-oyobanai", "koto-wa-nai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "近いから、車で行く{までもない}。", en = "It's close, so there's no need to drive." },
   { source = "yomeru", id = "y2", ja = "調べる{までもなく}、答えは分かった。", en = "I knew the answer without even looking it up." },
+  { source = "yomeru", id = "y3", ja = "わざわざ説明する{までもない}だろう。", en = "Surely there's no need to go as far as explaining it." },
+  { source = "yomeru", id = "y4", ja = "電話で済むので、会いに行く{までもない}。", en = "A phone call will do, so there's no need to go and see them." },
+  { source = "yomeru", id = "y5", ja = "結果は、見る{までもなく}明らかだ。", en = "The result is obvious without even needing to look." },
 ]
 
 [[point]]
@@ -21661,6 +21708,9 @@ related = ["made-mo-nai", "ni-wa-ataranai"]
 examples = [
   { tatoeba = "285314_118349", ja = "彼のことはほとんど心配する{ほどのことは}無い。", en = "It's hardly worthwhile worrying about him." },
   { source = "yomeru", id = "y1", ja = "ただの風邪だから、医者に行く{ほどのことではない}。", en = "It's only a cold, not worth seeing a doctor about." },
+  { tatoeba = "287203_116466", ja = "彼の提案は話にとりあげる{ほどのことも}ない。", en = "His proposal is not worth talking about." },
+  { source = "yomeru", id = "y2", ja = "小さな傷だから、騒ぐ{ほどのことでもない}。", en = "It's just a small scratch, not worth making a fuss about." },
+  { source = "yomeru", id = "y3", ja = "わざわざ謝りに来る{ほどのことではない}よ。", en = "It's not worth coming all the way here to apologize." },
 ]
 
 [[point]]
@@ -21685,8 +21735,11 @@ Aimed at someone else's behaviour, or at oneself in mock despair (我\
 without the sense that a line has been crossed."""
 related = ["ttara-nai", "kiwamarinai"]
 examples = [
-  { tatoeba = "35490_198299", ja = "ばかげた考え{にもほどがある}。", en = "Of all the silly ideas!" },
   { source = "yomeru", id = "y1", ja = "三時間も遅れるなんて、遅刻{にもほどがある}。", en = "Three hours late? That's way beyond being late." },
+  { source = "yomeru", id = "y2", ja = "人のお金を勝手に使うなんて、図々しい{にもほどがある}。", en = "Spending other people's money without asking? That's way too brazen." },
+  { source = "yomeru", id = "y3", ja = "鍵を三回もなくすとは、不注意{にもほどがある}。", en = "Losing your keys three times? That's carelessness gone way too far." },
+  { source = "yomeru", id = "y4", ja = "この子犬、かわいい{にもほどがある}よ。", en = "This puppy is way too cute!" },
+  { source = "yomeru", id = "y5", ja = "冗談{にもほどがある}。笑えないよ。", en = "That's taking a joke way too far. It's not funny." },
 ]
 
 [[point]]
@@ -21714,6 +21767,9 @@ related = ["te-wa-yarikirenai", "te-tamaranai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "こう暑く{てはかなわない}。", en = "I can't take this heat." },
   { source = "yomeru", id = "y2", ja = "夜中に何度も起こされ{ちゃかなわない}よ。", en = "Being woken up again and again at night is too much." },
+  { source = "yomeru", id = "y3", ja = "休みの日まで呼び出され{てはかなわない}。", en = "I can't take being called in even on my days off." },
+  { source = "yomeru", id = "y4", ja = "こんなに物価が高く{てはかなわない}。", en = "I can't cope with prices this high." },
+  { source = "yomeru", id = "y5", ja = "毎日雨{ではかなわない}。", en = "I can't stand rain every single day." },
 ]
 
 [[point]]
