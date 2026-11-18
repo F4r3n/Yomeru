@@ -274,7 +274,10 @@ and leaves the rest to the user.
      食べさせた counts for the causative. ~~The deinflector returns the
      rules' reasons and has the volitional~~ (done:
      `deinflect_with_reasons`, a `Reasons` bitset per form, joined over
-     every path); left: mapping them onto `Inflection`. The ichidan られる
+     every path), mapped onto `Inflection` by
+     `GrammarDict::check_answer` (grammar-core `answer.rs`), which takes a
+     `Vocabulary` (JMdict in the apps) for "is this base a verb" and the
+     word boundaries a one-char kana point needs. The ichidan られる
      is both passive and potential and counts for either card;
    - `"self"`: none of this finds it reliably (the く adverb, the て join,
      自動詞・他動詞). No check and none of the three cases: the user rates

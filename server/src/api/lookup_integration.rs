@@ -40,7 +40,7 @@ jlpt = "N5"
 meaning = "may, it's okay to"
 formation = ["Verb［て］ + もいい"]
 explanation = "Permission."
-examples = [{ source = "yomeru", ja = "行っ{てもいい}。", en = "You may go." }]
+examples = [{ source = "yomeru", id = "y1", ja = "行っ{てもいい}。", en = "You may go." }]
 "#;
 
 fn ensure_dicts() {

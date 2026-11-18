@@ -379,6 +379,36 @@ mod tests {
     }
 
     #[test]
+    fn short_causative_passive_imperatives_and_nasai() {
+        for (surface, base, want) in [
+            (
+                "待たされた",
+                "待つ",
+                Reasons::of(&[Reason::Causative, Reason::Passive, Reason::Past]),
+            ),
+            (
+                "歌わされる",
+                "歌う",
+                Reasons::of(&[Reason::Causative, Reason::Passive]),
+            ),
+            ("来い", "来る", Reasons::of(&[Reason::Imperative])),
+            ("こい", "くる", Reasons::of(&[Reason::Imperative])),
+            ("勉強しろ", "勉強する", Reasons::of(&[Reason::Imperative])),
+            ("せよ", "する", Reasons::of(&[Reason::Imperative])),
+            ("食べなさい", "食べる", Reasons::of(&[Reason::Nasai])),
+            ("読み返しなさい", "読み返す", Reasons::of(&[Reason::Nasai])),
+            ("勉強しなさい", "勉強する", Reasons::of(&[Reason::Nasai])),
+            ("忘れていった", "忘れていく", Reasons::of(&[Reason::Past])),
+            ("飛んでいって", "飛んでいく", Reasons::of(&[Reason::TeForm])),
+        ] {
+            assert!(
+                reasons(surface, base).contains_all(want),
+                "{surface} → {base}"
+            );
+        }
+    }
+
+    #[test]
     fn reasons_join_along_the_chain() {
         let r = reasons("食べさせられなかった", "食べる");
         for want in [

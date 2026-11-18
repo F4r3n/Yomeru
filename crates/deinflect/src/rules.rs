@@ -74,6 +74,7 @@ pub static RULES: &[Rule] = &[
     // ("without doing") chains through ず so every verb class gets it.
     rule!("ず", "る", Negative, Literary),
     rule!("ずに", "ず", WithoutDoing),
+    rule!("なさい", "る", Nasai),
     // ── Godan: negative (a-stem) ──────────────────────────────────────────
     rule!("かない", "く", Negative),
     rule!("がない", "ぐ", Negative),
@@ -201,6 +202,16 @@ pub static RULES: &[Rule] = &[
     rule!("ませる", "む", Causative),
     rule!("らせる", "る", Causative),
     rule!("わせる", "う", Causative),
+    // ── Godan: short causative-passive (a-stem + される) ──────────────────
+    // 待たされる, 飲まされる. す-verbs take the long させられる only.
+    rule!("かされる", "く", Causative, Passive),
+    rule!("がされる", "ぐ", Causative, Passive),
+    rule!("たされる", "つ", Causative, Passive),
+    rule!("なされる", "ぬ", Causative, Passive),
+    rule!("ばされる", "ぶ", Causative, Passive),
+    rule!("まされる", "む", Causative, Passive),
+    rule!("らされる", "る", Causative, Passive),
+    rule!("わされる", "う", Causative, Passive),
     // ── Godan: desiderative (i-stem + たい) ───────────────────────────────
     rule!("きたい", "く", Desiderative),
     rule!("ぎたい", "ぐ", Desiderative),
@@ -211,6 +222,16 @@ pub static RULES: &[Rule] = &[
     rule!("みたい", "む", Desiderative),
     rule!("りたい", "る", Desiderative),
     rule!("いたい", "う", Desiderative),
+    // ── Godan: なさい (i-stem + なさい) ──────────────────────────────────
+    rule!("きなさい", "く", Nasai),
+    rule!("ぎなさい", "ぐ", Nasai),
+    rule!("しなさい", "す", Nasai),
+    rule!("ちなさい", "つ", Nasai),
+    rule!("になさい", "ぬ", Nasai),
+    rule!("びなさい", "ぶ", Nasai),
+    rule!("みなさい", "む", Nasai),
+    rule!("りなさい", "る", Nasai),
+    rule!("いなさい", "う", Nasai),
     // ── Godan: conditional (e-stem + ば) ──────────────────────────────────
     rule!("けば", "く", Conditional),
     rule!("げば", "ぐ", Conditional),
@@ -239,6 +260,12 @@ pub static RULES: &[Rule] = &[
     rule!("んでいた", "ぬ", Progressive, Past),
     rule!("んでいた", "ぶ", Progressive, Past),
     rule!("んでいた", "む", Progressive, Past),
+    // ていく in kana: 行った's own rules are kanji-only (いった is as often
+    // 言った), but after て it is いく.
+    rule!("ていった", "ていく", Past),
+    rule!("ていって", "ていく", TeForm),
+    rule!("でいった", "でいく", Past),
+    rule!("でいって", "でいく", TeForm),
     // ── I-adjective ───────────────────────────────────────────────────────
     rule!("くない", "い", Negative),
     rule!("くなかった", "い", Negative, Past),
@@ -262,6 +289,9 @@ pub static RULES: &[Rule] = &[
     rule!("しませんでした", "する", Polite, Negative, Past),
     rule!("すれば", "する", Conditional),
     rule!("しよう", "する", Volitional),
+    rule!("しろ", "する", Imperative),
+    rule!("せよ", "する", Imperative),
+    rule!("しなさい", "する", Nasai),
     rule!("できる", "する", Potential),
     rule!("できない", "する", Potential, Negative),
     rule!("される", "する", Passive),
@@ -283,6 +313,9 @@ pub static RULES: &[Rule] = &[
     rule!("きません", "くる", Polite, Negative),
     rule!("くれば", "くる", Conditional),
     rule!("こよう", "くる", Volitional),
+    rule!("こい", "くる", Imperative),
+    rule!("来い", "来る", Imperative),
+    rule!("きなさい", "くる", Nasai),
     rule!("こられる", "くる", Passive, Potential),
     rule!("こさせる", "くる", Causative),
     rule!("きている", "くる", Progressive),

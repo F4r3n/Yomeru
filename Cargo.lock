@@ -3945,6 +3945,8 @@ dependencies = [
  "flate2",
  "fst",
  "grammar-core",
+ "jmdict-core",
+ "jmdict-types",
  "postcard",
  "serde",
  "toml",

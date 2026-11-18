@@ -44,6 +44,8 @@ pub enum Reason {
     TeIku,
     /// てほしい.
     TeHoshii,
+    /// なさい (食べなさい).
+    Nasai,
     /// The literary ず negative, beside [`Reason::Negative`].
     Literary,
     /// ずに.
@@ -57,7 +59,7 @@ pub enum Reason {
 }
 
 impl Reason {
-    pub const ALL: [Reason; 26] = [
+    pub const ALL: [Reason; 27] = [
         Self::Negative,
         Self::Past,
         Self::Polite,
@@ -79,6 +81,7 @@ impl Reason {
         Self::TeKuru,
         Self::TeIku,
         Self::TeHoshii,
+        Self::Nasai,
         Self::Literary,
         Self::WithoutDoing,
         Self::Adverbial,

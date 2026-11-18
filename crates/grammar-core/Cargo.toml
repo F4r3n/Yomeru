@@ -20,6 +20,9 @@ toml       = { version = "0.8", optional = true }
 
 [dev-dependencies]
 grammar-core = { path = ".", features = ["build"] }
+# The answer check against the real dictionary (an ignored test).
+jmdict-core  = { path = "../jmdict-core" }
+jmdict-types = { path = "../jmdict-types" }
 
 [lints]
 workspace = true

@@ -331,3 +331,211 @@ fn refuses_bad_or_other_version_bytes() {
     bytes.truncate(bytes.len() - 3);
     assert!(GrammarDict::from_bytes(&bytes).is_err());
 }
+
+mod answers {
+    use super::{numbered, point};
+    use crate::{GrammarDict, Related, Verdict, Vocabulary, compile};
+
+    /// A dictionary of a few words: `verbs` in dictionary form, `words`
+    /// for the word boundaries.
+    struct Words {
+        verbs: &'static [&'static str],
+        words: &'static [&'static str],
+    }
+
+    impl Vocabulary for Words {
+        fn is_verb(&self, base: &str) -> bool {
+            self.verbs.contains(&base)
+        }
+        fn word_len_at(&self, text: &str, char_offset: usize) -> usize {
+            let rest: String = text.chars().skip(char_offset).collect();
+            self.words
+                .iter()
+                .filter(|w| rest.starts_with(**w))
+                .map(|w| w.chars().count())
+                .max()
+                .unwrap_or(1)
+        }
+    }
+
+    const NONE: Words = Words {
+        verbs: &[],
+        words: &[],
+    };
+
+    fn dict() -> GrammarDict {
+        let points = [
+            point("te-kara", "てから", &[], r#"related = ["ta-ato-de"]"#),
+            point("ta-ato-de", "たあとで", &[], ""),
+            point("te-kudasai", "てください", &[], ""),
+            point("te-shimau", "てしまう", &[], ""),
+            point("koto-ga-aru", "ることがある", &[], ""),
+            point("you-to-omou", "ようと思う", &[], ""),
+            point("shika-nai", "しか〜ない", &[], ""),
+            point("koto-wa-nai", "ことはない", &[], ""),
+            point("ta-hyoushi-ni", "た拍子に", &[], ""),
+            point("sa-particle", "さ", &[], ""),
+            point("yo", "よ", &[], ""),
+            point("yone", "よね", &[], ""),
+            point("tte", "って", &[], "check = \"self\""),
+            point(
+                "causative",
+                "させる",
+                &[],
+                r#"check = { inflection = ["causative"] }"#,
+            ),
+            point(
+                "imperative",
+                "命令形",
+                &[],
+                r#"check = { inflection = ["imperative"] }"#,
+            ),
+            point(
+                "causative-passive",
+                "させられる",
+                &[],
+                r#"check = { inflection = ["causative-passive"] }"#,
+            ),
+        ]
+        .concat();
+        GrammarDict::from_bytes(&compile(&numbered(&points)).unwrap().bytes).unwrap()
+    }
+
+    fn related(id: &str, pattern: &str) -> Related {
+        Related {
+            id: id.into(),
+            pattern: pattern.into(),
+        }
+    }
+
+    #[test]
+    fn the_point_as_written_or_conjugated_is_accepted() {
+        let d = dict();
+        for (id, answer) in [
+            ("te-kara", "ご飯を食べてから、出かけます。"),
+            ("te-kara", "ご飯を 食べて から 出かけます"),
+            ("te-shimau", "全部食べてしまった。"),
+            // A leading る stands for any dictionary form.
+            ("koto-ga-aru", "たまに手紙を書くことがある。"),
+            ("koto-ga-aru", "たまに見ることがあります。"),
+            // A leading よう, for the godan volitional too.
+            ("you-to-omou", "帰ろうと思います。"),
+            ("you-to-omou", "寝ようと思う。"),
+            // A 〜 splits the pattern into pieces found in order.
+            ("shika-nai", "水しか飲まない。"),
+            // た for だ.
+            ("ta-hyoushi-ni", "転んだ拍子に眼鏡が落ちた。"),
+            // ありません read as ない.
+            ("koto-wa-nai", "心配することはありません。"),
+        ] {
+            assert_eq!(
+                d.check_answer(id, answer, &NONE),
+                Verdict::Accepted,
+                "{id}: {answer}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_related_point_is_close_and_others_are_named() {
+        let d = dict();
+        assert_eq!(
+            d.check_answer("te-kara", "食べたあとで出かけます。", &NONE),
+            Verdict::Close {
+                related: related("ta-ato-de", "たあとで")
+            }
+        );
+        assert_eq!(
+            d.check_answer("te-kara", "食べてください。", &NONE),
+            Verdict::Other {
+                found: vec![related("te-kudasai", "てください")]
+            }
+        );
+        assert_eq!(
+            d.check_answer("te-kara", "出かけます。", &NONE),
+            Verdict::NotFound
+        );
+        // In order, not anywhere: ない before しか isn't the pattern.
+        assert_eq!(
+            d.check_answer("shika-nai", "ないしか", &NONE),
+            Verdict::NotFound
+        );
+    }
+
+    #[test]
+    fn self_graded_and_unknown_points_are_not_checked() {
+        let d = dict();
+        assert_eq!(d.check_answer("tte", "何でも", &NONE), Verdict::SelfGraded);
+        assert_eq!(d.check_answer("gone", "何でも", &NONE), Verdict::SelfGraded);
+    }
+
+    #[test]
+    fn inflections_need_a_known_verb() {
+        let d = dict();
+        let words = Words {
+            verbs: &["書く", "待つ", "舞う"],
+            words: &[],
+        };
+        assert_eq!(
+            d.check_answer("causative", "子供に手紙を書かせた。", &words),
+            Verdict::Accepted
+        );
+        assert_eq!(
+            d.check_answer("causative-passive", "一時間も待たされた。", &words),
+            Verdict::Accepted
+        );
+        // 書かせる is causative but not causative-passive.
+        assert_ne!(
+            d.check_answer("causative-passive", "書かせた。", &words),
+            Verdict::Accepted
+        );
+        assert_eq!(
+            d.check_answer("imperative", "早く書け！", &words),
+            Verdict::Accepted
+        );
+        // まえ → まう is the imperative rule, but まう is not a verb here.
+        assert_eq!(
+            d.check_answer("imperative", "駅のまえで", &NONE),
+            Verdict::NotFound
+        );
+    }
+
+    #[test]
+    fn a_one_char_kana_point_is_not_found_inside_a_kana_word() {
+        let d = dict();
+        let words = Words {
+            verbs: &[],
+            words: &["さん", "高さ", "よく", "田中"],
+        };
+        assert_eq!(
+            d.check_answer("sa-particle", "田中さんが来た。", &words),
+            Verdict::NotFound
+        );
+        assert_eq!(
+            d.check_answer("sa-particle", "それがさ、困ったんだ。", &words),
+            Verdict::Accepted
+        );
+        // A word before it ends on it: the さ of 高さ passes.
+        assert_eq!(
+            d.check_answer("sa-particle", "高さが違う。", &words),
+            Verdict::Accepted
+        );
+        assert_eq!(
+            d.check_answer("yo", "よく食べる。", &words),
+            Verdict::NotFound
+        );
+        assert_eq!(
+            d.check_answer("yo", "いい天気だよ。", &words),
+            Verdict::Accepted
+        );
+        // A kana word that is a point itself doesn't hide it.
+        let with_yone = Words {
+            verbs: &[],
+            words: &["よね"],
+        };
+        assert_eq!(
+            d.check_answer("yo", "いいよね。", &with_yone),
+            Verdict::Accepted
+        );
+    }
+}
