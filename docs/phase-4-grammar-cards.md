@@ -263,7 +263,11 @@ and leaves the rest to the user.
    "works here too". An alternative missing from it comes back through
    the reports (below) and can be added.
    Each entry says how case 1 finds it, in `check` (`AnswerCheck`):
-   - left out: the pattern and `forms` are searched (most points);
+   - left out: the pattern and `forms` are searched (most points). A
+     leading る stands for the dictionary form (ることがある, るところだ,
+     るばかりだ): it matches any dictionary-form ending, so 行くことがある
+     counts. The hover popup has the same gap (see
+     `grammar-open-questions.md`);
    - `{ inflection = [...] }`: a point that is a verb form (passive,
      potential, causative, causative-passive, volitional, imperative). A
      verb of the answer must deinflect through one of them, so

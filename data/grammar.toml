@@ -3931,6 +3931,8 @@ examples = [
   { tatoeba = "53090_215789", ja = "ジャックは予約を取り消す{ことにした}。", en = "Jack decided to cancel the reservations." },
   { tatoeba = "261798_152751", ja = "私は毎朝６時に起きる{ことにしている}。", en = "I make it a rule to get up at six every morning." },
   { tatoeba = "36972_199769", ja = "ともかく来る{ことにした}。", en = "We made up our mind to come in any case." },
+  { tatoeba = "278826_125167", ja = "天気が悪かったけれど出かける{ことにした}。", en = "Regardless of the bad weather, I decided to go out." },
+  { source = "yomeru", id = "y1", ja = "今日から甘いものを食べ{ないことにした}。", en = "Starting today, I've decided not to eat sweets." },
 ]
 
 [[point]]
@@ -3956,11 +3958,13 @@ out the reasoning being denied ("it's raining, so…"), というわけではな
 is the usual form. Compare わけがない, \
 "there's no way that…", which is a strong denial, and わけにはいかない, \
 "I can't very well…"."""
-related = ["wake-ga-nai", "wake-ni-wa-ikanai"]
+related = ["wake-ga-nai", "wake-ni-wa-ikanai", "to-wa-kagiranai"]
 examples = [
   { tatoeba = "320622_83093", ja = "母はいつも家にいる{わけではない}。", en = "My mother is not always at home." },
   { tatoeba = "51772_214480", ja = "すべての医者が多額の金をかせぐ{わけではない}。", en = "Not all doctors make a lot of money." },
-  { source = "yomeru", id = "y1", ja = "料理が苦手な{わけじゃない}けど、今日は外で食べたい。", en = "I can cook just fine, but today I feel like eating out." },
+  { source = "yomeru", id = "y2", ja = "料理ができない{わけじゃない}けど、今日は外で食べたい。", en = "It's not that I can't cook, but today I want to eat out." },
+  { source = "yomeru", id = "y3", ja = "私はいつも暇な{わけではありません}よ。", en = "I'm not always free, you know." },
+  { source = "yomeru", id = "y4", ja = "行きたくない{というわけではない}けど、疲れた。", en = "It's not that I don't want to go, but I'm tired." },
 ]
 
 [[point]]
@@ -3987,6 +3991,8 @@ examples = [
   { tatoeba = "38241_201036", ja = "どこかで間違った{にちがいない}。", en = "I must have made a mistake somewhere." },
   { tatoeba = "315982_87725", ja = "彼女は当時金持ちだった{に違いない}。", en = "She must have been rich in those days." },
   { tatoeba = "43744_206496", ja = "その問題には何らかの解決法がある{に違いない}。", en = "There must be some solution to the problem." },
+  { tatoeba = "55391_218080", ja = "これは本物のダイヤ{に違いない}。", en = "This must be a real diamond." },
+  { tatoeba = "316689_87021", ja = "彼女は病気で寝ている{に違いありません}。", en = "She must be ill in bed." },
 ]
 
 [[point]]
@@ -4010,6 +4016,8 @@ examples = [
   { tatoeba = "1225413_235766", ja = "３個{ずつ}ください。", en = "Please give me three of each kind." },
   { tatoeba = "38510_201302", ja = "どうぞ一人{ずつ}お入りください。", en = "Please come in one by one." },
   { tatoeba = "299574_104118", ja = "彼は少し{ずつ}回復してきた。", en = "He has recovered little by little." },
+  { tatoeba = "31868_194695", ja = "メアリーは卵を一つ{ずつ}取り出した。", en = "Mary took out the eggs one by one." },
+  { source = "yomeru", id = "y1", ja = "子どもたちにあめを二つ{ずつ}あげた。", en = "I gave the children two candies each." },
 ]
 
 [[point]]
@@ -4032,6 +4040,8 @@ examples = [
   { tatoeba = "38064_200860", ja = "{ところで}、何歳ですか。", en = "By the way, how old are you?" },
   { tatoeba = "38047_200844", ja = "{ところで}あなたは今晩暇ですか。", en = "By the way, are you free tonight?" },
   { tatoeba = "38050_200847", ja = "{ところで}あなたはどこの出身ですか。", en = "By the way, where are you from?" },
+  { tatoeba = "38054_200851", ja = "{ところで}、最近彼に会いましたか。", en = "By the way, have you seen him lately?" },
+  { source = "yomeru", id = "y1", ja = "{ところで}、先月仕事を変えたんだ。", en = "By the way, I changed jobs last month." },
 ]
 
 [[point]]
@@ -4060,6 +4070,8 @@ examples = [
   { tatoeba = "27382_190223", ja = "一年{中}雨が多い。", en = "They have much rain all year round." },
   { tatoeba = "313540_90174", ja = "彼女は午前{中}そこにいた。", en = "She was there in the morning." },
   { source = "yomeru", id = "y1", ja = "父は今、電話{中}です。", en = "My father is on the phone right now." },
+  { source = "yomeru", id = "y2", ja = "この歌は世界{中}で知られている。", en = "This song is known all over the world." },
+  { source = "yomeru", id = "y3", ja = "授業{中}は携帯を使わないでください。", en = "Please don't use your phone during class." },
 ]
 
 [[point]]
@@ -4090,6 +4102,8 @@ examples = [
   { tatoeba = "30930_193762", ja = "もし雨が降ったらどうし{たらいい}のでしょうか。", en = "Suppose it rains, what shall we do?" },
   { source = "yomeru", id = "y1", ja = "このかばん、どこに置{けばいい}？", en = "Where should I put this bag?" },
   { tatoeba = "19042_180181", ja = "教室にエアコンがあ{ればいい}のにな。", en = "I wish our classroom were air-conditioned." },
+  { tatoeba = "26397_189252", ja = "泳げ{たらいい}な。", en = "I wish I could swim." },
+  { source = "yomeru", id = "y2", ja = "疲れたら、少し休{めばいい}よ。", en = "If you get tired, you can just rest a bit." },
 ]
 
 [[point]]
@@ -4727,6 +4741,8 @@ examples = [
   { tatoeba = "32901_195726", ja = "マイクは病気で寝こんでいる{そうだ}。", en = "They say that Mike is sick in bed." },
   { tatoeba = "303840_99857", ja = "彼は麻雀が上手だ{そうです}。", en = "I hear he is good at mahjong." },
   { tatoeba = "278906_125087", ja = "天気予報によれば、まもなく梅雨に入る{そうだ}。", en = "According to the weather forecast, the rainy season will set in before long." },
+  { tatoeba = "70228_232858", ja = "アメリカに行く{そうです}ね。", en = "I hear that you are going to the United States." },
+  { tatoeba = "309874_93833", ja = "彼女の話では彼は来ない{そうだ}。", en = "He is not coming, according to her." },
 ]
 
 [[point]]
@@ -5471,6 +5487,8 @@ examples = [
   { tatoeba = "298413_105276", ja = "彼は時々遅く帰{ることがある}。", en = "He sometimes comes home late." },
   { tatoeba = "255203_156373", ja = "私は時々悲しくな{ることがある}。", en = "I feel sad every now and then." },
   { source = "yomeru", id = "y1", ja = "忙しくて昼ご飯を食べ{ないことがある}。", en = "I'm sometimes so busy I skip lunch." },
+  { source = "yomeru", id = "y2", ja = "日曜日でも会社に行く{こともあります}。", en = "I sometimes go to the office even on Sundays." },
+  { source = "yomeru", id = "y3", ja = "冬は雪で電車が止ま{ることがある}。", en = "In winter, the trains sometimes stop because of snow." },
 ]
 
 [[point]]
@@ -5551,6 +5569,8 @@ examples = [
   { tatoeba = "25773_188628", ja = "鉛筆{ではなく}、ペンで書きなさい。", en = "Write with a pen, not with a pencil." },
   { tatoeba = "289956_113717", ja = "彼はこの病院の患者{ではなく}医者です。", en = "He is not a patient but a doctor in this hospital." },
   { tatoeba = "67039_229678", ja = "あれは馬{ではなく}ロバだ。", en = "That is not a horse, but a donkey." },
+  { tatoeba = "249555_164951", ja = "私{でなく}私の兄が仙台に住んでいる。", en = "Not I but my brother lives in Sendai." },
+  { source = "yomeru", id = "y1", ja = "今日{じゃなくて}、明日来てください。", en = "Please come tomorrow, not today." },
 ]
 
 [[point]]
@@ -7305,11 +7325,13 @@ subject in both halves; for states and potentials (見える, 話せる) use \
 be followed by an order, a request or the speaker's will. ため without \
 に is the same and can end a sentence: 健康のためだ. The cause use is \
 stiff: in speech, から or ので."""
-related = ["you-ni-purpose", "noni-purpose", "kara-reason", "node", "sono-tame"]
+related = ["you-ni-purpose", "noni-purpose", "kara-reason", "node", "sono-tame", "sei-de"]
 examples = [
   { tatoeba = "257442_157092", ja = "私は黒板を見る{ために}眼鏡をかけた。", en = "I put on my glasses to see the blackboard." },
-  { tatoeba = "314623_89083", ja = "彼女は自分{のために}おいしい料理を作った。", en = "She cooked herself a good meal." },
   { source = "yomeru", id = "y1", ja = "事故{のために}、電車が遅れた。", en = "The train was late because of an accident." },
+  { source = "yomeru", id = "y2", ja = "母{のために}ケーキを作った。", en = "I made a cake for my mother." },
+  { source = "yomeru", id = "y3", ja = "日本の大学に入る{ために}、日本語を勉強している。", en = "I'm studying Japanese to get into a Japanese university." },
+  { tatoeba = "26749_189596", ja = "雨{のために}ピクニックは延期された。", en = "The picnic was put off on account of rain." },
 ]
 
 [[point]]
@@ -7339,6 +7361,8 @@ examples = [
   { tatoeba = "28037_190875", ja = "医者の{おかげで}彼女は病気が治った。", en = "With the help of doctors, she got over her illness." },
   { tatoeba = "71001_233629", ja = "あなたの{おかげで}、私は早く終えることが出来ました。", en = "Thanks to your help, I was able to finish early." },
   { tatoeba = "65115_227762", ja = "{おかげさまで}元気です。", en = "I'm fine, thank you." },
+  { tatoeba = "246856_167641", ja = "私が成功したのは彼の助言の{おかげだった}。", en = "It was thanks to his advice that I succeeded." },
+  { source = "yomeru", id = "y1", ja = "毎日歩いた{おかげで}、元気になった。", en = "Thanks to walking every day, I've gotten healthier." },
 ]
 
 [[point]]
@@ -7369,6 +7393,8 @@ examples = [
   { tatoeba = "64308_226960", ja = "お前の{せいだ}ぞ。", en = "This is your fault." },
   { tatoeba = "297755_105931", ja = "彼は私の{せいにし}ようとした。", en = "He tried to put the blame on me." },
   { source = "yomeru", id = "y1", ja = "雨の{せいで}、洗濯物がぬれてしまった。", en = "The laundry got wet because of the rain." },
+  { tatoeba = "47109_209846", ja = "その事故は下手な運転の{せいだった}。", en = "The accident was due to bad driving." },
+  { source = "yomeru", id = "y2", ja = "風邪の{せいか}、何を食べてもおいしくない。", en = "Maybe because of my cold, nothing tastes good." },
 ]
 
 [[point]]
@@ -7397,6 +7423,8 @@ examples = [
   { tatoeba = "308743_94961", ja = "彼女には欠点がある{からこそ}僕は一層彼女が好きだ。", en = "I love her all the more for her faults." },
   { tatoeba = "41061_203836", ja = "{だからこそ}、車で行くなといったんですよ。", en = "That's why I told you not to go by car." },
   { source = "yomeru", id = "y1", ja = "毎日練習した{からこそ}、勝てたんだ。", en = "It's because we practiced every day that we won." },
+  { source = "yomeru", id = "y2", ja = "好き{だからこそ}、厳しいことを言うんだよ。", en = "It's precisely because I like you that I'm being hard on you." },
+  { source = "yomeru", id = "y3", ja = "時間がない{からこそ}、計画が大切だ。", en = "Planning matters precisely because we have no time." },
 ]
 
 [[point]]
@@ -7424,6 +7452,9 @@ related = ["kara-reason", "node"]
 examples = [
   { tatoeba = "20796_183673", ja = "眼鏡の形をしている{ことから}、その橋を眼鏡橋とよぶ。", en = "Since the bridge looks like a pair of glasses, they call it Meganebashi." },
   { tatoeba = "61128_223792", ja = "この{ことから}、会社には事故の責任が無いことになる。", en = "It follows from this that the company is not responsible for the accident." },
+  { source = "yomeru", id = "y1", ja = "電気がついていた{ことから}、家にいるとわかった。", en = "From the fact that the light was on, I knew he was home." },
+  { source = "yomeru", id = "y2", ja = "春に桜がたくさん咲く{ことから}、桜町と呼ばれている。", en = "It's called Sakuramachi from the fact that many cherry trees bloom there in spring." },
+  { source = "yomeru", id = "y3", ja = "顔がよく似ている{ことから}、二人は兄弟だと思われた。", en = "From the fact that they looked so alike, the two were taken for brothers." },
 ]
 
 [[point]]
@@ -7450,6 +7481,9 @@ related = ["to-iu", "kara-reason", "tame-ni"]
 examples = [
   { tatoeba = "299111_104579", ja = "彼は若い{という理由で}許された。", en = "He was excused on the ground that he was young." },
   { source = "yomeru", id = "y1", ja = "子どもだ{という理由で}、入れてもらえなかった。", en = "I wasn't let in on the grounds that I was a child." },
+  { source = "yomeru", id = "y2", ja = "雨だ{という理由で}、試合が中止になった。", en = "The game was called off on the grounds that it was raining." },
+  { source = "yomeru", id = "y3", ja = "忙しい{という理由で}、彼は手伝ってくれなかった。", en = "He didn't help me, on the grounds that he was busy." },
+  { source = "yomeru", id = "y4", ja = "若すぎる{という理由で}、アルバイトを断られた。", en = "I was turned down for a part-time job on the grounds that I was too young." },
 ]
 
 [[point]]
@@ -7478,6 +7512,9 @@ related = ["sei-de", "ta-bakari", "te-bakari"]
 examples = [
   { source = "yomeru", id = "y1", ja = "傘を忘れた{ばかりに}、びしょぬれになった。", en = "Just because I forgot my umbrella, I got soaked." },
   { source = "yomeru", id = "y2", ja = "英語ができない{ばかりに}、その仕事につけなかった。", en = "Just because I can't speak English, I couldn't get that job." },
+  { source = "yomeru", id = "y3", ja = "彼女に会い{たいばかりに}、毎日その店に通った。", en = "Just because he wanted to see her, he went to that shop every day." },
+  { source = "yomeru", id = "y4", ja = "名前を間違えた{ばかりに}、彼を怒らせてしまった。", en = "Just because I got his name wrong, I made him angry." },
+  { source = "yomeru", id = "y5", ja = "背が低い{ばかりに}、選手になれなかった。", en = "Just because he was short, he couldn't become a player." },
 ]
 
 [[point]]
@@ -7499,8 +7536,10 @@ that". Before a noun, そのための means "for that": そのための時間.""
 related = ["tame-ni", "sorede", "sono-kekka"]
 examples = [
   { tatoeba = "50269_212984", ja = "{そのため}大勢の人が亡くなった。", en = "Therefore many people passed away." },
-  { tatoeba = "50271_212986", ja = "{そのために}問題はますます複雑になった。", en = "That made the problem all the more complicated." },
   { source = "yomeru", id = "y1", ja = "台風が来た。{そのため}、学校は休みになった。", en = "A typhoon came. Because of that, school was closed." },
+  { source = "yomeru", id = "y2", ja = "昨日は熱があった。{そのため}、学校を休んだ。", en = "I had a fever yesterday. Because of that, I stayed home from school." },
+  { source = "yomeru", id = "y3", ja = "車を買いたい。{そのために}、毎月お金をためている。", en = "I want to buy a car. For that, I'm saving money every month." },
+  { source = "yomeru", id = "y4", ja = "彼は最近忙しい。{そのためか}、元気がない。", en = "He's been busy lately. Perhaps because of that, he has no energy." },
 ]
 
 [[point]]
@@ -7520,10 +7559,13 @@ The result is something that has happened, so no orders or plans \
 after it. Inside one sentence, Verb［た］ + 結果 does the same: よく\
 考えた結果、やめることにした. その結果 can also be just "that \
 result": その結果に驚いた."""
-related = ["sono-tame", "sorede"]
+related = ["sono-tame", "sorede", "kekka"]
 examples = [
   { tatoeba = "48408_211134", ja = "{その結果}、彼女は、職を失うこととなった。", en = "The consequence was that she lost her job." },
   { source = "yomeru", id = "y1", ja = "毎日日記を書いた。{その結果}、漢字を覚えた。", en = "I wrote a diary every day. As a result, I learned kanji." },
+  { source = "yomeru", id = "y2", ja = "雨が全然降らなかった。{その結果}、野菜が高くなった。", en = "It didn't rain at all. As a result, vegetables got expensive." },
+  { source = "yomeru", id = "y3", ja = "彼は毎晩ゲームをした。{その結果}、成績が下がった。", en = "He played games every night. As a result, his grades dropped." },
+  { source = "yomeru", id = "y4", ja = "みんなで話し合った。{その結果}、旅行は来月になった。", en = "We all talked it over. As a result, the trip was moved to next month." },
 ]
 
 [[point]]
@@ -7549,6 +7591,9 @@ related = ["sorede", "suruto", "sono-tame"]
 examples = [
   { source = "yomeru", id = "y1", ja = "部屋が暑かった。{そこで}、窓を開けた。", en = "The room was hot, so I opened the window." },
   { source = "yomeru", id = "y2", ja = "一人では無理だった。{そこで}、友達に頼んだ。", en = "I couldn't do it alone, so I asked a friend." },
+  { source = "yomeru", id = "y3", ja = "雨が降ってきた。{そこで}、近くの店に入った。", en = "It started to rain, so we went into a nearby shop." },
+  { source = "yomeru", id = "y4", ja = "財布を忘れた。{そこで}、友達にお金を借りた。", en = "I forgot my wallet, so I borrowed money from a friend." },
+  { source = "yomeru", id = "y5", ja = "時間が足りなかった。{そこで}、明日また会うことにした。", en = "We ran out of time, so we decided to meet again tomorrow." },
 ]
 
 [[point]]
