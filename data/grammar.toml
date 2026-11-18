@@ -16481,6 +16481,9 @@ related = ["ni-sakidatte"]
 examples = [
   { source = "yomeru", id = "y1", ja = "その会社は他社{に先駆けて}新しい車を発売した。", en = "The company launched the new car ahead of its rivals." },
   { source = "yomeru", id = "y2", ja = "全国{に先駆けて}、この町で新しい制度が始まった。", en = "Ahead of the rest of the country, the new system started in this town." },
+  { source = "yomeru", id = "y3", ja = "この映画は日本{に先駆けて}アメリカで公開された。", en = "This film was released in America ahead of Japan." },
+  { source = "yomeru", id = "y4", ja = "桜{に先駆けて}梅の花が咲いた。", en = "The plum blossoms bloomed ahead of the cherry blossoms." },
+  { source = "yomeru", id = "y5", ja = "彼は世界{に先駆けて}新しい薬を開発した。", en = "He developed the new drug before anyone else in the world." },
 ]
 
 [[point]]
@@ -16932,6 +16935,9 @@ related = ["tsuide-ni", "kaneru"]
 examples = [
   { tatoeba = "60246_222915", ja = "この映画は教育と娯楽{をかねて}いる。", en = "This is a movie which combines education with entertainment." },
   { source = "yomeru", id = "y1", ja = "散歩{をかねて}、駅前まで買い物に行った。", en = "I walked to the shops by the station, which doubled as a stroll." },
+  { source = "yomeru", id = "y2", ja = "会議{をかねて}、みんなで昼ご飯を食べた。", en = "We all had lunch together, which doubled as a meeting." },
+  { source = "yomeru", id = "y3", ja = "この部屋は居間と食堂{を兼ねて}いる。", en = "This room serves as both the living room and the dining room." },
+  { source = "yomeru", id = "y4", ja = "ダイエット{をかねて}、駅まで歩いている。", en = "I walk to the station, partly to lose weight." },
 ]
 
 [[point]]
@@ -19676,8 +19682,11 @@ speech, ながら and ながらも. Search-only: つつ also starts words like \
 包む in kana."""
 related = ["nagara", "nagara-mo", "tsutsu-aru", "tsu-tsu"]
 examples = [
-  { tatoeba = "73634_236268", ja = "「春を待ち{つつ}」は漱石の小説だったね。", en = "\"Waiting for Spring\" is a novel by Soseki, isn't it?" },
   { source = "yomeru", id = "y1", ja = "体に悪いと知り{つつも}、やめられない。", en = "Even though I know it's bad for me, I can't stop." },
+  { source = "yomeru", id = "y2", ja = "景色を楽しみ{つつ}、ゆっくり歩いた。", en = "I walked slowly while enjoying the scenery." },
+  { source = "yomeru", id = "y3", ja = "悪いと思い{つつ}、友達の手紙を読んでしまった。", en = "Even though I knew it was wrong, I read my friend's letter." },
+  { source = "yomeru", id = "y4", ja = "彼は「大丈夫だ」と言い{つつも}、不安そうだった。", en = "Even while saying \"I'm fine,\" he looked worried." },
+  { source = "yomeru", id = "y5", ja = "将来のことを考え{つつ}、大学を選んだ。", en = "I chose a university while thinking about my future." },
 ]
 
 [[point]]
@@ -19706,6 +19715,9 @@ related = ["sae", "dani", "mo-particle"]
 examples = [
   { tatoeba = "294940_108749", ja = "彼は簡単な算数{すら}できなかった。", en = "He couldn't do even simple arithmetic." },
   { tatoeba = "243684_170796", ja = "最も強大な帝国{ですら}崩壊する。", en = "Even the mightiest of empires comes to an end." },
+  { tatoeba = "288899_114772", ja = "彼はアルファベット{すら}書けない。", en = "He cannot so much as write the alphabet." },
+  { tatoeba = "55229_217920", ja = "これらの言葉{ですら}、いつか消えてしまいます。", en = "Even these words will someday disappear." },
+  { tatoeba = "299239_104452", ja = "彼は手伝うこと{すら}せずに私のそばに立っていた。", en = "He stood beside me without so much as helping me." },
 ]
 
 [[point]]
@@ -19735,6 +19747,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "あの事故は考える{だに}恐ろしい。", en = "That accident is frightening even to think about." },
   { source = "yomeru", id = "y2", ja = "こんな結果になるとは、想像{だにしなかった}。", en = "I never even imagined it would turn out like this." },
   { source = "yomeru", id = "y3", ja = "大きな音がしたが、犬は微動{だにしなかった}。", en = "There was a loud noise, but the dog didn't move a muscle." },
+  { source = "yomeru", id = "y4", ja = "自分が医者になるとは、夢{にだに}思わなかった。", en = "I never even dreamed that I would become a doctor." },
+  { source = "yomeru", id = "y5", ja = "地震の夜のことは、思い出す{だに}つらい。", en = "Even just remembering the night of the earthquake is painful." },
 ]
 
 [[point]]
@@ -19759,6 +19773,9 @@ related = ["sura", "sukoshimo-nai"]
 examples = [
   { tatoeba = "27413_190255", ja = "一日{たりとも}英語から離れるな。", en = "Do not stay away from English, even for a day." },
   { tatoeba = "73196_235816", ja = "１円{たりとも}無駄使いはできない。", en = "I can't afford to waste a single yen." },
+  { source = "yomeru", id = "y1", ja = "彼は一度{たりとも}約束を破ったことがない。", en = "He has never once broken a promise." },
+  { source = "yomeru", id = "y2", ja = "この部屋には誰一人{たりとも}入れるな。", en = "Don't let a single person into this room." },
+  { source = "yomeru", id = "y3", ja = "一瞬{たりとも}目を離さないでください。", en = "Please don't take your eyes off it for even a second." },
 ]
 
 [[point]]
@@ -19788,7 +19805,9 @@ related = ["ni-shite-wa", "te-hajimete"]
 examples = [
   { source = "yomeru", id = "y1", ja = "彼は四十歳{にして}初めて海外に行った。", en = "He went abroad for the first time at forty." },
   { source = "yomeru", id = "y2", ja = "一瞬{にして}、町は火の海になった。", en = "In an instant, the town became a sea of flames." },
-  { tatoeba = "2345_220068", ja = "この親{にして}この子あり。", en = "Like father, like son." },
+  { source = "yomeru", id = "y4", ja = "彼は医者{にして}、有名な作家でもある。", en = "He is both a doctor and a famous writer." },
+  { source = "yomeru", id = "y5", ja = "三回目の挑戦{にして}、ようやく試験に合格した。", en = "Only on my third try did I finally pass the exam." },
+  { source = "yomeru", id = "y6", ja = "彼女は二十歳{にして}社長になった。", en = "She became a company president at just twenty." },
 ]
 
 [[point]]
@@ -19817,6 +19836,9 @@ related = ["koso", "dokoroka"]
 examples = [
   { source = "yomeru", id = "y1", ja = "彼には感謝{こそすれ}、恨んだことはない。", en = "I'm grateful to him if anything; I've never resented him." },
   { source = "yomeru", id = "y2", ja = "このままでは、問題は増え{こそすれ}減りはしない。", en = "At this rate, the problems will only grow, never shrink." },
+  { source = "yomeru", id = "y3", ja = "彼女の言葉は私を励まし{こそすれ}、傷つけはしなかった。", en = "Her words encouraged me if anything; they never hurt me." },
+  { source = "yomeru", id = "y4", ja = "程度の差{こそあれ}、誰にでも悩みはある。", en = "It may differ in degree, but everyone has worries." },
+  { source = "yomeru", id = "y5", ja = "練習を休めば、下手になり{こそすれ}、上手にはならない。", en = "Skip practice and you'll only get worse, never better." },
 ]
 
 [[point]]
@@ -19845,7 +19867,9 @@ related = ["number-mo"]
 examples = [
   { source = "yomeru", id = "y1", ja = "父は五十キロ{からある}米袋を軽々と持ち上げた。", en = "My father easily lifted a rice sack of a good fifty kilos." },
   { source = "yomeru", id = "y2", ja = "この時計は百万円{からする}そうだ。", en = "I hear this watch costs no less than a million yen." },
-  { source = "yomeru", id = "y3", ja = "広場には一万人{からの}人が集まった。", en = "As many as ten thousand people gathered in the square." },
+  { source = "yomeru", id = "y4", ja = "川で二メートル{からある}魚が釣れた。", en = "We caught a fish of a good two meters in the river." },
+  { source = "yomeru", id = "y5", ja = "彼は毎日二十キロ{からある}道を走っている。", en = "Every day he runs a route of no less than twenty kilometers." },
+  { source = "yomeru", id = "y6", ja = "姉は十万円{からする}かばんを買った。", en = "My sister bought a bag that cost no less than 100,000 yen." },
 ]
 
 [[point]]
@@ -19872,7 +19896,9 @@ related = ["okage-de", "nashi"]
 examples = [
   { source = "yomeru", id = "y1", ja = "お客様{あっての}店だということを忘れるな。", en = "Never forget that a shop is nothing without its customers." },
   { source = "yomeru", id = "y2", ja = "今回の成功は、君の努力{あってのこと}だ。", en = "This success was only possible thanks to your hard work." },
-  { tatoeba = "271725_80759", ja = "命{あっての}物種。", en = "While there is life, there is hope." },
+  { source = "yomeru", id = "y3", ja = "健康{あっての}仕事だから、無理しないで。", en = "Work depends on your health, so don't overdo it." },
+  { source = "yomeru", id = "y4", ja = "今の私があるのは、両親の支え{あってのこと}だ。", en = "I am where I am today only thanks to my parents' support." },
+  { source = "yomeru", id = "y5", ja = "安全{があっての}旅行だから、危ない所には行かない。", en = "There's no trip without safety, so I won't go anywhere dangerous." },
 ]
 
 [[point]]
@@ -19900,6 +19926,9 @@ related = ["dake-atte", "rashii-typical"]
 examples = [
   { source = "yomeru", id = "y1", ja = "これは京都{ならではの}景色だ。", en = "This is a view you can only get in Kyoto." },
   { source = "yomeru", id = "y2", ja = "手作り{ならではの}温かさがある。", en = "It has a warmth only handmade things have." },
+  { source = "yomeru", id = "y3", ja = "祭りで、この町{ならではの}料理を食べた。", en = "At the festival, I ate food you can only get in this town." },
+  { source = "yomeru", id = "y4", ja = "子供{ならではの}自由な発想に驚いた。", en = "I was amazed by the free ideas that only a child could have." },
+  { source = "yomeru", id = "y5", ja = "この優しい味はおばあちゃん{ならではだ}。", en = "This gentle flavor is something only Grandma can make." },
 ]
 
 [[point]]
@@ -19927,6 +19956,9 @@ related = ["dake", "nomi-narazu", "bakari-noun"]
 examples = [
   { tatoeba = "40861_203623", ja = "ただ結果を待つ{のみ}だ。", en = "We can but wait for the results." },
   { tatoeba = "47960_210690", ja = "その航空会社は貨物{のみ}を扱っている。", en = "That aircraft company deals in freight only." },
+  { source = "yomeru", id = "y1", ja = "二十歳以上の方{のみ}お酒を買えます。", en = "Only people aged twenty and over can buy alcohol." },
+  { source = "yomeru", id = "y2", ja = "準備はできた。あとは全力を尽くす{のみだ}。", en = "We're ready. All that's left is to give it everything." },
+  { source = "yomeru", id = "y3", ja = "彼は自分の利益{のみ}を考えている。", en = "He thinks only of his own profit." },
 ]
 
 [[point]]
@@ -19950,6 +19982,9 @@ related = ["ika-ni"]
 examples = [
   { tatoeba = "270566_144000", ja = "人生は{いかなる}本よりも興味深い。", en = "Life is more interesting than any book." },
   { tatoeba = "66648_229290", ja = "{いかなる}状況でも部屋を離れてはならない。", en = "Under no circumstances must you leave the room." },
+  { tatoeba = "66650_229291", ja = "{いかなる}国も他国の内政に干渉してはならない。", en = "No country should interfere in another country's internal affairs." },
+  { source = "yomeru", id = "y1", ja = "{いかなる}理由があっても、暴力は許されない。", en = "Violence is not acceptable for any reason whatsoever." },
+  { source = "yomeru", id = "y2", ja = "彼は{いかなる}困難にも負けなかった。", en = "He never gave in to any hardship, whatever it was." },
 ]
 
 [[point]]
@@ -19979,6 +20014,8 @@ examples = [
   { tatoeba = "271326_143242", ja = "成功は努力{いかんによる}。", en = "Success depends on your efforts." },
   { tatoeba = "287668_116001", ja = "彼の命は判決{いかんにかかっている}。", en = "His life hangs on the judge's decision." },
   { source = "yomeru", id = "y1", ja = "結果{いかんでは}、計画を変えることもある。", en = "Depending on the results, we may change the plan." },
+  { tatoeba = "322608_81107", ja = "万事はその結果{いかんにかかっている}。", en = "Much depends upon the result." },
+  { source = "yomeru", id = "y2", ja = "合格できるかどうかは、面接{いかんだ}。", en = "Whether you pass depends on the interview." },
 ]
 
 [[point]]
@@ -20000,6 +20037,9 @@ related = ["ikan", "ni-kakawarazu", "wo-towazu"]
 examples = [
   { tatoeba = "278939_125054", ja = "天候の{いかんにかかわらず}駅へ迎えに参ります。", en = "Rain or shine, I will come to meet you at the station." },
   { tatoeba = "47300_210037", ja = "その試合には国籍の{いかんを問わず}誰でも参加出来る。", en = "Anyone can participate in the game, no matter what nationality they are." },
+  { source = "yomeru", id = "y1", ja = "理由の{いかんにかかわらず}、遅刻は認めない。", en = "Lateness will not be accepted, regardless of the reason." },
+  { source = "yomeru", id = "y2", ja = "結果の{いかんによらず}、彼の努力は評価したい。", en = "Regardless of the outcome, I want to recognize his effort." },
+  { source = "yomeru", id = "y3", ja = "年齢の{いかんを問わず}、誰でも応募できる。", en = "Anyone can apply, irrespective of age." },
 ]
 
 [[point]]
@@ -20025,6 +20065,9 @@ related = ["zenzen", "chittomo"]
 examples = [
   { source = "yomeru", id = "y1", ja = "こんな映画、怖く{もなんともない}。", en = "A movie like this isn't scary in the slightest." },
   { source = "yomeru", id = "y2", ja = "あの人は友達{でもなんでもない}。", en = "That person is no friend of mine at all." },
+  { source = "yomeru", id = "y3", ja = "痛く{もなんともない}よ。大丈夫。", en = "It doesn't hurt in the slightest. I'm fine." },
+  { source = "yomeru", id = "y4", ja = "そんな話、珍しく{もなんともない}。", en = "A story like that isn't unusual at all." },
+  { source = "yomeru", id = "y5", ja = "彼の成功は偶然{でもなんでもない}。", en = "His success is no accident at all." },
 ]
 
 [[point]]
@@ -20047,6 +20090,9 @@ related = ["igai-no-nanimono-de-mo-nai", "ni-hoka-naranai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "この出会いが運命{でなくてなんだろう}。", en = "If this meeting isn't fate, what is?" },
   { source = "yomeru", id = "y2", ja = "命をかけて子を守る、これが愛{でなくて何であろう}。", en = "Risking your life to protect your child: if that isn't love, what is?" },
+  { source = "yomeru", id = "y3", ja = "毎日十時間の練習、これが努力{でなくてなんだろう}。", en = "Ten hours of practice a day: if that isn't effort, what is?" },
+  { source = "yomeru", id = "y4", ja = "また会えたのは、奇跡{でなくてなんだろう}。", en = "We met again: if that isn't a miracle, what is?" },
+  { source = "yomeru", id = "y5", ja = "一人で三人の子を育てた母は、英雄{でなくて何であろう}。", en = "My mother raised three kids alone: if she isn't a hero, who is?" },
 ]
 
 [[point]]
@@ -20068,6 +20114,9 @@ related = ["ni-hoka-naranai", "de-nakute-nan-darou"]
 examples = [
   { tatoeba = "285654_118010", ja = "彼の化学の講義は苦痛{以外のなにものでもなかった}。", en = "His lecture on chemistry was nothing but torture." },
   { source = "yomeru", id = "y1", ja = "あんな発言は差別{以外の何ものでもない}。", en = "Remarks like that are nothing but discrimination." },
+  { source = "yomeru", id = "y2", ja = "彼のしたことは裏切り{以外の何ものでもない}。", en = "What he did is nothing but betrayal." },
+  { source = "yomeru", id = "y3", ja = "そんな考えは、ただのわがまま{以外の何ものでもない}。", en = "That idea is nothing but selfishness." },
+  { source = "yomeru", id = "y4", ja = "証拠を見れば、彼は犯人{以外の何者でもない}。", en = "Looking at the evidence, he is nothing other than the culprit." },
 ]
 
 [[point]]
@@ -20090,6 +20139,9 @@ related = ["sae"]
 examples = [
   { source = "yomeru", id = "y1", ja = "{ただでさえ}忙しいのに、また仕事が増えた。", en = "I'm busy enough as it is, and now I've got more work." },
   { source = "yomeru", id = "y2", ja = "{ただでさえ}狭い部屋に、大きな机を買ってしまった。", en = "The room was small enough already, and I went and bought a big desk." },
+  { source = "yomeru", id = "y3", ja = "{ただでさえ}暑いのに、エアコンが壊れた。", en = "It's hot enough as it is, and now the air conditioner has broken." },
+  { source = "yomeru", id = "y4", ja = "{ただでさえ}人が足りないのに、二人も休んだ。", en = "We're short of staff at the best of times, and two people took the day off." },
+  { source = "yomeru", id = "y5", ja = "彼は{ただでさえ}字が汚いから、急ぐと読めない。", en = "His handwriting is messy even normally, so when he rushes it's unreadable." },
 ]
 
 [[point]]
@@ -20113,6 +20165,9 @@ related = ["kurai", "tatta"]
 examples = [
   { source = "yomeru", id = "y1", ja = "{たかが}風邪で会社を休むな。", en = "Don't skip work over a mere cold." },
   { source = "yomeru", id = "y2", ja = "{たかが}千円のことで喧嘩するなんて。", en = "Fighting over a mere thousand yen…" },
+  { source = "yomeru", id = "y3", ja = "{たかが}テストの点数で、人の価値は決まらない。", en = "A person's worth isn't decided by mere test scores." },
+  { source = "yomeru", id = "y4", ja = "{たかが}一回負けたぐらいで、泣くことはない。", en = "There's no need to cry over losing just one game." },
+  { source = "yomeru", id = "y5", ja = "{たかが}子供の言うことだ。気にするな。", en = "It's just something a kid said. Don't let it bother you." },
 ]
 
 [[point]]
@@ -20135,6 +20190,9 @@ related = ["kurai", "yori-hou-ga", "ta-hou-ga-ii"]
 examples = [
   { tatoeba = "254790_159732", ja = "それをする{くらいなら}死んだほうがましだ。", en = "I may as well die as do it." },
   { tatoeba = "277539_126451", ja = "中途半端にやる{くらいなら}、やらない方がましだ。", en = "You may as well not do it at all than do it imperfectly." },
+  { tatoeba = "284461_119202", ja = "彼と結婚する{ぐらいなら}死んだ方がましだ。", en = "I would rather die than marry him." },
+  { tatoeba = "264224_150333", ja = "次のバスを待つ{くらいなら}歩いた方がましだ。", en = "We may as well walk as wait for the next bus." },
+  { source = "yomeru", id = "y1", ja = "文句を言う{くらいなら}、自分でやりなさい。", en = "Rather than complain, do it yourself." },
 ]
 
 [[point]]
@@ -24107,6 +24165,9 @@ related = ["te-wa", "tari-tari"]
 examples = [
   { tatoeba = "49488_212209", ja = "その鋭いかぎ爪を{開いては閉じ、開いては}閉じ始めた。", en = "Its sharp claws began to open and close, open and close." },
   { source = "yomeru", id = "y1", ja = "{書いては消し、書いては}消した。", en = "I wrote and erased, wrote and erased." },
+  { source = "yomeru", id = "y2", ja = "波が寄せ{ては返し、寄せては}返す。", en = "The waves come in and go out, again and again." },
+  { source = "yomeru", id = "y3", ja = "祖母は{食べては寝、食べては}寝ている。", en = "My grandmother just eats and sleeps, eats and sleeps." },
+  { source = "yomeru", id = "y4", ja = "雨が{降ってはやみ、降っては}やみの一日だった。", en = "It was a day of rain starting and stopping, over and over." },
 ]
 
 [[point]]
