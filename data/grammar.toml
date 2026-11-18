@@ -6360,6 +6360,8 @@ examples = [
   { tatoeba = "71930_234554", ja = "{あいにく}父は留守です。", en = "I'm sorry, my father is out." },
   { tatoeba = "71935_234558", ja = "{あいにく}店は閉まっていた。", en = "Unfortunately, the store was closed." },
   { tatoeba = "71949_234572", ja = "{あいにく}ですが本日は予約でいっぱいです。", en = "I'm sorry, today is fully booked." },
+  { tatoeba = "1190295_234557", ja = "{あいにく}彼女は来なかった。", en = "Unfortunately, she didn't come." },
+  { source = "yomeru", id = "y1", ja = "{あいにくの}雨で、ピクニックは中止になりました。", en = "Unfortunately it rained, so the picnic was called off." },
 ]
 
 [[point]]
@@ -6382,8 +6384,10 @@ time when": 子供の頃, "when I was a child"."""
 related = ["kurai"]
 examples = [
   { tatoeba = "266488_148071", ja = "十時{ごろ}ですか。", en = "Is it about ten o'clock?" },
-  { tatoeba = "16775_177923", ja = "いつも何時{頃}に寝るの？", en = "What time do you usually go to bed?" },
   { tatoeba = "243292_171185", ja = "今夜、８時{頃}に電話します。", en = "I'll call you up around eight this evening." },
+  { tatoeba = "72440_77235", ja = "六時{頃}車で迎えにきます。", en = "I will pick you up around six." },
+  { source = "yomeru", id = "y1", ja = "荷物は来週{ごろ}届きます。", en = "The package will arrive sometime around next week." },
+  { source = "yomeru", id = "y2", ja = "毎朝七時{ごろに}家を出ます。", en = "I leave home around seven every morning." },
 ]
 
 [[point]]
@@ -6411,6 +6415,8 @@ examples = [
   { tatoeba = "252616_161900", ja = "私は６時間{ごとに}２粒飲まなければなりません。", en = "I have to take two pills every six hours." },
   { tatoeba = "302195_101500", ja = "彼は日{ごとに}よくなってきている。", en = "He is getting better day by day." },
   { source = "yomeru", id = "y1", ja = "このバスは十分{ごとに}来ます。", en = "This bus comes every ten minutes." },
+  { tatoeba = "56619_219304", ja = "この薬は３時間{毎に}飲んでください。", en = "This medicine should be taken every three hours." },
+  { source = "yomeru", id = "y2", ja = "クラス{ごとに}写真をとります。", en = "We'll take a photo class by class." },
 ]
 
 [[point]]
@@ -6437,6 +6443,8 @@ examples = [
   { tatoeba = "68363_230996", ja = "あの山はどれくらいの{高さ}がありますか。", en = "How high is that mountain?" },
   { tatoeba = "242931_171544", ja = "今日は昼と夜の{長さ}が同じです。", en = "The lengths of day and night are the same today." },
   { source = "yomeru", id = "y1", ja = "この箱の{重さ}は五キロです。", en = "This box weighs five kilos." },
+  { source = "yomeru", id = "y2", ja = "この町の{便利さ}が好きです。", en = "I like the convenience of this town." },
+  { source = "yomeru", id = "y3", ja = "東京の夏の{暑さ}にびっくりしました。", en = "I was surprised by the heat of summer in Tokyo." },
 ]
 
 [[point]]
@@ -6461,6 +6469,8 @@ examples = [
   { tatoeba = "318947_84767", ja = "父は５０{代}です。", en = "My father is in his fifties." },
   { tatoeba = "251623_162890", ja = "私の父は２０{代}で結婚しました。", en = "My father got married in his twenties." },
   { source = "yomeru", id = "y1", ja = "今月は電気{代}が高かった。", en = "The electricity bill was high this month." },
+  { tatoeba = "310080_93627", ja = "彼女は１９５０{年代}の生まれです。", en = "She was born in the 1950s." },
+  { source = "yomeru", id = "y2", ja = "東京までのバス{代}はいくらですか。", en = "How much is the bus fare to Tokyo?" },
 ]
 
 [[point]]
@@ -6485,6 +6495,8 @@ examples = [
   { tatoeba = "21756_184628", ja = "{各}国にはそれぞれの習慣がある。", en = "Each country has its own customs." },
   { tatoeba = "43433_206187", ja = "その列車は{各}駅停車です。", en = "The train stops at every station." },
   { source = "yomeru", id = "y1", ja = "{各}部屋にテレビがあります。", en = "Each room has a TV." },
+  { source = "yomeru", id = "y2", ja = "{各}ページに絵があります。", en = "There's a picture on each page." },
+  { source = "yomeru", id = "y3", ja = "{各}学校から学生が三人来ます。", en = "Three students will come from each school." },
 ]
 
 [[point]]
@@ -6509,6 +6521,8 @@ examples = [
   { tatoeba = "635028_635027", ja = "東京駅は三つ{目}です。", en = "Tokyo Station is the third stop." },
   { tatoeba = "55478_218166", ja = "これは日本で２番{目}に長い川だ。", en = "This is the second longest river in Japan." },
   { source = "yomeru", id = "y1", ja = "日本は三回{目}です。", en = "This is my third time in Japan." },
+  { source = "yomeru", id = "y2", ja = "二つ{目}の駅で降りてください。", en = "Please get off at the second station." },
+  { source = "yomeru", id = "y3", ja = "今日は旅行の三日{目}です。", en = "Today is the third day of the trip." },
 ]
 
 [[point]]
@@ -6534,6 +6548,8 @@ examples = [
   { tatoeba = "21995_184864", ja = "外は{真っ}暗だった。", en = "It was pitch black outside." },
   { tatoeba = "44891_207638", ja = "その店はちょうど駅の{真ん}前にあります。", en = "The shop is just in front of the station." },
   { source = "yomeru", id = "y1", ja = "雪で庭が{真っ}白になった。", en = "The garden turned white with snow." },
+  { source = "yomeru", id = "y2", ja = "{真}夜中に電話が鳴った。", en = "The phone rang in the middle of the night." },
+  { source = "yomeru", id = "y3", ja = "テーブルの{真ん}中に花を置きました。", en = "I put flowers right in the middle of the table." },
 ]
 
 [[point]]
@@ -6557,8 +6573,10 @@ is "in such a way that, like this": 毎日少しずつ、という風に進め�
 related = ["you-da"]
 examples = [
   { tatoeba = "71566_234191", ja = "あなたがそんな{風に}考えるのは残念です。", en = "I'm sorry that you should think that way." },
-  { tatoeba = "37564_232508", ja = "あなたはどういう{風に}してここへ来ましたか。", en = "How did you come here?" },
   { source = "yomeru", id = "y1", ja = "日本{風}の部屋に泊まりました。", en = "I stayed in a Japanese-style room." },
+  { source = "yomeru", id = "y2", ja = "こんな{風に}書いてください。", en = "Please write it like this." },
+  { source = "yomeru", id = "y3", ja = "洋{風}の家に住みたいです。", en = "I want to live in a Western-style house." },
+  { source = "yomeru", id = "y4", ja = "彼はいつもあんな{ふうに}話すの？", en = "Does he always talk like that?" },
 ]
 
 [[point]]
@@ -6582,6 +6600,9 @@ related = []
 examples = [
   { tatoeba = "43961_206713", ja = "その本が映画{化}されてから５年になる。", en = "It is five years since the book was made into a movie." },
   { source = "yomeru", id = "y1", ja = "この町も国際{化}が進んでいる。", en = "This town is becoming international too." },
+  { source = "yomeru", id = "y2", ja = "この漫画はアニメ{化}されるそうです。", en = "I hear this manga is going to be made into an anime." },
+  { source = "yomeru", id = "y3", ja = "この工場の仕事は全部自動{化}されている。", en = "All the work in this factory is automated." },
+  { source = "yomeru", id = "y4", ja = "毎朝走ることを習慣{化}したい。", en = "I want to make running every morning a habit." },
 ]
 
 [[point]]
@@ -6606,6 +6627,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "六歳{以下}の子供は無料です。", en = "Children six and under are free." },
   { tatoeba = "28378_191218", ja = "{以下}は彼の話です。", en = "The following is his story." },
   { source = "yomeru", id = "y2", ja = "一万円{以下}のカメラを探しています。", en = "I'm looking for a camera for 10,000 yen or less." },
+  { tatoeba = "42275_205034", ja = "それは千円{以下}では買えません。", en = "You can't buy it under 1,000 yen." },
+  { source = "yomeru", id = "y3", ja = "荷物は二十キロ{以下}にしてください。", en = "Please keep your luggage to 20 kilos or less." },
 ]
 
 [[point]]
@@ -6631,6 +6654,8 @@ examples = [
   { tatoeba = "262459_152094", ja = "私{以外}の誰もがそれを知っています。", en = "Everybody knows it except me." },
   { tatoeba = "34453_197271", ja = "ビル{以外は}みなあつまった。", en = "Except for Bill, they all made it." },
   { source = "yomeru", id = "y1", ja = "英語{以外に}何語を話しますか。", en = "What languages do you speak besides English?" },
+  { tatoeba = "59888_222559", ja = "この間違い{以外}、これは良いレポートです。", en = "This is a good report, except for this mistake." },
+  { source = "yomeru", id = "y2", ja = "日本{以外の}国に行ったことがありますか。", en = "Have you been to any countries other than Japan?" },
 ]
 
 [[point]]
@@ -6656,6 +6681,8 @@ examples = [
   { tatoeba = "50529_213243", ja = "そのクラブには５０人{以上}の会員がいる。", en = "The club has more than fifty members." },
   { tatoeba = "37788_200587", ja = "とても暑くて、それ{以上}我慢できなかった。", en = "It was hot. I couldn't stand it any longer." },
   { source = "yomeru", id = "y1", ja = "私の話は{以上}です。", en = "That's all I have to say." },
+  { tatoeba = "60948_223612", ja = "このセーターは５０ドル{以上}もする。", en = "This sweater costs more than fifty dollars." },
+  { source = "yomeru", id = "y2", ja = "二十歳{以上}の人はお酒が飲めます。", en = "People twenty and over can drink alcohol." },
 ]
 
 [[point]]
@@ -6682,6 +6709,8 @@ examples = [
   { tatoeba = "267805_146756", ja = "少なくとも１００人{は}出席していた。", en = "No less than one hundred people were present." },
   { source = "yomeru", id = "y1", ja = "一日に二回{は}歯をみがきます。", en = "I brush my teeth at least twice a day." },
   { source = "yomeru", id = "y2", ja = "駅まで三十分{は}かかる。", en = "It takes at least thirty minutes to the station." },
+  { source = "yomeru", id = "y3", ja = "この本は千円{は}すると思う。", en = "I think this book costs at least 1,000 yen." },
+  { source = "yomeru", id = "y4", ja = "毎日八時間{は}寝たいです。", en = "I want to sleep at least eight hours every day." },
 ]
 
 [[point]]
@@ -6705,8 +6734,10 @@ related = ["number-wa", "nan-mo", "mo-particle"]
 homographs = ["mo-particle"]
 examples = [
   { tatoeba = "269176_145386", ja = "新しい自転車は５００００円{も}した。", en = "The new bicycle cost me as much as 50,000 yen." },
-  { tatoeba = "27006_189850", ja = "雨が３時間{も}激しく降り続いています。", en = "It has been raining heavily for three hours." },
   { source = "yomeru", id = "y1", ja = "ケーキを五つ{も}食べた。", en = "I ate five pieces of cake, no less." },
+  { tatoeba = "261376_153168", ja = "私は彼女を二時間{も}待った。", en = "I waited for her as long as two hours." },
+  { source = "yomeru", id = "y2", ja = "彼は本を十冊{も}買った。", en = "He bought as many as ten books." },
+  { source = "yomeru", id = "y3", ja = "今日は水を二リットル{も}飲みました。", en = "I drank as much as two liters of water today." },
 ]
 
 [[point]]
@@ -6731,6 +6762,8 @@ examples = [
   { tatoeba = "24518_187382", ja = "{何人か}遅刻した。", en = "Some were late." },
   { tatoeba = "29636_192472", ja = "りんごが{いくつか}木から落ちた。", en = "Some apples fell down from the tree." },
   { tatoeba = "252937_161579", ja = "私はあの学校の生徒を{何人か}知ってます。", en = "I know some students in that school." },
+  { tatoeba = "278537_125456", ja = "弟の本を{何冊か}貸してあげるよ。", en = "I'll lend you some books of my brother's." },
+  { source = "yomeru", id = "y1", ja = "日本へは{何回か}行ったことがあります。", en = "I've been to Japan a few times." },
 ]
 
 [[point]]
@@ -6755,6 +6788,8 @@ examples = [
   { tatoeba = "301024_102670", ja = "彼は{速く}走れる。", en = "He can run fast." },
   { tatoeba = "242176_172299", ja = "今朝は１時間{早く}起きた。", en = "He got up an hour early this morning." },
   { source = "yomeru", id = "y1", ja = "図書館では{静かに}話してください。", en = "Please speak quietly in the library." },
+  { source = "yomeru", id = "y2", ja = "字をもっと{大きく}書いてください。", en = "Please write the letters bigger." },
+  { source = "yomeru", id = "y3", ja = "妹はピアノを{上手に}ひきます。", en = "My little sister plays the piano well." },
 ]
 
 [[point]]
@@ -6781,6 +6816,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "週末は映画{とか買い物とか}に行きます。", en = "On weekends I go to movies, shopping and so on." },
   { source = "yomeru", id = "y2", ja = "すし{とかてんぷらとか}が好きです。", en = "I like things like sushi and tempura." },
   { source = "yomeru", id = "y3", ja = "お茶{とか}飲まない？", en = "Want some tea or something?" },
+  { source = "yomeru", id = "y4", ja = "休みの日は本を読む{とかテレビを見るとか}しています。", en = "On my days off I do things like reading and watching TV." },
+  { source = "yomeru", id = "y5", ja = "明日{とか}、どう？", en = "How about tomorrow or something?" },
 ]
 
 [[point]]
@@ -6807,6 +6844,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "京都や奈良{など}に行きました。", en = "I went to places like Kyoto and Nara." },
   { source = "yomeru", id = "y2", ja = "お茶{など}いかがですか。", en = "Would you like some tea or something?" },
   { source = "yomeru", id = "y3", ja = "私{なんか}には無理です。", en = "Someone like me couldn't do it." },
+  { source = "yomeru", id = "y4", ja = "りんごやバナナ{など}を買いました。", en = "I bought apples, bananas and so on." },
+  { source = "yomeru", id = "y5", ja = "宿題{なんか}やりたくない。", en = "I don't want to do homework or anything like that." },
 ]
 
 [[point]]
@@ -6832,6 +6871,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "雨{でも雪でも}、毎日走ります。", en = "Rain or snow, I run every day." },
   { source = "yomeru", id = "y2", ja = "肉{でも魚でも}いいですよ。", en = "Meat or fish, either is fine." },
   { source = "yomeru", id = "y3", ja = "大人{でも子供でも}楽しめる映画です。", en = "It's a movie both adults and children can enjoy." },
+  { source = "yomeru", id = "y4", ja = "電話{でもメールでも}、連絡してください。", en = "Contact me by phone or email, either is fine." },
+  { source = "yomeru", id = "y5", ja = "日本語{でも英語でも}大丈夫です。", en = "Japanese or English, either is fine." },
 ]
 
 [[point]]
