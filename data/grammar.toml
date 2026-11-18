@@ -14185,11 +14185,13 @@ notes = """
 Pushier than plain から, and odd when the listener doesn't know the \
 reason yet. At the end of a sentence, んだから sounds exasperated: \
 本当に困った人なんだから, "honestly, you're hopeless"."""
-related = ["kara-reason", "n-desu", "kara-ni-wa"]
+related = ["kara-reason", "n-desu", "kara-ni-wa", "ijou-wa"]
 examples = [
   { tatoeba = "31206_194037", ja = "もう大きくなった{のだから}、行儀良くしなさい。", en = "Now you are a big boy, behave yourself." },
   { tatoeba = "18014_179158", ja = "君がそう言う{んだから}。", en = "Since you say so." },
   { source = "yomeru", id = "y1", ja = "自分で決めた{んだから}、頑張りなさい。", en = "You decided this yourself, so do your best." },
+  { tatoeba = "16413_177561", ja = "君はもう１８歳{なのだから}車の免許が取れます。", en = "Now that you are eighteen, you can get a driver's license." },
+  { source = "yomeru", id = "y2", ja = "子供じゃない{んだから}、自分でやりなさい。", en = "You're not a child, so do it yourself." },
 ]
 
 [[point]]
@@ -14216,6 +14218,9 @@ related = ["to-iu-koto", "to-iu-no-wa", "tsumari"]
 examples = [
   { source = "yomeru", id = "y1", ja = "電気がついている。{ということは}、誰かいるね。", en = "The light is on. That means someone's home." },
   { source = "yomeru", id = "y2", ja = "「明日は雨だって。」「{ってことは}、試合は中止？」", en = "\"They say it'll rain tomorrow.\" \"So the match is off?\"" },
+  { source = "yomeru", id = "y3", ja = "彼女は来なかった。{ということは}、まだ怒っているんだ。", en = "She didn't come. That means she's still angry." },
+  { source = "yomeru", id = "y4", ja = "「来月引っ越す。」「{ってことは}、もう会えないの？」", en = "\"I'm moving next month.\" \"So that means we won't see each other anymore?\"" },
+  { source = "yomeru", id = "y5", ja = "返事がない{ということは}、興味がないということだ。", en = "No reply means they aren't interested." },
 ]
 
 [[point]]
@@ -14244,6 +14249,9 @@ related = ["ta-ue-de", "ni-oite", "kara-iu-to"]
 examples = [
   { tatoeba = "20226_183105", ja = "規則{の上では}彼はまだ学生だ。", en = "Technically he is still a student." },
   { source = "yomeru", id = "y1", ja = "日本で生活する{上で}、日本語は大切だ。", en = "For living in Japan, Japanese is important." },
+  { source = "yomeru", id = "y2", ja = "健康を守る{上で}、睡眠は欠かせない。", en = "Sleep is essential for staying healthy." },
+  { source = "yomeru", id = "y3", ja = "仕事を選ぶ{上で}、何を一番大切にしますか。", en = "What matters most to you in choosing a job?" },
+  { source = "yomeru", id = "y4", ja = "書類{の上では}、何も問題はありません。", en = "On paper, there's no problem at all." },
 ]
 
 [[point]]
@@ -14270,6 +14278,9 @@ related = ["ga-ichiban", "uchi-ni", "yori-hou-ga"]
 examples = [
   { tatoeba = "245519_168968", ja = "四季{のうちで}春が一番好きだ。", en = "Spring is my favourite of the four seasons." },
   { tatoeba = "52752_235467", ja = "２人{のうちでは}、ジョンの方が背が高い。", en = "John is the taller of the two." },
+  { tatoeba = "17666_178813", ja = "君たち{のうち}誰でもそれはできる。", en = "Any of you can do it." },
+  { tatoeba = "267826_146735", ja = "少女たち{のうち}一人が後に残された。", en = "One of the girls was left behind." },
+  { source = "yomeru", id = "y1", ja = "クラスの三十人{のうち}、十人が休んだ。", en = "Ten out of the thirty in the class were absent." },
 ]
 
 [[point]]
@@ -14300,6 +14311,9 @@ related = ["noni", "kedo", "ni-mo-kakawarazu", "nagara-mo"]
 examples = [
   { tatoeba = "35684_198491", ja = "パーティーに行くことにした{ものの}、気が進まない。", en = "Though I have decided to go to the party, I'm not looking forward to it." },
   { source = "yomeru", id = "y1", ja = "新しい靴を買った{ものの}、まだ一度もはいていない。", en = "I bought new shoes, but I haven't worn them even once." },
+  { source = "yomeru", id = "y2", ja = "謝ろうと思った{ものの}、言葉が出なかった。", en = "I meant to apologize, but the words wouldn't come." },
+  { source = "yomeru", id = "y3", ja = "この部屋は広い{ものの}、駅から遠い。", en = "This room is spacious, but it's far from the station." },
+  { source = "yomeru", id = "y4", ja = "計画は簡単だ。{とはいうものの}、時間はかかる。", en = "The plan is simple. That said, it will take time." },
 ]
 
 [[point]]
@@ -14331,6 +14345,9 @@ related = ["ni-kakawarazu", "noni", "mono-no", "nagara-mo"]
 examples = [
   { tatoeba = "26775_189622", ja = "雨{にもかかわらず}出発した。", en = "He started in spite of the rain." },
   { tatoeba = "303098_100600", ja = "彼は病気だった{にも関わらず}仕事に出かけた。", en = "He went to work in spite of his illness." },
+  { tatoeba = "315605_88103", ja = "彼女は足が痛かった{にもかかわらず}学校へ行った。", en = "She went to school in spite of the pain in her leg." },
+  { tatoeba = "301109_102585", ja = "彼は多くの障害{にもかかわらず}その仕事をした。", en = "He did the work in spite of many obstacles." },
+  { source = "yomeru", id = "y1", ja = "注意した{にもかかわらず}、彼はまた遅刻した。", en = "Despite being warned, he was late again." },
 ]
 
 [[point]]
@@ -14360,6 +14377,8 @@ examples = [
   { tatoeba = "328935_74784", ja = "結婚式は天候{にかかわらず}催されるだろう。", en = "The wedding ceremony will be held regardless of the weather." },
   { tatoeba = "241431_173042", ja = "国籍{に関係なく}すべての人に資格がある。", en = "Everyone is eligible regardless of nationality." },
   { source = "yomeru", id = "y1", ja = "行く行かない{にかかわらず}、返事をください。", en = "Whether you go or not, please reply." },
+  { tatoeba = "282221_121784", ja = "年齢{にかかわらず}全ての人々が許可されます。", en = "Every person will be admitted regardless of his or her age." },
+  { source = "yomeru", id = "y2", ja = "経験{にかかわらず}、誰でも応募できます。", en = "Anyone can apply, regardless of experience." },
 ]
 
 [[point]]
@@ -14388,6 +14407,8 @@ examples = [
   { tatoeba = "393793_393792", ja = "予想{に反して}楽に勝てましたね。", en = "Contrary to expectations, they won with ease." },
   { tatoeba = "17346_178494", ja = "君のやったことは規則{に反して}いるよ。", en = "What you did is against the rules." },
   { tatoeba = "258257_156277", ja = "私は自分の意志{に反して}それをした。", en = "I did it against my will." },
+  { tatoeba = "65620_228265", ja = "うそをつくことは私の主義{に反する}。", en = "It is against my principles to tell a lie." },
+  { source = "yomeru", id = "y1", ja = "親の期待{に反して}、彼は大学に行かなかった。", en = "Contrary to his parents' expectations, he didn't go to university." },
 ]
 
 [[point]]
@@ -14418,9 +14439,11 @@ After the volitional, ったって shortens といっても: 休もうったっ�
 いすがない, "you say let's rest, but there are no chairs"."""
 related = ["temo", "tatoe-temo", "ikura-temo", "datte-question"]
 examples = [
-  { tatoeba = "41634_204392", ja = "そんなことやっ{たって}無駄だ。", en = "That won't make any difference." },
-  { tatoeba = "41333_204092", ja = "そんな所に行っ{たって}しょうがない。", en = "It isn't worthwhile going there." },
   { tatoeba = "41554_204312", ja = "そんなトゲトゲしい言い方しな{くたって}いいだろう。", en = "You don't have to use such a harsh tone with me." },
+  { source = "yomeru", id = "y1", ja = "いくら待っ{たって}、バスは来ないよ。", en = "No matter how long you wait, the bus won't come." },
+  { source = "yomeru", id = "y2", ja = "高{くたって}、いい物なら買うよ。", en = "Even if it's expensive, I'll buy it if it's good." },
+  { source = "yomeru", id = "y3", ja = "今から走っ{たって}、間に合わないよ。", en = "Even if you run now, you won't make it." },
+  { source = "yomeru", id = "y4", ja = "何を言っ{たって}、彼は聞かないよ。", en = "No matter what you say, he won't listen." },
 ]
 
 [[point]]
@@ -14451,6 +14474,9 @@ related = ["temo", "tatoe-temo", "to-shitara", "ni-shite-mo"]
 examples = [
   { tatoeba = "41780_204539", ja = "それを認める{としても}、私は君に同意できない。", en = "Even if I admit that, I cannot agree with you." },
   { tatoeba = "40799_203561", ja = "たとえお金持ち{だとしても}、彼には金をやらない。", en = "Even if I were rich, I wouldn't give money to him." },
+  { source = "yomeru", id = "y1", ja = "宝くじが当たった{としても}、仕事は辞めない。", en = "Even if I won the lottery, I wouldn't quit my job." },
+  { source = "yomeru", id = "y2", ja = "本当{だとしても}、誰にも言わないでください。", en = "Even if it's true, please don't tell anyone." },
+  { source = "yomeru", id = "y3", ja = "彼が謝った{としても}、私は許さない。", en = "Even if he apologized, I wouldn't forgive him." },
 ]
 
 [[point]]
@@ -14482,6 +14508,8 @@ examples = [
   { tatoeba = "24730_187593", ja = "何をする{にしても}、全力を尽くさなければならない。", en = "Whatever you do, you must do your best." },
   { source = "yomeru", id = "y1", ja = "冗談{にしても}、それはひどいよ。", en = "Even as a joke, that's terrible." },
   { source = "yomeru", id = "y2", ja = "電車{にしてもバスにしても}、一時間はかかる。", en = "Whether by train or by bus, it takes at least an hour." },
+  { source = "yomeru", id = "y3", ja = "遅れる{にしても}、連絡ぐらいしてほしい。", en = "Even if you're going to be late, I'd like you to at least let me know." },
+  { source = "yomeru", id = "y4", ja = "先生{にしても}、この問題は難しいだろう。", en = "Even for a teacher, this problem must be hard." },
 ]
 
 [[point]]
@@ -14513,6 +14541,8 @@ examples = [
   { tatoeba = "24715_187578", ja = "何をやる{にせよ}、ベストを尽くしなさい。", en = "No matter what you do, do your best." },
   { tatoeba = "276231_137005", ja = "誰がそう言った{にせよ}、それはうそだよ。", en = "Whoever said so, it is false." },
   { source = "yomeru", id = "y1", ja = "肉{にしろ魚にしろ}、新しいものがいい。", en = "Whether it's meat or fish, fresh is best." },
+  { source = "yomeru", id = "y2", ja = "どんな理由がある{にしろ}、暴力はいけない。", en = "Whatever the reason, violence is wrong." },
+  { source = "yomeru", id = "y3", ja = "失敗した{にせよ}、いい経験になった。", en = "Even if it failed, it was a good experience." },
 ]
 
 [[point]]
@@ -14542,6 +14572,8 @@ examples = [
   { tatoeba = "20760_183637", ja = "顔{はともかく}、気立てはとてもいい子だよ。", en = "Looks aside, she is very good-natured." },
   { tatoeba = "268455_12574119", ja = "冗談{はともかく}、頭痛は医者に診てもらうべきだ。", en = "Joking aside, you ought to see a doctor about your headache." },
   { source = "yomeru", id = "y1", ja = "子供{ならともかく}、大人がそんなことをするなんて。", en = "A child, maybe, but for an adult to do that…" },
+  { source = "yomeru", id = "y2", ja = "味{はともかく}、この店は安い。", en = "Taste aside, this place is cheap." },
+  { source = "yomeru", id = "y3", ja = "結果{はともかくとして}、よく頑張ったね。", en = "Leaving the result aside, you did really well." },
 ]
 
 [[point]]
@@ -14569,6 +14601,8 @@ examples = [
   { tatoeba = "282071_121932", ja = "猫{は別として}動物は好きだ。", en = "Apart from cats, I like animals." },
   { tatoeba = "322347_81368", ja = "妹{は別として}、私の家族はテレビを見ません。", en = "Apart from my sister, my family doesn't watch TV." },
   { tatoeba = "35862_198669", ja = "ニンジン{は別にして}、彼が食べないものはない。", en = "Except for carrots, there is nothing he won't eat." },
+  { tatoeba = "276970_127119", ja = "値段{は別として}、そのドレスは私に似合わない。", en = "Apart from the cost, the dress doesn't suit me." },
+  { source = "yomeru", id = "y1", ja = "できるかどうか{は別として}、やってみよう。", en = "Whether we can or not, let's give it a try." },
 ]
 
 [[point]]
@@ -14595,6 +14629,9 @@ related = ["wa-tomokaku", "wa-betsu-to-shite", "sae"]
 examples = [
   { source = "yomeru", id = "y1", ja = "一回{ならまだしも}、毎日遅れるのは困る。", en = "Once would be one thing, but being late every day is a problem." },
   { source = "yomeru", id = "y2", ja = "大人{はまだしも}、子供にこの映画は怖すぎる。", en = "Adults might be fine, but this film is too scary for children." },
+  { source = "yomeru", id = "y3", ja = "冬{ならまだしも}、夏にこの寒さはおかしい。", en = "In winter it would be one thing, but this cold in summer is strange." },
+  { source = "yomeru", id = "y4", ja = "失敗{ならまだしも}、嘘をつくのは許せない。", en = "A mistake would be one thing, but lying is unforgivable." },
+  { source = "yomeru", id = "y5", ja = "謝れ{ばまだしも}、彼は笑っていた。", en = "If he had apologized, fine, but he was laughing." },
 ]
 
 [[point]]
@@ -14617,9 +14654,11 @@ the same idea; 構わない alone, "it's fine, I don't mind", is the \
 everyday word it comes from."""
 related = ["ni-kakawarazu", "te-mo-kamawanai"]
 examples = [
-  { tatoeba = "315551_88156", ja = "彼女は騒音{にかまわず}話しつづけた。", en = "She carried on talking in spite of the loud noise." },
   { source = "yomeru", id = "y1", ja = "子供たちは雨{も構わず}外で遊んでいる。", en = "The children are playing outside, never minding the rain." },
   { source = "yomeru", id = "y2", ja = "彼女は人目{も構わず}大声で泣いた。", en = "She cried loudly, not caring who saw." },
+  { source = "yomeru", id = "y3", ja = "彼は服が汚れるの{も構わず}、子供を助けた。", en = "Not caring if his clothes got dirty, he helped the child." },
+  { source = "yomeru", id = "y4", ja = "夜遅いの{も構わず}、隣の人がピアノを弾いている。", en = "My neighbour is playing the piano, never minding how late it is." },
+  { source = "yomeru", id = "y5", ja = "彼は値段{も構わず}、高いワインを注文した。", en = "He ordered expensive wine without caring about the price." },
 ]
 
 [[point]]
@@ -14642,6 +14681,9 @@ related = ["ni-shite-wa", "wari-ni", "kuse-ni"]
 examples = [
   { tatoeba = "317635_86076", ja = "彼女顔{に似合わず}、言うことがきついよね。", en = "Her harsh manner of speaking doesn't suit her pretty face." },
   { source = "yomeru", id = "y1", ja = "祖母は年{に似合わず}よく歩く。", en = "My grandmother walks a lot for her age." },
+  { source = "yomeru", id = "y2", ja = "あの子は小さい体{に似合わず}、力が強い。", en = "That kid is strong, despite his small build." },
+  { source = "yomeru", id = "y3", ja = "兄は見かけ{に似合わず}、料理が上手だ。", en = "Despite his looks, my brother is a good cook." },
+  { source = "yomeru", id = "y4", ja = "彼女はいつも{に似合わず}、静かだった。", en = "Unlike her usual self, she was quiet." },
 ]
 
 [[point]]
@@ -14664,6 +14706,9 @@ related = ["noni", "soredemo", "shikashi", "da-ga"]
 examples = [
   { tatoeba = "299081_104610", ja = "彼は若い、{それなのに}分別がある。", en = "He is young, and yet he is prudent." },
   { source = "yomeru", id = "y1", ja = "毎日練習した。{それなのに}、試合に負けた。", en = "I practised every day. And yet I lost the match." },
+  { source = "yomeru", id = "y2", ja = "約束したよね。{それなのに}、どうして来なかったの？", en = "You promised, didn't you? And yet why didn't you come?" },
+  { source = "yomeru", id = "y3", ja = "彼はお金持ちだ。{それなのに}、いつも安い服を着ている。", en = "He's rich. And yet he always wears cheap clothes." },
+  { source = "yomeru", id = "y4", ja = "薬を飲んだ。{それなのに}、熱が下がらない。", en = "I took the medicine. Despite that, my fever won't go down." },
 ]
 
 [[point]]
@@ -14686,6 +14731,9 @@ related = ["shikashi", "da-ga", "tokoroga"]
 examples = [
   { tatoeba = "53567_216263", ja = "{しかしながら}、高すぎる。", en = "However, it is too expensive." },
   { tatoeba = "53566_216262", ja = "{しかしながら}、私はあなたの御意見に賛成できません。", en = "I cannot, however, agree to your opinion." },
+  { tatoeba = "53558_216254", ja = "{しかしながら}、彼の言葉は全然信用されなかった。", en = "His words, however, were not believed at all." },
+  { tatoeba = "53557_216253", ja = "{しかしながら}、品物の数が誤っていました。", en = "However, the quantity was not correct." },
+  { source = "yomeru", id = "y1", ja = "計画はよくできている。{しかしながら}、費用が高すぎる。", en = "The plan is well made. However, it costs too much." },
 ]
 
 [[point]]
@@ -14714,6 +14762,9 @@ related = ["te-kara-de-nai-to", "nai-kagiri", "nakereba-naranai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "食べてみ{ないことには}、味はわからない。", en = "You can't tell the taste until you try it." },
   { source = "yomeru", id = "y2", ja = "彼が来{ないことには}、会議が始められない。", en = "We can't start the meeting unless he comes." },
+  { source = "yomeru", id = "y3", ja = "本人に聞いてみ{ないことには}、本当のことはわからない。", en = "Unless we ask him, we won't know the truth." },
+  { source = "yomeru", id = "y4", ja = "天気が良く{ないことには}、山には登れない。", en = "Unless the weather is good, we can't climb the mountain." },
+  { source = "yomeru", id = "y5", ja = "練習し{ないことには}、上手にならない。", en = "Unless you practise, you won't get better." },
 ]
 
 [[point]]
