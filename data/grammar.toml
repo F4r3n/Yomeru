@@ -11738,6 +11738,9 @@ related = ["shikashi", "demo"]
 examples = [
   { source = "yomeru", id = "y1", ja = "晴れると思った。{ところが}、雨が降った。", en = "I thought it would be sunny. But it rained." },
   { source = "yomeru", id = "y2", ja = "簡単だと思った。{ところが}、全然できなかった。", en = "I thought it was easy. But I couldn't do it at all." },
+  { source = "yomeru", id = "y3", ja = "早く着いた。{ところが}、店はまだ閉まっていた。", en = "I arrived early. But the shop was still closed." },
+  { source = "yomeru", id = "y4", ja = "彼は来ると言った。{ところが}、来なかった。", en = "He said he would come. But he didn't." },
+  { source = "yomeru", id = "y5", ja = "「試験、難しかった？」「{ところが}、簡単だったんだ。」", en = "\"Was the exam hard?\" \"Actually, it turned out to be easy.\"" },
 ]
 
 [[point]]
@@ -11757,10 +11760,13 @@ notes = """
 ところで changes the subject suddenly ("by the way"), often to \
 something unrelated; さて moves on in an orderly way, as the next part \
 of the same talk."""
-related = ["tokorode"]
+related = ["tokorode", "de-wa-conj"]
 examples = [
   { tatoeba = "54078_216772", ja = "{さて}、次の話題に移ろう。", en = "But now to our next topic." },
   { tatoeba = "54086_216780", ja = "{さて}、あなたの意見はどうですか。", en = "Now, what is your opinion?" },
+  { tatoeba = "54075_216769", ja = "{さて}、お昼にしましょう。", en = "Well, let's have lunch." },
+  { tatoeba = "54063_216757", ja = "{さて}別の問題に入ります。", en = "We now turn to a different problem." },
+  { source = "yomeru", id = "y1", ja = "{さてと}、そろそろ帰るか。", en = "Right, I guess it's about time I went home." },
 ]
 
 [[point]]
@@ -11784,6 +11790,8 @@ examples = [
   { tatoeba = "17726_234269", ja = "あなたか{あるいは}私が間違っている。", en = "Either you or I am wrong." },
   { tatoeba = "63752_226408", ja = "ガスで調理しますか、{あるいは}電気ですか。", en = "Do you cook by gas or electricity?" },
   { tatoeba = "67318_229955", ja = "{あるいは}それは本当かもしれない。", en = "Perhaps that's true." },
+  { tatoeba = "323087_80630", ja = "明日{あるいは}晴れるかもしれない。", en = "It may possibly be fine tomorrow." },
+  { source = "yomeru", id = "y1", ja = "黒{あるいは}青のペンで書いてください。", en = "Please write with a black or blue pen." },
 ]
 
 [[point]]
@@ -11808,6 +11816,9 @@ related = ["kedo"]
 examples = [
   { source = "yomeru", id = "y1", ja = "この店は安い。{もっとも}、いつも混んでいるけど。", en = "This shop is cheap. Mind you, it's always crowded." },
   { source = "yomeru", id = "y2", ja = "明日は休みだ。{もっとも}、宿題はある。", en = "Tomorrow's a day off. Mind you, I have homework." },
+  { source = "yomeru", id = "y3", ja = "彼は料理が上手だ。{もっとも}、片付けはしないけど。", en = "He's a good cook. Mind you, he never cleans up." },
+  { source = "yomeru", id = "y4", ja = "天気予報は晴れだ。{もっとも}、よく外れるけど。", en = "The forecast says sunny. Mind you, it's often wrong." },
+  { source = "yomeru", id = "y5", ja = "誰でも入れます。{もっとも}、子どもは親と一緒です。", en = "Anyone can come in. Mind you, children must be with a parent." },
 ]
 
 [[point]]
@@ -11828,11 +11839,13 @@ notes = """
 では and それでは are polite or formal; じゃあ and じゃ are casual. \
 Different from the particles で + は in the middle of a sentence \
 (東京では, "in Tokyo") and from the では of ではない."""
-related = ["sorede"]
+related = ["sorede", "sore-nara"]
 examples = [
   { tatoeba = "39363_202152", ja = "{では}、後で会いましょう。", en = "Well, see you later." },
   { tatoeba = "39366_202155", ja = "{では}、急いだほうがいいですね。", en = "We'd better hurry then." },
   { tatoeba = "1389443_215897", ja = "{じゃあ}注文します。", en = "OK, I'll order it." },
+  { tatoeba = "39348_202136", ja = "{では}始めましょう。", en = "Then let us begin." },
+  { tatoeba = "43011_205767", ja = "{それでは}そろそろ失礼します。", en = "Well, I must be going." },
 ]
 
 [[point]]
@@ -11857,6 +11870,8 @@ examples = [
   { tatoeba = "54229_216921", ja = "{さあ}、入って入って。", en = "Come on in!" },
   { tatoeba = "54242_216935", ja = "{さあ}、仕事にとりかかろう。", en = "Now let's get down to work." },
   { source = "yomeru", id = "y1", ja = "「田中さんはどこ？」「{さあ}、知らない。」", en = "\"Where's Tanaka?\" \"Hmm, I don't know.\"" },
+  { tatoeba = "54253_216945", ja = "{さあ}、起きなさい。", en = "Come on, get up." },
+  { source = "yomeru", id = "y2", ja = "「この傘、誰の？」「{さあ}、わからない。」", en = "\"Whose umbrella is this?\" \"Hmm, no idea.\"" },
 ]
 
 [[point]]
@@ -11880,9 +11895,11 @@ different word from the suffix さ of 高さ."""
 related = ["yo", "tte"]
 homographs = ["sa-noun"]
 examples = [
-  { tatoeba = "279068_124925", ja = "伝染病だって{さ}。", en = "He, um, said that it was contagious." },
   { source = "yomeru", id = "y1", ja = "大丈夫{さ}。きっとうまくいくよ。", en = "It's fine. I'm sure it'll go well." },
   { source = "yomeru", id = "y2", ja = "あの{さ}、明日ひま？", en = "Hey, are you free tomorrow?" },
+  { source = "yomeru", id = "y3", ja = "何とかなる{さ}。", en = "It'll work out somehow, you know." },
+  { source = "yomeru", id = "y4", ja = "そんなこと、誰でも知ってる{さ}。", en = "Everyone knows that, sure." },
+  { source = "yomeru", id = "y5", ja = "それで{さ}、昨日先生に会ったんだ。", en = "So, you know, I ran into my teacher yesterday." },
 ]
 
 [[point]]
@@ -11907,6 +11924,8 @@ examples = [
   { tatoeba = "66692_229334", ja = "いい天気だ{なあ}。", en = "Isn't it a lovely day!" },
   { tatoeba = "27370_190212", ja = "一杯やりたい{なあ}。", en = "I feel like a drink." },
   { tatoeba = "70850_233481", ja = "あなたのように英語が話せたらいい{なあ}。", en = "I wish I could speak English like you." },
+  { tatoeba = "68709_231341", ja = "あのギターが買えたら{なあ}。", en = "I wish I could buy that guitar." },
+  { source = "yomeru", id = "y1", ja = "{なあ}、ちょっと手伝ってくれない？", en = "Hey, can you give me a hand?" },
 ]
 
 [[point]]
@@ -11930,9 +11949,11 @@ died". Not every 〜かける is this: 話しかける, "speak to someone", and 
 alone has many other meanings."""
 related = ["hajimeru", "owaru", "ru-tokoro"]
 examples = [
-  { tatoeba = "33424_196249", ja = "ボタンが取れ{かけている}のに気付いた。", en = "I found the button loose." },
-  { tatoeba = "323956_79761", ja = "夜が明け{かけて}きた。", en = "Day is breaking." },
   { source = "yomeru", id = "y1", ja = "机の上に読み{かけの}本がある。", en = "There's a half-read book on the desk." },
+  { source = "yomeru", id = "y2", ja = "ご飯を食べ{かけた}とき、電話が鳴った。", en = "Just as I started eating, the phone rang." },
+  { source = "yomeru", id = "y3", ja = "何か言い{かけて}、やめた。", en = "I started to say something, then stopped." },
+  { source = "yomeru", id = "y4", ja = "道で転び{かけた}。", en = "I almost fell over in the street." },
+  { source = "yomeru", id = "y5", ja = "ボタンが取れ{かけて}いるよ。", en = "Your button is coming off." },
 ]
 
 [[point]]
@@ -11958,8 +11979,10 @@ of its own."""
 related = ["owaru", "te-shimau"]
 examples = [
   { tatoeba = "62860_225524", ja = "クリームを使い{切って}しまった。", en = "We have run out of cream." },
-  { tatoeba = "324950_78766", ja = "欲張っても食べ{きれない}よ。", en = "Your eyes are bigger than your stomach." },
   { source = "yomeru", id = "y1", ja = "一日でこの本を読み{きった}。", en = "I read this whole book in a day." },
+  { tatoeba = "297091_106591", ja = "彼は使い{切れない}程のお金を稼ぐ。", en = "He earns more money than he can spend." },
+  { tatoeba = "37273_200072", ja = "トムはすっかり疲れ{きって}いた。", en = "Tom was all worn out." },
+  { source = "yomeru", id = "y2", ja = "こんなにたくさん、一人では食べ{きれない}。", en = "I can't eat this much all by myself." },
 ]
 
 [[point]]
@@ -11985,7 +12008,9 @@ related = ["dasu", "kiru"]
 examples = [
   { tatoeba = "248837_165668", ja = "私たちは車に乗り{込んだ}。", en = "We got into a car." },
   { tatoeba = "31761_194588", ja = "メアリーは台所へ飛び{込んで}きた。", en = "Mary burst into the kitchen." },
-  { tatoeba = "303964_99733", ja = "私は眠り{込んだ}。", en = "I fell asleep." },
+  { source = "yomeru", id = "y1", ja = "彼は黙って考え{込んで}いる。", en = "He's silently lost in thought." },
+  { source = "yomeru", id = "y2", ja = "ここに名前を書き{込んで}ください。", en = "Please write your name in here." },
+  { source = "yomeru", id = "y3", ja = "かばんに服を詰め{込んだ}。", en = "I crammed my clothes into the bag." },
 ]
 
 [[point]]
@@ -12011,6 +12036,8 @@ examples = [
   { tatoeba = "43607_206359", ja = "その問題を話し{合いましょう}。", en = "Let's talk over the matter." },
   { tatoeba = "293818_109871", ja = "彼は一箱のお菓子を友達全員と分け{合った}。", en = "He shared his box of biscuits with all his friends." },
   { source = "yomeru", id = "y1", ja = "家族で助け{合って}生きている。", en = "We live helping each other as a family." },
+  { source = "yomeru", id = "y2", ja = "子どもたちが雪を投げ{合って}遊んでいる。", en = "The children are playing, throwing snow at each other." },
+  { source = "yomeru", id = "y3", ja = "二人は顔を見て笑い{合った}。", en = "The two of them looked at each other and laughed together." },
 ]
 
 [[point]]
@@ -12035,7 +12062,9 @@ related = ["owaru", "kiru"]
 examples = [
   { tatoeba = "45261_208004", ja = "その男は立ち{上がった}。", en = "The man stood up." },
   { tatoeba = "238019_176445", ja = "計画が出来{上がった}。", en = "The plans have been drawn up." },
-  { tatoeba = "245472_169015", ja = "仕{上がった}ばかり。", en = "Just finished it." },
+  { tatoeba = "18291_179432", ja = "空はすぐに晴れ{上がる}でしょう。", en = "The sky will soon clear up." },
+  { source = "yomeru", id = "y1", ja = "ケーキがきれいに焼き{上がった}。", en = "The cake has finished baking nicely." },
+  { source = "yomeru", id = "y2", ja = "猫が驚いて飛び{上がった}。", en = "The cat jumped up in surprise." },
 ]
 
 [[point]]
@@ -12060,6 +12089,8 @@ examples = [
   { tatoeba = "303792_99905", ja = "彼は本を読み{通した}。", en = "He read the book from cover to cover." },
   { tatoeba = "312603_91111", ja = "彼女は一晩中泣き{通した}。", en = "She kept crying all night long." },
   { tatoeba = "309896_93767", ja = "彼女は一日中泣き{通し}だった。", en = "She did nothing but cry all day." },
+  { source = "yomeru", id = "y1", ja = "彼女は最後まで走り{通した}。", en = "She kept running all the way to the end." },
+  { source = "yomeru", id = "y2", ja = "一度決めたことはやり{通す}つもりだ。", en = "Once I decide something, I intend to see it through." },
 ]
 
 [[point]]
@@ -12084,7 +12115,9 @@ related = ["komu", "te-iku"]
 examples = [
   { tatoeba = "27398_190239", ja = "一日中歩き{回って}くたくただ。", en = "I walked around all day, and I am done in." },
   { tatoeba = "23290_186156", ja = "我々はあちらこちらに走り{回った}。", en = "We were running to and fro." },
-  { tatoeba = "290594_113080", ja = "彼はその家を見て{回った}。", en = "He went over the house." },
+  { tatoeba = "262016_152533", ja = "私は野原を歩き{回る}のが好きだ。", en = "I like to roam about the fields." },
+  { source = "yomeru", id = "y1", ja = "京都のお寺を見て{回った}。", en = "I went around visiting temples in Kyoto." },
+  { source = "yomeru", id = "y2", ja = "鍵を家中探し{回った}。", en = "I searched all over the house for my keys." },
 ]
 
 [[point]]
@@ -12109,6 +12142,8 @@ examples = [
   { tatoeba = "280068_123928", ja = "答案を出す前にもう一度読み{返しなさい}。", en = "Read over your paper before you hand it in." },
   { source = "yomeru", id = "y1", ja = "母に言い{返して}しまった。", en = "I ended up talking back to my mother." },
   { tatoeba = "20844_183721", ja = "間違った商品を送り{返しましょう}か。", en = "Should we send back the wrong merchandise?" },
+  { source = "yomeru", id = "y2", ja = "メールを送る前に見{返した}。", en = "I looked over the email again before sending it." },
+  { source = "yomeru", id = "y3", ja = "押されたので押し{返した}。", en = "He pushed me, so I pushed him back." },
 ]
 
 [[point]]
@@ -12134,7 +12169,9 @@ related = ["you-ni-naru"]
 examples = [
   { source = "yomeru", id = "y1", ja = "使い{慣れた}ペンで書きたい。", en = "I want to write with a pen I'm used to." },
   { source = "yomeru", id = "y2", ja = "住み{慣れた}町を出るのは寂しい。", en = "It's sad to leave the town I've lived in so long." },
-  { source = "yomeru", id = "y3", ja = "見{慣れない}車が止まっている。", en = "There's a car I've never seen parked there." },
+  { source = "yomeru", id = "y4", ja = "見{慣れない}車が止まっている。", en = "An unfamiliar car is parked there." },
+  { source = "yomeru", id = "y5", ja = "彼女は人前で話し{慣れて}いる。", en = "She's used to speaking in front of people." },
+  { source = "yomeru", id = "y6", ja = "通い{慣れた}道だから迷わない。", en = "It's a road I'm used to taking, so I won't get lost." },
 ]
 
 [[point]]
@@ -12160,6 +12197,8 @@ examples = [
   { tatoeba = "310996_92713", ja = "彼女はすっかり泣き{止んだ}。", en = "She stopped crying altogether." },
   { tatoeba = "26896_189743", ja = "雨が降り{止んだ}。", en = "It has ceased raining." },
   { source = "yomeru", id = "y1", ja = "赤ちゃんがやっと泣き{やんだ}。", en = "The baby finally stopped crying." },
+  { source = "yomeru", id = "y2", ja = "電話の音が鳴り{やんだ}。", en = "The phone stopped ringing." },
+  { source = "yomeru", id = "y3", ja = "子どもがなかなか泣き{やまない}。", en = "The child just won't stop crying." },
 ]
 
 [[point]]
@@ -12185,7 +12224,9 @@ related = ["ta-bakari"]
 examples = [
   { tatoeba = "268176_146386", ja = "焼き{たての}ケーキは容易に切れない。", en = "A freshly baked cake doesn't cut easily." },
   { source = "yomeru", id = "y1", ja = "でき{たての}料理は温かい。", en = "Freshly made food is warm." },
-  { source = "yomeru", id = "y2", ja = "このペンキは塗り{たて}です。", en = "This paint is wet." },
+  { source = "yomeru", id = "y3", ja = "塗り{たての}ベンチに座ってしまった。", en = "I sat on a freshly painted bench by mistake." },
+  { source = "yomeru", id = "y4", ja = "生まれ{たての}赤ちゃんはとても小さい。", en = "A baby that has just been born is very small." },
+  { source = "yomeru", id = "y5", ja = "取り{たての}野菜はおいしい。", en = "Freshly picked vegetables taste good." },
 ]
 
 [[point]]
@@ -12210,6 +12251,8 @@ examples = [
   { tatoeba = "65397_228044", ja = "エアコンをつけ{っぱなしにしない}で。", en = "Don't leave the air conditioner on." },
   { tatoeba = "276167_137069", ja = "誰かが水を出し{っぱなしにして}たんだ。", en = "Someone left the water running." },
   { tatoeba = "262190_152360", ja = "私は立ち{っぱなし}だった。", en = "I stood all the way." },
+  { tatoeba = "39020_203206", ja = "だれがドアを開け{っ放し}にしたのだ。", en = "Who left the door open?" },
+  { source = "yomeru", id = "y1", ja = "今日は一日中働き{っぱなし}だった。", en = "I was working nonstop all day today." },
 ]
 
 [[point]]
