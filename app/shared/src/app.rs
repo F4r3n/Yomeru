@@ -58,34 +58,45 @@ fn install_head() {
     ));
 }
 
-#[derive(Clone, Routable, PartialEq, Debug)]
-#[rustfmt::skip]
-pub enum Route {
-    #[layout(Shell)]
-        #[route("/")]
-        Review {},
-        #[route("/new")]
-        New {},
-        #[route("/words")]
-        Words {},
-        #[route("/stats")]
-        Stats {},
-        #[nest("/lookup")]
-            #[layout(LookupLayout)]
-                #[route("/")]
-                Lookup {},
-                #[route("/:word")]
-                LookupDetail { word: String },
-            #[end_layout]
-        #[end_nest]
-        #[route("/kanji-finder")]
-        KanjiFinder {},
-        #[route("/settings")]
-        Settings {},
-        #[route("/about")]
-        About {},
-        #[route("/privacy")]
-        Privacy {},
+pub use route::Route;
+
+// `LookupDetail`'s `word` is a `String`, whose `FromStr` error is
+// `Infallible`, so the error branch the `Routable` derive writes for it can
+// never run. The lint has to sit on a module: on the enum, it doesn't reach
+// the impls the derive generates.
+#[allow(unreachable_code)]
+mod route {
+    use super::*;
+
+    #[derive(Clone, Routable, PartialEq, Debug)]
+    #[rustfmt::skip]
+    pub enum Route {
+        #[layout(Shell)]
+            #[route("/")]
+            Review {},
+            #[route("/new")]
+            New {},
+            #[route("/words")]
+            Words {},
+            #[route("/stats")]
+            Stats {},
+            #[nest("/lookup")]
+                #[layout(LookupLayout)]
+                    #[route("/")]
+                    Lookup {},
+                    #[route("/:word")]
+                    LookupDetail { word: String },
+                #[end_layout]
+            #[end_nest]
+            #[route("/kanji-finder")]
+            KanjiFinder {},
+            #[route("/settings")]
+            Settings {},
+            #[route("/about")]
+            About {},
+            #[route("/privacy")]
+            Privacy {},
+    }
 }
 
 #[component]

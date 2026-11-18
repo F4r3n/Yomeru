@@ -48,6 +48,11 @@ pub fn launch_with_config(platform: Platform, config: impl dioxus::core::LaunchC
 
 pub use app::startup_head;
 
+// `LaunchBuilder::new` is deprecated while no renderer feature is on. The
+// renderer comes from the app crate (`web` for the website and the
+// extension, `mobile` for Android), so checking this crate alone on the host
+// would warn here for nothing.
+#[allow(deprecated)]
 fn launch_builder(platform: Platform) -> dioxus::LaunchBuilder {
     // Natively, core has no task runner of its own: detached tasks (auto-sync,
     // settings saves) run on the root scope so leaving a page can't cancel
