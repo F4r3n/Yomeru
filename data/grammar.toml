@@ -18620,8 +18620,11 @@ understand one day". もうすぐ is a plain "soon"; 今にも is the edge-of-\
 happening feeling from what you see."""
 related = ["sou-da-appearance"]
 examples = [
-  { tatoeba = "241715_172759", ja = "{今にも}雪が降りそうだ。", en = "It is going to snow." },
   { tatoeba = "48162_210891", ja = "その古い橋は{今にも}崩れ落ちそうだ。", en = "The old bridge is in danger of collapse." },
+  { tatoeba = "313675_90039", ja = "彼女は{今にも}泣き出しそうだった。", en = "She was on the verge of crying." },
+  { tatoeba = "43325_206079", ja = "その老婦人は{今にも}倒れそうだった。", en = "The old woman seemed ready to fall down at any second." },
+  { tatoeba = "296496_107190", ja = "彼は{今にも}ここに来るでしょう。", en = "He'll be here any moment." },
+  { source = "yomeru", id = "y1", ja = "{今にも}雨が降り出しそうな空だ。", en = "The sky looks like it could start raining any moment." },
 ]
 
 [[point]]
@@ -18643,6 +18646,9 @@ related = ["koso"]
 examples = [
   { source = "yomeru", id = "y1", ja = "{今でこそ}元気だが、子供のころは体が弱かった。", en = "I'm healthy now, but I was a sickly child." },
   { source = "yomeru", id = "y2", ja = "{今でこそ}毎日走るけど、前は運動が嫌いだった。", en = "I run every day now, but I used to hate exercise." },
+  { source = "yomeru", id = "y3", ja = "彼は{今でこそ}有名だが、昔は誰も知らなかった。", en = "He's famous now, but back then nobody knew him." },
+  { source = "yomeru", id = "y4", ja = "{今でこそ}便利な町だが、昔は店が一軒もなかった。", en = "It's a convenient town now, but there wasn't a single shop here before." },
+  { source = "yomeru", id = "y5", ja = "{今でこそ}納豆が好きだが、最初は苦手だった。", en = "I love natto now, but at first I couldn't stand it." },
 ]
 
 [[point]]
@@ -18665,6 +18671,9 @@ related = ["tachimachi", "itsu-no-ma-ni-ka"]
 examples = [
   { tatoeba = "19811_182680", ja = "休暇は{あっという間に}過ぎた。", en = "My vacation went by quickly." },
   { tatoeba = "268163_146399", ja = "消防士は{あっという間に}火を消した。", en = "The firemen had the fire out in no time." },
+  { tatoeba = "71707_114943", ja = "{あっという間に}逃げてしまった。", en = "He disappeared in an instant." },
+  { tatoeba = "279166_124827", ja = "電子レンジは{あっという間に}食べ物を温める。", en = "A microwave oven gets food hot in an instant." },
+  { source = "yomeru", id = "y1", ja = "この一年は{あっという間だった}。", en = "This year was over in a flash." },
 ]
 
 [[point]]
@@ -18685,8 +18694,11 @@ It describes what anyone can see, positive or negative (見るからに\
 recognizing; 見るからに is about the impression."""
 related = ["sou-da-appearance", "kara-miru-to"]
 examples = [
-  { tatoeba = "42472_205230", ja = "それは{見るからに}微笑ましい眺めだった。", en = "It was a lovely sight to see." },
   { source = "yomeru", id = "y1", ja = "{見るからに}高そうな車だ。", en = "It's obviously an expensive car." },
+  { source = "yomeru", id = "y2", ja = "彼は{見るからに}疲れていた。", en = "He was visibly exhausted." },
+  { source = "yomeru", id = "y3", ja = "{見るからに}おいしそうなケーキだ。", en = "This cake looks delicious at first sight." },
+  { source = "yomeru", id = "y4", ja = "門の前に{見るからに}怪しい男がいた。", en = "There was an obviously suspicious man in front of the gate." },
+  { source = "yomeru", id = "y5", ja = "あの人は{見るからに}優しそうだ。", en = "That person looks kind at first glance." },
 ]
 
 [[point]]
@@ -18709,6 +18721,9 @@ related = ["you-ni-purpose", "toori"]
 examples = [
   { tatoeba = "270584_143982", ja = "人生は{思うように}はいかないものだ。", en = "Life doesn't always go the way we want it to." },
   { source = "yomeru", id = "y1", ja = "足が痛くて、{思うように}走れない。", en = "My leg hurts, so I can't run the way I want." },
+  { source = "yomeru", id = "y2", ja = "試験は{思ったように}できなかった。", en = "The exam didn't go the way I'd hoped." },
+  { source = "yomeru", id = "y3", ja = "すべてが{思い通りに}なった。", en = "Everything went exactly the way I wanted." },
+  { source = "yomeru", id = "y4", ja = "自分の{思うように}生きたい。", en = "I want to live my life the way I want." },
 ]
 
 [[point]]
@@ -18731,6 +18746,9 @@ related = ["gachi", "kirai-ga-aru"]
 examples = [
   { tatoeba = "294610_109080", ja = "彼は会議に遅刻する{傾向がある}。", en = "He tends to be late for meetings." },
   { source = "yomeru", id = "y1", ja = "子供の数は減る{傾向にある}。", en = "The number of children is on the decline." },
+  { tatoeba = "267318_147243", ja = "女性は男性より長生きする{傾向がある}。", en = "Women tend to live longer than men." },
+  { tatoeba = "271140_143427", ja = "世界の人口は増加する{傾向にある}。", en = "The world's population tends to increase." },
+  { tatoeba = "315240_88468", ja = "彼女は人の悪口を言う{傾向がある}。", en = "She tends to speak ill of others." },
 ]
 
 [[point]]
@@ -18755,6 +18773,9 @@ related = ["ni-ki-ga-tsuku", "ni-ki-wo-tsukeru"]
 examples = [
   { tatoeba = "268128_146434", ja = "昇進{が気になる}の？", en = "Are you worried about the promotion?" },
   { source = "yomeru", id = "y1", ja = "テストの結果{が気になる}。", en = "I can't stop thinking about the test results." },
+  { source = "yomeru", id = "y2", ja = "隣の部屋の音{が気になって}眠れない。", en = "The noise from next door bothers me so much I can't sleep." },
+  { source = "yomeru", id = "y3", ja = "彼女のこと{が気になる}。", en = "I can't stop thinking about her." },
+  { source = "yomeru", id = "y4", ja = "その映画の続き{が気になります}。", en = "I'm curious about what happens next in that movie." },
 ]
 
 [[point]]
@@ -18779,6 +18800,9 @@ related = ["ga-ki-ni-naru", "ni-ki-ga-tsuku", "you-ni-suru"]
 examples = [
   { tatoeba = "280135_123861", ja = "頭{に気をつけて}！", en = "Watch your head!" },
   { tatoeba = "63729_226385", ja = "かぜをひかないように{気をつけて}。", en = "Take care not to catch a cold." },
+  { tatoeba = "61965_224632", ja = "ここではスリ{に気をつけて}。", en = "Beware of pickpockets here." },
+  { tatoeba = "313982_89733", ja = "彼女は子供の栄養{に気をつけて}いる。", en = "She is careful about her child's nutrition." },
+  { source = "yomeru", id = "y1", ja = "これからは言葉{に気をつけます}。", en = "From now on I'll be careful with my words." },
 ]
 
 [[point]]
@@ -18805,6 +18829,8 @@ examples = [
   { tatoeba = "304295_99387", ja = "彼は約束を守り{抜いた}。", en = "He stuck to his promise." },
   { source = "yomeru", id = "y1", ja = "最後まで走り{抜いた}。", en = "I ran all the way to the finish." },
   { source = "yomeru", id = "y2", ja = "考え{抜いて}決めたことだ。", en = "It's a decision I made after thinking it through." },
+  { source = "yomeru", id = "y3", ja = "苦しくても最後まで戦い{抜いた}。", en = "Even though it was hard, they fought to the very end." },
+  { source = "yomeru", id = "y4", ja = "選び{抜いた}材料を使っています。", en = "We use ingredients chosen with great care." },
 ]
 
 [[point]]
@@ -18828,7 +18854,10 @@ the whole supply is exhausted, and is a little formal. 抜く is \
 related = ["kiru", "nuku"]
 examples = [
   { tatoeba = "32371_195197", ja = "マユコは全部のクッキーを食べ{尽くした}。", en = "Mayuko ate up all the cookies." },
-  { tatoeba = "250340_164170", ja = "私のすべての力を出し{尽くした}。", en = "All of my strength gave out." },
+  { tatoeba = "244079_170396", ja = "最善を{尽くす}つもりだ。", en = "I will do my best." },
+  { source = "yomeru", id = "y1", ja = "町は火事で焼き{尽くされた}。", en = "The town was burned to the ground by the fire." },
+  { source = "yomeru", id = "y2", ja = "言いたいことは言い{尽くした}。", en = "I've said everything I wanted to say." },
+  { source = "yomeru", id = "y3", ja = "彼は親のお金を使い{尽くした}。", en = "He used up all of his parents' money." },
 ]
 
 [[point]]
@@ -18853,6 +18882,8 @@ examples = [
   { tatoeba = "277820_126172", ja = "朝食{抜きで}働くのは苦痛であった。", en = "It was hard to work without breakfast." },
   { tatoeba = "239055_175410", ja = "堅苦しい礼儀は一切{抜きにしましょう}。", en = "Let's do away with all formalities." },
   { source = "yomeru", id = "y1", ja = "彼{抜きでは}この仕事はできない。", en = "We can't do this job without him." },
+  { tatoeba = "322577_81138", ja = "万一遅れたら、私{ぬきで}夕食を始めなさい。", en = "If I should be late, start dinner without me." },
+  { source = "yomeru", id = "y2", ja = "わさび{抜きの}お寿司をください。", en = "Sushi without wasabi, please." },
 ]
 
 [[point]]
@@ -18877,6 +18908,9 @@ related = ["furi-wo-suru", "garu", "ppoi"]
 examples = [
   { source = "yomeru", id = "y1", ja = "あの人はすぐ偉{ぶる}。", en = "That person is quick to act self-important." },
   { source = "yomeru", id = "y2", ja = "彼女はいつも上品{ぶって}いる。", en = "She always puts on refined airs." },
+  { tatoeba = "301456_102238", ja = "彼は知識人{ぶる}のが好きだ。", en = "He likes to posture as an intellectual." },
+  { source = "yomeru", id = "y3", ja = "先輩{ぶって}、何でも教えたがる。", en = "He acts like my senior and wants to teach me everything." },
+  { source = "yomeru", id = "y4", ja = "いい子{ぶる}のはやめなさい。", en = "Stop acting like such a good kid." },
 ]
 
 [[point]]
@@ -18903,6 +18937,8 @@ examples = [
   { tatoeba = "267759_146802", ja = "少し早{めに}帰ってもかまいませんか。", en = "Would you mind if I left a little early?" },
   { source = "yomeru", id = "y1", ja = "大き{めの}靴を買った。", en = "I bought shoes a size on the large side." },
   { source = "yomeru", id = "y2", ja = "ご飯は少な{め}でお願いします。", en = "A smaller portion of rice, please." },
+  { source = "yomeru", id = "y3", ja = "カレーを多{めに}作っておいた。", en = "I made a little extra curry, just in case." },
+  { source = "yomeru", id = "y4", ja = "このズボンは少し長{め}だ。", en = "These pants are a bit on the long side." },
 ]
 
 [[point]]
@@ -18926,6 +18962,9 @@ related = ["tatta", "dake", "sukoshimo-nai"]
 examples = [
   { tatoeba = "238699_175766", ja = "結婚するつもりなんかこれっ{ぽっちも}ありません。", en = "Marriage is the last thing on my mind." },
   { source = "yomeru", id = "y1", ja = "これっ{ぽっち}のお金じゃ何も買えない。", en = "You can't buy anything with this measly bit of money." },
+  { source = "yomeru", id = "y2", ja = "たったこれっ{ぽっち}しか残っていないの？", en = "Is this measly bit all that's left?" },
+  { source = "yomeru", id = "y3", ja = "彼を疑う気持ちはこれっ{ぽっちも}ない。", en = "I don't doubt him one tiny bit." },
+  { source = "yomeru", id = "y4", ja = "千円{ぽっち}でそんなに怒るなよ。", en = "Don't get so angry over a measly thousand yen." },
 ]
 
 [[point]]
@@ -18950,6 +18989,9 @@ related = ["kata", "yasui"]
 examples = [
   { tatoeba = "57706_220385", ja = "この電車は乗り{心地}がいい。", en = "This train rides very well." },
   { tatoeba = "277449_126599", ja = "着{心地}はいかがですか。", en = "How does it fit you?" },
+  { tatoeba = "61328_223993", ja = "このいすは座り{心地}が悪い。", en = "I feel uncomfortable in this chair." },
+  { tatoeba = "58565_221242", ja = "この住宅地域は住み{心地}がよい。", en = "This residential area is comfortable to live in." },
+  { source = "yomeru", id = "y1", ja = "海の風が{心地いい}。", en = "The sea breeze feels pleasant." },
 ]
 
 [[point]]
@@ -18974,6 +19016,9 @@ related = ["ba-sumu", "zu-ni-sumu"]
 examples = [
   { tatoeba = "1690410_2310167", ja = "これは証明{済み}の事実だ。", en = "It's a proven fact." },
   { tatoeba = "319626_84090", ja = "部屋代は半年分支払い{済み}だ。", en = "The rent is paid for six months." },
+  { tatoeba = "269519_145044", ja = "申し訳ありません、全席予約{済み}です。", en = "Sorry, but we're booked up." },
+  { source = "yomeru", id = "y1", ja = "このチケットは使用{済み}です。", en = "This ticket has already been used." },
+  { source = "yomeru", id = "y2", ja = "確認{済み}の書類はここに置いてください。", en = "Please put the documents that have been checked here." },
 ]
 
 [[point]]
@@ -18998,6 +19043,9 @@ related = ["zaru-wo-enai", "zu-ni"]
 examples = [
   { source = "yomeru", id = "y1", ja = "日本の知られ{ざる}名所を紹介する。", en = "I'll introduce little-known sights of Japan." },
   { source = "yomeru", id = "y2", ja = "見え{ざる}力に守られている気がする。", en = "I feel protected by an unseen force." },
+  { source = "yomeru", id = "y3", ja = "彼は招かれ{ざる}客だった。", en = "He was an uninvited guest." },
+  { source = "yomeru", id = "y4", ja = "それは許され{ざる}行為だ。", en = "That's an unforgivable act." },
+  { source = "yomeru", id = "y5", ja = "彼の成功は絶え{ざる}努力の結果だ。", en = "His success is the result of unceasing effort." },
 ]
 
 [[point]]
@@ -19022,6 +19070,9 @@ related = ["teki", "ta-ue-de", "kara-iu-to", "ten"]
 examples = [
   { tatoeba = "239020_175445", ja = "健康{上}の理由で仕事を辞めます。", en = "I'll quit my job for the sake of my health." },
   { tatoeba = "245462_169025", ja = "仕事{上}の知人はこの電話番号を知っている。", en = "My business acquaintances know this number." },
+  { source = "yomeru", id = "y1", ja = "この映画は教育{上}よくない。", en = "This movie is bad from an educational standpoint." },
+  { source = "yomeru", id = "y2", ja = "法律{上}は問題ない。", en = "Legally, there's no problem." },
+  { source = "yomeru", id = "y3", ja = "統計{上}、事故は減っている。", en = "Statistically, accidents are decreasing." },
 ]
 
 [[point]]
@@ -19045,6 +19096,9 @@ related = ["koso", "kara-koso", "te-hajimete"]
 examples = [
   { source = "yomeru", id = "y1", ja = "自分でやって{こそ}意味がある。", en = "It only means something if you do it yourself." },
   { source = "yomeru", id = "y2", ja = "健康であって{こそ}、仕事もできる。", en = "Only if you're healthy can you work too." },
+  { source = "yomeru", id = "y3", ja = "努力し続け{てこそ}、夢はかなう。", en = "Only by continuing to work hard will your dream come true." },
+  { source = "yomeru", id = "y4", ja = "親になっ{てこそ}、親の気持ちが分かる。", en = "Only when you become a parent do you understand how parents feel." },
+  { source = "yomeru", id = "y5", ja = "日本語は使っ{てこそ}上手になる。", en = "Japanese only gets better when you actually use it." },
 ]
 
 [[point]]
@@ -19068,6 +19122,9 @@ related = ["te-made", "temo", "doushitemo"]
 examples = [
   { tatoeba = "36618_199417", ja = "どんな手を使っ{てでも}勝ちとってみせる。", en = "I'll win no matter what it takes." },
   { tatoeba = "248248_166034", ja = "何とし{てでも}彼を説得しなくてはならない。", en = "We have to use every means to persuade him." },
+  { source = "yomeru", id = "y1", ja = "借金し{てでも}家を買いたい。", en = "I want to buy a house even if it means borrowing money." },
+  { source = "yomeru", id = "y2", ja = "週末に働い{てでも}、この仕事を終わらせたい。", en = "I want to finish this job even if it means working on the weekend." },
+  { source = "yomeru", id = "y3", ja = "会社を休ん{ででも}、その試合が見たい。", en = "I want to see that match even if I have to take a day off work." },
 ]
 
 [[point]]
