@@ -22322,7 +22322,9 @@ related = ["beki-da", "beku", "majiki"]
 examples = [
   { tatoeba = "265289_149268", ja = "芝生に入る{べからず}。", en = "Keep off the grass!" },
   { tatoeba = "40884_203646", ja = "ただちに、その計画を実行す{べし}。", en = "We must carry out the plan at once." },
-  { tatoeba = "270818_143747", ja = "水は生きるうえで欠く{べからざる}ものだ。", en = "Water is essential to life." },
+  { tatoeba = "21758_184629", ja = "各会員は会費を払う{べし}。", en = "Each member has to pay a membership fee." },
+  { tatoeba = "61822_224487", ja = "ここにゴミを捨てる{べからず}。", en = "Don't throw trash here." },
+  { source = "yomeru", id = "y1", ja = "これは決して許す{べからざる}行為だ。", en = "This is an act that must never be forgiven." },
 ]
 
 [[point]]
@@ -22346,6 +22348,9 @@ related = ["tame-ni", "beshi", "beku-mo-nai", "beku-shite", "n-ga-tame"]
 examples = [
   { tatoeba = "307125_96580", ja = "彼らは男を逮捕す{べく}追いかけた。", en = "They chased the man to arrest him." },
   { source = "yomeru", id = "y1", ja = "夢をかなえる{べく}、彼は東京へ出た。", en = "To make his dream come true, he moved to Tokyo." },
+  { source = "yomeru", id = "y2", ja = "試験に合格す{べく}、毎晩遅くまで勉強している。", en = "In order to pass the exam, I study late every night." },
+  { source = "yomeru", id = "y3", ja = "原因を調べる{べく}、調査チームが現地に送られた。", en = "A team was sent to the site to look into the cause." },
+  { source = "yomeru", id = "y4", ja = "彼女は期待に応える{べく}努力した。", en = "She worked hard so as to live up to expectations." },
 ]
 
 [[point]]
@@ -22367,6 +22372,9 @@ related = ["beku", "you-ga-nai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "この給料では、家など望む{べくもない}。", en = "On this salary, a house is out of the question." },
   { source = "yomeru", id = "y2", ja = "プロと私の腕は比べる{べくもない}。", en = "My skill can't even be compared with a pro's." },
+  { source = "yomeru", id = "y3", ja = "二十年前のことなので、詳しい事情は知る{べくもない}。", en = "It was twenty years ago, so there's no way to know the details." },
+  { source = "yomeru", id = "y4", ja = "彼の実力は疑う{べくもない}。", en = "There's no way anyone could doubt his ability." },
+  { source = "yomeru", id = "y5", ja = "小さな町の病院に、最新の設備は望む{べくもなかった}。", en = "At a small-town hospital, the latest equipment was out of the question." },
 ]
 
 [[point]]
@@ -22388,6 +22396,9 @@ related = ["beku", "beshi"]
 examples = [
   { tatoeba = "327474_76244", ja = "起こる{べくして}起こった事故だった。", en = "It was an accident that was waiting to happen." },
   { source = "yomeru", id = "y1", ja = "あれだけ練習したんだから、勝つ{べくして}勝ったんだ。", en = "After all that practice, the win was no fluke." },
+  { source = "yomeru", id = "y2", ja = "彼女はなる{べくして}医者になった。", en = "She was bound to become a doctor." },
+  { source = "yomeru", id = "y3", ja = "準備不足だったのだから、失敗す{べくして}失敗したのだ。", en = "We were so unprepared that our failure was inevitable." },
+  { source = "yomeru", id = "y4", ja = "二人は出会う{べくして}出会ったのだと思う。", en = "I think the two of them were bound to meet." },
 ]
 
 [[point]]
@@ -22413,6 +22424,9 @@ related = ["beshi", "mai", "taru-mono"]
 examples = [
   { tatoeba = "8318783_8318782", ja = "教師に{あるまじき}行為だ。", en = "Such conduct is unworthy of a teacher." },
   { source = "yomeru", id = "y1", ja = "客を怒鳴るなんて、店員に{あるまじき}態度だ。", en = "Yelling at customers is no way for a shop clerk to behave." },
+  { source = "yomeru", id = "y2", ja = "嘘をつくのは政治家に{あるまじき}ことだ。", en = "Lying is unacceptable for a politician." },
+  { source = "yomeru", id = "y3", ja = "患者の秘密を話すとは、医者{としてあるまじき}行為だ。", en = "Revealing a patient's secrets is conduct unworthy of a doctor." },
+  { source = "yomeru", id = "y4", ja = "それは裁判官に{あるまじき}判断だった。", en = "That was a judgment unworthy of a judge." },
 ]
 
 [[point]]
@@ -22442,6 +22456,8 @@ examples = [
   { tatoeba = "240402_174068", ja = "光陰矢の{ごとし}と言うのをよく耳にする。", en = "We often hear it said that time flies." },
   { tatoeba = "301374_102320", ja = "彼は脱兎の{ごとく}逃げた。", en = "He ran like a scared rabbit." },
   { source = "yomeru", id = "y1", ja = "私{ごとき}に、こんな大役は務まりません。", en = "Someone like me isn't up to such an important role." },
+  { tatoeba = "36155_198958", ja = "なんじの隣人をおのれの{ごとく}愛すべし。", en = "You shall love your neighbor as yourself." },
+  { source = "yomeru", id = "y2", ja = "彼は何事もなかったかの{ごとく}話し続けた。", en = "He kept talking as if nothing had happened." },
 ]
 
 [[point]]
@@ -22471,6 +22487,8 @@ examples = [
   { tatoeba = "454514_357576", ja = "我思う、{故に}我あり。", en = "I think, therefore I am." },
   { tatoeba = "265795_148764", ja = "若さ{ゆえに}彼に対する告訴は取り下げられた。", en = "The charges against him were dropped because of his youth." },
   { source = "yomeru", id = "y1", ja = "子供を愛する{がゆえに}、厳しくするのだ。", en = "I'm strict precisely because I love my children." },
+  { source = "yomeru", id = "y2", ja = "貧しさ{ゆえに}、彼は学校に行けなかった。", en = "Because of poverty, he couldn't go to school." },
+  { source = "yomeru", id = "y3", ja = "この案は費用がかかりすぎる。{ゆえに}採用できない。", en = "This plan costs too much; therefore, it can't be adopted." },
 ]
 
 [[point]]
@@ -22492,6 +22510,9 @@ related = ["tame-ni", "beku"]
 examples = [
   { source = "yomeru", id = "y1", ja = "勝た{んがために}、手段を選ばなかった。", en = "To win, he would stop at nothing." },
   { source = "yomeru", id = "y2", ja = "生き{んがため}、彼は必死で働いた。", en = "Just to survive, he worked desperately hard." },
+  { source = "yomeru", id = "y3", ja = "子供を守ら{んがため}、母親は危険を冒した。", en = "To protect her child, the mother took the risk." },
+  { source = "yomeru", id = "y4", ja = "金を得{んがために}嘘をつくのは許せない。", en = "Lying just to get money is unforgivable." },
+  { source = "yomeru", id = "y5", ja = "夢を実現せ{んがため}、彼は全財産を投じた。", en = "To make his dream real, he put in his entire fortune." },
 ]
 
 [[point]]
@@ -22519,6 +22540,8 @@ examples = [
   { tatoeba = "302044_101649", ja = "彼は同意すると言わ{んばかりに}うなずいた。", en = "He nodded as much as to say, I agree." },
   { tatoeba = "327058_76662", ja = "スタディアムは溢れ{んばかり}の人込みだった。", en = "The stadium was overflowing with people." },
   { source = "yomeru", id = "y1", ja = "彼女は泣か{んばかりに}頼んだ。", en = "She begged, almost in tears." },
+  { tatoeba = "256916_157615", ja = "私は恐怖で気も狂わ{んばかりだった}。", en = "I almost went crazy with fear." },
+  { source = "yomeru", id = "y2", ja = "子犬はしっぽをちぎれ{んばかりに}振った。", en = "The puppy wagged its tail so hard it almost came off." },
 ]
 
 [[point]]
@@ -22541,6 +22564,9 @@ related = ["n-bakari", "bakari-ni"]
 examples = [
   { tatoeba = "272617_141953", ja = "絶好の機会{とばかりに}飛びついた。", en = "The opportunity was grasped at immediately." },
   { source = "yomeru", id = "y1", ja = "今がチャンス{とばかりに}、彼は手を挙げた。", en = "As if to say 'now's my chance', he raised his hand." },
+  { tatoeba = "314955_88752", ja = "彼女は出て行け{とばかり}の顔つきをした。", en = "She gave a look as much as to say, \"Get out\"." },
+  { source = "yomeru", id = "y2", ja = "待ってました{とばかりに}、客が店に入ってきた。", en = "As if they'd been waiting for this, customers poured into the shop." },
+  { source = "yomeru", id = "y3", ja = "彼は「もう話すことはない」{とばかりに}席を立った。", en = "He stood up as if to say, 'There's nothing more to discuss.'" },
 ]
 
 [[point]]
@@ -22566,6 +22592,9 @@ related = ["beki-da", "majiki", "to-shite"]
 examples = [
   { tatoeba = "28074_190914", ja = "医者{たる者}は最新の医学の発達についていくべきだ。", en = "Doctors should keep abreast with all the latest developments in medicine." },
   { source = "yomeru", id = "y1", ja = "親{たるもの}、子供の話を聞くべきだ。", en = "A parent should listen to their child." },
+  { source = "yomeru", id = "y2", ja = "教師{たるもの}、生徒に公平でなければならない。", en = "Anyone who is a teacher must be fair to their students." },
+  { source = "yomeru", id = "y3", ja = "リーダー{たる者}、責任から逃げてはいけない。", en = "Anyone who is a leader must not run from responsibility." },
+  { source = "yomeru", id = "y4", ja = "プロ{たるもの}、言い訳をするな。", en = "Anyone who calls themselves a pro shouldn't make excuses." },
 ]
 
 [[point]]
@@ -22590,13 +22619,15 @@ examples = [
   { tatoeba = "270113_144452", ja = "人は働か{ねばならぬ}。", en = "A man must work." },
   { tatoeba = "299380_104312", ja = "彼は宿題を今日終え{ねばならない}。", en = "He must finish his homework today." },
   { source = "yomeru", id = "y1", ja = "もう遅い。そろそろ帰ら{ねば}。", en = "It's late. I've got to get going." },
+  { tatoeba = "22325_185193", ja = "解答はすべて指示に従って書か{ねばならない}。", en = "All answers must be written according to the instructions." },
+  { tatoeba = "36743_155582", ja = "私は是非とも目的を達成せ{ねばならない}。", en = "I have to attain my purpose at all costs." },
 ]
 
 [[point]]
 id = "tsu-tsu"
 seq = 811
 pattern = "つ〜つ"
-forms = ["行きつ戻りつ", "持ちつ持たれつ", "抜きつ抜かれつ", "差しつ差されつ"]
+forms = ["行きつ戻りつ", "持ちつ持たれつ", "抜きつ抜かれつ", "差しつ差されつ", "浮きつ沈みつ"]
 jlpt = "N1"
 meaning = "back and forth, alternately (set phrases)"
 formation = ["Verb A［stem］ + つ + Verb B［stem］ + つ   (行きつ戻りつ)"]
@@ -22613,6 +22644,9 @@ related = ["tari-tari", "tsutsu"]
 examples = [
   { tatoeba = "239913_143470", ja = "世の中は{持ちつ持たれつ}だ。", en = "Live and let live." },
   { source = "yomeru", id = "y1", ja = "犬は門の外を{行きつ戻りつ}して待っていた。", en = "The dog waited, pacing back and forth outside the gate." },
+  { source = "yomeru", id = "y2", ja = "二台の車は{抜きつ抜かれつ}のレースを続けた。", en = "The two cars kept overtaking each other in turn." },
+  { source = "yomeru", id = "y3", ja = "小舟は波間を{浮きつ沈みつ}流れていった。", en = "The little boat drifted on the waves, bobbing up and down." },
+  { source = "yomeru", id = "y4", ja = "二人は{差しつ差されつ}、酒を飲んだ。", en = "The two drank sake, pouring for each other in turn." },
 ]
 
 [[point]]
@@ -22635,6 +22669,8 @@ examples = [
   { tatoeba = "301492_102202", ja = "彼は{遅かれ早かれ}戻ってくるよ。", en = "He will come back sooner or later." },
   { tatoeba = "249020_165485", ja = "私たちは{多かれ少なかれ}利己的である。", en = "We are more or less selfish." },
   { tatoeba = "325871_77847", ja = "{良かれ悪しかれ}、テレビは世の中を変えた。", en = "For better or for worse, television has changed the world." },
+  { tatoeba = "277327_126763", ja = "{遅かれ早かれ}私たちは皆死ぬのだ。", en = "We all die sooner or later." },
+  { tatoeba = "307071_96634", ja = "彼らは{多かれ少なかれ}その知らせに驚いた。", en = "They were more or less surprised at the news." },
 ]
 
 [[point]]
@@ -22657,6 +22693,9 @@ related = ["ni-koshita-koto-wa-nai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "何事も用心する{に如くはない}。", en = "In everything, nothing beats being careful." },
   { source = "yomeru", id = "y2", ja = "迷ったら、専門家に聞く{に如くはない}。", en = "When in doubt, it's best to ask an expert." },
+  { source = "yomeru", id = "y3", ja = "健康には、早寝早起き{に如くはない}。", en = "For your health, nothing beats early to bed and early to rise." },
+  { source = "yomeru", id = "y4", ja = "外国語を学ぶには、その国に住む{に如くはない}。", en = "To learn a foreign language, nothing beats living in the country." },
+  { source = "yomeru", id = "y5", ja = "争いは避ける{にしくはない}。", en = "It's best to avoid quarrels." },
 ]
 
 [[point]]
@@ -22683,6 +22722,9 @@ related = ["koto-dakara", "kara-reason"]
 examples = [
   { source = "yomeru", id = "y1", ja = "初めての{こととて}、失礼があればお許しください。", en = "It being my first time, please forgive any rudeness." },
   { source = "yomeru", id = "y2", ja = "子供の{こととて}、どうか許してやってください。", en = "He's only a child, so please forgive him." },
+  { source = "yomeru", id = "y3", ja = "慣れぬ{こととて}、時間がかかってしまいました。", en = "Since I'm not used to it, it took me a long time." },
+  { source = "yomeru", id = "y4", ja = "急な{こととて}、何の準備もできておりません。", en = "Since it's so sudden, we have nothing prepared." },
+  { source = "yomeru", id = "y5", ja = "知らぬ{こととて}、大変失礼いたしました。", en = "Since I didn't know, I was very rude. My apologies." },
 ]
 
 [[point]]
@@ -22706,6 +22748,9 @@ related = ["zu-ni-wa-irarenai", "zu-ni-wa-sumanai"]
 examples = [
   { source = "yomeru", id = "y1", ja = "この映画は見る人を考えさせ{ずにはおかない}。", en = "This film can't fail to make its viewers think." },
   { source = "yomeru", id = "y2", ja = "犯人を必ず見つけ{ずにはおかない}。", en = "I won't rest until I find the culprit." },
+  { source = "yomeru", id = "y3", ja = "その絵は見る者の心を揺さぶら{ずにはおかない}。", en = "That painting can't fail to stir the hearts of those who see it." },
+  { source = "yomeru", id = "y4", ja = "この事件は社会に影響を与え{ずにはおかない}だろう。", en = "This incident will surely have an impact on society." },
+  { source = "yomeru", id = "y5", ja = "彼に本当のことを言わせ{ずにはおかない}。", en = "I will definitely make him tell the truth." },
 ]
 
 [[point]]
@@ -22729,6 +22774,9 @@ related = ["zu-ni-wa-okanai", "de-wa-sumanai", "zu-ni-wa-irarenai"]
 examples = [
   { tatoeba = "285404_118260", ja = "彼のふしだらな行為は気付かれ{ずにはすまなかった}。", en = "His immoral actions did not go unnoticed." },
   { source = "yomeru", id = "y1", ja = "大事な物を壊したのだから、弁償せ{ずにはすまない}。", en = "I broke something precious, so I'll have to pay for it." },
+  { source = "yomeru", id = "y2", ja = "友達の車を傷つけたら、修理代を払わ{ずにはすまない}。", en = "If you damage a friend's car, you can't get away without paying for repairs." },
+  { source = "yomeru", id = "y3", ja = "会社の金を使った以上、責任を問われ{ずにはすまない}。", en = "Having used company money, he can't escape being held responsible." },
+  { source = "yomeru", id = "y4", ja = "約束した以上、行か{ないではすまない}。", en = "Since I promised, I can't get away without going." },
 ]
 
 [[point]]
@@ -22751,6 +22799,9 @@ related = ["ba-yokatta", "beki-da"]
 examples = [
   { tatoeba = "1442_4858", ja = "ログアウトする{んじゃなかった}よ。", en = "I shouldn't have logged off." },
   { source = "yomeru", id = "y1", ja = "こんな映画、見る{んじゃなかった}。", en = "I shouldn't have watched this movie." },
+  { source = "yomeru", id = "y2", ja = "あんなに食べる{んじゃなかった}。お腹が痛い。", en = "I shouldn't have eaten so much. My stomach hurts." },
+  { source = "yomeru", id = "y3", ja = "彼に秘密を話す{んじゃなかった}な。", en = "I shouldn't have told him the secret." },
+  { source = "yomeru", id = "y4", ja = "こんなパーティー、来る{んじゃなかった}。", en = "I should never have come to this party." },
 ]
 
 [[point]]
@@ -22778,6 +22829,8 @@ examples = [
   { tatoeba = "32315_195141", ja = "まるで眠れ{やしない}。", en = "I can't sleep at all!" },
   { tatoeba = "54683_217373", ja = "こんな甘いものは、飲め{やしない}。", en = "I can't drink such sweet stuff." },
   { source = "yomeru", id = "y1", ja = "そんな話、誰も信じ{やしない}よ。", en = "Nobody's going to believe that story." },
+  { source = "yomeru", id = "y2", ja = "あいつは何度言っても聞き{やしない}。", en = "No matter how many times I tell him, he just won't listen." },
+  { source = "yomeru", id = "y3", ja = "親の気持ちなんて、子供には分かり{ゃしない}よ。", en = "Kids can't possibly understand how their parents feel." },
 ]
 
 [[point]]
