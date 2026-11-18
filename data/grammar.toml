@@ -1799,6 +1799,9 @@ related = ["no-nominalizer", "n-desu"]
 examples = [
   { tatoeba = "251859_162655", ja = "私{の}母は毎日早く起きます。", en = "My mother gets up early every morning." },
   { tatoeba = "55516_218204", ja = "これは誰{の}辞書ですか。", en = "Whose dictionary is this?" },
+  { tatoeba = "56193_218878", ja = "これが私の母{の}写真です。", en = "This is a picture of my mother." },
+  { tatoeba = "281422_122581", ja = "日本{の}人形です。", en = "This is a Japanese doll." },
+  { source = "yomeru", id = "y1", ja = "七時{の}バスに乗ります。", en = "I take the seven o'clock bus." },
 ]
 
 [[point]]
@@ -1828,6 +1831,8 @@ examples = [
   { tatoeba = "322708_81006", ja = "眠い{から}帰ります。", en = "I'm sleepy, so I am leaving now." },
   { tatoeba = "21998_184867", ja = "外は寒い{から}中に入りなさい。", en = "Come inside because it's cold outside." },
   { source = "yomeru", id = "y1", ja = "雨{だから}、出かけません。", en = "It's raining, so I won't go out." },
+  { tatoeba = "42402_205161", ja = "それは私が遅く起きた{から}です。", en = "That is because I got up late." },
+  { tatoeba = "50985_213697", ja = "そこにいなかった{から}知らないよ。", en = "I don't know because I wasn't there." },
 ]
 
 [[point]]
@@ -1856,6 +1861,8 @@ examples = [
   { tatoeba = "40017_175178", ja = "見ている{だけ}だ。", en = "I'm just looking around." },
   { source = "yomeru", id = "y1", ja = "一つ{だけ}ください。", en = "Just one, please." },
   { source = "yomeru", id = "y2", ja = "日曜日{だけ}休みです。", en = "I only have Sundays off." },
+  { tatoeba = "284372_119291", ja = "彼{だけ}がその手紙を読んだ。", en = "Only he read the letter." },
+  { source = "yomeru", id = "y3", ja = "朝はコーヒー{だけ}飲みます。", en = "In the morning I only drink coffee." },
 ]
 
 [[point]]
@@ -1881,6 +1888,8 @@ examples = [
   { tatoeba = "33715_196536", ja = "ボーナスを{もらった}。", en = "I received my bonus." },
   { tatoeba = "316206_87502", ja = "彼女は彼からプレゼントを{もらった}。", en = "She got a present from her boyfriend." },
   { source = "yomeru", id = "y1", ja = "友達に本を{もらいました}。", en = "I got a book from a friend." },
+  { tatoeba = "62811_225474", ja = "クリスマスに何を{もらいました}か。", en = "What did you get for Christmas?" },
+  { tatoeba = "255202_159321", ja = "私はときどき彼女から電話を{もらう}。", en = "I get a call from her once in a while." },
 ]
 
 [[point]]
@@ -1907,9 +1916,11 @@ planned?", is softer and fits fixed schedules. For a decision made just \
 now, use 〜ことにする; for a passing idea, 〜ようと思う (行こうと思う)."""
 related = ["koto-ni-suru", "volitional"]
 examples = [
-  { tatoeba = "252588_161928", ja = "私は５月に休暇をとる{つもりだ}。", en = "I expect to take a vacation in May." },
   { source = "yomeru", id = "y1", ja = "夏休みに日本へ行く{つもりです}。", en = "I plan to go to Japan in the summer holidays." },
   { source = "yomeru", id = "y2", ja = "今日は出かけない{つもりです}。", en = "I don't plan to go out today." },
+  { tatoeba = "242789_171686", ja = "今日は何をする{つもりですか}。", en = "What are you going to do today?" },
+  { tatoeba = "260211_154331", ja = "私は彼と行く{つもりだった}。", en = "I intended to go with him." },
+  { tatoeba = "289579_114093", ja = "彼はカメラを買う{つもりはない}。", en = "He isn't going to buy a camera." },
 ]
 
 [[point]]
@@ -1939,6 +1950,8 @@ examples = [
   { tatoeba = "274982_138253", ja = "多分今日は雨が降る{でしょう}。", en = "The chances are that it will rain today." },
   { tatoeba = "48540_211266", ja = "その計画はうまくいく{だろう}。", en = "The plan will work out." },
   { source = "yomeru", id = "y1", ja = "明日はたぶん晴れる{でしょう}。", en = "It will probably be sunny tomorrow." },
+  { tatoeba = "242984_171492", ja = "今日は由利さんの誕生日{でしょう}？", en = "It's your birthday, isn't it, Yuri?" },
+  { source = "yomeru", id = "y2", ja = "たぶん先生は知らない{だろう}。", en = "The teacher probably doesn't know." },
 ]
 
 [[point]]
@@ -1968,6 +1981,8 @@ examples = [
   { tatoeba = "30165_192999", ja = "ユーフォー{って}何？", en = "What is a UFO?" },
   { tatoeba = "29809_192645", ja = "ラグビー{って}何人でするの？", en = "How many people do you need for a rugby game?" },
   { source = "yomeru", id = "y1", ja = "田中さんは来ない{って}。", en = "Tanaka says he isn't coming." },
+  { tatoeba = "309900_11241491", ja = "六時ごろ来る{って}言ってたよ。", en = "She told me she would be here about six." },
+  { tatoeba = "65285_227932", ja = "エミリー{って}だれ？", en = "Who's Emily?" },
 ]
 
 [[point]]
@@ -1992,6 +2007,8 @@ examples = [
   { tatoeba = "61929_224594", ja = "ここでは走る{な}。", en = "Don't run here." },
   { tatoeba = "23860_186724", ja = "火を消すのを忘れる{な}。", en = "Don't forget to put out the fire." },
   { source = "yomeru", id = "y1", ja = "危ないから、触る{な}。", en = "It's dangerous, so don't touch it." },
+  { tatoeba = "21582_184456", ja = "学校に遅れる{な}。", en = "Don't be late for school." },
+  { tatoeba = "46244_208984", ja = "その上に座る{な}。", en = "Don't sit on it." },
 ]
 
 [[point]]
@@ -2393,6 +2410,8 @@ examples = [
   { tatoeba = "55727_218416", ja = "これは高{すぎる}。", en = "That is too expensive." },
   { tatoeba = "45473_208216", ja = "その棚には本が多{すぎます}。", en = "You have too many books on the shelf." },
   { source = "yomeru", id = "y1", ja = "昨日は飲み{すぎた}。", en = "I drank too much yesterday." },
+  { tatoeba = "61057_223720", ja = "このサイズは私には大き{すぎます}。", en = "This size is too large for me." },
+  { source = "yomeru", id = "y2", ja = "この部屋は静か{すぎます}。", en = "This room is too quiet." },
 ]
 
 [[point]]
