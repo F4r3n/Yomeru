@@ -49,6 +49,9 @@ pub struct Example {
     pub en: String,
     /// Tatoeba sentence ids, `<ja>_<en>`; empty for our own sentences.
     pub tatoeba: String,
+    /// The example's key within its entry, which reports and verdicts point
+    /// at: the `tatoeba` pair, or `y<n>` for our own sentences.
+    pub key: String,
 }
 
 /// Text with the pattern marked: a run of spans.

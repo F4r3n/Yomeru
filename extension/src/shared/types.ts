@@ -311,6 +311,8 @@ export interface GrammarExample {
   en: string;
   /** Tatoeba sentence ids `<ja>_<en>`; empty for Yomeru's own sentences. */
   tatoeba: string;
+  /** The example's key within its entry: the `tatoeba` pair, or `y<n>`. */
+  key: string;
 }
 
 /** What the hover popup shows of a grammar point — `PopupEntry` in

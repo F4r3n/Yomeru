@@ -37,7 +37,7 @@ What {id} does. \
 Second line."""
 examples = [
   {{ tatoeba = "1_2", ja = "前{{{pattern}}}後。", en = "An example." }},
-  {{ source = "yomeru", ja = "{{{pattern}}}だ。", en = "Ours." }},
+  {{ source = "yomeru", id = "y1", ja = "{{{pattern}}}だ。", en = "Ours." }},
 ]
 {extra}
 "#,
@@ -114,6 +114,8 @@ fn compiles_every_field() {
     );
     assert_eq!(e.examples[0].tatoeba, "1_2");
     assert_eq!(e.examples[1].tatoeba, "");
+    assert_eq!(e.examples[0].key, "1_2");
+    assert_eq!(e.examples[1].key, "y1");
     assert!(!dict.by_id("tte").unwrap().hover);
     assert!(dict.by_id("missing").is_none());
     // Numbered in file order: you-ni-suru is the first.
@@ -240,6 +242,21 @@ fn refuses_what_a_lookup_would_get_wrong() {
         (base.replace("\"N4\"", "\"N6\""), "jlpt"),
         (base.replace("前{あい}後", "前あい後"), "mark the pattern"),
         (base.replace("tatoeba = \"1_2\", ", ""), "either `tatoeba`"),
+        (base.replace("id = \"y1\", ", ""), "needs id"),
+        (base.replace("\"y1\"", "\"y01\""), "must be y1"),
+        (base.replace("\"y1\"", "\"1\""), "must be y1"),
+        (
+            base.replace("tatoeba = \"1_2\", ", "tatoeba = \"1_2\", id = \"y2\", "),
+            "only our own",
+        ),
+        (
+            base.replace("examples = [", "examples = [\n  { source = \"yomeru\", id = \"y1\", ja = \"{あい}。\", en = \"Again.\" },"),
+            "keyed y1",
+        ),
+        (
+            base.replace("examples = [", "examples = [\n  { tatoeba = \"1_2\", ja = \"{あい}。\", en = \"Again.\" },"),
+            "keyed 1_2",
+        ),
         (
             format!("{base}{}", point("b", "うえ", &["あい"], "")),
             "both spell",
@@ -262,11 +279,21 @@ fn refuses_what_a_lookup_would_get_wrong() {
     let a = point("a", "あい", &[], "");
     let b = point("b", "うえ", &[], "");
     let cases = [
-        (format!("next_seq = 5\n{}{}", a.replace("@", "1"), b.replace("@", "1")), "already a's"),
+        (
+            format!(
+                "next_seq = 5\n{}{}",
+                a.replace("@", "1"),
+                b.replace("@", "1")
+            ),
+            "already a's",
+        ),
         (format!("next_seq = 5\n{}", a.replace("@", "5")), "next_seq"),
         (format!("next_seq = 5\n{}", a.replace("@", "0")), "from 1"),
         (a.replace("@", "1"), "next_seq"),
-        (format!("next_seq = 5\n{}", a.replace("seq = @\n", "")), "seq"),
+        (
+            format!("next_seq = 5\n{}", a.replace("seq = @\n", "")),
+            "seq",
+        ),
     ];
     for (toml, want) in cases {
         let err = format!("{:#}", compile(&toml).err().unwrap());

@@ -126,8 +126,9 @@ def validate(points):
         if p.get("jlpt") not in LEVELS:
             errors.append(f"{name}: jlpt must be one of N5…N1")
         examples = p.get("examples", [])
-        if not 2 <= len(examples) <= 3:
-            errors.append(f"{name}: wants 2–3 examples, has {len(examples)}")
+        if not 2 <= len(examples) <= 5:
+            errors.append(f"{name}: wants 5 examples (2–3 until extended), has {len(examples)}")
+        keys = set()
         for ex in examples:
             ja = ex.get("ja", "")
             if ja.count("{") != 1 or ja.count("}") != 1:
@@ -143,6 +144,18 @@ def validate(points):
                     errors.append(f"{name}: {ex['tatoeba']} differs from the corpus:\n    corpus {got[0]} | {got[1]}\n    entry  {plain} | {ex.get('en')}")
             elif ex.get("source") != "yomeru":
                 errors.append(f"{name}: unknown source {ex.get('source')}")
+            # Reports and verdicts point at an example by this key.
+            if "tatoeba" in ex:
+                key = ex["tatoeba"]
+                if "id" in ex:
+                    errors.append(f"{name}: a Tatoeba example is keyed by its pair, no id: {ja}")
+            else:
+                key = ex.get("id", "")
+                if not re.fullmatch(r"y[1-9][0-9]*", key):
+                    errors.append(f"{name}: our own example needs id = \"y<n>\": {ja}")
+            if key in keys:
+                errors.append(f"{name}: two examples are keyed {key}")
+            keys.add(key)
     # A spelling two entries claim is a homograph (passive and potential
     # られる): allowed only when each names the other in `homographs`, so
     # it is deliberate and the lookup shows both. Otherwise it is a mistake.

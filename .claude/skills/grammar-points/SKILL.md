@@ -53,6 +53,9 @@ comments or commit messages.
     **Planning a level**): progress per batch; batch N's unwritten points
     with their decisions, example candidates and the `bee.py facts` calls;
     every regex's match count.
+  - `examples.py status | show N [--level n5]`: entries still short of 5
+    examples (see **An examples batch**): progress per level; batch N with
+    each entry's examples, its next `y<n>` key and Tatoeba candidates.
   - `check.py [ZIP]`: validation; with the ZIP, the overlap check.
   - `preview.py OUT.html --bee ZIP`: the whole file as one review page
     (index, search, level filter), each entry linking to bee-san's pages
@@ -95,12 +98,12 @@ re-sends its whole history on every call. Work in this order:
 2. **Write each entry from your own knowledge first**, before any fact
    sheet: meaning, formation, explanation, notes, related.
 3. **Examples.** `tatoeba.py` with a regex that catches the conjugated
-   forms. Pick 2–3 short, natural sentences with faithful translations.
+   forms. Pick 5 short, natural sentences with faithful translations.
    Copy the id, Japanese and English *exactly* (the check compares them with
    the corpus); add only the `{…}` mark. A loose translation ("This is life!"
    for 生きててよかった) disqualifies the sentence: pick another or write
-   our own (`source = "yomeru"`). Write our own when Tatoeba has nothing
-   simple enough for the level.
+   our own (`source = "yomeru"`, `id = "y1"`, `"y2"`… within the entry).
+   Write our own when Tatoeba has nothing simple enough for the level.
 4. **Fact-check.** `bee.py facts ZIP <the batch's patterns>`, five patterns
    per call. Look only for facts: a wrong rule, a missing use, a missing
    pitfall or contrast, a register note. Add them in your own words, with
@@ -139,6 +142,25 @@ re-sends its whole history on every call. Work in this order:
    disagreements and level differences, what the review fixed, the
    remaining count from `bee.py list`, and suggest the user run `/cost` to
    track the batch's cost.
+
+## An examples batch
+
+Extends written entries to 5 examples, about 20 entries per batch, one
+fresh session per batch, level by level from N5.
+
+1. `python3 -I examples.py show N --level n5`: each short entry with its
+   examples, the key the next sentence of ours takes, and Tatoeba
+   candidates found by its pattern and forms. Too few or too noisy
+   candidates: `tatoeba.py` with a regex of the conjugated forms.
+2. Add the missing examples to each entry, following **examples** below:
+   Tatoeba copied exactly, ours keyed `y<n>`. While there, replace an
+   existing example whose English wouldn't lead to the point: remove it
+   (its key is never given again) and add another.
+3. `python3 -I check.py ZIP`, then the **Review** step of a batch for the
+   new sentences: level, naturalness, and each English read as a
+   production prompt.
+4. **Report**: entries extended, examples replaced and why, `examples.py
+   status`.
 
 ## Planning a level
 
@@ -225,7 +247,20 @@ a Read first, and the file is thousands of lines. Instead:
   unrelated words: `hover = false` (って, inside 行って) keeps the entry
   search-only. One-char patterns (は, に, て) need nothing: the popup
   already skips matches under two chars.
-- **examples**: 2–3, under ~26 chars of Japanese, at the entry's level or
-  below in vocabulary; the `{…}` mark covers the pattern as conjugated.
+- **examples**: 5 (entries written before 2026-11-18 have 2–3 until an
+  examples batch extends them), under ~26 chars of Japanese, at the
+  entry's level or below in vocabulary; the `{…}` mark covers the pattern
+  as conjugated. Production cards show one at random: the English and the
+  `meaning` line, and the learner writes the Japanese. So each English
+  must lead to *this* point: "May I borrow this book?" does for てもいい;
+  a loose or idiomatic one ("I'd bet my life on it" for 賭けてもいいよ)
+  doesn't, even when faithful. Vary the sentences: different verbs,
+  subjects and the entry's main forms (statement, question, negative),
+  not five rewordings of one.
+- **example keys**: reports and verdicts point at an example by its key.
+  A Tatoeba example is keyed by its `tatoeba` pair; one of ours carries
+  `id = "y<n>"`, unique within the entry: a new one takes the next number
+  up (`examples.py show` prints it), and a removed one's number is never
+  given again. Never renumber.
 - Plain English for learners: no linguistics jargon (連用形, ergative),
   no "we will learn", no quotes from sources.

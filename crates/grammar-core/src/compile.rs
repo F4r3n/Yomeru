@@ -53,6 +53,8 @@ struct RawExample {
     en: String,
     tatoeba: Option<String>,
     source: Option<String>,
+    /// `y<n>`, on our own sentences only: their key within the entry.
+    id: Option<String>,
 }
 
 /// What [`compile`] produced.
@@ -147,23 +149,50 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
     let mut entries = Vec::with_capacity(file.point.len());
     for p in file.point {
         let mut examples = Vec::with_capacity(p.examples.len());
+        let mut keys: HashSet<String> = HashSet::new();
         for ex in p.examples {
             let ja = parse_marked(&ex.ja).with_context(|| {
                 format!("{}: mark the pattern once with {{…}}: {}", p.id, ex.ja)
             })?;
-            let tatoeba = match (ex.tatoeba, ex.source.as_deref()) {
-                (Some(id), None) => id,
-                (None, Some("yomeru")) => String::new(),
+            // Reports and verdicts point at an example by its key, so a key
+            // names one example of the entry. Our own sentences have no
+            // corpus id: they carry `y<n>`, a number never given again
+            // within the entry.
+            let (tatoeba, key) = match (ex.tatoeba, ex.source.as_deref(), ex.id) {
+                (Some(pair), None, None) => (pair.clone(), pair),
+                (None, Some("yomeru"), Some(id)) => {
+                    let numbered = id.strip_prefix('y').is_some_and(|n| {
+                        !n.is_empty()
+                            && !n.starts_with('0')
+                            && n.bytes().all(|b| b.is_ascii_digit())
+                    });
+                    if !numbered {
+                        bail!("{}: example id {id:?} must be y1, y2…: {}", p.id, ex.ja);
+                    }
+                    (String::new(), id)
+                }
+                (None, Some("yomeru"), None) => {
+                    bail!("{}: our own example needs id = \"y<n>\": {}", p.id, ex.ja)
+                }
+                (_, _, Some(_)) => bail!(
+                    "{}: only our own examples take an id, a Tatoeba one is keyed by its pair: {}",
+                    p.id,
+                    ex.ja
+                ),
                 _ => bail!(
                     "{}: an example has either `tatoeba` or source = \"yomeru\": {}",
                     p.id,
                     ex.ja
                 ),
             };
+            if !keys.insert(key.clone()) {
+                bail!("{}: two examples are keyed {key}", p.id);
+            }
             examples.push(Example {
                 ja,
                 en: ex.en,
                 tatoeba,
+                key,
             });
         }
         let mut related = Vec::with_capacity(p.related.len());
