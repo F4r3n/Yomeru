@@ -18105,6 +18105,9 @@ related = ["sude-ni", "mou"]
 examples = [
   { tatoeba = "21494_184366", ja = "学校へ走って行ったがベルは{とっくに}鳴っていた。", en = "I ran to school, but the bell had already rung." },
   { tatoeba = "31553_194381", ja = "もう{とっくに}寝る時間だ。", en = "It is high time we went to bed." },
+  { source = "yomeru", id = "y1", ja = "彼ならもう{とっくに}帰ったよ。", en = "Him? He went home ages ago." },
+  { source = "yomeru", id = "y2", ja = "その本は{とっくに}読み終わった。", en = "I finished that book long ago." },
+  { source = "yomeru", id = "y3", ja = "祖父は{とっくの昔に}亡くなった。", en = "My grandfather died ages and ages ago." },
 ]
 
 [[point]]
@@ -18127,8 +18130,10 @@ is resignation: the result is fixed. Both often go with なら and \
 related = ["sekkaku"]
 examples = [
   { tatoeba = "30188_201388", ja = "{どうせ}やるなら上手にやれ。", en = "If you do it at all, do it well." },
-  { tatoeba = "38595_201385", ja = "{どうせ}行くんでしょ。", en = "I daresay you are going to go no matter what." },
   { source = "yomeru", id = "y1", ja = "{どうせ}私には無理だよ。", en = "I can't do it anyway." },
+  { source = "yomeru", id = "y2", ja = "{どうせ}明日も雨だろう。", en = "It'll probably rain again tomorrow anyway." },
+  { source = "yomeru", id = "y3", ja = "{どうせ}家にいるから、手伝うよ。", en = "I'll be home anyway, so I'll help." },
+  { source = "yomeru", id = "y4", ja = "{どうせ}買うなら、いい物を買おう。", en = "If we're buying one anyway, let's buy a good one." },
 ]
 
 [[point]]
@@ -18152,6 +18157,9 @@ related = ["rashii", "you-da", "osoraku"]
 examples = [
   { tatoeba = "38331_201125", ja = "{どうやら}風邪を引いたらしい。", en = "I seem to have caught a cold." },
   { tatoeba = "38337_201131", ja = "{どうやら}誤解があるようだ。", en = "There appears to be a misunderstanding." },
+  { tatoeba = "38334_201128", ja = "{どうやら}電車の中に傘を置き忘れてきたらしい。", en = "I seem to have left my umbrella behind in the train." },
+  { tatoeba = "38330_201124", ja = "{どうやら}明日は雨になりそうだ。", en = "Evidently, it's going to rain tomorrow." },
+  { source = "yomeru", id = "y1", ja = "終電に{どうやら}間に合った。", en = "I somehow managed to catch the last train." },
 ]
 
 [[point]]
@@ -18174,6 +18182,9 @@ related = ["yara", "nantonaku"]
 examples = [
   { tatoeba = "255319_159205", ja = "私は{なにやら}彼に話さなければならないことがある。", en = "I have something or other to tell him." },
   { source = "yomeru", id = "y1", ja = "台所で{何やら}変な音がする。", en = "There's some strange noise in the kitchen." },
+  { source = "yomeru", id = "y2", ja = "彼は{何やら}楽しそうに話している。", en = "He's happily talking about something or other." },
+  { source = "yomeru", id = "y3", ja = "{何やら}寂しい気持ちになった。", en = "Somehow, I started to feel lonely." },
+  { source = "yomeru", id = "y4", ja = "弟が{何やら}隠しているようだ。", en = "My little brother seems to be hiding something or other." },
 ]
 
 [[point]]
@@ -18196,6 +18207,9 @@ related = ["shidai-ni"]
 examples = [
   { tatoeba = "30292_193127", ja = "{やがて}月が見え始めた。", en = "Before long, the moon began to appear." },
   { tatoeba = "320178_83538", ja = "平和は{やがて}訪れるだろう。", en = "Peace will come to us in time." },
+  { tatoeba = "30286_193121", ja = "{やがて}冬休みも終わるだろう。", en = "It will not be long before the winter vacation ends." },
+  { tatoeba = "306095_97608", ja = "彼らは{やがて}結婚するだろう。", en = "They will get married in due course." },
+  { source = "yomeru", id = "y1", ja = "{やがて}雨がやんで、日が出てきた。", en = "Before long, the rain stopped and the sun came out." },
 ]
 
 [[point]]
@@ -18218,6 +18232,9 @@ related = ["dandan", "shidai", "shidai-depending", "masumasu"]
 examples = [
   { tatoeba = "48722_211447", ja = "その急行列車は{次第に}速度を上げた。", en = "The express train picked up speed gradually." },
   { source = "yomeru", id = "y1", ja = "空が{次第に}暗くなってきた。", en = "The sky gradually got darker." },
+  { tatoeba = "314556_89150", ja = "彼女は{次第に}理解しはじめた。", en = "She gradually began to understand." },
+  { tatoeba = "270460_144106", ja = "人々は{次第に}本来の目的を見失うだろう。", en = "People will gradually lose sight of the original purpose." },
+  { source = "yomeru", id = "y2", ja = "日本の生活にも{次第に}慣れてきた。", en = "I've gradually got used to life in Japan." },
 ]
 
 [[point]]
@@ -18241,6 +18258,9 @@ related = ["man-ga-ichi"]
 examples = [
   { tatoeba = "3424571_3424569", ja = "ええ、先方から{一応}返事はありました。", en = "Yeah, there was some sort of reply from them." },
   { source = "yomeru", id = "y1", ja = "{一応}、傘を持って行こう。", en = "I'll take an umbrella, just in case." },
+  { source = "yomeru", id = "y2", ja = "レポートは{一応}書き終わった。", en = "I've more or less finished writing the report." },
+  { source = "yomeru", id = "y3", ja = "{一応}、医者に行ったほうがいい。", en = "You should see a doctor, just in case." },
+  { source = "yomeru", id = "y4", ja = "{一応}、ピアノは弾けます。", en = "I can play the piano, sort of." },
 ]
 
 [[point]]
@@ -18264,6 +18284,9 @@ related = ["moshi", "tara"]
 examples = [
   { tatoeba = "322536_81179", ja = "{万一}の場合はここへ電話をください。", en = "In case of an emergency, phone me at this number." },
   { tatoeba = "322577_81138", ja = "{万一}遅れたら、私ぬきで夕食を始めなさい。", en = "If I should be late, start dinner without me." },
+  { tatoeba = "23512_81152", ja = "{万一}失敗したらどうなるだろうか。", en = "What if we should fail?" },
+  { source = "yomeru", id = "y1", ja = "{万が一}火事になったら、ここから逃げてください。", en = "If by any chance there's a fire, get out this way." },
+  { source = "yomeru", id = "y2", ja = "{万が一}雨なら、試合は中止です。", en = "In the unlikely event of rain, the match is off." },
 ]
 
 [[point]]
@@ -18288,6 +18311,8 @@ examples = [
   { tatoeba = "1990618_143970", ja = "人生{わずか}７０年である。", en = "People live only about 70 years." },
   { tatoeba = "243189_171287", ja = "今年も残り{わずかな}日しかない。", en = "There are only a few days left before the end of the year." },
   { source = "yomeru", id = "y1", ja = "値段が{わずかに}上がった。", en = "The price went up slightly." },
+  { tatoeba = "10537074_158567", ja = "私は{わずか}１００円しか持ち合わせがない。", en = "I only have 100 yen on me." },
+  { source = "yomeru", id = "y2", ja = "二人の意見には{わずかな}違いがある。", en = "There's a slight difference between their opinions." },
 ]
 
 [[point]]
@@ -18310,6 +18335,9 @@ related = ["koto-ni-emotion"]
 examples = [
   { tatoeba = "240760_173710", ja = "{幸いなことに}間に合った。", en = "Fortunately, I was on time." },
   { tatoeba = "240769_173701", ja = "{幸いにも}天気は良かった。", en = "Fortunately, the weather was good." },
+  { tatoeba = "240768_173702", ja = "{幸いにも}誰もぬれなかった。", en = "Luckily nobody got wet." },
+  { source = "yomeru", id = "y1", ja = "{幸い}、財布はすぐに見つかった。", en = "Luckily, my wallet turned up right away." },
+  { source = "yomeru", id = "y2", ja = "{幸い}、電車はまだ出ていなかった。", en = "Fortunately, the train hadn't left yet." },
 ]
 
 [[point]]
@@ -18334,6 +18362,9 @@ related = ["mochiron", "kitto"]
 examples = [
   { tatoeba = "21692_184565", ja = "{確かに}彼は信頼できます。", en = "You can certainly rely on him." },
   { tatoeba = "36227_108910", ja = "彼は{確かに}貧乏だが、幸せだ。", en = "He is poor, to be sure, but he is happy." },
+  { tatoeba = "55777_218465", ja = "これは{確かに}大ニュースです。", en = "This is, indeed, a great piece of news." },
+  { source = "yomeru", id = "y1", ja = "お金は{確かに}受け取りました。", en = "I have certainly received the money." },
+  { source = "yomeru", id = "y2", ja = "「この店、高いね。」「{確かに}。」", en = "\"This shop is pricey, huh?\" \"True.\"" },
 ]
 
 [[point]]
@@ -18358,6 +18389,9 @@ related = ["kurai", "shika-nai"]
 examples = [
   { tatoeba = "290384_113290", ja = "彼は{せいぜい}１８歳だ。", en = "He is not more than eighteen." },
   { tatoeba = "244904_169582", ja = "桜の花は、{せいぜい}１週間しかもたない。", en = "Cherry blossoms last only for days, a week at the most." },
+  { tatoeba = "274577_139154", ja = "村まで{せいぜい}２マイルだ。", en = "It is not more than two miles to the village." },
+  { source = "yomeru", id = "y1", ja = "{せいぜい}楽しんできてね。", en = "Enjoy yourself as much as you can." },
+  { source = "yomeru", id = "y2", ja = "私の給料では、この部屋が{せいぜい}だ。", en = "On my salary, this room is the best I can manage." },
 ]
 
 [[point]]
@@ -18380,6 +18414,9 @@ related = ["tsumari", "sunawachi"]
 examples = [
   { tatoeba = "324894_78818", ja = "{要するに}人生は短い。", en = "In a word, life is short." },
   { tatoeba = "324890_78827", ja = "{要するに}、彼が不注意だったのだ。", en = "In brief, he was careless." },
+  { tatoeba = "324896_78820", ja = "{要するに}君は私が嫌いなんだね。", en = "In a word, you hate me, don't you?" },
+  { tatoeba = "324903_78813", ja = "{要するに}彼らは腹が減っているのだ。", en = "The point is that they are hungry." },
+  { source = "yomeru", id = "y1", ja = "{要するに}、明日までに全部やれってこと？", en = "So basically, you want me to do it all by tomorrow?" },
 ]
 
 [[point]]
@@ -18405,6 +18442,8 @@ examples = [
   { tatoeba = "299018_104672", ja = "彼は車が大好きだが、{逆に}弟は車が大嫌いだ。", en = "He loves cars, while his brother hates them." },
   { tatoeba = "292462_111222", ja = "彼はハンドルを{逆に}切った。", en = "He turned the steering wheel the other way about." },
   { source = "yomeru", id = "y1", ja = "薬を飲んだら、{逆に}悪くなった。", en = "I took the medicine, and it got worse instead." },
+  { source = "yomeru", id = "y2", ja = "先生に聞いたら、{逆に}質問された。", en = "I asked the teacher, and got a question back instead." },
+  { source = "yomeru", id = "y3", ja = "姉は朝型だが、{逆に}私は夜型だ。", en = "My sister is a morning person; I, conversely, am a night owl." },
 ]
 
 [[point]]
@@ -18429,6 +18468,8 @@ examples = [
   { tatoeba = "53974_173578", ja = "{更に}質問がありますか。", en = "Do you have any further questions?" },
   { tatoeba = "252183_162331", ja = "私は、それについて{さらに}情報を集めた。", en = "I gathered more information about it." },
   { source = "yomeru", id = "y1", ja = "明日は{さらに}寒くなるそうだ。", en = "They say it'll get even colder tomorrow." },
+  { tatoeba = "43635_206387", ja = "その問題を{さらに}調査しよう。", en = "I'll check further into the matter." },
+  { source = "yomeru", id = "y2", ja = "この店は安い。{さらに}、味もいい。", en = "This place is cheap. What's more, the food is good." },
 ]
 
 [[point]]
@@ -18453,6 +18494,9 @@ related = ["hotondo", "nakanaka-nai"]
 examples = [
   { tatoeba = "244834_169652", ja = "昨夜は{ろくに}眠れなかった。", en = "I could not sleep much last night." },
   { tatoeba = "312437_91277", ja = "彼女は{ろくに}食べないで席を立った。", en = "She had only eaten a little before she left the table." },
+  { tatoeba = "274869_138366", ja = "多くの女性は自分の名前も{ろくに}書けなかった。", en = "Many women could barely spell their names." },
+  { source = "yomeru", id = "y1", ja = "忙しくて、{ろくに}食事もしていない。", en = "I've been so busy I haven't eaten properly." },
+  { source = "yomeru", id = "y2", ja = "彼は説明も{ろくに}聞かずに始めた。", en = "He started without properly listening to the explanation." },
 ]
 
 [[point]]
@@ -18477,6 +18521,8 @@ examples = [
   { tatoeba = "24797_187658", ja = "{何よりも}、お体を大切に。", en = "Above all, take care of yourself." },
   { tatoeba = "24779_187641", ja = "{何よりも}走ることが好きです。", en = "I love to jog more than anything else in the world." },
   { source = "yomeru", id = "y1", ja = "みんな元気で{何より}だ。", en = "Everyone being well is the best thing of all." },
+  { tatoeba = "24796_187657", ja = "{何よりも}、彼にもう一度会いたい。", en = "Above all, I want to see him again." },
+  { tatoeba = "263978_150579", ja = "時間はほかの{何よりも}高価だ。", en = "Time is more precious than anything else." },
 ]
 
 [[point]]
@@ -18501,6 +18547,9 @@ related = ["nani-yori", "nanishiro"]
 examples = [
   { source = "yomeru", id = "y1", ja = "日本の夏は{何といっても}花火だ。", en = "In a Japanese summer, fireworks are the best, no question." },
   { source = "yomeru", id = "y2", ja = "{何といっても}彼には経験がある。", en = "After all, he has experience." },
+  { source = "yomeru", id = "y3", ja = "京都の魅力は{何といっても}お寺だ。", en = "Kyoto's charm is, above all, its temples." },
+  { source = "yomeru", id = "y4", ja = "{なんといっても}母の料理が一番だ。", en = "When all's said and done, Mom's cooking is the best." },
+  { source = "yomeru", id = "y5", ja = "{何と言っても}、彼はまだ子どもだからね。", en = "After all, he's still just a kid." },
 ]
 
 [[point]]
@@ -18523,6 +18572,9 @@ related = ["kara-made"]
 examples = [
   { tatoeba = "312775_90939", ja = "彼女は{何から何まで}母親そっくりだ。", en = "She resembles her mother in every respect." },
   { source = "yomeru", id = "y1", ja = "引っ越しは{何から何まで}手伝ってもらった。", en = "They helped me with every part of the move." },
+  { source = "yomeru", id = "y2", ja = "{何から何まで}お世話になりました。", en = "Thank you for helping me with every little thing." },
+  { source = "yomeru", id = "y3", ja = "この町は{何から何まで}便利だ。", en = "This town is convenient in every way." },
+  { source = "yomeru", id = "y4", ja = "彼は{何から何まで}自分で決めたがる。", en = "He wants to decide every last thing himself." },
 ]
 
 [[point]]
@@ -18545,6 +18597,9 @@ related = ["zenzen", "sukoshimo-nai", "chittomo"]
 examples = [
   { tatoeba = "286038_117613", ja = "彼の言うことは僕には{一向に}わからない。", en = "I can make nothing of what he says." },
   { tatoeba = "254758_159764", ja = "私はそれで{一向に}構いません。", en = "That's just fine with me." },
+  { source = "yomeru", id = "y1", ja = "バスが{一向に}来ない。", en = "The bus shows no sign of coming." },
+  { source = "yomeru", id = "y2", ja = "薬を飲んでも、熱が{一向に}下がらない。", en = "Even after taking medicine, my fever won't come down at all." },
+  { source = "yomeru", id = "y3", ja = "何度注意しても、彼は{一向に}聞かない。", en = "No matter how often I warn him, he doesn't listen in the least." },
 ]
 
 [[point]]
