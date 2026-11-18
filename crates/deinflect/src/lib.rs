@@ -275,6 +275,24 @@ mod tests {
     }
 
     #[test]
+    fn godan_and_kuru_polite_past_negative() {
+        for (polite, base) in [
+            ("思いませんでした", "思う"),
+            ("書きませんでした", "書く"),
+            ("飲みませんでした", "飲む"),
+            ("帰りませんでした", "帰る"),
+            ("きませんでした", "くる"),
+        ] {
+            let got = deinflect_with_reasons(polite);
+            let reasons = Reasons::of(&[Reason::Polite, Reason::Negative, Reason::Past]);
+            assert!(
+                got.iter().any(|d| d.text == base && d.reasons == reasons),
+                "{polite}: {got:?}"
+            );
+        }
+    }
+
+    #[test]
     fn adjective_negative() {
         assert!(forms("高くない").contains(&"高い".to_owned()));
     }

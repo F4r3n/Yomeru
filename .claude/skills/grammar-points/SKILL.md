@@ -269,5 +269,10 @@ a Read first, and the file is thousands of lines. Instead:
   `id = "y<n>"`, unique within the entry: a new one takes the next number
   up (`examples.py show` prints it), and a removed one's number is never
   given again. Never renumber.
+- **also**: optional on an example, `also = ["間に合ってよかった。"]`:
+  other answers to its English a learner would rightly write (a word the
+  English doesn't call for left out, another word order), plain, no
+  `{…}`. The review diffs an answer against the closest of the sentence
+  and these. Don't list mere politeness variants (だ/です, る/ます).
 - Plain English for learners: no linguistics jargon (連用形, ergative),
   no "we will learn", no quotes from sources.

@@ -261,6 +261,24 @@ learned by heart. Before writing examples at scale, the format grows:
   then `grammar::hint_words`): dictionary forms, readings and a meaning,
   without the point's words, particles or short kana words. A hint like
   the formation: capped at Hard. No `hints = […]` override yet.
+- ~~Done~~: other correct answers, `also = […]` on an example (format 7):
+  the back diffs the answer against the closest of the sentence and
+  these (`grammar::closest_also`), and says "Also correct". Filled by
+  hand for now; part 4's reports are where most will come from.
+- ~~Done~~: readings in the diff (`grammar::sentence_diff`): a kanji the
+  other sentence lacks is compared by its reading, from the sentences'
+  JMdict words, so 持って来て / 持ってきて or 子供 / 子ども aren't marked.
+  A word the segmenter reads wrong (今日は as こんにちは) stays marked.
+- ~~Done~~: an optional I / you topic: a leading 私は, 僕が, あなたは…
+  one sentence has and the other lacks is greyed out, not marked
+  (`grammar::topic_is_optional`), unless the point is in it (私{は}学生です).
+- ~~Done~~: the check takes either register, as the register note
+  promises: a pattern's own conjugation in the polite form (考えられません
+  for 考えられない, 聞こうとしません for ようとしない, a lone 〜ない as
+  ません), and the polite copula for the plain one (当然です, んでした,
+  でしょう). Found by flipping every example's register: 2,031 flipped
+  sentences, no real miss left. The deinflector learnt the godan and 来る
+  ませんでした along the way (思いませんでした → 思う).
 - Front: the English sentence, and under it the point's `meaning` line
   ("prohibition: must not"), so the user knows which point to use without
   seeing the pattern. The vocabulary hints are behind a button.

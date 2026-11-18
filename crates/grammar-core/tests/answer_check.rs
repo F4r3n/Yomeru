@@ -1,5 +1,5 @@
-//! Every reference example of `data/grammar.toml` passes the answer check
-//! of its own point: an example the check can't find its point in is
+//! Every reference example of `data/grammar.toml`, and each of its `also`
+//! sentences, passes the answer check of its own point: an example the check can't find its point in is
 //! either a gap of the check or a weak example.
 //!
 //! The full run needs JMdict for the verbs and the word boundaries, so it
@@ -44,8 +44,12 @@ fn misses(
         if !keep(&e.check) {
             continue;
         }
-        for ex in &e.examples {
-            let ja = plain(&ex.ja);
+        // The `also` sentences are correct answers too.
+        for ja in e
+            .examples
+            .iter()
+            .flat_map(|ex| std::iter::once(plain(&ex.ja)).chain(ex.also.iter().cloned()))
+        {
             checked += 1;
             let v = dict.check_answer(&e.id, &ja, vocab);
             if v != Verdict::Accepted && v != Verdict::SelfGraded {
