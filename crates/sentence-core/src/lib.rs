@@ -143,8 +143,9 @@ impl<'a> Analyzer<'a> {
                 .into_iter()
                 .find(|&(_, len)| {
                     // One char inside a word is a kana of its ending or of
-                    // a compound (な of 買わなかった), not a particle.
-                    (len >= 2 || text.word_start(start))
+                    // a compound (な of 買わなかった), not a particle,
+                    // unless it ends the word (ば of 急げば).
+                    (len >= 2 || text.word_start(start) || text.word_end(start + len))
                         && (text.can_end(start, start + len)
                             || (!soft_start && text.soft_end(start, start + len)))
                 });
@@ -249,17 +250,21 @@ fn soft_edges(chars: &[char], words: &[Word], n: usize) -> Vec<bool> {
             };
             // A kana word cut anywhere reads as words too (あ|なた,
             // いく|ら): the head has a kanji, or two chars, or is する's
-            // stem (す|べき), and the tail two chars.
+            // stem (す|べき), and the tail two chars or a kanji (一年|中).
             let head_ok = head.iter().any(|&c| japanese_utils::is_kanji(c))
                 || head.len() >= 2
                 || matches!(head, ['す' | 'し' | 'せ']);
-            if !head_ok || tail.len() < 2 {
+            let tail_ok = tail.len() >= 2 || tail.iter().any(|&c| japanese_utils::is_kanji(c));
+            if !head_ok || !tail_ok {
                 continue;
             }
             let head: String = head.iter().collect();
             let tail: String = tail.iter().collect();
             let whole_head = jmdict_core::lookup_longest_match(&head, MAX_PATTERN_CHARS)
-                .is_some_and(|(_, len)| len == cut);
+                .is_some_and(|(_, len)| len == cut)
+                || masu_stem_of(&head)
+                    .iter()
+                    .any(|v| !jmdict_core::lookup(v).is_empty());
             if whole_head
                 && jmdict_core::lookup_longest_match(&tail, MAX_PATTERN_CHARS).is_some()
                 && let Some(slot) = soft.get_mut(w.start + cut)
@@ -269,6 +274,28 @@ fn soft_edges(chars: &[char], words: &[Word], n: usize) -> Vec<bool> {
         }
     }
     soft
+}
+
+/// The verbs `stem` is the ます-stem of, which the deinflection rules
+/// don't read: 信じ (信じる), 歌い (歌う), 乗り (乗る).
+fn masu_stem_of(stem: &str) -> Vec<String> {
+    let mut out = vec![format!("{stem}る")];
+    if let Some((i, last)) = stem.char_indices().next_back() {
+        let u = match last {
+            'い' => 'う',
+            'き' => 'く',
+            'ぎ' => 'ぐ',
+            'し' => 'す',
+            'ち' => 'つ',
+            'に' => 'ぬ',
+            'び' => 'ぶ',
+            'み' => 'む',
+            'り' => 'る',
+            _ => return out,
+        };
+        out.push(format!("{}{u}", &stem[..i]));
+    }
+    out
 }
 
 /// A sentence with where its words let grammar start and end.
@@ -286,6 +313,8 @@ struct Text<'s> {
     starts: Vec<bool>,
     /// `word_start[p]`: a word starts at char `p`.
     word_start: Vec<bool>,
+    /// `word_end[p]`: a word ends at char `p`.
+    word_end: Vec<bool>,
     /// `in_word[p]`: char `p` belongs to a word.
     in_word: Vec<bool>,
     /// `soft[p]`: char `p` is inside a word that is a compound there,
@@ -343,6 +372,15 @@ impl<'s> Text<'s> {
             bytes,
             edge,
             starts,
+            word_end: {
+                let mut v = vec![false; n + 1];
+                for w in words {
+                    if let Some(slot) = v.get_mut(w.start + w.len) {
+                        *slot = true;
+                    }
+                }
+                v
+            },
             word_start: {
                 let mut v = vec![false; n + 1];
                 for w in words {
@@ -380,6 +418,11 @@ impl<'s> Text<'s> {
     /// [`Self::can_end`], at a compound's inside.
     fn soft_end(&self, start: usize, end: usize) -> bool {
         end > start && self.soft(end) && (start..end).all(|p| self.in_word(p))
+    }
+
+    /// Whether a word ends at `p`.
+    fn word_end(&self, p: usize) -> bool {
+        self.word_end.get(p).copied().unwrap_or(false)
     }
 
     /// Whether a word starts at `p` (not a conjugated ending inside one).
