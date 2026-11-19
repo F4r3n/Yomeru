@@ -35,6 +35,7 @@
 use std::collections::{BTreeSet, HashMap};
 use std::fmt::Write as _;
 
+use jmdict_core::segment::Word;
 use jmdict_types::ArchivedWordEntry;
 
 /// One word of a `B:` line, located in its sentence.
@@ -180,6 +181,12 @@ struct Counts {
 }
 
 impl Counts {
+    fn f1(&self) -> f64 {
+        let p = self.both as f64 / self.pred.max(1) as f64;
+        let r = self.both as f64 / self.gold.max(1) as f64;
+        2.0 * p * r / (p + r).max(f64::EPSILON)
+    }
+
     fn line(&self, name: &str) -> String {
         let p = self.both as f64 / self.pred.max(1) as f64;
         let r = self.both as f64 / self.gold.max(1) as f64;
@@ -205,14 +212,105 @@ fn entry_is(e: &ArchivedWordEntry, g: &Gold) -> bool {
 
 /// The words of `sentence` as `segment::segment_with` reads them, with
 /// the costs of `SEG_COSTS`.
-fn split(sentence: &str) -> Vec<(usize, usize, Option<&'static ArchivedWordEntry>)> {
+fn split(sentence: &str) -> Vec<Word> {
     let costs = jmdict_core::segment::Costs::default()
         .with(&std::env::var("SEG_COSTS").unwrap_or_default())
         .unwrap();
     jmdict_core::segment::segment_with(sentence, &costs)
-        .into_iter()
-        .map(|w| (w.start, w.len, w.entry))
-        .collect()
+}
+
+fn kana(chars: &[char]) -> bool {
+    !chars.is_empty() && chars.iter().all(|&c| japanese_utils::is_kana(c))
+}
+
+fn digit(c: char) -> bool {
+    c.is_ascii_digit() || ('０'..='９').contains(&c)
+}
+
+/// Whether the boundary at `p`, which only one side has, is a matter of
+/// convention rather than a wrong split: function words in kana that one
+/// side keeps whole (では, という, ことに / に|なる, よう|な, すべて|の),
+/// or a split after the stem of a word we read as conjugated (成功|する,
+/// 行き|たい). `gold` and `pred` are `(start, len)` spans, the gold's
+/// leading digits left out.
+fn convention(
+    p: usize,
+    chars: &[char],
+    gold: &[(usize, usize)],
+    pred: &[Word],
+    gold_has: bool,
+) -> bool {
+    use jmdict_core::segment::Class as C;
+    let text = |s: usize, l: usize| &chars[s..s + l];
+    if gold_has {
+        // We read one word over it.
+        let Some(t) = pred.iter().find(|w| w.start < p && p < w.start + w.len) else {
+            return false;
+        };
+        let surface = text(t.start, t.len);
+        let function = |c: &C| {
+            matches!(
+                c,
+                C::Expression | C::Particle | C::Auxiliary | C::Conjunction
+            )
+        };
+        if kana(surface)
+            && (function(&t.class)
+                || t.entry
+                    .is_some_and(|e| jmdict_core::segment::classes(e).iter().any(function)))
+        {
+            return true;
+        }
+        let base: Vec<char> = t.base.chars().collect();
+        let after = gold.iter().find(|&&(s, _)| s == p);
+        // する and 来る change their first kana (し, き, こ).
+        let irregular = ["する", "為る", "来る", "くる"].contains(&t.base.as_str());
+        !t.reasons.is_empty()
+            && (irregular || base.first() == surface.first())
+            && p - t.start + 1 >= base.len()
+            && after.is_some_and(|&(s, l)| kana(text(s, l)))
+    } else {
+        // The corpus reads one word over it.
+        let Some(&(gs, gl)) = gold.iter().find(|&&(s, l)| s < p && p < s + l) else {
+            return false;
+        };
+        let inside: Vec<&Word> = pred
+            .iter()
+            .filter(|w| w.start >= gs && w.start + w.len <= gs + gl)
+            .collect();
+        let function = kana(text(gs, gl))
+            && inside.iter().all(|w| kana(text(w.start, w.len)))
+            && inside
+                .iter()
+                .any(|w| matches!(w.class, C::Particle | C::Auxiliary));
+        // A conjugated word and the kana endings after it (探して|いる,
+        // 行かなければ|ならない): the corpus keeps some of those whole.
+        let over: Vec<&Word> = pred
+            .iter()
+            .filter(|w| w.start < gs + gl && gs < w.start + w.len)
+            .collect();
+        let ending = over.len() > 1
+            && over
+                .first()
+                .is_some_and(|w| w.start <= gs && !w.reasons.is_empty())
+            && over.iter().skip(1).all(|w| kana(text(w.start, w.len)));
+        function || ending
+    }
+}
+
+/// `spans` with those meeting at a `forgiven` boundary joined.
+fn join_at(
+    spans: &BTreeSet<(usize, usize)>,
+    forgiven: &BTreeSet<usize>,
+) -> BTreeSet<(usize, usize)> {
+    let mut out: Vec<(usize, usize)> = Vec::new();
+    for &(s, l) in spans {
+        match out.last_mut() {
+            Some(last) if last.0 + last.1 == s && forgiven.contains(&s) => last.1 += l,
+            _ => out.push((s, l)),
+        }
+    }
+    out.into_iter().collect()
 }
 
 #[test]
@@ -227,6 +325,9 @@ fn segmentation_against_the_corpus() {
     let mut spans = Counts::default();
     let mut bounds = Counts::default();
     let (mut entry_ok, mut perfect, mut aligned) = (0, 0, 0);
+    let (mut loose_spans, mut loose_bounds, mut loose_perfect) =
+        (Counts::default(), Counts::default(), 0);
+    let mut conventions = 0;
     // Gold surface → how the segmenter split it, with counts.
     let mut misses: HashMap<(String, String), usize> = HashMap::new();
     let mut report = String::new();
@@ -247,10 +348,11 @@ fn segmentation_against_the_corpus() {
         };
         // Words wholly within what the corpus skips (names, punctuation)
         // aren't scored either way.
-        let pred: Vec<_> = split(sentence)
+        let words: Vec<Word> = split(sentence)
             .into_iter()
-            .filter(|&(s, l, _)| covered[s..s + l].iter().any(|&c| c))
+            .filter(|w| covered[w.start..w.start + w.len].iter().any(|&c| c))
             .collect();
+        let pred: Vec<_> = words.iter().map(|w| (w.start, w.len, w.entry)).collect();
 
         let gold_spans: BTreeSet<(usize, usize)> = gold.iter().map(|g| (g.start, g.len)).collect();
         let pred_spans: BTreeSet<(usize, usize)> = pred.iter().map(|&(s, l, _)| (s, l)).collect();
@@ -275,12 +377,65 @@ fn segmentation_against_the_corpus() {
             perfect += 1;
         }
 
+        // The same, conventions aside: the gold's leading digits (１日 is
+        // 日 to us), and the boundaries `convention` forgives.
+        let gold_trim: BTreeSet<(usize, usize)> = gold_spans
+            .iter()
+            .map(|&(s, l)| {
+                let d = chars[s..s + l]
+                    .iter()
+                    .take_while(|&&c| digit(c))
+                    .count()
+                    .min(l - 1);
+                (s + d, l - d)
+            })
+            .collect();
+        let gold_list: Vec<(usize, usize)> = gold_trim.iter().copied().collect();
+        let gb2 = edges(&gold_trim);
+        let forgiven: BTreeSet<usize> = gb2
+            .symmetric_difference(&pb)
+            .copied()
+            .filter(|&p| convention(p, &chars, &gold_list, &words, gb2.contains(&p)))
+            .collect();
+        let gold_loose = join_at(&gold_trim, &forgiven);
+        let pred_loose = join_at(&pred_spans, &forgiven);
+        loose_spans.gold += gold_loose.len();
+        loose_spans.pred += pred_loose.len();
+        loose_spans.both += gold_loose.intersection(&pred_loose).count();
+        let (gb3, pb3) = (edges(&gold_loose), edges(&pred_loose));
+        loose_bounds.gold += gb3.len();
+        loose_bounds.pred += pb3.len();
+        loose_bounds.both += gb3.intersection(&pb3).count();
+        if gb3 == pb3 {
+            loose_perfect += 1;
+        }
+
         for g in &gold {
             let matched = pred.iter().find(|&&(s, l, _)| (s, l) == (g.start, g.len));
             if let Some(&(_, _, Some(e))) = matched {
                 if entry_is(e, g) {
                     entry_ok += 1;
                 }
+                continue;
+            }
+            // A convention only: the word meets our split once both are
+            // read conventions aside.
+            let d = chars[g.start..g.start + g.len]
+                .iter()
+                .take_while(|&&c| digit(c))
+                .count()
+                .min(g.len - 1);
+            let (ts, te) = (g.start + d, g.start + g.len);
+            let in_loose = |spans: &BTreeSet<(usize, usize)>| {
+                spans
+                    .iter()
+                    .find(|&&(s, l)| s <= ts && te <= s + l)
+                    .copied()
+            };
+            if let Some(span) = in_loose(&gold_loose)
+                && pred_loose.contains(&span)
+            {
+                conventions += 1;
                 continue;
             }
             let surface: String = chars[g.start..g.start + g.len].iter().collect();
@@ -312,6 +467,12 @@ fn segmentation_against_the_corpus() {
         "right entry on matched words: {:.1}%   sentences split exactly as the corpus: {:.1}%",
         entry_ok as f64 * 100.0 / spans.both.max(1) as f64,
         perfect as f64 * 100.0 / aligned.max(1) as f64
+    );
+    eprintln!(
+        "conventions aside: words F1 {:.1}%, boundaries F1 {:.1}%, exact {:.1}% ({conventions} corpus words differ by convention only)",
+        loose_spans.f1() * 100.0,
+        loose_bounds.f1() * 100.0,
+        loose_perfect as f64 * 100.0 / aligned.max(1) as f64
     );
     let mut top: Vec<_> = misses.into_iter().collect();
     top.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
