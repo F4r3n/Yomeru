@@ -49,10 +49,12 @@ fn dict() -> &'static GrammarDict {
             word(33, "", "が", vec![P::Particle], "subject marker; but"),
             word(34, "", "と", vec![P::Particle], "quote"),
             word(35, "", "とする", vec![P::Expression, P::VerbSuru], "to assume"),
+            word(36, "中心", "ちゅうしん", vec![P::Noun], "centre"),
+            word(37, "中", "じゅう", vec![P::Suffix], "throughout"),
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 26\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+            "next_seq = 27\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -136,6 +138,7 @@ fn dict() -> &'static GrammarDict {
                 "after = [\"noun-or-particle\"]"
             ),
             point("to-suru", 25, "とする", "食べる{とする}。", ""),
+            point("chuu-juu", 26, "中", "学校{中}。", ""),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
     })
@@ -414,4 +417,16 @@ fn a_ga_after_a_predicate_isnt_wa_gas() {
     // That が joins two clauses: "she eats it, but…".
     assert!(!has("彼女は本を食べるが、高い。"));
     assert!(!has("彼女は高いが、"));
+}
+
+#[test]
+fn a_one_kanji_point_isnt_a_longer_words_first_kanji() {
+    let has = |sentence: &str| {
+        grammar(sentence)
+            .iter()
+            .any(|(_, ids, _)| ids.contains(&"chuu-juu".to_owned()))
+    };
+    assert!(has("学校中"));
+    // 中 opens the word 中心.
+    assert!(!has("東京の中心"));
 }

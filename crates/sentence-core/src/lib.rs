@@ -248,6 +248,27 @@ impl<'a> Analyzer<'a> {
             // it comes after: a shorter match there would be a piece of it
             // (の of よいのか once のか is out).
             let refused = Cell::new(0);
+            // A one-kanji point that goes after a word (中, 前, 的) isn't
+            // the first kanji of a longer word (中心部), unless the word is
+            // an expression holding it (姿を消す).
+            let kanji_inside_word = |e: &GrammarEntry, matched: &str| {
+                let mut chars = matched.chars();
+                let (Some(c), None) = (chars.next(), chars.next()) else {
+                    return false;
+                };
+                let prefix = e
+                    .formation
+                    .iter()
+                    .any(|f| e.keys().any(|k| f.starts_with(k)));
+                japanese_utils::is_kanji(c)
+                    && !prefix
+                    && text.word_start(start)
+                    && !text.word_end(start + 1)
+                    && words.iter().find(|w| w.start == start).is_some_and(|w| {
+                        w.entry
+                            .is_none_or(|e| !segment::classes(e).contains(&Class::Expression))
+                    })
+            };
             let keep = |e: &GrammarEntry, len: usize| {
                 let end = start + len;
                 let before_suru = e.no_suru
@@ -272,7 +293,8 @@ impl<'a> Analyzer<'a> {
                     || (ends_here(&text.chars, words, end, true)
                         && e.keys().any(|k| k == matched)))
                     && !(e.continues && ends_here(&text.chars, words, end, false))
-                    && !before_suru;
+                    && !before_suru
+                    && !kanji_inside_word(e, matched);
                 // A point that names what it comes after isn't found
                 // elsewhere: then the text's other forms of that length are
                 // tried (いないとして is とする's, not として "as").
