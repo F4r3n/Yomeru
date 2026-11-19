@@ -133,9 +133,12 @@ impl<'a> Analyzer<'a> {
                 // or the な a noun takes before a predicate's ending (休み
                 // なの).
                 e.after.iter().any(|k| head.is(k))
+                    // The copula a noun takes before a predicate's ending
+                    // (休みなの, 雨だから, 学生ですから), or opening a
+                    // sentence (だから、…).
                     || (e.after.iter().any(|k| k == "predicate")
-                        && matched.starts_with('な')
-                        && head.is("noun"))
+                        && matched.starts_with(['な', 'だ', 'で'])
+                        && (head.is("noun") || matches!(head, Head::Nothing)))
                     // A form holding its verb: あり of ありえない, 泣く of
                     // 泣くに泣けない.
                     || e.after.iter().any(|k| {
@@ -267,7 +270,14 @@ impl<'a> Analyzer<'a> {
                         && (text.can_end(start, start + len)
                             || (!soft_start && text.soft_end(start, start + len)))
                 });
-            if let Some((entries, len)) = best {
+            if let Some((mut entries, len)) = best {
+                // A homograph comes along in its partner's group: だから
+                // is kara-reason's spelling, not kara-from's.
+                if let Some(matched) = text.slice(start, start + len)
+                    && entries.iter().any(|e| e.keys().any(|k| k == matched))
+                {
+                    entries.retain(|e| e.keys().any(|k| k == matched));
+                }
                 found.push(GrammarMatch {
                     start,
                     len,

@@ -75,7 +75,7 @@
 #                inside 行って). One-char patterns (は, に, て) never show on
 #                hover anyway: the popup skips matches under two chars
 
-next_seq = 941
+next_seq = 942
 
 [[point]]
 id = "te-mo-ii"
@@ -1871,7 +1871,8 @@ both go before it (行くから, 行きますから). In polite requests, refusa
 and excuses it can sound pushy; ので is softer there. だから opens a sentence: \
 "that's why". After a place or time, から is "from" (see から〜まで); \
 after a て-form, "after" (see 〜てから)."""
-related = ["node", "kara-made", "te-kara", "doushite"]
+related = ["node", "kara-made", "te-kara", "doushite", "kara-from"]
+homographs = ["kara-from"]
 examples = [
   { tatoeba = "322708_81006", ja = "眠い{から}帰ります。", en = "I'm sleepy, so I am leaving now." },
   { tatoeba = "21998_184867", ja = "外は寒い{から}中に入りなさい。", en = "Come inside because it's cold outside." },
@@ -1879,6 +1880,7 @@ examples = [
   { tatoeba = "42402_205161", ja = "それは私が遅く起きた{から}です。", en = "That is because I got up late." },
   { tatoeba = "50985_213697", ja = "そこにいなかった{から}知らないよ。", en = "I don't know because I wasn't there." },
 ]
+after = ["predicate"]
 
 [[point]]
 id = "dake"
@@ -2520,6 +2522,34 @@ examples = [
 ]
 after = ["predicate"]
 final = true
+
+[[point]]
+id = "kara-from"
+seq = 941
+pattern = "から"
+forms = []
+jlpt = "N5"
+meaning = "from (a place, a time, a person); since; out of"
+formation = ["Noun + から   (駅から, 九時から, 友達から)"]
+explanation = """
+Marks where something starts: a place, 駅から歩いた, "I walked from the \
+station"; a time, 九時から, "from nine"; or a person something comes \
+from, 友達からもらった, "I got it from a friend". With ずっと or a time \
+it is "since": 朝からずっと, "ever since this morning"."""
+notes = """
+After a noun it is "from"; after a verb or adjective, から is \
+"because" (寒いから). An end point takes まで: 九時から五時まで (see \
+から〜まで). A way out is から too: 窓から出た, "went out the window"."""
+related = ["kara-made", "kara-reason", "te-kara", "ni-particle"]
+homographs = ["kara-reason"]
+examples = [
+  { tatoeba = "256255_158274", ja = "私は駅{から}歩いた。", en = "I walked from the station." },
+  { tatoeba = "70776_233406", ja = "あなたの学校はここ{から}遠いですか。", en = "Is your school far from here?" },
+  { tatoeba = "296568_107118", ja = "彼は今朝{から}ずっといそがしい。", en = "He has been busy since this morning." },
+  { source = "yomeru", id = "y1", ja = "友達{から}手紙をもらった。", en = "I got a letter from a friend." },
+  { source = "yomeru", id = "y2", ja = "かばん{から}本を出した。", en = "I took a book out of my bag." },
+]
+after = ["noun-or-particle"]
 
 [[point]]
 id = "kata"
@@ -7448,7 +7478,7 @@ after = ["predicate"]
 id = "tame-ni"
 seq = 257
 pattern = "ために"
-forms = ["為に", "のために", "のため"]
+forms = ["為に", "のために", "のため", "ため", "ためには", "のためには"]
 jlpt = "N3"
 meaning = "in order to, for (the sake of); because of (formal)"
 formation = [
