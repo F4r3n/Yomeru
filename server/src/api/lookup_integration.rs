@@ -335,6 +335,25 @@ async fn sentence_words_reads_a_sentence_into_its_words() {
 }
 
 #[tokio::test]
+async fn sentence_breakdown_gives_the_words_and_their_grammar() {
+    let h = harness().await;
+    let (status, body) = h
+        .post("/api/sentence-breakdown", None, &json!({ "text": "人を食べた" }))
+        .await;
+    assert_eq!(status, StatusCode::OK, "{body}");
+    let ate = body["words"]
+        .as_array()
+        .expect("words")
+        .iter()
+        .find(|w| w["start"] == 2)
+        .expect("a word at 食");
+    assert_eq!((ate["len"].as_u64(), ate["base"].as_str()), (Some(3), Some("食べる")), "{body}");
+    assert_eq!(ate["reasons"], json!(["past"]), "{body}");
+    assert!(ate["entry"].is_object(), "{body}");
+    assert!(body["grammar"].is_array(), "{body}");
+}
+
+#[tokio::test]
 async fn grammar_check_takes_answers_of_at_most_100_chars() {
     let h = harness().await;
     assert_limit(
@@ -412,6 +431,7 @@ async fn text_inputs_take_at_most_256_chars() {
         ("/api/examples", "word"),
         ("/api/grammar", "text"),
         ("/api/sentence-words", "text"),
+        ("/api/sentence-breakdown", "text"),
     ] {
         assert_limit(
             &h,

@@ -26,13 +26,26 @@ const MAX_RESULTS: u8 = 100;
 
 /// Words / Kanji switch at the top of both lookup modes.
 #[component]
-pub fn LookupModeTabs(kanji: bool) -> Element {
+pub fn LookupModeTabs(mode: LookupMode) -> Element {
+    let active = |m: LookupMode| if m == mode { "active" } else { "" };
+    let sentences = crate::routes::sentence::available();
     rsx! {
         div { class: "seg-tabs lookup-modes",
-            Link { to: Route::Lookup {}, class: if kanji { "" } else { "active" }, "Words" }
-            Link { to: Route::KanjiFinder {}, class: if kanji { "active" } else { "" }, "Find a kanji" }
+            Link { to: Route::Lookup {}, class: active(LookupMode::Words), "Words" }
+            Link { to: Route::KanjiFinder {}, class: active(LookupMode::Kanji), "Find a kanji" }
+            if sentences {
+                Link { to: Route::Sentence {}, class: active(LookupMode::Sentence), "Sentence" }
+            }
         }
     }
+}
+
+/// The Lookup page's tabs.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum LookupMode {
+    Words,
+    Kanji,
+    Sentence,
 }
 
 fn stroke_label(n: u8) -> String {
@@ -155,7 +168,7 @@ pub fn KanjiFinder() -> Element {
 
     rsx! {
         div { class: "kanji-finder",
-            LookupModeTabs { kanji: true }
+            LookupModeTabs { mode: LookupMode::Kanji }
 
             if let Some(err) = load_err.read().clone() {
                 div { class: "card error", "Couldn't load the parts: {err}" }

@@ -126,7 +126,7 @@ fn push_history(mut h: Vec<String>, term: &str) -> Vec<String> {
 /// cards for a word not yet in the list, or bump the priority of one
 /// already staged. Never called when the word is `Active` or `Graduated` —
 /// that's `on_reset`'s job instead.
-async fn add_or_bump(
+pub(crate) async fn add_or_bump(
     sequence: u32,
     mut card_status: Signal<HashMap<u32, CardStatus>>,
     mut card_priority: Signal<HashMap<u32, u32>>,
@@ -173,7 +173,7 @@ async fn add_or_bump(
     });
 }
 
-fn status_of(cards: &[SrsCard]) -> Option<CardStatus> {
+pub(crate) fn status_of(cards: &[SrsCard]) -> Option<CardStatus> {
     if cards.iter().any(|c| matches!(c.status, CardStatus::Active)) {
         Some(CardStatus::Active)
     } else if cards
@@ -498,7 +498,7 @@ fn LookupListPane() -> Element {
 
     rsx! {
         div {
-            crate::routes::kanji_finder::LookupModeTabs { kanji: false }
+            crate::routes::kanji_finder::LookupModeTabs { mode: crate::routes::kanji_finder::LookupMode::Words }
             if result_count > 0 {
                 div { class: "page-header",
                     span { class: "pill", "{result_label}" }

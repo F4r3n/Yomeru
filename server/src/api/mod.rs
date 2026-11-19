@@ -18,7 +18,7 @@ pub use account::{delete_account_handler, delete_account_request_handler, privac
 pub use auth::{auth_request_handler, auth_verify_handler};
 pub use fsrs::optimize_handler;
 pub use lookup::{
-    examples_handler, grammar_by_sequence_handler, grammar_check_handler, grammar_handler, sentence_words_handler, kanji_by_parts_handler, kanji_handler, kanji_parts_handler,
+    examples_handler, grammar_by_sequence_handler, grammar_check_handler, grammar_handler, sentence_breakdown_handler, sentence_words_handler, kanji_by_parts_handler, kanji_handler, kanji_parts_handler,
     lookup_by_sequence_handler, lookup_handler, lookup_prefix_handler,
 };
 pub use sync::sync_handler;
@@ -63,6 +63,7 @@ pub fn router(state: AppState) -> Router {
         .route("/api/grammar-by-sequence", post(grammar_by_sequence_handler))
         .route("/api/grammar-check", post(grammar_check_handler))
         .route("/api/sentence-words", post(sentence_words_handler))
+        .route("/api/sentence-breakdown", post(sentence_breakdown_handler))
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
         .with_state(state)

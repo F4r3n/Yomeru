@@ -17,7 +17,9 @@ use std::sync::{Arc, OnceLock};
 
 use tokio::sync::OnceCell;
 
-use crate::platform::{DictClient, SentenceWord};
+use crate::platform::{
+    BreakdownGrammar, BreakdownWord, DictClient, SentenceBreakdown, SentenceWord,
+};
 use async_trait::async_trait;
 
 /// One of the bundled data files.
@@ -80,6 +82,8 @@ static EXAMPLES: OnceCell<Result<(), String>> = OnceCell::const_new();
 static GRAMMAR: OnceCell<Result<(), String>> = OnceCell::const_new();
 /// grammar-core has no global of its own: the loaded dictionary.
 static GRAMMAR_DICT: OnceLock<GrammarDict> = OnceLock::new();
+/// The sentence analyzer over [`GRAMMAR_DICT`], built on first use.
+static ANALYZER: OnceLock<sentence_core::Analyzer<'static>> = OnceLock::new();
 
 impl Part {
     fn ready(self) -> &'static OnceCell<Result<(), String>> {
@@ -320,5 +324,46 @@ impl DictClient for LocalDict {
             .into_iter()
             .filter_map(|(start, len, e)| Some(SentenceWord { start, len, entry: owned(e)? }))
             .collect())
+    }
+
+    fn has_sentence_breakdown(&self) -> bool {
+        true
+    }
+
+    async fn sentence_breakdown(&self, sentence: &str) -> Result<SentenceBreakdown, String> {
+        self.ensure(Part::Words).await?;
+        self.ensure(Part::Grammar).await?;
+        let Some(dict) = GRAMMAR_DICT.get() else {
+            return Ok(SentenceBreakdown::default());
+        };
+        let b = ANALYZER
+            .get_or_init(|| sentence_core::Analyzer::new(dict))
+            .analyze(sentence);
+        Ok(SentenceBreakdown {
+            words: b
+                .words
+                .into_iter()
+                .map(|w| BreakdownWord {
+                    start: w.start,
+                    len: w.len,
+                    reasons: sentence_core::reason_names(w.reasons)
+                        .into_iter()
+                        .map(str::to_owned)
+                        .collect(),
+                    base: w.base,
+                    entry: w.entry.and_then(owned),
+                })
+                .collect(),
+            grammar: b
+                .grammar
+                .into_iter()
+                .map(|m| BreakdownGrammar {
+                    start: m.start,
+                    len: m.len,
+                    pieces: m.pieces,
+                    entries: m.entries,
+                })
+                .collect(),
+        })
     }
 }

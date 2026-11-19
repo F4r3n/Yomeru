@@ -5,6 +5,7 @@ mod lookup_grammar;
 pub mod new_words;
 pub mod privacy;
 pub mod review;
+pub mod sentence;
 mod review_common;
 mod review_grammar;
 mod review_kanji;

@@ -3,7 +3,7 @@ use dioxus::prelude::*;
 use crate::icons::{Icon, IconName};
 use crate::platform::Platform;
 use crate::routes::{
-    about, kanji_finder, lookup, new_words, privacy, review, settings, stats, word_list,
+    about, kanji_finder, lookup, new_words, privacy, review, sentence, settings, stats, word_list,
 };
 use crate::sync::{SyncActivity, SyncGen, SyncHealth};
 use crate::theme::global_css;
@@ -90,6 +90,8 @@ mod route {
             #[end_nest]
             #[route("/kanji-finder")]
             KanjiFinder {},
+            #[route("/sentence")]
+            Sentence {},
             #[route("/settings")]
             Settings {},
             #[route("/about")]
@@ -435,7 +437,7 @@ fn nav_active(to: &Route, current: &Route) -> bool {
         (to, current),
         (
             Route::Lookup {},
-            Route::LookupDetail { .. } | Route::KanjiFinder {}
+            Route::LookupDetail { .. } | Route::KanjiFinder {} | Route::Sentence {}
         )
     )
 }
@@ -471,6 +473,10 @@ fn LookupDetail(word: String) -> Element {
 #[component]
 fn KanjiFinder() -> Element {
     rsx! { kanji_finder::KanjiFinder {} }
+}
+#[component]
+fn Sentence() -> Element {
+    rsx! { sentence::SentenceBreakdownPage {} }
 }
 #[component]
 fn Settings() -> Element {

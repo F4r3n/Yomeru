@@ -36,8 +36,9 @@ pub fn GrammarResults(entries: Vec<GrammarEntry>, on_search: EventHandler<String
     }
 }
 
+/// One point's card, closed at first (also the Sentence tab's).
 #[component]
-fn GrammarEntryCard(entry: GrammarEntry, on_search: EventHandler<String>) -> Element {
+pub fn GrammarEntryCard(entry: GrammarEntry, on_search: EventHandler<String>) -> Element {
     let mut open = use_signal(|| false);
     let is_open = *open.read();
     let shown_examples = if is_open {
@@ -158,7 +159,9 @@ fn bee_search_url(pattern: &str) -> String {
 /// state, which the production card's follows on Add, promote and reset.
 /// The recognition card among a point's cards, the one its button shows.
 fn recognition(cards: Vec<SrsCard>) -> Option<SrsCard> {
-    cards.into_iter().find(|c| c.direction == CardDirection::Recognition)
+    cards
+        .into_iter()
+        .find(|c| c.direction == CardDirection::Recognition)
 }
 
 #[component]

@@ -62,6 +62,47 @@ pub trait DictClient: Send + Sync {
     /// The words of `sentence` in order, for a production card's
     /// vocabulary hint (see `jmdict_core::vocab::sentence_words`).
     async fn sentence_words(&self, sentence: &str) -> Result<Vec<SentenceWord>, String>;
+    /// Whether [`Self::sentence_breakdown`] works here. Not yet in the
+    /// extension, whose JMdict and grammar live in separate WASM modules.
+    fn has_sentence_breakdown(&self) -> bool {
+        false
+    }
+    /// `sentence` read into its words and the grammar they make up
+    /// (`sentence_core::Analyzer::analyze`), for the Lookup page's
+    /// Sentence tab.
+    async fn sentence_breakdown(&self, _sentence: &str) -> Result<SentenceBreakdown, String> {
+        Err("sentence breakdown isn't available here".to_owned())
+    }
+}
+
+/// A sentence read into words and grammar.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
+pub struct SentenceBreakdown {
+    pub words: Vec<BreakdownWord>,
+    pub grammar: Vec<BreakdownGrammar>,
+}
+
+/// One word of a [`SentenceBreakdown`]: where it is, in chars, its
+/// dictionary form, how it is conjugated from it (`deinflect::Reason`
+/// names: `past`, `te-form`) and its entry, if it has one.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct BreakdownWord {
+    pub start: usize,
+    pub len: usize,
+    pub base: String,
+    pub reasons: Vec<String>,
+    pub entry: Option<WordEntry>,
+}
+
+/// One grammar point of a [`SentenceBreakdown`]: where it is, in chars,
+/// its pattern's own text as `(start, len)` pieces (ければ and ほど of
+/// 早ければ早いほど), and the points spelled that way.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct BreakdownGrammar {
+    pub start: usize,
+    pub len: usize,
+    pub pieces: Vec<(usize, usize)>,
+    pub entries: Vec<GrammarEntry>,
 }
 
 /// One word of a sentence: where it is, in chars, and its entry.
@@ -349,6 +390,14 @@ impl DictClient for HttpDict {
         let parsed: SentenceWordsResponse =
             post_json("/api/sentence-words", &SentenceBody { text: sentence }).await?;
         Ok(parsed.words)
+    }
+
+    fn has_sentence_breakdown(&self) -> bool {
+        true
+    }
+
+    async fn sentence_breakdown(&self, sentence: &str) -> Result<SentenceBreakdown, String> {
+        post_json("/api/sentence-breakdown", &SentenceBody { text: sentence }).await
     }
 }
 

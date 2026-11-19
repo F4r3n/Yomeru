@@ -164,6 +164,34 @@ pub struct SentenceWordsResponse {
     pub words: Vec<SentenceWord>,
 }
 
+/// One word of a sentence breakdown: where it is, in chars, its dictionary
+/// form, how it is conjugated from it (`deinflect::Reason` names) and its
+/// entry, if it has one.
+#[derive(Serialize)]
+pub struct BreakdownWord {
+    pub start: usize,
+    pub len: usize,
+    pub base: String,
+    pub reasons: Vec<&'static str>,
+    pub entry: Option<&'static ArchivedWordEntry>,
+}
+
+/// One grammar point found in a sentence: where it is, its pattern's own
+/// text as `[start, len]` pieces, and the points spelled that way.
+#[derive(Serialize)]
+pub struct BreakdownGrammar {
+    pub start: usize,
+    pub len: usize,
+    pub pieces: Vec<(usize, usize)>,
+    pub entries: Vec<grammar_core::GrammarEntry>,
+}
+
+#[derive(Serialize)]
+pub struct SentenceBreakdownResponse {
+    pub words: Vec<BreakdownWord>,
+    pub grammar: Vec<BreakdownGrammar>,
+}
+
 #[derive(Deserialize)]
 pub struct GrammarCheckBody {
     /// The point's id.
@@ -398,4 +426,53 @@ pub async fn sentence_words_handler(
     })
     .await?;
     Ok(Json(SentenceWordsResponse { words }))
+}
+
+/// A sentence read into its words and the grammar they make up, for the
+/// Lookup page's Sentence tab.
+pub async fn sentence_breakdown_handler(
+    State(state): State<AppState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Json(body): Json<SentenceBody>,
+) -> Result<impl IntoResponse, ApiError> {
+    rate_limit(&state, &state.lookup_limiter, addr, &headers)?;
+    let text = body.text;
+    if text.chars().count() > MAX_QUERY_CHARS {
+        return Err(too_large("text", text.chars().count(), MAX_QUERY_CHARS));
+    }
+    let response = run_blocking("sentence_breakdown", move || {
+        let Some(analyzer) = crate::dicts::analyzer() else {
+            return Ok(SentenceBreakdownResponse {
+                words: Vec::new(),
+                grammar: Vec::new(),
+            });
+        };
+        let b = analyzer.analyze(&text);
+        Ok(SentenceBreakdownResponse {
+            words: b
+                .words
+                .into_iter()
+                .map(|w| BreakdownWord {
+                    start: w.start,
+                    len: w.len,
+                    reasons: sentence_core::reason_names(w.reasons),
+                    base: w.base,
+                    entry: w.entry,
+                })
+                .collect(),
+            grammar: b
+                .grammar
+                .into_iter()
+                .map(|m| BreakdownGrammar {
+                    start: m.start,
+                    len: m.len,
+                    pieces: m.pieces,
+                    entries: m.entries,
+                })
+                .collect(),
+        })
+    })
+    .await?;
+    Ok(Json(response))
 }
