@@ -99,13 +99,14 @@ rm -rf "$res_dir/values-v31"
 version="$(sed -n 's/^version = "\(.*\)"/\1/p' "$root/app/android/Cargo.toml" | head -1)"
 out="yomeru-$version.apk"
 
-# Same signing script the release workflow runs (see sign-release.sh).
-aab="$(find "$root/target/podman/dx/yomeru/release/android" -name "*.aab" \
-       -path "*outputs/bundle/release/*" | head -1)"
-if [[ -z "$aab" ]]; then
+# Gradle's own bundle from the apply.sh pass (dx's copy, with its icons, is
+# deleted there).
+aab="$root/target/podman/dx/yomeru/release/android/app/app/build/outputs/bundle/release/app-release.aab"
+if [[ ! -f "$aab" ]]; then
     echo "no release .aab found under target/podman/dx/yomeru/release" >&2
     exit 1
 fi
+# Same signing script the release workflow runs (see sign-release.sh).
 "${run[@]}" \
     -e YOMERU_KS_PASS \
     -v "$keystore":/keys/release.jks:ro,Z \

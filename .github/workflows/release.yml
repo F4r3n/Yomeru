@@ -155,7 +155,7 @@ jobs:
         run: |
           echo "$ANDROID_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
           trap 'rm -f "$RUNNER_TEMP/release.jks"' EXIT
-          aab=$(find target/dx/yomeru/release/android -name '*.aab' -path '*outputs/bundle/release/*' | head -1)
+          aab=target/dx/yomeru/release/android/app/app/build/outputs/bundle/release/app-release.aab
           app/android/sign-release.sh "$aab" "$RUNNER_TEMP/release.jks" yomeru \
             "dist/android/yomeru-${GITHUB_REF_NAME#v}.apk"
         env:

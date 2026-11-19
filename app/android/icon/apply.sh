@@ -32,4 +32,29 @@ fi
 rm -f "$res"/mipmap-*/ic_launcher.webp
 cp -r "$here/res/." "$res/"
 
+# dx copies its bundle to outputs/bundle/<type>/Yomeru-<target>.aab, while
+# Gradle writes app-<type>.aab next to it: drop dx's, or whoever picks "the"
+# .aab may sign the one with dx's icons (0.24.0 did).
+outputs="$project/app/build/outputs"
+rm -f "$outputs"/bundle/*/*.aab
+
+stamp="$(mktemp)"
+trap 'rm -f "$stamp"' EXIT
 (cd "$project" && ./gradlew --quiet "$@")
+
+# Every package this pass wrote must carry our icon, not dx's. (Older ones
+# stay, such as the debug APK of a release `dx bundle`: not ours to check.)
+found=0
+while IFS= read -r pkg; do
+    found=1
+    list="$(unzip -l "$pkg")"
+    if ! grep -q 'res/drawable/ic_launcher_monochrome\.xml' <<<"$list" \
+        || grep -q 'ic_launcher\.webp' <<<"$list"; then
+        echo "$pkg still has dx's default launcher icon" >&2
+        exit 1
+    fi
+done < <(find "$outputs" \( -name '*.aab' -o -name '*.apk' \) -newer "$stamp")
+if [[ $found == 0 ]]; then
+    echo "no .aab or .apk under $outputs after: gradlew $*" >&2
+    exit 1
+fi
