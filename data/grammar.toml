@@ -1795,6 +1795,7 @@ examples = [
   { source = "yomeru", id = "y3", ja = "犬{と}猫がいます。", en = "I have a dog and a cat." },
   { source = "yomeru", id = "y4", ja = "先生{と}話しました。", en = "I talked with the teacher." },
 ]
+after = ["noun-or-particle"]
 
 [[point]]
 id = "ya-particle"
@@ -2216,7 +2217,7 @@ examples = [
 id = "ta-ato-de"
 seq = 76
 pattern = "たあとで"
-forms = ["だあとで", "た後で", "だ後で", "のあとで", "の後で", "たあとに", "た後に", "あとで", "後で", "あとに", "後に"]
+forms = ["だあとで", "た後で", "だ後で", "のあとで", "の後で", "たあとに", "た後に", "あとで", "後で", "あとに", "後に", "たあと", "た後", "だあと", "だ後"]
 jlpt = "N4"
 meaning = "after (doing), after (something); later"
 formation = ["Verb［た］ + あとで", "Noun + の + あとで   (授業のあとで)"]
@@ -3537,6 +3538,7 @@ examples = [
   { source = "yomeru", id = "y3", ja = "お酒を飲む{と}、すぐ顔が赤くなる。", en = "Whenever I drink, my face goes red right away." },
   { source = "yomeru", id = "y4", ja = "右に曲がる{と}、駅が見えます。", en = "Turn right and you'll see the station." },
 ]
+after = ["predicate"]
 
 [[point]]
 id = "nara"

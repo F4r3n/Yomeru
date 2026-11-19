@@ -446,6 +446,7 @@ impl Costs {
             (Some(C::Noun | C::Unknown), C::Suffix) => 0,
             (_, C::Suffix) => self.stray_affix,
             (Some(C::Noun), C::Noun) => self.noun_noun,
+            (Some(C::Noun), _) if node.kanji_expression => self.noun_noun,
             _ => 0,
         }
     }
@@ -581,6 +582,11 @@ struct Node {
     /// frequency: after a noun or な adjective, に and で are its own
     /// (になった is the expression になる, or に|なった; not 担う).
     kana_head: bool,
+    /// A verb expression that opens on a kanji word (拠点とする, 姿を消す):
+    /// after a noun it joins it as that word would, so it pays
+    /// [`Costs::noun_noun`] too, and 貿易|拠点として isn't cheaper than
+    /// 貿易|拠点|として. Not one that stays a noun (年ぶり, after digits).
+    kanji_expression: bool,
 }
 
 /// The candidates for one dictionary form of `surface`, one per class its
@@ -618,6 +624,10 @@ fn push_nodes(
         let spelled = e.kanji_forms.iter().any(|k| k.text.as_str() == form)
             || e.reading_forms.iter().any(|r| r.text.as_str() == form);
         let freq = costs.freq(e, form);
+        let kanji_expression = surface.starts_with(japanese_utils::is_kanji) && {
+            let c = classes(e);
+            c.contains(&Class::Expression) && c.contains(&Class::Verb)
+        };
         let base_cost = costs.word + if spelled { 0 } else { costs.kana_mismatch };
         for (rank, s) in e.senses.iter().enumerate() {
             // `vs` (merged with する's own `vs-i`) tags a noun taking する:
@@ -662,6 +672,7 @@ fn push_nodes(
                         && content(class)
                         && class != Class::Expression
                         && kana_for_kanji,
+                    kanji_expression,
                 });
             }
         }
@@ -840,6 +851,7 @@ fn unknown(run: &[char], len: usize, cost: i32) -> Node {
         reasons: Reasons::EMPTY,
         particle_head: false,
         kana_head: false,
+        kanji_expression: false,
     }
 }
 
