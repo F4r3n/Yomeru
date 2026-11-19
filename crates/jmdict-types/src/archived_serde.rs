@@ -199,6 +199,7 @@ mod tests {
                         value: 12,
                     },
                 ],
+                word_cost: None,
             }],
             reading_forms: vec![
                 ReadingElement::from_reading("たべる"),

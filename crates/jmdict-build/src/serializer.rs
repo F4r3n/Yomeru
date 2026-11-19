@@ -8,7 +8,7 @@ use std::path::Path;
 /// | Field                  | Size   | Notes                                |
 /// |------------------------|--------|--------------------------------------|
 /// | magic                  | 4      | b"JMDI"                              |
-/// | version                | 1      | currently 5                          |
+/// | version                | 1      | currently 6                          |
 /// | fst_len                | 4 LE   | byte length of FST data              |
 /// | fst_data               | fst_len|                                      |
 /// | lookup_table_len       | 4 LE   | byte length of postcard lookup_table |
@@ -31,7 +31,8 @@ pub fn write_index(index: &DictionaryIndex, path: &Path) -> Result<()> {
     // v4: entries blob is rkyv-archived (zero-copy decode) instead of postcard.
     // v5: ke_pri/re_pri are Freq structs, ke_inf/misc/field are enums (was
     //     strings), and Gloss dropped its `lang` field — incompatible layout.
-    f.write_all(&[5u8])?; // version
+    // v6: kanji and reading forms carry an IPADIC `word_cost`.
+    f.write_all(&[6u8])?; // version
 
     let fst_len = index.fst_bytes.len() as u32;
     f.write_all(&fst_len.to_le_bytes())?;

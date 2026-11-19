@@ -21,7 +21,10 @@ Everything uses the full dictionary at `~/.cache/yomeru-sentence/jmdict-full.bin
   `Slot`, `Read` + the point's id).
 - `score.sh TAG [COSTS]`: corpus scores; writes `seg-TAG.tsv`, `gram-TAG.tsv`.
   - segmentation: word / boundary F1, right entry on matched words, sentences
-    split exactly as the corpus;
+    split exactly as the corpus; then the same **conventions aside** (では vs
+    で|は, に|なる, 成功|する, 行き|たい, the gold's leading digits): the line
+    to watch, since most raw disagreements are the corpus' conventions.
+    `seg-TAG.tsv` lists only the rest;
   - grammar: examples of `grammar.toml` found exactly / overlap / missed, and
     other matches per sentence (noise: lower is better).
   `COSTS` (`word=900,particle_head=1200`) tries other `segment::Costs` values
@@ -101,6 +104,11 @@ Segmentation (`segment.rs`):
   - a broad condition breaks fixed expressions: exempt
     `Class::Expression` (では|ない, に|なった);
   - frequency tags can sit on the kanji spelling only (時 tagged, とき not);
+  - nouns, verbs and adjectives also take IPADIC's word cost (`word_cost`,
+    `ipadic_base` / `ipadic_scale`), when lower than their tags give; not
+    adverbs, conjunctions or expressions, which made cheap swallow a noun
+    and its particle (時に, なので, 電|気がつく). `ipadic_scale=0` is the
+    tags alone, to see what IPADIC changes;
   - the class a word leaves in the lattice decides the next connection
     (a する noun read with its する must leave `Verb`, or とき after
     アクセスできない pays the noun-after-noun cost);
@@ -116,6 +124,6 @@ Grammar (`sentence-core`, `data/grammar.toml`):
 
 ## Last scores
 
-2026-11-19, after a Wikipedia text (とする, という): segmentation F1 88.9,
-boundaries 95.0, right entry 97.8%, exact 57.8%; grammar exact 88.1%, other
-matches 2.78 per sentence. Always take a fresh baseline: these move with every change.
+2026-11-20, with IPADIC's word costs: segmentation F1 89.2, boundaries
+95.1, right entry 97.7%, exact 58.5%; conventions aside F1 96.3, boundaries
+98.2, exact 85.0%; grammar exact 88.1%, other matches 2.77 per sentence. Always take a fresh baseline: these move with every change.

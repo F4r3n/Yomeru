@@ -357,6 +357,14 @@ pub struct Costs {
     pub extra_form: i32,
     /// An imperative that doesn't end its sentence (see [`mid_imperative`]).
     pub mid_imperative: i32,
+    /// The frequency cost of a content word with an IPADIC word cost
+    /// (`word_cost`, against its part of speech's median): `ipadic_base`
+    /// plus `ipadic_scale` percent of it, at least 0, when that is less
+    /// than its JMdict tags give. The tags still mark the commonest; the
+    /// costs grade the rest (拠点 isn't as rare as an untagged word). An
+    /// `ipadic_scale` of 0 keeps the tags alone.
+    pub ipadic_base: i32,
+    pub ipadic_scale: i32,
 }
 
 impl Default for Costs {
@@ -366,7 +374,7 @@ impl Default for Costs {
             later_sense: 100,
             some_freq: 500,
             no_freq: 1200,
-            kana_for_kanji: 700,
+            kana_for_kanji: 1000,
             lone_kana: 1500,
             unknown_char: 4000,
             unknown_katakana: 2500,
@@ -382,6 +390,8 @@ impl Default for Costs {
             function_freq_percent: 50,
             extra_form: 600,
             mid_imperative: 500,
+            ipadic_base: 600,
+            ipadic_scale: 15,
         }
     }
 }
@@ -415,6 +425,8 @@ impl Costs {
                 "function_freq_percent" => &mut self.function_freq_percent,
                 "extra_form" => &mut self.extra_form,
                 "mid_imperative" => &mut self.mid_imperative,
+                "ipadic_base" => &mut self.ipadic_base,
+                "ipadic_scale" => &mut self.ipadic_scale,
                 other => return Err(format!("no cost named {other}")),
             };
             *slot = v;
@@ -449,6 +461,28 @@ impl Costs {
             (Some(C::Noun), _) if node.kanji_expression => self.noun_noun,
             _ => 0,
         }
+    }
+
+    /// The frequency cost of `e` written as `form` from its IPADIC word
+    /// cost, if it has one (and [`Costs::ipadic_scale`] isn't 0).
+    fn ipadic_freq(&self, e: &ArchivedWordEntry, form: &str) -> Option<i32> {
+        if self.ipadic_scale == 0 {
+            return None;
+        }
+        let cost = e
+            .kanji_forms
+            .iter()
+            .find(|k| k.text.as_str() == form)
+            .map(|k| &k.word_cost)
+            .or_else(|| {
+                e.reading_forms
+                    .iter()
+                    .find(|r| r.text.as_str() == form)
+                    .map(|r| &r.word_cost)
+            })?
+            .as_ref()?
+            .to_native();
+        Some((self.ipadic_base + i32::from(cost) * self.ipadic_scale / 100).max(0))
     }
 
     /// The frequency tags of the form of `e` written as `form`.
@@ -624,10 +658,14 @@ fn push_nodes(
         let spelled = e.kanji_forms.iter().any(|k| k.text.as_str() == form)
             || e.reading_forms.iter().any(|r| r.text.as_str() == form);
         let freq = costs.freq(e, form);
-        let kanji_expression = surface.starts_with(japanese_utils::is_kanji) && {
-            let c = classes(e);
-            c.contains(&Class::Expression) && c.contains(&Class::Verb)
-        };
+        let entry_classes = classes(e);
+        let expression = entry_classes.contains(&Class::Expression);
+        // An expression (気がつく) keeps the tags: IPADIC's cost is its
+        // verb's, and made cheap it swallows the noun before (電|気がつく).
+        let ipadic_freq = costs.ipadic_freq(e, form).filter(|_| !expression);
+        let kanji_expression = surface.starts_with(japanese_utils::is_kanji)
+            && expression
+            && entry_classes.contains(&Class::Verb);
         let base_cost = costs.word + if spelled { 0 } else { costs.kana_mismatch };
         for (rank, s) in e.senses.iter().enumerate() {
             // `vs` (merged with する's own `vs-i`) tags a noun taking する:
@@ -649,10 +687,31 @@ fn push_nodes(
                         Class::Particle | Class::Auxiliary | Class::Suffix | Class::Prefix
                     );
                 let function = len == 1 && matches!(class, Class::Particle | Class::Auxiliary);
+                // Only nouns, verbs and adjectives take IPADIC's costs: they
+                // compare within a part of speech, and an adverb (時に, 本に)
+                // or a conjunction (なので, だから) made cheap beats the noun
+                // and particle it competes with. Particles and endings keep
+                // JMdict's tags: their costs only make sense with MeCab's
+                // own connection costs.
+                let content_freq = match ipadic_freq {
+                    Some(f)
+                        if matches!(
+                            class,
+                            Class::Noun | Class::Verb | Class::Adjective | Class::NaAdjective
+                        ) =>
+                    {
+                        f.min(freq)
+                    }
+                    _ => freq,
+                };
                 out.push(Node {
                     len,
                     cost: base_cost
-                        + if function { freq * costs.function_freq_percent / 100 } else { freq }
+                        + if function {
+                            freq * costs.function_freq_percent / 100
+                        } else {
+                            content_freq
+                        }
                         + costs.later_sense * (rank.min(3) as i32)
                         + if lone { costs.lone_kana } else { 0 }
                         // Function words are written in kana anyway: the
@@ -751,7 +810,9 @@ fn candidates(
                     indices.iter().filter_map(|&i| get_entry(i)).any(|e| {
                         classes(e).contains(&Class::Noun)
                             && (costs.freq(e, surface) == 0
-                                || e.kanji_forms.iter().any(|k| costs.freq(e, k.text.as_str()) == 0))
+                                || e.kanji_forms
+                                    .iter()
+                                    .any(|k| costs.freq(e, k.text.as_str()) == 0))
                     })
                 });
         let mut forms = extra_forms(surface);

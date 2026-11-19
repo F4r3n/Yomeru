@@ -16,6 +16,7 @@ extension/data
 # Offline dictionaries for the Android build, linked from extension/data.
 app/android/assets/dict/
 examples.utf
+mecab-ipadic.tar
 web-dist/
 # Signed Android release APKs (app/android/podman-build.sh --release).
 dist/

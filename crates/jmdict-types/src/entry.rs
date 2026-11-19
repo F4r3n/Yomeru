@@ -528,6 +528,10 @@ pub struct KanjiElement {
     /// `ke_pri` frequency tags — e.g. "news1", "ichi1", "spec1", "gai1",
     /// "nf01"–"nf48".
     pub priorities: Vec<Freq>,
+    /// How common this spelling is, from IPADIC's word costs (see
+    /// [`WordCost`]); `None` where IPADIC has no such word.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub word_cost: Option<WordCost>,
 }
 
 impl KanjiElement {
@@ -536,9 +540,17 @@ impl KanjiElement {
             text: content.into(),
             info: vec![],
             priorities: vec![],
+            word_cost: None,
         }
     }
 }
+
+/// A word's cost in IPADIC, MeCab's dictionary, against the median of
+/// the words of its part of speech: below 0 is commoner than most of
+/// them, above rarer. MeCab learned the costs from a tagged corpus, so
+/// they grade every word, where JMdict's frequency tags only mark the
+/// commonest (and often only their kanji spelling).
+pub type WordCost = i16;
 
 #[derive(
     Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Archive, RkyvSerialize, RkyvDeserialize,
@@ -555,6 +567,9 @@ pub struct ReadingElement {
     pub info: Vec<String>,
     /// `re_pri` frequency tags — same vocabulary as `KanjiElement.priorities`.
     pub priorities: Vec<Freq>,
+    /// As `KanjiElement.word_cost`, for this kana spelling.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub word_cost: Option<WordCost>,
 }
 
 impl ReadingElement {
@@ -568,6 +583,7 @@ impl ReadingElement {
             #[cfg(feature = "full")]
             info: vec![],
             priorities: vec![],
+            word_cost: None,
         }
     }
 }

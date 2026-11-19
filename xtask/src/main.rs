@@ -81,6 +81,12 @@ enum Cmd {
         #[arg(short, long)]
         output_dir: Option<PathBuf>,
     },
+    /// Download IPADIC's release tarball (word costs for the segmenter)
+    /// and gunzip it to mecab-ipadic.tar.
+    DownloadIpadic {
+        #[arg(short, long)]
+        output_dir: Option<PathBuf>,
+    },
     /// Build the examples binary index from examples.utf.
     BuildExamples {
         #[arg(short, long)]
@@ -193,6 +199,12 @@ fn main() -> Result<()> {
             let dir = output_dir.unwrap_or_else(|| root.clone());
             let out = download_examples(&dir)?;
             eprintln!("examples.utf ready at {}", out.display());
+        }
+
+        Cmd::DownloadIpadic { output_dir } => {
+            let dir = output_dir.unwrap_or_else(|| root.clone());
+            let out = download_source(&dir, "IPADIC")?;
+            eprintln!("IPADIC ready at {}", out.display());
         }
 
         Cmd::BuildExamples {
@@ -852,7 +864,10 @@ fn build_kanjidic(root: &Path, input: &Path, kanjivg: Option<&Path>, output: &Pa
     Ok(())
 }
 
+/// Builds the JMdict index, with IPADIC's word costs for the segmenter
+/// (downloaded if missing).
 fn build_dict(root: &Path, input: &Path, output: &Path) -> Result<()> {
+    let ipadic = download_source(root, "IPADIC")?;
     run(Command::new("cargo")
         .args([
             "run",
@@ -865,6 +880,8 @@ fn build_dict(root: &Path, input: &Path, output: &Path) -> Result<()> {
         .arg(input)
         .arg("--output")
         .arg(output)
+        .arg("--ipadic")
+        .arg(ipadic)
         .current_dir(root))?;
     Ok(())
 }

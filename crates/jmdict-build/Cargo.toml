@@ -32,6 +32,8 @@ rkyv = { version = "0.8", default-features = false, features = [
 fst          = "0.4"
 anyhow       = "1"
 clap         = { version = "4", features = ["derive"] }
+# IPADIC's CSVs (word costs for the segmenter) are EUC-JP.
+encoding_rs  = "0.8"
 
 
 [lints]

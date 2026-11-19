@@ -166,7 +166,7 @@ fn parse_binary<'a>(bytes: &'a [u8]) -> anyhow::Result<DictionaryInner> {
         bail!("Invalid magic bytes");
     }
     let version = bytes.get(4).copied().unwrap_or(0);
-    if version != 5 {
+    if version != 6 {
         bail!("Unsupported dictionary version {version}");
     }
 
