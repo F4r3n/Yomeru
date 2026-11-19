@@ -55,9 +55,10 @@ pub struct GrammarEntry {
     /// にしろ at the end reads as にする's command.
     #[serde(default)]
     pub continues: bool,
-    /// The point's に is never before する or なる (以上に, "more than"):
-    /// there the に is にする's or になる's, and 以上にしろ reads as 以上
-    /// + にする.
+    /// The point's final に or と is never before する or なる (以上に,
+    /// "more than"; ないと, "must"): there it is にする's, になる's or
+    /// とする's, and 以上にしろ reads as 以上 + にする, いないとして as a
+    /// quote + とする.
     #[serde(default)]
     pub no_suru: bool,
 }

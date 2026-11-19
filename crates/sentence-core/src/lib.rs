@@ -18,6 +18,7 @@
 use deinflect::{Reason, Reasons};
 use grammar_core::{AnswerCheck, GrammarDict, GrammarEntry, Inflection};
 use jmdict_core::segment::{self, Class, Word};
+use std::cell::Cell;
 
 /// The longest text pattern tried, in chars.
 const MAX_PATTERN_CHARS: usize = 24;
@@ -121,32 +122,6 @@ impl<'a> Analyzer<'a> {
         let words = segment::segment(sentence);
         let text = Text::new(sentence, &words);
         let mut grammar = self.text_matches(&text, &words);
-        // A point that names what it comes after isn't found elsewhere.
-        for m in &mut grammar {
-            let head = head_before(&text.chars, &words, m.start);
-            let matched: String = text.chars.iter().skip(m.start).take(m.len).collect();
-            m.entries.retain(|e| {
-                if e.after.is_empty() {
-                    return true;
-                }
-                // Or a form holding its own verb stem: あり of ありえない,
-                // or the な a noun takes before a predicate's ending (休み
-                // なの).
-                e.after.iter().any(|k| head.is(k))
-                    // The copula a noun takes before a predicate's ending
-                    // (休みなの, 雨だから, 学生ですから), or opening a
-                    // sentence (だから、…).
-                    || (e.after.iter().any(|k| k == "predicate")
-                        && matched.starts_with(['な', 'だ', 'で'])
-                        && (head.is("noun") || matches!(head, Head::Nothing)))
-                    // A form holding its verb: あり of ありえない, 泣く of
-                    // 泣くに泣けない.
-                    || e.after.iter().any(|k| {
-                        ["masu-stem", "verb-plain"].contains(&k.as_str())
-                            && own_heads(&matched, e).any(|lead| Head::Text(lead).is(k))
-                    })
-            });
-        }
         // A verb form inside a conjugated word is what the word's
         // conjugation says, not what its text spells: 開催された is
         // passive, though れた also spells potential's ending.
@@ -219,6 +194,20 @@ impl<'a> Analyzer<'a> {
             {
                 m.entries.clear();
             }
+            // After a bare topic は, a が right after a verb or adjective
+            // joins two clauses, "but": 妻はいないとしてきたが、… isn't は〜が
+            // (ことは〜が's が is that "but", 行くことは行くが).
+            if m.pieces
+                .first()
+                .is_some_and(|&(s, n)| n == 1 && text.chars.get(s) == Some(&'は'))
+                && m.pieces.iter().any(|&(s, n)| {
+                    n == 1
+                        && text.chars.get(s) == Some(&'が')
+                        && head_before(&text.chars, &words, s).is("predicate")
+                })
+            {
+                m.entries.clear();
+            }
         }
         slots.retain(|m| !m.entries.is_empty());
         grammar.extend(slots);
@@ -232,6 +221,7 @@ impl<'a> Analyzer<'a> {
         let mut found: Vec<GrammarMatch> = Vec::new();
         for start in 0..text.len() {
             let soft_start = !text.can_start(start);
+            let head = head_before(&text.chars, words, start);
             if soft_start && !text.soft_start(start) {
                 continue;
             }
@@ -243,33 +233,63 @@ impl<'a> Analyzer<'a> {
             // Where a match ends decides between readings: a point that
             // ends a sentence (の of 行くの？, not of 行くのは), and one
             // that never does (にしろ of 雨にしろ、; at the end it is
-            // にする's command), and one whose に isn't にする's or
-            // になる's (以上にしろ is 以上 + にする).
+            // にする's command), and one whose に or と isn't にする's,
+            // になる's or とする's (以上にしろ is 以上 + にする; いないとして
+            // quotes, it isn't ないと).
+            // One char inside a word is a kana of its ending or of a
+            // compound (な of 買わなかった), not a particle, unless it ends
+            // the word (ば of 急げば).
+            let fits_text = |len: usize| {
+                (len >= 2 || text.word_start(start) || text.word_end(start + len))
+                    && (text.can_end(start, start + len)
+                        || (!soft_start && text.soft_end(start, start + len)))
+            };
+            // The longest length whose point was turned down only for what
+            // it comes after: a shorter match there would be a piece of it
+            // (の of よいのか once のか is out).
+            let refused = Cell::new(0);
             let keep = |e: &GrammarEntry, len: usize| {
                 let end = start + len;
                 let before_suru = e.no_suru
                     && end > 0
-                    && text.chars.get(end - 1) == Some(&'に')
-                    && words.iter().find(|w| w.start == end).is_some_and(|w| {
-                        ["する", "為る", "なる", "成る"].contains(&w.base.as_str())
+                    && text
+                        .chars
+                        .get(end - 1)
+                        .is_some_and(|c| ['に', 'と'].contains(c))
+                    && words.iter().any(|w| {
+                        (w.start == end
+                            && ["する", "為る", "なる", "成る"].contains(&w.base.as_str()))
+                            // Or the particle read with it: として (とする).
+                            || (w.start + 1 == end
+                                && ["にする", "になる", "とする", "となる"]
+                                    .contains(&w.base.as_str()))
                     });
-                // 、 closes a clause the の ends, but 雨にしろ、 goes on.
-                (!e.ends || ends_here(&text.chars, words, end, true))
+                let matched = text.slice(start, end).unwrap_or_default();
+                // 、 closes a clause the の ends, but 雨にしろ、 goes on. A
+                // sentence's last word is written as is: といって、 isn't
+                // the hearsay という.
+                let fits = (!e.ends
+                    || (ends_here(&text.chars, words, end, true)
+                        && e.keys().any(|k| k == matched)))
                     && !(e.continues && ends_here(&text.chars, words, end, false))
-                    && !before_suru
+                    && !before_suru;
+                // A point that names what it comes after isn't found
+                // elsewhere: then the text's other forms of that length are
+                // tried (いないとして is とする's, not として "as").
+                if fits && !fits_after(e, &head, matched) {
+                    if fits_text(len) {
+                        refused.set(refused.get().max(len));
+                    }
+                    return false;
+                }
+                fits
             };
             let best = self
                 .dict
                 .matches_at_where(rest, MAX_PATTERN_CHARS, keep)
                 .into_iter()
-                .find(|&(_, len)| {
-                    // One char inside a word is a kana of its ending or of
-                    // a compound (な of 買わなかった), not a particle,
-                    // unless it ends the word (ば of 急げば).
-                    (len >= 2 || text.word_start(start) || text.word_end(start + len))
-                        && (text.can_end(start, start + len)
-                            || (!soft_start && text.soft_end(start, start + len)))
-                });
+                .find(|&(_, len)| fits_text(len))
+                .filter(|&(_, len)| len >= refused.get());
             if let Some((mut entries, len)) = best {
                 // A homograph comes along in its partner's group: だから
                 // is kara-reason's spelling, not kara-from's.
@@ -745,6 +765,23 @@ impl Head<'_> {
             _ => false,
         }
     }
+}
+
+/// Whether `e` may come after `head`, where the text it matched is
+/// `matched`.
+fn fits_after(e: &GrammarEntry, head: &Head<'_>, matched: &str) -> bool {
+    e.after.is_empty()
+        || e.after.iter().any(|k| head.is(k))
+        // The copula a noun takes before a predicate's ending (休みなの,
+        // 雨だから, 学生ですから), or opening a sentence (だから、…).
+        || (e.after.iter().any(|k| k == "predicate")
+            && matched.starts_with(['な', 'だ', 'で'])
+            && (head.is("noun") || matches!(head, Head::Nothing)))
+        // A form holding its verb: あり of ありえない, 泣く of 泣くに泣けない.
+        || e.after.iter().any(|k| {
+            ["masu-stem", "verb-plain"].contains(&k.as_str())
+                && own_heads(matched, e).any(|lead| Head::Text(lead).is(k))
+        })
 }
 
 /// The verbs `stem` is the ます-stem of, which the deinflection rules

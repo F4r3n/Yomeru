@@ -267,11 +267,13 @@ a Read first, and the file is thousands of lines. Instead:
   after a noun: 休み{なの}), `adjective-stem` (寒{がる}, 嫌{がる},
   行きた{がる}). Last.
 - **final**: `final = true` for a point that ends a sentence (行く{の}？):
-  the breakdown then skips it before more of the sentence (行くのは).
+  the breakdown then skips it before more of the sentence (行くのは),
+  and finds it only as written, never conjugated (といって isn't it).
   `continues = true` for one that never ends a sentence (雨{にしろ}…): at
   the end, にしろ reads as にする's command instead. `no_suru = true` for
-  a point ending in に that never goes before する/なる (以上に "more
-  than"): there the に is にする's (80%以上にしろ). After `after`.
+  a point ending in に or と that never goes before する/なる (以上に
+  "more than", ないと "must"): there it is にする's or とする's
+  (80%以上にしろ, いないとして). After `after`.
 - **examples**: 5 (entries written before 2026-11-18 have 2–3 until an
   examples batch extends them), under ~26 chars of Japanese, at the
   entry's level or below in vocabulary; the `{…}` mark covers the pattern

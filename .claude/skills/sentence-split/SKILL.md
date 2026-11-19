@@ -116,6 +116,6 @@ Grammar (`sentence-core`, `data/grammar.toml`):
 
 ## Last scores
 
-2026-11-19, after the tech-blog text: segmentation F1 88.9, boundaries 95.0,
-right entry 97.8%, exact 57.8%; grammar exact 88.0%, other matches 2.78 per
-sentence. Always take a fresh baseline: these move with every change.
+2026-11-19, after a Wikipedia text (とする, という): segmentation F1 88.9,
+boundaries 95.0, right entry 97.8%, exact 57.8%; grammar exact 88.1%, other
+matches 2.78 per sentence. Always take a fresh baseline: these move with every change.

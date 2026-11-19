@@ -62,20 +62,21 @@
 #                に行く off 学校に行く. Only for a point that misfires; last
 #   final        optional, true: the point ends a sentence (行く{の}？),
 #                and the breakdown finds it only before the end,
-#                punctuation or よ, ね, さ, な; not before the は of
-#                行くのは. After `after`
+#                punctuation or よ, ね, さ, な, and as written (not
+#                conjugated); not before the は of 行くのは. After `after`
 #   continues    optional, true: the point never ends a sentence (雨{にしろ}
 #                雪にしろ、…); the breakdown skips it at the end, where
 #                にしろ is にする's command. After `after`
-#   no_suru      optional, true: the point's に never comes before する or
-#                なる (以上に "more than"); there the breakdown reads the
-#                に as にする's (80%以上{にしろ}). After `after`
+#   no_suru      optional, true: the point's final に or と never comes
+#                before する or なる (以上に "more than", ないと "must");
+#                there the breakdown reads it as にする's or とする's
+#                (80%以上{にしろ}, いないとして). After `after`
 #   hover        optional, default true; false keeps the entry out of the
 #                hover popup, reachable by search only (って would match
 #                inside 行って). One-char patterns (は, に, て) never show on
 #                hover anyway: the popup skips matches under two chars
 
-next_seq = 942
+next_seq = 943
 
 [[point]]
 id = "te-mo-ii"
@@ -3908,6 +3909,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "早く行か{ないと}、遅れるよ。", en = "If we don't go soon, we'll be late." },
   { source = "yomeru", id = "y2", ja = "練習し{ないと}、上手になりません。", en = "Unless you practise, you won't get better." },
 ]
+no_suru = true
 
 [[point]]
 id = "nakereba-naranai"
@@ -7927,7 +7929,8 @@ The noun after it often is 人, 名前, 話, こと, 意味. Usually written in 
 kana; と言う with the kanji is the verb "say" in its literal sense. \
 Casual speech says っていう: ポチっていう犬. Search only: という is \
 everywhere in text."""
-related = ["to-iu-koto", "to-iu-no-wa", "tte"]
+related = ["to-iu-koto", "to-iu-no-wa", "tte", "to-iu-hearsay"]
+homographs = ["to-iu-hearsay"]
 examples = [
   { tatoeba = "48271_211000", ja = "その犬はジョン{という}名前です。", en = "The dog answers to the name John." },
   { tatoeba = "58126_220804", ja = "この川は何{という}のですか。", en = "What is the name of this river?" },
@@ -7935,6 +7938,37 @@ examples = [
   { tatoeba = "52905_215603", ja = "ジョーンズさん{という}人が外で待っています。", en = "A Mr Jones is waiting for you outside." },
   { tatoeba = "247399_167103", ja = "私たちのチームが勝った{という}知らせを聴いた。", en = "I heard the news that our team had won." },
 ]
+continues = true
+
+[[point]]
+id = "to-iu-hearsay"
+seq = 942
+pattern = "という"
+forms = []
+jlpt = "N3"
+hover = false
+meaning = "(ending a sentence) they say, reportedly; (someone) says"
+formation = ["Sentence (plain) + という。"]
+explanation = """
+Closes a sentence to pass on what was said or reported, without vouching \
+for it: 昔ここに城があったという, "they say there was a castle here \
+once". With a named speaker it is simply "says": 兄は疲れたという, "my \
+brother says he's tired". Common in writing, news and stories."""
+notes = """
+Written in kana in this use. Speech prefers そうだ or って: 雨が降るそうだ, \
+雨が降るって. The という that goes on to a noun (田中という人, 雨が降るという話) \
+is "called" or "that says"; this one ends the sentence. ということだ is \
+the same hearsay, a little more formal."""
+related = ["to-iu", "sou-da-hearsay", "tte", "to-iu-koto", "to-iwarete-iru"]
+homographs = ["to-iu"]
+examples = [
+  { tatoeba = "315358_88349", ja = "彼女は生活が単調だ{という}。", en = "She says her life is monotonous." },
+  { tatoeba = "250703_163807", ja = "私の兄は暗闇は恐くない{という}。", en = "My brother says he isn't afraid of the dark." },
+  { tatoeba = "319848_83868", ja = "腹が減った{という}。", en = "He said that he was hungry." },
+  { source = "yomeru", id = "y1", ja = "昔、この村には大きな寺があった{という}。", en = "They say there was once a big temple in this village." },
+  { source = "yomeru", id = "y2", ja = "二人はもう別れた{という}。", en = "Reportedly, the two have already broken up." },
+]
+final = true
 
 [[point]]
 id = "to-iu-no-wa"
@@ -10636,7 +10670,7 @@ seq = 364
 pattern = "とする"
 forms = ["とします", "だとする", "だとします"]
 jlpt = "N3"
-meaning = "suppose (that), let's say; (formal) decide, rule that"
+meaning = "suppose (that), let's say; (formal) decide, rule that; claim"
 formation = [
   "Verb / ［い］Adjective + とする   (ある → あるとする)",
   "［な］Adjective / Noun + (だ)とする   (中止とする)",
@@ -10645,7 +10679,9 @@ explanation = """
 Lays down an assumption to reason from, whatever the real facts are: \
 仮に毎日10ページ読むとする, "say you read ten pages a day". とします is \
 common when explaining or setting up a problem: ここに箱が二つあるとします, \
-"suppose there are two boxes here". 仮に or もし often comes first."""
+"suppose there are two boxes here". In news and reports, としている \
+says what someone holds or claims: 会社は問題はないとしている, "the \
+company maintains there's no problem"."""
 notes = """
 In rules and notices, Noun + とする states a decision: 雨の場合は中止とする, \
 "if it rains, it's called off" (in speech, にする). としたら / とすれば \
@@ -10657,8 +10693,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "ここにりんごが三つある{とします}。", en = "Suppose there are three apples here." },
   { source = "yomeru", id = "y2", ja = "明日雨が降る{とする}。どうする？", en = "Let's say it rains tomorrow. What will you do?" },
   { source = "yomeru", id = "y3", ja = "雨の場合、試合は中止{とする}。", en = "In case of rain, the match will be called off." },
-  { source = "yomeru", id = "y4", ja = "百万円もらった{とする}。何を買う？", en = "Say you got a million yen. What would you buy?" },
   { source = "yomeru", id = "y5", ja = "レポートの締め切りは金曜日{とします}。", en = "We'll set Friday as the deadline for the report." },
+  { source = "yomeru", id = "y6", ja = "彼は自分は悪くない{としている}。", en = "He maintains that he did nothing wrong." },
 ]
 
 [[point]]
@@ -10754,6 +10790,7 @@ examples = [
   { source = "yomeru", id = "y3", ja = "兄はボランティア{として}、毎週公園を掃除している。", en = "My brother cleans the park every week as a volunteer." },
   { source = "yomeru", id = "y4", ja = "彼は一日{として}練習を休まなかった。", en = "He didn't skip practice for a single day." },
 ]
+after = ["noun-or-particle"]
 
 [[point]]
 id = "wa-mochiron"

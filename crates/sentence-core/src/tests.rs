@@ -46,10 +46,13 @@ fn dict() -> &'static GrammarDict {
             word(30, "", "の", vec![P::Particle], "of"),
             word(31, "為る", "する", vec![P::VerbSuru], "to do"),
             word(32, "以上", "いじょう", vec![P::Noun], "or more"),
+            word(33, "", "が", vec![P::Particle], "subject marker; but"),
+            word(34, "", "と", vec![P::Particle], "quote"),
+            word(35, "", "とする", vec![P::Expression, P::VerbSuru], "to assume"),
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 22\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+            "next_seq = 26\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -123,6 +126,16 @@ fn dict() -> &'static GrammarDict {
             point("nari", 20, "なり", "見る{なり}。", "after = [\"verb-plain\"]"),
             point("garu", 21, "がる", "高{がる}。", "after = [\"adjective-stem\"]"),
             point("ijou-ni", 18, "以上に", "思った{以上に}高い。", "no_suru = true"),
+            point("wa-ga", 22, "は〜が", "彼女{は本が}高い。", ""),
+            point("nai-to", 23, "ないと", "食べ{ないと}。", "no_suru = true"),
+            point(
+                "to-shite",
+                24,
+                "として",
+                "本{として}。",
+                "after = [\"noun-or-particle\"]"
+            ),
+            point("to-suru", 25, "とする", "食べる{とする}。", ""),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
     })
@@ -371,4 +384,34 @@ fn a_sentence_ending_point_is_found_only_at_the_end() {
     assert!(has("本以上に高い", "ijou-ni"));
     assert!(!has("本以上にしろ", "ijou-ni"));
     assert!(has("本以上にしろ", "ijou"));
+}
+
+#[test]
+fn a_quoting_to_before_suru_isnt_a_point_of_its_own() {
+    let has = |sentence: &str, id: &str| {
+        grammar(sentence)
+            .iter()
+            .any(|(_, ids, _)| ids.contains(&id.to_owned()))
+    };
+    // ないと is "must", but before する (or read in として) it quotes.
+    assert!(has("本を食べないと。", "nai-to"));
+    assert!(!has("本を食べないとする。", "nai-to"));
+    assert!(!has("本を食べないとして", "nai-to"));
+    // として "as" follows a noun; after a verb it is とする's.
+    assert!(has("本として", "to-shite"));
+    assert!(!has("本を食べないとして", "to-shite"));
+    assert!(has("本を食べないとして", "to-suru"));
+}
+
+#[test]
+fn a_ga_after_a_predicate_isnt_wa_gas() {
+    let has = |sentence: &str| {
+        grammar(sentence)
+            .iter()
+            .any(|(_, ids, _)| ids.contains(&"wa-ga".to_owned()))
+    };
+    assert!(has("彼女は本が高い。"));
+    // That が joins two clauses: "she eats it, but…".
+    assert!(!has("彼女は本を食べるが、高い。"));
+    assert!(!has("彼女は高いが、"));
 }
