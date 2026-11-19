@@ -85,6 +85,72 @@ pub struct Word {
     pub attach: usize,
 }
 
+/// Verb forms the deinflection rules don't read, as `(dictionary form,
+/// reasons, ichidan)`: the ます-stem alone (知り → 知る, 食べ → 食べる),
+/// and the negatives ん (泣かん → 泣く) and ねば (書かねば → 書く). Each
+/// form says whether it is an ichidan verb's or a godan one's, which the
+/// entry must be.
+fn extra_forms(surface: &str) -> Vec<(String, Reasons, bool)> {
+    let mut out = Vec::new();
+    // The u-row kana of an i-row or a-row one: 知り → る, 泣か → く.
+    let u_of = |c: char| -> Option<char> {
+        Some(match c {
+            'い' | 'わ' => 'う',
+            'き' | 'か' => 'く',
+            'ぎ' | 'が' => 'ぐ',
+            'し' | 'さ' => 'す',
+            'ち' | 'た' => 'つ',
+            'に' | 'な' => 'ぬ',
+            'び' | 'ば' => 'ぶ',
+            'み' | 'ま' => 'む',
+            'り' | 'ら' => 'る',
+            _ => return None,
+        })
+    };
+    let a_row = |c: char| "わかがさたなばまら".contains(c);
+    let godan = |stem: &str, reasons: Reasons, out: &mut Vec<(String, Reasons, bool)>| {
+        if let Some((i, last)) = stem.char_indices().next_back()
+            && let Some(u) = u_of(last)
+        {
+            out.push((format!("{}{u}", &stem[..i]), reasons, false));
+        }
+    };
+    let masu = Reasons::of(&[Reason::MasuStem]);
+    if surface.chars().next_back().is_some_and(|c| !a_row(c)) {
+        godan(surface, masu, &mut out);
+    }
+    out.push((format!("{surface}る"), masu, true));
+    for (ending, reasons) in [
+        ("ん", Reasons::of(&[Reason::Negative])),
+        (
+            "ねば",
+            Reasons::of(&[Reason::Negative, Reason::Conditional]),
+        ),
+    ] {
+        let Some(stem) = surface.strip_suffix(ending).filter(|s| !s.is_empty()) else {
+            continue;
+        };
+        if stem.chars().next_back().is_some_and(a_row) {
+            godan(stem, reasons, &mut out);
+        }
+        out.push((format!("{stem}る"), reasons, true));
+    }
+    out
+}
+
+/// Whether `e` is an ichidan verb and no other kind of verb.
+fn ichidan_only(e: &ArchivedWordEntry) -> bool {
+    let mut ichidan = false;
+    for p in e.senses.iter().flat_map(|s| s.pos.iter()) {
+        if matches!(p, P::VerbIchidan | P::VerbIchidanS) {
+            ichidan = true;
+        } else if class_of(p) == Some(Class::Verb) {
+            return false;
+        }
+    }
+    ichidan
+}
+
 /// Whether `e` is a godan verb and no other kind.
 fn godan_only(e: &ArchivedWordEntry) -> bool {
     let mut godan = false;
@@ -229,6 +295,20 @@ pub struct Costs {
     /// An affix not where it attaches: a suffix after anything but a noun,
     /// a prefix before anything but a noun.
     pub stray_affix: i32,
+    /// Text that is none of the entry's spellings, found only because the
+    /// index folds kana: があ for ガー.
+    pub kana_mismatch: i32,
+    /// A kana content word without a top frequency tag opening on a
+    /// particle's kana right after a noun or particle: は|どう read as
+    /// 波動, は|めった, が|あ. (とても, もう are common: no cost.)
+    pub particle_head: i32,
+    /// The share, in percent, of the frequency cost one-kana particles and
+    /// auxiliaries pay: JMdict tags few of them (ん, ぬ), common as they
+    /// are.
+    pub function_freq_percent: i32,
+    /// A verb form only the lattice reads (the bare ます-stem, ん, ねば):
+    /// where a noun is written the same (休み), the noun is likelier.
+    pub extra_form: i32,
 }
 
 impl Default for Costs {
@@ -249,6 +329,10 @@ impl Default for Costs {
             after_interjection: 1200,
             noun_noun: 300,
             stray_affix: 700,
+            kana_mismatch: 1500,
+            particle_head: 1000,
+            function_freq_percent: 50,
+            extra_form: 600,
         }
     }
 }
@@ -277,6 +361,10 @@ impl Costs {
                 "after_interjection" => &mut self.after_interjection,
                 "noun_noun" => &mut self.noun_noun,
                 "stray_affix" => &mut self.stray_affix,
+                "kana_mismatch" => &mut self.kana_mismatch,
+                "particle_head" => &mut self.particle_head,
+                "function_freq_percent" => &mut self.function_freq_percent,
+                "extra_form" => &mut self.extra_form,
                 other => return Err(format!("no cost named {other}")),
             };
             *slot = v;
@@ -284,11 +372,18 @@ impl Costs {
         Ok(self)
     }
 
-    /// The cost of reading `next` after `prev` (a state).
-    fn connection(&self, prev: usize, next: Class) -> i32 {
+    /// The cost of reading `node` after `prev` (a state).
+    fn connection(&self, prev: usize, node: &Node) -> i32 {
         use Class as C;
         let prev = CLASSES.get(prev).copied();
-        match (prev, next) {
+        let head = if node.particle_head
+            && matches!(prev, Some(C::Noun | C::Suffix | C::Unknown | C::Particle))
+        {
+            self.particle_head
+        } else {
+            0
+        };
+        head + match (prev, node.class) {
             (None, C::Particle | C::Suffix | C::Auxiliary) => self.clause_open,
             (Some(_), C::Conjunction | C::Interjection) => self.mid_conjunction,
             (Some(C::Particle), C::Particle) => self.particle_particle,
@@ -384,20 +479,24 @@ fn godan_row(p: &P) -> Option<&'static str> {
     })
 }
 
-/// Whether `surface` can be the verb `e` conjugated from `base`. Only a
-/// verb that is godan and nothing else is checked: its stem (`base` less
-/// its last kana) must go on with a kana of its row.
+/// Whether `surface` can be the verb `e` conjugated from `base`. A verb
+/// that is godan and nothing else must go on from its stem (`base` less
+/// its last kana) with a kana of its row; one that is ichidan and nothing
+/// else never with っ, り or ん (はめった isn't はめる's past: はめた is).
 fn verb_fits(e: &ArchivedWordEntry, base: &str, surface: &str) -> bool {
     let mut rows = Vec::new();
+    let mut ichidan = false;
     for p in e.senses.iter().flat_map(|s| s.pos.iter()) {
         match godan_row(p) {
             Some(row) => rows.push(row),
-            // Another verb type (ichidan, する, くる…): no check.
+            None if matches!(p, P::VerbIchidan | P::VerbIchidanS) => ichidan = true,
+            // Another verb type (する, くる…): no check.
             None if class_of(p) == Some(Class::Verb) => return true,
             None => {}
         }
     }
-    if rows.is_empty() {
+    if rows.is_empty() == !ichidan {
+        // Not a verb, or both godan and ichidan: no check.
         return true;
     }
     let Some((last, _)) = base.char_indices().next_back() else {
@@ -409,6 +508,9 @@ fn verb_fits(e: &ArchivedWordEntry, base: &str, surface: &str) -> bool {
         // stem: nothing to check.
         return true;
     };
+    if ichidan {
+        return !matches!(next, 'っ' | 'り' | 'ん');
+    }
     rows.iter().any(|row| row.contains(next))
 }
 
@@ -420,6 +522,8 @@ struct Node {
     entry: Option<&'static ArchivedWordEntry>,
     base: String,
     reasons: Reasons,
+    /// A kana content word whose first kana is a particle's (はどう).
+    particle_head: bool,
 }
 
 /// The candidates for one dictionary form of `surface`, one per class its
@@ -435,6 +539,9 @@ fn push_nodes(
 ) {
     let kana = surface.chars().all(japanese_utils::is_kana);
     let lone_kana = kana && len == 1;
+    let particle_head = kana
+        && len >= 2
+        && surface.starts_with(['は', 'が', 'を', 'に', 'で', 'と', 'も', 'へ', 'の']);
     for &e in entries {
         // A form already read for this entry by a less conjugated path.
         if out
@@ -451,9 +558,18 @@ fn push_nodes(
         });
         let kana_for_kanji =
             kana && !e.kanji_forms.is_empty() && !usually_kana && form_is_reading(e, form);
-        let base_cost = costs.word + costs.freq(e, form);
+        let spelled = e.kanji_forms.iter().any(|k| k.text.as_str() == form)
+            || e.reading_forms.iter().any(|r| r.text.as_str() == form);
+        let freq = costs.freq(e, form);
+        let base_cost = costs.word + if spelled { 0 } else { costs.kana_mismatch };
         for (rank, s) in e.senses.iter().enumerate() {
-            for class in s.pos.iter().filter_map(class_of) {
+            // `vs` (merged with する's own `vs-i`) tags a noun taking する:
+            // 破滅 is no verb, so はめった isn't it conjugated as one. Its
+            // する forms come through the SuruStem rule.
+            let pos = s.pos.iter().filter(|p| {
+                !matches!(p, P::VerbSuru) || form.ends_with("する") || form.ends_with("ずる")
+            });
+            for class in pos.filter_map(class_of) {
                 if seen.contains(&class)
                     || (!reasons.is_empty() && !conjugates(class, e, reasons, form, surface))
                 {
@@ -465,9 +581,11 @@ fn push_nodes(
                         class,
                         Class::Particle | Class::Auxiliary | Class::Suffix | Class::Prefix
                     );
+                let function = len == 1 && matches!(class, Class::Particle | Class::Auxiliary);
                 out.push(Node {
                     len,
                     cost: base_cost
+                        + if function { freq * costs.function_freq_percent / 100 } else { freq }
                         + costs.later_sense * (rank.min(3) as i32)
                         + if lone { costs.lone_kana } else { 0 }
                         // Function words are written in kana anyway: the
@@ -482,6 +600,7 @@ fn push_nodes(
                     entry: Some(e),
                     base: form.to_owned(),
                     reasons,
+                    particle_head: particle_head && content(class) && freq > 0,
                 });
             }
         }
@@ -529,6 +648,27 @@ fn candidates(
         let Some(surface) = window.get(..byte_end) else {
             continue;
         };
+        for (form, reasons, ichidan) in extra_forms(surface) {
+            let Some(indices) = walk.get(&window, &form).and_then(get_entry_group) else {
+                continue;
+            };
+            let entries: Vec<_> = indices
+                .iter()
+                .filter_map(|&i| get_entry(i))
+                .filter(|e| {
+                    if ichidan {
+                        ichidan_only(e)
+                    } else {
+                        godan_only(e)
+                    }
+                })
+                .collect();
+            let from = out.len();
+            push_nodes(costs, &mut out, &entries, surface, len, &form, reasons);
+            for n in out.get_mut(from..).into_iter().flatten() {
+                n.cost += costs.extra_form;
+            }
+        }
         if !walk.reaches(byte_end) && !deinflect::can_deinflect(surface) {
             continue;
         }
@@ -565,6 +705,7 @@ fn unknown(run: &[char], len: usize, cost: i32) -> Node {
         entry: None,
         base: run.iter().take(len).collect(),
         reasons: Reasons::EMPTY,
+        particle_head: false,
     }
 }
 
@@ -605,6 +746,30 @@ impl Table {
 /// covers is, with no entry.
 pub fn segment(sentence: &str) -> Vec<Word> {
     segment_with(sentence, &Costs::default())
+}
+
+/// The candidates the lattice weighs at char `at` of `sentence`, as
+/// `(len, class, cost, headword)`: for tuning the costs.
+#[doc(hidden)]
+pub fn candidates_at(sentence: &str, at: usize, costs: &Costs) -> Vec<(usize, Class, i32, String)> {
+    let chars: Vec<char> = sentence.chars().collect();
+    let rest = chars.get(at..).unwrap_or_default();
+    let run_len = rest.iter().take_while(|&&c| wordy(c)).count();
+    let run = rest.get(..run_len).unwrap_or_default();
+    if run.is_empty() {
+        return Vec::new();
+    }
+    let mut walk = FstWalk::default();
+    let mut deinflector = deinflect::Deinflector::default();
+    candidates(costs, run, &mut walk, &mut deinflector)
+        .into_iter()
+        .map(|n| {
+            let head = n
+                .entry
+                .map_or_else(|| n.base.clone(), |e| e.headword().to_owned());
+            (n.len, n.class, n.cost, head)
+        })
+        .collect()
 }
 
 /// [`segment`] with other costs, for tuning them.
@@ -662,7 +827,7 @@ pub fn segment_with(sentence: &str, costs: &Costs) -> Vec<Word> {
             };
             for (i, node) in here_nodes.iter().enumerate() {
                 let step = Best {
-                    cost: here.cost + costs.connection(prev, node.class) + node.cost,
+                    cost: here.cost + costs.connection(prev, node) + node.cost,
                     from: (at, st),
                     node: Some((at, i)),
                 };

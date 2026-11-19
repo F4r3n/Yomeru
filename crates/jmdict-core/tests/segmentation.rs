@@ -15,7 +15,9 @@
 //!
 //! Scores when the lattice came in (2026-11-19), word / boundary F1, right
 //! entry, sentences split exactly: longest match at each point 79.3 / 89.2
-//! / 94.8 / 38.9%; lattice 88.5 / 94.8 / 97.7 / 56.5%.
+//! / 94.8 / 38.9%; lattice 88.5 / 94.8 / 97.7 / 56.5%; with the ichidan check, `vs`
+//! nouns kept out of verbs and the lattice-only verb forms (2026-11-19)
+//! 88.9 / 95.0 / 97.7 / 57.6%.
 //!
 //! The corpus' split is a convention as much as a truth: it sometimes keeps
 //! a particle with its word (私{私の}) or a whole ending as one token
@@ -344,6 +346,22 @@ fn seg_debug() {
                     })
             };
             eprintln!("{w}: {} pri={:?} {pos}", e.headword(), pri(w));
+        }
+    }
+    // SEG_AT=文:3 lists the candidates at char 3 of 文, with their costs.
+    for spec in std::env::var("SEG_AT").unwrap_or_default().split(',') {
+        let Some((s, at)) = spec.rsplit_once(':') else {
+            continue;
+        };
+        let at: usize = at.parse().unwrap();
+        let costs = jmdict_core::segment::Costs::default()
+            .with(&std::env::var("SEG_COSTS").unwrap_or_default())
+            .unwrap();
+        let mut c = jmdict_core::segment::candidates_at(s, at, &costs);
+        c.sort_by_key(|x| (x.0, x.2));
+        for (len, class, cost, head) in c {
+            let t: String = s.chars().skip(at).take(len).collect();
+            eprintln!("{s}@{at} {t} {head} {class:?} {cost}");
         }
     }
     for s in std::env::var("SEG_SENTENCES")

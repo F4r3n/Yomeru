@@ -56,10 +56,15 @@ pub enum Reason {
     Nominalization,
     /// する taken off a suru noun (勉強する → 勉強).
     SuruStem,
+    /// The ます-stem standing alone (知りつつ, 食べに行く). No rule of this
+    /// crate gives it, as any word ending in an i-row kana would then
+    /// read as a verb; the sentence lattice (jmdict-core) tries it where
+    /// a verb is likely.
+    MasuStem,
 }
 
 impl Reason {
-    pub const ALL: [Reason; 27] = [
+    pub const ALL: [Reason; 28] = [
         Self::Negative,
         Self::Past,
         Self::Polite,
@@ -87,6 +92,7 @@ impl Reason {
         Self::Adverbial,
         Self::Nominalization,
         Self::SuruStem,
+        Self::MasuStem,
     ];
 
     const fn bit(self) -> u32 {

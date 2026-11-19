@@ -75,10 +75,52 @@ fn build_test_binary() -> Vec<u8> {
         // ichidan rule ない → る would read as 張る conjugated.
         make_entry(13, "", "が", vec![PartOfSpeech::Particle], "subject marker"),
         make_entry(14, "", "があ", vec![PartOfSpeech::Interjection], "caw"),
-        make_entry(15, "有る", "ある", vec![PartOfSpeech::VerbGodanRuIrr], "to be"),
+        make_entry(
+            15,
+            "有る",
+            "ある",
+            vec![PartOfSpeech::VerbGodanRuIrr],
+            "to be",
+        ),
         make_entry(16, "", "は", vec![PartOfSpeech::Particle], "topic marker"),
-        make_entry(17, "張る", "はる", vec![PartOfSpeech::VerbGodanRu], "to stretch"),
-        make_entry(18, "", "ない", vec![PartOfSpeech::AuxiliaryAdjective], "not"),
+        make_entry(
+            17,
+            "張る",
+            "はる",
+            vec![PartOfSpeech::VerbGodanRu],
+            "to stretch",
+        ),
+        make_entry(
+            18,
+            "",
+            "ない",
+            vec![PartOfSpeech::AuxiliaryAdjective],
+            "not",
+        ),
+        // Verb forms only the lattice reads (知り, 泣かん), and a noun
+        // taking する, which is no godan verb (破滅).
+        make_entry(
+            19,
+            "知る",
+            "しる",
+            vec![PartOfSpeech::VerbGodanRu],
+            "to know",
+        ),
+        make_entry(20, "", "つつ", vec![PartOfSpeech::Particle], "while"),
+        make_entry(
+            21,
+            "泣く",
+            "なく",
+            vec![PartOfSpeech::VerbGodanKu],
+            "to cry",
+        ),
+        make_entry(
+            22,
+            "破滅",
+            "はめつ",
+            vec![PartOfSpeech::Noun, PartOfSpeech::VerbSuru],
+            "ruin",
+        ),
     ];
     build_binary(&entries)
 }
@@ -556,10 +598,7 @@ fn split(sentence: &str) -> Vec<String> {
 fn the_lattice_reads_two_words_over_a_word_and_a_leftover() {
     ensure_test_dict();
     // The longest match takes があ, and る is no word.
-    assert_eq!(
-        lookup_longest_match("がある", 20).map(|(_, n)| n),
-        Some(2)
-    );
+    assert_eq!(lookup_longest_match("がある", 20).map(|(_, n)| n), Some(2));
     assert_eq!(split("本がある"), ["本", "が", "ある"]);
 }
 
@@ -584,4 +623,29 @@ fn a_word_carries_its_base_and_conjugation() {
     assert_eq!(split("日本で書いた"), ["日本", "で", "書いた"]);
     assert!(words[1].entry.is_none());
     assert!(crate::segment::segment("").is_empty());
+}
+
+#[test]
+fn the_lattice_reads_a_bare_masu_stem_and_the_negative_n() {
+    ensure_test_dict();
+    assert_eq!(split("知りつつ"), ["知り", "つつ"]);
+    let words = crate::segment::segment("知りつつ泣かん");
+    assert_eq!(words[0].base, "知る");
+    assert!(words[0].reasons.contains(deinflect::Reason::MasuStem));
+    assert_eq!(words[2].base, "泣く");
+    assert!(words[2].reasons.contains(deinflect::Reason::Negative));
+}
+
+#[test]
+fn a_noun_taking_suru_isnt_a_godan_verb() {
+    ensure_test_dict();
+    // った → つ would make はめった 破滅 (はめつ) conjugated.
+    let words = crate::segment::segment("はめった");
+    assert!(
+        words
+            .iter()
+            .all(|w| w.entry.is_none_or(|e| e.sequence.to_native() != 22)),
+        "{:?}",
+        words.iter().map(|w| &w.base).collect::<Vec<_>>()
+    );
 }
