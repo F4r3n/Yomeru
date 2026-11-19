@@ -5,6 +5,7 @@
 
 pub mod dictionary;
 pub mod lookup;
+pub mod segment;
 pub mod vocab;
 
 #[cfg(any(test, feature = "test-utils"))]

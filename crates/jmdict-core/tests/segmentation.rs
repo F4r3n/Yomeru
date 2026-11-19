@@ -1,4 +1,4 @@
-//! How well `vocab::sentence_words` splits real sentences, measured against
+//! How well `segment::segment` splits real sentences, measured against
 //! the word split of the Tanaka corpus (`examples.utf`'s `B:` lines). A
 //! report, not a pass/fail test: it prints the scores and the commonest
 //! disagreements, so a change to the segmenter can be compared with the
@@ -10,7 +10,12 @@
 //! ```
 //!
 //! `JMDICT_BIN` must be a `jmdict-types/full` build (see `real_dict.rs`).
-//! `SEG_REPORT=path.tsv` also writes every disagreement, one per line.
+//! `SEG_REPORT=path.tsv` also writes every disagreement, one per line, and
+//! `SEG_COSTS=no_freq=1500,word=900` tries other costs (`segment::Costs`).
+//!
+//! Scores when the lattice came in (2026-11-19), word / boundary F1, right
+//! entry, sentences split exactly: longest match at each point 79.3 / 89.2
+//! / 94.8 / 38.9%; lattice 88.5 / 94.8 / 97.7 / 56.5%.
 //!
 //! The corpus' split is a convention as much as a truth: it sometimes keeps
 //! a particle with its word (私{私の}) or a whole ending as one token
@@ -27,6 +32,8 @@
 
 use std::collections::{BTreeSet, HashMap};
 use std::fmt::Write as _;
+
+use jmdict_types::ArchivedWordEntry;
 
 /// One word of a `B:` line, located in its sentence.
 struct Gold {
@@ -68,9 +75,9 @@ fn narrow(s: &str) -> String {
         .collect()
 }
 
-/// The corpus keeps some particles and する with the word before
-/// (私{私の}, 有名{有名な}, 勉強{勉強した}); a breakdown shows them apart, so
-/// the gold does too. Returns the word's own length in chars and the
+/// The corpus keeps some particles with the word before (私{私の},
+/// 有名{有名な}); a breakdown shows them apart, so the gold does too. A
+/// noun with する stays one word (勉強{勉強した}), as the segmenter reads it. Returns the word's own length in chars and the
 /// headword of what follows, when the token splits.
 fn glued(headword: &str, surface: &str) -> Option<(usize, &'static str)> {
     let rest = surface.strip_prefix(headword).filter(|r| !r.is_empty())?;
@@ -80,14 +87,6 @@ fn glued(headword: &str, surface: &str) -> Option<(usize, &'static str)> {
         "な" => Some((own, "な")),
         "に" => Some((own, "に")),
         "と" => Some((own, "と")),
-        // 勉強した: a noun written in kanji or katakana, then する.
-        _ if rest.starts_with(['し', 'す', 'さ', 'せ'])
-            && headword.chars().all(|c| {
-                japanese_utils::is_kanji(c) || ('ァ'..='ヺ').contains(&c) || c == 'ー'
-            }) =>
-        {
-            Some((own, "する"))
-        }
         _ => None,
     }
 }
@@ -192,7 +191,7 @@ impl Counts {
     }
 }
 
-fn entry_is(e: &jmdict_types::ArchivedWordEntry, g: &Gold) -> bool {
+fn entry_is(e: &ArchivedWordEntry, g: &Gold) -> bool {
     if let Some(seq) = g.sequence {
         return e.sequence.to_native() == seq;
     }
@@ -200,6 +199,18 @@ fn entry_is(e: &jmdict_types::ArchivedWordEntry, g: &Gold) -> bool {
         || e.reading_forms
             .iter()
             .any(|r| r.text.as_str() == g.headword)
+}
+
+/// The words of `sentence` as `segment::segment_with` reads them, with
+/// the costs of `SEG_COSTS`.
+fn split(sentence: &str) -> Vec<(usize, usize, Option<&'static ArchivedWordEntry>)> {
+    let costs = jmdict_core::segment::Costs::default()
+        .with(&std::env::var("SEG_COSTS").unwrap_or_default())
+        .unwrap();
+    jmdict_core::segment::segment_with(sentence, &costs)
+        .into_iter()
+        .map(|w| (w.start, w.len, w.entry))
+        .collect()
 }
 
 #[test]
@@ -234,7 +245,7 @@ fn segmentation_against_the_corpus() {
         };
         // Words wholly within what the corpus skips (names, punctuation)
         // aren't scored either way.
-        let pred: Vec<_> = jmdict_core::vocab::sentence_words(sentence)
+        let pred: Vec<_> = split(sentence)
             .into_iter()
             .filter(|&(s, l, _)| covered[s..s + l].iter().any(|&c| c))
             .collect();
@@ -264,7 +275,7 @@ fn segmentation_against_the_corpus() {
 
         for g in &gold {
             let matched = pred.iter().find(|&&(s, l, _)| (s, l) == (g.start, g.len));
-            if let Some(&(_, _, e)) = matched {
+            if let Some(&(_, _, Some(e))) = matched {
                 if entry_is(e, g) {
                     entry_ok += 1;
                 }
@@ -309,5 +320,46 @@ fn segmentation_against_the_corpus() {
     if let Ok(out) = std::env::var("SEG_REPORT") {
         std::fs::write(&out, report).unwrap();
         eprintln!("\nevery disagreement written to {out}");
+    }
+}
+
+#[test]
+#[ignore = "debug: SEG_WORDS=彼の,では cargo test … seg_debug -- --ignored --nocapture"]
+fn seg_debug() {
+    let path = std::env::var("JMDICT_BIN").expect("set JMDICT_BIN");
+    jmdict_core::init(&std::fs::read(&path).unwrap()).unwrap();
+    for w in std::env::var("SEG_WORDS").unwrap_or_default().split(',') {
+        for e in jmdict_core::lookup(w) {
+            let pos = format!("{:?}", jmdict_core::segment::classes(e));
+            let pri = |t: &str| {
+                e.kanji_forms
+                    .iter()
+                    .find(|k| k.text.as_str() == t)
+                    .map(|k| k.priorities.len())
+                    .or_else(|| {
+                        e.reading_forms
+                            .iter()
+                            .find(|r| r.text.as_str() == t)
+                            .map(|r| r.priorities.len())
+                    })
+            };
+            eprintln!("{w}: {} pri={:?} {pos}", e.headword(), pri(w));
+        }
+    }
+    for s in std::env::var("SEG_SENTENCES")
+        .unwrap_or_default()
+        .split(',')
+    {
+        let costs = jmdict_core::segment::Costs::default()
+            .with(&std::env::var("SEG_COSTS").unwrap_or_default())
+            .unwrap();
+        let words: Vec<String> = jmdict_core::segment::segment_with(s, &costs)
+            .iter()
+            .map(|w| {
+                let t: String = s.chars().skip(w.start).take(w.len).collect();
+                format!("{t}[{:?}]", w.class)
+            })
+            .collect();
+        eprintln!("{}", words.join(" "));
     }
 }

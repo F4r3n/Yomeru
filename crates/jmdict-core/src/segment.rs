@@ -1,0 +1,666 @@
+//! The words of a sentence, as the cheapest path through every word that
+//! could start at each char: a lattice, as MeCab builds, with costs set by
+//! hand from what JMdict knows (part of speech, frequency tags, kana or
+//! kanji) instead of trained on a corpus.
+//!
+//! Taking the longest word at each point reads がある as があ|る and はい
+//! where は|い was meant; weighing whole paths prefers two common words over
+//! a rare one and a leftover kana. `tests/segmentation.rs` scores it against
+//! the Tanaka corpus.
+
+use deinflect::{Reason, Reasons};
+use jmdict_types::{ArchivedFreqKind, ArchivedMisc, ArchivedPartOfSpeech as P, ArchivedWordEntry};
+
+use crate::dictionary::{FstWalk, get_entry, get_entry_group};
+
+/// The longest word tried, in chars.
+const MAX_WORD_CHARS: usize = 20;
+
+/// What a word is to its neighbours: the part of speech, coarsely.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Class {
+    Particle,
+    Noun,
+    NaAdjective,
+    Verb,
+    Adjective,
+    /// Auxiliaries and the copula: だ, です, らしい, そうだ.
+    Auxiliary,
+    Adverb,
+    Prefix,
+    /// Suffixes and counters: さん, 的, 個.
+    Suffix,
+    /// この, その, 大きな.
+    Prenominal,
+    Conjunction,
+    Interjection,
+    Expression,
+    /// No dictionary word: a name in katakana, a rare kanji.
+    Unknown,
+}
+
+const CLASSES: [Class; 14] = [
+    Class::Particle,
+    Class::Noun,
+    Class::NaAdjective,
+    Class::Verb,
+    Class::Adjective,
+    Class::Auxiliary,
+    Class::Adverb,
+    Class::Prefix,
+    Class::Suffix,
+    Class::Prenominal,
+    Class::Conjunction,
+    Class::Interjection,
+    Class::Expression,
+    Class::Unknown,
+];
+
+/// A lattice state: the class of the word just read, or the start of a
+/// clause (the sentence's start, or past punctuation).
+const START: usize = CLASSES.len();
+/// Past a number written in digits (3月): counters follow as after a noun.
+const AFTER_NUMBER: usize = CLASSES.len() + 1;
+const STATES: usize = CLASSES.len() + 2;
+
+/// One word of a sentence.
+#[derive(Clone)]
+pub struct Word {
+    /// Position and length in chars.
+    pub start: usize,
+    pub len: usize,
+    /// The entry read here; `None` for text no word covers.
+    pub entry: Option<&'static ArchivedWordEntry>,
+    /// The dictionary form looked up: 食べる for 食べさせられた.
+    pub base: String,
+    /// How the text is conjugated from `base`: causative, passive, past.
+    pub reasons: Reasons,
+    pub class: Class,
+}
+
+fn class_of(p: &P) -> Option<Class> {
+    Some(match p {
+        P::Particle => Class::Particle,
+        P::Conjunction => Class::Conjunction,
+        P::Interjection => Class::Interjection,
+        P::Noun
+        | P::NounAdverbial
+        | P::NounTemporal
+        | P::NounProper
+        | P::Pronoun
+        | P::Numeric
+        | P::AdjectiveNo => Class::Noun,
+        P::AdjectiveNa => Class::NaAdjective,
+        P::Adjective | P::AdjectiveFormal => Class::Adjective,
+        P::Auxiliary | P::AuxiliaryAdjective | P::AuxiliaryVerb | P::Copula => Class::Auxiliary,
+        P::Adverb | P::AdverbTo | P::AdjectiveT => Class::Adverb,
+        P::Prefix | P::NounPrefix => Class::Prefix,
+        P::Suffix | P::NounSuffix | P::Counter => Class::Suffix,
+        P::AdjectivePrenominal => Class::Prenominal,
+        P::Expression => Class::Expression,
+        P::VerbIchidan
+        | P::VerbIchidanS
+        | P::VerbGodanBu
+        | P::VerbGodanGu
+        | P::VerbGodanKu
+        | P::VerbGodanKuS
+        | P::VerbGodanMu
+        | P::VerbGodanNu
+        | P::VerbGodanRu
+        | P::VerbGodanRuIrr
+        | P::VerbGodanSu
+        | P::VerbGodanTsu
+        | P::VerbGodanU
+        | P::VerbGodanUS
+        | P::VerbGodanUru
+        | P::VerbSuru
+        | P::VerbSuruS
+        | P::VerbSuruC
+        | P::VerbKuru
+        | P::VerbNu
+        | P::VerbRu
+        | P::VerbUnclassified => Class::Verb,
+        P::VerbTransitive | P::VerbIntransitive | P::Unknown => return None,
+    })
+}
+
+/// The classes of `e`'s senses, in sense order, each once.
+pub fn classes(e: &ArchivedWordEntry) -> Vec<Class> {
+    let mut out = Vec::new();
+    for c in e
+        .senses
+        .iter()
+        .flat_map(|s| s.pos.iter().filter_map(class_of))
+    {
+        if !out.contains(&c) {
+            out.push(c);
+        }
+    }
+    out
+}
+
+fn state(c: Class) -> usize {
+    CLASSES.iter().position(|&k| k == c).unwrap_or(START)
+}
+
+/// A char a word can hold. Punctuation, digits and Latin letters end words.
+fn wordy(c: char) -> bool {
+    japanese_utils::is_kanji(c)
+        || japanese_utils::is_kana(c)
+        || matches!(c, '々' | '〆' | 'ヵ' | 'ヶ')
+}
+
+// ── Costs ────────────────────────────────────────────────────────────────
+
+/// What each trait of a reading costs; lower is likelier. Every word pays
+/// `word`, so fewer, longer words win unless they are rarer. Tuned against
+/// the corpus by `tests/segmentation.rs` (`SEG_COSTS` overrides them).
+#[derive(Debug, Clone)]
+pub struct Costs {
+    pub word: i32,
+    /// Per sense before the one a class comes from: 歯 (noun) is は's later
+    /// reading, after the particle.
+    pub later_sense: i32,
+    /// The form read has a frequency tag, but not a top one: news2, ichi2,
+    /// gai2, or the rarest nf band (nf48; nf01 costs a 48th of it).
+    pub some_freq: i32,
+    /// The form read has no frequency tag.
+    pub no_freq: i32,
+    /// Kana text read as a word usually written in kanji: は as 歯.
+    pub kana_for_kanji: i32,
+    /// A lone kana that isn't a particle, auxiliary or affix.
+    pub lone_kana: i32,
+    /// One char no word covers.
+    pub unknown_char: i32,
+    /// A katakana run no word covers, read as one name or loanword.
+    pub unknown_katakana: i32,
+    /// An expression (それは, という): a breakdown would rather show its
+    /// words, and the grammar layer names the pattern.
+    pub expression: i32,
+    /// A conjunction or interjection inside a clause: では after a noun is
+    /// で|は.
+    pub mid_conjunction: i32,
+    /// A clause opening on a particle, auxiliary or suffix.
+    pub clause_open: i32,
+    pub particle_particle: i32,
+    /// A word right after an interjection, with no punctuation between:
+    /// 今日は家で is 今日|は, not the greeting.
+    pub after_interjection: i32,
+    /// Two nouns side by side: often one compound read in two.
+    pub noun_noun: i32,
+    /// An affix not where it attaches: a suffix after anything but a noun,
+    /// a prefix before anything but a noun.
+    pub stray_affix: i32,
+}
+
+impl Default for Costs {
+    fn default() -> Self {
+        Self {
+            word: 1000,
+            later_sense: 100,
+            some_freq: 500,
+            no_freq: 1200,
+            kana_for_kanji: 700,
+            lone_kana: 1500,
+            unknown_char: 4000,
+            unknown_katakana: 2500,
+            expression: 0,
+            mid_conjunction: 600,
+            clause_open: 800,
+            particle_particle: 100,
+            after_interjection: 1200,
+            noun_noun: 300,
+            stray_affix: 700,
+        }
+    }
+}
+
+impl Costs {
+    /// `self` with the `name=value` pairs of `spec` (comma-separated) set.
+    pub fn with(mut self, spec: &str) -> Result<Self, String> {
+        for pair in spec.split(',').filter(|p| !p.trim().is_empty()) {
+            let (k, v) = pair
+                .split_once('=')
+                .ok_or_else(|| format!("not name=value: {pair}"))?;
+            let v: i32 = v.trim().parse().map_err(|e| format!("{pair}: {e}"))?;
+            let slot = match k.trim() {
+                "word" => &mut self.word,
+                "later_sense" => &mut self.later_sense,
+                "some_freq" => &mut self.some_freq,
+                "no_freq" => &mut self.no_freq,
+                "kana_for_kanji" => &mut self.kana_for_kanji,
+                "lone_kana" => &mut self.lone_kana,
+                "unknown_char" => &mut self.unknown_char,
+                "unknown_katakana" => &mut self.unknown_katakana,
+                "expression" => &mut self.expression,
+                "mid_conjunction" => &mut self.mid_conjunction,
+                "clause_open" => &mut self.clause_open,
+                "particle_particle" => &mut self.particle_particle,
+                "after_interjection" => &mut self.after_interjection,
+                "noun_noun" => &mut self.noun_noun,
+                "stray_affix" => &mut self.stray_affix,
+                other => return Err(format!("no cost named {other}")),
+            };
+            *slot = v;
+        }
+        Ok(self)
+    }
+
+    /// The cost of reading `next` after `prev` (a state).
+    fn connection(&self, prev: usize, next: Class) -> i32 {
+        use Class as C;
+        let prev = CLASSES.get(prev).copied();
+        match (prev, next) {
+            (None, C::Particle | C::Suffix | C::Auxiliary) => self.clause_open,
+            (Some(_), C::Conjunction | C::Interjection) => self.mid_conjunction,
+            (Some(C::Particle), C::Particle) => self.particle_particle,
+            (Some(C::Interjection), _) => self.after_interjection,
+            (Some(C::Prefix), C::Noun | C::Suffix | C::NaAdjective) => 0,
+            (Some(C::Prefix), _) => self.stray_affix,
+            (Some(C::Noun | C::Unknown), C::Suffix) => 0,
+            (_, C::Suffix) => self.stray_affix,
+            (Some(C::Noun), C::Noun) => self.noun_noun,
+            _ => 0,
+        }
+    }
+
+    /// The frequency tags of the form of `e` written as `form`.
+    fn freq(&self, e: &ArchivedWordEntry, form: &str) -> i32 {
+        let tags = e
+            .kanji_forms
+            .iter()
+            .find(|k| k.text.as_str() == form)
+            .map(|k| &k.priorities)
+            .or_else(|| {
+                e.reading_forms
+                    .iter()
+                    .find(|r| r.text.as_str() == form)
+                    .map(|r| &r.priorities)
+            });
+        let Some(tags) = tags.filter(|t| !t.is_empty()) else {
+            return self.no_freq;
+        };
+        // news1, ichi1, spec1/2, gai1: the commonest words.
+        if tags.iter().any(|f| {
+            !matches!(f.kind, ArchivedFreqKind::Nf)
+                && (f.value == 1 || matches!(f.kind, ArchivedFreqKind::Spec))
+        }) {
+            return 0;
+        }
+        // nf01 (the 500 commonest) … nf48: graded up to `some_freq`.
+        let nf = tags
+            .iter()
+            .filter(|f| matches!(f.kind, ArchivedFreqKind::Nf))
+            .map(|f| i32::from(f.value))
+            .min();
+        match nf {
+            Some(nf) => self.some_freq * nf / 48,
+            None => self.some_freq,
+        }
+    }
+}
+
+/// Whether `e`, read as `class`, may stand conjugated as `surface` from
+/// `base`: a deinflected form only counts for a word that conjugates, so
+/// があ|る can't be a noun があ conjugated; and a godan verb only in its
+/// own row, so はない isn't 張る (whose negative is はらない), which the
+/// ichidan rule ない → る would make it.
+fn conjugates(
+    class: Class,
+    e: &ArchivedWordEntry,
+    reasons: Reasons,
+    base: &str,
+    surface: &str,
+) -> bool {
+    match class {
+        Class::Verb => verb_fits(e, base, surface),
+        Class::Adjective | Class::Auxiliary | Class::Expression => true,
+        // 勉強して → 勉強, a noun taking する.
+        Class::Noun | Class::NaAdjective => {
+            reasons.contains(Reason::SuruStem)
+                && e.senses.iter().any(|s| {
+                    s.pos
+                        .iter()
+                        .any(|p| matches!(p, P::VerbSuru | P::VerbSuruS))
+                })
+        }
+        _ => false,
+    }
+}
+
+/// The kana a godan verb's stem goes on with, by the verb's type; `None`
+/// for a type that isn't godan or isn't checked.
+fn godan_row(p: &P) -> Option<&'static str> {
+    Some(match p {
+        P::VerbGodanU | P::VerbGodanUS => "わいうえおっ",
+        P::VerbGodanKu => "かきくけこい",
+        P::VerbGodanKuS => "かきくけこっ",
+        P::VerbGodanGu => "がぎぐげごい",
+        P::VerbGodanSu => "さしすせそ",
+        P::VerbGodanTsu => "たちつてとっ",
+        P::VerbGodanNu => "なにぬねのん",
+        P::VerbGodanBu => "ばびぶべぼん",
+        P::VerbGodanMu => "まみむめもん",
+        P::VerbGodanRu | P::VerbGodanRuIrr => "らりるれろっ",
+        _ => return None,
+    })
+}
+
+/// Whether `surface` can be the verb `e` conjugated from `base`. Only a
+/// verb that is godan and nothing else is checked: its stem (`base` less
+/// its last kana) must go on with a kana of its row.
+fn verb_fits(e: &ArchivedWordEntry, base: &str, surface: &str) -> bool {
+    let mut rows = Vec::new();
+    for p in e.senses.iter().flat_map(|s| s.pos.iter()) {
+        match godan_row(p) {
+            Some(row) => rows.push(row),
+            // Another verb type (ichidan, する, くる…): no check.
+            None if class_of(p) == Some(Class::Verb) => return true,
+            None => {}
+        }
+    }
+    if rows.is_empty() {
+        return true;
+    }
+    let Some((last, _)) = base.char_indices().next_back() else {
+        return true;
+    };
+    let stem = &base[..last];
+    let Some(next) = surface.strip_prefix(stem).and_then(|r| r.chars().next()) else {
+        // Spelled apart from its base (ある → ない), or nothing after the
+        // stem: nothing to check.
+        return true;
+    };
+    rows.iter().any(|row| row.contains(next))
+}
+
+/// One candidate word of the lattice.
+struct Node {
+    len: usize,
+    cost: i32,
+    class: Class,
+    entry: Option<&'static ArchivedWordEntry>,
+    base: String,
+    reasons: Reasons,
+}
+
+/// The candidates for one dictionary form of `surface`, one per class its
+/// senses have.
+fn push_nodes(
+    costs: &Costs,
+    out: &mut Vec<Node>,
+    entries: &[&'static ArchivedWordEntry],
+    surface: &str,
+    len: usize,
+    form: &str,
+    reasons: Reasons,
+) {
+    let kana = surface.chars().all(japanese_utils::is_kana);
+    let lone_kana = kana && len == 1;
+    for &e in entries {
+        // A form already read for this entry by a less conjugated path.
+        if out
+            .iter()
+            .any(|n| n.len == len && n.entry.is_some_and(|x| std::ptr::eq(x, e)))
+        {
+            continue;
+        }
+        let mut seen: Vec<Class> = Vec::new();
+        let usually_kana = e.senses.iter().any(|s| {
+            s.misc
+                .iter()
+                .any(|m| matches!(m, ArchivedMisc::UsuallyKana))
+        });
+        let kana_for_kanji =
+            kana && !e.kanji_forms.is_empty() && !usually_kana && form_is_reading(e, form);
+        let base_cost = costs.word + costs.freq(e, form);
+        for (rank, s) in e.senses.iter().enumerate() {
+            for class in s.pos.iter().filter_map(class_of) {
+                if seen.contains(&class)
+                    || (!reasons.is_empty() && !conjugates(class, e, reasons, form, surface))
+                {
+                    continue;
+                }
+                seen.push(class);
+                let lone = lone_kana
+                    && !matches!(
+                        class,
+                        Class::Particle | Class::Auxiliary | Class::Suffix | Class::Prefix
+                    );
+                out.push(Node {
+                    len,
+                    cost: base_cost
+                        + costs.later_sense * (rank.min(3) as i32)
+                        + if lone { costs.lone_kana } else { 0 }
+                        // Function words are written in kana anyway: the
+                        // particle の has 乃 and 之 too.
+                        + if kana_for_kanji && content(class) {
+                            costs.kana_for_kanji
+                        } else {
+                            0
+                        }
+                        + if class == Class::Expression { costs.expression } else { 0 },
+                    class,
+                    entry: Some(e),
+                    base: form.to_owned(),
+                    reasons,
+                });
+            }
+        }
+    }
+}
+
+/// A word with a meaning of its own, as opposed to a function word.
+fn content(class: Class) -> bool {
+    matches!(
+        class,
+        Class::Noun
+            | Class::NaAdjective
+            | Class::Verb
+            | Class::Adjective
+            | Class::Adverb
+            | Class::Prefix
+            | Class::Suffix
+            | Class::Expression
+    )
+}
+
+fn form_is_reading(e: &ArchivedWordEntry, form: &str) -> bool {
+    e.reading_forms.iter().any(|r| r.text.as_str() == form)
+        && !e.kanji_forms.iter().any(|k| k.text.as_str() == form)
+}
+
+/// Every candidate word at the start of `run`, the rest of a run of word
+/// chars.
+fn candidates(
+    costs: &Costs,
+    run: &[char],
+    walk: &mut FstWalk,
+    deinflector: &mut deinflect::Deinflector,
+) -> Vec<Node> {
+    let window: String = run.iter().take(MAX_WORD_CHARS).collect();
+    // Byte offset past each prefix of the window, by its length in chars.
+    let ends: Vec<usize> = window
+        .char_indices()
+        .map(|(i, c)| i + c.len_utf8())
+        .collect();
+    walk.walk(&window);
+    let mut out = Vec::new();
+    for (i, &byte_end) in ends.iter().enumerate().rev() {
+        let len = i + 1;
+        let Some(surface) = window.get(..byte_end) else {
+            continue;
+        };
+        if !walk.reaches(byte_end) && !deinflect::can_deinflect(surface) {
+            continue;
+        }
+        for (form, reasons) in deinflector.run_with_reasons(surface) {
+            let Some(group) = walk.get(&window, form) else {
+                continue;
+            };
+            let Some(indices) = get_entry_group(group) else {
+                continue;
+            };
+            let entries: Vec<_> = indices.iter().filter_map(|&i| get_entry(i)).collect();
+            push_nodes(costs, &mut out, &entries, surface, len, form, reasons);
+        }
+    }
+    // Text no word covers still has to be read: one char, or a whole
+    // katakana run as one unknown word.
+    let katakana = run
+        .iter()
+        .take_while(|&&c| japanese_utils::is_katakana(c))
+        .count();
+    if katakana > 1 && !out.iter().any(|n| n.len == katakana) {
+        out.push(unknown(run, katakana, costs.unknown_katakana));
+    }
+    out.push(unknown(run, 1, costs.unknown_char));
+    out
+}
+
+/// The first `len` chars of `run` as a word no entry covers.
+fn unknown(run: &[char], len: usize, cost: i32) -> Node {
+    Node {
+        len,
+        cost,
+        class: Class::Unknown,
+        entry: None,
+        base: run.iter().take(len).collect(),
+        reasons: Reasons::EMPTY,
+    }
+}
+
+/// The best way to reach a (position, state): its cost and where from.
+#[derive(Clone, Copy)]
+struct Best {
+    cost: i32,
+    from: (usize, usize),
+    /// The candidate read to get here, as (start, index in its list);
+    /// `None` for a step over a char no word holds.
+    node: Option<(usize, usize)>,
+}
+
+/// The best ways into each (position, state) of the lattice.
+struct Table(Vec<[Option<Best>; STATES]>);
+
+impl Table {
+    fn get(&self, pos: usize, st: usize) -> Option<Best> {
+        self.0
+            .get(pos)
+            .and_then(|row| row.get(st))
+            .copied()
+            .flatten()
+    }
+
+    /// Keep `b` as the way into (pos, st) if it beats the one there.
+    fn relax(&mut self, pos: usize, st: usize, b: Best) {
+        if let Some(slot) = self.0.get_mut(pos).and_then(|row| row.get_mut(st))
+            && slot.is_none_or(|old| b.cost < old.cost)
+        {
+            *slot = Some(b);
+        }
+    }
+}
+
+/// The words of `sentence`, in order. Text outside words (punctuation,
+/// digits, Latin letters) isn't listed; Japanese text no dictionary word
+/// covers is, with no entry.
+pub fn segment(sentence: &str) -> Vec<Word> {
+    segment_with(sentence, &Costs::default())
+}
+
+/// [`segment`] with other costs, for tuning them.
+pub fn segment_with(sentence: &str, costs: &Costs) -> Vec<Word> {
+    let chars: Vec<char> = sentence.chars().collect();
+    let n = chars.len();
+    let mut walk = FstWalk::default();
+    let mut deinflector = deinflect::Deinflector::default();
+    // The candidates at each char; none where no word can start.
+    let mut nodes: Vec<Vec<Node>> = Vec::with_capacity(n);
+    for (at, &c) in chars.iter().enumerate() {
+        let rest = chars.get(at..).unwrap_or_default();
+        if !wordy(c) {
+            nodes.push(Vec::new());
+            continue;
+        }
+        let run_len = rest.iter().take_while(|&&c| wordy(c)).count();
+        let run = rest.get(..run_len).unwrap_or_default();
+        nodes.push(candidates(costs, run, &mut walk, &mut deinflector));
+    }
+
+    let mut best = Table(vec![[None; STATES]; n + 1]);
+    best.relax(
+        0,
+        START,
+        Best {
+            cost: 0,
+            from: (0, START),
+            node: None,
+        },
+    );
+    for (at, (&c, here_nodes)) in chars.iter().zip(&nodes).enumerate() {
+        for st in 0..STATES {
+            let Some(here) = best.get(at, st) else {
+                continue;
+            };
+            if !wordy(c) {
+                let next = if c.is_ascii_digit() || ('０'..='９').contains(&c) {
+                    AFTER_NUMBER
+                } else {
+                    START
+                };
+                let step = Best {
+                    cost: here.cost,
+                    from: (at, st),
+                    node: None,
+                };
+                best.relax(at + 1, next, step);
+                continue;
+            }
+            let prev = if st == AFTER_NUMBER {
+                state(Class::Noun)
+            } else {
+                st
+            };
+            for (i, node) in here_nodes.iter().enumerate() {
+                let step = Best {
+                    cost: here.cost + costs.connection(prev, node.class) + node.cost,
+                    from: (at, st),
+                    node: Some((at, i)),
+                };
+                best.relax(at + node.len, state(node.class), step);
+            }
+        }
+    }
+
+    let Some(mut st) = (0..STATES)
+        .filter_map(|s| best.get(n, s).map(|b| (s, b.cost)))
+        .min_by_key(|&(_, cost)| cost)
+        .map(|(s, _)| s)
+    else {
+        return Vec::new();
+    };
+    let mut pos = n;
+    let mut out = Vec::new();
+    while pos > 0 {
+        let Some(b) = best.get(pos, st) else {
+            break;
+        };
+        if let Some(node) = b
+            .node
+            .and_then(|(start, i)| nodes.get(start).and_then(|ns| ns.get(i)))
+        {
+            out.push(Word {
+                start: b.from.0,
+                len: node.len,
+                entry: node.entry,
+                base: node.base.clone(),
+                reasons: node.reasons,
+                class: node.class,
+            });
+        }
+        (pos, st) = b.from;
+    }
+    out.reverse();
+    out
+}

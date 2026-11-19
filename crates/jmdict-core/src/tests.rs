@@ -70,6 +70,15 @@ fn build_test_binary() -> Vec<u8> {
             "to write",
         ),
         make_entry(12, "喫茶店", "きっさてん", vec![PartOfSpeech::Noun], "café"),
+        // For the lattice (`segment`): が|ある, where the longest match
+        // reads the interjection があ and leaves る over; は|ない, which the
+        // ichidan rule ない → る would read as 張る conjugated.
+        make_entry(13, "", "が", vec![PartOfSpeech::Particle], "subject marker"),
+        make_entry(14, "", "があ", vec![PartOfSpeech::Interjection], "caw"),
+        make_entry(15, "有る", "ある", vec![PartOfSpeech::VerbGodanRuIrr], "to be"),
+        make_entry(16, "", "は", vec![PartOfSpeech::Particle], "topic marker"),
+        make_entry(17, "張る", "はる", vec![PartOfSpeech::VerbGodanRu], "to stretch"),
+        make_entry(18, "", "ない", vec![PartOfSpeech::AuxiliaryAdjective], "not"),
     ];
     build_binary(&entries)
 }
@@ -532,4 +541,47 @@ fn a_sentence_is_read_into_its_words() {
         ]
     );
     assert!(crate::vocab::sentence_words("").is_empty());
+}
+
+// ── segment ───────────────────────────────────────────────────────────────────
+
+fn split(sentence: &str) -> Vec<String> {
+    crate::segment::segment(sentence)
+        .into_iter()
+        .map(|w| sentence.chars().skip(w.start).take(w.len).collect())
+        .collect()
+}
+
+#[test]
+fn the_lattice_reads_two_words_over_a_word_and_a_leftover() {
+    ensure_test_dict();
+    // The longest match takes があ, and る is no word.
+    assert_eq!(
+        lookup_longest_match("がある", 20).map(|(_, n)| n),
+        Some(2)
+    );
+    assert_eq!(split("本がある"), ["本", "が", "ある"]);
+}
+
+#[test]
+fn a_godan_verb_conjugates_only_in_its_row() {
+    ensure_test_dict();
+    // ない → る makes はない a form of はる (張る), but 張る's negative is
+    // はらない.
+    assert_eq!(split("本はない"), ["本", "は", "ない"]);
+    assert_eq!(split("本をはらない"), ["本", "を", "はらない"]);
+}
+
+#[test]
+fn a_word_carries_its_base_and_conjugation() {
+    ensure_test_dict();
+    let words = crate::segment::segment("日本で書いた");
+    let last = words.last().unwrap();
+    assert_eq!(last.base, "書く");
+    assert!(last.reasons.contains(deinflect::Reason::Past));
+    assert_eq!(last.entry.unwrap().sequence.to_native(), 11);
+    // で isn't a word here: it comes out as text no entry covers.
+    assert_eq!(split("日本で書いた"), ["日本", "で", "書いた"]);
+    assert!(words[1].entry.is_none());
+    assert!(crate::segment::segment("").is_empty());
 }
