@@ -47,7 +47,7 @@ fn dict() -> &'static GrammarDict {
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 14\n{}{}{}{}{}{}{}{}{}{}{}{}{}",
+            "next_seq = 17\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -105,8 +105,17 @@ fn dict() -> &'static GrammarDict {
                 13,
                 "の",
                 "東京{の}町。",
-                "after = [\"noun-or-particle\"]"
+                "homographs = [\"no-ending\"]\nafter = [\"noun-or-particle\"]"
             ),
+            point(
+                "no-ending",
+                14,
+                "の",
+                "行く{の}？",
+                "forms = [\"なの\"]\nhomographs = [\"no-particle\"]\nafter = [\"predicate\"]\nfinal = true"
+            ),
+            point("ni-suru", 15, "にする", "コーヒー{にする}。", ""),
+            point("ni-shiro", 16, "にしろ", "肉{にしろ}、魚にしろ。", "continues = true"),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
     })
@@ -216,6 +225,24 @@ fn a_point_is_read_off_a_words_form() {
 }
 
 #[test]
+fn a_na_adjectives_ni_before_naru_isnt_the_adverb() {
+    // 静かになる is "become quiet": its に is なる's.
+    let found = grammar("静かになる");
+    assert!(
+        found
+            .iter()
+            .all(|(_, ids, _)| !ids.contains(&"ku-adverb".to_owned())),
+        "{found:?}"
+    );
+    assert!(
+        found
+            .iter()
+            .any(|(t, ids, _)| t == "なる" && ids.contains(&"naru".to_owned())),
+        "{found:?}"
+    );
+}
+
+#[test]
 fn a_read_point_isnt_found_by_its_pattern() {
     // く as an ending is in けた (the past of a would-be 蹴く), and ける
     // is no adjective: nothing reads as the く adverb.
@@ -276,4 +303,28 @@ fn after_reads_the_stem_a_form_holds() {
     // の linking nouns, not the の that explains or asks after a verb.
     assert!(has("東京の本", "no-particle"));
     assert!(!has("得たの", "no-particle"));
+}
+
+#[test]
+fn a_sentence_ending_point_is_found_only_at_the_end() {
+    let has = |sentence: &str, id: &str| {
+        grammar(sentence)
+            .iter()
+            .any(|(_, ids, _)| ids.contains(&id.to_owned()))
+    };
+    // After a verb, conjugated or not, or a noun's な, and at the end.
+    assert!(has("本を食べたの？", "no-ending"));
+    assert!(has("走るの。", "no-ending"));
+    assert!(has("本なの", "no-ending"));
+    assert!(has("走るのよ", "no-ending"));
+    // Not after a noun, nor before more of the sentence.
+    assert!(!has("東京の", "no-ending"));
+    assert!(!has("走るのは", "no-ending"));
+    // にしろ that goes on is "even if"; at the end, にする's command.
+    assert!(has("本にしろ、", "ni-shiro"));
+    assert!(!has("本にしろ。", "ni-shiro"));
+    assert!(has("本にしろ。", "ni-suru"));
+    // The end is also a closing particle or a line break.
+    assert!(!has("本にしろよ", "ni-shiro"));
+    assert!(!has("本にしろ\n", "ni-shiro"));
 }

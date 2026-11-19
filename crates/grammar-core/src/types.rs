@@ -45,20 +45,33 @@ pub struct GrammarEntry {
     /// or a する noun, not 学校に行く). Empty: after anything.
     #[serde(default)]
     pub after: Vec<String>,
+    /// The point ends a sentence (the の of 行くの？): the breakdown finds
+    /// it only before the end, punctuation or a sentence-ending particle
+    /// (よ, ね), not before the は of 行くのは.
+    #[serde(default)]
+    pub ends: bool,
+    /// The point never ends a sentence (the にしろ of 雨にしろ、…): the
+    /// breakdown skips it where [`Self::ends`] points are found, and
+    /// にしろ at the end reads as にする's command.
+    #[serde(default)]
+    pub continues: bool,
 }
 
 /// The kinds of word `after` can name: `verb-plain` (a verb in its
 /// dictionary form: 走る, 電話する), `masu-stem` (食べ, 遊び), `suru-noun`
 /// (散歩, 勉強), `amount` (a number, with or without its counter: 三十分,
 /// 100, 五つ), `noun-or-demonstrative` (東京, この), `noun-or-particle`
-/// (私, 由利さん, から).
-pub const AFTER_KINDS: [&str; 6] = [
+/// (私, 由利さん, から), `predicate` (a verb, adjective or ending,
+/// conjugated or not: 行くの, 高いの, 行ったのか; a form starting with な
+/// also after a noun or な-adjective: 休みなの).
+pub const AFTER_KINDS: [&str; 7] = [
     "verb-plain",
     "masu-stem",
     "suru-noun",
     "amount",
     "noun-or-demonstrative",
     "noun-or-particle",
+    "predicate",
 ];
 
 /// How a production review checks that the typed answer uses the point.

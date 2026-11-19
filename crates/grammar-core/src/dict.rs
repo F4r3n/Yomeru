@@ -141,7 +141,18 @@ impl GrammarDict {
     /// caller that knows where words end and wants the longest match ending
     /// on one.
     pub fn matches_at(&self, text: &str, max_chars: usize) -> Vec<(Vec<GrammarEntry>, usize)> {
-        let keep = |_: &GrammarEntry, _: usize| true;
+        self.matches_at_where(text, max_chars, |_, _| true)
+    }
+
+    /// [`Self::matches_at`] keeping only the entries `keep(entry, chars)`
+    /// accepts: one it rejects leaves the lookup to the text's other
+    /// readings (にしろ as にする's command) and shorter matches.
+    pub fn matches_at_where(
+        &self,
+        text: &str,
+        max_chars: usize,
+        keep: impl Fn(&GrammarEntry, usize) -> bool,
+    ) -> Vec<(Vec<GrammarEntry>, usize)> {
         let mut out = self.plain_matches(text, max_chars, &keep, false);
         if let Some(h) = self.honorific_match(text, max_chars, &keep)
             && !out.iter().any(|(_, n)| *n == h.1)
@@ -263,7 +274,8 @@ impl GrammarDict {
             if end > reach && !deinflect::can_deinflect(surface) {
                 continue;
             }
-            for form in deinflector.run(surface) {
+            // No pattern is a する noun: 以上にしろ (以上にする) isn't 以上に.
+            for form in deinflector.run_without(surface, deinflect::Reason::SuruStem) {
                 if let Some(g) = self.fst.get(form) {
                     let entries: Vec<GrammarEntry> = self
                         .group(g)

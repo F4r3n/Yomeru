@@ -54,7 +54,7 @@ INFLECTIONS = {"passive", "potential", "causative", "causative-passive", "voliti
 
 # The kinds of word `after = [...]` can name (grammar-core's `AFTER_KINDS`).
 AFTER = {"verb-plain", "masu-stem", "suru-noun", "amount", "noun-or-demonstrative",
-         "noun-or-particle"}
+         "noun-or-particle", "predicate"}
 
 # The reasons `reads = [...]` can name (deinflect's `Reason::name`).
 READS = {
@@ -148,6 +148,11 @@ def validate(points):
         after = p.get("after", [])
         if not isinstance(after, list) or not set(after) <= AFTER:
             errors.append(f"{name}: after is a list of {sorted(AFTER)}")
+        for flag in ("final", "continues"):
+            if not isinstance(p.get(flag, False), bool):
+                errors.append(f"{name}: {flag} is true or false")
+        if p.get("final") and p.get("continues"):
+            errors.append(f"{name}: final and continues both set")
         reads = p.get("reads", [])
         if not isinstance(reads, list) or not set(reads) <= READS:
             errors.append(f"{name}: reads is a list of {sorted(READS)}")

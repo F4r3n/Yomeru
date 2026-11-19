@@ -83,14 +83,22 @@ impl Deinflector {
     /// The forms of `text`, itself first, then each new form in the order
     /// found (least transformed first).
     pub fn run(&mut self, text: &str) -> impl Iterator<Item = &str> + '_ {
-        self.walk::<false>(text);
+        self.walk::<false>(text, None);
+        self.forms.iter().map(|&(s, e, _)| slice(&self.buf, s, e))
+    }
+
+    /// The forms of [`Deinflector::run`] reached without ever applying a
+    /// rule for `reason`: with [`Reason::SuruStem`], 以上にしろ gives
+    /// 以上にする but not 以上に. A form another path reaches is kept.
+    pub fn run_without(&mut self, text: &str, reason: Reason) -> impl Iterator<Item = &str> + '_ {
+        self.walk::<false>(text, Some(reason));
         self.forms.iter().map(|&(s, e, _)| slice(&self.buf, s, e))
     }
 
     /// The forms of [`Deinflector::run`], in the same order, each with its
     /// reasons.
     pub fn run_with_reasons(&mut self, text: &str) -> impl Iterator<Item = (&str, Reasons)> + '_ {
-        self.walk::<true>(text);
+        self.walk::<true>(text, None);
         self.merge_paths();
         self.forms
             .iter()
@@ -102,7 +110,8 @@ impl Deinflector {
     /// dropped. With it, a form found again by a path that adds reasons is
     /// kept and expanded as well (its own forms carry those reasons too);
     /// [`Deinflector::merge_paths`] then folds the copies into the first.
-    fn walk<const REASONS: bool>(&mut self, text: &str) {
+    /// Rules for `skip` are never applied.
+    fn walk<const REASONS: bool>(&mut self, text: &str, skip: Option<Reason>) {
         self.buf.clear();
         self.forms.clear();
         self.reasons.clear();
@@ -129,6 +138,9 @@ impl Deinflector {
                 let Some(rule) = RULES.get(usize::from(r)) else {
                     continue;
                 };
+                if skip.is_some_and(|reason| rule.reasons.contains(reason)) {
+                    continue;
+                }
                 let Some(stem_len) = slice(&self.buf, start, end)
                     .strip_suffix(rule.suffix_in)
                     .map(str::len)
@@ -221,6 +233,19 @@ mod tests {
 
     fn forms(text: &str) -> Vec<String> {
         deinflect(text).into_iter().map(|d| d.text).collect()
+    }
+
+    #[test]
+    fn a_run_without_a_reason_never_applies_its_rules() {
+        let mut d = Deinflector::default();
+        let all: Vec<String> = d.run("勉強しろ").map(str::to_owned).collect();
+        assert!(all.iter().any(|f| f == "勉強"), "{all:?}");
+        let without: Vec<String> = d
+            .run_without("勉強しろ", Reason::SuruStem)
+            .map(str::to_owned)
+            .collect();
+        assert!(without.iter().any(|f| f == "勉強する"), "{without:?}");
+        assert!(!without.iter().any(|f| f == "勉強"), "{without:?}");
     }
 
     #[test]

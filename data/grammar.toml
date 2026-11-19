@@ -55,15 +55,23 @@
 #                verb-plain (走る, 電話する), masu-stem (食べ, 遊び),
 #                suru-noun (散歩), amount (三十分, 100, 五つ),
 #                noun-or-demonstrative (東京, この), noun-or-particle
-#                (私, 由利さん, から).
+#                (私, 由利さん, から), predicate (行く, 行った, 高い;
+#                a form starting with な also after a noun: 休み{なの}).
 #                after = ["masu-stem", "suru-noun"] keeps
 #                に行く off 学校に行く. Only for a point that misfires; last
+#   final        optional, true: the point ends a sentence (行く{の}？),
+#                and the breakdown finds it only before the end,
+#                punctuation or よ, ね, さ, な; not before the は of
+#                行くのは. After `after`
+#   continues    optional, true: the point never ends a sentence (雨{にしろ}
+#                雪にしろ、…); the breakdown skips it at the end, where
+#                にしろ is にする's command. After `after`
 #   hover        optional, default true; false keeps the entry out of the
 #                hover popup, reachable by search only (って would match
 #                inside 行って). One-char patterns (は, に, て) never show on
 #                hover anyway: the popup skips matches under two chars
 
-next_seq = 938
+next_seq = 941
 
 [[point]]
 id = "te-mo-ii"
@@ -549,7 +557,7 @@ examples = [
 id = "n-desu"
 seq = 18
 pattern = "んです"
-forms = ["のです", "んだ", "のだ", "なの"]
+forms = ["のです", "んだ", "のだ"]
 jlpt = "N5"
 meaning = "explaining, asking about the background"
 formation = ["Verb / ［い］Adjective + んです", "［な］Adjective / Noun + なんです   (学生なんです)"]
@@ -558,13 +566,13 @@ Adds a sense of explanation: what is said is the reason or story behind \
 something both people can see. 頭が痛いんです, "(it's that) I have a \
 headache". In questions it asks for that story: どうしたんですか, "what \
 happened?". Writing and formal speech use のです; casual speech uses \
-んだ, or の."""
+んだ, or の (no-ending)."""
 notes = """
 Overused, it sounds insistent; for a plain fact, です/ます is enough. A \
 んですか question shows interest in a situation, but without a reason to \
 ask it can sound nosy. んですが or んですけど opens a request: 道を聞きたい\
 んですが…."""
-related = ["node", "kedo"]
+related = ["node", "kedo", "no-ending", "noka"]
 examples = [
   { tatoeba = "280130_123865", ja = "頭が痛い{んです}。頭痛薬がありますか。", en = "My head hurts. Have you got any headache tablets?" },
   { source = "yomeru", id = "y3", ja = "明日はテストがある{んです}。だから今日は早く寝ます。", en = "The thing is, I have a test tomorrow. So I'm going to bed early tonight." },
@@ -1827,6 +1835,7 @@ noun can drop when it's clear: この本は私のです, "this book is mine". \
 Adjectives don't take の: 赤い車, 静かな町. の also turns verbs into \
 nouns (〜のが好き) and ends casual questions: separate points."""
 related = ["no-nominalizer", "n-desu"]
+homographs = ["no-ending"]
 examples = [
   { tatoeba = "251859_162655", ja = "私{の}母は毎日早く起きます。", en = "My mother gets up early every morning." },
   { tatoeba = "55516_218204", ja = "これは誰{の}辞書ですか。", en = "Whose dictionary is this?" },
@@ -2474,6 +2483,39 @@ examples = [
   { tatoeba = "61057_223720", ja = "このサイズは私には大き{すぎます}。", en = "This size is too large for me." },
   { source = "yomeru", id = "y2", ja = "この部屋は静か{すぎます}。", en = "This room is too quiet." },
 ]
+
+[[point]]
+id = "no-ending"
+seq = 938
+pattern = "の"
+forms = ["なの"]
+jlpt = "N5"
+meaning = "(casual) asking or explaining: plain のですか / のです"
+formation = [
+  "Verb / ［い］Adjective + の   (行くの？, 痛いの)",
+  "［な］Adjective / Noun + なの   (好きなの, 学生なの？)",
+]
+explanation = """
+The casual form of のです and のですか. Said rising, it asks for \
+the story behind what you notice: どうしたの？, "what's wrong?". Said \
+falling, it explains your side of things softly: 頭が痛いの, "my head \
+hurts, you see". After a noun or a な-adjective it takes な: 休みなの."""
+notes = """
+A の question sounds more involved than a bare plain one (行く？), and \
+everyone uses it among friends. The falling, explaining の sounds soft; \
+many speakers say んだ instead. This の closes the sentence: it isn't \
+the の that links nouns (私の本) or turns a verb into a noun (読むのが好き)."""
+related = ["n-desu", "noka", "no-particle", "no-nominalizer"]
+homographs = ["no-particle"]
+examples = [
+  { tatoeba = "460867_121148", ja = "彼、試験に通った{の}？", en = "Did he pass the exam?" },
+  { tatoeba = "57963_220643", ja = "この単語はどう発音する{の}？", en = "How do you pronounce this word?" },
+  { source = "yomeru", id = "y1", ja = "ごめん、頭が痛い{の}。", en = "Sorry, my head hurts, you see." },
+  { source = "yomeru", id = "y2", ja = "今日は仕事が休み{なの}。", en = "I'm off work today, you see." },
+  { source = "yomeru", id = "y3", ja = "明日はどこに行く{の}？", en = "Where are you going tomorrow?" },
+]
+after = ["predicate"]
+final = true
 
 [[point]]
 id = "kata"
@@ -4852,7 +4894,7 @@ notes = """
 polite speech. そうだ (stem) is a first look; ようだ weighs the signs; \
 らしい leans on what others say. Often with どうやら or まるで \
 (まるで夢のようだ). Not ように "so that" (you-ni-purpose)."""
-related = ["mitai", "rashii", "sou-da-appearance", "no-you-na", "ni-mieru"]
+related = ["mitai", "rashii", "sou-da-appearance", "no-you-na", "ni-mieru", "you-na"]
 examples = [
   { tatoeba = "66729_229370", ja = "いい家の{ようです}。", en = "It seems to be a good house." },
   { tatoeba = "50620_213334", ja = "そのエレベーターは故障している{ようだ}。", en = "The elevator seems to be out of order." },
@@ -4911,7 +4953,8 @@ notes = """
 The casual equivalent is みたいな / みたいに, with no の: 東京みたいな町. \
 A verb can also come before ような: 夢を見ているような気持ち. Not ように \
 "so that" after a verb (you-ni-purpose), which has no の."""
-related = ["you-da", "mitai", "mai-no-you-ni", "you-ni-purpose"]
+related = ["you-da", "mitai", "mai-no-you-ni", "you-ni-purpose", "you-na"]
+homographs = ["you-na"]
 examples = [
   { tatoeba = "272579_141991", ja = "雪{のように}白い。", en = "It is white as snow." },
   { source = "yomeru", id = "y1", ja = "東京{のような}大きい町に住みたい。", en = "I want to live in a big city like Tokyo." },
@@ -7328,6 +7371,72 @@ examples = [
   { source = "yomeru", id = "y1", ja = "パーティーでケーキを{いっぱい}食べた。", en = "I ate a lot of cake at the party." },
   { source = "yomeru", id = "y2", ja = "宿題が{いっぱい}あって、遊べない。", en = "I have lots of homework, so I can't play." },
 ]
+
+[[point]]
+id = "noka"
+seq = 939
+pattern = "のか"
+forms = ["なのか"]
+jlpt = "N4"
+meaning = "(plain) is it that…?; oh, so…; what, whether (in a clause)"
+formation = [
+  "Verb / ［い］Adjective + のか",
+  "［な］Adjective / Noun + なのか   (本当なのか)",
+  "Question word … のか + 分からない / 教えて   (何をすればいいのか分からない)",
+]
+explanation = """
+の with the question marker か. Closing a sentence it is a plain, \
+direct question, もう帰るのか？, "you're leaving already?", or, said \
+falling, a realization: そうか、休みなのか, "oh, so it's a day off". \
+Inside a sentence it makes a question part of it: いつ始まるのか知らない, \
+"I don't know when it starts"."""
+notes = """
+Asked of someone face to face, のか sounds blunt and rather masculine; \
+の？ is the friendly casual question. Writing uses it to raise a \
+question for no one in particular (それぞれ何を得たのか). Inside a \
+sentence か alone works too (いつ始まるか); のか leans on wanting the \
+background. I-wonder questions take のだろうか."""
+related = ["no-ending", "n-desu", "question-ka", "no-darou-ka", "kana"]
+examples = [
+  { tatoeba = "16501_177649", ja = "君はどうしてここへ来た{のか}。", en = "What have you come here for?" },
+  { tatoeba = "61439_136994", ja = "誰がその茶碗をわった{のか}。", en = "Who broke the cup?" },
+  { tatoeba = "454490_187586", ja = "何をすればよい{のか}わからない。", en = "I don't know what to do." },
+  { tatoeba = "282941_121067", ja = "彼がいつ戻る{のか}教えてください。", en = "Please tell me when he'll be back." },
+  { source = "yomeru", id = "y1", ja = "そうか、明日は休み{なのか}。", en = "Oh, so tomorrow is a day off." },
+]
+after = ["predicate"]
+
+[[point]]
+id = "you-na"
+seq = 940
+pattern = "ような"
+forms = []
+jlpt = "N4"
+meaning = "the kind of … that; as if (describing a noun)"
+formation = [
+  "Verb + ような + Noun   (子供が喜ぶようなプレゼント)",
+  "［い］Adjective + ような + Noun   (泣きたいような気分)",
+]
+explanation = """
+A verb before ような + noun describes the noun by what it is like: \
+子供が喜ぶようなプレゼント, "the kind of present children love". It is \
+ようだ before a noun, so it can mean "as if" too: 幽霊を見たような顔, \
+"a face as if he'd seen a ghost"."""
+notes = """
+Common with a negative: うそをつくような人ではない, "not the sort who \
+lies". A noun takes の first: 東京のような町 (のような). Casual speech \
+says みたいな. ような気がする, "I have a feeling", is a set phrase of \
+its own."""
+related = ["no-you-na", "you-da", "mitai", "you-na-ki-ga-suru", "ka-no-you-da"]
+homographs = ["no-you-na"]
+examples = [
+  { tatoeba = "310257_90356", ja = "彼女は君が想像する{ような}女の子ではない。", en = "She is not such a girl as you imagine." },
+  { tatoeba = "69758_176831", ja = "君は幽霊を見た{ような}顔をしている。", en = "You look as if you had seen a ghost." },
+  { source = "yomeru", id = "y1", ja = "子供が喜ぶ{ような}プレゼントを買いたい。", en = "I want to buy the kind of present children love." },
+  { source = "yomeru", id = "y2", ja = "母が作る{ような}料理を作りたい。", en = "I want to cook the kind of food my mother makes." },
+  { source = "yomeru", id = "y3", ja = "泣きたくなる{ような}映画だった。", en = "It was the kind of movie that makes you want to cry." },
+]
+after = ["predicate"]
 
 [[point]]
 id = "tame-ni"
@@ -14569,6 +14678,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "どんな理由がある{にしろ}、暴力はいけない。", en = "Whatever the reason, violence is wrong." },
   { source = "yomeru", id = "y3", ja = "失敗した{にせよ}、いい経験になった。", en = "Even if it failed, it was a good experience." },
 ]
+continues = true
 
 [[point]]
 id = "wa-tomokaku"

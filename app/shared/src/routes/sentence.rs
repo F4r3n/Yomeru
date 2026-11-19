@@ -169,13 +169,14 @@ pub fn SentenceBreakdownPage() -> Element {
                         grammar: b.grammar.clone(),
                         selected: sel,
                         open_word: *word.read(),
-                        on_word: EventHandler::new(move |i: usize| {
+                        on_word: EventHandler::new(move |(i, start, len): (usize, usize, usize)| {
                             let Some(w) = BREAKDOWN.read().as_ref().and_then(|b| b.words.get(i).cloned()) else {
                                 return;
                             };
-                            // A word that is a point of its own opens it.
+                            // A word (or a block of words: よう|な) that is
+                            // a point of its own opens it.
                             let own = BREAKDOWN.read().as_ref().and_then(|b| {
-                                b.grammar.iter().position(|m| (m.start, m.len) == (w.start, w.len))
+                                b.grammar.iter().position(|m| (m.start, m.len) == (start, len))
                             });
                             match own {
                                 Some(g) => {
@@ -296,7 +297,8 @@ fn Words(
     selected: Option<usize>,
     /// The word whose card is open, marked.
     open_word: Option<usize>,
-    on_word: EventHandler<usize>,
+    /// The first word tapped, and the block's start and length in chars.
+    on_word: EventHandler<(usize, usize, usize)>,
 ) -> Element {
     let marked = |start: usize, len: usize| -> bool {
         selected.and_then(|g| grammar.get(g)).is_some_and(|m| {
@@ -305,18 +307,22 @@ fn Words(
                 .any(|&(s, n)| start < s + n && s < start + len)
         })
     };
-    let own_point =
-        |w: &BreakdownWord| grammar.iter().any(|m| (m.start, m.len) == (w.start, w.len));
+    let own_point = |start: usize, len: usize| grammar.iter().any(|m| (m.start, m.len) == (start, len));
     let cut = |start: usize, len: usize| -> String { chars.iter().skip(start).take(len).collect() };
-    // Each word, and the uncovered text before it.
+    // Each word, or block of words a point covers whole, and the uncovered
+    // text before it.
     let mut parts: Vec<(Option<usize>, usize, usize)> = Vec::new();
     let mut at = 0;
-    for (i, w) in words.iter().enumerate() {
+    let mut i = 0;
+    while let Some(w) = words.get(i) {
         if w.start > at {
             parts.push((None, at, w.start - at));
         }
-        parts.push((Some(i), w.start, w.len));
-        at = w.start + w.len;
+        let n = block_at(&chars, &words, &grammar, i);
+        let len = words.get(i + n - 1).map_or(w.len, |last| last.start + last.len - w.start);
+        parts.push((Some(i), w.start, len));
+        at = w.start + len;
+        i += n;
     }
     if at < chars.len() {
         parts.push((None, at, chars.len() - at));
@@ -328,9 +334,11 @@ fn Words(
                 match i.and_then(|i| words.get(i).map(|w| (i, w))) {
                     Some((i, w)) => {
                         let mut class = String::from("sentence-word");
-                        if w.entry.is_none() {
+                        if own_point(start, len) {
+                            class.push_str(" point");
+                        } else if w.entry.is_none() {
                             class.push_str(" unknown");
-                        } else if own_point(w) {
+                        } else if own_point(w.start, w.len) {
                             class.push_str(" point");
                         }
                         if marked(start, len) {
@@ -345,7 +353,7 @@ fn Words(
                                 class,
                                 role: "button",
                                 title: w.entry.as_ref().map(dict::short_gloss).unwrap_or_default(),
-                                onclick: move |_| on_word.call(i),
+                                onclick: move |_| on_word.call((i, start, len)),
                                 {cut(start, len)}
                             }
                         }
@@ -357,6 +365,40 @@ fn Words(
             }
         }
     }
+}
+
+/// How many words, from `i`, show as one block: a grammar point that
+/// covers two or more whole words in one piece, all in kana (よう|な as
+/// ような, の|か as のか, に|なりました as になる). A word with kanji keeps
+/// its own card. Otherwise 1.
+fn block_at(chars: &[char], words: &[BreakdownWord], grammar: &[BreakdownGrammar], i: usize) -> usize {
+    let Some(first) = words.get(i) else {
+        return 1;
+    };
+    let kana = |w: &BreakdownWord| {
+        chars
+                .iter()
+                .skip(w.start)
+                .take(w.len)
+                .all(|&c| ('\u{3041}'..='\u{309f}').contains(&c))
+    };
+    grammar
+        .iter()
+        .filter(|m| m.start == first.start && m.pieces.len() <= 1)
+        .filter_map(|m| {
+            let mut end = first.start;
+            let mut n = 0;
+            for w in words.get(i..).unwrap_or_default() {
+                if w.start != end || !kana(w) || end >= m.start + m.len {
+                    break;
+                }
+                end += w.len;
+                n += 1;
+            }
+            (n >= 2 && end == m.start + m.len).then_some(n)
+        })
+        .max()
+        .unwrap_or(1)
 }
 
 /// The grammar points found, in sentence order, one row each: the text it

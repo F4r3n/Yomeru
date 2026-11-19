@@ -22,7 +22,7 @@ use crate::types::GrammarEntry;
 pub(crate) const MAGIC: &[u8; 4] = b"YGRM";
 /// Bump on any change to the layout or to the types. The file ships with
 /// the code, so a mismatch is a build mistake.
-pub const FORMAT_VERSION: u8 = 9;
+pub const FORMAT_VERSION: u8 = 11;
 
 #[cfg(feature = "build")]
 pub(crate) fn write(entries: &[GrammarEntry]) -> anyhow::Result<Vec<u8>> {

@@ -120,7 +120,7 @@ impl<'a> Analyzer<'a> {
     pub fn analyze(&self, sentence: &str) -> Breakdown {
         let words = segment::segment(sentence);
         let text = Text::new(sentence, &words);
-        let mut grammar = self.text_matches(&text);
+        let mut grammar = self.text_matches(&text, &words);
         // A point that names what it comes after isn't found elsewhere.
         for m in &mut grammar {
             let head = head_before(&text.chars, &words, m.start);
@@ -129,13 +129,17 @@ impl<'a> Analyzer<'a> {
                 if e.after.is_empty() {
                     return true;
                 }
-                // Or a form holding its own verb stem: あり of ありえない.
+                // Or a form holding its own verb stem: あり of ありえない,
+                // or the な a noun takes before a predicate's ending (休み
+                // なの).
                 e.after.iter().any(|k| head.is(k))
+                    || (e.after.iter().any(|k| k == "predicate")
+                        && matched.starts_with('な')
+                        && head.is("noun"))
                     || (e.after.iter().any(|k| k == "masu-stem")
                         && own_heads(&matched, e).any(|lead| Head::Text(lead).is("masu-stem")))
             });
         }
-        grammar.retain(|m| !m.entries.is_empty());
         // A verb form inside a conjugated word is what the word's
         // conjugation says, not what its text spells: 開催された is
         // passive, though れた also spells potential's ending.
@@ -164,6 +168,26 @@ impl<'a> Analyzer<'a> {
                         .any(|e| m.entries.iter().any(|x| x.id == e.id))
             })
         });
+        // A point spelled as written holds its command or volitional form:
+        // the しろ of 雨にしろ, the ろう of てやろう aren't points of their own.
+        conjugations.retain(|c| {
+            let fixed = c.entries.iter().all(|e| {
+                matches!(&e.check, AnswerCheck::Inflection { forms }
+                    if forms.iter().all(|f| matches!(f, Inflection::Imperative | Inflection::Volitional)))
+            });
+            !fixed || !grammar.iter().any(|m| {
+                m.start <= c.start
+                    && c.start + c.len <= m.start + m.len
+                    && (m.start, m.len) != (c.start, c.len)
+                    && {
+                        let t: String = text.chars.iter().skip(m.start).take(m.len).collect();
+                        self.dict
+                            .lookup(&t)
+                            .iter()
+                            .any(|e| m.entries.iter().any(|x| x.id == e.id))
+                    }
+            })
+        });
         grammar.extend(conjugations);
         // A point read off a word's form is found that way only: its
         // pattern (く) also matches as a verb's ending (負けた as 負く).
@@ -179,7 +203,7 @@ impl<'a> Analyzer<'a> {
 
     /// The longest text pattern at each point that ends where it may,
     /// less those inside a longer one.
-    fn text_matches(&self, text: &Text<'_>) -> Vec<GrammarMatch> {
+    fn text_matches(&self, text: &Text<'_>, words: &[Word]) -> Vec<GrammarMatch> {
         let mut found: Vec<GrammarMatch> = Vec::new();
         for start in 0..text.len() {
             let soft_start = !text.can_start(start);
@@ -191,9 +215,19 @@ impl<'a> Analyzer<'a> {
             };
             // Inside a compound (泳ぎ|方, 乗り|込んだ) a pattern may start
             // or end, but not both: it is the compound's head or its tail.
+            // Where a match ends decides between readings: a point that
+            // ends a sentence (の of 行くの？, not of 行くのは), and one
+            // that never does (にしろ of 雨にしろ、; at the end it is
+            // にする's command).
+            let keep = |e: &GrammarEntry, len: usize| {
+                let end = start + len;
+                // 、 closes a clause the の ends, but 雨にしろ、 goes on.
+                (!e.ends || ends_here(&text.chars, words, end, true))
+                    && !(e.continues && ends_here(&text.chars, words, end, false))
+            };
             let best = self
                 .dict
-                .matches_at(rest, MAX_PATTERN_CHARS)
+                .matches_at_where(rest, MAX_PATTERN_CHARS, keep)
                 .into_iter()
                 .find(|&(_, len)| {
                     // One char inside a word is a kana of its ending or of
@@ -274,8 +308,17 @@ impl<'a> Analyzer<'a> {
             let a_row = chars
                 .get(w.start + w.stem)
                 .is_some_and(|&c| "あかがさざただなばぱまらわ".contains(c));
-            let start =
-                w.start + if a_row { w.attach } else { w.stem }.min(w.len.saturating_sub(1));
+            // する and 来る change whole (しろ, 来い, させる).
+            let whole = ["する", "為る", "くる", "来る"].contains(&w.base.as_str());
+            let start = w.start
+                + if whole {
+                    0
+                } else if a_row {
+                    w.attach
+                } else {
+                    w.stem
+                }
+                .min(w.len.saturating_sub(1));
             let len = w.start + w.len - start;
             out.push(GrammarMatch {
                 start,
@@ -353,7 +396,12 @@ fn reads_form(words: &[Word], i: usize, reasons: Reasons) -> Option<usize> {
             && next.start == w.start + w.len
             && next.class == Class::Particle
             && next.base == "に";
-        return na.then_some(w.len + next.len);
+        // Not the に of になる, にする: 容易になった is "became easy".
+        let becomes = words.get(i + 2).is_some_and(|v| {
+            v.start == next.start + next.len
+                && ["なる", "成る", "為る", "する"].contains(&v.base.as_str())
+        });
+        return (na && !becomes).then_some(w.len + next.len);
     }
     if only(Reason::Nominalization) && w.reasons.is_empty() {
         let head = w.base.strip_suffix('さ')?;
@@ -494,6 +542,26 @@ fn head_before<'w>(chars: &[char], words: &'w [Word], at: usize) -> Head<'w> {
     }
 }
 
+/// Whether a sentence may end at `at`: the end, punctuation, a line
+/// break, or a sentence-ending particle (よ, ね, さ, な, かな…) closing it.
+/// 、 counts only with `comma`.
+fn ends_here(chars: &[char], words: &[Word], at: usize, comma: bool) -> bool {
+    let Some(&next) = chars.get(at) else {
+        return true;
+    };
+    if next == '、' {
+        return comma;
+    }
+    if !japanese_utils::is_japanese(next) || "。！？!?」』）…・〜".contains(next) {
+        return true;
+    }
+    words.iter().find(|w| w.start == at).is_some_and(|w| {
+        let t: String = chars.iter().skip(w.start).take(w.len).collect();
+        ["よ", "ね", "さ", "な", "かな", "かしら", "よね"].contains(&t.as_str())
+            && ends_here(chars, words, w.start + w.len, comma)
+    })
+}
+
 /// The leads a matched form of `e` may hold its own verb stem in: あり,
 /// ありえ… of ありえない (the uru point written whole). Not the start of
 /// the point's own text: 得 of 得よう, に of に行く.
@@ -560,6 +628,25 @@ impl Head<'_> {
                     || jmdict_core::lookup(t)
                         .iter()
                         .any(|e| spelled(e, t) && segment::classes(e).contains(&Class::Noun))
+            }
+            // A verb, adjective or ending, conjugated or not (行くの,
+            // 行ったのか, 高いの, 走って|る|の).
+            (Head::Word(w, _, _, after_verb), "predicate") => match w.class {
+                Class::Verb | Class::Adjective | Class::Auxiliary => true,
+                Class::Suffix => *after_verb,
+                _ => !w.reasons.is_empty(),
+            },
+            (Head::Text(t), "predicate") => jmdict_core::lookup(t).iter().any(|e| {
+                spelled(e, t)
+                    && segment::classes(e)
+                        .iter()
+                        .any(|c| matches!(c, Class::Verb | Class::Adjective))
+            }),
+            // Not a kind of its own: a noun or な-adjective before the な of
+            // a predicate (休みなの, 好きなのか).
+            (Head::Word(w, _, _, _), "noun") => {
+                w.reasons.is_empty()
+                    && matches!(w.class, Class::Noun | Class::NaAdjective | Class::Unknown)
             }
             (Head::Word(w, _, _, _), "verb-plain") => {
                 (w.class == Class::Verb && w.reasons.is_empty())

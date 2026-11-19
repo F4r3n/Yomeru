@@ -49,6 +49,12 @@ struct Point {
     /// breakdown.
     #[serde(default)]
     after: Vec<String>,
+    /// Whether the point ends a sentence, for the sentence breakdown.
+    #[serde(default, rename = "final")]
+    ends: bool,
+    /// Whether the point never ends a sentence, for the sentence breakdown.
+    #[serde(default)]
+    continues: bool,
 }
 
 /// `check = "self"` or `check = { inflection = ["causative"] }`; left out,
@@ -270,6 +276,9 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
                 bail!("{}: reads {name:?}, not one of {}", p.id, known.join(", "));
             }
         }
+        if p.ends && p.continues {
+            bail!("{}: final and continues both set", p.id);
+        }
         for kind in &p.after {
             if !crate::types::AFTER_KINDS.contains(&kind.as_str()) {
                 bail!(
@@ -306,6 +315,8 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
             check,
             reads: p.reads,
             after: p.after,
+            ends: p.ends,
+            continues: p.continues,
         });
     }
 
