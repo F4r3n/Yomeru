@@ -1910,7 +1910,7 @@ checksum = "ac6b926516df9c60bfa16e107b21086399f8285a44ca9711344b9e553c5146e2"
 
 [[package]]
 name = "deinflect"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "criterion",
 ]
@@ -2885,7 +2885,7 @@ dependencies = [
 
 [[package]]
 name = "examples-build"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "aho-corasick",
  "anyhow",
@@ -2898,7 +2898,7 @@ dependencies = [
 
 [[package]]
 name = "examples-core"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "anyhow",
  "examples-types",
@@ -2908,14 +2908,14 @@ dependencies = [
 
 [[package]]
 name = "examples-types"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "examples-wasm"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "console_error_panic_hook",
  "examples-core",
@@ -3938,7 +3938,7 @@ dependencies = [
 
 [[package]]
 name = "grammar-core"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "anyhow",
  "deinflect",
@@ -3954,7 +3954,7 @@ dependencies = [
 
 [[package]]
 name = "grammar-wasm"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "console_error_panic_hook",
  "grammar-core",
@@ -4594,7 +4594,7 @@ checksum = "3bd1574e617a9a6c1f8f8181bd7e841e1f20e4277607ef28945765188d6284d4"
 
 [[package]]
 name = "japanese-utils"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "criterion",
  "wasm-bindgen",
@@ -4625,7 +4625,7 @@ dependencies = [
 
 [[package]]
 name = "jmdict-build"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -4639,7 +4639,7 @@ dependencies = [
 
 [[package]]
 name = "jmdict-core"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "anyhow",
  "criterion",
@@ -4655,7 +4655,7 @@ dependencies = [
 
 [[package]]
 name = "jmdict-types"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "rkyv",
  "serde",
@@ -4665,7 +4665,7 @@ dependencies = [
 
 [[package]]
 name = "jmdict-wasm"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "console_error_panic_hook",
  "japanese-utils",
@@ -4776,7 +4776,7 @@ dependencies = [
 
 [[package]]
 name = "kanjidic-build"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -4789,7 +4789,7 @@ dependencies = [
 
 [[package]]
 name = "kanjidic-core"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "anyhow",
  "japanese-utils",
@@ -4801,14 +4801,14 @@ dependencies = [
 
 [[package]]
 name = "kanjidic-types"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "kanjidic-wasm"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "console_error_panic_hook",
  "kanjidic-core",
@@ -7515,7 +7515,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -7907,7 +7907,7 @@ dependencies = [
 
 [[package]]
 name = "srs-core"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "chrono",
  "rs-fsrs",
@@ -7916,7 +7916,7 @@ dependencies = [
 
 [[package]]
 name = "srs-wasm"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "console_error_panic_hook",
  "js-sys",
@@ -10041,7 +10041,7 @@ checksum = "e450f9b2ed1dff33c94c12589a87338689467b9c4f5d8a5710bd09a847d2c8a7"
 
 [[package]]
 name = "xtask"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -10121,7 +10121,7 @@ dependencies = [
 
 [[package]]
 name = "yomeru-android"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "dioxus",
  "yomeru-shared",
@@ -10129,7 +10129,7 @@ dependencies = [
 
 [[package]]
 name = "yomeru-core"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -10163,7 +10163,7 @@ dependencies = [
 
 [[package]]
 name = "yomeru-extension"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "async-trait",
  "console_error_panic_hook",
@@ -10182,7 +10182,7 @@ dependencies = [
 
 [[package]]
 name = "yomeru-shared"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "deinflect",
  "dioxus",
@@ -10203,7 +10203,7 @@ dependencies = [
 
 [[package]]
 name = "yomeru-web"
-version = "0.24.0"
+version = "0.24.1"
 dependencies = [
  "dioxus",
  "yomeru-shared",
