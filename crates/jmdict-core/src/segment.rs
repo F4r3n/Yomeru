@@ -355,6 +355,8 @@ pub struct Costs {
     /// A verb form only the lattice reads (the bare ます-stem, ん, ねば):
     /// where a noun is written the same (休み), the noun is likelier.
     pub extra_form: i32,
+    /// An imperative that doesn't end its sentence (see [`mid_imperative`]).
+    pub mid_imperative: i32,
 }
 
 impl Default for Costs {
@@ -379,6 +381,7 @@ impl Default for Costs {
             particle_head: 1000,
             function_freq_percent: 50,
             extra_form: 600,
+            mid_imperative: 500,
         }
     }
 }
@@ -411,6 +414,7 @@ impl Costs {
                 "particle_head" => &mut self.particle_head,
                 "function_freq_percent" => &mut self.function_freq_percent,
                 "extra_form" => &mut self.extra_form,
+                "mid_imperative" => &mut self.mid_imperative,
                 other => return Err(format!("no cost named {other}")),
             };
             *slot = v;
@@ -422,8 +426,9 @@ impl Costs {
     fn connection(&self, prev: usize, node: &Node) -> i32 {
         use Class as C;
         let prev = CLASSES.get(prev).copied();
-        let head = if node.particle_head
-            && matches!(prev, Some(C::Noun | C::Suffix | C::Unknown | C::Particle))
+        let head = if (node.particle_head
+            && matches!(prev, Some(C::Noun | C::Suffix | C::Unknown | C::Particle)))
+            || (node.kana_head && matches!(prev, Some(C::NaAdjective | C::Noun)))
         {
             self.particle_head
         } else {
@@ -432,6 +437,8 @@ impl Costs {
         head + match (prev, node.class) {
             (None, C::Particle | C::Suffix | C::Auxiliary) => self.clause_open,
             (Some(_), C::Conjunction | C::Interjection) => self.mid_conjunction,
+            // A particle takes の freely: などの, からの, での.
+            (Some(C::Particle), C::Particle) if node.base == "の" => 0,
             (Some(C::Particle), C::Particle) => self.particle_particle,
             (Some(C::Interjection), _) => self.after_interjection,
             (Some(C::Prefix), C::Noun | C::Suffix | C::NaAdjective) => 0,
@@ -570,6 +577,10 @@ struct Node {
     reasons: Reasons,
     /// A kana content word whose first kana is a particle's (はどう).
     particle_head: bool,
+    /// The same for a word written in kana that takes kanji, whatever its
+    /// frequency: after a noun or な adjective, に and で are its own
+    /// (になった is the expression になる, or に|なった; not 担う).
+    kana_head: bool,
 }
 
 /// The candidates for one dictionary form of `surface`, one per class its
@@ -647,6 +658,10 @@ fn push_nodes(
                     base: form.to_owned(),
                     reasons,
                     particle_head: particle_head && content(class) && freq > 0,
+                    kana_head: particle_head
+                        && content(class)
+                        && class != Class::Expression
+                        && kana_for_kanji,
                 });
             }
         }
@@ -673,6 +688,24 @@ fn form_is_reading(e: &ArchivedWordEntry, form: &str) -> bool {
         && !e.kanji_forms.iter().any(|k| k.text.as_str() == form)
 }
 
+/// Adds [`Costs::mid_imperative`] to the imperatives among `nodes` that
+/// don't end their sentence: `rest` is the text from where they start.
+/// An imperative ends it, or comes before と, って, よ, な, ね, ぞ (止まれと,
+/// 来いよ); 実行され、 is 実行 + される's stem, not さる's imperative.
+fn mid_imperative(costs: &Costs, nodes: &mut [Node], rest: &[char]) {
+    for n in nodes {
+        if !n.reasons.contains(Reason::Imperative) {
+            continue;
+        }
+        let ends = rest
+            .get(n.len)
+            .is_none_or(|c| "。！？!?」』）)\n…".contains(*c) || "とっよなねぞや".contains(*c));
+        if !ends {
+            n.cost += costs.mid_imperative;
+        }
+    }
+}
+
 /// Every candidate word at the start of `run`, the rest of a run of word
 /// chars.
 fn candidates(
@@ -694,7 +727,31 @@ fn candidates(
         let Some(surface) = window.get(..byte_end) else {
             continue;
         };
-        for (form, reasons, ichidan) in extra_forms(surface) {
+        // A godan verb's a-row stem stands alone before ざる (書か|ざるを得
+        // ない): the stem of its ん negative.
+        let before_zaru = run.get(len..).is_some_and(|r| r.starts_with(&['ざ', 'る']));
+        // A common noun spelled the same in kana (とき as 時, not 解く's
+        // stem) is likelier still than its kana costs it.
+        let kana_noun = surface.chars().all(japanese_utils::is_kana)
+            && walk
+                .get(&window, surface)
+                .and_then(get_entry_group)
+                .is_some_and(|indices| {
+                    indices.iter().filter_map(|&i| get_entry(i)).any(|e| {
+                        classes(e).contains(&Class::Noun)
+                            && (costs.freq(e, surface) == 0
+                                || e.kanji_forms.iter().any(|k| costs.freq(e, k.text.as_str()) == 0))
+                    })
+                });
+        let mut forms = extra_forms(surface);
+        if before_zaru {
+            forms.extend(
+                extra_forms(&format!("{surface}ん"))
+                    .into_iter()
+                    .filter(|&(_, _, ichidan)| !ichidan),
+            );
+        }
+        for (form, reasons, ichidan) in forms {
             let Some(indices) = walk.get(&window, &form).and_then(get_entry_group) else {
                 continue;
             };
@@ -712,7 +769,7 @@ fn candidates(
             let from = out.len();
             push_nodes(costs, &mut out, &entries, surface, len, &form, reasons);
             for n in out.get_mut(from..).into_iter().flatten() {
-                n.cost += costs.extra_form;
+                n.cost += costs.extra_form + if kana_noun { costs.kana_for_kanji } else { 0 };
             }
         }
         if walk.reaches(byte_end) || deinflect::can_deinflect(surface) {
@@ -782,6 +839,7 @@ fn unknown(run: &[char], len: usize, cost: i32) -> Node {
         base: run.iter().take(len).collect(),
         reasons: Reasons::EMPTY,
         particle_head: false,
+        kana_head: false,
     }
 }
 
@@ -837,7 +895,9 @@ pub fn candidates_at(sentence: &str, at: usize, costs: &Costs) -> Vec<(usize, Cl
     }
     let mut walk = FstWalk::default();
     let mut deinflector = deinflect::Deinflector::default();
-    candidates(costs, run, &mut walk, &mut deinflector)
+    let mut found = candidates(costs, run, &mut walk, &mut deinflector);
+    mid_imperative(costs, &mut found, rest);
+    found
         .into_iter()
         .map(|n| {
             let head = n
@@ -864,7 +924,9 @@ pub fn segment_with(sentence: &str, costs: &Costs) -> Vec<Word> {
         }
         let run_len = rest.iter().take_while(|&&c| wordy(c)).count();
         let run = rest.get(..run_len).unwrap_or_default();
-        nodes.push(candidates(costs, run, &mut walk, &mut deinflector));
+        let mut here = candidates(costs, run, &mut walk, &mut deinflector);
+        mid_imperative(costs, &mut here, rest);
+        nodes.push(here);
     }
 
     let mut best = Table(vec![[None; STATES]; n + 1]);
@@ -907,7 +969,14 @@ pub fn segment_with(sentence: &str, costs: &Costs) -> Vec<Word> {
                     from: (at, st),
                     node: Some((at, i)),
                 };
-                best.relax(at + node.len, state(node.class), step);
+                // A する noun with its する is a verb to what follows:
+                // アクセスできない|とき is a verb's とき.
+                let next = if node.reasons.contains(Reason::SuruStem) {
+                    state(Class::Verb)
+                } else {
+                    state(node.class)
+                };
+                best.relax(at + node.len, next, step);
             }
         }
     }

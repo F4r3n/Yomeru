@@ -270,6 +270,14 @@ pub static RULES: &[Rule] = &[
     rule!("んでいた", "ぬ", Progressive, Past),
     rule!("んでいた", "ぶ", Progressive, Past),
     rule!("んでいた", "む", Progressive, Past),
+    // Spoken ている without its い (走ってる, 見てた, 泳いでます): back to
+    // the full form, which the rules above take on.
+    rule!("てる", "ている", Progressive),
+    rule!("てた", "ていた", Progressive),
+    rule!("てます", "ています", Progressive),
+    rule!("でる", "でいる", Progressive),
+    rule!("でた", "でいた", Progressive),
+    rule!("でます", "でいます", Progressive),
     // ていく in kana: 行った's own rules are kanji-only (いった is as often
     // 言った), but after て it is いく.
     rule!("ていった", "ていく", Past),

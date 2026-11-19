@@ -236,6 +236,19 @@ mod tests {
     }
 
     #[test]
+    fn spoken_teiru_reads_back_to_the_verb() {
+        for (text, verb) in [
+            ("走ってる", "走る"),
+            ("見てた", "見る"),
+            ("泳いでる", "泳ぐ"),
+            ("読んでます", "読む"),
+            ("通ってる", "通る"),
+        ] {
+            assert!(forms(text).iter().any(|f| f == verb), "{text}: {:?}", forms(text));
+        }
+    }
+
+    #[test]
     fn a_run_without_a_reason_never_applies_its_rules() {
         let mut d = Deinflector::default();
         let all: Vec<String> = d.run("勉強しろ").map(str::to_owned).collect();
