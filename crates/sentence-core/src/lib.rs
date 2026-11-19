@@ -136,8 +136,12 @@ impl<'a> Analyzer<'a> {
                     || (e.after.iter().any(|k| k == "predicate")
                         && matched.starts_with('な')
                         && head.is("noun"))
-                    || (e.after.iter().any(|k| k == "masu-stem")
-                        && own_heads(&matched, e).any(|lead| Head::Text(lead).is("masu-stem")))
+                    // A form holding its verb: あり of ありえない, 泣く of
+                    // 泣くに泣けない.
+                    || e.after.iter().any(|k| {
+                        ["masu-stem", "verb-plain"].contains(&k.as_str())
+                            && own_heads(&matched, e).any(|lead| Head::Text(lead).is(k))
+                    })
             });
         }
         // A verb form inside a conjugated word is what the word's
@@ -196,7 +200,25 @@ impl<'a> Analyzer<'a> {
         }
         grammar.retain(|m| !m.entries.is_empty());
         grammar.extend(self.read_matches(&words));
-        grammar.extend(self.slot_matches(&text));
+        let mut slots = self.slot_matches(&text);
+        for m in &mut slots {
+            let head = head_before(&text.chars, &words, m.start);
+            m.entries
+                .retain(|e| e.after.is_empty() || e.after.iter().any(|k| head.is(k)));
+            // A verb (or a する noun with its する) right after を takes it
+            // as its object: モックを推奨するロンドン学派とし isn't を〜とする.
+            if let Some(&(s, n)) = m.pieces.first()
+                && text.chars.get(s + n - 1) == Some(&'を')
+                && words
+                    .iter()
+                    .find(|w| w.start == s + n)
+                    .is_some_and(|w| w.class == Class::Verb || w.reasons.contains(Reason::SuruStem))
+            {
+                m.entries.clear();
+            }
+        }
+        slots.retain(|m| !m.entries.is_empty());
+        grammar.extend(slots);
         grammar.sort_by_key(|m| (m.start, std::cmp::Reverse(m.len)));
         Breakdown { words, grammar }
     }
@@ -268,11 +290,20 @@ impl<'a> Analyzer<'a> {
     fn slot_matches(&self, text: &Text<'_>) -> Vec<GrammarMatch> {
         let mut out = Vec::new();
         for (pieces, entries) in &self.slots {
+            // A slot crosses 、 only for a point whose examples do: paired
+            // points (もあれば、…も, 書いては消し、書いては), not は〜が.
+            let commas = entries.iter().any(|e| {
+                e.examples.iter().any(|x| {
+                    x.ja.iter().any(|s| {
+                        matches!(s, grammar_core::Span::Highlight { text } if text.contains('、'))
+                    })
+                })
+            });
             for start in 0..text.len() {
                 if !text.can_start(start) {
                     continue;
                 }
-                if let Some(spans) = text.slots_at(start, pieces)
+                if let Some(spans) = text.slots_at(start, pieces, commas)
                     && let (Some(&first), Some(&last)) = (spans.first(), spans.last())
                 {
                     out.push(GrammarMatch {
@@ -661,7 +692,7 @@ impl Head<'_> {
                 spelled(e, t)
                     && segment::classes(e)
                         .iter()
-                        .any(|c| matches!(c, Class::Verb | Class::Adjective))
+                        .any(|c| matches!(c, Class::Verb | Class::Adjective | Class::Auxiliary))
             }),
             // An adjective's stem (寒|がる, 欲し|がる), a な adjective
             // (嫌|がる), or a verb's stem + た (行きた|がる).
@@ -879,12 +910,15 @@ impl<'s> Text<'s> {
             .get(*self.bytes.get(start)?..*self.bytes.get(end)?)
     }
 
-    /// Ends a sentence: a slot doesn't reach past it.
-    fn stop(&self, p: usize) -> bool {
-        matches!(
-            self.chars.get(p),
-            Some('。' | '！' | '？' | '!' | '?' | '\n')
-        )
+    /// Ends a sentence or a bracketed part, or a clause (、) unless
+    /// `commas`: a slot doesn't reach past it (は実行され、テストが,
+    /// は(実装対象によりますが).
+    fn stop(&self, p: usize, commas: bool) -> bool {
+        match self.chars.get(p) {
+            Some('、' | '，') => !commas,
+            Some(c) => "。！？!?\n()（）「」『』".contains(*c),
+            None => false,
+        }
     }
 
     /// Words starting in `start..end`.
@@ -934,7 +968,12 @@ impl<'s> Text<'s> {
     /// `(start, len)`: the first at `start`, each next one the nearest
     /// after a slot of one to [`MAX_SLOT_WORDS`] words. The last piece may
     /// be conjugated.
-    fn slots_at(&self, start: usize, pieces: &[String]) -> Option<Vec<(usize, usize)>> {
+    fn slots_at(
+        &self,
+        start: usize,
+        pieces: &[String],
+        commas: bool,
+    ) -> Option<Vec<(usize, usize)>> {
         let (first, rest) = pieces.split_first()?;
         let first_end = if rest.is_empty() {
             self.conjugated_at(start, first)?
@@ -947,7 +986,7 @@ impl<'s> Text<'s> {
             let last = i + 1 == rest.len();
             let mut found = None;
             for p in at + 1..self.len() {
-                if self.stop(p - 1) || self.words_in(at, p) > MAX_SLOT_WORDS {
+                if self.stop(p - 1, commas) || self.words_in(at, p) > MAX_SLOT_WORDS {
                     break;
                 }
                 if !self.can_start(p) {

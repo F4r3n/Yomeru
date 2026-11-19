@@ -303,6 +303,19 @@ fn listing_shi_nari_and_garu_attach_where_they_name() {
 }
 
 #[test]
+fn a_slot_doesnt_cross_a_clause_its_examples_dont() {
+    let has = |sentence: &str| {
+        grammar(sentence)
+            .iter()
+            .any(|(_, ids, _)| ids.contains(&"shika-nai".to_owned()))
+    };
+    assert!(has("本しか食べない"));
+    // しか〜ない's example has no 、 inside: not across one, nor a bracket.
+    assert!(!has("本しか、食べない"));
+    assert!(!has("本しか（食べ）ない"));
+}
+
+#[test]
 fn a_verb_of_one_piece_isnt_split_for_grammar() {
     // 異なる isn't 異 + なる.
     let found = grammar("異なる");

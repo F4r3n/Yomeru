@@ -26165,6 +26165,7 @@ examples = [
   { source = "yomeru", id = "y4", ja = "彼には本当のことを{言うに言えなかった}。", en = "I wanted to tell him the truth, but I just couldn't." },
   { source = "yomeru", id = "y5", ja = "隣がうるさくて、{寝るに寝られない}。", en = "The neighbors are so loud I can't sleep, try as I might." },
 ]
+after = ["verb-plain"]
 
 [[point]]
 id = "ika-ni"
