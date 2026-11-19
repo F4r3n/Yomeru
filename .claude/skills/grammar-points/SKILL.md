@@ -254,6 +254,10 @@ a Read first, and the file is thousands of lines. Instead:
   imperative). `check = "self"` when neither finds it reliably (the く
   adverb, the て join, 自動詞・他動詞): the user rates against the
   reference. Put it last in the entry, after `examples`.
+- **reads**: only for a point that is a word's form rather than a string
+  the breakdown can find (the く adverb: `reads = ["adverbial"]`; the さ
+  noun: `["nominalization"]`). Names from deinflect's `Reason`. After
+  `check`, last.
 - **examples**: 5 (entries written before 2026-11-18 have 2–3 until an
   examples batch extends them), under ~26 chars of Japanese, at the
   entry's level or below in vocabulary; the `{…}` mark covers the pattern

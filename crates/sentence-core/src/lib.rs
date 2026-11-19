@@ -15,8 +15,9 @@
 //! - **Conjugations** (passive, causative): read from the words'
 //!   deinflection, for the points whose answer check names a form.
 
+use deinflect::{Reason, Reasons};
 use grammar_core::{AnswerCheck, GrammarDict, GrammarEntry, Inflection};
-use jmdict_core::segment::{self, Word};
+use jmdict_core::segment::{self, Class, Word};
 
 /// The longest text pattern tried, in chars.
 const MAX_PATTERN_CHARS: usize = 24;
@@ -60,13 +61,21 @@ pub struct Analyzer<'a> {
     /// The pieces of each key with a `〜`, and the entries it spells.
     slots: Vec<(Vec<String>, Vec<GrammarEntry>)>,
     inflections: Vec<(Inflection, GrammarEntry)>,
+    /// The points read off a word's form (`reads`): the く adverb, the さ
+    /// noun.
+    reads: Vec<(Reasons, GrammarEntry)>,
 }
 
 impl<'a> Analyzer<'a> {
     pub fn new(dict: &'a GrammarDict) -> Self {
         let mut slots: Vec<(String, Vec<String>, Vec<GrammarEntry>)> = Vec::new();
         let mut inflections = Vec::new();
+        let mut reads = Vec::new();
         for e in dict.entries() {
+            let r = e.read_reasons();
+            if !r.is_empty() {
+                reads.push((r, e.clone()));
+            }
             if let AnswerCheck::Inflection { forms } = &e.check {
                 inflections.extend(forms.iter().map(|&f| (f, e.clone())));
             }
@@ -97,6 +106,7 @@ impl<'a> Analyzer<'a> {
             dict,
             slots: slots.into_iter().map(|(_, p, e)| (p, e)).collect(),
             inflections,
+            reads,
         }
     }
 
@@ -118,6 +128,13 @@ impl<'a> Analyzer<'a> {
             })
         });
         grammar.extend(conjugations);
+        // A point read off a word's form is found that way only: its
+        // pattern (く) also matches as a verb's ending (負けた as 負く).
+        for m in &mut grammar {
+            m.entries.retain(|e| e.reads.is_empty());
+        }
+        grammar.retain(|m| !m.entries.is_empty());
+        grammar.extend(self.read_matches(&words));
         grammar.extend(self.slot_matches(&text));
         grammar.sort_by_key(|m| (m.start, std::cmp::Reverse(m.len)));
         Breakdown { words, grammar }
@@ -226,6 +243,79 @@ impl<'a> Analyzer<'a> {
         }
         out
     }
+
+    /// The points read off a word's form ([`reads_form`]), on the whole
+    /// word.
+    fn read_matches(&self, words: &[Word]) -> Vec<GrammarMatch> {
+        let mut out: Vec<GrammarMatch> = Vec::new();
+        for (i, w) in words.iter().enumerate() {
+            for (r, e) in &self.reads {
+                let Some(len) = reads_form(words, i, *r) else {
+                    continue;
+                };
+                match out.iter_mut().find(|m| {
+                    (m.start, m.len) == (w.start, len) && m.kind == MatchKind::Conjugation
+                }) {
+                    Some(m) if !m.entries.iter().any(|x| x.id == e.id) => m.entries.push(e.clone()),
+                    Some(_) => {}
+                    None => out.push(GrammarMatch {
+                        start: w.start,
+                        len,
+                        entries: vec![e.clone()],
+                        pieces: vec![(w.start, len)],
+                        kind: MatchKind::Conjugation,
+                    }),
+                }
+            }
+        }
+        out
+    }
+}
+
+/// Whether word `i` shows the form `reasons` stand for, and if so how many
+/// chars the form covers from the word's start: the whole word (速く,
+/// 高さ), or the word and the に after it (静か|に, the な adjective's
+/// adverb). Besides the reasons the lattice gave the word, a word the
+/// dictionary has whole (速く, 高さ, 便利さ) counts by its head: an い
+/// adjective less its い, or for さ a な adjective.
+fn reads_form(words: &[Word], i: usize, reasons: Reasons) -> Option<usize> {
+    let w = words.get(i)?;
+    w.entry?;
+    if w.reasons.contains_all(reasons) {
+        return Some(w.len);
+    }
+    let head_is = |head: &str, ending: &str| -> bool {
+        !head.is_empty()
+            && (jmdict_core::lookup(&format!("{head}い"))
+                .iter()
+                .any(|e| segment::classes(e).contains(&Class::Adjective))
+                || (ending == "さ"
+                    && jmdict_core::lookup(head)
+                        .iter()
+                        .any(|e| segment::classes(e).contains(&Class::NaAdjective))))
+    };
+    let only = |r: Reason| reasons == Reasons::of(&[r]);
+    if only(Reason::Adverbial) {
+        if w.reasons.is_empty()
+            && let Some(head) = w.base.strip_suffix('く')
+            && head_is(head, "く")
+        {
+            return Some(w.len);
+        }
+        let next = words.get(i + 1)?;
+        let na = w.reasons.is_empty()
+            && w.entry
+                .is_some_and(|e| segment::classes(e).contains(&Class::NaAdjective))
+            && next.start == w.start + w.len
+            && next.class == Class::Particle
+            && next.base == "に";
+        return na.then_some(w.len + next.len);
+    }
+    if only(Reason::Nominalization) && w.reasons.is_empty() {
+        let head = w.base.strip_suffix('さ')?;
+        return head_is(head, "さ").then_some(w.len);
+    }
+    None
 }
 
 /// The shortest word part [`soft_edges`] splits off, in chars.

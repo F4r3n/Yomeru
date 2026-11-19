@@ -21,10 +21,15 @@ fn dict() -> &'static GrammarDict {
             word(6, "", "いい", vec![P::Adjective], "good"),
             word(7, "彼ら", "かれら", vec![P::Pronoun], "they"),
             word(8, "", "は", vec![P::Particle], "topic marker"),
+            word(9, "高い", "たかい", vec![P::Adjective], "high"),
+            word(10, "高さ", "たかさ", vec![P::Noun], "height"),
+            word(11, "静か", "しずか", vec![P::AdjectiveNa], "quiet"),
+            word(12, "", "に", vec![P::Particle], "in, to"),
+            word(13, "", "ける", vec![P::VerbIchidan], "to kick"),
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 5\n{}{}{}{}",
+            "next_seq = 7\n{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -36,6 +41,15 @@ fn dict() -> &'static GrammarDict {
                 "使役形",
                 "食べ{させる}。",
                 "check = { inflection = [\"causative\"] }"
+            ),
+            // Points read off a word's form.
+            point("ku-adverb", 5, "く", "{高く}。", "reads = [\"adverbial\"]"),
+            point(
+                "sa-noun",
+                6,
+                "さ",
+                "{高さ}。",
+                "reads = [\"nominalization\"]"
             ),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
@@ -124,6 +138,36 @@ fn a_conjugation_point_comes_from_the_word() {
         found.iter().any(|(t, ids, k)| t == "させた"
             && ids == &["causative"]
             && *k == MatchKind::Conjugation),
+        "{found:?}"
+    );
+}
+
+#[test]
+fn a_point_is_read_off_a_words_form() {
+    // 高く: the lattice's own deinflection; 高さ: an entry of its own, read
+    // by its head; 静かに: a な adjective and に.
+    for (sentence, text, id) in [
+        ("高く", "高く", "ku-adverb"),
+        ("高さ", "高さ", "sa-noun"),
+        ("静かに", "静かに", "ku-adverb"),
+    ] {
+        let found = grammar(sentence);
+        assert!(
+            found.contains(&(text.to_owned(), vec![id.to_owned()], MatchKind::Conjugation)),
+            "{sentence}: {found:?}"
+        );
+    }
+}
+
+#[test]
+fn a_read_point_isnt_found_by_its_pattern() {
+    // く as an ending is in けた (the past of a would-be 蹴く), and ける
+    // is no adjective: nothing reads as the く adverb.
+    let found = grammar("けた");
+    assert!(
+        found
+            .iter()
+            .all(|(_, ids, _)| !ids.contains(&"ku-adverb".to_owned())),
         "{found:?}"
     );
 }

@@ -45,6 +45,11 @@
 #                answer must be in one of them. check = "self" when neither
 #                works (the く adverb, the て join): the user compares with
 #                the reference and rates
+#   reads        optional: for a point that is a word's form, not a string
+#                (reads = ["adverbial"]: 速く, 静かに), the deinflection
+#                reasons the sentence breakdown finds it by: adverbial
+#                (く), nominalization (さ), or another of deinflect's
+#                `Reason` names. Put it after `check`, last
 #   hover        optional, default true; false keeps the entry out of the
 #                hover popup, reachable by search only (って would match
 #                inside 行って). One-char patterns (は, に, て) never show on
@@ -6491,6 +6496,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "この町の{便利さ}が好きです。", en = "I like the convenience of this town." },
   { source = "yomeru", id = "y3", ja = "東京の夏の{暑さ}にびっくりしました。", en = "I was surprised by the heat of summer in Tokyo." },
 ]
+reads = ["nominalization"]
 
 [[point]]
 id = "dai-age"
@@ -6837,6 +6843,7 @@ examples = [
   { source = "yomeru", id = "y3", ja = "妹はピアノを{上手に}ひきます。", en = "My little sister plays the piano well." },
 ]
 check = "self"
+reads = ["adverbial"]
 
 [[point]]
 id = "toka"

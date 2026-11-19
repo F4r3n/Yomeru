@@ -52,6 +52,14 @@ def load_bee():
 # `Inflection`).
 INFLECTIONS = {"passive", "potential", "causative", "causative-passive", "volitional", "imperative"}
 
+# The reasons `reads = [...]` can name (deinflect's `Reason::name`).
+READS = {
+    "negative", "past", "polite", "te-form", "conditional", "tara", "tari", "passive",
+    "potential", "causative", "imperative", "volitional", "desiderative", "progressive",
+    "completion", "try-doing", "te-oku", "te-aru", "te-kuru", "te-iku", "te-hoshii", "nasai",
+    "literary", "without-doing", "adverbial", "nominalization", "suru-stem", "masu-stem",
+}
+
 
 def tatoeba():
     out = {}
@@ -133,6 +141,9 @@ def validate(points):
             forms = check.get("inflection") if isinstance(check, dict) else None
             if not forms or set(check) != {"inflection"} or not set(forms) <= INFLECTIONS:
                 errors.append(f"{name}: check is \"self\" or {{ inflection = [...] }} of {sorted(INFLECTIONS)}")
+        reads = p.get("reads", [])
+        if not isinstance(reads, list) or not set(reads) <= READS:
+            errors.append(f"{name}: reads is a list of {sorted(READS)}")
         if p.get("jlpt") not in LEVELS:
             errors.append(f"{name}: jlpt must be one of N5…N1")
         examples = p.get("examples", [])

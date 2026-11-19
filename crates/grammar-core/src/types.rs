@@ -35,6 +35,11 @@ pub struct GrammarEntry {
     pub hover: bool,
     /// How a production answer is checked for this point.
     pub check: AnswerCheck,
+    /// Deinflection reasons ([`deinflect::Reason::name`]) a word carries
+    /// when it shows this point: `adverbial` for the く adverb (速く). For
+    /// the sentence breakdown only; the answer check reads `check`.
+    #[serde(default)]
+    pub reads: Vec<String>,
 }
 
 /// How a production review checks that the typed answer uses the point.
@@ -175,6 +180,16 @@ pub fn parse_marked(ja: &str) -> Option<Rich> {
 }
 
 impl GrammarEntry {
+    /// [`Self::reads`] as reasons, all together.
+    pub fn read_reasons(&self) -> deinflect::Reasons {
+        self.reads
+            .iter()
+            .filter_map(|n| deinflect::Reason::from_name(n))
+            .fold(deinflect::Reasons::EMPTY, |acc, r| {
+                acc.union(deinflect::Reasons::of(&[r]))
+            })
+    }
+
     /// Every spelling the entry is found by: the pattern, then its forms.
     pub fn keys(&self) -> impl Iterator<Item = &str> {
         std::iter::once(self.pattern.as_str()).chain(self.forms.iter().map(String::as_str))

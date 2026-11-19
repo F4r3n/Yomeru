@@ -41,6 +41,10 @@ struct Point {
     #[serde(default = "yes")]
     hover: bool,
     check: Option<RawCheck>,
+    /// Deinflection reasons a word showing the point carries (`adverbial`),
+    /// for the sentence breakdown.
+    #[serde(default)]
+    reads: Vec<String>,
 }
 
 /// `check = "self"` or `check = { inflection = ["causative"] }`; left out,
@@ -256,6 +260,12 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
                 AnswerCheck::Inflection { forms }
             }
         };
+        for name in &p.reads {
+            if deinflect::Reason::from_name(name).is_none() {
+                let known: Vec<&str> = deinflect::Reason::ALL.iter().map(|r| r.name()).collect();
+                bail!("{}: reads {name:?}, not one of {}", p.id, known.join(", "));
+            }
+        }
         let mut related = Vec::with_capacity(p.related.len());
         for id in p.related {
             match pattern_of.get(&id) {
@@ -281,6 +291,7 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
             examples,
             hover: p.hover,
             check,
+            reads: p.reads,
         });
     }
 
