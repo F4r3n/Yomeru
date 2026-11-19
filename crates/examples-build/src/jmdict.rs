@@ -74,6 +74,29 @@ fn is_hiragana(c: char) -> bool {
     matches!(c, '\u{3041}'..='\u{309F}')
 }
 
+fn is_kanji(c: char) -> bool {
+    matches!(c, '\u{3400}'..='\u{9FFF}' | '\u{F900}'..='\u{FAFF}' | '々')
+}
+
+/// Suffixes that leave the word before them as it is: 積極的, 納税者,
+/// 過半数, 自家用. 料 is not one (手数料 is its own word).
+const SUFFIXES: &[char] = &[
+    '的', '性', '化', '者', '家', '数', '用', '式', '型', '感', '力', '率', '界', '側', '上', '中',
+    '内', '外', '製', '権', '心', '色', '風', '人', '員', '品', '物',
+];
+
+/// A kanji match with another kanji right before it, or right after it
+/// other than one of `SUFFIXES`, is part of a longer word: 手数 in 手数料,
+/// 社中 in 会社中. Kana next to it (お手数, 手数をかける) is fine.
+fn inside_compound(before: &str, text: &str, after: &str) -> bool {
+    let kanji = |c: Option<char>| c.is_some_and(is_kanji);
+    let next = after.chars().next();
+    (kanji(before.chars().next_back()) && kanji(text.chars().next()))
+        || (kanji(next)
+            && kanji(text.chars().next_back())
+            && !next.is_some_and(|c| SUFFIXES.contains(&c)))
+}
+
 fn conjugates(e: &WordEntry) -> bool {
     use PartOfSpeech as P;
     e.senses.iter().flat_map(|s| &s.pos).any(|p| {
@@ -159,6 +182,9 @@ pub(crate) fn add_literal_candidates(
             let Some(text) = s.japanese.get(m.range()) else {
                 continue;
             };
+            if inside_compound(start, text, s.japanese.get(m.end()..).unwrap_or("")) {
+                continue;
+            }
             let base = *base.get_or_insert_with(|| {
                 commonness(&s.tokens, "", doc_freq) - sentence_penalty(&s.japanese)
             });

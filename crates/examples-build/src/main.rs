@@ -658,6 +658,31 @@ mod tests {
         assert_eq!(ex[0].1, "擽った");
     }
 
+    /// The text fallback skips a word written inside a longer compound
+    /// (手数 in 手数料) but keeps it next to kana (お手数).
+    #[test]
+    fn build_skips_untagged_matches_inside_compounds() {
+        let input = "A: 手数料はいくらですか。\tHow much is the fee?#ID=1\n\
+                     B: 手数料 は 幾ら{いくら} ですか\n\
+                     A: お手数ですが塩を回して。\tPass me the salt, please.#ID=2\n\
+                     B: お手数 です が 塩 を 回す{回して}\n";
+        let e = entry(&["手数"], &["てすう"], true, vec![PartOfSpeech::Noun]);
+        let jp: Vec<String> = examples_of(input, &[e], "手数")
+            .into_iter()
+            .map(|(j, _)| j)
+            .collect();
+        assert_eq!(jp, vec!["お手数ですが塩を回して。"]);
+    }
+
+    /// A suffix that leaves the word as it is (積極的) does not hide it.
+    #[test]
+    fn build_keeps_untagged_matches_before_a_suffix() {
+        let input = "A: 彼は積極的だ。\tHe is proactive.#ID=1\n\
+                     B: 彼(かれ) は 積極的 だ\n";
+        let e = entry(&["積極"], &["せっきょく"], true, vec![PartOfSpeech::Noun]);
+        assert_eq!(examples_of(input, &[e], "積極").len(), 1);
+    }
+
     /// A short sentence showing the particle beats a long multi-clause one
     /// that comes first in the corpus.
     #[test]
