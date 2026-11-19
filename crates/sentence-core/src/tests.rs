@@ -44,10 +44,12 @@ fn dict() -> &'static GrammarDict {
             word(28, "決める", "きめる", vec![P::VerbIchidan], "to decide"),
             word(29, "様", "よう", vec![P::Noun], "way"),
             word(30, "", "の", vec![P::Particle], "of"),
+            word(31, "為る", "する", vec![P::VerbSuru], "to do"),
+            word(32, "以上", "いじょう", vec![P::Noun], "or more"),
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 17\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+            "next_seq = 22\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -116,6 +118,11 @@ fn dict() -> &'static GrammarDict {
             ),
             point("ni-suru", 15, "にする", "コーヒー{にする}。", ""),
             point("ni-shiro", 16, "にしろ", "肉{にしろ}、魚にしろ。", "continues = true"),
+            point("ijou", 17, "以上", "三つ{以上}。", ""),
+            point("shi", 19, "し", "高い{し}。", "after = [\"predicate\"]"),
+            point("nari", 20, "なり", "見る{なり}。", "after = [\"verb-plain\"]"),
+            point("garu", 21, "がる", "高{がる}。", "after = [\"adjective-stem\"]"),
+            point("ijou-ni", 18, "以上に", "思った{以上に}高い。", "no_suru = true"),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
     })
@@ -276,6 +283,26 @@ fn a_point_is_found_only_after_what_it_names() {
 }
 
 #[test]
+fn listing_shi_nari_and_garu_attach_where_they_name() {
+    let has = |sentence: &str, id: &str| {
+        grammar(sentence)
+            .iter()
+            .any(|(_, ids, _)| ids.contains(&id.to_owned()))
+    };
+    // し after a predicate, not する's stem after a noun.
+    assert!(has("高いし", "shi"));
+    assert!(!has("散歩し", "shi"));
+    // なり "as soon as" after a dictionary form, not なる's stem after に.
+    assert!(has("走るなり", "nari"));
+    assert!(!has("本になり", "nari"));
+    // がる after an adjective's stem, not after a noun's が.
+    assert!(has("高がる", "garu"));
+    assert!(!has("本がある", "garu"));
+    // The adverb form before なる is "become": 高くなる.
+    assert!(!has("高くなる", "ku-adverb"));
+}
+
+#[test]
 fn a_verb_of_one_piece_isnt_split_for_grammar() {
     // 異なる isn't 異 + なる.
     let found = grammar("異なる");
@@ -327,4 +354,8 @@ fn a_sentence_ending_point_is_found_only_at_the_end() {
     // The end is also a closing particle or a line break.
     assert!(!has("本にしろよ", "ni-shiro"));
     assert!(!has("本にしろ\n", "ni-shiro"));
+    // 以上に is "more than", but before する its に is にする's.
+    assert!(has("本以上に高い", "ijou-ni"));
+    assert!(!has("本以上にしろ", "ijou-ni"));
+    assert!(has("本以上にしろ", "ijou"));
 }

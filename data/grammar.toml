@@ -56,7 +56,8 @@
 #                suru-noun (散歩), amount (三十分, 100, 五つ),
 #                noun-or-demonstrative (東京, この), noun-or-particle
 #                (私, 由利さん, から), predicate (行く, 行った, 高い;
-#                a form starting with な also after a noun: 休み{なの}).
+#                a form starting with な also after a noun: 休み{なの}),
+#                adjective-stem (寒, 欲し, 嫌, 行きた: 寒{がる}).
 #                after = ["masu-stem", "suru-noun"] keeps
 #                に行く off 学校に行く. Only for a point that misfires; last
 #   final        optional, true: the point ends a sentence (行く{の}？),
@@ -66,6 +67,9 @@
 #   continues    optional, true: the point never ends a sentence (雨{にしろ}
 #                雪にしろ、…); the breakdown skips it at the end, where
 #                にしろ is にする's command. After `after`
+#   no_suru      optional, true: the point's に never comes before する or
+#                なる (以上に "more than"); there the breakdown reads the
+#                に as にする's (80%以上{にしろ}). After `after`
 #   hover        optional, default true; false keeps the entry out of the
 #                hover popup, reachable by search only (って would match
 #                inside 行って). One-char patterns (は, に, て) never show on
@@ -3286,6 +3290,7 @@ examples = [
   { tatoeba = "312491_91223", ja = "彼女は暗いところをとても怖{がる}。", en = "She is very afraid of the dark." },
   { source = "yomeru", id = "y1", ja = "子供たちが寒{がっている}ので、窓を閉めました。", en = "The children were complaining of the cold, so I shut the window." },
 ]
+after = ["adjective-stem"]
 
 [[point]]
 id = "tagaru"
@@ -4717,6 +4722,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "この店は安い{し}、おいしいから、よく来ます。", en = "This place is cheap, and it's good too, so I come here often." },
   { source = "yomeru", id = "y3", ja = "彼女は歌も上手だ{し}、ピアノもひける。", en = "She sings well, and what's more, she can play the piano." },
 ]
+after = ["predicate"]
 
 [[point]]
 id = "dake-de-naku"
@@ -9185,6 +9191,7 @@ examples = [
   { source = "yomeru", id = "y4", ja = "仕方ないわ。初めて{ですもの}。", en = "It can't be helped. It's my first time, after all." },
   { source = "yomeru", id = "y5", ja = "もう食べられないよ。おなかがいっぱいな{んだもん}。", en = "I can't eat any more. I'm full, after all." },
 ]
+final = true
 
 [[point]]
 id = "koto-ka"
@@ -12128,6 +12135,7 @@ examples = [
   { tatoeba = "37273_200072", ja = "トムはすっかり疲れ{きって}いた。", en = "Tom was all worn out." },
   { source = "yomeru", id = "y2", ja = "こんなにたくさん、一人では食べ{きれない}。", en = "I can't eat this much all by myself." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "komu"
@@ -17678,6 +17686,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "思った{以上に}試験は難しかった。", en = "The exam was harder than I'd thought." },
   { source = "yomeru", id = "y2", ja = "期待{以上の}結果が出た。", en = "We got better results than we'd hoped for." },
 ]
+no_suru = true
 
 [[point]]
 id = "yara"
@@ -20947,6 +20956,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "父は家に帰る{なり}、ソファで寝てしまった。", en = "The minute he got home, my father fell asleep on the sofa." },
   { source = "yomeru", id = "y3", ja = "男の子は母親を見る{なり}、わっと泣き出した。", en = "The little boy burst into tears the instant he saw his mother." },
 ]
+after = ["verb-plain"]
 
 [[point]]
 id = "ta-nari"
@@ -24627,6 +24637,7 @@ examples = [
   { source = "yomeru", id = "y4", ja = "謝ればすむ{ものを}、彼は言い訳ばかりする。", en = "An apology would settle it, but he just keeps making excuses." },
   { source = "yomeru", id = "y5", ja = "タクシーで行けば間に合った{ものを}。", en = "If only we'd taken a taxi, we'd have made it in time." },
 ]
+final = true
 
 [[point]]
 id = "mono-to-omou"

@@ -55,6 +55,11 @@ pub struct GrammarEntry {
     /// にしろ at the end reads as にする's command.
     #[serde(default)]
     pub continues: bool,
+    /// The point's に is never before する or なる (以上に, "more than"):
+    /// there the に is にする's or になる's, and 以上にしろ reads as 以上
+    /// + にする.
+    #[serde(default)]
+    pub no_suru: bool,
 }
 
 /// The kinds of word `after` can name: `verb-plain` (a verb in its
@@ -63,8 +68,9 @@ pub struct GrammarEntry {
 /// 100, 五つ), `noun-or-demonstrative` (東京, この), `noun-or-particle`
 /// (私, 由利さん, から), `predicate` (a verb, adjective or ending,
 /// conjugated or not: 行くの, 高いの, 行ったのか; a form starting with な
-/// also after a noun or な-adjective: 休みなの).
-pub const AFTER_KINDS: [&str; 7] = [
+/// also after a noun or な-adjective: 休みなの), `adjective-stem` (寒,
+/// 欲し, 嫌, 行きた: what がる follows).
+pub const AFTER_KINDS: [&str; 8] = [
     "verb-plain",
     "masu-stem",
     "suru-noun",
@@ -72,6 +78,7 @@ pub const AFTER_KINDS: [&str; 7] = [
     "noun-or-demonstrative",
     "noun-or-particle",
     "predicate",
+    "adjective-stem",
 ];
 
 /// How a production review checks that the typed answer uses the point.

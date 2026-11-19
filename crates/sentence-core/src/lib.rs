@@ -218,12 +218,20 @@ impl<'a> Analyzer<'a> {
             // Where a match ends decides between readings: a point that
             // ends a sentence (の of 行くの？, not of 行くのは), and one
             // that never does (にしろ of 雨にしろ、; at the end it is
-            // にする's command).
+            // にする's command), and one whose に isn't にする's or
+            // になる's (以上にしろ is 以上 + にする).
             let keep = |e: &GrammarEntry, len: usize| {
                 let end = start + len;
+                let before_suru = e.no_suru
+                    && end > 0
+                    && text.chars.get(end - 1) == Some(&'に')
+                    && words.iter().find(|w| w.start == end).is_some_and(|w| {
+                        ["する", "為る", "なる", "成る"].contains(&w.base.as_str())
+                    });
                 // 、 closes a clause the の ends, but 雨にしろ、 goes on.
                 (!e.ends || ends_here(&text.chars, words, end, true))
                     && !(e.continues && ends_here(&text.chars, words, end, false))
+                    && !before_suru
             };
             let best = self
                 .dict
@@ -368,6 +376,24 @@ impl<'a> Analyzer<'a> {
 fn reads_form(words: &[Word], i: usize, reasons: Reasons) -> Option<usize> {
     let w = words.get(i)?;
     w.entry?;
+    let only = |r: Reason| reasons == Reasons::of(&[r]);
+    // Before なる or する the adverb form goes with it: 高くなる,
+    // 得なくなる, 容易になる are "become …", not "…ly".
+    // なり of 得なくなり is a word of its own, but なる's stem too.
+    let becomes = |j: usize, at: usize| {
+        let verb = |base: &str| ["なる", "成る", "為る", "する"].contains(&base);
+        words.get(j).is_some_and(|v| {
+            v.start == at
+                && (verb(&v.base)
+                    || segment::masu_stem_verbs(&v.base).iter().any(|e| {
+                        e.kanji_forms.iter().any(|k| verb(k.text.as_str()))
+                            || e.reading_forms.iter().any(|r| verb(r.text.as_str()))
+                    }))
+        })
+    };
+    if only(Reason::Adverbial) && becomes(i + 1, w.start + w.len) {
+        return None;
+    }
     if w.reasons.contains_all(reasons) {
         return Some(w.len);
     }
@@ -381,7 +407,6 @@ fn reads_form(words: &[Word], i: usize, reasons: Reasons) -> Option<usize> {
                         .iter()
                         .any(|e| segment::classes(e).contains(&Class::NaAdjective))))
     };
-    let only = |r: Reason| reasons == Reasons::of(&[r]);
     if only(Reason::Adverbial) {
         if w.reasons.is_empty()
             && let Some(head) = w.base.strip_suffix('く')
@@ -397,11 +422,7 @@ fn reads_form(words: &[Word], i: usize, reasons: Reasons) -> Option<usize> {
             && next.class == Class::Particle
             && next.base == "に";
         // Not the に of になる, にする: 容易になった is "became easy".
-        let becomes = words.get(i + 2).is_some_and(|v| {
-            v.start == next.start + next.len
-                && ["なる", "成る", "為る", "する"].contains(&v.base.as_str())
-        });
-        return (na && !becomes).then_some(w.len + next.len);
+        return (na && !becomes(i + 2, next.start + next.len)).then_some(w.len + next.len);
     }
     if only(Reason::Nominalization) && w.reasons.is_empty() {
         let head = w.base.strip_suffix('さ')?;
@@ -642,6 +663,20 @@ impl Head<'_> {
                         .iter()
                         .any(|c| matches!(c, Class::Verb | Class::Adjective))
             }),
+            // An adjective's stem (寒|がる, 欲し|がる), a な adjective
+            // (嫌|がる), or a verb's stem + た (行きた|がる).
+            (Head::Word(_, t, _, _) | Head::Text(t), "adjective-stem") => {
+                let is =
+                    |e: &jmdict_core::segment::Entry, c: Class| segment::classes(e).contains(&c);
+                jmdict_core::lookup(&format!("{t}い"))
+                    .iter()
+                    .any(|e| is(e, Class::Adjective))
+                    || jmdict_core::lookup(t)
+                        .iter()
+                        .any(|e| spelled(e, t) && is(e, Class::NaAdjective))
+                    || t.strip_suffix('た')
+                        .is_some_and(|stem| !segment::masu_stem_verbs(stem).is_empty())
+            }
             // Not a kind of its own: a noun or な-adjective before the な of
             // a predicate (休みなの, 好きなのか).
             (Head::Word(w, _, _, _), "noun") => {

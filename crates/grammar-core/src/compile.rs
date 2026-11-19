@@ -55,6 +55,10 @@ struct Point {
     /// Whether the point never ends a sentence, for the sentence breakdown.
     #[serde(default)]
     continues: bool,
+    /// Whether the point's に is never before する/なる, for the sentence
+    /// breakdown.
+    #[serde(default)]
+    no_suru: bool,
 }
 
 /// `check = "self"` or `check = { inflection = ["causative"] }`; left out,
@@ -317,6 +321,7 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
             after: p.after,
             ends: p.ends,
             continues: p.continues,
+            no_suru: p.no_suru,
         });
     }
 
