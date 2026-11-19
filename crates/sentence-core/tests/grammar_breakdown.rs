@@ -9,7 +9,8 @@
 //!
 //! `JMDICT_BIN` must be a `jmdict-types/full` build. `GRAMMAR_REPORT=path`
 //! also writes every example the breakdown misses or finds elsewhere, and
-//! `GRAMMAR_NOISE=path` the commonest other matches.
+//! `GRAMMAR_NOISE=path` the commonest other matches. `GRAMMAR_BEFORE=id,id`
+//! prints the word before each match of those points (for `after`).
 //!
 //! Only the marked point is known per sentence; other matches may be right
 //! too, so "other matches" counts what a reader sees besides it.
@@ -111,6 +112,12 @@ fn grammar_found_on_the_words() {
     let mut by_match_kind: BTreeMap<&str, usize> = BTreeMap::new();
     let (mut sentences, mut other_matches) = (0, 0);
     let mut report = String::new();
+    // GRAMMAR_BEFORE=id,id: what the word before each match of those points
+    // is, on the marked match and on the others.
+    let before_ids: Vec<String> = std::env::var("GRAMMAR_BEFORE")
+        .map(|v| v.split(',').map(str::to_owned).collect())
+        .unwrap_or_default();
+    let mut before: BTreeMap<(String, bool, String), (usize, Vec<String>)> = BTreeMap::new();
 
     for e in dict.entries() {
         for ex in &e.examples {
@@ -135,6 +142,22 @@ fn grammar_found_on_the_words() {
             };
             sentences += 1;
             for m in &b.grammar {
+                for id in &before_ids {
+                    if !has(m, id) {
+                        continue;
+                    }
+                    let prev = b.words.iter().rfind(|w| w.start < m.start);
+                    let what = prev.map_or("start".to_owned(), |w| {
+                        let r: Vec<String> = w.reasons.iter().map(|r| format!("{r:?}")).collect();
+                        format!("{:?} {}", w.class, r.join("+"))
+                    });
+                    let marked = *id == e.id && overlaps(m, start, len);
+                    let slot = before.entry((id.clone(), marked, what)).or_default();
+                    slot.0 += 1;
+                    if slot.1.len() < 30 {
+                        slot.1.push(text.clone());
+                    }
+                }
                 if overlaps(m, start, len) && has(m, &e.id) {
                     continue;
                 }
@@ -238,6 +261,13 @@ fn grammar_found_on_the_words() {
             "  {:3.0}%  {id:<26} {}",
             r * 100.0,
             miss.as_deref().unwrap_or("")
+        );
+    }
+    for ((id, marked, what), (n, ex)) in &before {
+        eprintln!(
+            "before {id} {}: {what:<28} {n:4}  {}",
+            if *marked { "marked" } else { "other " },
+            ex.join("  ")
         );
     }
     if let Ok(out) = std::env::var("GRAMMAR_REPORT") {

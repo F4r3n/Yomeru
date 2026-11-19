@@ -138,6 +138,52 @@ fn extra_forms(surface: &str) -> Vec<(String, Reasons, bool)> {
     out
 }
 
+/// A dictionary entry as the lattice reads it.
+pub type Entry = ArchivedWordEntry;
+
+/// The verbs `head` is the ます-stem of, of the kind it fits: 見 (見る),
+/// 遊び (遊ぶ), 迎え (迎える). Not 上 (上る is godan, whose stem would be
+/// 上り), nor a kana stem of a verb usually written in kanji (うち, 打つ).
+pub fn masu_stem_verbs(head: &str) -> Vec<&'static ArchivedWordEntry> {
+    let masu = Reasons::of(&[Reason::MasuStem]);
+    let mut out: Vec<&'static ArchivedWordEntry> = Vec::new();
+    for (form, reasons, ichidan) in extra_forms(head) {
+        if reasons != masu {
+            continue;
+        }
+        for e in crate::lookup(&form) {
+            let spelled = e.kanji_forms.iter().any(|k| k.text.as_str() == form)
+                || e.reading_forms.iter().any(|r| r.text.as_str() == form);
+            let kind = if ichidan {
+                ichidan_only(e)
+            } else {
+                godan_only(e)
+            };
+            // A kana stem of a verb written in kanji is likelier a word of
+            // its own: うち isn't 打つ's, とおり 通る's.
+            let kana = form.chars().all(japanese_utils::is_kana);
+            let usually_kana = e.senses.iter().any(|s| {
+                s.misc
+                    .iter()
+                    .any(|m| matches!(m, ArchivedMisc::UsuallyKana))
+            });
+            let written = !kana || e.kanji_forms.is_empty() || usually_kana;
+            if spelled && kind && written && !out.iter().any(|x| std::ptr::eq(*x, e)) {
+                out.push(e);
+            }
+        }
+    }
+    out
+}
+
+/// Whether `e` is a noun taking する (勉強, 散歩): `vs` on a sense.
+pub fn takes_suru(e: &ArchivedWordEntry) -> bool {
+    e.senses
+        .iter()
+        .flat_map(|s| s.pos.iter())
+        .any(|p| matches!(p, P::VerbSuru))
+}
+
 /// Whether `e` is an ichidan verb and no other kind of verb.
 fn ichidan_only(e: &ArchivedWordEntry) -> bool {
     let mut ichidan = false;

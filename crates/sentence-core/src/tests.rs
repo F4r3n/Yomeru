@@ -26,10 +26,16 @@ fn dict() -> &'static GrammarDict {
             word(11, "静か", "しずか", vec![P::AdjectiveNa], "quiet"),
             word(12, "", "に", vec![P::Particle], "in, to"),
             word(13, "", "ける", vec![P::VerbIchidan], "to kick"),
+            word(14, "行く", "いく", vec![P::VerbGodanKuS], "to go"),
+            word(15, "学校", "がっこう", vec![P::Noun], "school"),
+            word(16, "散歩", "さんぽ", vec![P::Noun, P::VerbSuru], "walk"),
+            word(17, "走る", "はしる", vec![P::VerbGodanRu], "to run"),
+            word(18, "", "な", vec![P::Particle], "don't"),
+            word(19, "", "きれい", vec![P::AdjectiveNa], "pretty"),
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 7\n{}{}{}{}{}{}",
+            "next_seq = 9\n{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -50,6 +56,21 @@ fn dict() -> &'static GrammarDict {
                 "さ",
                 "{高さ}。",
                 "reads = [\"nominalization\"]"
+            ),
+            // Points found only after a kind of word.
+            point(
+                "ni-iku",
+                7,
+                "に行く",
+                "食べ{に行く}。",
+                "after = [\"masu-stem\", \"suru-noun\"]"
+            ),
+            point(
+                "na-prohibition",
+                8,
+                "な",
+                "走る{な}。",
+                "after = [\"verb-plain\"]"
             ),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
@@ -170,4 +191,20 @@ fn a_read_point_isnt_found_by_its_pattern() {
             .all(|(_, ids, _)| !ids.contains(&"ku-adverb".to_owned())),
         "{found:?}"
     );
+}
+
+#[test]
+fn a_point_is_found_only_after_what_it_names() {
+    let has = |sentence: &str, id: &str| {
+        grammar(sentence)
+            .iter()
+            .any(|(_, ids, _)| ids.contains(&id.to_owned()))
+    };
+    // A ます-stem or a する noun, not a place.
+    assert!(has("食べに行く", "ni-iku"));
+    assert!(has("散歩に行く", "ni-iku"));
+    assert!(!has("学校に行く", "ni-iku"));
+    // A verb in its dictionary form, not a な adjective.
+    assert!(has("走るな", "na-prohibition"));
+    assert!(!has("きれいな本", "na-prohibition"));
 }

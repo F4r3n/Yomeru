@@ -49,7 +49,12 @@
 #                (reads = ["adverbial"]: 速く, 静かに), the deinflection
 #                reasons the sentence breakdown finds it by: adverbial
 #                (く), nominalization (さ), or another of deinflect's
-#                `Reason` names. Put it after `check`, last
+#                `Reason` names. Put it after `check`
+#   after        optional: what the point comes right after, for the
+#                sentence breakdown, which doesn't find it elsewhere:
+#                verb-plain (走る, 電話する), masu-stem (食べ, 遊び),
+#                suru-noun (散歩). after = ["masu-stem", "suru-noun"] keeps
+#                に行く off 学校に行く. Only for a point that misfires; last
 #   hover        optional, default true; false keeps the entry out of the
 #                hover popup, reachable by search only (って would match
 #                inside 行って). One-char patterns (は, に, て) never show on
@@ -421,6 +426,7 @@ examples = [
   { tatoeba = "264311_150246", ja = "次の日曜にあなたに会い{に行きます}。", en = "I will come to see you next Sunday." },
   { source = "yomeru", id = "y1", ja = "毎日、家へ昼ご飯を食べ{に帰ります}。", en = "Every day I go home to eat lunch." },
 ]
+after = ["masu-stem", "suru-noun"]
 
 [[point]]
 id = "tari-tari"
@@ -2032,6 +2038,7 @@ examples = [
   { tatoeba = "21582_184456", ja = "学校に遅れる{な}。", en = "Don't be late for school." },
   { tatoeba = "46244_208984", ja = "その上に座る{な}。", en = "Don't sit on it." },
 ]
+after = ["verb-plain"]
 
 [[point]]
 id = "nagara"

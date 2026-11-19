@@ -40,7 +40,17 @@ pub struct GrammarEntry {
     /// the sentence breakdown only; the answer check reads `check`.
     #[serde(default)]
     pub reads: Vec<String>,
+    /// What the point attaches to ([`AFTER_KINDS`]): the sentence
+    /// breakdown finds it only after one of them (に行く after a ます-stem
+    /// or a する noun, not 学校に行く). Empty: after anything.
+    #[serde(default)]
+    pub after: Vec<String>,
 }
+
+/// The kinds of word `after` can name: `verb-plain` (a verb in its
+/// dictionary form: 走る, 電話する), `masu-stem` (食べ, 遊び), `suru-noun`
+/// (散歩, 勉強).
+pub const AFTER_KINDS: [&str; 3] = ["verb-plain", "masu-stem", "suru-noun"];
 
 /// How a production review checks that the typed answer uses the point.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]

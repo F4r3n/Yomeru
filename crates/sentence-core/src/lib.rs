@@ -115,6 +115,13 @@ impl<'a> Analyzer<'a> {
         let words = segment::segment(sentence);
         let text = Text::new(sentence, &words);
         let mut grammar = self.text_matches(&text);
+        // A point that names what it comes after isn't found elsewhere.
+        for m in &mut grammar {
+            let head = head_before(&text.chars, &words, m.start);
+            m.entries
+                .retain(|e| e.after.is_empty() || e.after.iter().any(|k| head.is(k)));
+        }
+        grammar.retain(|m| !m.entries.is_empty());
         // A conjugation the text matching already found (させられた as
         // causative-passive's pattern) isn't shown twice.
         let mut conjugations = self.conjugation_matches(&words);
@@ -364,6 +371,59 @@ fn soft_edges(chars: &[char], words: &[Word], n: usize) -> Vec<bool> {
         }
     }
     soft
+}
+
+/// What comes before a match: the word before it, with its text, or, for a
+/// match starting inside a word (釣り|に行く of 釣りに行く), the text of
+/// that word before it.
+enum Head<'w> {
+    Word(&'w Word, String),
+    Text(String),
+    Nothing,
+}
+
+fn head_before<'w>(chars: &[char], words: &'w [Word], at: usize) -> Head<'w> {
+    let Some(w) = words.iter().rfind(|w| w.start < at) else {
+        return Head::Nothing;
+    };
+    let text = |end: usize| chars.get(w.start..end).unwrap_or_default().iter().collect();
+    match (w.start + w.len).cmp(&at) {
+        std::cmp::Ordering::Equal => Head::Word(w, text(at)),
+        // A gap (punctuation) between it and the match.
+        std::cmp::Ordering::Less => Head::Nothing,
+        std::cmp::Ordering::Greater => Head::Text(text(at)),
+    }
+}
+
+impl Head<'_> {
+    /// Whether this is a word of `kind` ([`grammar_core::AFTER_KINDS`]).
+    fn is(&self, kind: &str) -> bool {
+        let spelled = |e: &jmdict_core::segment::Entry, t: &str| {
+            e.kanji_forms.iter().any(|k| k.text.as_str() == t)
+                || e.reading_forms.iter().any(|r| r.text.as_str() == t)
+        };
+        match (self, kind) {
+            (Head::Word(w, _), "verb-plain") => {
+                (w.class == Class::Verb && w.reasons.is_empty())
+                    || w.reasons == Reasons::of(&[Reason::SuruStem])
+            }
+            (Head::Word(w, t), "masu-stem") => {
+                w.reasons == Reasons::of(&[Reason::MasuStem])
+                    || (w.reasons.is_empty() && !segment::masu_stem_verbs(t).is_empty())
+            }
+            (Head::Word(w, _), "suru-noun") => {
+                w.reasons.is_empty() && w.entry.is_some_and(segment::takes_suru)
+            }
+            (Head::Text(t), "verb-plain") => jmdict_core::lookup(t)
+                .iter()
+                .any(|e| segment::classes(e).contains(&Class::Verb) && spelled(e, t)),
+            (Head::Text(t), "masu-stem") => !segment::masu_stem_verbs(t).is_empty(),
+            (Head::Text(t), "suru-noun") => jmdict_core::lookup(t)
+                .iter()
+                .any(|e| segment::takes_suru(e) && spelled(e, t)),
+            _ => false,
+        }
+    }
 }
 
 /// The verbs `stem` is the ます-stem of, which the deinflection rules

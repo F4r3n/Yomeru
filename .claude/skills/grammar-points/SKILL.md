@@ -257,7 +257,10 @@ a Read first, and the file is thousands of lines. Instead:
 - **reads**: only for a point that is a word's form rather than a string
   the breakdown can find (the く adverb: `reads = ["adverbial"]`; the さ
   noun: `["nominalization"]`). Names from deinflect's `Reason`. After
-  `check`, last.
+  `check`.
+- **after**: only for a point the sentence breakdown finds in the wrong
+  places, naming what it comes right after: `verb-plain` (走る{な}),
+  `masu-stem`, `suru-noun` (に行く after 食べ or 散歩, not 学校). Last.
 - **examples**: 5 (entries written before 2026-11-18 have 2–3 until an
   examples batch extends them), under ~26 chars of Japanese, at the
   entry's level or below in vocabulary; the `{…}` mark covers the pattern

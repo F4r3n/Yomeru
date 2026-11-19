@@ -45,6 +45,10 @@ struct Point {
     /// for the sentence breakdown.
     #[serde(default)]
     reads: Vec<String>,
+    /// Kinds of word the point comes after (`masu-stem`), for the sentence
+    /// breakdown.
+    #[serde(default)]
+    after: Vec<String>,
 }
 
 /// `check = "self"` or `check = { inflection = ["causative"] }`; left out,
@@ -266,6 +270,15 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
                 bail!("{}: reads {name:?}, not one of {}", p.id, known.join(", "));
             }
         }
+        for kind in &p.after {
+            if !crate::types::AFTER_KINDS.contains(&kind.as_str()) {
+                bail!(
+                    "{}: after {kind:?}, not one of {}",
+                    p.id,
+                    crate::types::AFTER_KINDS.join(", ")
+                );
+            }
+        }
         let mut related = Vec::with_capacity(p.related.len());
         for id in p.related {
             match pattern_of.get(&id) {
@@ -292,6 +305,7 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
             hover: p.hover,
             check,
             reads: p.reads,
+            after: p.after,
         });
     }
 

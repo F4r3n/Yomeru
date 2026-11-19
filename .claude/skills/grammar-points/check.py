@@ -52,6 +52,9 @@ def load_bee():
 # `Inflection`).
 INFLECTIONS = {"passive", "potential", "causative", "causative-passive", "volitional", "imperative"}
 
+# The kinds of word `after = [...]` can name (grammar-core's `AFTER_KINDS`).
+AFTER = {"verb-plain", "masu-stem", "suru-noun"}
+
 # The reasons `reads = [...]` can name (deinflect's `Reason::name`).
 READS = {
     "negative", "past", "polite", "te-form", "conditional", "tara", "tari", "passive",
@@ -141,6 +144,9 @@ def validate(points):
             forms = check.get("inflection") if isinstance(check, dict) else None
             if not forms or set(check) != {"inflection"} or not set(forms) <= INFLECTIONS:
                 errors.append(f"{name}: check is \"self\" or {{ inflection = [...] }} of {sorted(INFLECTIONS)}")
+        after = p.get("after", [])
+        if not isinstance(after, list) or not set(after) <= AFTER:
+            errors.append(f"{name}: after is a list of {sorted(AFTER)}")
         reads = p.get("reads", [])
         if not isinstance(reads, list) or not set(reads) <= READS:
             errors.append(f"{name}: reads is a list of {sorted(READS)}")
