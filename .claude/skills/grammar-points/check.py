@@ -53,7 +53,8 @@ def load_bee():
 INFLECTIONS = {"passive", "potential", "causative", "causative-passive", "volitional", "imperative"}
 
 # The kinds of word `after = [...]` can name (grammar-core's `AFTER_KINDS`).
-AFTER = {"verb-plain", "masu-stem", "suru-noun"}
+AFTER = {"verb-plain", "masu-stem", "suru-noun", "amount", "noun-or-demonstrative",
+         "noun-or-particle"}
 
 # The reasons `reads = [...]` can name (deinflect's `Reason::name`).
 READS = {

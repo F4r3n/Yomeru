@@ -121,6 +121,16 @@ fn build_test_binary() -> Vec<u8> {
             vec![PartOfSpeech::Noun, PartOfSpeech::VerbSuru],
             "ruin",
         ),
+        // A conjugated verb's stem (言われ, of 言われる) and a godan
+        // imperative spelled like a potential's stem (止まれ).
+        make_entry(23, "言う", "いう", vec![PartOfSpeech::VerbGodanU], "to say"),
+        make_entry(
+            24,
+            "止まる",
+            "とまる",
+            vec![PartOfSpeech::VerbGodanRu],
+            "to stop",
+        ),
     ];
     build_binary(&entries)
 }
@@ -648,4 +658,18 @@ fn a_noun_taking_suru_isnt_a_godan_verb() {
         "{:?}",
         words.iter().map(|w| &w.base).collect::<Vec<_>>()
     );
+}
+
+#[test]
+fn a_conjugated_verbs_stem_reads_back_to_the_verb() {
+    ensure_test_dict();
+    let words = crate::segment::segment("言われ");
+    assert_eq!(words[0].base, "言う");
+    assert!(words[0].reasons.contains(deinflect::Reason::Passive));
+    assert!(words[0].reasons.contains(deinflect::Reason::MasuStem));
+    // The plain reading comes first: 止まれ is an imperative.
+    let words = crate::segment::segment("止まれ");
+    assert_eq!(words[0].base, "止まる");
+    assert!(words[0].reasons.contains(deinflect::Reason::Imperative));
+    assert!(!words[0].reasons.contains(deinflect::Reason::MasuStem));
 }

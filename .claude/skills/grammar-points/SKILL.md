@@ -260,7 +260,9 @@ a Read first, and the file is thousands of lines. Instead:
   `check`.
 - **after**: only for a point the sentence breakdown finds in the wrong
   places, naming what it comes right after: `verb-plain` (走る{な}),
-  `masu-stem`, `suru-noun` (に行く after 食べ or 散歩, not 学校). Last.
+  `masu-stem`, `suru-noun` (に行く after 食べ or 散歩, not 学校), `amount`
+  (三十分{は}), `noun-or-demonstrative` (東京{のような}, この{ような}),
+  `noun-or-particle` (私{の}, から{の}). Last.
 - **examples**: 5 (entries written before 2026-11-18 have 2–3 until an
   examples batch extends them), under ~26 chars of Japanese, at the
   entry's level or below in vocabulary; the `{…}` mark covers the pattern

@@ -49,8 +49,17 @@ pub struct GrammarEntry {
 
 /// The kinds of word `after` can name: `verb-plain` (a verb in its
 /// dictionary form: 走る, 電話する), `masu-stem` (食べ, 遊び), `suru-noun`
-/// (散歩, 勉強).
-pub const AFTER_KINDS: [&str; 3] = ["verb-plain", "masu-stem", "suru-noun"];
+/// (散歩, 勉強), `amount` (a number, with or without its counter: 三十分,
+/// 100, 五つ), `noun-or-demonstrative` (東京, この), `noun-or-particle`
+/// (私, 由利さん, から).
+pub const AFTER_KINDS: [&str; 6] = [
+    "verb-plain",
+    "masu-stem",
+    "suru-noun",
+    "amount",
+    "noun-or-demonstrative",
+    "noun-or-particle",
+];
 
 /// How a production review checks that the typed answer uses the point.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]

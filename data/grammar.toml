@@ -53,7 +53,10 @@
 #   after        optional: what the point comes right after, for the
 #                sentence breakdown, which doesn't find it elsewhere:
 #                verb-plain (走る, 電話する), masu-stem (食べ, 遊び),
-#                suru-noun (散歩). after = ["masu-stem", "suru-noun"] keeps
+#                suru-noun (散歩), amount (三十分, 100, 五つ),
+#                noun-or-demonstrative (東京, この), noun-or-particle
+#                (私, 由利さん, から).
+#                after = ["masu-stem", "suru-noun"] keeps
 #                に行く off 学校に行く. Only for a point that misfires; last
 #   hover        optional, default true; false keeps the entry out of the
 #                hover popup, reachable by search only (って would match
@@ -1831,6 +1834,7 @@ examples = [
   { tatoeba = "281422_122581", ja = "日本{の}人形です。", en = "This is a Japanese doll." },
   { source = "yomeru", id = "y1", ja = "七時{の}バスに乗ります。", en = "I take the seven o'clock bus." },
 ]
+after = ["noun-or-particle"]
 
 [[point]]
 id = "kara-reason"
@@ -4915,6 +4919,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "鳥{のように}空を飛びたい。", en = "I want to fly in the sky like a bird." },
   { source = "yomeru", id = "y3", ja = "りんご{のような}赤い果物が好きです。", en = "I like red fruit such as apples." },
 ]
+after = ["noun-or-demonstrative"]
 
 [[point]]
 id = "mai-no-you-ni"
@@ -6770,6 +6775,7 @@ examples = [
   { source = "yomeru", id = "y3", ja = "この本は千円{は}すると思う。", en = "I think this book costs at least 1,000 yen." },
   { source = "yomeru", id = "y4", ja = "毎日八時間{は}寝たいです。", en = "I want to sleep at least eight hours every day." },
 ]
+after = ["amount"]
 
 [[point]]
 id = "number-mo"
@@ -6797,6 +6803,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "彼は本を十冊{も}買った。", en = "He bought as many as ten books." },
   { source = "yomeru", id = "y3", ja = "今日は水を二リットル{も}飲みました。", en = "I drank as much as two liters of water today." },
 ]
+after = ["amount"]
 
 [[point]]
 id = "nan-counter-ka"
@@ -15413,6 +15420,7 @@ examples = [
   { tatoeba = "284303_119360", ja = "彼が来ることは{ありえない}。", en = "There's no possibility of his coming." },
   { source = "yomeru", id = "y1", ja = "考え{得る}方法はすべて試した。", en = "We tried every method we could possibly think of." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "osore-ga-aru"

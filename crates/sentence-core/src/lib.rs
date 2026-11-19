@@ -47,6 +47,12 @@ pub struct GrammarMatch {
     pub kind: MatchKind,
 }
 
+/// The names ([`Reason::name`]) of `reasons`, in the order of
+/// [`Reason::ALL`]: what a client shows of how a word is conjugated.
+pub fn reason_names(reasons: Reasons) -> Vec<&'static str> {
+    reasons.iter().map(Reason::name).collect()
+}
+
 /// A sentence read into words and grammar.
 pub struct Breakdown {
     pub words: Vec<Word>,
@@ -118,13 +124,37 @@ impl<'a> Analyzer<'a> {
         // A point that names what it comes after isn't found elsewhere.
         for m in &mut grammar {
             let head = head_before(&text.chars, &words, m.start);
-            m.entries
-                .retain(|e| e.after.is_empty() || e.after.iter().any(|k| head.is(k)));
+            let matched: String = text.chars.iter().skip(m.start).take(m.len).collect();
+            m.entries.retain(|e| {
+                if e.after.is_empty() {
+                    return true;
+                }
+                // Or a form holding its own verb stem: あり of ありえない.
+                e.after.iter().any(|k| head.is(k))
+                    || (e.after.iter().any(|k| k == "masu-stem")
+                        && own_heads(&matched, e).any(|lead| Head::Text(lead).is("masu-stem")))
+            });
+        }
+        grammar.retain(|m| !m.entries.is_empty());
+        // A verb form inside a conjugated word is what the word's
+        // conjugation says, not what its text spells: 開催された is
+        // passive, though れた also spells potential's ending.
+        for m in &mut grammar {
+            let in_conjugated = words.iter().any(|w| {
+                w.entry.is_some()
+                    && !w.reasons.is_empty()
+                    && w.start <= m.start
+                    && m.start + m.len <= w.start + w.len
+            });
+            if in_conjugated {
+                m.entries
+                    .retain(|e| !matches!(e.check, AnswerCheck::Inflection { .. }));
+            }
         }
         grammar.retain(|m| !m.entries.is_empty());
         // A conjugation the text matching already found (させられた as
         // causative-passive's pattern) isn't shown twice.
-        let mut conjugations = self.conjugation_matches(&words);
+        let mut conjugations = self.conjugation_matches(&text.chars, &words);
         conjugations.retain(|c| {
             !grammar.iter().any(|m| {
                 c.start < m.start + m.len
@@ -219,7 +249,7 @@ impl<'a> Analyzer<'a> {
     /// The conjugation points of each conjugated word, on its ending. A
     /// causative-passive word shows that point, not causative and passive
     /// besides.
-    fn conjugation_matches(&self, words: &[Word]) -> Vec<GrammarMatch> {
+    fn conjugation_matches(&self, chars: &[char], words: &[Word]) -> Vec<GrammarMatch> {
         let mut out = Vec::new();
         for w in words {
             if w.reasons.is_empty() || w.entry.is_none() {
@@ -238,7 +268,14 @@ impl<'a> Analyzer<'a> {
             if entries.is_empty() {
                 continue;
             }
-            let start = w.start + w.stem;
+            // The ending, with the verb's last kana when the form changes it
+            // (泳|げます, 飲|もう), without it when it is the a-row kana
+            // the verb keeps for other endings too (盗ま|れた, 書か|せた).
+            let a_row = chars
+                .get(w.start + w.stem)
+                .is_some_and(|&c| "あかがさざただなばぱまらわ".contains(c));
+            let start =
+                w.start + if a_row { w.attach } else { w.stem }.min(w.len.saturating_sub(1));
             let len = w.start + w.len - start;
             out.push(GrammarMatch {
                 start,
@@ -338,6 +375,13 @@ fn soft_edges(chars: &[char], words: &[Word], n: usize) -> Vec<bool> {
         .iter()
         .filter(|w| w.entry.is_some() && w.len >= MIN_COMPOUND_CHARS)
     {
+        // A verb or adjective splits after a verb's ます-stem or an
+        // adjective's stem (立ち|上がる, 怖|がる, 古|びた), or a head of two
+        // chars (大人|びる), not after any word (異なる isn't 異 + なる).
+        let one_piece = matches!(w.class, Class::Verb | Class::Adjective)
+            && !w
+                .entry
+                .is_some_and(|e| segment::classes(e).contains(&Class::Expression));
         let Some(text) = chars.get(w.start..w.start + w.len) else {
             continue;
         };
@@ -357,6 +401,34 @@ fn soft_edges(chars: &[char], words: &[Word], n: usize) -> Vec<bool> {
             }
             let head: String = head.iter().collect();
             let tail: String = tail.iter().collect();
+            // A suffix or auxiliary takes any head (女|らしい, 春|めく), if no
+            // word of its own is spelled the same (なる, 成る).
+            let suffix = || {
+                jmdict_core::lookup_longest_match(&tail, MAX_PATTERN_CHARS).is_some_and(
+                    |(es, _)| {
+                        let affix = |e: &&_| {
+                            let c = segment::classes(e);
+                            c.contains(&Class::Suffix) || c.contains(&Class::Auxiliary)
+                        };
+                        es.iter().any(affix)
+                            && !es.iter().any(|e| {
+                                let c = segment::classes(e);
+                                !affix(e)
+                                    && (c.contains(&Class::Verb) || c.contains(&Class::Adjective))
+                            })
+                    },
+                )
+            };
+            if one_piece
+                && cut < 2
+                && !suffix()
+                && segment::masu_stem_verbs(&head).is_empty()
+                && !jmdict_core::lookup(&format!("{head}い"))
+                    .iter()
+                    .any(|e| segment::classes(e).contains(&Class::Adjective))
+            {
+                continue;
+            }
             let whole_head = jmdict_core::lookup_longest_match(&head, MAX_PATTERN_CHARS)
                 .is_some_and(|(_, len)| len == cut)
                 || masu_stem_of(&head)
@@ -377,22 +449,72 @@ fn soft_edges(chars: &[char], words: &[Word], n: usize) -> Vec<bool> {
 /// match starting inside a word (釣り|に行く of 釣りに行く), the text of
 /// that word before it.
 enum Head<'w> {
-    Word(&'w Word, String),
+    /// The word, its text, whether a numeral comes right before it (the
+    /// counter of 二|リットル, ５００００|円), and whether it follows a verb
+    /// or adjective (る of 走って|る).
+    Word(&'w Word, String, bool, bool),
     Text(String),
+    /// Digits, which the lattice leaves between words (１００は).
+    Digits,
     Nothing,
 }
 
 fn head_before<'w>(chars: &[char], words: &'w [Word], at: usize) -> Head<'w> {
+    let gap_digits = |from: usize| {
+        let gap = chars.get(from..at).unwrap_or_default();
+        !gap.is_empty() && gap.iter().all(|&c| is_numeral(c))
+    };
     let Some(w) = words.iter().rfind(|w| w.start < at) else {
-        return Head::Nothing;
+        return if gap_digits(0) {
+            Head::Digits
+        } else {
+            Head::Nothing
+        };
     };
     let text = |end: usize| chars.get(w.start..end).unwrap_or_default().iter().collect();
     match (w.start + w.len).cmp(&at) {
-        std::cmp::Ordering::Equal => Head::Word(w, text(at)),
-        // A gap (punctuation) between it and the match.
+        std::cmp::Ordering::Equal => {
+            let numeral_before = w
+                .start
+                .checked_sub(1)
+                .and_then(|i| chars.get(i))
+                .is_some_and(|&c| is_numeral(c));
+            let after_verb = words
+                .iter()
+                .rfind(|p| p.start + p.len == w.start)
+                .is_some_and(|p| {
+                    matches!(p.class, Class::Verb | Class::Adjective | Class::Auxiliary)
+                });
+            Head::Word(w, text(at), numeral_before, after_verb)
+        }
+        // A gap between it and the match: digits, or punctuation.
+        std::cmp::Ordering::Less if gap_digits(w.start + w.len) => Head::Digits,
         std::cmp::Ordering::Less => Head::Nothing,
         std::cmp::Ordering::Greater => Head::Text(text(at)),
     }
+}
+
+/// The leads a matched form of `e` may hold its own verb stem in: あり,
+/// ありえ… of ありえない (the uru point written whole). Not the start of
+/// the point's own text: 得 of 得よう, に of に行く.
+fn own_heads<'m>(matched: &'m str, e: &'m GrammarEntry) -> impl Iterator<Item = String> + 'm {
+    let first = e.pattern.chars().next();
+    matched
+        .char_indices()
+        .skip(1)
+        .map(|(i, _)| matched[..i].to_owned())
+        .filter(move |lead| {
+            !e.keys()
+                .filter(|k| k.chars().next() == first)
+                .any(|k| k.starts_with(lead.as_str()))
+        })
+}
+
+/// A digit or a kanji numeral: 3, ３, 三, 十, 万.
+fn is_numeral(c: char) -> bool {
+    c.is_ascii_digit()
+        || ('０'..='９').contains(&c)
+        || "〇一二三四五六七八九十百千万億兆".contains(c)
 }
 
 impl Head<'_> {
@@ -403,15 +525,51 @@ impl Head<'_> {
                 || e.reading_forms.iter().any(|r| r.text.as_str() == t)
         };
         match (self, kind) {
-            (Head::Word(w, _), "verb-plain") => {
+            // An amount: a word that starts with a numeral (三十分, 一度,
+            // 五つ), a word right after one (二|リットル), or digits.
+            (Head::Word(_, t, numeral_before, _), "amount") => {
+                *numeral_before || t.chars().next().is_some_and(is_numeral)
+            }
+            (Head::Text(t), "amount") => t.chars().next().is_some_and(is_numeral),
+            (Head::Digits, "amount") => true,
+            // A noun (東京のような, 雪のように), a name in katakana, or
+            // この, その, あの, どの (このような).
+            (Head::Word(w, _, _, _), "noun-or-demonstrative") => {
+                matches!(w.class, Class::Noun | Class::Suffix | Class::Unknown)
+                    || (w.class == Class::Prenominal && w.base.ends_with('の'))
+            }
+            (Head::Digits, "noun-or-demonstrative" | "noun-or-particle") => true,
+            // A noun (私の), a suffix (由利さんの), a name in katakana, or
+            // a particle (東京からの): not a verb or adjective, whose の
+            // explains or asks (得たのか).
+            (Head::Word(w, _, _, after_verb), "noun-or-particle") => {
+                // Unconjugated (失敗した is a verb), and a suffix on a noun
+                // (さん of 由利さん, not る of 走って|る).
+                w.reasons.is_empty()
+                    && match w.class {
+                        Class::Noun | Class::Unknown | Class::Particle => true,
+                        Class::Suffix => !after_verb,
+                        _ => false,
+                    }
+            }
+            (Head::Text(t), "noun-or-particle") => jmdict_core::lookup(t)
+                .iter()
+                .any(|e| spelled(e, t) && segment::classes(e).contains(&Class::Noun)),
+            (Head::Text(t), "noun-or-demonstrative") => {
+                ["こ", "そ", "あ", "ど"].contains(&t.as_str())
+                    || jmdict_core::lookup(t)
+                        .iter()
+                        .any(|e| spelled(e, t) && segment::classes(e).contains(&Class::Noun))
+            }
+            (Head::Word(w, _, _, _), "verb-plain") => {
                 (w.class == Class::Verb && w.reasons.is_empty())
                     || w.reasons == Reasons::of(&[Reason::SuruStem])
             }
-            (Head::Word(w, t), "masu-stem") => {
+            (Head::Word(w, t, _, _), "masu-stem") => {
                 w.reasons == Reasons::of(&[Reason::MasuStem])
                     || (w.reasons.is_empty() && !segment::masu_stem_verbs(t).is_empty())
             }
-            (Head::Word(w, _), "suru-noun") => {
+            (Head::Word(w, _, _, _), "suru-noun") => {
                 w.reasons.is_empty() && w.entry.is_some_and(segment::takes_suru)
             }
             (Head::Text(t), "verb-plain") => jmdict_core::lookup(t)

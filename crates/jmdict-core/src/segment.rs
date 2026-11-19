@@ -715,18 +715,48 @@ fn candidates(
                 n.cost += costs.extra_form;
             }
         }
-        if !walk.reaches(byte_end) && !deinflect::can_deinflect(surface) {
-            continue;
+        if walk.reaches(byte_end) || deinflect::can_deinflect(surface) {
+            for (form, reasons) in deinflector.run_with_reasons(surface) {
+                let Some(group) = walk.get(&window, form) else {
+                    continue;
+                };
+                let Some(indices) = get_entry_group(group) else {
+                    continue;
+                };
+                let entries: Vec<_> = indices.iter().filter_map(|&i| get_entry(i)).collect();
+                push_nodes(costs, &mut out, &entries, surface, len, form, reasons);
+            }
         }
-        for (form, reasons) in deinflector.run_with_reasons(surface) {
-            let Some(group) = walk.get(&window, form) else {
+        // The stem of a conjugated verb, which conjugates like an ichidan
+        // one: 言われ (言われる, 言う's passive), 食べさせ. Written Japanese
+        // ends clauses on it (…とも言われ、).
+        // After the plain readings, which win for the same entry (止まれ is
+        // 止まる's imperative before the stem of its potential), and only
+        // the forms that make such a verb.
+        let masu = Reasons::of(&[Reason::MasuStem]);
+        let ichidan_like = Reasons::of(&[Reason::Passive, Reason::Potential, Reason::Causative]);
+        let stem_form = format!("{surface}る");
+        for (form, reasons) in deinflector.run_with_reasons(&stem_form) {
+            if form == stem_form || reasons.is_empty() || !ichidan_like.contains_all(reasons) {
                 continue;
-            };
-            let Some(indices) = get_entry_group(group) else {
+            }
+            let Some(indices) = walk.get(&window, form).and_then(get_entry_group) else {
                 continue;
             };
             let entries: Vec<_> = indices.iter().filter_map(|&i| get_entry(i)).collect();
-            push_nodes(costs, &mut out, &entries, surface, len, form, reasons);
+            let from = out.len();
+            push_nodes(
+                costs,
+                &mut out,
+                &entries,
+                surface,
+                len,
+                form,
+                reasons.union(masu),
+            );
+            for n in out.get_mut(from..).into_iter().flatten() {
+                n.cost += costs.extra_form;
+            }
         }
     }
     // Text no word covers still has to be read: one char, or a whole

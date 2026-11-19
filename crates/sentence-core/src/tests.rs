@@ -32,10 +32,22 @@ fn dict() -> &'static GrammarDict {
             word(17, "走る", "はしる", vec![P::VerbGodanRu], "to run"),
             word(18, "", "な", vec![P::Particle], "don't"),
             word(19, "", "きれい", vec![P::AdjectiveNa], "pretty"),
+            word(20, "彼女", "かのじょ", vec![P::Pronoun], "she"),
+            word(21, "分", "ふん", vec![P::Counter], "minute"),
+            word(22, "異なる", "ことなる", vec![P::VerbGodanRu], "to differ"),
+            word(23, "異", "い", vec![P::Noun], "difference"),
+            word(24, "成る", "なる", vec![P::VerbGodanRu], "to become"),
+            word(25, "得る", "える", vec![P::VerbIchidan], "to get"),
+            // Kana only: a kana stem counts for a verb written in kana.
+            word(26, "", "ある", vec![P::VerbGodanRuIrr], "to be"),
+            word(27, "東京", "とうきょう", vec![P::Noun], "Tokyo"),
+            word(28, "決める", "きめる", vec![P::VerbIchidan], "to decide"),
+            word(29, "様", "よう", vec![P::Noun], "way"),
+            word(30, "", "の", vec![P::Particle], "of"),
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 9\n{}{}{}{}{}{}{}{}",
+            "next_seq = 14\n{}{}{}{}{}{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -71,6 +83,29 @@ fn dict() -> &'static GrammarDict {
                 "な",
                 "走る{な}。",
                 "after = [\"verb-plain\"]"
+            ),
+            point("number-wa", 9, "は", "三十分{は}。", "after = [\"amount\"]"),
+            point("naru", 10, "なる", "大きく{なる}。", ""),
+            point(
+                "uru",
+                11,
+                "得る",
+                "あり{得る}。",
+                "forms = [\"あり得る\"]\nafter = [\"masu-stem\"]"
+            ),
+            point(
+                "no-you-na",
+                12,
+                "のような",
+                "東京{のような}町。",
+                "forms = [\"ような\"]\nafter = [\"noun-or-demonstrative\"]"
+            ),
+            point(
+                "no-particle",
+                13,
+                "の",
+                "東京{の}町。",
+                "after = [\"noun-or-particle\"]"
             ),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
@@ -207,4 +242,38 @@ fn a_point_is_found_only_after_what_it_names() {
     // A verb in its dictionary form, not a な adjective.
     assert!(has("走るな", "na-prohibition"));
     assert!(!has("きれいな本", "na-prohibition"));
+    // An amount: digits, or a counter after a numeral; not a pronoun.
+    assert!(has("３０分は", "number-wa"));
+    assert!(has("三十分は", "number-wa"));
+    assert!(!has("彼女は", "number-wa"));
+}
+
+#[test]
+fn a_verb_of_one_piece_isnt_split_for_grammar() {
+    // 異なる isn't 異 + なる.
+    let found = grammar("異なる");
+    assert!(
+        found
+            .iter()
+            .all(|(_, ids, _)| !ids.contains(&"naru".to_owned())),
+        "{found:?}"
+    );
+}
+
+#[test]
+fn after_reads_the_stem_a_form_holds() {
+    let has = |sentence: &str, id: &str| {
+        grammar(sentence)
+            .iter()
+            .any(|(_, ids, _)| ids.contains(&id.to_owned()))
+    };
+    // あり得る holds its stem; 得た after を has none.
+    assert!(has("あり得る", "uru"));
+    assert!(!has("本を得た", "uru"));
+    // ような after a noun's の, not after a verb (よう is a noun too).
+    assert!(has("東京のような", "no-you-na"));
+    assert!(!has("決めるような", "no-you-na"));
+    // の linking nouns, not the の that explains or asks after a verb.
+    assert!(has("東京の本", "no-particle"));
+    assert!(!has("得たの", "no-particle"));
 }
