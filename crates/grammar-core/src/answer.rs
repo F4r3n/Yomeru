@@ -313,14 +313,7 @@ fn piece_at(piece: &str, chars: &[char], start: usize) -> Option<usize> {
 /// Whether a verb of `answer` is in the form `wanted`: some stretch of it
 /// deinflects through that form to a word `vocab` knows as a verb.
 fn has_inflection(answer: &str, wanted: Inflection, vocab: &impl Vocabulary) -> bool {
-    let need = match wanted {
-        Inflection::Passive => Reasons::of(&[Reason::Passive]),
-        Inflection::Potential => Reasons::of(&[Reason::Potential]),
-        Inflection::Causative => Reasons::of(&[Reason::Causative]),
-        Inflection::CausativePassive => Reasons::of(&[Reason::Causative, Reason::Passive]),
-        Inflection::Volitional => Reasons::of(&[Reason::Volitional]),
-        Inflection::Imperative => Reasons::of(&[Reason::Imperative]),
-    };
+    let need = wanted.reasons();
     let chars: Vec<char> = answer.chars().collect();
     let mut deinflector = deinflect::Deinflector::default();
     for start in 0..chars.len() {

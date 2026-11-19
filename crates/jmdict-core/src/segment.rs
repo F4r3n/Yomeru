@@ -76,6 +76,44 @@ pub struct Word {
     /// How the text is conjugated from `base`: causative, passive, past.
     pub reasons: Reasons,
     pub class: Class,
+    /// Chars the text shares with `base` before its conjugated ending: 2
+    /// for 食べ|させられた, 1 for 飲|みたい. `len` when not conjugated.
+    pub stem: usize,
+    /// Chars before where grammar attaches: the stem, and for a godan verb
+    /// its row kana too (飲み|たい), for a noun with する its し
+    /// (勉強し|ました). `len` when not conjugated.
+    pub attach: usize,
+}
+
+/// Whether `e` is a godan verb and no other kind.
+fn godan_only(e: &ArchivedWordEntry) -> bool {
+    let mut godan = false;
+    for p in e.senses.iter().flat_map(|s| s.pos.iter()) {
+        if godan_row(p).is_some() {
+            godan = true;
+        } else if class_of(p) == Some(Class::Verb) {
+            return false;
+        }
+    }
+    godan
+}
+
+/// [`Word::stem`] and [`Word::attach`] of a word read as `surface`.
+fn stem_len(surface: &[char], node: &Node) -> (usize, usize) {
+    let len = surface.len();
+    let Some(e) = node.entry.filter(|_| !node.reasons.is_empty()) else {
+        return (len, len);
+    };
+    // At least one char: 来た → 来る shares 来, but きた → くる nothing.
+    let shared = surface
+        .iter()
+        .zip(node.base.chars())
+        .take_while(|(a, b)| *a == b)
+        .count()
+        .clamp(1, len);
+    let row_kana =
+        (node.class == Class::Verb && godan_only(e)) || node.reasons.contains(Reason::SuruStem);
+    (shared, (shared + usize::from(row_kana)).min(len))
 }
 
 fn class_of(p: &P) -> Option<Class> {
@@ -650,13 +688,18 @@ pub fn segment_with(sentence: &str, costs: &Costs) -> Vec<Word> {
             .node
             .and_then(|(start, i)| nodes.get(start).and_then(|ns| ns.get(i)))
         {
+            let start = b.from.0;
+            let surface = chars.get(start..start + node.len).unwrap_or_default();
+            let (stem, attach) = stem_len(surface, node);
             out.push(Word {
-                start: b.from.0,
+                start,
                 len: node.len,
                 entry: node.entry,
                 base: node.base.clone(),
                 reasons: node.reasons,
                 class: node.class,
+                stem,
+                attach,
             });
         }
         (pos, st) = b.from;

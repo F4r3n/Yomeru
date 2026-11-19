@@ -89,6 +89,14 @@ impl GrammarDict {
         format::entry_at(&self.entries, offset).ok()
     }
 
+    /// Every entry, in id order. Decodes each: for building an index once,
+    /// not for a lookup.
+    pub fn entries(&self) -> impl Iterator<Item = GrammarEntry> + '_ {
+        self.ids
+            .iter()
+            .filter_map(|&(_, _, offset)| format::entry_at(&self.entries, offset).ok())
+    }
+
     /// The entry numbered `seq`, which a grammar card reviews. `None` once
     /// the point left the dictionary.
     pub fn by_seq(&self, seq: u32) -> Option<GrammarEntry> {
@@ -124,6 +132,24 @@ impl GrammarDict {
         self.longest_match_where(text, max_chars, |e, chars| {
             e.hover && chars >= HOVER_MIN_CHARS && e.pattern.chars().count() >= HOVER_MIN_CHARS
         })
+    }
+
+    /// Every match at the start of `text`, longest first: each prefix (at
+    /// most `max_chars` chars) that is a pattern or form, as written or once
+    /// deinflected, with its entries and length in chars; and the
+    /// honorific match ([`Self::honorific_match`]) if there is one. For a
+    /// caller that knows where words end and wants the longest match ending
+    /// on one.
+    pub fn matches_at(&self, text: &str, max_chars: usize) -> Vec<(Vec<GrammarEntry>, usize)> {
+        let keep = |_: &GrammarEntry, _: usize| true;
+        let mut out = self.plain_matches(text, max_chars, &keep, false);
+        if let Some(h) = self.honorific_match(text, max_chars, &keep)
+            && !out.iter().any(|(_, n)| *n == h.1)
+        {
+            out.push(h);
+            out.sort_by_key(|(_, n)| std::cmp::Reverse(*n));
+        }
+        out
     }
 
     /// The longer of the match as written and the honorific one
@@ -201,6 +227,20 @@ impl GrammarDict {
         max_chars: usize,
         keep: &impl Fn(&GrammarEntry, usize) -> bool,
     ) -> Option<(Vec<GrammarEntry>, usize)> {
+        self.plain_matches(text, max_chars, keep, true)
+            .into_iter()
+            .next()
+    }
+
+    /// The prefixes of `text` that are keys, longest first; only the
+    /// longest with `first_only`.
+    fn plain_matches(
+        &self,
+        text: &str,
+        max_chars: usize,
+        keep: &impl Fn(&GrammarEntry, usize) -> bool,
+        first_only: bool,
+    ) -> Vec<(Vec<GrammarEntry>, usize)> {
         let boundaries: Vec<usize> = text
             .char_indices()
             .map(|(i, _)| i)
@@ -209,6 +249,7 @@ impl GrammarDict {
             .collect();
         let reach = self.reach(text);
         let mut deinflector = deinflect::Deinflector::default();
+        let mut out = Vec::new();
 
         for (chars, &end) in boundaries.iter().enumerate().rev() {
             if end == 0 {
@@ -230,12 +271,16 @@ impl GrammarDict {
                         .filter(|e| keep(e, chars))
                         .collect();
                     if !entries.is_empty() {
-                        return Some((entries, chars));
+                        out.push((entries, chars));
+                        if first_only {
+                            return out;
+                        }
+                        break;
                     }
                 }
             }
         }
-        None
+        out
     }
 
     /// What a search box shows for `text`, at most `max` entries, each once:

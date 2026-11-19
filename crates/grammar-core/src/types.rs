@@ -75,6 +75,19 @@ impl Inflection {
         Self::Imperative,
     ];
 
+    /// The deinflection reasons a verb in this form carries, all of them.
+    pub fn reasons(self) -> deinflect::Reasons {
+        use deinflect::{Reason, Reasons};
+        match self {
+            Self::Passive => Reasons::of(&[Reason::Passive]),
+            Self::Potential => Reasons::of(&[Reason::Potential]),
+            Self::Causative => Reasons::of(&[Reason::Causative]),
+            Self::CausativePassive => Reasons::of(&[Reason::Causative, Reason::Passive]),
+            Self::Volitional => Reasons::of(&[Reason::Volitional]),
+            Self::Imperative => Reasons::of(&[Reason::Imperative]),
+        }
+    }
+
     /// The name `grammar.toml` uses.
     pub fn as_str(self) -> &'static str {
         match self {
