@@ -63,10 +63,12 @@ fn dict() -> &'static GrammarDict {
             word(47, "家", "いえ", vec![P::Noun], "house"),
             word(48, "出る", "でる", vec![P::VerbIchidan], "to leave"),
             word(49, "家を出る", "いえをでる", vec![P::Expression, P::VerbIchidan], "to leave home"),
+            word(50, "泣く", "なく", vec![P::VerbGodanKu], "to cry"),
+            word(51, "出す", "だす", vec![P::VerbGodanSu], "to take out"),
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 30\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+            "next_seq = 31\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -154,6 +156,7 @@ fn dict() -> &'static GrammarDict {
             point("gata", 27, "型", "新{型}。", "after = [\"noun-or-particle\"]\nsuffix = true"),
             point("kaku", 28, "各", "{各}国。", "prefix = true"),
             point("wo-particle", 29, "を", "本{を}食べる。", ""),
+            point("dasu", 30, "出す", "泣き{出す}。", "after = [\"masu-stem\"]"),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
     })
@@ -493,4 +496,17 @@ fn a_phrases_particle_is_a_point() {
             .iter()
             .any(|(t, ids, _)| t == "を" && ids.contains(&"wo-particle".to_owned()))
     );
+}
+
+#[test]
+fn a_stem_point_isnt_its_verb_on_its_own() {
+    let has = |sentence: &str| {
+        grammar(sentence)
+            .iter()
+            .any(|(_, ids, _)| ids.contains(&"dasu".to_owned()))
+    };
+    assert!(has("泣き出す"));
+    // 出す after a noun and its を is the verb, not 泣き|出す's.
+    assert!(!has("本を出す"));
+    assert!(!has("本を出した"));
 }

@@ -929,9 +929,12 @@ impl Head<'_> {
                 (w.class == Class::Verb && w.reasons.is_empty())
                     || w.reasons == Reasons::of(&[Reason::SuruStem])
             }
+            // Or text read otherwise that is a verb's stem too: 取れ, 取る's
+            // command, is 取れる's stem (取れかける).
             (Head::Word(w, t, _, _), "masu-stem") => {
                 w.reasons == Reasons::of(&[Reason::MasuStem])
-                    || (w.reasons.is_empty() && !segment::masu_stem_verbs(t).is_empty())
+                    || ((w.reasons.is_empty() || w.reasons == Reasons::of(&[Reason::Imperative]))
+                        && !segment::masu_stem_verbs(t).is_empty())
             }
             (Head::Word(w, _, _, _), "suru-noun") => {
                 w.reasons.is_empty() && w.entry.is_some_and(segment::takes_suru)
@@ -939,7 +942,16 @@ impl Head<'_> {
             (Head::Text(t), "verb-plain") => jmdict_core::lookup(t)
                 .iter()
                 .any(|e| segment::classes(e).contains(&Class::Verb) && spelled(e, t)),
-            (Head::Text(t), "masu-stem") => !segment::masu_stem_verbs(t).is_empty(),
+            // A する noun's し too (休憩し|たい), or する's own.
+            (Head::Text(t), "masu-stem") => {
+                !segment::masu_stem_verbs(t).is_empty()
+                    || t == "し"
+                    || t.strip_suffix('し').is_some_and(|n| {
+                        jmdict_core::lookup(n)
+                            .iter()
+                            .any(|e| spelled(e, n) && segment::takes_suru(e))
+                    })
+            }
             (Head::Text(t), "suru-noun") => jmdict_core::lookup(t)
                 .iter()
                 .any(|e| segment::takes_suru(e) && spelled(e, t)),
@@ -959,9 +971,19 @@ fn fits_after(e: &GrammarEntry, head: &Head<'_>, matched: &str) -> bool {
             && matched.starts_with(['な', 'だ', 'で'])
             && (head.is("noun") || matches!(head, Head::Nothing)))
         // A form holding its verb: あり of ありえない, 泣く of 泣くに泣けない.
+        // A key holds that verb and goes on as the text does (ありえない for
+        // ありえなかった): not any stem the text opens with (抜け of
+        // 抜けません for 抜く).
         || e.after.iter().any(|k| {
             ["masu-stem", "verb-plain"].contains(&k.as_str())
-                && own_heads(matched, e).any(|lead| Head::Text(lead).is(k))
+                && own_heads(matched, e).any(|lead| {
+                    let next = matched[lead.len()..].chars().next();
+                    Head::Text(lead.clone()).is(k)
+                        && e.keys().any(|key| {
+                            key.strip_prefix(lead.as_str())
+                                .is_some_and(|rest| rest.chars().next() == next)
+                        })
+                })
         })
 }
 

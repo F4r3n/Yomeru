@@ -137,6 +137,6 @@ Grammar (`sentence-core`, `data/grammar.toml`):
 2026-11-20, with IPADIC's word costs and `phrase` 700: segmentation F1
 89.2, boundaries 95.2, right entry 97.7%, exact 58.5%; conventions aside F1
 96.3, boundaries 98.3, exact 85.1%; grammar exact 88.9%, conventions aside
-97.0% (overlap 0.2, missed 2.8), other matches 2.82 per sentence. Precision
+97.0% (overlap 0.2, missed 2.8), other matches 2.80 per sentence. Precision
 of all shown points, judged by hand on 100 random corpus sentences: ~88%
-(45 wrong of 390). Always take a fresh baseline: these move with every change.
+(45 wrong of 390), ~90% after the stem fixes (39). Always take a fresh baseline: these move with every change.

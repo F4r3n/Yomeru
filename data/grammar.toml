@@ -366,6 +366,7 @@ examples = [
   { tatoeba = "32801_195627", ja = "まずどこに行き{たい}ですか。", en = "Where would you like to go first?" },
   { tatoeba = "253822_160698", ja = "コンサートに行き{たかった}な。", en = "I wanted to go to the concert." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "mashou"
@@ -3111,6 +3112,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "去年からピアノを習い{始めました}。", en = "I started learning the piano last year." },
   { source = "yomeru", id = "y2", ja = "みんな、もう食べ{始めて}いいですよ。", en = "Everyone, you can start eating now." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "owaru"
@@ -3137,6 +3139,7 @@ examples = [
   { tatoeba = "266699_147862", ja = "宿題をやり{終える}のに３時間かかった。", en = "It took me three hours to finish my homework." },
   { source = "yomeru", id = "y1", ja = "手紙を書き{終わったら}、出かけましょう。", en = "When I've finished writing the letter, let's go out." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "tsuzukeru"
@@ -3162,6 +3165,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "雨は一日中降り{続けた}。", en = "It kept raining all day." },
   { source = "yomeru", id = "y2", ja = "疲れても、走り{続けて}ください。", en = "Keep running, even if you get tired." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "dasu"
@@ -3189,6 +3193,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "犬が急に走り{出した}。", en = "The dog suddenly started running." },
   { source = "yomeru", id = "y2", ja = "急に彼が歌い{出した}ので、びっくりした。", en = "He suddenly burst into song, and I was surprised." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "yasui"
@@ -5914,6 +5919,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "この作文を書き{直して}ください。", en = "Please rewrite this essay." },
   { source = "yomeru", id = "y2", ja = "最初からやり{直したい}。", en = "I want to do it over from the start." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "zurai"
@@ -7234,6 +7240,7 @@ examples = [
   { tatoeba = "39342_202130", ja = "デビー！私の声が聞こえる{かい}？", en = "Debbie! Can you hear me?" },
   { source = "yomeru", id = "y1", ja = "あの人は誰{だい}？", en = "Who's that person?" },
 ]
+after = ["predicate", "noun-or-particle"]
 
 [[point]]
 id = "inai"
@@ -12186,6 +12193,7 @@ examples = [
   { source = "yomeru", id = "y4", ja = "道で転び{かけた}。", en = "I almost fell over in the street." },
   { source = "yomeru", id = "y5", ja = "ボタンが取れ{かけて}いるよ。", en = "Your button is coming off." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "kiru"
@@ -12244,6 +12252,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "ここに名前を書き{込んで}ください。", en = "Please write your name in here." },
   { source = "yomeru", id = "y3", ja = "かばんに服を詰め{込んだ}。", en = "I crammed my clothes into the bag." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "au"
@@ -12271,6 +12280,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "子どもたちが雪を投げ{合って}遊んでいる。", en = "The children are playing, throwing snow at each other." },
   { source = "yomeru", id = "y3", ja = "二人は顔を見て笑い{合った}。", en = "The two of them looked at each other and laughed together." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "agaru"
@@ -12298,6 +12308,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "ケーキがきれいに焼き{上がった}。", en = "The cake has finished baking nicely." },
   { source = "yomeru", id = "y2", ja = "猫が驚いて飛び{上がった}。", en = "The cat jumped up in surprise." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "toosu"
@@ -12324,6 +12335,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "彼女は最後まで走り{通した}。", en = "She kept running all the way to the end." },
   { source = "yomeru", id = "y2", ja = "一度決めたことはやり{通す}つもりだ。", en = "Once I decide something, I intend to see it through." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "mawaru"
@@ -12351,6 +12363,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "京都のお寺を見て{回った}。", en = "I went around visiting temples in Kyoto." },
   { source = "yomeru", id = "y2", ja = "鍵を家中探し{回った}。", en = "I searched all over the house for my keys." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "kaesu"
@@ -12377,6 +12390,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "メールを送る前に見{返した}。", en = "I looked over the email again before sending it." },
   { source = "yomeru", id = "y3", ja = "押されたので押し{返した}。", en = "He pushed me, so I pushed him back." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "nareru"
@@ -12405,6 +12419,7 @@ examples = [
   { source = "yomeru", id = "y5", ja = "彼女は人前で話し{慣れて}いる。", en = "She's used to speaking in front of people." },
   { source = "yomeru", id = "y6", ja = "通い{慣れた}道だから迷わない。", en = "It's a road I'm used to taking, so I won't get lost." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "yamu"
@@ -12432,6 +12447,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "電話の音が鳴り{やんだ}。", en = "The phone stopped ringing." },
   { source = "yomeru", id = "y3", ja = "子どもがなかなか泣き{やまない}。", en = "The child just won't stop crying." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "tate"
@@ -19074,6 +19090,7 @@ examples = [
   { source = "yomeru", id = "y3", ja = "苦しくても最後まで戦い{抜いた}。", en = "Even though it was hard, they fought to the very end." },
   { source = "yomeru", id = "y4", ja = "選び{抜いた}材料を使っています。", en = "We use ingredients chosen with great care." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "tsukusu"
@@ -19101,6 +19118,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "言いたいことは言い{尽くした}。", en = "I've said everything I wanted to say." },
   { source = "yomeru", id = "y3", ja = "彼は親のお金を使い{尽くした}。", en = "He used up all of his parents' money." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "nuki-de"
@@ -22359,6 +22377,7 @@ examples = [
   { tatoeba = "290978_112698", ja = "彼はその手紙に返事を出し{損なった}。", en = "He failed to answer the letter." },
   { source = "yomeru", id = "y1", ja = "会議が長引いて、昼ご飯を食べ{損ねた}。", en = "The meeting ran long and I missed lunch." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "sobireru"
