@@ -489,6 +489,30 @@ impl<'a> Analyzer<'a> {
                 if okurigana && !e.suffix && !e.after.iter().any(|k| k == "adjective-stem") {
                     return false;
                 }
+                // A point read conjugated isn't a run of particles: なよ,
+                // split な|よ, isn't なる's.
+                let matched_text = text.slice(start, end).unwrap_or_default();
+                let over: Vec<&Word> = words
+                    .iter()
+                    .filter(|w| w.start < end && start < w.start + w.len)
+                    .collect();
+                if !e.keys().any(|k| k == matched_text)
+                    && !over.is_empty()
+                    && over
+                        .iter()
+                        .all(|w| w.class == Class::Particle && w.reasons.is_empty())
+                {
+                    return false;
+                }
+                // A verb's stem before its own ます is no point (あり of
+                // あります).
+                if text.chars.get(end) == Some(&'ま')
+                    && words.iter().any(|w| {
+                        w.start < end && end < w.start + w.len && w.reasons.contains(Reason::Polite)
+                    })
+                {
+                    return false;
+                }
                 if own_ending && len == 1 && e.pattern != "て" {
                     return false;
                 }
@@ -1030,7 +1054,9 @@ impl Head<'_> {
             // command, is 取れる's stem (取れかける).
             (Head::Word(w, t, _, _), "masu-stem") => {
                 w.reasons == Reasons::of(&[Reason::MasuStem])
+                    // Not a particle spelling one (で, 出る's).
                     || ((w.reasons.is_empty() || w.reasons == Reasons::of(&[Reason::Imperative]))
+                        && w.class != Class::Particle
                         && !segment::masu_stem_verbs(t).is_empty())
             }
             (Head::Word(w, _, _, _), "suru-noun") => {

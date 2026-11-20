@@ -542,8 +542,10 @@ fn conjugates(
     surface: &str,
 ) -> bool {
     match class {
-        Class::Verb => verb_fits(e, base, surface),
-        Class::Adjective | Class::Auxiliary | Class::Expression => true,
+        // An auxiliary that is a verb too (成る) in its own row: なよ isn't
+        // なる's.
+        Class::Verb | Class::Auxiliary => verb_fits(e, base, surface),
+        Class::Adjective | Class::Expression => true,
         // 勉強して → 勉強, a noun taking する.
         Class::Noun | Class::NaAdjective => {
             reasons.contains(Reason::SuruStem)

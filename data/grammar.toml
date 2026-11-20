@@ -13051,6 +13051,7 @@ examples = [
   { source = "yomeru", id = "y4", ja = "冷蔵庫{ありの}部屋がいい。", en = "I'd like a room with a fridge." },
   { source = "yomeru", id = "y5", ja = "明日は雨の可能性{あり}。", en = "Chance of rain tomorrow." },
 ]
+after = ["noun-or-particle"]
 
 [[point]]
 id = "sugata"
@@ -19620,6 +19621,7 @@ examples = [
   { tatoeba = "71699_234324", ja = "{あと}１０分で手が空く。", en = "I will be free in ten minutes." },
   { tatoeba = "71693_234318", ja = "{あと}２通手紙を書かなくてはならない。", en = "I have another two letters to write." },
 ]
+no_particle = true
 
 [[point]]
 id = "koto-naku"

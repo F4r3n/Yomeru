@@ -71,11 +71,13 @@ fn dict() -> &'static GrammarDict {
             word(55, "温かい", "あたたかい", vec![P::Adjective], "warm"),
             word(56, "温い", "ぬくい", vec![P::Adjective], "warm"),
             word(58, "温", "おん", vec![P::Noun], "warmth"),
+            word(59, "", "よ", vec![P::Particle], "emphasis"),
+            word(60, "", "あり", vec![P::Noun], "there is"),
             word(57, "貝", "かい", vec![P::Noun], "shellfish"),
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 35\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+            "next_seq = 36\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -168,6 +170,7 @@ fn dict() -> &'static GrammarDict {
             point("kekka", 32, "結果", "雨の{結果}、出た。", "no_particle = true"),
             point("da", 33, "だ", "本{だ}。", ""),
             point("kai-dai", 34, "かい", "本{かい}。", ""),
+            point("ari", 35, "あり", "本{あり}。", ""),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
     })
@@ -561,4 +564,16 @@ fn a_verbs_past_ending_isnt_the_copula() {
 fn an_adjectives_kana_are_no_point() {
     assert!(ids("本かい").contains(&"kai-dai".to_owned()));
     assert!(!ids("温かい").contains(&"kai-dai".to_owned()));
+}
+
+#[test]
+fn particles_dont_read_as_a_conjugated_point() {
+    // な|よ isn't なる's imperative.
+    assert!(!ids("走るなよ").contains(&"naru".to_owned()));
+}
+
+#[test]
+fn a_verbs_stem_before_its_masu_is_no_point() {
+    assert!(ids("本あり").contains(&"ari".to_owned()));
+    assert!(!ids("本があります").contains(&"ari".to_owned()));
 }
