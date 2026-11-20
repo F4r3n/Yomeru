@@ -1025,13 +1025,20 @@ fn phrase_particles(surface: &str) -> Vec<usize> {
 /// phrases themselves, one a particle where [`phrase_particles`] puts one
 /// (or a kana expression opening on it):
 /// 何で|も isn't 何でも, nor 上|がった 上がった.
-pub fn split_phrase(surface: &str) -> Option<Vec<Word>> {
+///
+/// `after` is the text following it, read along so the last word is what
+/// it is in the sentence: して of 気がしてならない is する's, not the
+/// particle して.
+pub fn split_phrase(surface: &str, after: &str) -> Option<Vec<Word>> {
     let costs = Costs {
         phrase: 100_000,
         ..Costs::default()
     };
-    let words = segment_with(surface, &costs);
-    let whole = words.iter().map(|w| w.len).sum::<usize>() == surface.chars().count();
+    let n = surface.chars().count();
+    let mut words = segment_with(&format!("{surface}{after}"), &costs);
+    words.retain(|w| w.start < n);
+    let whole = words.iter().map(|w| w.len).sum::<usize>() == n
+        && words.last().is_some_and(|w| w.start + w.len == n);
     let at = phrase_particles(surface);
     let chars: Vec<char> = surface.chars().collect();
     // A particle, or one of the kana expressions opening on one (とは,

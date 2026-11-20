@@ -273,7 +273,11 @@ a Read first, and the file is thousands of lines. Instead:
   the end, にしろ reads as にする's command instead. `no_suru = true` for
   a point ending in に or と that never goes before する/なる (以上に
   "more than", ないと "must"): there it is にする's or とする's
-  (80%以上にしろ, いないとして). After `after`.
+  (80%以上にしろ, いないとして). `suffix = true` for an affix point the
+  dictionary often lists inside whole words (新{型}, 痛{み}, 三回{目}):
+  found inside a word, ending it, when its `after` (required) fits the
+  rest; `prefix = true` the same at a word's start ({各}国, {真っ}暗).
+  After `after`.
 - **examples**: 5 (entries written before 2026-11-18 have 2–3 until an
   examples batch extends them), under ~26 chars of Japanese, at the
   entry's level or below in vocabulary; the `{…}` mark covers the pattern

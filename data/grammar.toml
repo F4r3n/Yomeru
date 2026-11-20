@@ -71,6 +71,14 @@
 #                before する or なる (以上に "more than", ないと "must");
 #                there the breakdown reads it as にする's or とする's
 #                (80%以上{にしろ}, いないとして). After `after`
+#   suffix       optional, true: the point also ends a word the dictionary
+#                lists whole (新{型}, 痛{み}, 三回{目}); the breakdown finds
+#                it inside a word, ending it, when its `after` (required)
+#                fits the rest of the word. After `after`
+#   prefix       optional, true: the point also opens a word the dictionary
+#                lists whole ({各}国, {真っ}暗); the breakdown finds it
+#                there when the rest is a word or an adjective's stem.
+#                After `after`
 #   hover        optional, default true; false keeps the entry out of the
 #                hover popup, reachable by search only (って would match
 #                inside 行って). One-char patterns (は, に, て) never show on
@@ -1615,7 +1623,7 @@ examples = [
 id = "ga-particle"
 seq = 56
 pattern = "が"
-forms = []
+forms = ["ですが"]
 jlpt = "N5"
 meaning = "(subject marker); but"
 formation = [
@@ -4731,7 +4739,7 @@ examples = [
 id = "shi"
 seq = 160
 pattern = "し"
-forms = []
+forms = ["だし"]
 jlpt = "N4"
 meaning = "and, and what's more (listing reasons or points)"
 formation = [
@@ -5196,6 +5204,7 @@ After a noun, だ is optional: 天才だと / 天才と言われている, and i
 usually left out with とされている and と考えられている. For something one person \
 told you, use そうだ or と聞いた instead."""
 related = ["sou-da-hearsay", "to-kiita", "passive"]
+homographs = ["to-kangaerareru"]
 examples = [
   { tatoeba = "301764_101929", ja = "彼は天才だ{と言われている}。", en = "He is said to be a genius." },
   { tatoeba = "300422_103271", ja = "彼は正直者だ{と言われている}。", en = "He is said to be honest." },
@@ -6644,6 +6653,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "{各}ページに絵があります。", en = "There's a picture on each page." },
   { source = "yomeru", id = "y3", ja = "{各}学校から学生が三人来ます。", en = "Three students will come from each school." },
 ]
+prefix = true
 
 [[point]]
 id = "me-ordinal"
@@ -6697,6 +6707,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "{真}夜中に電話が鳴った。", en = "The phone rang in the middle of the night." },
   { source = "yomeru", id = "y3", ja = "テーブルの{真ん}中に花を置きました。", en = "I put flowers right in the middle of the table." },
 ]
+prefix = true
 
 [[point]]
 id = "fuu"
@@ -12557,6 +12568,8 @@ examples = [
   { source = "yomeru", id = "y2", ja = "あの日のことは忘れ{がたい}。", en = "That day is hard to forget." },
   { source = "yomeru", id = "y3", ja = "彼がそんなことを言ったとは考え{がたい}。", en = "It's hard to believe he said such a thing." },
 ]
+after = ["masu-stem"]
+suffix = true
 
 [[point]]
 id = "ppoi"
@@ -12636,6 +12649,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "このスープは甘{み}が足りない。", en = "This soup needs more sweetness." },
   { source = "yomeru", id = "y2", ja = "彼女は悲し{み}を忘れようとした。", en = "She tried to forget her sorrow." },
 ]
+after = ["adjective-stem"]
+suffix = true
 
 [[point]]
 id = "teki"
@@ -12687,6 +12702,8 @@ examples = [
   { tatoeba = "275664_137572", ja = "大{型}車はガソリンを食う。", en = "Large cars use lots of gas." },
   { tatoeba = "58354_221032", ja = "この新{型}自動車はとても人気がある。", en = "This new model of car is so popular." },
 ]
+after = ["noun-or-particle"]
+suffix = true
 
 [[point]]
 id = "doushi"
@@ -16155,7 +16172,7 @@ examples = [
 id = "to-kangaerareru"
 seq = 559
 pattern = "と考えられる"
-forms = ["と考えられます"]
+forms = ["と考えられます", "と考えられている"]
 jlpt = "N2"
 meaning = "it's thought that, it seems likely that (impersonal)"
 formation = ["Clause + と考えられる   (原因は寝不足だと考えられる)"]
@@ -16169,6 +16186,7 @@ notes = """
 speaker forward; と考えられる steps back from it. Its negative \
 考えられない means "unthinkable"."""
 related = ["kangaerarenai", "you-to-omou", "to-iwarete-iru"]
+homographs = ["to-iwarete-iru"]
 examples = [
   { tatoeba = "272168_142402", ja = "昔はずっと寒かった{と考えられる}。", en = "It is thought to have been much colder long ago." },
   { source = "yomeru", id = "y1", ja = "原因は寝不足だ{と考えられる}。", en = "The cause is thought to be lack of sleep." },
@@ -19164,6 +19182,8 @@ examples = [
   { source = "yomeru", id = "y3", ja = "カレーを多{めに}作っておいた。", en = "I made a little extra curry, just in case." },
   { source = "yomeru", id = "y4", ja = "このズボンは少し長{め}だ。", en = "These pants are a bit on the long side." },
 ]
+after = ["adjective-stem"]
+suffix = true
 
 [[point]]
 id = "pocchi"
@@ -19190,6 +19210,8 @@ examples = [
   { source = "yomeru", id = "y3", ja = "彼を疑う気持ちはこれっ{ぽっちも}ない。", en = "I don't doubt him one tiny bit." },
   { source = "yomeru", id = "y4", ja = "千円{ぽっち}でそんなに怒るなよ。", en = "Don't get so angry over a measly thousand yen." },
 ]
+after = ["noun-or-demonstrative", "amount"]
+suffix = true
 
 [[point]]
 id = "kokochi"
@@ -22099,6 +22121,8 @@ examples = [
   { source = "yomeru", id = "y4", ja = "差し出{がましい}ようですが、一言よろしいですか。", en = "It may be presumptuous of me, but may I say something?" },
   { source = "yomeru", id = "y5", ja = "別れた相手に未練{がましく}電話するな。", en = "Don't keep calling your ex like you can't let go." },
 ]
+after = ["masu-stem", "noun-or-particle"]
+suffix = true
 
 [[point]]
 id = "zukume"

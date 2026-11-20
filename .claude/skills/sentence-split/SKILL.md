@@ -27,7 +27,10 @@ Everything uses the full dictionary at `~/.cache/yomeru-sentence/jmdict-full.bin
     to watch, since most raw disagreements are the corpus' conventions.
     `seg-TAG.tsv` lists only the rest;
   - grammar: examples of `grammar.toml` found exactly / overlap / missed, and
-    other matches per sentence (noise: lower is better).
+    other matches per sentence (noise: lower is better); then the same with
+    **conventions** aside (our span holds the mark or sits in it, and is the
+    entry's pattern as written, conjugated, or its slots: の間に for a mark
+    間に). `gram-TAG.tsv` lists only the rest.
   `COSTS` (`word=900,particle_head=1200`) tries other `segment::Costs` values
   without editing code: use it to sweep a new cost before fixing its value.
 - `compare.sh OLD NEW [N]`: what moved between two runs: corpus words newly
@@ -133,6 +136,7 @@ Grammar (`sentence-core`, `data/grammar.toml`):
 
 2026-11-20, with IPADIC's word costs and `phrase` 700: segmentation F1
 89.2, boundaries 95.2, right entry 97.7%, exact 58.5%; conventions aside F1
-96.3, boundaries 98.3, exact 85.1%; grammar exact 88.1%, other matches 2.75
-per sentence (after the review fixes: IPADIC matched by reading and part of
-speech, spoken ている only after a て-form stem). Always take a fresh baseline: these move with every change.
+96.3, boundaries 98.3, exact 85.1%; grammar exact 88.9%, conventions aside
+97.0% (overlap 0.2, missed 2.8), other matches 2.82 per sentence. Precision
+of all shown points, judged by hand on 100 random corpus sentences: ~88%
+(45 wrong of 390). Always take a fresh baseline: these move with every change.

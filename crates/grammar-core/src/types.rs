@@ -61,6 +61,16 @@ pub struct GrammarEntry {
     /// quote + とする.
     #[serde(default)]
     pub no_suru: bool,
+    /// The point also ends a word the dictionary lists whole (新型, 痛み,
+    /// 三回目): the breakdown finds it inside a word, ending it, when its
+    /// [`Self::after`] (which it needs) fits the rest of the word.
+    #[serde(default)]
+    pub suffix: bool,
+    /// The point also opens a word the dictionary lists whole (各国,
+    /// 真っ暗): the breakdown finds it at a word's start, ending inside
+    /// it, when the rest is a word or an adjective's stem.
+    #[serde(default)]
+    pub prefix: bool,
 }
 
 /// The kinds of word `after` can name: `verb-plain` (a verb in its

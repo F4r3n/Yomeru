@@ -48,6 +48,32 @@ pub struct GrammarMatch {
     pub kind: MatchKind,
 }
 
+/// Whether the verb `base` (働かせる) is the causative of another
+/// dictionary verb (働く): then the chars the two share.
+fn lexical_causative(deinflector: &mut deinflect::Deinflector, base: &str) -> Option<usize> {
+    if !(base.ends_with("せる") || base.ends_with("させる")) {
+        return None;
+    }
+    let root = deinflector
+        .run_with_reasons(base)
+        .filter(|(_, r)| *r == Reasons::of(&[Reason::Causative]))
+        .map(|(f, _)| f.to_owned())
+        .find(|f| {
+            jmdict_core::lookup(f)
+                .iter()
+                .any(|e| segment::classes(e).contains(&Class::Verb))
+        })?;
+    Some(
+        base.chars()
+            .zip(root.chars())
+            .take_while(|(a, b)| a == b)
+            .count(),
+    )
+}
+
+/// The most chars after a phrase read along when splitting it.
+const MAX_PHRASE_CONTEXT: usize = 12;
+
 /// `words` with each phrase ([`Word::phrase`]) replaced by its words, and
 /// the phrases split.
 fn split_phrases(chars: &[char], words: Vec<Word>) -> (Vec<Word>, Vec<Word>) {
@@ -55,7 +81,23 @@ fn split_phrases(chars: &[char], words: Vec<Word>) -> (Vec<Word>, Vec<Word>) {
     let mut phrases = Vec::new();
     for w in words {
         let surface: String = chars.iter().skip(w.start).take(w.len).collect();
-        match w.phrase.then(|| segment::split_phrase(&surface)).flatten() {
+        // What follows, to the end of the clause.
+        let after: String = chars
+            .iter()
+            .skip(w.start + w.len)
+            .take(MAX_PHRASE_CONTEXT)
+            .take_while(|&&c| !matches!(c, '、' | '。' | '，' | '．' | '！' | '？'))
+            .collect();
+        // A conjugated phrase keeps its conjugation on its last word: 気が
+        // して isn't 気|が|して with the particle して.
+        let split = w
+            .phrase
+            .then(|| segment::split_phrase(&surface, &after))
+            .flatten()
+            .filter(|parts| {
+                w.reasons.is_empty() || parts.last().is_some_and(|p| p.reasons == w.reasons)
+            });
+        match split {
             Some(parts) => {
                 out.extend(parts.into_iter().map(|p| Word {
                     start: w.start + p.start,
@@ -145,7 +187,10 @@ impl<'a> Analyzer<'a> {
 
     /// The words of `sentence` and the grammar they make up.
     pub fn analyze(&self, sentence: &str) -> Breakdown {
-        let words = segment::segment(sentence);
+        let chars: Vec<char> = sentence.chars().collect();
+        // The grammar is read on the words a learner sees: a phrase JMdict
+        // lists whole (家を出る) split, so its particle is a point too.
+        let (words, phrases) = split_phrases(&chars, segment::segment(sentence));
         let text = Text::new(sentence, &words);
         let mut grammar = self.text_matches(&text, &words);
         // A verb form inside a conjugated word is what the word's
@@ -238,9 +283,6 @@ impl<'a> Analyzer<'a> {
         slots.retain(|m| !m.entries.is_empty());
         grammar.extend(slots);
         grammar.sort_by_key(|m| (m.start, std::cmp::Reverse(m.len)));
-        // The grammar is read on the expressions whole, as the segmenter
-        // reads them; a learner sees their words.
-        let (words, phrases) = split_phrases(&text.chars, words);
         Breakdown {
             words,
             grammar,
@@ -255,9 +297,27 @@ impl<'a> Analyzer<'a> {
         for start in 0..text.len() {
             let soft_start = !text.can_start(start);
             let head = head_before(&text.chars, words, start);
-            if soft_start && !text.soft_start(start) {
-                continue;
-            }
+            // Inside a word, but not at a compound's edge: only a suffix
+            // point ending the word (新|型, 痛|み).
+            let inside = soft_start && !text.soft_start(start);
+            // The last kana of a plain verb (食べ|る), where a point holding
+            // it starts (るところだ, ることがある): the end of the verb.
+            let tail_end = words
+                .iter()
+                .find(|w| {
+                    w.start < start
+                        && start + 1 == w.start + w.len
+                        && w.class == Class::Verb
+                        && w.reasons.is_empty()
+                })
+                .map(|w| w.start + w.len)
+                .filter(|_| {
+                    text.chars
+                        .get(start)
+                        .is_some_and(|&c| "うくぐすつぬぶむる".contains(c))
+                });
+            // The word starting here, for a prefix point ending inside it.
+            let word_here = words.iter().find(|w| w.start == start && w.len >= 2);
             let Some(rest) = text.from(start) else {
                 continue;
             };
@@ -272,10 +332,38 @@ impl<'a> Analyzer<'a> {
             // One char inside a word is a kana of its ending or of a
             // compound (な of 買わなかった), not a particle, unless it ends
             // the word (ば of 急げば).
-            let fits_text = |len: usize| {
+            let ends_well = |len: usize| {
                 (len >= 2 || text.word_start(start) || text.word_end(start + len))
                     && (text.can_end(start, start + len)
                         || (!soft_start && text.soft_end(start, start + len)))
+            };
+            // A prefix point ending inside the word that starts here (各|国,
+            // 真っ|暗): the rest is a word, or an adjective's stem.
+            let prefix_end = |len: usize| {
+                word_here.is_some_and(|w| {
+                    len < w.len && {
+                        let rest = text.slice(start + len, w.start + w.len).unwrap_or_default();
+                        !jmdict_core::lookup(rest).is_empty()
+                            || jmdict_core::lookup(&format!("{rest}い"))
+                                .iter()
+                                .any(|e| segment::classes(e).contains(&Class::Adjective))
+                    }
+                })
+            };
+            // The entries [`keep`] lets through at each length have been
+            // checked for the affix cases.
+            // From a verb's last kana: three chars or more, past the verb
+            // (not うと of 言うと, るな).
+            let from_tail = |len: usize| {
+                tail_end.is_some_and(|end| len >= 3 && start + len > end)
+                    && text.can_end(start, start + len)
+            };
+            let fits_text = |len: usize| {
+                if inside {
+                    text.word_end(start + len) || from_tail(len)
+                } else {
+                    ends_well(len) || prefix_end(len)
+                }
             };
             // The longest length whose point was turned down only for what
             // it comes after: a shorter match there would be a piece of it
@@ -289,10 +377,10 @@ impl<'a> Analyzer<'a> {
                 let (Some(c), None) = (chars.next(), chars.next()) else {
                     return false;
                 };
-                let prefix = e
-                    .formation
-                    .iter()
-                    .any(|f| e.keys().any(|k| f.starts_with(k)));
+                let prefix = e.prefix
+                    || e.formation
+                        .iter()
+                        .any(|f| e.keys().any(|k| f.starts_with(k)));
                 japanese_utils::is_kanji(c)
                     && !prefix
                     && text.word_start(start)
@@ -319,6 +407,14 @@ impl<'a> Analyzer<'a> {
                                     .contains(&w.base.as_str()))
                     });
                 let matched = text.slice(start, end).unwrap_or_default();
+                let affix = if inside {
+                    (e.suffix && !e.after.is_empty() && text.word_end(end)) || from_tail(len)
+                } else {
+                    ends_well(len) || (e.prefix && prefix_end(len))
+                };
+                if !affix {
+                    return false;
+                }
                 // 、 closes a clause the の ends, but 雨にしろ、 goes on. A
                 // sentence's last word is written as is: といって、 isn't
                 // the hearsay という.
@@ -409,11 +505,25 @@ impl<'a> Analyzer<'a> {
     /// besides.
     fn conjugation_matches(&self, chars: &[char], words: &[Word]) -> Vec<GrammarMatch> {
         let mut out = Vec::new();
+        let mut deinflector = deinflect::Deinflector::default();
         for w in words {
-            if w.reasons.is_empty() || w.entry.is_none() {
+            if w.entry.is_none() {
                 continue;
             }
-            let fits = |f: Inflection| w.reasons.contains_all(f.reasons());
+            // A causative JMdict lists as a verb of its own (働かせる,
+            // 待たせる) is still one: its own verb's, from the char after
+            // what the two share (働か|せた).
+            let lexical = (!w.reasons.contains(Reason::Causative))
+                .then(|| lexical_causative(&mut deinflector, &w.base))
+                .flatten();
+            let reasons = match lexical {
+                Some(_) => w.reasons.union(Reasons::of(&[Reason::Causative])),
+                None => w.reasons,
+            };
+            if reasons.is_empty() {
+                continue;
+            }
+            let fits = |f: Inflection| reasons.contains_all(f.reasons());
             let mut entries: Vec<GrammarEntry> = Vec::new();
             for (f, e) in &self.inflections {
                 let covered = Inflection::ALL
@@ -443,6 +553,16 @@ impl<'a> Analyzer<'a> {
                     w.stem
                 }
                 .min(w.len.saturating_sub(1));
+            let start = match lexical {
+                Some(shared) => {
+                    let after = w.start + shared;
+                    let a_row = chars
+                        .get(after)
+                        .is_some_and(|&c| "あかがさざただなばぱまらわ".contains(c));
+                    (after + usize::from(a_row)).min(w.start + w.len.saturating_sub(1))
+                }
+                None => start,
+            };
             let len = w.start + w.len - start;
             out.push(GrammarMatch {
                 start,
@@ -756,6 +876,10 @@ impl Head<'_> {
                     && match w.class {
                         Class::Noun | Class::Unknown | Class::Particle => true,
                         Class::Suffix => !after_verb,
+                        // A noun read as an adverb (夜 of 夜型, 今日).
+                        Class::Adverb => w
+                            .entry
+                            .is_some_and(|e| segment::classes(e).contains(&Class::Noun)),
                         _ => false,
                     }
             }
@@ -923,7 +1047,17 @@ impl<'s> Text<'s> {
                     *slot = true;
                 }
             }
-            for p in ending..end {
+            // A volitional's ending holds its row kana: 習|おう, so
+            // おうと思う starts there. Only お, which the points spell
+            // (not こう of 聞こう, which reads as こう "this way").
+            let start_from = if w.reasons.contains(Reason::Volitional)
+                && chars.get(w.start + w.stem) == Some(&'お')
+            {
+                w.start + w.stem
+            } else {
+                ending
+            };
+            for p in start_from..end {
                 if let Some(slot) = starts.get_mut(p) {
                     *slot = true;
                 }

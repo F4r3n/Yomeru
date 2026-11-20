@@ -57,6 +57,31 @@ fn overlaps(m: &GrammarMatch, start: usize, len: usize) -> bool {
     m.start < start + len && m.start + m.len > start
 }
 
+/// Whether an overlap is only the example's mark and the pattern covering
+/// different stretches of the same point: one span holds the other, and
+/// ours is the entry's pattern as written or conjugated (の間に for a mark
+/// 間に, ぶっている for ぶって) or its slots (だろうが社長だろうが for
+/// 学生だろうが社長だろうが). The reader sees the right point there.
+fn convention(
+    dict: &GrammarDict,
+    text: &str,
+    m: &GrammarMatch,
+    id: &str,
+    start: usize,
+    len: usize,
+) -> bool {
+    let holds = |a: usize, n: usize, b: usize, k: usize| a <= b && b + k <= a + n;
+    if !has(m, id) || !(holds(m.start, m.len, start, len) || holds(start, len, m.start, m.len)) {
+        return false;
+    }
+    if m.kind == MatchKind::Slots {
+        return true;
+    }
+    let t: String = text.chars().skip(m.start).take(m.len).collect();
+    dict.lookup_longest_match(&t, m.len)
+        .is_some_and(|(es, n)| n == m.len && es.iter().any(|e| e.id == id))
+}
+
 fn has(m: &GrammarMatch, id: &str) -> bool {
     m.entries.iter().any(|e| e.id == id)
 }
@@ -105,6 +130,8 @@ fn grammar_found_on_the_words() {
     let analyzer = Analyzer::new(&dict);
 
     let mut all = Tally::default();
+    // The same, an overlap that is only a convention counted as exact.
+    let mut aside = Tally::default();
     let mut by_kind: BTreeMap<&str, Tally> = BTreeMap::new();
     let mut by_level: BTreeMap<String, Tally> = BTreeMap::new();
     let mut per_entry: HashMap<String, (Tally, Option<String>)> = HashMap::new();
@@ -177,11 +204,16 @@ fn grammar_found_on_the_words() {
                     .or_default() += 1;
             }
             all.add(o);
+            let forgiven = o == Outcome::Overlap
+                && b.grammar
+                    .iter()
+                    .any(|m| convention(&dict, &text, m, &e.id, start, len));
+            aside.add(if forgiven { Outcome::Exact } else { o });
             by_kind.entry(kind(&e)).or_default().add(o);
             by_level.entry(e.jlpt.clone()).or_default().add(o);
             let slot = per_entry.entry(e.id.clone()).or_default();
             slot.0.add(o);
-            if o != Outcome::Exact {
+            if o != Outcome::Exact && !forgiven {
                 let mark: String = text.chars().skip(start).take(len).collect();
                 let shown: Vec<String> = b
                     .grammar
@@ -216,6 +248,7 @@ fn grammar_found_on_the_words() {
     }
 
     eprintln!("\n{}", all.line("all"));
+    eprintln!("{}", aside.line("conventions"));
     for (k, t) in &by_kind {
         eprintln!("{}", t.line(k));
     }

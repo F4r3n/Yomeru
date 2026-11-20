@@ -59,6 +59,12 @@ struct Point {
     /// breakdown.
     #[serde(default)]
     no_suru: bool,
+    /// Whether the point also ends a word, for the sentence breakdown.
+    #[serde(default)]
+    suffix: bool,
+    /// Whether the point also opens a word, for the sentence breakdown.
+    #[serde(default)]
+    prefix: bool,
 }
 
 /// `check = "self"` or `check = { inflection = ["causative"] }`; left out,
@@ -322,6 +328,8 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
             ends: p.ends,
             continues: p.continues,
             no_suru: p.no_suru,
+            suffix: p.suffix,
+            prefix: p.prefix,
         });
     }
 

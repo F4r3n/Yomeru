@@ -54,10 +54,19 @@ fn dict() -> &'static GrammarDict {
             word(38, "雨", "あめ", vec![P::Noun], "rain"),
             word(39, "降る", "ふる", vec![P::VerbGodanRu], "to fall"),
             word(40, "雨が降る", "あめがふる", vec![P::Expression, P::VerbGodanRu], "to rain"),
+            word(41, "新型", "しんがた", vec![P::Noun], "new model"),
+            word(42, "新", "しん", vec![P::Noun], "new"),
+            word(43, "各国", "かっこく", vec![P::Noun], "each country"),
+            word(44, "国", "くに", vec![P::Noun], "country"),
+            word(45, "働く", "はたらく", vec![P::VerbGodanKu], "to work"),
+            word(46, "働かせる", "はたらかせる", vec![P::VerbIchidan], "to make work"),
+            word(47, "家", "いえ", vec![P::Noun], "house"),
+            word(48, "出る", "でる", vec![P::VerbIchidan], "to leave"),
+            word(49, "家を出る", "いえをでる", vec![P::Expression, P::VerbIchidan], "to leave home"),
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 27\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+            "next_seq = 30\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -142,6 +151,9 @@ fn dict() -> &'static GrammarDict {
             ),
             point("to-suru", 25, "とする", "食べる{とする}。", ""),
             point("chuu-juu", 26, "中", "学校{中}。", ""),
+            point("gata", 27, "型", "新{型}。", "after = [\"noun-or-particle\"]\nsuffix = true"),
+            point("kaku", 28, "各", "{各}国。", "prefix = true"),
+            point("wo-particle", 29, "を", "本{を}食べる。", ""),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
     })
@@ -447,4 +459,38 @@ fn a_phrase_jmdict_lists_whole_shows_as_its_words() {
         .map(|w| (cut(w.start, w.len), w.base.clone()))
         .collect();
     assert_eq!(phrases, [("雨が降った".to_owned(), "雨が降る".to_owned())]);
+}
+
+#[test]
+fn an_affix_point_is_found_inside_the_word_it_ends_or_opens() {
+    let has = |sentence: &str, id: &str| {
+        grammar(sentence)
+            .iter()
+            .any(|(_, ids, _)| ids.contains(&id.to_owned()))
+    };
+    // 新型 is one word; 型 ends it, after the noun 新.
+    assert!(has("新型", "gata"));
+    // 各国 is one word; 各 opens it, before the word 国.
+    assert!(has("各国", "kaku"));
+}
+
+#[test]
+fn a_causative_listed_as_a_verb_is_still_causative() {
+    let found = grammar("働かせた");
+    assert!(
+        found
+            .iter()
+            .any(|(t, ids, _)| t == "せた" && ids.contains(&"causative".to_owned())),
+        "{found:?}"
+    );
+}
+
+#[test]
+fn a_phrases_particle_is_a_point() {
+    // 家を出る is one JMdict entry; its を is still the particle.
+    assert!(
+        grammar("家を出た")
+            .iter()
+            .any(|(t, ids, _)| t == "を" && ids.contains(&"wo-particle".to_owned()))
+    );
 }
