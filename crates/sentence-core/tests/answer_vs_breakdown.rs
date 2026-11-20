@@ -6,7 +6,8 @@
 //! - `corpus_accepts`: the points the check accepts on each sentence of
 //!   `ANSWER_SENTENCES` (one per line) that the breakdown doesn't find
 //!   (`EXTRA`), mostly wrong accepts. `PLAIN=1` measures the plain search
-//!   (`GrammarDict::check_answer`) instead. Slow: one check per point per
+//!   (`GrammarDict::check_answer`) instead; `ALL=1` prints the accepts
+//!   the breakdown finds too (`FOUND`), for judging by hand. Slow: one check per point per
 //!   sentence.
 //!
 //! ```sh
@@ -77,6 +78,7 @@ fn corpus_accepts() {
     let analyzer = Analyzer::new(&dict);
     let ids = graded(&dict);
     let plain_search = std::env::var("PLAIN").is_ok();
+    let all = std::env::var("ALL").is_ok();
     let file = std::env::var("ANSWER_SENTENCES").expect("set ANSWER_SENTENCES");
     let (mut sentences, mut found, mut extra) = (0, 0, 0);
     for s in std::fs::read_to_string(file).unwrap().lines().filter(|l| !l.is_empty()) {
@@ -98,6 +100,9 @@ fn corpus_accepts() {
             }
             if breakdown.contains(id) {
                 found += 1;
+                if all {
+                    println!("FOUND\t{id}\t{s}");
+                }
             } else {
                 extra += 1;
                 println!("EXTRA\t{id}\t{s}");
