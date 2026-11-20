@@ -182,3 +182,58 @@ Answer check (`Analyzer::check_answer`, `answer_vs_breakdown.rs`):
   not inside a longer point (about half right; mi-suffix on 頼み,
   ni-nai-repeat, you-ga among the wrong). Own examples 4682 of 4691: the
   one-char limit lost 机の上に (に of 上に) and 法律上は.
+
+## Next: answer-check precision plan
+
+Started 2026-11-20, to do next session. Hand-judged on 30 fresh corpus
+sentences (not used in tuning; `~/.cache/yomeru-sentence/answer-judge/`:
+`fresh30.txt`, `fresh30-en.txt`, `judge.txt` with each accepted point per
+sentence, B = both checks, N = new only, P = plain only; `ans200.txt` is
+the tuning set, keep it out of judging):
+
+| | accepts | right |
+|---|---|---|
+| plain search | 305 | ~41% |
+| `check_answer` | 171 | 74% |
+| of which the breakdown's own | 127 | 91% |
+| of which plain-search fallback | 44 | 25% |
+
+Steps, each measured with `own_examples` (now 4682 of 4691) and the 30
+sentences (`ALL=1 ANSWER_SENTENCES=…/fresh30.txt corpus_accepts`, then
+re-judge only what changed); keep a step when wrong accepts drop and own
+examples lose little:
+
+1. **Slot patterns not trusted alone.** `plain_trusted` takes に〜ない,
+   たり〜たり, といい〜といい, として〜ない because their pattern less 〜 is
+   3 chars; the plain search then spans a clause (子供たちに言った…
+   当てはまらない). Exclude patterns holding 〜 from `plain_trusted`
+   (they stay accepted when the breakdown finds them). 9 of 33 wrong.
+2. **Recall: a one-char particle inside a longer point.** を of ことを and
+   中を, に of 上に are separate words in the breakdown but hidden by the
+   longer point, so a を card rejects 遅れたことをお許しください. Accept a
+   one-char key that is a word of its own inside the longer point when
+   the entry has no `after` (number-wa's `after = amount` keeps は of
+   ことは out). Should win back 机の上に and 法律上は.
+3. **Phrase pieces.** Inside a JMdict phrase the plain search takes どう,
+   どうして, ても, も of どうしても, だ of んだ, それ of それに. Accept a
+   key in a phrase only when the phrase *is* the point (one of its keys
+   or forms) or the key ends the phrase and is a point with `suffix`;
+   check which own examples needed the old rule (暇なとき, 楽しみに待つ,
+   になると) before narrowing.
+4. **3+ char patterns inside other words.** ものではない read as
+   ものだから / もの "because", としている as として, をもて遊ぶ as をもって,
+   ませんでした as んだった / たった: require the plain match to start and
+   end on breakdown word edges (as the longer-point rule does).
+5. **Breakdown errors** (12, also in the Sentence tab): 時 of ８時 as とき
+   (after a number: `after`?), potential + reru-dake offered with passive
+   on られた and on てくれた (くれる read as 来る's potential), 出かける as
+   かける "half-done", ぐるりと / と言われた as と "and", は私が as
+   は〜が across a relative clause. These go through the normal workflow
+   above (score.sh, compare.sh).
+6. **たち/ら inside 彼ら, 私達** (lost vs the plain search): a `suffix`
+   flag on tachi would accept ら inside any word: needs a narrower rule
+   (the word's entry ends in the key and starts with a pronoun?) or
+   leave it.
+
+Then re-judge 30 more fresh sentences (new seed) to confirm, re-run the
+200-sentence report, restart the server, and report.
