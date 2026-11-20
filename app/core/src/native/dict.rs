@@ -295,10 +295,7 @@ impl DictClient for LocalDict {
             .unwrap_or_default())
     }
 
-    async fn grammar_by_seq(
-        &self,
-        sequences: &[u32],
-    ) -> Result<Vec<Option<GrammarEntry>>, String> {
+    async fn grammar_by_seq(&self, sequences: &[u32]) -> Result<Vec<Option<GrammarEntry>>, String> {
         self.ensure(Part::Grammar).await?;
         let dict = GRAMMAR_DICT.get();
         Ok(sequences
@@ -311,18 +308,22 @@ impl DictClient for LocalDict {
         // The words around the point come from JMdict.
         self.ensure(Part::Words).await?;
         self.ensure(Part::Grammar).await?;
-        Ok(GRAMMAR_DICT
-            .get()
-            .map_or(Verdict::SelfGraded, |d| {
-                d.check_answer(id, answer, &JmdictVocabulary)
-            }))
+        Ok(GRAMMAR_DICT.get().map_or(Verdict::SelfGraded, |d| {
+            d.check_answer(id, answer, &JmdictVocabulary)
+        }))
     }
 
     async fn sentence_words(&self, sentence: &str) -> Result<Vec<SentenceWord>, String> {
         self.ensure(Part::Words).await?;
         Ok(jmdict_core::vocab::sentence_words(sentence)
             .into_iter()
-            .filter_map(|(start, len, e)| Some(SentenceWord { start, len, entry: owned(e)? }))
+            .filter_map(|(start, len, e)| {
+                Some(SentenceWord {
+                    start,
+                    len,
+                    entry: owned(e)?,
+                })
+            })
             .collect())
     }
 
@@ -339,21 +340,19 @@ impl DictClient for LocalDict {
         let b = ANALYZER
             .get_or_init(|| sentence_core::Analyzer::new(dict))
             .analyze(sentence);
-        Ok(SentenceBreakdown {
-            words: b
-                .words
+        let word = |w: jmdict_core::segment::Word| BreakdownWord {
+            start: w.start,
+            len: w.len,
+            reasons: sentence_core::reason_names(w.reasons)
                 .into_iter()
-                .map(|w| BreakdownWord {
-                    start: w.start,
-                    len: w.len,
-                    reasons: sentence_core::reason_names(w.reasons)
-                        .into_iter()
-                        .map(str::to_owned)
-                        .collect(),
-                    base: w.base,
-                    entry: w.entry.and_then(owned),
-                })
+                .map(str::to_owned)
                 .collect(),
+            base: w.base,
+            entry: w.entry.and_then(owned),
+        };
+        Ok(SentenceBreakdown {
+            words: b.words.into_iter().map(word).collect(),
+            phrases: b.phrases.into_iter().map(word).collect(),
             grammar: b
                 .grammar
                 .into_iter()

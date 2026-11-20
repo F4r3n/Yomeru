@@ -48,6 +48,27 @@ pub struct GrammarMatch {
     pub kind: MatchKind,
 }
 
+/// `words` with each phrase ([`Word::phrase`]) replaced by its words, and
+/// the phrases split.
+fn split_phrases(chars: &[char], words: Vec<Word>) -> (Vec<Word>, Vec<Word>) {
+    let mut out = Vec::with_capacity(words.len());
+    let mut phrases = Vec::new();
+    for w in words {
+        let surface: String = chars.iter().skip(w.start).take(w.len).collect();
+        match w.phrase.then(|| segment::split_phrase(&surface)).flatten() {
+            Some(parts) => {
+                out.extend(parts.into_iter().map(|p| Word {
+                    start: w.start + p.start,
+                    ..p
+                }));
+                phrases.push(w);
+            }
+            None => out.push(w),
+        }
+    }
+    (out, phrases)
+}
+
 /// The names ([`Reason::name`]) of `reasons`, in the order of
 /// [`Reason::ALL`]: what a client shows of how a word is conjugated.
 pub fn reason_names(reasons: Reasons) -> Vec<&'static str> {
@@ -56,9 +77,14 @@ pub fn reason_names(reasons: Reasons) -> Vec<&'static str> {
 
 /// A sentence read into words and grammar.
 pub struct Breakdown {
+    /// A phrase JMdict lists whole (と言った, 雨が降る) shows as its
+    /// words: と|言った.
     pub words: Vec<Word>,
     /// Ordered by start, longer first.
     pub grammar: Vec<GrammarMatch>,
+    /// The phrases split in `words`, as the expressions read: their
+    /// entries, a learner's to open.
+    pub phrases: Vec<Word>,
 }
 
 /// The grammar dictionary with what the matching needs indexed: its slot
@@ -212,7 +238,14 @@ impl<'a> Analyzer<'a> {
         slots.retain(|m| !m.entries.is_empty());
         grammar.extend(slots);
         grammar.sort_by_key(|m| (m.start, std::cmp::Reverse(m.len)));
-        Breakdown { words, grammar }
+        // The grammar is read on the expressions whole, as the segmenter
+        // reads them; a learner sees their words.
+        let (words, phrases) = split_phrases(&text.chars, words);
+        Breakdown {
+            words,
+            grammar,
+            phrases,
+        }
     }
 
     /// The longest text pattern at each point that ends where it may,

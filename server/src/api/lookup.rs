@@ -190,6 +190,9 @@ pub struct BreakdownGrammar {
 pub struct SentenceBreakdownResponse {
     pub words: Vec<BreakdownWord>,
     pub grammar: Vec<BreakdownGrammar>,
+    /// The expressions JMdict lists whole that `words` shows split
+    /// (と言った as と|言った).
+    pub phrases: Vec<BreakdownWord>,
 }
 
 #[derive(Deserialize)]
@@ -398,9 +401,11 @@ pub async fn grammar_check_handler(
         return Err(too_large("answer", chars, MAX_ANSWER_CHARS));
     }
     let verdict = run_blocking("grammar_check", move || {
-        Ok(crate::dicts::grammar().map_or(grammar_core::Verdict::SelfGraded, |d| {
-            d.check_answer(&id, &answer, &grammar_core::JmdictVocabulary)
-        }))
+        Ok(
+            crate::dicts::grammar().map_or(grammar_core::Verdict::SelfGraded, |d| {
+                d.check_answer(&id, &answer, &grammar_core::JmdictVocabulary)
+            }),
+        )
     })
     .await?;
     Ok(Json(GrammarCheckResponse { verdict }))
@@ -446,21 +451,20 @@ pub async fn sentence_breakdown_handler(
             return Ok(SentenceBreakdownResponse {
                 words: Vec::new(),
                 grammar: Vec::new(),
+                phrases: Vec::new(),
             });
         };
         let b = analyzer.analyze(&text);
+        let word = |w: jmdict_core::segment::Word| BreakdownWord {
+            start: w.start,
+            len: w.len,
+            reasons: sentence_core::reason_names(w.reasons),
+            base: w.base,
+            entry: w.entry,
+        };
         Ok(SentenceBreakdownResponse {
-            words: b
-                .words
-                .into_iter()
-                .map(|w| BreakdownWord {
-                    start: w.start,
-                    len: w.len,
-                    reasons: sentence_core::reason_names(w.reasons),
-                    base: w.base,
-                    entry: w.entry,
-                })
-                .collect(),
+            words: b.words.into_iter().map(word).collect(),
+            phrases: b.phrases.into_iter().map(word).collect(),
             grammar: b
                 .grammar
                 .into_iter()

@@ -51,6 +51,9 @@ fn dict() -> &'static GrammarDict {
             word(35, "", "とする", vec![P::Expression, P::VerbSuru], "to assume"),
             word(36, "中心", "ちゅうしん", vec![P::Noun], "centre"),
             word(37, "中", "じゅう", vec![P::Suffix], "throughout"),
+            word(38, "雨", "あめ", vec![P::Noun], "rain"),
+            word(39, "降る", "ふる", vec![P::VerbGodanRu], "to fall"),
+            word(40, "雨が降る", "あめがふる", vec![P::Expression, P::VerbGodanRu], "to rain"),
         ]))
         .unwrap();
         let toml = format!(
@@ -429,4 +432,19 @@ fn a_one_kanji_point_isnt_a_longer_words_first_kanji() {
     assert!(has("学校中"));
     // 中 opens the word 中心.
     assert!(!has("東京の中心"));
+}
+
+#[test]
+fn a_phrase_jmdict_lists_whole_shows_as_its_words() {
+    let s = "雨が降った";
+    let b = Analyzer::new(dict()).analyze(s);
+    let cut = |start: usize, len: usize| -> String { s.chars().skip(start).take(len).collect() };
+    let words: Vec<String> = b.words.iter().map(|w| cut(w.start, w.len)).collect();
+    assert_eq!(words, ["雨", "が", "降った"]);
+    let phrases: Vec<(String, String)> = b
+        .phrases
+        .iter()
+        .map(|w| (cut(w.start, w.len), w.base.clone()))
+        .collect();
+    assert_eq!(phrases, [("雨が降った".to_owned(), "雨が降る".to_owned())]);
 }

@@ -18,7 +18,8 @@ Everything uses the full dictionary at `~/.cache/yomeru-sentence/jmdict-full.bin
 
 - `split.sh FILE`: the breakdown of every sentence of FILE: words (with the
   deinflection: `なった(なる Past)`) and grammar points (`Text`, `Conjugation`,
-  `Slot`, `Read` + the point's id).
+  `Slot`, `Read` + the point's id), and `phrase:` lines: an expression JMdict
+  lists whole (と言った, 雨が降る) shown split, with its split.
 - `score.sh TAG [COSTS]`: corpus scores; writes `seg-TAG.tsv`, `gram-TAG.tsv`.
   - segmentation: word / boundary F1, right entry on matched words, sentences
     split exactly as the corpus; then the same **conventions aside** (では vs
@@ -109,6 +110,12 @@ Segmentation (`segment.rs`):
     adverbs, conjunctions or expressions, which made cheap swallow a noun
     and its particle (時に, なので, 電|気がつく). `ipadic_scale=0` is the
     tags alone, to see what IPADIC changes;
+  - the corpus keeps some kanji + particle expressions whole (人気がある,
+    に対して) and splits others (と言った, 雨が降る): no cost can follow it
+    (`phrase` past ~800 is a cliff). The breakdown splits them for display
+    instead (`segment::split_phrase`, `Breakdown::phrases`), after the
+    grammar is read on the whole expression; the corpus scores the lattice
+    and doesn't see it;
   - the class a word leaves in the lattice decides the next connection
     (a する noun read with its する must leave `Verb`, or とき after
     アクセスできない pays the noun-after-noun cost);
@@ -124,6 +131,7 @@ Grammar (`sentence-core`, `data/grammar.toml`):
 
 ## Last scores
 
-2026-11-20, with IPADIC's word costs: segmentation F1 89.2, boundaries
-95.1, right entry 97.7%, exact 58.5%; conventions aside F1 96.3, boundaries
-98.2, exact 85.0%; grammar exact 88.1%, other matches 2.77 per sentence. Always take a fresh baseline: these move with every change.
+2026-11-20, with IPADIC's word costs and `phrase` 700: segmentation F1
+89.2, boundaries 95.2, right entry 97.7%, exact 58.5%; conventions aside F1
+96.3, boundaries 98.3, exact 85.1%; grammar exact 88.1%, other matches 2.78
+per sentence. Always take a fresh baseline: these move with every change.

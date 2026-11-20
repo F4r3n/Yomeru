@@ -5,7 +5,9 @@
 //! A word shows its dictionary form and how it is conjugated; tapping it
 //! opens its entry card under the sentence, to add it to the deck or open
 //! it in the word lookup. A word that is a grammar point of its own (a
-//! particle: は, に) opens that point's card instead. Each
+//! particle: は, に) opens that point's card instead. An expression
+//! JMdict lists whole (と言った, 雨が降る) shows as its words, and lists
+//! under the sentence, opening its own entry card. Each
 //! grammar point lists under the sentence, its text marked in it while
 //! selected.
 
@@ -26,6 +28,7 @@ use crate::routes::lookup_grammar::GrammarEntryCard;
 use crate::srs::now_ms;
 use crate::sync::schedule_sync;
 use crate::types::{CardItem, CardStatus};
+use jmdict_types::WordEntry;
 
 /// The sentence last read, kept while the user opens a word and comes
 /// back. A global signal, not a thread-local: on Android, Dioxus runs the
@@ -51,6 +54,8 @@ pub fn SentenceBreakdownPage() -> Element {
     let mut selected = use_signal(|| Option::<usize>::None);
     // The word whose card is open, by its place in the breakdown's words.
     let mut word = use_signal(|| Option::<usize>::None);
+    // The expression whose card is open, by its place in the phrases.
+    let mut phrase = use_signal(|| Option::<usize>::None);
     // The deck state of the words opened, keyed by JMdict sequence, as on
     // the word lookup.
     let mut card_status = use_signal(HashMap::<u32, CardStatus>::new);
@@ -74,6 +79,7 @@ pub fn SentenceBreakdownPage() -> Element {
                     error.set(None);
                     selected.set(None);
                     word.set(None);
+                    phrase.set(None);
                     *BREAKDOWN.write() = Some(b);
                 }
                 Err(e) => error.set(Some(e)),
@@ -87,35 +93,39 @@ pub fn SentenceBreakdownPage() -> Element {
     let breakdown = BREAKDOWN.read().clone();
     let sel = *selected.read();
 
-    // Opens word `i`'s card (closes it if open), with its deck state.
-    let mut open_word = move |i: usize, w: BreakdownWord| {
-        if *word.read() == Some(i) {
+    // Opens `entry`'s card in `which` as `i` (closes it if open), with its
+    // deck state; one card at a time, a word's or an expression's.
+    let mut open_card =
+        move |mut which: Signal<Option<usize>>, i: usize, entry: Option<WordEntry>| {
+            if *which.read() == Some(i) {
+                which.set(None);
+                return;
+            }
+            let Some(entry) = entry else {
+                return;
+            };
             word.set(None);
-            return;
-        }
-        let Some(entry) = w.entry else {
-            return;
-        };
-        word.set(Some(i));
-        let seq = entry.sequence;
-        let mut card_priority = card_priority;
-        spawn(async move {
-            let cards = get_cards_of(CardItem::Word(seq)).await.unwrap_or_default();
-            card_status.with_mut(|m| match status_of(&cards) {
-                Some(s) => {
-                    m.insert(seq, s);
-                }
-                None => {
-                    m.remove(&seq);
+            phrase.set(None);
+            which.set(Some(i));
+            let seq = entry.sequence;
+            let mut card_priority = card_priority;
+            spawn(async move {
+                let cards = get_cards_of(CardItem::Word(seq)).await.unwrap_or_default();
+                card_status.with_mut(|m| match status_of(&cards) {
+                    Some(s) => {
+                        m.insert(seq, s);
+                    }
+                    None => {
+                        m.remove(&seq);
+                    }
+                });
+                if let Some(p) = cards.iter().map(|c| c.priority).max() {
+                    card_priority.with_mut(|m| {
+                        m.insert(seq, p);
+                    });
                 }
             });
-            if let Some(p) = cards.iter().map(|c| c.priority).max() {
-                card_priority.with_mut(|m| {
-                    m.insert(seq, p);
-                });
-            }
-        });
-    };
+        };
     let on_add = move |seq: u32| {
         locked.with_mut(|s| {
             s.insert(seq);
@@ -137,12 +147,22 @@ pub fn SentenceBreakdownPage() -> Element {
             });
         });
     };
-    // The open word, its text, and its entry.
-    let open_entry = breakdown.as_ref().zip(*word.read()).and_then(|(b, i)| {
-        let w = b.words.get(i)?;
+    // The open word or expression, its text, and its entry.
+    let open_entry = breakdown.as_ref().and_then(|b| {
+        let w = match (*word.read(), *phrase.read()) {
+            (Some(i), _) => b.words.get(i)?,
+            (_, Some(i)) => b.phrases.get(i)?,
+            _ => return None,
+        };
         let surface: String = chars.iter().skip(w.start).take(w.len).collect();
         Some((w.clone(), surface, w.entry.clone()?))
     });
+    // The open expression's text, marked in the sentence.
+    let open_phrase = breakdown
+        .as_ref()
+        .zip(*phrase.read())
+        .and_then(|(b, i)| b.phrases.get(i))
+        .map(|w| (w.start, w.len));
 
     rsx! {
         div {
@@ -169,6 +189,7 @@ pub fn SentenceBreakdownPage() -> Element {
                         grammar: b.grammar.clone(),
                         selected: sel,
                         open_word: *word.read(),
+                        open_phrase,
                         on_word: EventHandler::new(move |(i, start, len): (usize, usize, usize)| {
                             let Some(w) = BREAKDOWN.read().as_ref().and_then(|b| b.words.get(i).cloned()) else {
                                 return;
@@ -181,13 +202,14 @@ pub fn SentenceBreakdownPage() -> Element {
                             match own {
                                 Some(g) => {
                                     word.set(None);
+                                    phrase.set(None);
                                     select(selected, g);
                                 }
                                 None => {
                                     // One selection at a time: the word's
                                     // card, or a point's.
                                     selected.set(None);
-                                    open_word(i, w);
+                                    open_card(word, i, w.entry);
                                 }
                             }
                         }),
@@ -230,11 +252,27 @@ pub fn SentenceBreakdownPage() -> Element {
                                             },
                                             "Open in word search"
                                         }
-                                        button { onclick: move |_| word.set(None), "Close" }
+                                        button {
+                                            onclick: move |_| {
+                                                word.set(None);
+                                                phrase.set(None);
+                                            },
+                                            "Close"
+                                        }
                                     }
                                 }
                             }
                         }
+                    }
+                    PhraseList {
+                        chars: chars.clone(),
+                        phrases: b.phrases.clone(),
+                        open: *phrase.read(),
+                        on_open: EventHandler::new(move |i: usize| {
+                            let entry = BREAKDOWN.read().as_ref().and_then(|b| b.phrases.get(i)?.entry.clone());
+                            selected.set(None);
+                            open_card(phrase, i, entry);
+                        }),
                     }
                     GrammarList {
                         chars,
@@ -245,6 +283,7 @@ pub fn SentenceBreakdownPage() -> Element {
                                 selected.set(None);
                             } else {
                                 word.set(None);
+                                phrase.set(None);
                                 select(selected, g);
                             }
                         }),
@@ -297,6 +336,8 @@ fn Words(
     selected: Option<usize>,
     /// The word whose card is open, marked.
     open_word: Option<usize>,
+    /// The text of the expression whose card is open, marked.
+    open_phrase: Option<(usize, usize)>,
     /// The first word tapped, and the block's start and length in chars.
     on_word: EventHandler<(usize, usize, usize)>,
 ) -> Element {
@@ -307,7 +348,8 @@ fn Words(
                 .any(|&(s, n)| start < s + n && s < start + len)
         })
     };
-    let own_point = |start: usize, len: usize| grammar.iter().any(|m| (m.start, m.len) == (start, len));
+    let own_point =
+        |start: usize, len: usize| grammar.iter().any(|m| (m.start, m.len) == (start, len));
     let cut = |start: usize, len: usize| -> String { chars.iter().skip(start).take(len).collect() };
     // Each word, or block of words a point covers whole, and the uncovered
     // text before it.
@@ -319,7 +361,9 @@ fn Words(
             parts.push((None, at, w.start - at));
         }
         let n = block_at(&chars, &words, &grammar, i);
-        let len = words.get(i + n - 1).map_or(w.len, |last| last.start + last.len - w.start);
+        let len = words
+            .get(i + n - 1)
+            .map_or(w.len, |last| last.start + last.len - w.start);
         parts.push((Some(i), w.start, len));
         at = w.start + len;
         i += n;
@@ -344,7 +388,9 @@ fn Words(
                         if marked(start, len) {
                             class.push_str(" marked");
                         }
-                        if open_word == Some(i) {
+                        if open_word == Some(i)
+                            || open_phrase.is_some_and(|(s, n)| s <= start && start + len <= s + n)
+                        {
                             class.push_str(" open");
                         }
                         rsx! {
@@ -371,16 +417,21 @@ fn Words(
 /// covers two or more whole words in one piece, all in kana (よう|な as
 /// ような, の|か as のか, に|なりました as になる). A word with kanji keeps
 /// its own card. Otherwise 1.
-fn block_at(chars: &[char], words: &[BreakdownWord], grammar: &[BreakdownGrammar], i: usize) -> usize {
+fn block_at(
+    chars: &[char],
+    words: &[BreakdownWord],
+    grammar: &[BreakdownGrammar],
+    i: usize,
+) -> usize {
     let Some(first) = words.get(i) else {
         return 1;
     };
     let kana = |w: &BreakdownWord| {
         chars
-                .iter()
-                .skip(w.start)
-                .take(w.len)
-                .all(|&c| ('\u{3041}'..='\u{309f}').contains(&c))
+            .iter()
+            .skip(w.start)
+            .take(w.len)
+            .all(|&c| ('\u{3041}'..='\u{309f}').contains(&c))
     };
     grammar
         .iter()
@@ -399,6 +450,52 @@ fn block_at(chars: &[char], words: &[BreakdownWord], grammar: &[BreakdownGrammar
         })
         .max()
         .unwrap_or(1)
+}
+
+/// The expressions JMdict lists whole that the sentence shows as their
+/// words (と言った, 雨が降る), one row each: the text, the headword and
+/// its gloss. A row opens the expression's entry card.
+#[component]
+fn PhraseList(
+    chars: Vec<char>,
+    phrases: Vec<BreakdownWord>,
+    open: Option<usize>,
+    on_open: EventHandler<usize>,
+) -> Element {
+    if phrases.is_empty() {
+        return rsx! {};
+    }
+    rsx! {
+        div { class: "grammar-results",
+            div { class: "section-title", "Expressions" }
+            for (i, w) in phrases.into_iter().enumerate() {
+                {
+                    let text: String = chars.iter().skip(w.start).take(w.len).collect();
+                    let head = w.entry.as_ref().map(|e| primary_headword(e).to_owned()).unwrap_or_default();
+                    let gloss = w.entry.as_ref().map(dict::short_gloss).unwrap_or_default();
+                    let is_open = open == Some(i);
+                    rsx! {
+                        div {
+                            key: "{i}",
+                            class: if is_open { "sentence-grammar selected" } else { "sentence-grammar" },
+                            button {
+                                class: "sentence-grammar-row",
+                                title: if is_open { "Close" } else { "Open" },
+                                onclick: move |_| on_open.call(i),
+                                span { class: "sentence-grammar-text", lang: "ja", "{text}" }
+                                span { class: "sentence-grammar-points",
+                                    span { class: "sentence-grammar-point",
+                                        span { class: "pattern", lang: "ja", "{head}" }
+                                        span { class: "meaning", "{gloss}" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// The grammar points found, in sentence order, one row each: the text it

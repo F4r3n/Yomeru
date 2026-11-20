@@ -316,6 +316,20 @@ fn breakdown_of() {
             })
             .collect();
         eprintln!("\n{s}\n  words:   {}", words.join(" | "));
+        for w in &b.phrases {
+            let inside: Vec<String> = b
+                .words
+                .iter()
+                .filter(|x| w.start <= x.start && x.start < w.start + w.len)
+                .map(|x| cut(s, x.start, x.len))
+                .collect();
+            eprintln!(
+                "  phrase:  {} ({}) = {}",
+                cut(s, w.start, w.len),
+                w.base,
+                inside.join("|")
+            );
+        }
         for m in &b.grammar {
             let ids: Vec<&str> = m.entries.iter().map(|e| e.id.as_str()).collect();
             eprintln!(

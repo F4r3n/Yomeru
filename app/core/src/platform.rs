@@ -53,8 +53,7 @@ pub trait DictClient: Send + Sync {
     /// The points grammar cards with these `sequence`s review, aligned with
     /// `sequences`; `None` for a point that left the dictionary (see
     /// `grammar_core::GrammarDict::by_seq`).
-    async fn grammar_by_seq(&self, sequences: &[u32])
-    -> Result<Vec<Option<GrammarEntry>>, String>;
+    async fn grammar_by_seq(&self, sequences: &[u32]) -> Result<Vec<Option<GrammarEntry>>, String>;
     /// Whether a typed production `answer` uses the point `id` (see
     /// `grammar_core::GrammarDict::check_answer`). Only a help for the
     /// user's own rating, so nothing checks it again.
@@ -80,6 +79,10 @@ pub trait DictClient: Send + Sync {
 pub struct SentenceBreakdown {
     pub words: Vec<BreakdownWord>,
     pub grammar: Vec<BreakdownGrammar>,
+    /// The expressions JMdict lists whole that `words` shows split
+    /// (と言った as と|言った). An older server sends none.
+    #[serde(default)]
+    pub phrases: Vec<BreakdownWord>,
 }
 
 /// One word of a [`SentenceBreakdown`]: where it is, in chars, its
@@ -368,10 +371,7 @@ impl DictClient for HttpDict {
         Ok(parsed.entries)
     }
 
-    async fn grammar_by_seq(
-        &self,
-        sequences: &[u32],
-    ) -> Result<Vec<Option<GrammarEntry>>, String> {
+    async fn grammar_by_seq(&self, sequences: &[u32]) -> Result<Vec<Option<GrammarEntry>>, String> {
         let parsed: GrammarBySeqResponse = post_json(
             "/api/grammar-by-sequence",
             &LookupBySequenceBody { sequences },

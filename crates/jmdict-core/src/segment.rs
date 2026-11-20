@@ -83,6 +83,9 @@ pub struct Word {
     /// its row kana too (飲み|たい), for a noun with する its し
     /// (勉強し|ました). `len` when not conjugated.
     pub attach: usize,
+    /// An expression JMdict lists whole that is a phrase of words, kanji
+    /// and particle (と言う, 雨が降る): [`split_phrase`] gives its words.
+    pub phrase: bool,
 }
 
 /// Verb forms the deinflection rules don't read, as `(dictionary form,
@@ -327,6 +330,9 @@ pub struct Costs {
     /// An expression (それは, という): a breakdown would rather show its
     /// words, and the grammar layer names the pattern.
     pub expression: i32,
+    /// An expression of kanji and particles, a phrase its words make up
+    /// (と言う, 雨が降る): one word in JMdict, words to a learner.
+    pub phrase: i32,
     /// A conjunction or interjection inside a clause: では after a noun is
     /// で|は.
     pub mid_conjunction: i32,
@@ -379,6 +385,7 @@ impl Default for Costs {
             unknown_char: 4000,
             unknown_katakana: 2500,
             expression: 0,
+            phrase: 700,
             mid_conjunction: 600,
             clause_open: 800,
             particle_particle: 100,
@@ -414,6 +421,7 @@ impl Costs {
                 "unknown_char" => &mut self.unknown_char,
                 "unknown_katakana" => &mut self.unknown_katakana,
                 "expression" => &mut self.expression,
+                "phrase" => &mut self.phrase,
                 "mid_conjunction" => &mut self.mid_conjunction,
                 "clause_open" => &mut self.clause_open,
                 "particle_particle" => &mut self.particle_particle,
@@ -621,6 +629,8 @@ struct Node {
     /// [`Costs::noun_noun`] too, and 貿易|拠点として isn't cheaper than
     /// 貿易|拠点|として. Not one that stays a noun (年ぶり, after digits).
     kanji_expression: bool,
+    /// See [`Word::phrase`].
+    phrase: bool,
 }
 
 /// The candidates for one dictionary form of `surface`, one per class its
@@ -663,6 +673,14 @@ fn push_nodes(
         // An expression (気がつく) keeps the tags: IPADIC's cost is its
         // verb's, and made cheap it swallows the noun before (電|気がつく).
         let ipadic_freq = costs.ipadic_freq(e, form).filter(|_| !expression);
+        // A phrase JMdict lists whole, kanji and particle (と言う, 雨が降る,
+        // 時には): the breakdown would rather show its words, and the
+        // grammar layer names the pattern. Kana ones (じゃない, ほうがいい)
+        // stay whole.
+        // A conjunction too: と言った "and yet" is と|言った to a learner.
+        let phrase = (expression || entry_classes.contains(&Class::Conjunction))
+            && surface.chars().any(japanese_utils::is_kanji)
+            && !phrase_particles(surface).is_empty();
         let kanji_expression = surface.starts_with(japanese_utils::is_kanji)
             && expression
             && entry_classes.contains(&Class::Verb);
@@ -721,7 +739,8 @@ fn push_nodes(
                         } else {
                             0
                         }
-                        + if class == Class::Expression { costs.expression } else { 0 },
+                        + if class == Class::Expression { costs.expression } else { 0 }
+                        + if phrase { costs.phrase } else { 0 },
                     class,
                     entry: Some(e),
                     base: form.to_owned(),
@@ -732,6 +751,7 @@ fn push_nodes(
                         && class != Class::Expression
                         && kana_for_kanji,
                     kanji_expression,
+                    phrase,
                 });
             }
         }
@@ -913,6 +933,7 @@ fn unknown(run: &[char], len: usize, cost: i32) -> Node {
         particle_head: false,
         kana_head: false,
         kanji_expression: false,
+        phrase: false,
     }
 }
 
@@ -979,6 +1000,54 @@ pub fn candidates_at(sentence: &str, at: usize, costs: &Costs) -> Vec<(usize, Cl
             (n.len, n.class, n.cost, head)
         })
         .collect()
+}
+
+/// Where a phrase's particles may be, in chars: one opening it or right
+/// after a kanji, with more after it (not the と of 長いこと).
+fn phrase_particles(surface: &str) -> Vec<usize> {
+    let c: Vec<char> = surface.chars().collect();
+    let before = std::iter::once(None).chain(c.iter().copied().map(Some));
+    c.iter()
+        .zip(before)
+        .take(c.len().saturating_sub(1))
+        .enumerate()
+        .filter(|&(_, (&here, before))| {
+            matches!(here, 'が' | 'を' | 'に' | 'と' | 'で' | 'は' | 'も')
+                && before.is_none_or(japanese_utils::is_kanji)
+        })
+        .map(|(i, _)| i)
+        .collect()
+}
+
+/// The words of a phrase [`segment`] reads as one expression
+/// ([`Word::phrase`]): 雨|が|降って for 雨が降って, positions within
+/// `surface`. `None` unless it splits into known words that aren't
+/// phrases themselves, one a particle where [`phrase_particles`] puts one
+/// (or a kana expression opening on it):
+/// 何で|も isn't 何でも, nor 上|がった 上がった.
+pub fn split_phrase(surface: &str) -> Option<Vec<Word>> {
+    let costs = Costs {
+        phrase: 100_000,
+        ..Costs::default()
+    };
+    let words = segment_with(surface, &costs);
+    let whole = words.iter().map(|w| w.len).sum::<usize>() == surface.chars().count();
+    let at = phrase_particles(surface);
+    let chars: Vec<char> = surface.chars().collect();
+    // A particle, or one of the kana expressions opening on one (とは,
+    // にも, ではない).
+    let particle = words.iter().any(|w| {
+        at.contains(&w.start)
+            && match w.class {
+                Class::Particle => true,
+                Class::Expression | Class::Auxiliary => chars
+                    .get(w.start..w.start + w.len)
+                    .is_some_and(|c| c.iter().all(|&c| japanese_utils::is_kana(c))),
+                _ => false,
+            }
+    });
+    (whole && particle && words.len() >= 2 && words.iter().all(|w| w.entry.is_some() && !w.phrase))
+        .then_some(words)
 }
 
 /// [`segment`] with other costs, for tuning them.
@@ -1083,6 +1152,7 @@ pub fn segment_with(sentence: &str, costs: &Costs) -> Vec<Word> {
                 class: node.class,
                 stem,
                 attach,
+                phrase: node.phrase,
             });
         }
         (pos, st) = b.from;
