@@ -31,6 +31,12 @@ const HISTORY_MAX: usize = 10;
 /// Grammar points shown for one search.
 const GRAMMAR_MAX: u8 = 10;
 
+/// Word tiers on the results: spelled as typed, a conjugation of it, or
+/// starting with it.
+const TIER_EXACT: u8 = 0;
+const TIER_CONJUGATED: u8 = 1;
+const TIER_PREFIX: u8 = 2;
+
 #[derive(Clone, Copy, PartialEq)]
 enum ExtraTab {
     Kanji,
@@ -246,6 +252,8 @@ fn LookupListPane() -> Element {
     let mut input_seed = use_signal(|| (0u32, query.peek().clone()));
     let mut last_target = use_signal(String::new);
     let mut entries = use_signal(Vec::<WordEntry>::new);
+    // Each entry's tier (`TIER_EXACT`…), by sequence; missing is exact.
+    let mut word_tiers = use_signal(HashMap::<u32, u8>::new);
     // Grammar points for the search.
     let mut grammar_hits = use_signal(Vec::<GrammarEntry>::new);
     let mut searching = use_signal(|| false);
@@ -349,6 +357,12 @@ fn LookupListPane() -> Element {
             if matched.is_none() && deinflected.iter().any(|h| !h.is_empty()) {
                 matched = targets.first().cloned();
             }
+            let mut tiers: HashMap<u32, u8> = HashMap::new();
+            for (tier, group) in [(TIER_EXACT, &per_target), (TIER_CONJUGATED, &deinflected)] {
+                for e in group.iter().flatten() {
+                    tiers.entry(e.sequence).or_insert(tier);
+                }
+            }
             let mut groups = per_target;
             groups.extend(deinflected);
             for t in &targets {
@@ -386,7 +400,9 @@ fn LookupListPane() -> Element {
             //TODO: for each result we open IDB to see if the card exists.
             // It's slow, need to do it on batch
             for e in &results {
-                let siblings = get_cards_of(CardItem::Word(e.sequence)).await.unwrap_or_default();
+                let siblings = get_cards_of(CardItem::Word(e.sequence))
+                    .await
+                    .unwrap_or_default();
                 if let Some(s) = status_of(&siblings) {
                     statuses.insert(e.sequence, s);
                 }
@@ -405,6 +421,7 @@ fn LookupListPane() -> Element {
                 None
             };
             entries.set(results);
+            word_tiers.set(tiers);
             grammar_hits.set(grammar);
             searching.set(false);
             searched.set(true);
@@ -480,12 +497,86 @@ fn LookupListPane() -> Element {
     let target = last_target.read().clone();
     let show_converted = is_romaji(&q_trim) && !target.is_empty() && target != q_trim;
     let result_count = entries.read().len();
-    // Grammar leads when the search is itself a grammar pattern (てよかった),
-    // and otherwise follows the words.
-    let grammar_first = grammar_hits
+    // The results in tiers, words and grammar interleaved: what the search
+    // is (words spelled so, grammar points it is a pattern of), then what it
+    // conjugates or relates to, then the words it starts. Within the first
+    // tier grammar leads when the search is a pattern (てよかった).
+    let (grammar_exact, grammar_other): (Vec<GrammarEntry>, Vec<GrammarEntry>) = grammar_hits
         .read()
-        .first()
-        .is_some_and(|g| g.keys().any(|k| k == target));
+        .iter()
+        .cloned()
+        .partition(|g| g.keys().any(|k| k == target));
+    let grammar_first = !grammar_exact.is_empty();
+    let words_of = |tier: u8| -> Vec<WordEntry> {
+        let tiers = word_tiers.read();
+        entries
+            .read()
+            .iter()
+            .filter(|e| tiers.get(&e.sequence).copied().unwrap_or(TIER_PREFIX) == tier)
+            .cloned()
+            .collect()
+    };
+    let words_exact = words_of(TIER_EXACT);
+    let words_conjugated = words_of(TIER_CONJUGATED);
+    let words_prefix = words_of(TIER_PREFIX);
+    let prefix_title = format!("Starting with {target}");
+    let render_word = move |entry: &WordEntry| -> Element {
+        let head = primary_headword(entry).to_string();
+        let status = card_status.read().get(&entry.sequence).copied();
+        let priority = card_priority
+            .read()
+            .get(&entry.sequence)
+            .copied()
+            .unwrap_or(0);
+        let is_locked = locked.read().contains(&entry.sequence);
+        let expanded = selected_word.as_deref() == Some(&head);
+        let head_for_select = head.clone();
+        let on_select = if expanded {
+            // Already expanded — clicking collapses.
+            Some(EventHandler::new(move |_| {
+                nav.replace(Route::Lookup {});
+            }))
+        } else {
+            Some(EventHandler::new(move |_| {
+                nav.push(Route::LookupDetail {
+                    word: head_for_select.clone(),
+                });
+            }))
+        };
+        rsx! {
+            EntryCard {
+                entry: entry.clone(),
+                on_add: Some(EventHandler::new(on_add)),
+                on_reset: Some(EventHandler::new(on_reset)),
+                on_select,
+                status,
+                priority,
+                locked: is_locked,
+            }
+            if expanded {
+                ExpansionPanel {
+                    word: head,
+                    kanji: kanji_data.read().clone(),
+                    examples: examples_data.read().clone(),
+                    tab: *extra_tab.read(),
+                    on_tab: EventHandler::new(move |t| extra_tab.set(t)),
+                }
+            }
+        }
+    };
+    let word_block = move |title: &str, words: &[WordEntry]| -> Element {
+        if words.is_empty() {
+            return rsx! { Fragment {} };
+        }
+        rsx! {
+            div { class: "result-block words",
+                div { class: "section-title", "{title}" }
+                for entry in words.iter() {
+                    {render_word(entry)}
+                }
+            }
+        }
+    };
     let on_grammar_search = EventHandler::new(move |term: String| {
         let mut search = on_history;
         search(term);
@@ -532,53 +623,19 @@ fn LookupListPane() -> Element {
                 div { class: "loading", "Searching…" }
             } else if !entries.read().is_empty() || !grammar_hits.read().is_empty() {
                 if grammar_first {
-                    GrammarResults { entries: grammar_hits.read().clone(), on_search: on_grammar_search }
+                    GrammarResults { title: "Grammar", entries: grammar_exact.clone(), on_search: on_grammar_search }
                 }
-                for entry in entries.read().iter() {
-                    {
-                        let head = primary_headword(entry).to_string();
-                        let status = card_status.read().get(&entry.sequence).copied();
-                        let priority = card_priority.read().get(&entry.sequence).copied().unwrap_or(0);
-                        let is_locked = locked.read().contains(&entry.sequence);
-                        let expanded = selected_word.as_deref() == Some(&head);
-                        let head_for_select = head.clone();
-                        let head_for_close = head.clone();
-                        let on_select = if expanded {
-                            // Already expanded — clicking collapses.
-                            Some(EventHandler::new(move |_| {
-                                nav.replace(Route::Lookup {});
-                                let _ = &head_for_close;
-                            }))
-                        } else {
-                            Some(EventHandler::new(move |_| {
-                                nav.push(Route::LookupDetail { word: head_for_select.clone() });
-                            }))
-                        };
-                        rsx! {
-                            EntryCard {
-                                entry: entry.clone(),
-                                on_add: Some(EventHandler::new(on_add)),
-                                on_reset: Some(EventHandler::new(on_reset)),
-                                on_select,
-                                status,
-                                priority,
-                                locked: is_locked,
-                            }
-                            if expanded {
-                                ExpansionPanel {
-                                    word: head,
-                                    kanji: kanji_data.read().clone(),
-                                    examples: examples_data.read().clone(),
-                                    tab: *extra_tab.read(),
-                                    on_tab: EventHandler::new(move |t| extra_tab.set(t)),
-                                }
-                            }
-                        }
-                    }
-                }
+                {word_block("Words", &words_exact)}
                 if !grammar_first {
-                    GrammarResults { entries: grammar_hits.read().clone(), on_search: on_grammar_search }
+                    GrammarResults { title: "Grammar", entries: grammar_exact, on_search: on_grammar_search }
                 }
+                {word_block("Conjugated forms", &words_conjugated)}
+                GrammarResults {
+                    title: if words_exact.is_empty() && grammar_first { "Related grammar" } else { "Grammar" },
+                    entries: grammar_other,
+                    on_search: on_grammar_search,
+                }
+                {word_block(&prefix_title, &words_prefix)}
             } else if *searched.read() {
                 {
                     let label = if target.is_empty() { q_trim } else { target };

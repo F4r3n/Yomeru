@@ -19,16 +19,20 @@ const PREVIEW_EXAMPLES: usize = 2;
 /// Other spellings listed before "+N".
 const FORMS_SHOWN: usize = 6;
 
-/// The Grammar section: `entries` as cards. `on_search` searches a pattern
-/// a card links to.
+/// A grammar section titled `title`: `entries` as cards. `on_search`
+/// searches a pattern a card links to.
 #[component]
-pub fn GrammarResults(entries: Vec<GrammarEntry>, on_search: EventHandler<String>) -> Element {
+pub fn GrammarResults(
+    title: String,
+    entries: Vec<GrammarEntry>,
+    on_search: EventHandler<String>,
+) -> Element {
     if entries.is_empty() {
         return rsx! { Fragment {} };
     }
     rsx! {
-        div { class: "grammar-results",
-            div { class: "section-title", "Grammar" }
+        div { class: "result-block grammar-results",
+            div { class: "section-title", "{title}" }
             for entry in entries {
                 GrammarEntryCard { key: "{entry.id}", entry, on_search }
             }

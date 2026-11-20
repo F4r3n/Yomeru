@@ -1044,9 +1044,18 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 }
 
 /* ── Grammar results (lookup page) ───────────────────────────────── */
-.grammar-results { margin-top: 18px; }
-.grammar-results:first-child { margin-top: 0; }
-.grammar-card { margin-bottom: 10px; }
+/* Words and grammar interleaved, told apart by colour: blue words,
+   green grammar, on the block's title and each card's left edge. */
+.result-block { margin-top: 18px; }
+.result-block:first-child, .row + .result-block, .hero-search + .result-block { margin-top: 0; }
+.result-block.words > .section-title { color: var(--blue); }
+.result-block.grammar-results > .section-title { color: var(--green); }
+.result-block.words > .card { border-left: 3px solid var(--blue); }
+.grammar-card { margin-bottom: 10px; border-left: 3px solid var(--green); }
+.grammar-card .freq-badge {
+    color: var(--green); border-color: color-mix(in srgb, var(--green) 50%, transparent);
+    background: color-mix(in srgb, var(--green) 12%, transparent);
+}
 .grammar-head.clickable { cursor: pointer; }
 .grammar-title { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .grammar-chevron {
