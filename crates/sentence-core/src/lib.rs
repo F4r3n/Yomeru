@@ -577,9 +577,11 @@ fn soft_edges(chars: &[char], words: &[Word], n: usize) -> Vec<bool> {
             // A kana word cut anywhere reads as words too (あ|なた,
             // いく|ら): the head has a kanji, or two chars, or is する's
             // stem (す|べき), and the tail two chars or a kanji (一年|中).
+            // す only before べき: すてる isn't す|てる.
             let head_ok = head.iter().any(|&c| japanese_utils::is_kanji(c))
                 || head.len() >= 2
-                || matches!(head, ['す' | 'し' | 'せ']);
+                || matches!(head, ['し' | 'せ'])
+                || (head == ['す'] && tail.first() == Some(&'べ'));
             let tail_ok = tail.len() >= 2 || tail.iter().any(|&c| japanese_utils::is_kanji(c));
             if !head_ok || !tail_ok {
                 continue;

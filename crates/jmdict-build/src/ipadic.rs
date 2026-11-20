@@ -17,10 +17,64 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use anyhow::{Context, Result, bail};
-use jmdict_types::{WordCost, WordEntry};
+use jmdict_types::{PartOfSpeech, WordCost, WordEntry};
 
-/// Spelling → `(reading in hiragana, cost)` of each IPADIC word.
-pub struct Costs(HashMap<String, Vec<(String, WordCost)>>);
+/// The parts of speech whose costs the segmenter can take (IPADIC's pos1):
+/// a word's cost only ranks the JMdict entries of the same one.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Kind {
+    Noun,
+    Verb,
+    Adjective,
+    Adverb,
+}
+
+impl Kind {
+    fn of_pos1(pos1: &str) -> Option<Self> {
+        match pos1 {
+            "名詞" => Some(Self::Noun),
+            "動詞" => Some(Self::Verb),
+            "形容詞" => Some(Self::Adjective),
+            "副詞" => Some(Self::Adverb),
+            _ => None,
+        }
+    }
+
+    /// Whether a JMdict part of speech is this one: 名詞 takes nouns,
+    /// pronouns, な and の adjectives, numbers, counters and suffixes too.
+    fn fits(self, p: &PartOfSpeech) -> bool {
+        use PartOfSpeech as P;
+        match self {
+            Self::Noun => matches!(
+                p,
+                P::Noun
+                    | P::NounAdverbial
+                    | P::NounProper
+                    | P::NounSuffix
+                    | P::NounPrefix
+                    | P::NounTemporal
+                    | P::Pronoun
+                    | P::AdjectiveNa
+                    | P::AdjectiveNo
+                    | P::Numeric
+                    | P::Counter
+                    | P::Suffix
+                    | P::VerbSuru
+            ),
+            Self::Verb => format!("{p:?}").starts_with("Verb"),
+            Self::Adjective => matches!(p, P::Adjective | P::AdjectiveFormal),
+            // 今ごろ, 後ほど: adverbs to IPADIC, nouns too to JMdict.
+            Self::Adverb => matches!(
+                p,
+                P::Adverb | P::AdverbTo | P::NounAdverbial | P::NounTemporal
+            ),
+        }
+    }
+}
+
+/// Spelling → `(reading in hiragana, part of speech, cost)` of each IPADIC
+/// noun, verb and adjective.
+pub struct Costs(HashMap<String, Vec<(String, Kind, WordCost)>>);
 
 /// The files of a tar archive, as `(name, bytes)`.
 fn tar_files(bytes: &[u8]) -> Result<Vec<(String, &[u8])>> {
@@ -61,8 +115,8 @@ fn hiragana(s: &str) -> String {
 
 pub fn load(path: &Path) -> Result<Costs> {
     let bytes = std::fs::read(path).with_context(|| format!("can't read {}", path.display()))?;
-    // (spelling, reading, left id, cost) of every row kept.
-    let mut rows: Vec<(String, String, u32, i32)> = Vec::new();
+    // (spelling, reading, part of speech, left id, cost) of every row kept.
+    let mut rows: Vec<(String, String, Kind, u32, i32)> = Vec::new();
     for (name, data) in tar_files(&bytes)? {
         if !name.ends_with(".csv") {
             continue;
@@ -73,25 +127,41 @@ pub fn load(path: &Path) -> Result<Costs> {
         }
         for line in text.lines() {
             let f: Vec<&str> = line.split(',').collect();
-            let [surface, left, _right, cost, _pos1, _pos2, pos3, _pos4, _ctype, cform, _base, reading, ..] =
-                f[..]
+            let [
+                surface,
+                left,
+                _right,
+                cost,
+                pos1,
+                _pos2,
+                pos3,
+                _pos4,
+                _ctype,
+                cform,
+                _base,
+                reading,
+                ..,
+            ] = f[..]
             else {
                 continue;
             };
             if !matches!(cform, "*" | "基本形") || matches!(pos3, "人名" | "組織") {
                 continue;
             }
+            let Some(kind) = Kind::of_pos1(pos1) else {
+                continue;
+            };
             let (Ok(left), Ok(cost)) = (left.parse(), cost.parse()) else {
                 continue;
             };
-            rows.push((surface.to_owned(), hiragana(reading), left, cost));
+            rows.push((surface.to_owned(), hiragana(reading), kind, left, cost));
         }
     }
     if rows.is_empty() {
         bail!("no IPADIC words in {}", path.display());
     }
     let mut by_id: HashMap<u32, Vec<i32>> = HashMap::new();
-    for (_, _, id, cost) in &rows {
+    for (_, _, _, id, cost) in &rows {
         by_id.entry(*id).or_default().push(*cost);
     }
     let medians: HashMap<u32, i32> = by_id
@@ -101,26 +171,29 @@ pub fn load(path: &Path) -> Result<Costs> {
             (id, costs[costs.len() / 2])
         })
         .collect();
-    let mut map: HashMap<String, Vec<(String, WordCost)>> = HashMap::new();
-    for (surface, reading, id, cost) in rows {
+    let mut map: HashMap<String, Vec<(String, Kind, WordCost)>> = HashMap::new();
+    for (surface, reading, kind, id, cost) in rows {
         let relative = (cost - medians[&id]).clamp(i16::MIN.into(), i16::MAX.into());
         map.entry(surface)
             .or_default()
-            .push((reading, relative as WordCost));
+            .push((reading, kind, relative as WordCost));
     }
     Ok(Costs(map))
 }
 
 impl Costs {
     /// The commonest IPADIC word spelled `form`, read as one of
-    /// `readings` (in hiragana) if any is, else as anything.
-    fn of(&self, form: &str, readings: &[String]) -> Option<WordCost> {
-        let rows = self.0.get(form)?;
-        rows.iter()
-            .filter(|(r, _)| readings.contains(r))
-            .map(|&(_, c)| c)
+    /// `readings` (in hiragana), of a part of speech `e` has. None
+    /// otherwise: another word's cost (the particle は's for 歯 read は)
+    /// would rank this one.
+    fn of(&self, e: &WordEntry, form: &str, readings: &[String]) -> Option<WordCost> {
+        let pos: Vec<&PartOfSpeech> = e.senses.iter().flat_map(|s| &s.pos).collect();
+        self.0
+            .get(form)?
+            .iter()
+            .filter(|(r, kind, _)| readings.contains(r) && pos.iter().any(|p| kind.fits(p)))
+            .map(|&(_, _, c)| c)
             .min()
-            .or_else(|| rows.iter().map(|&(_, c)| c).min())
     }
 
     /// Puts a cost on every spelling of `entries` IPADIC has; returns how
@@ -141,17 +214,22 @@ impl Costs {
                     .filter(|(_, r)| reads(r, &k.text))
                     .map(|(h, _)| h.clone())
                     .collect();
-                kanji_costs.push(self.of(&k.text, &own));
+                kanji_costs.push(self.of(e, &k.text, &own));
             }
             for (k, cost) in e.kanji_forms.iter_mut().zip(kanji_costs) {
                 all += 1;
                 found += usize::from(cost.is_some());
                 k.word_cost = cost;
             }
-            for r in &mut e.reading_forms {
+            let reading_costs: Vec<Option<WordCost>> = e
+                .reading_forms
+                .iter()
+                .map(|r| self.of(e, &r.text, &[hiragana(&r.text)]))
+                .collect();
+            for (r, cost) in e.reading_forms.iter_mut().zip(reading_costs) {
                 all += 1;
-                r.word_cost = self.of(&r.text, &[hiragana(&r.text)]);
-                found += usize::from(r.word_cost.is_some());
+                found += usize::from(cost.is_some());
+                r.word_cost = cost;
             }
         }
         (found, all)

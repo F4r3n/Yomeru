@@ -334,12 +334,6 @@ impl DictClient for LocalDict {
     async fn sentence_breakdown(&self, sentence: &str) -> Result<SentenceBreakdown, String> {
         self.ensure(Part::Words).await?;
         self.ensure(Part::Grammar).await?;
-        let Some(dict) = GRAMMAR_DICT.get() else {
-            return Ok(SentenceBreakdown::default());
-        };
-        let b = ANALYZER
-            .get_or_init(|| sentence_core::Analyzer::new(dict))
-            .analyze(sentence);
         let word = |w: jmdict_core::segment::Word| BreakdownWord {
             start: w.start,
             len: w.len,
@@ -350,6 +344,19 @@ impl DictClient for LocalDict {
             base: w.base,
             entry: w.entry.and_then(owned),
         };
+        // Without the grammar dictionary, the words alone.
+        let Some(dict) = GRAMMAR_DICT.get() else {
+            return Ok(SentenceBreakdown {
+                words: jmdict_core::segment::segment(sentence)
+                    .into_iter()
+                    .map(word)
+                    .collect(),
+                ..SentenceBreakdown::default()
+            });
+        };
+        let b = ANALYZER
+            .get_or_init(|| sentence_core::Analyzer::new(dict))
+            .analyze(sentence);
         Ok(SentenceBreakdown {
             words: b.words.into_iter().map(word).collect(),
             phrases: b.phrases.into_iter().map(word).collect(),

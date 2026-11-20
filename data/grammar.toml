@@ -14094,6 +14094,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "この漢字を覚える{には}、何度も書くのがいい。", en = "To learn this kanji, it's best to write it many times." },
   { source = "yomeru", id = "y3", ja = "家を買う{には}、たくさんのお金が必要だ。", en = "To buy a house, you need a lot of money." },
 ]
+after = ["verb-plain"]
 
 [[point]]
 id = "dake-no"

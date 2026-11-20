@@ -133,5 +133,6 @@ Grammar (`sentence-core`, `data/grammar.toml`):
 
 2026-11-20, with IPADIC's word costs and `phrase` 700: segmentation F1
 89.2, boundaries 95.2, right entry 97.7%, exact 58.5%; conventions aside F1
-96.3, boundaries 98.3, exact 85.1%; grammar exact 88.1%, other matches 2.78
-per sentence. Always take a fresh baseline: these move with every change.
+96.3, boundaries 98.3, exact 85.1%; grammar exact 88.1%, other matches 2.75
+per sentence (after the review fixes: IPADIC matched by reading and part of
+speech, spoken ている only after a て-form stem). Always take a fresh baseline: these move with every change.

@@ -34,8 +34,10 @@ use jmdict_types::WordEntry;
 /// back. A global signal, not a thread-local: on Android, Dioxus runs the
 /// app from more than one thread.
 static SENTENCE: GlobalSignal<String> = Signal::global(String::new);
-/// Its breakdown, kept with it.
-static BREAKDOWN: GlobalSignal<Option<SentenceBreakdown>> = Signal::global(|| None);
+/// Its breakdown, kept with it, and the text it was read from: the
+/// breakdown's char offsets are that text's, so it shows only while the
+/// box still holds it.
+static BREAKDOWN: GlobalSignal<Option<(String, SentenceBreakdown)>> = Signal::global(|| None);
 
 /// Longest sentence read, in chars (the server's limit on a query).
 const MAX_CHARS: usize = 256;
@@ -65,22 +67,24 @@ pub fn SentenceBreakdownPage() -> Element {
     // Read once typing pauses. `use_resource` drops the previous future
     // at its sleep when the text changes, so only the last one asks.
     let _reader = use_resource(move || {
-        let text = SENTENCE.read().trim().to_owned();
+        let text = read_text();
         async move {
             if text.is_empty() {
+                // A request dropped while reading left these set.
                 *BREAKDOWN.write() = None;
+                reading.set(false);
+                error.set(None);
                 return;
             }
             crate::rt::sleep_ms(300).await;
             reading.set(true);
-            let text: String = text.chars().take(MAX_CHARS).collect();
             match dict::sentence_breakdown(&text).await {
                 Ok(b) => {
                     error.set(None);
                     selected.set(None);
                     word.set(None);
                     phrase.set(None);
-                    *BREAKDOWN.write() = Some(b);
+                    *BREAKDOWN.write() = Some((text, b));
                 }
                 Err(e) => error.set(Some(e)),
             }
@@ -88,9 +92,15 @@ pub fn SentenceBreakdownPage() -> Element {
         }
     });
 
-    let text = SENTENCE.read().trim().to_owned();
+    let text = read_text();
     let chars: Vec<char> = text.chars().collect();
-    let breakdown = BREAKDOWN.read().clone();
+    // Only the breakdown of the text in the box: another one's offsets
+    // would mark the wrong words.
+    let breakdown = BREAKDOWN
+        .read()
+        .as_ref()
+        .filter(|(read, _)| *read == text)
+        .map(|(_, b)| b.clone());
     let sel = *selected.read();
 
     // Opens `entry`'s card in `which` as `i` (closes it if open), with its
@@ -191,12 +201,12 @@ pub fn SentenceBreakdownPage() -> Element {
                         open_word: *word.read(),
                         open_phrase,
                         on_word: EventHandler::new(move |(i, start, len): (usize, usize, usize)| {
-                            let Some(w) = BREAKDOWN.read().as_ref().and_then(|b| b.words.get(i).cloned()) else {
+                            let Some(w) = BREAKDOWN.read().as_ref().and_then(|(_, b)| b.words.get(i).cloned()) else {
                                 return;
                             };
                             // A word (or a block of words: よう|な) that is
                             // a point of its own opens it.
-                            let own = BREAKDOWN.read().as_ref().and_then(|b| {
+                            let own = BREAKDOWN.read().as_ref().and_then(|(_, b)| {
                                 b.grammar.iter().position(|m| (m.start, m.len) == (start, len))
                             });
                             match own {
@@ -269,7 +279,7 @@ pub fn SentenceBreakdownPage() -> Element {
                         phrases: b.phrases.clone(),
                         open: *phrase.read(),
                         on_open: EventHandler::new(move |i: usize| {
-                            let entry = BREAKDOWN.read().as_ref().and_then(|b| b.phrases.get(i)?.entry.clone());
+                            let entry = BREAKDOWN.read().as_ref().and_then(|(_, b)| b.phrases.get(i)?.entry.clone());
                             selected.set(None);
                             open_card(phrase, i, entry);
                         }),
@@ -300,6 +310,11 @@ pub fn SentenceBreakdownPage() -> Element {
             }
         }
     }
+}
+
+/// The text the box asks to read: trimmed, cut to [`MAX_CHARS`].
+fn read_text() -> String {
+    SENTENCE.read().trim().chars().take(MAX_CHARS).collect()
 }
 
 /// Selects grammar point `g` and brings its card into view.

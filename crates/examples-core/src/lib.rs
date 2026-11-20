@@ -72,6 +72,7 @@ fn parse_binary<'a>(bytes: &'a [u8]) -> anyhow::Result<ExamplesDictInner> {
         bail!("invalid magic bytes");
     }
     let version = bytes.get(4).copied().unwrap_or(0);
+    // xtask/docker-entrypoint.sh reads the version from this line.
     if version != 2 {
         bail!("unsupported version {version}");
     }

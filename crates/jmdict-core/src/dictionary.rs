@@ -166,6 +166,7 @@ fn parse_binary<'a>(bytes: &'a [u8]) -> anyhow::Result<DictionaryInner> {
         bail!("Invalid magic bytes");
     }
     let version = bytes.get(4).copied().unwrap_or(0);
+    // xtask/docker-entrypoint.sh reads the version from this line.
     if version != 6 {
         bail!("Unsupported dictionary version {version}");
     }

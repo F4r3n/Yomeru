@@ -141,12 +141,16 @@ impl Deinflector {
                 if skip.is_some_and(|reason| rule.reasons.contains(reason)) {
                     continue;
                 }
-                let Some(stem_len) = slice(&self.buf, start, end)
-                    .strip_suffix(rule.suffix_in)
-                    .map(str::len)
-                else {
+                let Some(stem) = slice(&self.buf, start, end).strip_suffix(rule.suffix_in) else {
                     continue;
                 };
+                if rule
+                    .after
+                    .is_some_and(|after| !stem.chars().next_back().is_some_and(after))
+                {
+                    continue;
+                }
+                let stem_len = stem.len();
                 // Write the new form at the end of the buffer, and take it
                 // back off if it's too short or already known.
                 let new_start = self.buf.len();
@@ -236,6 +240,20 @@ mod tests {
     }
 
     #[test]
+    fn a_verb_ending_in_teru_isnt_spoken_teiru() {
+        // す and あ end no て-form: すてる and あてる are verbs.
+        for w in ["すてる", "あてる", "すてた"] {
+            let f = forms(w);
+            assert!(
+                !f.contains(&"する".to_owned()) && !f.contains(&"ある".to_owned()),
+                "{w}: {f:?}"
+            );
+        }
+        // A polite spoken form of a passive still reaches the verb.
+        assert!(forms("書かれてました").contains(&"書く".to_owned()));
+    }
+
+    #[test]
     fn spoken_teiru_reads_back_to_the_verb() {
         for (text, verb) in [
             ("走ってる", "走る"),
@@ -244,7 +262,11 @@ mod tests {
             ("読んでます", "読む"),
             ("通ってる", "通る"),
         ] {
-            assert!(forms(text).iter().any(|f| f == verb), "{text}: {:?}", forms(text));
+            assert!(
+                forms(text).iter().any(|f| f == verb),
+                "{text}: {:?}",
+                forms(text)
+            );
         }
     }
 
@@ -554,6 +576,12 @@ mod tests {
                 let Some(stem) = candidate.strip_suffix(rule.suffix_in) else {
                     continue;
                 };
+                if rule
+                    .after
+                    .is_some_and(|after| !stem.chars().next_back().is_some_and(after))
+                {
+                    continue;
+                }
                 let new_text = format!("{}{}", stem, rule.suffix_out);
                 let n = new_text.chars().count();
                 if n < 1 || (input_char_count > 2 && n < 2) || seen.contains(&new_text) {

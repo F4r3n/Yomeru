@@ -447,14 +447,6 @@ pub async fn sentence_breakdown_handler(
         return Err(too_large("text", text.chars().count(), MAX_QUERY_CHARS));
     }
     let response = run_blocking("sentence_breakdown", move || {
-        let Some(analyzer) = crate::dicts::analyzer() else {
-            return Ok(SentenceBreakdownResponse {
-                words: Vec::new(),
-                grammar: Vec::new(),
-                phrases: Vec::new(),
-            });
-        };
-        let b = analyzer.analyze(&text);
         let word = |w: jmdict_core::segment::Word| BreakdownWord {
             start: w.start,
             len: w.len,
@@ -462,6 +454,20 @@ pub async fn sentence_breakdown_handler(
             base: w.base,
             entry: w.entry,
         };
+        // Without the grammar dictionary, the words alone.
+        let Some(analyzer) = crate::dicts::analyzer() else {
+            let words = if jmdict_core::dictionary::is_loaded() {
+                jmdict_core::segment::segment(&text)
+            } else {
+                Vec::new()
+            };
+            return Ok(SentenceBreakdownResponse {
+                words: words.into_iter().map(word).collect(),
+                grammar: Vec::new(),
+                phrases: Vec::new(),
+            });
+        };
+        let b = analyzer.analyze(&text);
         Ok(SentenceBreakdownResponse {
             words: b.words.into_iter().map(word).collect(),
             phrases: b.phrases.into_iter().map(word).collect(),
