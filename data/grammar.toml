@@ -4932,6 +4932,8 @@ examples = [
   { source = "yomeru", id = "y3", ja = "子供{らしい}かわいい絵ですね。", en = "What a cute, childlike picture." },
   { source = "yomeru", id = "y4", ja = "泣くなんて君{らしくない}よ。", en = "Crying isn't like you." },
 ]
+after = ["noun-or-particle"]
+suffix = true
 
 [[point]]
 id = "you-da"
@@ -12621,6 +12623,8 @@ examples = [
   { tatoeba = "296725_106961", ja = "彼は最近怒り{っぽい}。", en = "He easily gets angry nowadays." },
   { source = "yomeru", id = "y1", ja = "その服、ちょっと大人{っぽい}ね。", en = "That outfit looks a little grown-up." },
 ]
+after = ["noun-or-particle", "masu-stem", "adjective-stem"]
+suffix = true
 
 [[point]]
 id = "darake"
@@ -22360,6 +22364,8 @@ examples = [
   { source = "yomeru", id = "y4", ja = "あの子は本当に憎{ったらしい}ことを言う。", en = "That kid says the most hateful things." },
   { source = "yomeru", id = "y5", ja = "そんな貧乏{ったらしい}格好はやめなさい。", en = "Stop dressing so shabbily." },
 ]
+after = ["adjective-stem", "noun-or-particle"]
+suffix = true
 
 [[point]]
 id = "sokonau"

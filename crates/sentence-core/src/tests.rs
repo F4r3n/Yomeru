@@ -67,10 +67,15 @@ fn dict() -> &'static GrammarDict {
             word(51, "出す", "だす", vec![P::VerbGodanSu], "to take out"),
             word(52, "言う", "いう", vec![P::VerbGodanU], "to say"),
             word(53, "結果", "けっか", vec![P::Noun], "result"),
+            word(54, "選ぶ", "えらぶ", vec![P::VerbGodanBu], "to choose"),
+            word(55, "温かい", "あたたかい", vec![P::Adjective], "warm"),
+            word(56, "温い", "ぬくい", vec![P::Adjective], "warm"),
+            word(58, "温", "おん", vec![P::Noun], "warmth"),
+            word(57, "貝", "かい", vec![P::Noun], "shellfish"),
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 33\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+            "next_seq = 35\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -161,6 +166,8 @@ fn dict() -> &'static GrammarDict {
             point("dasu", 30, "出す", "泣き{出す}。", "after = [\"masu-stem\"]"),
             point("to-conditional", 31, "と", "雨が降る{と}寒い。", "after = [\"predicate\"]\nno_quote = true"),
             point("kekka", 32, "結果", "雨の{結果}、出た。", "no_particle = true"),
+            point("da", 33, "だ", "本{だ}。", ""),
+            point("kai-dai", 34, "かい", "本{かい}。", ""),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
     })
@@ -535,4 +542,23 @@ fn a_clause_point_before_a_particle_is_its_noun() {
     };
     assert!(has("本の結果、出た"));
     assert!(!has("本の結果が出た"));
+}
+
+fn ids(sentence: &str) -> Vec<String> {
+    grammar(sentence)
+        .into_iter()
+        .flat_map(|(_, ids, _)| ids)
+        .collect()
+}
+
+#[test]
+fn a_verbs_past_ending_isnt_the_copula() {
+    assert!(ids("本だ").contains(&"da".to_owned()));
+    assert!(!ids("本を選んだ").contains(&"da".to_owned()));
+}
+
+#[test]
+fn an_adjectives_kana_are_no_point() {
+    assert!(ids("本かい").contains(&"kai-dai".to_owned()));
+    assert!(!ids("温かい").contains(&"kai-dai".to_owned()));
 }

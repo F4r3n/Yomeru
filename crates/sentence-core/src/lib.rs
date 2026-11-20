@@ -316,6 +316,49 @@ impl<'a> Analyzer<'a> {
                         .get(start)
                         .is_some_and(|&c| "うくぐすつぬぶむる".contains(c))
                 });
+            // A conjugated verb's sound change (持っ|て, 選ん|だ): its っ or ん
+            // opens no point (not って "they say", not んだ), and its て, で,
+            // た or だ alone is the form's ending (not the copula だ), read
+            // only as the て-form point.
+            let onbin = |p: usize| {
+                text.chars.get(p).is_some_and(|c| ['っ', 'ん'].contains(c))
+                    && text
+                        .chars
+                        .get(p + 1)
+                        .is_some_and(|c| ['て', 'で', 'た', 'だ'].contains(c))
+                    && words.iter().any(|w| {
+                        w.start < p
+                            && p + 1 < w.start + w.len
+                            && ((matches!(w.class, Class::Verb | Class::Auxiliary)
+                                    && !w.reasons.is_empty())
+                                    // An expression in its own past (だった).
+                                    || (w.class == Class::Expression
+                                        && text.chars.get(w.start + w.len - 1).is_some_and(
+                                            |c| ['て', 'で', 'た', 'だ'].contains(c),
+                                        )))
+                    })
+            };
+            if onbin(start) {
+                continue;
+            }
+            let own_ending = start > 0 && onbin(start - 1);
+            // In an adjective, an edge between a kanji and its kana (温|かい)
+            // is where the word's kana start: only a point after an
+            // adjective's stem or a suffix goes there (寒|がる), not かい.
+            let okurigana = soft_start
+                && words.iter().any(|w| {
+                    w.start < start && start < w.start + w.len && w.class == Class::Adjective
+                })
+                && text.soft_start(start)
+                && start > 0
+                && text
+                    .chars
+                    .get(start - 1)
+                    .is_some_and(|&c| japanese_utils::is_kanji(c))
+                && text
+                    .chars
+                    .get(start)
+                    .is_some_and(|&c| japanese_utils::is_kana(c));
             // The word starting here, for a prefix point ending inside it.
             let word_here = words.iter().find(|w| w.start == start && w.len >= 2);
             let Some(rest) = text.from(start) else {
@@ -442,6 +485,13 @@ impl<'a> Analyzer<'a> {
                             && ["が", "を", "は", "も", "に", "の", "と", "で", "へ", "まで"]
                                 .contains(&w.base.as_str())
                     });
+                // An adjective's own suffix (熱っぽい, 未練がましい) goes there too.
+                if okurigana && !e.suffix && !e.after.iter().any(|k| k == "adjective-stem") {
+                    return false;
+                }
+                if own_ending && len == 1 && e.pattern != "て" {
+                    return false;
+                }
                 let matched = text.slice(start, end).unwrap_or_default();
                 let affix = if inside {
                     (e.suffix && !e.after.is_empty() && text.word_end(end)) || from_tail(len)
