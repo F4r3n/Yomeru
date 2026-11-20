@@ -2228,6 +2228,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "この仕事は今日中に終わり{そうにない}。", en = "This work doesn't look like it will be finished today." },
   { source = "yomeru", id = "y3", ja = "あの子は今にも泣き{そうだ}。", en = "That child looks like he's about to cry." },
 ]
+after = ["masu-stem", "adjective-stem"]
 
 [[point]]
 id = "ta-ato-de"

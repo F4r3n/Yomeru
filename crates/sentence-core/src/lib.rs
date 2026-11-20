@@ -221,12 +221,13 @@ impl<'a> Analyzer<'a> {
                         .any(|e| m.entries.iter().any(|x| x.id == e.id))
             })
         });
-        // A point spelled as written holds its command or volitional form:
-        // the しろ of 雨にしろ, the ろう of てやろう aren't points of their own.
+        // A point spelled as written holds its command, volitional or
+        // potential form: the しろ of 雨にしろ, the ろう of てやろう, the
+        // いけない of てはいけない aren't points of their own.
         conjugations.retain(|c| {
             let fixed = c.entries.iter().all(|e| {
                 matches!(&e.check, AnswerCheck::Inflection { forms }
-                    if forms.iter().all(|f| matches!(f, Inflection::Imperative | Inflection::Volitional)))
+                    if forms.iter().all(|f| matches!(f, Inflection::Imperative | Inflection::Volitional | Inflection::Potential)))
             });
             !fixed || !grammar.iter().any(|m| {
                 m.start <= c.start
@@ -274,7 +275,11 @@ impl<'a> Analyzer<'a> {
                 && m.pieces.iter().any(|&(s, n)| {
                     n == 1
                         && text.chars.get(s) == Some(&'が')
-                        && head_before(&text.chars, &words, s).is("predicate")
+                        // Or a copula's ending (そうだが, のですが).
+                        && (head_before(&text.chars, &words, s).is("predicate")
+                            || s > 0
+                                && ['だ', 'す'].contains(text.chars.get(s - 1).unwrap_or(&' '))
+                                && words.iter().any(|w| w.start + w.len == s && w.len >= 2))
                 })
             {
                 m.entries.clear();
@@ -496,11 +501,59 @@ impl<'a> Analyzer<'a> {
                     .iter()
                     .filter(|w| w.start < end && start < w.start + w.len)
                     .collect();
-                if !e.keys().any(|k| k == matched_text)
+                let conjugated = !e.keys().any(|k| k == matched_text);
+                // Nor are a word's forms that don't conjugate: つく isn't the
+                // adverb つい's.
+                let fixed_word = |k: &str| {
+                    let entries = jmdict_core::lookup(k);
+                    let spelled: Vec<_> = entries
+                        .iter()
+                        .filter(|x| {
+                            x.kanji_forms.iter().any(|f| f.text.as_str() == k)
+                                || x.reading_forms.iter().any(|f| f.text.as_str() == k)
+                        })
+                        .collect();
+                    !spelled.is_empty()
+                        && spelled.iter().all(|x| {
+                            !segment::classes(x).iter().any(|c| {
+                                matches!(
+                                    c,
+                                    Class::Verb
+                                        | Class::Adjective
+                                        | Class::Auxiliary
+                                        | Class::Expression
+                                )
+                            })
+                        })
+                };
+                if conjugated && e.keys().all(fixed_word) {
+                    return false;
+                }
+                if conjugated
                     && !over.is_empty()
                     && over
                         .iter()
                         .all(|w| w.class == Class::Particle && w.reasons.is_empty())
+                {
+                    return false;
+                }
+                // Nor is the start of a conjugated word, stopping inside it
+                // (かな of かなわなかった), but for a prefix point.
+                // The rest a word of its own reads as that word's split
+                // (時間さえ|ない, a 冴えない misread).
+                if !e.prefix
+                    && words.iter().any(|w| {
+                        w.start == start && end < w.start + w.len && !w.reasons.is_empty() && {
+                            let rest = text.slice(end, w.start + w.len).unwrap_or_default();
+                            let n = rest.chars().count();
+                            !segment::candidates_at(rest, 0, &segment::Costs::default())
+                                .iter()
+                                // A likely one: not わなかった as 悪い's.
+                                .any(|&(len, class, cost, _)| {
+                                    len == n && class != Class::Unknown && cost <= 2000
+                                })
+                        }
+                    })
                 {
                     return false;
                 }
@@ -581,6 +634,19 @@ impl<'a> Analyzer<'a> {
     }
 
     fn slot_matches(&self, text: &Text<'_>) -> Vec<GrammarMatch> {
+        /// The longest gap, in chars, between `pieces` found in order in
+        /// an example's mark (何人か: 1); `None` if they aren't all there.
+        fn slot_gap(mark: &str, pieces: &[String]) -> Option<usize> {
+            let (first, rest) = pieces.split_first()?;
+            let mut at = mark.find(first.as_str())? + first.len();
+            let mut longest = 0;
+            for piece in rest {
+                let i = mark.get(at..)?.find(piece.as_str())?;
+                longest = longest.max(mark[at..at + i].chars().count());
+                at += i + piece.len();
+            }
+            Some(longest)
+        }
         let mut out = Vec::new();
         for (pieces, entries) in &self.slots {
             // A slot crosses 、 only for a point whose examples do: paired
@@ -592,11 +658,27 @@ impl<'a> Analyzer<'a> {
                     })
                 })
             });
+            // Nor longer than about twice the longest the examples show:
+            // 何〜か takes a counter (何人か), not a clause.
+            let longest = entries
+                .iter()
+                .flat_map(|e| e.examples.iter())
+                .flat_map(|x| x.ja.iter())
+                .filter_map(|s| match s {
+                    grammar_core::Span::Highlight { text } => slot_gap(text, pieces),
+                    _ => None,
+                })
+                .max();
+            let max_chars = longest.map_or(usize::MAX, |n| 2 * n + 2);
             for start in 0..text.len() {
                 if !text.can_start(start) {
                     continue;
                 }
                 if let Some(spans) = text.slots_at(start, pieces, commas)
+                    && spans.windows(2).all(|w| match w {
+                        [a, b] => b.0.saturating_sub(a.0 + a.1) <= max_chars,
+                        _ => true,
+                    })
                     && let (Some(&first), Some(&last)) = (spans.first(), spans.last())
                 {
                     out.push(GrammarMatch {
@@ -1052,6 +1134,8 @@ impl Head<'_> {
             }
             // Or text read otherwise that is a verb's stem too: 取れ, 取る's
             // command, is 取れる's stem (取れかける).
+            // 来, 来る's stem, which is irregular (来そうだ).
+            (Head::Word(_, t, _, _) | Head::Text(t), "masu-stem") if t == "来" => true,
             (Head::Word(w, t, _, _), "masu-stem") => {
                 w.reasons == Reasons::of(&[Reason::MasuStem])
                     // Not a particle spelling one (で, 出る's).

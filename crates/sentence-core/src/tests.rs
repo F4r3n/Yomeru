@@ -73,11 +73,14 @@ fn dict() -> &'static GrammarDict {
             word(58, "温", "おん", vec![P::Noun], "warmth"),
             word(59, "", "よ", vec![P::Particle], "emphasis"),
             word(60, "", "あり", vec![P::Noun], "there is"),
+            word(61, "何", "なに", vec![P::Pronoun], "what"),
+            word(62, "人", "にん", vec![P::Counter], "people"),
+            word(63, "", "か", vec![P::Particle], "question"),
             word(57, "貝", "かい", vec![P::Noun], "shellfish"),
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 36\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+            "next_seq = 37\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -171,6 +174,7 @@ fn dict() -> &'static GrammarDict {
             point("da", 33, "だ", "本{だ}。", ""),
             point("kai-dai", 34, "かい", "本{かい}。", ""),
             point("ari", 35, "あり", "本{あり}。", ""),
+            point("nan-counter-ka", 36, "何〜か", "{何人か}来た。", ""),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
     })
@@ -576,4 +580,10 @@ fn particles_dont_read_as_a_conjugated_point() {
 fn a_verbs_stem_before_its_masu_is_no_point() {
     assert!(ids("本あり").contains(&"ari".to_owned()));
     assert!(!ids("本があります").contains(&"ari".to_owned()));
+}
+
+#[test]
+fn a_slot_is_no_longer_than_its_examples_show() {
+    assert!(ids("何人か来た").contains(&"nan-counter-ka".to_owned()));
+    assert!(!ids("何が本を彼女に出したか").contains(&"nan-counter-ka".to_owned()));
 }

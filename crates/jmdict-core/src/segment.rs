@@ -541,6 +541,24 @@ fn conjugates(
     base: &str,
     surface: &str,
 ) -> bool {
+    // Verbs of state have no potential: 違えた is 違える, not 違う's.
+    const NO_POTENTIAL: [&str; 12] = [
+        "違う",
+        "ちがう",
+        "分かる",
+        "わかる",
+        "要る",
+        "ある",
+        "有る",
+        "在る",
+        "できる",
+        "出来る",
+        "見える",
+        "聞こえる",
+    ];
+    if reasons.contains(Reason::Potential) && NO_POTENTIAL.contains(&base) {
+        return false;
+    }
     match class {
         // An auxiliary that is a verb too (成る) in its own row: なよ isn't
         // なる's.
