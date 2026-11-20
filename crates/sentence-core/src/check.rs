@@ -47,11 +47,11 @@ impl Analyzer<'_> {
                 .flat_map(|m| m.entries.iter().map(|e| e.id.as_str()))
         };
         let chars: Vec<char> = answer.chars().collect();
-        let text =
-            |start: usize, len: usize| -> String { chars.iter().skip(start).take(len).collect() };
-        // Where the plain search is trusted for any point: a phrase kept
-        // as one word, a longer point's text.
-        let holders: Vec<String> = breakdown
+        // Where the plain search is trusted for any point, as `(start, len,
+        // on edges)`: a phrase kept as one word and a conjugation's text,
+        // anywhere in them; a longer point's text, on its words' edges (に
+        // of 上|に, not も of もう).
+        let holders: Vec<(usize, usize, bool)> = breakdown
             .words
             .iter()
             .filter(|w| {
@@ -59,28 +59,40 @@ impl Analyzer<'_> {
                     && w.entry
                         .is_some_and(|e| segment::classes(e).contains(&Class::Expression))
             })
-            .map(|w| text(w.start, w.len))
+            .map(|w| (w.start, w.len, false))
             .chain(
                 found
                     .iter()
                     .filter(|m| m.kind != MatchKind::Slots)
-                    .map(|m| text(m.start, m.len)),
+                    .map(|m| (m.start, m.len, m.kind == MatchKind::Text)),
             )
             .collect();
         // A suffix or prefix point (型 of 大型車) in any word holding it.
-        let words: Vec<String> = breakdown
+        let words: Vec<(usize, usize, bool)> = breakdown
             .words
             .iter()
             .filter(|w| w.len >= 2)
-            .map(|w| text(w.start, w.len))
+            .map(|w| (w.start, w.len, false))
             .collect();
+        let edge = |p: usize| {
+            breakdown
+                .words
+                .iter()
+                .any(|w| w.start == p || w.start + w.len == p)
+        };
         let held = |e: &GrammarEntry| {
             let affix = e.suffix || e.prefix;
             e.keys().filter(|k| !k.contains('〜')).any(|k| {
-                holders
-                    .iter()
-                    .chain(words.iter().filter(|_| affix))
-                    .any(|h| h.len() > k.len() && h.contains(k))
+                let key: Vec<char> = k.chars().collect();
+                holders.iter().chain(words.iter().filter(|_| affix)).any(
+                    |&(start, len, on_edges)| {
+                        len > key.len()
+                            && (start..=start + len - key.len()).any(|p| {
+                                chars.get(p..p + key.len()) == Some(&key[..])
+                                    && (!on_edges || (edge(p) && edge(p + key.len())))
+                            })
+                    },
+                )
             })
         };
         let uses = |e: &GrammarEntry| {
