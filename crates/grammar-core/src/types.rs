@@ -80,6 +80,13 @@ pub struct GrammarEntry {
     /// it, when the rest is a word or an adjective's stem.
     #[serde(default)]
     pub prefix: bool,
+    /// Inside a word the dictionary lists whole (食べかける, 出かける),
+    /// the breakdown finds the point only when a gloss of the word's
+    /// first sense holds one of these (`start *ing`: `*` stands for a word):
+    /// 食べかける "to start eating" is かける "half-done", 出かける "to go
+    /// out" isn't. Empty: anywhere.
+    #[serde(default)]
+    pub inside_glosses: Vec<String>,
 }
 
 /// The kinds of word `after` can name: `verb-plain` (a verb in its

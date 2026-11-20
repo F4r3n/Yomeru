@@ -86,6 +86,11 @@
 #                lists whole ({各}国, {真っ}暗); the breakdown finds it
 #                there when the rest is a word or an adjective's stem.
 #                After `after`
+#   inside_glosses  optional, list: inside a word the dictionary lists
+#                whole, the breakdown finds the point only when a gloss
+#                of the word's first sense holds one of these (`*` stands for
+#                a word: "start *ing"); 食べかける "to start eating" is
+#                かける "half-done", 出かける "to go out" isn't. After `after`
 #   hover        optional, default true; false keeps the entry out of the
 #                hover popup, reachable by search only (って would match
 #                inside 行って). One-char patterns (は, に, て) never show on
@@ -12210,6 +12215,7 @@ examples = [
   { source = "yomeru", id = "y5", ja = "ボタンが取れ{かけて}いるよ。", en = "Your button is coming off." },
 ]
 after = ["masu-stem"]
+inside_glosses = ["start to", "start *ing", "begin to", "begin *ing", "about to", "attempt to", "dying", "partway", "half", "unfinished", "in progress", "verge", "brink"]
 
 [[point]]
 id = "kiru"

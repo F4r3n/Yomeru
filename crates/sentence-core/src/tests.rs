@@ -84,10 +84,14 @@ fn dict() -> &'static GrammarDict {
             word(68, "与える", "あたえる", vec![P::VerbIchidan], "to give"),
             word(69, "呉れる", "くれる", vec![P::VerbIchidan], "to give me"),
             word(70, "来る", "くる", vec![P::VerbKuru], "to come"),
+            word(71, "時", "とき", vec![P::Noun], "time; when"),
+            word(72, "泳ぐ", "およぐ", vec![P::VerbGodanGu], "to swim"),
+            word(73, "食べかける", "たべかける", vec![P::VerbIchidan], "to start eating"),
+            word(74, "出かける", "でかける", vec![P::VerbIchidan], "to go out"),
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 40\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+            "next_seq = 42\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -185,6 +189,14 @@ fn dict() -> &'static GrammarDict {
             point("mou", 38, "もう", "{もう}食べた。", ""),
             point("mo-particle", 39, "も", "本{も}食べた。", ""),
             point("mawaru", 37, "回る", "見て{回る}。", "after = [\"masu-stem\", \"te-form\"]"),
+            point("toki", 40, "時", "本の{時}。", ""),
+            point(
+                "kakeru",
+                41,
+                "かける",
+                "食べ{かける}。",
+                "after = [\"masu-stem\"]\ninside_glosses = [\"start *ing\", \"about to\"]"
+            ),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
     })
@@ -572,6 +584,7 @@ fn ids(sentence: &str) -> Vec<String> {
 fn a_verbs_past_ending_isnt_the_copula() {
     assert!(ids("本だ").contains(&"da".to_owned()));
     assert!(!ids("本を選んだ").contains(&"da".to_owned()));
+    assert!(!ids("本を泳いだ").contains(&"da".to_owned()));
 }
 
 #[test]
@@ -673,8 +686,29 @@ fn te_kureru_is_kureru_not_kurus_potential() {
     // 来る's potential is これる: てくれた is て + くれる.
     let b = Analyzer::new(dict()).analyze("本を与えてくれた");
     assert!(
-        b.words.iter().all(|w| !w.reasons.contains(Reason::Potential)),
+        b.words
+            .iter()
+            .all(|w| !w.reasons.contains(Reason::Potential)),
         "{:?}",
-        b.words.iter().map(|w| (&w.base, w.reasons)).collect::<Vec<_>>()
+        b.words
+            .iter()
+            .map(|w| (&w.base, w.reasons))
+            .collect::<Vec<_>>()
     );
+}
+
+#[test]
+fn one_kanji_after_a_number_is_its_counter() {
+    // ８時 is "eight o'clock": no toki "when" on its 時.
+    assert!(!ids("８時に食べる").contains(&"toki".to_owned()));
+    assert!(ids("本の時に食べる").contains(&"toki".to_owned()));
+}
+
+#[test]
+fn a_point_inside_a_word_only_where_its_gloss_says_it() {
+    // 食べかける "to start eating" is かける "half-done"; 出かける isn't.
+    assert!(ids("本を食べかけた").contains(&"kakeru".to_owned()));
+    assert!(!ids("本に出かけた").contains(&"kakeru".to_owned()));
+    assert!(crate::gloss_has("to start eating", "start *ing"));
+    assert!(!crate::gloss_has("to start; to set out", "start *ing"));
 }

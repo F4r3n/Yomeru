@@ -72,6 +72,10 @@ struct Point {
     /// Whether the point also opens a word, for the sentence breakdown.
     #[serde(default)]
     prefix: bool,
+    /// The glosses a word holding the point must have, for the sentence
+    /// breakdown.
+    #[serde(default)]
+    inside_glosses: Vec<String>,
 }
 
 /// `check = "self"` or `check = { inflection = ["causative"] }`; left out,
@@ -339,6 +343,7 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
             no_particle: p.no_particle,
             suffix: p.suffix,
             prefix: p.prefix,
+            inside_glosses: p.inside_glosses,
         });
     }
 

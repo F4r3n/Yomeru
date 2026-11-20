@@ -281,7 +281,10 @@ a Read first, and the file is thousands of lines. Instead:
   dictionary often lists inside whole words (新{型}, 痛{み}, 三回{目}):
   found inside a word, ending it, when its `after` (required) fits the
   rest; `prefix = true` the same at a word's start ({各}国, {真っ}暗).
-  After `after`.
+  `inside_glosses` for a point that JMdict words hold in some senses
+  only: inside a word, found only when a gloss of the word's first
+  sense holds one of the phrases (かける: "start to", "start *ing", "about to"…, so
+  食べかける yes, 出かける and 話しかける no). After `after`.
 - **examples**: 5 (entries written before 2026-11-18 have 2–3 until an
   examples batch extends them), under ~26 chars of Japanese, at the
   entry's level or below in vocabulary; the `{…}` mark covers the pattern

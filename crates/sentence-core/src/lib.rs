@@ -323,12 +323,14 @@ impl<'a> Analyzer<'a> {
                         .get(start)
                         .is_some_and(|&c| "うくぐすつぬぶむる".contains(c))
                 });
-            // A conjugated verb's sound change (持っ|て, 選ん|だ): its っ or ん
-            // opens no point (not って "they say", not んだ), and its て, で,
+            // A conjugated verb's sound change (持っ|て, 選ん|だ, 泳い|だ): its
+            // っ, ん or い opens no point (not って "they say", not んだ), and its て, で,
             // た or だ alone is the form's ending (not the copula だ), read
             // only as the て-form point.
             let onbin = |p: usize| {
-                text.chars.get(p).is_some_and(|c| ['っ', 'ん'].contains(c))
+                text.chars
+                    .get(p)
+                    .is_some_and(|c| ['っ', 'ん', 'い'].contains(c))
                     && text
                         .chars
                         .get(p + 1)
@@ -492,6 +494,40 @@ impl<'a> Analyzer<'a> {
                             && ["が", "を", "は", "も", "に", "の", "と", "で", "へ", "まで"]
                                 .contains(&w.base.as_str())
                     });
+                // One kanji right after a number is its counter (時 of
+                // ８時, not toki), unless the point goes after an amount
+                // (its `after`, or a formation "Number + 代").
+                let after_number = len == 1
+                    && start > 0
+                    && text
+                        .chars
+                        .get(start)
+                        .is_some_and(|&c| japanese_utils::is_kanji(c))
+                    && text.chars.get(start - 1).is_some_and(|&c| is_numeral(c))
+                    && !e.after.iter().any(|k| k == "amount")
+                    && !e.formation.iter().any(|f| f.starts_with("Number"));
+                if after_number {
+                    return false;
+                }
+                // Inside a word the dictionary lists whole, a point with
+                // `inside_glosses` only where the word's first sense says
+                // it (食べかける "to start eating", not 出かける "to go
+                // out", whose later "to be about to leave" is rare).
+                let holder = words
+                    .iter()
+                    .find(|w| w.start < start && start < w.start + w.len && w.entry.is_some());
+                if !e.inside_glosses.is_empty()
+                    && let Some(entry) = holder.and_then(|w| w.entry)
+                    && !entry.senses.iter().take(1).any(|sense| {
+                        sense.glosses.iter().any(|g| {
+                            e.inside_glosses
+                                .iter()
+                                .any(|want| gloss_has(g.text.as_str(), want))
+                        })
+                    })
+                {
+                    return false;
+                }
                 // An adjective's own suffix (熱っぽい, 未練がましい) goes there too.
                 if okurigana && !e.suffix && !e.after.iter().any(|k| k == "adjective-stem") {
                     return false;
@@ -1046,6 +1082,24 @@ fn own_heads<'m>(matched: &'m str, e: &'m GrammarEntry) -> impl Iterator<Item = 
                 .filter(|k| k.chars().next() == first)
                 .any(|k| k.starts_with(lead.as_str()))
         })
+}
+
+/// Whether `gloss` holds `want`, where a `*` in `want` stands for one
+/// word: `start *ing` holds in "to start eating", not in "to start".
+fn gloss_has(gloss: &str, want: &str) -> bool {
+    let Some((head, tail)) = want.split_once('*') else {
+        return gloss.contains(want);
+    };
+    gloss.match_indices(head).any(|(i, _)| {
+        let rest = &gloss[i + head.len()..];
+        let word_end = rest
+            .find(|c: char| !c.is_alphabetic())
+            .unwrap_or(rest.len());
+        !rest.is_empty()
+            && word_end > 0
+            && rest[..word_end].ends_with(tail)
+            && word_end > tail.len()
+    })
 }
 
 /// A digit or a kanji numeral: 3, ３, 三, 十, 万.

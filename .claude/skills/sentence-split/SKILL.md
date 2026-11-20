@@ -233,9 +233,13 @@ Still to do:
    a causative point covers せてくれます).
 5. **Breakdown errors**, partly done: てくれた no longer 来る's
    potential (`segment::conjugates`), reru-dake no longer on every
-   potential (its check is its pattern now). Still open: 時 of ８時 as
-   toki, 出かける / 見かける / 話しかける as kakeru (JMdict's glosses
-   tell the half-done ones: "start to", "about to"), は私が as は〜が.
+   potential (its check is its pattern now), a one-kanji point after a
+   number is its counter (時 of ８時; not for an `amount` point or a
+   "Number + …" formation: 代 of ５０代), だ of 泳いだ isn't the copula
+   (い is a sound change too), kakeru inside a whole word only when its
+   first sense's gloss says so (`inside_glosses`: 食べかける yes,
+   出かける / 見かける / 話しかける no). Still open: は私が as は〜が
+   across a relative clause.
    Was (12, also in the Sentence tab): 時 of ８時 as とき
    (after a number: `after`?), potential + reru-dake offered with passive
    on られた and on てくれた (くれる read as 来る's potential), 出かける as

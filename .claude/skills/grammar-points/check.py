@@ -151,6 +151,9 @@ def validate(points):
         for flag in ("final", "continues", "no_suru", "no_quote", "no_particle", "suffix", "prefix"):
             if not isinstance(p.get(flag, False), bool):
                 errors.append(f"{name}: {flag} is true or false")
+        glosses = p.get("inside_glosses", [])
+        if not isinstance(glosses, list) or not all(isinstance(g, str) and g for g in glosses):
+            errors.append(f"{name}: inside_glosses is a list of English phrases")
         if p.get("suffix") and not p.get("after"):
             errors.append(f"{name}: suffix needs after")
         if p.get("final") and p.get("continues"):
