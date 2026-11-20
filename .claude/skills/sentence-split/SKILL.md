@@ -176,4 +176,9 @@ Answer check (`Analyzer::check_answer`, `answer_vs_breakdown.rs`):
   a WASM module with JMdict and grammar.bin.
 - `ANSWER_SENTENCES` on 200 corpus sentences: the plain search accepts
   ~1300 points the breakdown doesn't find (nearly all wrong); the first
-  hybrid ~150, about half right.
+  hybrid 148, about half right; the hybrid trusting the plain search
+  inside phrases and longer points 639 (one-char keys: か of かもしれない,
+  は of ことは), then 249 with one-char keys only at a phrase's end and
+  not inside a longer point (about half right; mi-suffix on 頼み,
+  ni-nai-repeat, you-ga among the wrong). Own examples 4682 of 4691: the
+  one-char limit lost 机の上に (に of 上に) and 法律上は.

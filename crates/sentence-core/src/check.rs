@@ -47,11 +47,21 @@ impl Analyzer<'_> {
                 .flat_map(|m| m.entries.iter().map(|e| e.id.as_str()))
         };
         let chars: Vec<char> = answer.chars().collect();
-        // Where the plain search is trusted for any point, as `(start, len,
-        // on edges)`: a phrase kept as one word and a conjugation's text,
-        // anywhere in them; a longer point's text, on its words' edges (に
-        // of 上|に, not も of もう).
-        let holders: Vec<(usize, usize, bool)> = breakdown
+        // Where the plain search is trusted for any point:
+        // - a phrase kept as one word (暇なとき, 楽しみに待つ), anywhere in
+        //   it, but a one-char key only at its end (と of になると, not か of
+        //   かもしれない);
+        // - a longer point's text (こと of ことです), on its words' edges,
+        //   or a conjugation's (ずに of れずに), for a key of two chars or
+        //   more: one char there is likelier a piece (は of ことは);
+        // - for a suffix or prefix point, any word (型 of 大型車).
+        #[derive(Clone, Copy, PartialEq)]
+        enum Holder {
+            Phrase,
+            Point { on_edges: bool },
+            Word,
+        }
+        let holders: Vec<(usize, usize, Holder)> = breakdown
             .words
             .iter()
             .filter(|w| {
@@ -59,20 +69,22 @@ impl Analyzer<'_> {
                     && w.entry
                         .is_some_and(|e| segment::classes(e).contains(&Class::Expression))
             })
-            .map(|w| (w.start, w.len, false))
+            .map(|w| (w.start, w.len, Holder::Phrase))
             .chain(
                 found
                     .iter()
                     .filter(|m| m.kind != MatchKind::Slots)
-                    .map(|m| (m.start, m.len, m.kind == MatchKind::Text)),
+                    .map(|m| {
+                        let on_edges = m.kind == MatchKind::Text;
+                        (m.start, m.len, Holder::Point { on_edges })
+                    }),
             )
             .collect();
-        // A suffix or prefix point (型 of 大型車) in any word holding it.
-        let words: Vec<(usize, usize, bool)> = breakdown
+        let words: Vec<(usize, usize, Holder)> = breakdown
             .words
             .iter()
             .filter(|w| w.len >= 2)
-            .map(|w| (w.start, w.len, false))
+            .map(|w| (w.start, w.len, Holder::Word))
             .collect();
         let edge = |p: usize| {
             breakdown
@@ -84,15 +96,23 @@ impl Analyzer<'_> {
             let affix = e.suffix || e.prefix;
             e.keys().filter(|k| !k.contains('〜')).any(|k| {
                 let key: Vec<char> = k.chars().collect();
-                holders.iter().chain(words.iter().filter(|_| affix)).any(
-                    |&(start, len, on_edges)| {
-                        len > key.len()
-                            && (start..=start + len - key.len()).any(|p| {
-                                chars.get(p..p + key.len()) == Some(&key[..])
-                                    && (!on_edges || (edge(p) && edge(p + key.len())))
+                let n = key.len();
+                holders
+                    .iter()
+                    .chain(words.iter().filter(|_| affix))
+                    .any(|&(start, len, holder)| {
+                        len > n
+                            && (start..=start + len - n).any(|p| {
+                                chars.get(p..p + n) == Some(&key[..])
+                                    && match holder {
+                                        Holder::Phrase => n >= 2 || p + n == start + len,
+                                        Holder::Point { on_edges } => {
+                                            n >= 2 && (!on_edges || (edge(p) && edge(p + n)))
+                                        }
+                                        Holder::Word => true,
+                                    }
                             })
-                    },
-                )
+                    })
             })
         };
         let uses = |e: &GrammarEntry| {
