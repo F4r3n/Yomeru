@@ -650,3 +650,16 @@ fn the_answer_check_takes_a_key_inside_a_longer_point_only_on_word_edges() {
     assert_ne!(check("mo-particle", "もう食べた"), Verdict::Accepted);
     assert_eq!(check("mo-particle", "本も食べた"), Verdict::Accepted);
 }
+
+#[test]
+fn the_answer_check_takes_a_plain_match_only_on_the_breakdowns_edges() {
+    use grammar_core::Verdict;
+    // The plain search finds として "as" in としている, where it ends
+    // inside a word (とする).
+    assert_eq!(
+        dict().check_answer("to-shite", "彼女は本としている", &NoWords),
+        Verdict::Accepted
+    );
+    assert_eq!(check("to-shite", "本として食べる"), Verdict::Accepted);
+    assert_ne!(check("to-shite", "彼女は本としている"), Verdict::Accepted);
+}

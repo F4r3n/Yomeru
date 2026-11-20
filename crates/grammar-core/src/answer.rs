@@ -105,6 +105,27 @@ impl GrammarDict {
         }
     }
 
+    /// Where the plain search finds `entry`'s pattern or forms in
+    /// `answer`, as written or conjugated: `(start, end)` in chars, for
+    /// each key with no slot inside (ものだから, not に〜ない). The
+    /// sentence breakdown keeps the spans on its word edges.
+    pub fn key_spans(&self, entry: &GrammarEntry, answer: &str) -> Vec<(usize, usize)> {
+        let chars: Vec<char> = normalize(answer).chars().collect();
+        let mut spans: Vec<(usize, usize)> = entry
+            .keys()
+            .map(|k| k.trim_matches('〜'))
+            .filter(|k| !k.is_empty() && !k.contains('〜'))
+            .flat_map(|key| {
+                let chars = &chars;
+                (0..chars.len())
+                    .filter_map(move |start| Some((start, piece_at(key, chars, start)?)))
+            })
+            .collect();
+        spans.sort_unstable();
+        spans.dedup();
+        spans
+    }
+
     /// Whether `answer` uses `entry`'s point; `None` for a self-graded one.
     fn uses(&self, entry: &GrammarEntry, answer: &str, vocab: &impl Vocabulary) -> Option<bool> {
         match &entry.check {

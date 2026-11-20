@@ -169,9 +169,49 @@ impl Analyzer<'_> {
                     })
             })
         };
+        // Where the plain search alone finds a pattern, the breakdown
+        // must agree on its edges:
+        // - not cut short by a longer point it found from the same char
+        //   (もので of ものではない under もの, として of としている under
+        //   とする, つもりで of つもりです);
+        // - ending on a word edge, a char into the next word (だ of
+        //   おかげだった, に of になった), two into a function word (です
+        //   of ですが), or inside the word it starts (そうです of
+        //   そうですね), not inside some other word (どう of どうしても,
+        //   をもって of をもて遊ぶ);
+        // - starting on a word edge or after a stem (ていった of
+        //   忘れていった, そうだ of うれしそうだ), but not on the ん of a
+        //   verb or adjective (んだ of 読んだ: the explanatory ん is a word
+        //   of its own; なんだって, 狂わんばかり are not).
+        let word_at = |p: usize| {
+            breakdown
+                .words
+                .iter()
+                .find(|w| w.start <= p && p < w.start + w.len)
+        };
+        let on_edges = |e: &GrammarEntry| {
+            dict.key_spans(e, &answer).iter().any(|&(s, end)| {
+                let cut_short = found
+                    .iter()
+                    .any(|m| m.kind == MatchKind::Text && m.start == s && end < m.start + m.len);
+                let ends = edge(end)
+                    || word_at(end - 1).is_some_and(|w| {
+                        w.start == s
+                            || end == w.start + 1
+                            || (end == w.start + 2
+                                && !matches!(w.class, Class::Verb | Class::Adjective | Class::Noun))
+                    });
+                let begins = edge(s)
+                    || chars.get(s) != Some(&'ん')
+                    || word_at(s)
+                        .is_some_and(|w| !matches!(w.class, Class::Verb | Class::Adjective));
+                !cut_short && ends && begins
+            })
+        };
         let uses = |e: &GrammarEntry| {
             found_ids().any(|f| f == e.id)
-                || ((plain_trusted(e) && (!has_slot(e) || starts(e)) || held(e))
+                || ((plain_trusted(e) && (if has_slot(e) { starts(e) } else { on_edges(e) })
+                    || held(e))
                     && dict.check_answer(&e.id, &answer, vocab) == Verdict::Accepted)
         };
         if uses(&entry) {
