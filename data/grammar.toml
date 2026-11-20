@@ -344,6 +344,7 @@ examples = [
   { tatoeba = "60594_223262", ja = "このビンは開ける{前に}振りなさい。", en = "Shake this bottle before you open it." },
   { source = "yomeru", id = "y2", ja = "旅行に行く{前に}、カメラを買いました。", en = "Before going on the trip, I bought a camera." },
 ]
+after = ["noun-or-particle", "verb-plain"]
 
 [[point]]
 id = "tai"
