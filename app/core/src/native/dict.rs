@@ -308,8 +308,11 @@ impl DictClient for LocalDict {
         // The words around the point come from JMdict.
         self.ensure(Part::Words).await?;
         self.ensure(Part::Grammar).await?;
+        // On the breakdown (sentence-core), which reads the words.
         Ok(GRAMMAR_DICT.get().map_or(Verdict::SelfGraded, |d| {
-            d.check_answer(id, answer, &JmdictVocabulary)
+            ANALYZER
+                .get_or_init(|| sentence_core::Analyzer::new(d))
+                .check_answer(id, answer, &JmdictVocabulary)
         }))
     }
 

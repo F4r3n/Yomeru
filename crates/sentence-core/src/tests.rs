@@ -587,3 +587,43 @@ fn a_slot_is_no_longer_than_its_examples_show() {
     assert!(ids("何人か来た").contains(&"nan-counter-ka".to_owned()));
     assert!(!ids("何が本を彼女に出したか").contains(&"nan-counter-ka".to_owned()));
 }
+
+/// No dictionary for the plain search: no word longer than a char,
+/// nothing a verb.
+struct NoWords;
+impl grammar_core::Vocabulary for NoWords {
+    fn is_verb(&self, _: &str) -> bool {
+        false
+    }
+    fn word_len_at(&self, _: &str, _: usize) -> usize {
+        1
+    }
+}
+
+fn check(id: &str, answer: &str) -> grammar_core::Verdict {
+    Analyzer::new(dict()).check_answer(id, answer, &NoWords)
+}
+
+#[test]
+fn the_answer_check_takes_a_one_char_point_only_where_the_breakdown_finds_it() {
+    use grammar_core::Verdict;
+    // The plain search takes any は for "at least"; the breakdown wants an
+    // amount before it.
+    assert_eq!(
+        dict().check_answer("number-wa", "彼女は本を食べる", &NoWords),
+        Verdict::Accepted
+    );
+    assert_ne!(check("number-wa", "彼女は本を食べる"), Verdict::Accepted);
+    assert_eq!(check("wo-particle", "本を食べる"), Verdict::Accepted);
+}
+
+#[test]
+fn the_answer_check_names_the_points_the_breakdown_finds() {
+    use grammar_core::Verdict;
+    assert_eq!(check("te-mo-ii", "本を食べてもいい"), Verdict::Accepted);
+    match check("da", "本を食べてもいい") {
+        Verdict::Other { found } => assert!(found.iter().any(|r| r.id == "te-mo-ii"), "{found:?}"),
+        v => panic!("{v:?}"),
+    }
+    assert_eq!(check("da", "本を"), Verdict::NotFound);
+}

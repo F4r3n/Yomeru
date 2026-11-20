@@ -15,6 +15,8 @@
 //! - **Conjugations** (passive, causative): read from the words'
 //!   deinflection, for the points whose answer check names a form.
 
+mod check;
+
 use deinflect::{Reason, Reasons};
 use grammar_core::{AnswerCheck, GrammarDict, GrammarEntry, Inflection};
 use jmdict_core::segment::{self, Class, Word};

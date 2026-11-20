@@ -400,12 +400,15 @@ pub async fn grammar_check_handler(
     if chars > MAX_ANSWER_CHARS {
         return Err(too_large("answer", chars, MAX_ANSWER_CHARS));
     }
+    // On the breakdown when JMdict is loaded; the plain search otherwise.
     let verdict = run_blocking("grammar_check", move || {
-        Ok(
-            crate::dicts::grammar().map_or(grammar_core::Verdict::SelfGraded, |d| {
-                d.check_answer(&id, &answer, &grammar_core::JmdictVocabulary)
+        let vocab = grammar_core::JmdictVocabulary;
+        Ok(match crate::dicts::analyzer() {
+            Some(a) if jmdict_core::dictionary::is_loaded() => a.check_answer(&id, &answer, &vocab),
+            _ => crate::dicts::grammar().map_or(grammar_core::Verdict::SelfGraded, |d| {
+                d.check_answer(&id, &answer, &vocab)
             }),
-        )
+        })
     })
     .await?;
     Ok(Json(GrammarCheckResponse { verdict }))
