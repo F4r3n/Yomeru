@@ -91,7 +91,7 @@ fn dict() -> &'static GrammarDict {
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 42\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+            "next_seq = 43\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -197,6 +197,7 @@ fn dict() -> &'static GrammarDict {
                 "食べ{かける}。",
                 "after = [\"masu-stem\"]\ninside_glosses = [\"start *ing\", \"about to\"]"
             ),
+            point("te-mo-sashitsukaenai", 42, "ても差し支えない", "食べ{ても差し支えない}。", ""),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
     })
@@ -678,6 +679,11 @@ fn the_answer_check_takes_a_plain_match_only_on_the_breakdowns_edges() {
     );
     assert_eq!(check("to-shite", "本として食べる"), Verdict::Accepted);
     assert_ne!(check("to-shite", "彼女は本としている"), Verdict::Accepted);
+    // A pattern written plain holds in a polite answer.
+    assert_eq!(
+        check("te-mo-sashitsukaenai", "本を食べても差し支えありません"),
+        Verdict::Accepted
+    );
 }
 
 #[test]
@@ -706,9 +712,17 @@ fn one_kanji_after_a_number_is_its_counter() {
 
 #[test]
 fn a_point_inside_a_word_only_where_its_gloss_says_it() {
+    use grammar_core::Verdict;
     // 食べかける "to start eating" is かける "half-done"; 出かける isn't.
     assert!(ids("本を食べかけた").contains(&"kakeru".to_owned()));
     assert!(!ids("本に出かけた").contains(&"kakeru".to_owned()));
+    // The answer check too: the plain search takes かける in 出かけた.
+    assert_eq!(
+        dict().check_answer("kakeru", "本に出かけた", &NoWords),
+        Verdict::Accepted
+    );
+    assert_eq!(check("kakeru", "本を食べかけた"), Verdict::Accepted);
+    assert_ne!(check("kakeru", "本に出かけた"), Verdict::Accepted);
     assert!(crate::gloss_has("to start eating", "start *ing"));
     assert!(!crate::gloss_has("to start; to set out", "start *ing"));
 }

@@ -516,15 +516,9 @@ impl<'a> Analyzer<'a> {
                 let holder = words
                     .iter()
                     .find(|w| w.start < start && start < w.start + w.len && w.entry.is_some());
-                if !e.inside_glosses.is_empty()
-                    && let Some(entry) = holder.and_then(|w| w.entry)
-                    && !entry.senses.iter().take(1).any(|sense| {
-                        sense.glosses.iter().any(|g| {
-                            e.inside_glosses
-                                .iter()
-                                .any(|want| gloss_has(g.text.as_str(), want))
-                        })
-                    })
+                if holder
+                    .and_then(|w| w.entry)
+                    .is_some_and(|entry| !said_inside(e, entry))
                 {
                     return false;
                 }
@@ -1081,6 +1075,19 @@ fn own_heads<'m>(matched: &'m str, e: &'m GrammarEntry) -> impl Iterator<Item = 
             !e.keys()
                 .filter(|k| k.chars().next() == first)
                 .any(|k| k.starts_with(lead.as_str()))
+        })
+}
+
+/// Whether a point may be read inside the word `entry` (`inside_glosses`):
+/// with none, anywhere; else only where the word's first sense holds one.
+pub(crate) fn said_inside(e: &GrammarEntry, entry: &segment::Entry) -> bool {
+    e.inside_glosses.is_empty()
+        || entry.senses.iter().take(1).any(|sense| {
+            sense.glosses.iter().any(|g| {
+                e.inside_glosses
+                    .iter()
+                    .any(|want| gloss_has(g.text.as_str(), want))
+            })
         })
 }
 

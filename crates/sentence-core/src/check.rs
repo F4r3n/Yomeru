@@ -16,7 +16,7 @@ use grammar_core::{AnswerCheck, GrammarEntry, Related, Verdict, Vocabulary};
 
 use jmdict_core::segment::{self, Class};
 
-use crate::{Analyzer, MatchKind};
+use crate::{Analyzer, MatchKind, said_inside};
 
 /// The shortest pattern, in chars (less its `〜`), the plain search alone
 /// accepts.
@@ -182,7 +182,9 @@ impl Analyzer<'_> {
         // - starting on a word edge or after a stem (ていった of
         //   忘れていった, そうだ of うれしそうだ), but not on the ん of a
         //   verb or adjective (んだ of 読んだ: the explanatory ん is a word
-        //   of its own; なんだって, 狂わんばかり are not).
+        //   of its own; なんだって, 狂わんばかり are not), and inside a word
+        //   only where its `inside_glosses` allow (かける of 食べかける,
+        //   not 話しかける).
         let word_at = |p: usize| {
             breakdown
                 .words
@@ -202,9 +204,11 @@ impl Analyzer<'_> {
                                 && !matches!(w.class, Class::Verb | Class::Adjective | Class::Noun))
                     });
                 let begins = edge(s)
-                    || chars.get(s) != Some(&'ん')
-                    || word_at(s)
-                        .is_some_and(|w| !matches!(w.class, Class::Verb | Class::Adjective));
+                    || word_at(s).is_some_and(|w| {
+                        (chars.get(s) != Some(&'ん')
+                            || !matches!(w.class, Class::Verb | Class::Adjective))
+                            && w.entry.is_none_or(|entry| said_inside(e, entry))
+                    });
                 !cut_short && ends && begins
             })
         };
