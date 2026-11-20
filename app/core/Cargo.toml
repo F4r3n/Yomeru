@@ -52,6 +52,8 @@ examples-core = { path = "../../crates/examples-core" }
 rkyv          = { version = "0.8", default-features = false, features = ["alloc"] }
 # The production answer check, over the JMdict above.
 grammar-core  = { path = "../../crates/grammar-core", features = ["jmdict"] }
+# The Lookup page's sentence breakdown, over the two above.
+sentence-core = { path = "../../crates/sentence-core" }
 anyhow        = "1"
 
 

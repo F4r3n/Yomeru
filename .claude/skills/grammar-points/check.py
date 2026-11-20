@@ -52,6 +52,18 @@ def load_bee():
 # `Inflection`).
 INFLECTIONS = {"passive", "potential", "causative", "causative-passive", "volitional", "imperative"}
 
+# The kinds of word `after = [...]` can name (grammar-core's `AFTER_KINDS`).
+AFTER = {"verb-plain", "masu-stem", "suru-noun", "amount", "noun-or-demonstrative",
+         "noun-or-particle", "predicate", "adjective-stem", "te-form"}
+
+# The reasons `reads = [...]` can name (deinflect's `Reason::name`).
+READS = {
+    "negative", "past", "polite", "te-form", "conditional", "tara", "tari", "passive",
+    "potential", "causative", "imperative", "volitional", "desiderative", "progressive",
+    "completion", "try-doing", "te-oku", "te-aru", "te-kuru", "te-iku", "te-hoshii", "nasai",
+    "literary", "without-doing", "adverbial", "nominalization", "suru-stem", "masu-stem",
+}
+
 
 def tatoeba():
     out = {}
@@ -133,6 +145,22 @@ def validate(points):
             forms = check.get("inflection") if isinstance(check, dict) else None
             if not forms or set(check) != {"inflection"} or not set(forms) <= INFLECTIONS:
                 errors.append(f"{name}: check is \"self\" or {{ inflection = [...] }} of {sorted(INFLECTIONS)}")
+        after = p.get("after", [])
+        if not isinstance(after, list) or not set(after) <= AFTER:
+            errors.append(f"{name}: after is a list of {sorted(AFTER)}")
+        for flag in ("final", "continues", "no_suru", "no_quote", "no_particle", "suffix", "prefix"):
+            if not isinstance(p.get(flag, False), bool):
+                errors.append(f"{name}: {flag} is true or false")
+        glosses = p.get("inside_glosses", [])
+        if not isinstance(glosses, list) or not all(isinstance(g, str) and g for g in glosses):
+            errors.append(f"{name}: inside_glosses is a list of English phrases")
+        if p.get("suffix") and not p.get("after"):
+            errors.append(f"{name}: suffix needs after")
+        if p.get("final") and p.get("continues"):
+            errors.append(f"{name}: final and continues both set")
+        reads = p.get("reads", [])
+        if not isinstance(reads, list) or not set(reads) <= READS:
+            errors.append(f"{name}: reads is a list of {sorted(READS)}")
         if p.get("jlpt") not in LEVELS:
             errors.append(f"{name}: jlpt must be one of N5…N1")
         examples = p.get("examples", [])

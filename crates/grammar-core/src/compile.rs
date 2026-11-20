@@ -41,6 +41,41 @@ struct Point {
     #[serde(default = "yes")]
     hover: bool,
     check: Option<RawCheck>,
+    /// Deinflection reasons a word showing the point carries (`adverbial`),
+    /// for the sentence breakdown.
+    #[serde(default)]
+    reads: Vec<String>,
+    /// Kinds of word the point comes after (`masu-stem`), for the sentence
+    /// breakdown.
+    #[serde(default)]
+    after: Vec<String>,
+    /// Whether the point ends a sentence, for the sentence breakdown.
+    #[serde(default, rename = "final")]
+    ends: bool,
+    /// Whether the point never ends a sentence, for the sentence breakdown.
+    #[serde(default)]
+    continues: bool,
+    /// Whether the point's に is never before する/なる, for the sentence
+    /// breakdown.
+    #[serde(default)]
+    no_suru: bool,
+    /// Whether the point's と never quotes, for the sentence breakdown.
+    #[serde(default)]
+    no_quote: bool,
+    /// Whether the point is never before a particle, for the sentence
+    /// breakdown.
+    #[serde(default)]
+    no_particle: bool,
+    /// Whether the point also ends a word, for the sentence breakdown.
+    #[serde(default)]
+    suffix: bool,
+    /// Whether the point also opens a word, for the sentence breakdown.
+    #[serde(default)]
+    prefix: bool,
+    /// The glosses a word holding the point must have, for the sentence
+    /// breakdown.
+    #[serde(default)]
+    inside_glosses: Vec<String>,
 }
 
 /// `check = "self"` or `check = { inflection = ["causative"] }`; left out,
@@ -256,6 +291,24 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
                 AnswerCheck::Inflection { forms }
             }
         };
+        for name in &p.reads {
+            if deinflect::Reason::from_name(name).is_none() {
+                let known: Vec<&str> = deinflect::Reason::ALL.iter().map(|r| r.name()).collect();
+                bail!("{}: reads {name:?}, not one of {}", p.id, known.join(", "));
+            }
+        }
+        if p.ends && p.continues {
+            bail!("{}: final and continues both set", p.id);
+        }
+        for kind in &p.after {
+            if !crate::types::AFTER_KINDS.contains(&kind.as_str()) {
+                bail!(
+                    "{}: after {kind:?}, not one of {}",
+                    p.id,
+                    crate::types::AFTER_KINDS.join(", ")
+                );
+            }
+        }
         let mut related = Vec::with_capacity(p.related.len());
         for id in p.related {
             match pattern_of.get(&id) {
@@ -281,6 +334,16 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
             examples,
             hover: p.hover,
             check,
+            reads: p.reads,
+            after: p.after,
+            ends: p.ends,
+            continues: p.continues,
+            no_suru: p.no_suru,
+            no_quote: p.no_quote,
+            no_particle: p.no_particle,
+            suffix: p.suffix,
+            prefix: p.prefix,
+            inside_glosses: p.inside_glosses,
         });
     }
 

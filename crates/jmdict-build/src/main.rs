@@ -7,6 +7,7 @@
 #[cfg(feature = "full")]
 mod disambig;
 mod indexer;
+mod ipadic;
 mod serializer;
 
 use jmdict_build::parser;
@@ -34,14 +35,26 @@ struct Args {
     /// it correctly requires `--features full`.
     #[arg(long)]
     disambig_output: Option<PathBuf>,
+
+    /// IPADIC's release tarball, gunzipped (`mecab-ipadic.tar`): puts its
+    /// word costs on the spellings, for the segmenter. Without it the
+    /// segmenter falls back on JMdict's frequency tags.
+    #[arg(long)]
+    ipadic: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
     let args = Args::parse();
 
     eprintln!("Parsing JMdict XML from {:?}...", args.input);
-    let entries = parser::parse_jmdict(&args.input)?;
+    let (mut entries, scopes) = parser::parse_jmdict_scoped(&args.input)?;
     eprintln!("Parsed {} entries.", entries.len());
+
+    if let Some(path) = &args.ipadic {
+        eprintln!("Reading IPADIC word costs from {path:?}...");
+        let (found, all) = ipadic::load(path)?.apply(&mut entries, &scopes);
+        eprintln!("Word costs on {found} of {all} spellings.");
+    }
 
     eprintln!("Building index...");
     let index = indexer::build_index(&entries)?;

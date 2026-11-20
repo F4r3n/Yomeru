@@ -254,6 +254,37 @@ a Read first, and the file is thousands of lines. Instead:
   imperative). `check = "self"` when neither finds it reliably (the く
   adverb, the て join, 自動詞・他動詞): the user rates against the
   reference. Put it last in the entry, after `examples`.
+- **reads**: only for a point that is a word's form rather than a string
+  the breakdown can find (the く adverb: `reads = ["adverbial"]`; the さ
+  noun: `["nominalization"]`). Names from deinflect's `Reason`. After
+  `check`.
+- **after**: only for a point the sentence breakdown finds in the wrong
+  places, naming what it comes right after: `verb-plain` (走る{な}),
+  `masu-stem`, `suru-noun` (に行く after 食べ or 散歩, not 学校), `amount`
+  (三十分{は}), `noun-or-demonstrative` (東京{のような}, この{ような}),
+  `noun-or-particle` (私{の}, から{の}), `predicate` (a verb or adjective,
+  conjugated or not: 行く{の}？, 高い{の}; a form starting with な also
+  after a noun: 休み{なの}), `adjective-stem` (寒{がる}, 嫌{がる},
+  行きた{がる}), `te-form` (見て{回る}). Last.
+- **final**: `final = true` for a point that ends a sentence (行く{の}？):
+  the breakdown then skips it before more of the sentence (行くのは),
+  and finds it only as written, never conjugated (といって isn't it).
+  `continues = true` for one that never ends a sentence (雨{にしろ}…): at
+  the end, にしろ reads as にする's command instead. `no_suru = true` for
+  a point ending in に or と that never goes before する/なる (以上に
+  "more than", ないと "must"): there it is にする's or とする's
+  (80%以上にしろ, いないとして). `no_quote = true` for a と point that
+  never quotes: before 言う, 思う, 考える… the breakdown skips it (the
+  conditional と in いい{と}言う). `no_particle = true` for a point that
+  ends a clause and is never before a particle: before が, を, は… it is
+  the plain noun it spells (試験の結果が出た, not "as a result"). `suffix = true` for an affix point the
+  dictionary often lists inside whole words (新{型}, 痛{み}, 三回{目}):
+  found inside a word, ending it, when its `after` (required) fits the
+  rest; `prefix = true` the same at a word's start ({各}国, {真っ}暗).
+  `inside_glosses` for a point that JMdict words hold in some senses
+  only: inside a word, found only when a gloss of the word's first
+  sense holds one of the phrases (かける: "start to", "start *ing", "about to"…, so
+  食べかける yes, 出かける and 話しかける no). After `after`.
 - **examples**: 5 (entries written before 2026-11-18 have 2–3 until an
   examples batch extends them), under ~26 chars of Japanese, at the
   entry's level or below in vocabulary; the `{…}` mark covers the pattern

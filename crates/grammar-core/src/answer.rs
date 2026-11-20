@@ -105,6 +105,47 @@ impl GrammarDict {
         }
     }
 
+    /// Where the plain search finds `entry`'s pattern or forms in
+    /// `answer`, as written or conjugated: `(start, end)` in chars, for
+    /// each key with no slot inside (ものだから, not に〜ない). The
+    /// sentence breakdown keeps the spans on its word edges.
+    ///
+    /// The answer is also read in the plain register (ても差し支えありません
+    /// for ても差し支えない), its spans given back in the answer as typed.
+    pub fn key_spans(&self, entry: &GrammarEntry, answer: &str) -> Vec<(usize, usize)> {
+        let answer = normalize(answer);
+        let typed: Vec<char> = answer.chars().collect();
+        let (plain, at) = plain_register_mapped(&answer);
+        let keys: Vec<&str> = entry
+            .keys()
+            .map(|k| k.trim_matches('〜'))
+            .filter(|k| !k.is_empty() && !k.contains('〜'))
+            .collect();
+        let find = |chars: &[char]| -> Vec<(usize, usize)> {
+            keys.iter()
+                .flat_map(|key| {
+                    (0..chars.len())
+                        .filter_map(move |start| Some((start, piece_at(key, chars, start)?)))
+                })
+                .collect()
+        };
+        let mut spans = find(&typed);
+        // Only a span starting on a typed char: one starting in a replaced
+        // ending is another key's (たった, whose た stands for the だ of
+        // 読んだ, in the だった of いいませんでした).
+        spans.extend(
+            find(&plain)
+                .into_iter()
+                .filter_map(|(s, e)| {
+                    let (start, end) = (at.get(s)?, at.get(e.checked_sub(1)?)?);
+                    (start.1 - start.0 == 1).then_some((start.0, end.1))
+                }),
+        );
+        spans.sort_unstable();
+        spans.dedup();
+        spans
+    }
+
     /// Whether `answer` uses `entry`'s point; `None` for a self-graded one.
     fn uses(&self, entry: &GrammarEntry, answer: &str, vocab: &impl Vocabulary) -> Option<bool> {
         match &entry.check {
@@ -206,12 +247,48 @@ fn normalize(answer: &str) -> String {
 /// their polite forms are only sometimes listed. (A polite verb is
 /// [`piece_at`]'s.)
 fn plain_register(answer: &str) -> String {
-    answer
-        .replace("ありませんでした", "なかった")
-        .replace("ありません", "ない")
-        .replace("でしょう", "だろう")
-        .replace("でした", "だった")
-        .replace("です", "だ")
+    plain_register_mapped(answer).0.into_iter().collect()
+}
+
+/// The polite endings [`plain_register`] reads plain, longest first.
+const PLAIN_REGISTER: [(&str, &str); 5] = [
+    ("ありませんでした", "なかった"),
+    ("ありません", "ない"),
+    ("でしょう", "だろう"),
+    ("でした", "だった"),
+    ("です", "だ"),
+];
+
+/// [`plain_register`]'s chars, each with the `(start, end)` in `answer`'s
+/// chars it comes from: a replaced ending's chars all span the whole
+/// polite ending.
+fn plain_register_mapped(answer: &str) -> (Vec<char>, Vec<(usize, usize)>) {
+    let chars: Vec<char> = answer.chars().collect();
+    let polite: Vec<(Vec<char>, &str)> = PLAIN_REGISTER
+        .iter()
+        .map(|(from, to)| (from.chars().collect(), *to))
+        .collect();
+    let (mut out, mut at) = (Vec::new(), Vec::new());
+    let mut i = 0;
+    while let Some(rest) = chars.get(i..)
+        && let Some(&c) = rest.first()
+    {
+        match polite.iter().find(|(from, _)| rest.starts_with(from)) {
+            Some((from, to)) => {
+                for c in to.chars() {
+                    out.push(c);
+                    at.push((i, i + from.len()));
+                }
+                i += from.len();
+            }
+            None => {
+                out.push(c);
+                at.push((i, i + 1));
+                i += 1;
+            }
+        }
+    }
+    (out, at)
 }
 
 fn is_hiragana(c: char) -> bool {
@@ -313,14 +390,7 @@ fn piece_at(piece: &str, chars: &[char], start: usize) -> Option<usize> {
 /// Whether a verb of `answer` is in the form `wanted`: some stretch of it
 /// deinflects through that form to a word `vocab` knows as a verb.
 fn has_inflection(answer: &str, wanted: Inflection, vocab: &impl Vocabulary) -> bool {
-    let need = match wanted {
-        Inflection::Passive => Reasons::of(&[Reason::Passive]),
-        Inflection::Potential => Reasons::of(&[Reason::Potential]),
-        Inflection::Causative => Reasons::of(&[Reason::Causative]),
-        Inflection::CausativePassive => Reasons::of(&[Reason::Causative, Reason::Passive]),
-        Inflection::Volitional => Reasons::of(&[Reason::Volitional]),
-        Inflection::Imperative => Reasons::of(&[Reason::Imperative]),
-    };
+    let need = wanted.reasons();
     let chars: Vec<char> = answer.chars().collect();
     let mut deinflector = deinflect::Deinflector::default();
     for start in 0..chars.len() {

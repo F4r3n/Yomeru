@@ -45,12 +45,58 @@
 #                answer must be in one of them. check = "self" when neither
 #                works (the く adverb, the て join): the user compares with
 #                the reference and rates
+#   reads        optional: for a point that is a word's form, not a string
+#                (reads = ["adverbial"]: 速く, 静かに), the deinflection
+#                reasons the sentence breakdown finds it by: adverbial
+#                (く), nominalization (さ), or another of deinflect's
+#                `Reason` names. Put it after `check`
+#   after        optional: what the point comes right after, for the
+#                sentence breakdown, which doesn't find it elsewhere:
+#                verb-plain (走る, 電話する), masu-stem (食べ, 遊び),
+#                suru-noun (散歩), amount (三十分, 100, 五つ),
+#                noun-or-demonstrative (東京, この), noun-or-particle
+#                (私, 由利さん, から), predicate (行く, 行った, 高い;
+#                a form starting with な also after a noun: 休み{なの}),
+#                adjective-stem (寒, 欲し, 嫌, 行きた: 寒{がる}),
+#                te-form (見て: 見て{回る}).
+#                after = ["masu-stem", "suru-noun"] keeps
+#                に行く off 学校に行く. Only for a point that misfires; last
+#   final        optional, true: the point ends a sentence (行く{の}？),
+#                and the breakdown finds it only before the end,
+#                punctuation or よ, ね, さ, な, and as written (not
+#                conjugated); not before the は of 行くのは. After `after`
+#   continues    optional, true: the point never ends a sentence (雨{にしろ}
+#                雪にしろ、…); the breakdown skips it at the end, where
+#                にしろ is にする's command. After `after`
+#   no_suru      optional, true: the point's final に or と never comes
+#                before する or なる (以上に "more than", ないと "must");
+#                there the breakdown reads it as にする's or とする's
+#                (80%以上{にしろ}, いないとして). After `after`
+#   no_quote     optional, true: the point's final と never comes before a
+#                verb of saying or thinking (言う, 思う, 考える); there it
+#                quotes (いい{と}言う). After `no_suru`
+#   no_particle  optional, true: the point ends a clause and never comes
+#                before a particle (が, を, は, も, に, の…); there it is
+#                the plain noun it spells (試験の結果が出た). After `after`
+#   suffix       optional, true: the point also ends a word the dictionary
+#                lists whole (新{型}, 痛{み}, 三回{目}); the breakdown finds
+#                it inside a word, ending it, when its `after` (required)
+#                fits the rest of the word. After `after`
+#   prefix       optional, true: the point also opens a word the dictionary
+#                lists whole ({各}国, {真っ}暗); the breakdown finds it
+#                there when the rest is a word or an adjective's stem.
+#                After `after`
+#   inside_glosses  optional, list: inside a word the dictionary lists
+#                whole, the breakdown finds the point only when a gloss
+#                of the word's first sense holds one of these (`*` stands for
+#                a word: "start *ing"); 食べかける "to start eating" is
+#                かける "half-done", 出かける "to go out" isn't. After `after`
 #   hover        optional, default true; false keeps the entry out of the
 #                hover popup, reachable by search only (って would match
 #                inside 行って). One-char patterns (は, に, て) never show on
 #                hover anyway: the popup skips matches under two chars
 
-next_seq = 938
+next_seq = 943
 
 [[point]]
 id = "te-mo-ii"
@@ -304,6 +350,7 @@ examples = [
   { tatoeba = "60594_223262", ja = "このビンは開ける{前に}振りなさい。", en = "Shake this bottle before you open it." },
   { source = "yomeru", id = "y2", ja = "旅行に行く{前に}、カメラを買いました。", en = "Before going on the trip, I bought a camera." },
 ]
+after = ["noun-or-particle", "verb-plain"]
 
 [[point]]
 id = "tai"
@@ -332,6 +379,7 @@ examples = [
   { tatoeba = "32801_195627", ja = "まずどこに行き{たい}ですか。", en = "Where would you like to go first?" },
   { tatoeba = "253822_160698", ja = "コンサートに行き{たかった}な。", en = "I wanted to go to the concert." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "mashou"
@@ -416,6 +464,7 @@ examples = [
   { tatoeba = "264311_150246", ja = "次の日曜にあなたに会い{に行きます}。", en = "I will come to see you next Sunday." },
   { source = "yomeru", id = "y1", ja = "毎日、家へ昼ご飯を食べ{に帰ります}。", en = "Every day I go home to eat lunch." },
 ]
+after = ["masu-stem", "suru-noun"]
 
 [[point]]
 id = "tari-tari"
@@ -535,7 +584,7 @@ examples = [
 id = "n-desu"
 seq = 18
 pattern = "んです"
-forms = ["のです", "んだ", "のだ", "なの"]
+forms = ["のです", "んだ", "のだ"]
 jlpt = "N5"
 meaning = "explaining, asking about the background"
 formation = ["Verb / ［い］Adjective + んです", "［な］Adjective / Noun + なんです   (学生なんです)"]
@@ -544,13 +593,13 @@ Adds a sense of explanation: what is said is the reason or story behind \
 something both people can see. 頭が痛いんです, "(it's that) I have a \
 headache". In questions it asks for that story: どうしたんですか, "what \
 happened?". Writing and formal speech use のです; casual speech uses \
-んだ, or の."""
+んだ, or の (no-ending)."""
 notes = """
 Overused, it sounds insistent; for a plain fact, です/ます is enough. A \
 んですか question shows interest in a situation, but without a reason to \
 ask it can sound nosy. んですが or んですけど opens a request: 道を聞きたい\
 んですが…."""
-related = ["node", "kedo"]
+related = ["node", "kedo", "no-ending", "noka"]
 examples = [
   { tatoeba = "280130_123865", ja = "頭が痛い{んです}。頭痛薬がありますか。", en = "My head hurts. Have you got any headache tablets?" },
   { source = "yomeru", id = "y3", ja = "明日はテストがある{んです}。だから今日は早く寝ます。", en = "The thing is, I have a test tomorrow. So I'm going to bed early tonight." },
@@ -1588,7 +1637,7 @@ examples = [
 id = "ga-particle"
 seq = 56
 pattern = "が"
-forms = []
+forms = ["ですが"]
 jlpt = "N5"
 meaning = "(subject marker); but"
 formation = [
@@ -1768,6 +1817,7 @@ examples = [
   { source = "yomeru", id = "y3", ja = "犬{と}猫がいます。", en = "I have a dog and a cat." },
   { source = "yomeru", id = "y4", ja = "先生{と}話しました。", en = "I talked with the teacher." },
 ]
+after = ["noun-or-particle"]
 
 [[point]]
 id = "ya-particle"
@@ -1813,6 +1863,7 @@ noun can drop when it's clear: この本は私のです, "this book is mine". \
 Adjectives don't take の: 赤い車, 静かな町. の also turns verbs into \
 nouns (〜のが好き) and ends casual questions: separate points."""
 related = ["no-nominalizer", "n-desu"]
+homographs = ["no-ending"]
 examples = [
   { tatoeba = "251859_162655", ja = "私{の}母は毎日早く起きます。", en = "My mother gets up early every morning." },
   { tatoeba = "55516_218204", ja = "これは誰{の}辞書ですか。", en = "Whose dictionary is this?" },
@@ -1820,6 +1871,7 @@ examples = [
   { tatoeba = "281422_122581", ja = "日本{の}人形です。", en = "This is a Japanese doll." },
   { source = "yomeru", id = "y1", ja = "七時{の}バスに乗ります。", en = "I take the seven o'clock bus." },
 ]
+after = ["noun-or-particle"]
 
 [[point]]
 id = "kara-reason"
@@ -1843,7 +1895,8 @@ both go before it (行くから, 行きますから). In polite requests, refusa
 and excuses it can sound pushy; ので is softer there. だから opens a sentence: \
 "that's why". After a place or time, から is "from" (see から〜まで); \
 after a て-form, "after" (see 〜てから)."""
-related = ["node", "kara-made", "te-kara", "doushite"]
+related = ["node", "kara-made", "te-kara", "doushite", "kara-from"]
+homographs = ["kara-from"]
 examples = [
   { tatoeba = "322708_81006", ja = "眠い{から}帰ります。", en = "I'm sleepy, so I am leaving now." },
   { tatoeba = "21998_184867", ja = "外は寒い{から}中に入りなさい。", en = "Come inside because it's cold outside." },
@@ -1851,6 +1904,7 @@ examples = [
   { tatoeba = "42402_205161", ja = "それは私が遅く起きた{から}です。", en = "That is because I got up late." },
   { tatoeba = "50985_213697", ja = "そこにいなかった{から}知らないよ。", en = "I don't know because I wasn't there." },
 ]
+after = ["predicate"]
 
 [[point]]
 id = "dake"
@@ -2027,6 +2081,7 @@ examples = [
   { tatoeba = "21582_184456", ja = "学校に遅れる{な}。", en = "Don't be late for school." },
   { tatoeba = "46244_208984", ja = "その上に座る{な}。", en = "Don't sit on it." },
 ]
+after = ["verb-plain"]
 
 [[point]]
 id = "nagara"
@@ -2179,12 +2234,13 @@ examples = [
   { source = "yomeru", id = "y2", ja = "この仕事は今日中に終わり{そうにない}。", en = "This work doesn't look like it will be finished today." },
   { source = "yomeru", id = "y3", ja = "あの子は今にも泣き{そうだ}。", en = "That child looks like he's about to cry." },
 ]
+after = ["masu-stem", "adjective-stem"]
 
 [[point]]
 id = "ta-ato-de"
 seq = 76
 pattern = "たあとで"
-forms = ["だあとで", "た後で", "だ後で", "のあとで", "の後で", "たあとに", "た後に", "あとで", "後で", "あとに", "後に"]
+forms = ["だあとで", "た後で", "だ後で", "のあとで", "の後で", "たあとに", "た後に", "あとで", "後で", "あとに", "後に", "たあと", "た後", "だあと", "だ後"]
 jlpt = "N4"
 meaning = "after (doing), after (something); later"
 formation = ["Verb［た］ + あとで", "Noun + の + あとで   (授業のあとで)"]
@@ -2458,6 +2514,67 @@ examples = [
   { tatoeba = "61057_223720", ja = "このサイズは私には大き{すぎます}。", en = "This size is too large for me." },
   { source = "yomeru", id = "y2", ja = "この部屋は静か{すぎます}。", en = "This room is too quiet." },
 ]
+
+[[point]]
+id = "no-ending"
+seq = 938
+pattern = "の"
+forms = ["なの"]
+jlpt = "N5"
+meaning = "(casual) asking or explaining: plain のですか / のです"
+formation = [
+  "Verb / ［い］Adjective + の   (行くの？, 痛いの)",
+  "［な］Adjective / Noun + なの   (好きなの, 学生なの？)",
+]
+explanation = """
+The casual form of のです and のですか. Said rising, it asks for \
+the story behind what you notice: どうしたの？, "what's wrong?". Said \
+falling, it explains your side of things softly: 頭が痛いの, "my head \
+hurts, you see". After a noun or a な-adjective it takes な: 休みなの."""
+notes = """
+A の question sounds more involved than a bare plain one (行く？), and \
+everyone uses it among friends. The falling, explaining の sounds soft; \
+many speakers say んだ instead. This の closes the sentence: it isn't \
+the の that links nouns (私の本) or turns a verb into a noun (読むのが好き)."""
+related = ["n-desu", "noka", "no-particle", "no-nominalizer"]
+homographs = ["no-particle"]
+examples = [
+  { tatoeba = "460867_121148", ja = "彼、試験に通った{の}？", en = "Did he pass the exam?" },
+  { tatoeba = "57963_220643", ja = "この単語はどう発音する{の}？", en = "How do you pronounce this word?" },
+  { source = "yomeru", id = "y1", ja = "ごめん、頭が痛い{の}。", en = "Sorry, my head hurts, you see." },
+  { source = "yomeru", id = "y2", ja = "今日は仕事が休み{なの}。", en = "I'm off work today, you see." },
+  { source = "yomeru", id = "y3", ja = "明日はどこに行く{の}？", en = "Where are you going tomorrow?" },
+]
+after = ["predicate"]
+final = true
+
+[[point]]
+id = "kara-from"
+seq = 941
+pattern = "から"
+forms = []
+jlpt = "N5"
+meaning = "from (a place, a time, a person); since; out of"
+formation = ["Noun + から   (駅から, 九時から, 友達から)"]
+explanation = """
+Marks where something starts: a place, 駅から歩いた, "I walked from the \
+station"; a time, 九時から, "from nine"; or a person something comes \
+from, 友達からもらった, "I got it from a friend". With ずっと or a time \
+it is "since": 朝からずっと, "ever since this morning"."""
+notes = """
+After a noun it is "from"; after a verb or adjective, から is \
+"because" (寒いから). An end point takes まで: 九時から五時まで (see \
+から〜まで). A way out is から too: 窓から出た, "went out the window"."""
+related = ["kara-made", "kara-reason", "te-kara", "ni-particle"]
+homographs = ["kara-reason"]
+examples = [
+  { tatoeba = "256255_158274", ja = "私は駅{から}歩いた。", en = "I walked from the station." },
+  { tatoeba = "70776_233406", ja = "あなたの学校はここ{から}遠いですか。", en = "Is your school far from here?" },
+  { tatoeba = "296568_107118", ja = "彼は今朝{から}ずっといそがしい。", en = "He has been busy since this morning." },
+  { source = "yomeru", id = "y1", ja = "友達{から}手紙をもらった。", en = "I got a letter from a friend." },
+  { source = "yomeru", id = "y2", ja = "かばん{から}本を出した。", en = "I took a book out of my bag." },
+]
+after = ["noun-or-particle"]
 
 [[point]]
 id = "kata"
@@ -3009,6 +3126,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "去年からピアノを習い{始めました}。", en = "I started learning the piano last year." },
   { source = "yomeru", id = "y2", ja = "みんな、もう食べ{始めて}いいですよ。", en = "Everyone, you can start eating now." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "owaru"
@@ -3035,6 +3153,7 @@ examples = [
   { tatoeba = "266699_147862", ja = "宿題をやり{終える}のに３時間かかった。", en = "It took me three hours to finish my homework." },
   { source = "yomeru", id = "y1", ja = "手紙を書き{終わったら}、出かけましょう。", en = "When I've finished writing the letter, let's go out." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "tsuzukeru"
@@ -3060,6 +3179,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "雨は一日中降り{続けた}。", en = "It kept raining all day." },
   { source = "yomeru", id = "y2", ja = "疲れても、走り{続けて}ください。", en = "Keep running, even if you get tired." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "dasu"
@@ -3087,6 +3207,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "犬が急に走り{出した}。", en = "The dog suddenly started running." },
   { source = "yomeru", id = "y2", ja = "急に彼が歌い{出した}ので、びっくりした。", en = "He suddenly burst into song, and I was surprised." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "yasui"
@@ -3228,6 +3349,7 @@ examples = [
   { tatoeba = "312491_91223", ja = "彼女は暗いところをとても怖{がる}。", en = "She is very afraid of the dark." },
   { source = "yomeru", id = "y1", ja = "子供たちが寒{がっている}ので、窓を閉めました。", en = "The children were complaining of the cold, so I shut the window." },
 ]
+after = ["adjective-stem"]
 
 [[point]]
 id = "tagaru"
@@ -3443,6 +3565,8 @@ examples = [
   { source = "yomeru", id = "y3", ja = "お酒を飲む{と}、すぐ顔が赤くなる。", en = "Whenever I drink, my face goes red right away." },
   { source = "yomeru", id = "y4", ja = "右に曲がる{と}、駅が見えます。", en = "Turn right and you'll see the station." },
 ]
+after = ["predicate"]
+no_quote = true
 
 [[point]]
 id = "nara"
@@ -3815,6 +3939,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "早く行か{ないと}、遅れるよ。", en = "If we don't go soon, we'll be late." },
   { source = "yomeru", id = "y2", ja = "練習し{ないと}、上手になりません。", en = "Unless you practise, you won't get better." },
 ]
+no_suru = true
 
 [[point]]
 id = "nakereba-naranai"
@@ -4634,7 +4759,7 @@ examples = [
 id = "shi"
 seq = 160
 pattern = "し"
-forms = []
+forms = ["だし"]
 jlpt = "N4"
 meaning = "and, and what's more (listing reasons or points)"
 formation = [
@@ -4659,6 +4784,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "この店は安い{し}、おいしいから、よく来ます。", en = "This place is cheap, and it's good too, so I come here often." },
   { source = "yomeru", id = "y3", ja = "彼女は歌も上手だ{し}、ピアノもひける。", en = "She sings well, and what's more, she can play the piano." },
 ]
+after = ["predicate"]
 
 [[point]]
 id = "dake-de-naku"
@@ -4813,6 +4939,8 @@ examples = [
   { source = "yomeru", id = "y3", ja = "子供{らしい}かわいい絵ですね。", en = "What a cute, childlike picture." },
   { source = "yomeru", id = "y4", ja = "泣くなんて君{らしくない}よ。", en = "Crying isn't like you." },
 ]
+after = ["noun-or-particle"]
+suffix = true
 
 [[point]]
 id = "you-da"
@@ -4836,7 +4964,7 @@ notes = """
 polite speech. そうだ (stem) is a first look; ようだ weighs the signs; \
 らしい leans on what others say. Often with どうやら or まるで \
 (まるで夢のようだ). Not ように "so that" (you-ni-purpose)."""
-related = ["mitai", "rashii", "sou-da-appearance", "no-you-na", "ni-mieru"]
+related = ["mitai", "rashii", "sou-da-appearance", "no-you-na", "ni-mieru", "you-na"]
 examples = [
   { tatoeba = "66729_229370", ja = "いい家の{ようです}。", en = "It seems to be a good house." },
   { tatoeba = "50620_213334", ja = "そのエレベーターは故障している{ようだ}。", en = "The elevator seems to be out of order." },
@@ -4895,7 +5023,8 @@ notes = """
 The casual equivalent is みたいな / みたいに, with no の: 東京みたいな町. \
 A verb can also come before ような: 夢を見ているような気持ち. Not ように \
 "so that" after a verb (you-ni-purpose), which has no の."""
-related = ["you-da", "mitai", "mai-no-you-ni", "you-ni-purpose"]
+related = ["you-da", "mitai", "mai-no-you-ni", "you-ni-purpose", "you-na"]
+homographs = ["you-na"]
 examples = [
   { tatoeba = "272579_141991", ja = "雪{のように}白い。", en = "It is white as snow." },
   { source = "yomeru", id = "y1", ja = "東京{のような}大きい町に住みたい。", en = "I want to live in a big city like Tokyo." },
@@ -4903,6 +5032,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "鳥{のように}空を飛びたい。", en = "I want to fly in the sky like a bird." },
   { source = "yomeru", id = "y3", ja = "りんご{のような}赤い果物が好きです。", en = "I like red fruit such as apples." },
 ]
+after = ["noun-or-demonstrative"]
 
 [[point]]
 id = "mai-no-you-ni"
@@ -5096,6 +5226,7 @@ After a noun, だ is optional: 天才だと / 天才と言われている, and i
 usually left out with とされている and と考えられている. For something one person \
 told you, use そうだ or と聞いた instead."""
 related = ["sou-da-hearsay", "to-kiita", "passive"]
+homographs = ["to-kangaerareru"]
 examples = [
   { tatoeba = "301764_101929", ja = "彼は天才だ{と言われている}。", en = "He is said to be a genius." },
   { tatoeba = "300422_103271", ja = "彼は正直者だ{と言われている}。", en = "He is said to be honest." },
@@ -5805,6 +5936,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "この作文を書き{直して}ください。", en = "Please rewrite this essay." },
   { source = "yomeru", id = "y2", ja = "最初からやり{直したい}。", en = "I want to do it over from the start." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "zurai"
@@ -6491,6 +6623,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "この町の{便利さ}が好きです。", en = "I like the convenience of this town." },
   { source = "yomeru", id = "y3", ja = "東京の夏の{暑さ}にびっくりしました。", en = "I was surprised by the heat of summer in Tokyo." },
 ]
+reads = ["nominalization"]
 
 [[point]]
 id = "dai-age"
@@ -6543,6 +6676,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "{各}ページに絵があります。", en = "There's a picture on each page." },
   { source = "yomeru", id = "y3", ja = "{各}学校から学生が三人来ます。", en = "Three students will come from each school." },
 ]
+prefix = true
 
 [[point]]
 id = "me-ordinal"
@@ -6569,6 +6703,8 @@ examples = [
   { source = "yomeru", id = "y2", ja = "二つ{目}の駅で降りてください。", en = "Please get off at the second station." },
   { source = "yomeru", id = "y3", ja = "今日は旅行の三日{目}です。", en = "Today is the third day of the trip." },
 ]
+after = ["amount"]
+suffix = true
 
 [[point]]
 id = "ma-prefix"
@@ -6596,6 +6732,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "{真}夜中に電話が鳴った。", en = "The phone rang in the middle of the night." },
   { source = "yomeru", id = "y3", ja = "テーブルの{真ん}中に花を置きました。", en = "I put flowers right in the middle of the table." },
 ]
+prefix = true
 
 [[point]]
 id = "fuu"
@@ -6623,6 +6760,8 @@ examples = [
   { source = "yomeru", id = "y3", ja = "洋{風}の家に住みたいです。", en = "I want to live in a Western-style house." },
   { source = "yomeru", id = "y4", ja = "彼はいつもあんな{ふうに}話すの？", en = "Does he always talk like that?" },
 ]
+after = ["noun-or-demonstrative"]
+suffix = true
 
 [[point]]
 id = "ka-suru"
@@ -6757,6 +6896,7 @@ examples = [
   { source = "yomeru", id = "y3", ja = "この本は千円{は}すると思う。", en = "I think this book costs at least 1,000 yen." },
   { source = "yomeru", id = "y4", ja = "毎日八時間{は}寝たいです。", en = "I want to sleep at least eight hours every day." },
 ]
+after = ["amount"]
 
 [[point]]
 id = "number-mo"
@@ -6784,6 +6924,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "彼は本を十冊{も}買った。", en = "He bought as many as ten books." },
   { source = "yomeru", id = "y3", ja = "今日は水を二リットル{も}飲みました。", en = "I drank as much as two liters of water today." },
 ]
+after = ["amount"]
 
 [[point]]
 id = "nan-counter-ka"
@@ -6837,6 +6978,7 @@ examples = [
   { source = "yomeru", id = "y3", ja = "妹はピアノを{上手に}ひきます。", en = "My little sister plays the piano well." },
 ]
 check = "self"
+reads = ["adverbial"]
 
 [[point]]
 id = "toka"
@@ -7119,6 +7261,7 @@ examples = [
   { tatoeba = "39342_202130", ja = "デビー！私の声が聞こえる{かい}？", en = "Debbie! Can you hear me?" },
   { source = "yomeru", id = "y1", ja = "あの人は誰{だい}？", en = "Who's that person?" },
 ]
+after = ["predicate", "noun-or-particle"]
 
 [[point]]
 id = "inai"
@@ -7309,10 +7452,76 @@ examples = [
 ]
 
 [[point]]
+id = "noka"
+seq = 939
+pattern = "のか"
+forms = ["なのか"]
+jlpt = "N4"
+meaning = "(plain) is it that…?; oh, so…; what, whether (in a clause)"
+formation = [
+  "Verb / ［い］Adjective + のか",
+  "［な］Adjective / Noun + なのか   (本当なのか)",
+  "Question word … のか + 分からない / 教えて   (何をすればいいのか分からない)",
+]
+explanation = """
+の with the question marker か. Closing a sentence it is a plain, \
+direct question, もう帰るのか？, "you're leaving already?", or, said \
+falling, a realization: そうか、休みなのか, "oh, so it's a day off". \
+Inside a sentence it makes a question part of it: いつ始まるのか知らない, \
+"I don't know when it starts"."""
+notes = """
+Asked of someone face to face, のか sounds blunt and rather masculine; \
+の？ is the friendly casual question. Writing uses it to raise a \
+question for no one in particular (それぞれ何を得たのか). Inside a \
+sentence か alone works too (いつ始まるか); のか leans on wanting the \
+background. I-wonder questions take のだろうか."""
+related = ["no-ending", "n-desu", "question-ka", "no-darou-ka", "kana"]
+examples = [
+  { tatoeba = "16501_177649", ja = "君はどうしてここへ来た{のか}。", en = "What have you come here for?" },
+  { tatoeba = "61439_136994", ja = "誰がその茶碗をわった{のか}。", en = "Who broke the cup?" },
+  { tatoeba = "454490_187586", ja = "何をすればよい{のか}わからない。", en = "I don't know what to do." },
+  { tatoeba = "282941_121067", ja = "彼がいつ戻る{のか}教えてください。", en = "Please tell me when he'll be back." },
+  { source = "yomeru", id = "y1", ja = "そうか、明日は休み{なのか}。", en = "Oh, so tomorrow is a day off." },
+]
+after = ["predicate"]
+
+[[point]]
+id = "you-na"
+seq = 940
+pattern = "ような"
+forms = []
+jlpt = "N4"
+meaning = "the kind of … that; as if (describing a noun)"
+formation = [
+  "Verb + ような + Noun   (子供が喜ぶようなプレゼント)",
+  "［い］Adjective + ような + Noun   (泣きたいような気分)",
+]
+explanation = """
+A verb before ような + noun describes the noun by what it is like: \
+子供が喜ぶようなプレゼント, "the kind of present children love". It is \
+ようだ before a noun, so it can mean "as if" too: 幽霊を見たような顔, \
+"a face as if he'd seen a ghost"."""
+notes = """
+Common with a negative: うそをつくような人ではない, "not the sort who \
+lies". A noun takes の first: 東京のような町 (のような). Casual speech \
+says みたいな. ような気がする, "I have a feeling", is a set phrase of \
+its own."""
+related = ["no-you-na", "you-da", "mitai", "you-na-ki-ga-suru", "ka-no-you-da"]
+homographs = ["no-you-na"]
+examples = [
+  { tatoeba = "310257_90356", ja = "彼女は君が想像する{ような}女の子ではない。", en = "She is not such a girl as you imagine." },
+  { tatoeba = "69758_176831", ja = "君は幽霊を見た{ような}顔をしている。", en = "You look as if you had seen a ghost." },
+  { source = "yomeru", id = "y1", ja = "子供が喜ぶ{ような}プレゼントを買いたい。", en = "I want to buy the kind of present children love." },
+  { source = "yomeru", id = "y2", ja = "母が作る{ような}料理を作りたい。", en = "I want to cook the kind of food my mother makes." },
+  { source = "yomeru", id = "y3", ja = "泣きたくなる{ような}映画だった。", en = "It was the kind of movie that makes you want to cry." },
+]
+after = ["predicate"]
+
+[[point]]
 id = "tame-ni"
 seq = 257
 pattern = "ために"
-forms = ["為に", "のために", "のため"]
+forms = ["為に", "のために", "のため", "ため", "ためには", "のためには"]
 jlpt = "N3"
 meaning = "in order to, for (the sake of); because of (formal)"
 formation = [
@@ -7761,7 +7970,8 @@ The noun after it often is 人, 名前, 話, こと, 意味. Usually written in 
 kana; と言う with the kanji is the verb "say" in its literal sense. \
 Casual speech says っていう: ポチっていう犬. Search only: という is \
 everywhere in text."""
-related = ["to-iu-koto", "to-iu-no-wa", "tte"]
+related = ["to-iu-koto", "to-iu-no-wa", "tte", "to-iu-hearsay"]
+homographs = ["to-iu-hearsay"]
 examples = [
   { tatoeba = "48271_211000", ja = "その犬はジョン{という}名前です。", en = "The dog answers to the name John." },
   { tatoeba = "58126_220804", ja = "この川は何{という}のですか。", en = "What is the name of this river?" },
@@ -7769,6 +7979,37 @@ examples = [
   { tatoeba = "52905_215603", ja = "ジョーンズさん{という}人が外で待っています。", en = "A Mr Jones is waiting for you outside." },
   { tatoeba = "247399_167103", ja = "私たちのチームが勝った{という}知らせを聴いた。", en = "I heard the news that our team had won." },
 ]
+continues = true
+
+[[point]]
+id = "to-iu-hearsay"
+seq = 942
+pattern = "という"
+forms = []
+jlpt = "N3"
+hover = false
+meaning = "(ending a sentence) they say, reportedly; (someone) says"
+formation = ["Sentence (plain) + という。"]
+explanation = """
+Closes a sentence to pass on what was said or reported, without vouching \
+for it: 昔ここに城があったという, "they say there was a castle here \
+once". With a named speaker it is simply "says": 兄は疲れたという, "my \
+brother says he's tired". Common in writing, news and stories."""
+notes = """
+Written in kana in this use. Speech prefers そうだ or って: 雨が降るそうだ, \
+雨が降るって. The という that goes on to a noun (田中という人, 雨が降るという話) \
+is "called" or "that says"; this one ends the sentence. ということだ is \
+the same hearsay, a little more formal."""
+related = ["to-iu", "sou-da-hearsay", "tte", "to-iu-koto", "to-iwarete-iru"]
+homographs = ["to-iu"]
+examples = [
+  { tatoeba = "315358_88349", ja = "彼女は生活が単調だ{という}。", en = "She says her life is monotonous." },
+  { tatoeba = "250703_163807", ja = "私の兄は暗闇は恐くない{という}。", en = "My brother says he isn't afraid of the dark." },
+  { tatoeba = "319848_83868", ja = "腹が減った{という}。", en = "He said that he was hungry." },
+  { source = "yomeru", id = "y1", ja = "昔、この村には大きな寺があった{という}。", en = "They say there was once a big temple in this village." },
+  { source = "yomeru", id = "y2", ja = "二人はもう別れた{という}。", en = "Reportedly, the two have already broken up." },
+]
+final = true
 
 [[point]]
 id = "to-iu-no-wa"
@@ -9055,6 +9296,7 @@ examples = [
   { source = "yomeru", id = "y4", ja = "仕方ないわ。初めて{ですもの}。", en = "It can't be helped. It's my first time, after all." },
   { source = "yomeru", id = "y5", ja = "もう食べられないよ。おなかがいっぱいな{んだもん}。", en = "I can't eat any more. I'm full, after all." },
 ]
+final = true
 
 [[point]]
 id = "koto-ka"
@@ -10469,7 +10711,7 @@ seq = 364
 pattern = "とする"
 forms = ["とします", "だとする", "だとします"]
 jlpt = "N3"
-meaning = "suppose (that), let's say; (formal) decide, rule that"
+meaning = "suppose (that), let's say; (formal) decide, rule that; claim"
 formation = [
   "Verb / ［い］Adjective + とする   (ある → あるとする)",
   "［な］Adjective / Noun + (だ)とする   (中止とする)",
@@ -10478,7 +10720,9 @@ explanation = """
 Lays down an assumption to reason from, whatever the real facts are: \
 仮に毎日10ページ読むとする, "say you read ten pages a day". とします is \
 common when explaining or setting up a problem: ここに箱が二つあるとします, \
-"suppose there are two boxes here". 仮に or もし often comes first."""
+"suppose there are two boxes here". In news and reports, としている \
+says what someone holds or claims: 会社は問題はないとしている, "the \
+company maintains there's no problem"."""
 notes = """
 In rules and notices, Noun + とする states a decision: 雨の場合は中止とする, \
 "if it rains, it's called off" (in speech, にする). としたら / とすれば \
@@ -10490,8 +10734,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "ここにりんごが三つある{とします}。", en = "Suppose there are three apples here." },
   { source = "yomeru", id = "y2", ja = "明日雨が降る{とする}。どうする？", en = "Let's say it rains tomorrow. What will you do?" },
   { source = "yomeru", id = "y3", ja = "雨の場合、試合は中止{とする}。", en = "In case of rain, the match will be called off." },
-  { source = "yomeru", id = "y4", ja = "百万円もらった{とする}。何を買う？", en = "Say you got a million yen. What would you buy?" },
   { source = "yomeru", id = "y5", ja = "レポートの締め切りは金曜日{とします}。", en = "We'll set Friday as the deadline for the report." },
+  { source = "yomeru", id = "y6", ja = "彼は自分は悪くない{としている}。", en = "He maintains that he did nothing wrong." },
 ]
 
 [[point]]
@@ -10587,6 +10831,7 @@ examples = [
   { source = "yomeru", id = "y3", ja = "兄はボランティア{として}、毎週公園を掃除している。", en = "My brother cleans the park every week as a volunteer." },
   { source = "yomeru", id = "y4", ja = "彼は一日{として}練習を休まなかった。", en = "He didn't skip practice for a single day." },
 ]
+after = ["noun-or-particle"]
 
 [[point]]
 id = "wa-mochiron"
@@ -11969,6 +12214,8 @@ examples = [
   { source = "yomeru", id = "y4", ja = "道で転び{かけた}。", en = "I almost fell over in the street." },
   { source = "yomeru", id = "y5", ja = "ボタンが取れ{かけて}いるよ。", en = "Your button is coming off." },
 ]
+after = ["masu-stem"]
+inside_glosses = ["start to", "start *ing", "begin to", "begin *ing", "about to", "attempt to", "dying", "partway", "half", "unfinished", "in progress", "verge", "brink"]
 
 [[point]]
 id = "kiru"
@@ -11998,6 +12245,7 @@ examples = [
   { tatoeba = "37273_200072", ja = "トムはすっかり疲れ{きって}いた。", en = "Tom was all worn out." },
   { source = "yomeru", id = "y2", ja = "こんなにたくさん、一人では食べ{きれない}。", en = "I can't eat this much all by myself." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "komu"
@@ -12026,6 +12274,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "ここに名前を書き{込んで}ください。", en = "Please write your name in here." },
   { source = "yomeru", id = "y3", ja = "かばんに服を詰め{込んだ}。", en = "I crammed my clothes into the bag." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "au"
@@ -12053,6 +12302,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "子どもたちが雪を投げ{合って}遊んでいる。", en = "The children are playing, throwing snow at each other." },
   { source = "yomeru", id = "y3", ja = "二人は顔を見て笑い{合った}。", en = "The two of them looked at each other and laughed together." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "agaru"
@@ -12080,6 +12330,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "ケーキがきれいに焼き{上がった}。", en = "The cake has finished baking nicely." },
   { source = "yomeru", id = "y2", ja = "猫が驚いて飛び{上がった}。", en = "The cat jumped up in surprise." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "toosu"
@@ -12106,6 +12357,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "彼女は最後まで走り{通した}。", en = "She kept running all the way to the end." },
   { source = "yomeru", id = "y2", ja = "一度決めたことはやり{通す}つもりだ。", en = "Once I decide something, I intend to see it through." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "mawaru"
@@ -12133,6 +12385,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "京都のお寺を見て{回った}。", en = "I went around visiting temples in Kyoto." },
   { source = "yomeru", id = "y2", ja = "鍵を家中探し{回った}。", en = "I searched all over the house for my keys." },
 ]
+after = ["masu-stem", "te-form"]
 
 [[point]]
 id = "kaesu"
@@ -12159,6 +12412,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "メールを送る前に見{返した}。", en = "I looked over the email again before sending it." },
   { source = "yomeru", id = "y3", ja = "押されたので押し{返した}。", en = "He pushed me, so I pushed him back." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "nareru"
@@ -12187,6 +12441,7 @@ examples = [
   { source = "yomeru", id = "y5", ja = "彼女は人前で話し{慣れて}いる。", en = "She's used to speaking in front of people." },
   { source = "yomeru", id = "y6", ja = "通い{慣れた}道だから迷わない。", en = "It's a road I'm used to taking, so I won't get lost." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "yamu"
@@ -12214,6 +12469,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "電話の音が鳴り{やんだ}。", en = "The phone stopped ringing." },
   { source = "yomeru", id = "y3", ja = "子どもがなかなか泣き{やまない}。", en = "The child just won't stop crying." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "tate"
@@ -12350,6 +12606,8 @@ examples = [
   { source = "yomeru", id = "y2", ja = "あの日のことは忘れ{がたい}。", en = "That day is hard to forget." },
   { source = "yomeru", id = "y3", ja = "彼がそんなことを言ったとは考え{がたい}。", en = "It's hard to believe he said such a thing." },
 ]
+after = ["masu-stem"]
+suffix = true
 
 [[point]]
 id = "ppoi"
@@ -12377,6 +12635,8 @@ examples = [
   { tatoeba = "296725_106961", ja = "彼は最近怒り{っぽい}。", en = "He easily gets angry nowadays." },
   { source = "yomeru", id = "y1", ja = "その服、ちょっと大人{っぽい}ね。", en = "That outfit looks a little grown-up." },
 ]
+after = ["noun-or-particle", "masu-stem", "adjective-stem"]
+suffix = true
 
 [[point]]
 id = "darake"
@@ -12429,6 +12689,8 @@ examples = [
   { source = "yomeru", id = "y1", ja = "このスープは甘{み}が足りない。", en = "This soup needs more sweetness." },
   { source = "yomeru", id = "y2", ja = "彼女は悲し{み}を忘れようとした。", en = "She tried to forget her sorrow." },
 ]
+after = ["adjective-stem"]
+suffix = true
 
 [[point]]
 id = "teki"
@@ -12480,6 +12742,8 @@ examples = [
   { tatoeba = "275664_137572", ja = "大{型}車はガソリンを食う。", en = "Large cars use lots of gas." },
   { tatoeba = "58354_221032", ja = "この新{型}自動車はとても人気がある。", en = "This new model of car is so popular." },
 ]
+after = ["noun-or-particle"]
+suffix = true
 
 [[point]]
 id = "doushi"
@@ -12799,6 +13063,7 @@ examples = [
   { source = "yomeru", id = "y4", ja = "冷蔵庫{ありの}部屋がいい。", en = "I'd like a room with a fridge." },
   { source = "yomeru", id = "y5", ja = "明日は雨の可能性{あり}。", en = "Chance of rain tomorrow." },
 ]
+after = ["noun-or-particle"]
 
 [[point]]
 id = "sugata"
@@ -13887,6 +14152,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "この漢字を覚える{には}、何度も書くのがいい。", en = "To learn this kanji, it's best to write it many times." },
   { source = "yomeru", id = "y3", ja = "家を買う{には}、たくさんのお金が必要だ。", en = "To buy a house, you need a lot of money." },
 ]
+after = ["verb-plain"]
 
 [[point]]
 id = "dake-no"
@@ -14548,6 +14814,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "どんな理由がある{にしろ}、暴力はいけない。", en = "Whatever the reason, violence is wrong." },
   { source = "yomeru", id = "y3", ja = "失敗した{にせよ}、いい経験になった。", en = "Even if it failed, it was a good experience." },
 ]
+continues = true
 
 [[point]]
 id = "wa-tomokaku"
@@ -15399,6 +15666,7 @@ examples = [
   { tatoeba = "284303_119360", ja = "彼が来ることは{ありえない}。", en = "There's no possibility of his coming." },
   { source = "yomeru", id = "y1", ja = "考え{得る}方法はすべて試した。", en = "We tried every method we could possibly think of." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "osore-ga-aru"
@@ -15945,7 +16213,7 @@ examples = [
 id = "to-kangaerareru"
 seq = 559
 pattern = "と考えられる"
-forms = ["と考えられます"]
+forms = ["と考えられます", "と考えられている"]
 jlpt = "N2"
 meaning = "it's thought that, it seems likely that (impersonal)"
 formation = ["Clause + と考えられる   (原因は寝不足だと考えられる)"]
@@ -15959,6 +16227,7 @@ notes = """
 speaker forward; と考えられる steps back from it. Its negative \
 考えられない means "unthinkable"."""
 related = ["kangaerarenai", "you-to-omou", "to-iwarete-iru"]
+homographs = ["to-iwarete-iru"]
 examples = [
   { tatoeba = "272168_142402", ja = "昔はずっと寒かった{と考えられる}。", en = "It is thought to have been much colder long ago." },
   { source = "yomeru", id = "y1", ja = "原因は寝不足だ{と考えられる}。", en = "The cause is thought to be lack of sleep." },
@@ -16706,6 +16975,8 @@ examples = [
   { source = "yomeru", id = "y3", ja = "毎日練習し{た結果}、試合に勝てた。", en = "As a result of practicing every day, we won the match." },
   { source = "yomeru", id = "y4", ja = "急い{だ結果}、ミスが増えてしまった。", en = "As a result of rushing, I made more mistakes." },
 ]
+after = ["predicate", "noun-or-particle"]
+no_particle = true
 
 [[point]]
 id = "tochuu-de"
@@ -17546,6 +17817,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "思った{以上に}試験は難しかった。", en = "The exam was harder than I'd thought." },
   { source = "yomeru", id = "y2", ja = "期待{以上の}結果が出た。", en = "We got better results than we'd hoped for." },
 ]
+no_suru = true
 
 [[point]]
 id = "yara"
@@ -17763,7 +18035,7 @@ examples = [
 id = "reru-dake"
 seq = 627
 pattern = "れるだけ"
-forms = ["られるだけ"]
+forms = ["られるだけ", "えるだけ", "けるだけ", "げるだけ", "せるだけ"]
 jlpt = "N2"
 meaning = "as much as (one) can"
 formation = ["Verb［できる］ + だけ + Verb (same verb)   (食べられるだけ食べる)"]
@@ -17784,7 +18056,6 @@ examples = [
   { source = "yomeru", id = "y4", ja = "週末は寝{られるだけ}寝たい。", en = "On the weekend I want to sleep as much as I can." },
   { source = "yomeru", id = "y5", ja = "書{けるだけ}書いてください。", en = "Please write as much as you can." },
 ]
-check = { inflection = ["potential"] }
 
 [[point]]
 id = "ikinari"
@@ -18845,6 +19116,7 @@ examples = [
   { source = "yomeru", id = "y3", ja = "苦しくても最後まで戦い{抜いた}。", en = "Even though it was hard, they fought to the very end." },
   { source = "yomeru", id = "y4", ja = "選び{抜いた}材料を使っています。", en = "We use ingredients chosen with great care." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "tsukusu"
@@ -18872,6 +19144,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "言いたいことは言い{尽くした}。", en = "I've said everything I wanted to say." },
   { source = "yomeru", id = "y3", ja = "彼は親のお金を使い{尽くした}。", en = "He used up all of his parents' money." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "nuki-de"
@@ -18953,6 +19226,8 @@ examples = [
   { source = "yomeru", id = "y3", ja = "カレーを多{めに}作っておいた。", en = "I made a little extra curry, just in case." },
   { source = "yomeru", id = "y4", ja = "このズボンは少し長{め}だ。", en = "These pants are a bit on the long side." },
 ]
+after = ["adjective-stem"]
+suffix = true
 
 [[point]]
 id = "pocchi"
@@ -18979,6 +19254,8 @@ examples = [
   { source = "yomeru", id = "y3", ja = "彼を疑う気持ちはこれっ{ぽっちも}ない。", en = "I don't doubt him one tiny bit." },
   { source = "yomeru", id = "y4", ja = "千円{ぽっち}でそんなに怒るなよ。", en = "Don't get so angry over a measly thousand yen." },
 ]
+after = ["noun-or-demonstrative", "amount"]
+suffix = true
 
 [[point]]
 id = "kokochi"
@@ -19355,6 +19632,7 @@ examples = [
   { tatoeba = "71699_234324", ja = "{あと}１０分で手が空く。", en = "I will be free in ten minutes." },
   { tatoeba = "71693_234318", ja = "{あと}２通手紙を書かなくてはならない。", en = "I have another two letters to write." },
 ]
+no_particle = true
 
 [[point]]
 id = "koto-naku"
@@ -20815,6 +21093,7 @@ examples = [
   { source = "yomeru", id = "y2", ja = "父は家に帰る{なり}、ソファで寝てしまった。", en = "The minute he got home, my father fell asleep on the sofa." },
   { source = "yomeru", id = "y3", ja = "男の子は母親を見る{なり}、わっと泣き出した。", en = "The little boy burst into tears the instant he saw his mother." },
 ]
+after = ["verb-plain"]
 
 [[point]]
 id = "ta-nari"
@@ -21835,6 +22114,8 @@ examples = [
   { source = "yomeru", id = "y3", ja = "彼は冗談{めいた}口調で言ったが、目は真剣だった。", en = "He said it in a half-joking tone, but his eyes were serious." },
   { source = "yomeru", id = "y4", ja = "説教{めいた}ことは言いたくないが…", en = "I don't want to sound preachy, but…" },
 ]
+after = ["noun-or-particle"]
+suffix = true
 
 [[point]]
 id = "biru"
@@ -21887,6 +22168,8 @@ examples = [
   { source = "yomeru", id = "y4", ja = "差し出{がましい}ようですが、一言よろしいですか。", en = "It may be presumptuous of me, but may I say something?" },
   { source = "yomeru", id = "y5", ja = "別れた相手に未練{がましく}電話するな。", en = "Don't keep calling your ex like you can't let go." },
 ]
+after = ["masu-stem", "noun-or-particle"]
+suffix = true
 
 [[point]]
 id = "zukume"
@@ -22096,6 +22379,8 @@ examples = [
   { source = "yomeru", id = "y4", ja = "あの子は本当に憎{ったらしい}ことを言う。", en = "That kid says the most hateful things." },
   { source = "yomeru", id = "y5", ja = "そんな貧乏{ったらしい}格好はやめなさい。", en = "Stop dressing so shabbily." },
 ]
+after = ["adjective-stem", "noun-or-particle"]
+suffix = true
 
 [[point]]
 id = "sokonau"
@@ -22123,6 +22408,7 @@ examples = [
   { tatoeba = "290978_112698", ja = "彼はその手紙に返事を出し{損なった}。", en = "He failed to answer the letter." },
   { source = "yomeru", id = "y1", ja = "会議が長引いて、昼ご飯を食べ{損ねた}。", en = "The meeting ran long and I missed lunch." },
 ]
+after = ["masu-stem"]
 
 [[point]]
 id = "sobireru"
@@ -24495,6 +24781,7 @@ examples = [
   { source = "yomeru", id = "y4", ja = "謝ればすむ{ものを}、彼は言い訳ばかりする。", en = "An apology would settle it, but he just keeps making excuses." },
   { source = "yomeru", id = "y5", ja = "タクシーで行けば間に合った{ものを}。", en = "If only we'd taken a taxi, we'd have made it in time." },
 ]
+final = true
 
 [[point]]
 id = "mono-to-omou"
@@ -26022,6 +26309,7 @@ examples = [
   { source = "yomeru", id = "y4", ja = "彼には本当のことを{言うに言えなかった}。", en = "I wanted to tell him the truth, but I just couldn't." },
   { source = "yomeru", id = "y5", ja = "隣がうるさくて、{寝るに寝られない}。", en = "The neighbors are so loud I can't sleep, try as I might." },
 ]
+after = ["verb-plain"]
 
 [[point]]
 id = "ika-ni"

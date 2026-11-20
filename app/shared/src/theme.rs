@@ -693,6 +693,71 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 }
 .lookup-modes a:hover { color: var(--text); }
 .lookup-modes a.active { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+/* ── Sentence tab ────────────────────────────────────────────────── */
+.sentence-input {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    font-size: 18px;
+    line-height: 1.5;
+}
+.sentence-text {
+    font-size: 22px;
+    line-height: 2.1;
+    margin-bottom: 14px;
+    overflow-wrap: anywhere;
+}
+/* Each word underlined, a hair apart so neighbours read as two. */
+.sentence-word {
+    cursor: pointer;
+    margin: 0 1px;
+    border-radius: 4px;
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+.sentence-word:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.sentence-word.point { text-decoration-color: var(--subtext); }
+.sentence-word.unknown { text-decoration-style: dotted; text-decoration-color: var(--subtext); cursor: default; }
+.sentence-word.marked { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.sentence-word.open { background: var(--accent); color: var(--on-accent); text-decoration-color: var(--on-accent); }
+.sentence-entry { margin: -6px 0 14px; }
+.sentence-entry-actions { gap: 6px; justify-content: flex-end; margin-top: 6px; }
+.sentence-form { font-size: 15px; margin-bottom: 6px; }
+.sentence-how { margin-left: 8px; font-size: 12px; color: var(--accent); }
+.sentence-grammar { margin-bottom: 6px; scroll-margin: 12px; }
+.sentence-grammar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+}
+.sentence-grammar-row:hover { border-color: var(--accent); }
+.sentence-grammar.selected .sentence-grammar-row { border-color: var(--accent); margin-bottom: 6px; }
+.sentence-grammar-text {
+    flex: none;
+    font-size: 15px;
+    padding: 1px 10px;
+    border-radius: 999px;
+    background: var(--surface);
+}
+.sentence-grammar.selected .sentence-grammar-text { background: var(--accent); color: var(--on-accent); }
+.sentence-grammar-points { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.sentence-grammar-point { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.sentence-grammar-point .pattern { font-size: 14px; }
+.sentence-grammar-point .meaning { font-size: 13px; color: var(--subtext); }
+.sentence-grammar-row .grammar-chevron { flex: none; color: var(--subtext); transition: transform 0.15s; }
+.sentence-grammar-row .grammar-chevron.open { transform: rotate(180deg); }
 /* The word being built: one box per kanji. */
 .finder-word {
     display: flex;
@@ -979,9 +1044,18 @@ details.info ul { margin: 6px 0 4px 18px; display: flex; flex-direction: column;
 }
 
 /* ── Grammar results (lookup page) ───────────────────────────────── */
-.grammar-results { margin-top: 18px; }
-.grammar-results:first-child { margin-top: 0; }
-.grammar-card { margin-bottom: 10px; }
+/* Words and grammar interleaved, told apart by colour: blue words,
+   green grammar, on the block's title and each card's left edge. */
+.result-block { margin-top: 18px; }
+.result-block:first-child, .row + .result-block, .hero-search + .result-block { margin-top: 0; }
+.result-block.words > .section-title { color: var(--blue); }
+.result-block.grammar-results > .section-title { color: var(--green); }
+.result-block.words > .card { border-left: 3px solid var(--blue); }
+.grammar-card { margin-bottom: 10px; border-left: 3px solid var(--green); }
+.grammar-card .freq-badge {
+    color: var(--green); border-color: color-mix(in srgb, var(--green) 50%, transparent);
+    background: color-mix(in srgb, var(--green) 12%, transparent);
+}
 .grammar-head.clickable { cursor: pointer; }
 .grammar-title { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .grammar-chevron {

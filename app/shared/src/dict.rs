@@ -15,7 +15,7 @@ use yomeru_core::grammar::{GrammarEntry, Verdict};
 
 pub use yomeru_core::dict::*;
 
-use crate::platform::{Platform, SentenceWord};
+use crate::platform::{Platform, SentenceBreakdown, SentenceWord};
 
 /// Exact lookup of a single headword/reading.
 pub async fn lookup(word: &str) -> Result<Vec<WordEntry>, String> {
@@ -93,6 +93,14 @@ pub async fn sentence_words(sentence: &str) -> Result<Vec<SentenceWord>, String>
     consume_context::<Platform>()
         .dict
         .sentence_words(sentence)
+        .await
+}
+
+/// `sentence` read into its words and their grammar (the Sentence tab).
+pub async fn sentence_breakdown(sentence: &str) -> Result<SentenceBreakdown, String> {
+    consume_context::<Platform>()
+        .dict
+        .sentence_breakdown(sentence)
         .await
 }
 

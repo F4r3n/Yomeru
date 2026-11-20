@@ -12,6 +12,8 @@ kanjidic2
 kanjidic2.xml.gz
 examples.utf
 examples.utf.gz
+mecab-ipadic.tar
+mecab-ipadic*.tar.gz
 
 # Release artifacts
 release/

@@ -4,7 +4,8 @@
 # Behaviour:
 #   - Compile data/grammar.toml into /dicts/grammar.bin (always: it comes
 #     with the image).
-#   - If /dicts already holds the three other .bin files and FORCE != 1, exit
+#   - If /dicts already holds the three other .bin files, in the format
+#     versions this image's readers take, and FORCE != 1, exit
 #     immediately. Lets `depends_on` keep `docker compose up` cheap
 #     after the first run.
 #   - Otherwise: run `cargo xtask build-all` (downloads JMdict_e,
@@ -27,7 +28,25 @@ done
 cd /build
 cargo run --release -p xtask -- build-grammar --output /dicts/grammar.bin
 
+# The format version a reader takes, from its `if version != N {` line,
+# and the one a .bin holds (the byte after its 4-byte magic). A new image
+# whose reader takes another version rebuilds: an old jmdict.bin left in
+# the volume would stop the server from starting.
+wanted() { sed -n 's/.*if version != \([0-9]*\) {.*/\1/p' "$1" | head -n 1; }
+held() { od -An -tu1 -j4 -N1 "$1" 2>/dev/null | tr -d ' '; }
+current=1
+for pair in jmdict.bin:crates/jmdict-core/src/dictionary.rs \
+    examples.bin:crates/examples-core/src/lib.rs; do
+    bin=/dicts/${pair%%:*}
+    want=$(wanted "${pair#*:}")
+    if [ -s "$bin" ] && [ -n "$want" ] && [ "$(held "$bin")" != "$want" ]; then
+        echo "yomeru-dicts: $bin is format $(held "$bin"), this image reads $want; rebuilding."
+        current=0
+    fi
+done
+
 if [ "${FORCE:-0}" != "1" ] \
+    && [ "$current" = 1 ] \
     && [ -s /dicts/jmdict.bin ] \
     && [ -s /dicts/kanjidic.bin ] \
     && [ -s /dicts/examples.bin ]; then

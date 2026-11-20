@@ -83,14 +83,22 @@ impl Deinflector {
     /// The forms of `text`, itself first, then each new form in the order
     /// found (least transformed first).
     pub fn run(&mut self, text: &str) -> impl Iterator<Item = &str> + '_ {
-        self.walk::<false>(text);
+        self.walk::<false>(text, None);
+        self.forms.iter().map(|&(s, e, _)| slice(&self.buf, s, e))
+    }
+
+    /// The forms of [`Deinflector::run`] reached without ever applying a
+    /// rule for `reason`: with [`Reason::SuruStem`], 以上にしろ gives
+    /// 以上にする but not 以上に. A form another path reaches is kept.
+    pub fn run_without(&mut self, text: &str, reason: Reason) -> impl Iterator<Item = &str> + '_ {
+        self.walk::<false>(text, Some(reason));
         self.forms.iter().map(|&(s, e, _)| slice(&self.buf, s, e))
     }
 
     /// The forms of [`Deinflector::run`], in the same order, each with its
     /// reasons.
     pub fn run_with_reasons(&mut self, text: &str) -> impl Iterator<Item = (&str, Reasons)> + '_ {
-        self.walk::<true>(text);
+        self.walk::<true>(text, None);
         self.merge_paths();
         self.forms
             .iter()
@@ -102,7 +110,8 @@ impl Deinflector {
     /// dropped. With it, a form found again by a path that adds reasons is
     /// kept and expanded as well (its own forms carry those reasons too);
     /// [`Deinflector::merge_paths`] then folds the copies into the first.
-    fn walk<const REASONS: bool>(&mut self, text: &str) {
+    /// Rules for `skip` are never applied.
+    fn walk<const REASONS: bool>(&mut self, text: &str, skip: Option<Reason>) {
         self.buf.clear();
         self.forms.clear();
         self.reasons.clear();
@@ -129,12 +138,24 @@ impl Deinflector {
                 let Some(rule) = RULES.get(usize::from(r)) else {
                     continue;
                 };
-                let Some(stem_len) = slice(&self.buf, start, end)
-                    .strip_suffix(rule.suffix_in)
-                    .map(str::len)
-                else {
+                if skip.is_some_and(|reason| rule.reasons.contains(reason)) {
+                    continue;
+                }
+                // An adjective's く (高く → 高い) only as written: a rule's
+                // く is a godan verb's (かける → かく, not 書く → かい).
+                if depth > 0 && rule.reasons.contains(Reason::Adverbial) {
+                    continue;
+                }
+                let Some(stem) = slice(&self.buf, start, end).strip_suffix(rule.suffix_in) else {
                     continue;
                 };
+                if rule
+                    .after
+                    .is_some_and(|after| !stem.chars().next_back().is_some_and(after))
+                {
+                    continue;
+                }
+                let stem_len = stem.len();
                 // Write the new form at the end of the buffer, and take it
                 // back off if it's too short or already known.
                 let new_start = self.buf.len();
@@ -221,6 +242,58 @@ mod tests {
 
     fn forms(text: &str) -> Vec<String> {
         deinflect(text).into_iter().map(|d| d.text).collect()
+    }
+
+    #[test]
+    fn a_verb_ending_in_teru_isnt_spoken_teiru() {
+        // す and あ end no て-form: すてる and あてる are verbs.
+        for w in ["すてる", "あてる", "すてた"] {
+            let f = forms(w);
+            assert!(
+                !f.contains(&"する".to_owned()) && !f.contains(&"ある".to_owned()),
+                "{w}: {f:?}"
+            );
+        }
+        // A polite spoken form of a passive still reaches the verb.
+        assert!(forms("書かれてました").contains(&"書く".to_owned()));
+    }
+
+    #[test]
+    fn the_classical_imperative_yo_follows_an_ichidan_stem() {
+        assert!(forms("見よ").contains(&"見る".to_owned()));
+        assert!(forms("食べよ").contains(&"食べる".to_owned()));
+        // ですよ is です + よ, not でする's.
+        assert!(!forms("ですよ").contains(&"でする".to_owned()));
+    }
+
+    #[test]
+    fn spoken_teiru_reads_back_to_the_verb() {
+        for (text, verb) in [
+            ("走ってる", "走る"),
+            ("見てた", "見る"),
+            ("泳いでる", "泳ぐ"),
+            ("読んでます", "読む"),
+            ("通ってる", "通る"),
+        ] {
+            assert!(
+                forms(text).iter().any(|f| f == verb),
+                "{text}: {:?}",
+                forms(text)
+            );
+        }
+    }
+
+    #[test]
+    fn a_run_without_a_reason_never_applies_its_rules() {
+        let mut d = Deinflector::default();
+        let all: Vec<String> = d.run("勉強しろ").map(str::to_owned).collect();
+        assert!(all.iter().any(|f| f == "勉強"), "{all:?}");
+        let without: Vec<String> = d
+            .run_without("勉強しろ", Reason::SuruStem)
+            .map(str::to_owned)
+            .collect();
+        assert!(without.iter().any(|f| f == "勉強する"), "{without:?}");
+        assert!(!without.iter().any(|f| f == "勉強"), "{without:?}");
     }
 
     #[test]
@@ -490,6 +563,16 @@ mod tests {
     }
 
     #[test]
+    fn an_adjectives_ku_only_as_written() {
+        assert!(forms("高く").contains(&"高い".to_owned()));
+        assert!(forms("食べたく").contains(&"食べる".to_owned()));
+        let kakeru = forms("かける");
+        assert!(kakeru.contains(&"かく".to_owned()));
+        assert!(!kakeru.contains(&"かい".to_owned()), "{kakeru:?}");
+        assert!(!forms("だけます").contains(&"だい".to_owned()));
+    }
+
+    #[test]
     fn kuru_verb() {
         assert!(forms("来なかった").contains(&"来る".to_owned()));
     }
@@ -513,9 +596,18 @@ mod tests {
                 continue;
             }
             for rule in RULES {
+                if depth > 0 && rule.reasons.contains(Reason::Adverbial) {
+                    continue;
+                }
                 let Some(stem) = candidate.strip_suffix(rule.suffix_in) else {
                     continue;
                 };
+                if rule
+                    .after
+                    .is_some_and(|after| !stem.chars().next_back().is_some_and(after))
+                {
+                    continue;
+                }
                 let new_text = format!("{}{}", stem, rule.suffix_out);
                 let n = new_text.chars().count();
                 if n < 1 || (input_char_count > 2 && n < 2) || seen.contains(&new_text) {

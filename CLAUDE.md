@@ -17,6 +17,10 @@ cargo xtask build-dict --input JMdict_e
 # Download JMdict_e.gz from EDRDG and decompress (skips if already present)
 cargo xtask download-dict
 
+# Download IPADIC (word costs for the segmenter, put on JMdict's spellings by
+# jmdict-build --ipadic; build-dict fetches it itself)
+cargo xtask download-ipadic
+
 # Run tests for all host crates (excludes WASM crates which require wasm-pack)
 cargo xtask test
 

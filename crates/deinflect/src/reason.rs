@@ -56,10 +56,15 @@ pub enum Reason {
     Nominalization,
     /// する taken off a suru noun (勉強する → 勉強).
     SuruStem,
+    /// The ます-stem standing alone (知りつつ, 食べに行く). No rule of this
+    /// crate gives it, as any word ending in an i-row kana would then
+    /// read as a verb; the sentence lattice (jmdict-core) tries it where
+    /// a verb is likely.
+    MasuStem,
 }
 
 impl Reason {
-    pub const ALL: [Reason; 27] = [
+    pub const ALL: [Reason; 28] = [
         Self::Negative,
         Self::Past,
         Self::Polite,
@@ -87,7 +92,48 @@ impl Reason {
         Self::Adverbial,
         Self::Nominalization,
         Self::SuruStem,
+        Self::MasuStem,
     ];
+
+    /// The reason's name in data files, kebab-case: `te-form`,
+    /// `adverbial`, `masu-stem`.
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Negative => "negative",
+            Self::Past => "past",
+            Self::Polite => "polite",
+            Self::TeForm => "te-form",
+            Self::Conditional => "conditional",
+            Self::Tara => "tara",
+            Self::Tari => "tari",
+            Self::Passive => "passive",
+            Self::Potential => "potential",
+            Self::Causative => "causative",
+            Self::Imperative => "imperative",
+            Self::Volitional => "volitional",
+            Self::Desiderative => "desiderative",
+            Self::Progressive => "progressive",
+            Self::Completion => "completion",
+            Self::TryDoing => "try-doing",
+            Self::TeOku => "te-oku",
+            Self::TeAru => "te-aru",
+            Self::TeKuru => "te-kuru",
+            Self::TeIku => "te-iku",
+            Self::TeHoshii => "te-hoshii",
+            Self::Nasai => "nasai",
+            Self::Literary => "literary",
+            Self::WithoutDoing => "without-doing",
+            Self::Adverbial => "adverbial",
+            Self::Nominalization => "nominalization",
+            Self::SuruStem => "suru-stem",
+            Self::MasuStem => "masu-stem",
+        }
+    }
+
+    /// The reason named `name` ([`Reason::name`]).
+    pub fn from_name(name: &str) -> Option<Reason> {
+        Self::ALL.into_iter().find(|r| r.name() == name)
+    }
 
     const fn bit(self) -> u32 {
         1 << self as u8
@@ -150,6 +196,14 @@ mod tests {
         for (i, r) in Reason::ALL.iter().enumerate() {
             assert_eq!(*r as usize, i, "{r:?}");
         }
+    }
+
+    #[test]
+    fn names_read_back() {
+        for r in Reason::ALL {
+            assert_eq!(Reason::from_name(r.name()), Some(r));
+        }
+        assert_eq!(Reason::from_name("nope"), None);
     }
 
     #[test]

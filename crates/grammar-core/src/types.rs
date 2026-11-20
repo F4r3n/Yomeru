@@ -35,7 +35,80 @@ pub struct GrammarEntry {
     pub hover: bool,
     /// How a production answer is checked for this point.
     pub check: AnswerCheck,
+    /// Deinflection reasons ([`deinflect::Reason::name`]) a word carries
+    /// when it shows this point: `adverbial` for the く adverb (速く). For
+    /// the sentence breakdown only; the answer check reads `check`.
+    #[serde(default)]
+    pub reads: Vec<String>,
+    /// What the point attaches to ([`AFTER_KINDS`]): the sentence
+    /// breakdown finds it only after one of them (に行く after a ます-stem
+    /// or a する noun, not 学校に行く). Empty: after anything.
+    #[serde(default)]
+    pub after: Vec<String>,
+    /// The point ends a sentence (the の of 行くの？): the breakdown finds
+    /// it only before the end, punctuation or a sentence-ending particle
+    /// (よ, ね), not before the は of 行くのは.
+    #[serde(default)]
+    pub ends: bool,
+    /// The point never ends a sentence (the にしろ of 雨にしろ、…): the
+    /// breakdown skips it where [`Self::ends`] points are found, and
+    /// にしろ at the end reads as にする's command.
+    #[serde(default)]
+    pub continues: bool,
+    /// The point's final に or と is never before する or なる (以上に,
+    /// "more than"; ないと, "must"): there it is にする's, になる's or
+    /// とする's, and 以上にしろ reads as 以上 + にする, いないとして as a
+    /// quote + とする.
+    #[serde(default)]
+    pub no_suru: bool,
+    /// The point's final と is never before a verb of saying or thinking
+    /// (言う, 思う): there it quotes (いいと言う), and the conditional と
+    /// isn't found.
+    #[serde(default)]
+    pub no_quote: bool,
+    /// The point ends a clause and is never before a particle (の結果、…):
+    /// before が, を, は… it is the noun of its spelling (試験の結果が出た).
+    #[serde(default)]
+    pub no_particle: bool,
+    /// The point also ends a word the dictionary lists whole (新型, 痛み,
+    /// 三回目): the breakdown finds it inside a word, ending it, when its
+    /// [`Self::after`] (which it needs) fits the rest of the word.
+    #[serde(default)]
+    pub suffix: bool,
+    /// The point also opens a word the dictionary lists whole (各国,
+    /// 真っ暗): the breakdown finds it at a word's start, ending inside
+    /// it, when the rest is a word or an adjective's stem.
+    #[serde(default)]
+    pub prefix: bool,
+    /// Inside a word the dictionary lists whole (食べかける, 出かける),
+    /// the breakdown finds the point only when a gloss of the word's
+    /// first sense holds one of these (`start *ing`: `*` stands for a word):
+    /// 食べかける "to start eating" is かける "half-done", 出かける "to go
+    /// out" isn't. Empty: anywhere.
+    #[serde(default)]
+    pub inside_glosses: Vec<String>,
 }
+
+/// The kinds of word `after` can name: `verb-plain` (a verb in its
+/// dictionary form: 走る, 電話する), `masu-stem` (食べ, 遊び), `suru-noun`
+/// (散歩, 勉強), `amount` (a number, with or without its counter: 三十分,
+/// 100, 五つ), `noun-or-demonstrative` (東京, この), `noun-or-particle`
+/// (私, 由利さん, から), `predicate` (a verb, adjective or ending,
+/// conjugated or not: 行くの, 高いの, 行ったのか; a form starting with な
+/// also after a noun or な-adjective: 休みなの), `adjective-stem` (寒,
+/// 欲し, 嫌, 行きた: what がる follows), `te-form` (a verb's て-form: 見て
+/// of 見て回る).
+pub const AFTER_KINDS: [&str; 9] = [
+    "verb-plain",
+    "masu-stem",
+    "suru-noun",
+    "amount",
+    "noun-or-demonstrative",
+    "noun-or-particle",
+    "predicate",
+    "adjective-stem",
+    "te-form",
+];
 
 /// How a production review checks that the typed answer uses the point.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -74,6 +147,19 @@ impl Inflection {
         Self::Volitional,
         Self::Imperative,
     ];
+
+    /// The deinflection reasons a verb in this form carries, all of them.
+    pub fn reasons(self) -> deinflect::Reasons {
+        use deinflect::{Reason, Reasons};
+        match self {
+            Self::Passive => Reasons::of(&[Reason::Passive]),
+            Self::Potential => Reasons::of(&[Reason::Potential]),
+            Self::Causative => Reasons::of(&[Reason::Causative]),
+            Self::CausativePassive => Reasons::of(&[Reason::Causative, Reason::Passive]),
+            Self::Volitional => Reasons::of(&[Reason::Volitional]),
+            Self::Imperative => Reasons::of(&[Reason::Imperative]),
+        }
+    }
 
     /// The name `grammar.toml` uses.
     pub fn as_str(self) -> &'static str {
@@ -162,6 +248,16 @@ pub fn parse_marked(ja: &str) -> Option<Rich> {
 }
 
 impl GrammarEntry {
+    /// [`Self::reads`] as reasons, all together.
+    pub fn read_reasons(&self) -> deinflect::Reasons {
+        self.reads
+            .iter()
+            .filter_map(|n| deinflect::Reason::from_name(n))
+            .fold(deinflect::Reasons::EMPTY, |acc, r| {
+                acc.union(deinflect::Reasons::of(&[r]))
+            })
+    }
+
     /// Every spelling the entry is found by: the pattern, then its forms.
     pub fn keys(&self) -> impl Iterator<Item = &str> {
         std::iter::once(self.pattern.as_str()).chain(self.forms.iter().map(String::as_str))

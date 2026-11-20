@@ -5,6 +5,8 @@ pub struct Rule {
     pub suffix_out: &'static str,
     /// What the suffix means: 食べなかった → 食べる is negative and past.
     pub reasons: Reasons,
+    /// What the char before the suffix must be, when not anything.
+    pub after: Option<fn(char) -> bool>,
 }
 
 macro_rules! rule {
@@ -13,8 +15,43 @@ macro_rules! rule {
             suffix_in: $in,
             suffix_out: $out,
             reasons: Reasons::of(&[$(Reason::$reason),+]),
+            after: None,
         }
     };
+}
+
+/// [`rule!`] for a suffix only after a char `$after` accepts.
+macro_rules! rule_after {
+    ($after:expr, $in:expr, $out:expr, $($reason:ident),+) => {
+        Rule {
+            suffix_in: $in,
+            suffix_out: $out,
+            reasons: Reasons::of(&[$(Reason::$reason),+]),
+            after: Some($after),
+        }
+    };
+}
+
+/// What a て-form's て follows: っ (走って), an ichidan stem's e- or i-row
+/// kana or kanji (食べて, 起きて, 見て), the い and し of godan く and す
+/// (書いて, 話して, both i-row). Not す or あ: すてる and あてる are verbs.
+fn before_te(c: char) -> bool {
+    c == 'っ' || "いきぎしじちぢにひびぴみりえけげせぜてでねへべぺめれ".contains(c) || is_kanji(c)
+}
+
+/// What an ichidan stem ends on: an e- or i-row kana, or a kanji (見よ,
+/// 食べよ; not す of ですよ).
+fn ichidan_stem_end(c: char) -> bool {
+    "いきぎしじちぢにひびぴみりえけげせぜてでねへべぺめれ".contains(c) || is_kanji(c)
+}
+
+/// What a で-form's で follows: ん (読んで), い (泳いで).
+fn before_de(c: char) -> bool {
+    matches!(c, 'ん' | 'い')
+}
+
+fn is_kanji(c: char) -> bool {
+    matches!(c, '\u{4e00}'..='\u{9fff}' | '\u{3400}'..='\u{4dbf}' | '々')
 }
 
 pub static RULES: &[Rule] = &[
@@ -48,7 +85,7 @@ pub static RULES: &[Rule] = &[
     rule!("させた", "る", Causative, Past),
     rule!("させられる", "る", Causative, Passive),
     rule!("ろ", "る", Imperative),
-    rule!("よ", "る", Imperative),
+    rule_after!(ichidan_stem_end, "よ", "る", Imperative),
     rule!("よう", "る", Volitional),
     // ましょう → ます, then the polite rules of every verb class.
     rule!("ましょう", "ます", Volitional),
@@ -57,6 +94,8 @@ pub static RULES: &[Rule] = &[
     rule!("たくない", "る", Desiderative, Negative),
     rule!("ている", "る", Progressive),
     rule!("ていた", "る", Progressive, Past),
+    rule!("ています", "る", Progressive, Polite),
+    rule!("ていました", "る", Progressive, Polite, Past),
     rule!("ていて", "る", Progressive, TeForm),
     rule!("ていない", "る", Progressive, Negative),
     rule!("ていなかった", "る", Progressive, Negative, Past),
@@ -270,6 +309,17 @@ pub static RULES: &[Rule] = &[
     rule!("んでいた", "ぬ", Progressive, Past),
     rule!("んでいた", "ぶ", Progressive, Past),
     rule!("んでいた", "む", Progressive, Past),
+    // Spoken ている without its い (走ってる, 見てた, 泳いでます): back to
+    // the full form, which the rules above take on.
+    // Only after a て-form's stem: すてる and あてる are verbs of their own.
+    rule_after!(before_te, "てる", "ている", Progressive),
+    rule_after!(before_te, "てた", "ていた", Progressive),
+    rule_after!(before_te, "てます", "ています", Progressive),
+    rule_after!(before_te, "てました", "ていました", Progressive),
+    rule_after!(before_de, "でる", "でいる", Progressive),
+    rule_after!(before_de, "でた", "でいた", Progressive),
+    rule_after!(before_de, "でます", "でいます", Progressive),
+    rule_after!(before_de, "でました", "でいました", Progressive),
     // ていく in kana: 行った's own rules are kanji-only (いった is as often
     // 言った), but after て it is いく.
     rule!("ていった", "ていく", Past),

@@ -32,6 +32,14 @@ pub fn grammar() -> Option<&'static GrammarDict> {
     GRAMMAR.get()
 }
 
+static ANALYZER: OnceLock<sentence_core::Analyzer<'static>> = OnceLock::new();
+
+/// The sentence analyzer over [`grammar`], built on first use.
+pub fn analyzer() -> Option<&'static sentence_core::Analyzer<'static>> {
+    let dict = grammar()?;
+    Some(ANALYZER.get_or_init(|| sentence_core::Analyzer::new(dict)))
+}
+
 /// Loads `grammar.bin` bytes; a second call keeps the first dictionary.
 pub fn init_grammar_from_bytes(bytes: &[u8]) -> Result<()> {
     let dict = GrammarDict::from_bytes(bytes).context("init grammar")?;

@@ -19,4 +19,4 @@ pub use answer::{Verdict, Vocabulary};
 pub use compile::{Compiled, compile};
 pub use dict::{GrammarDict, HOVER_MIN_CHARS};
 pub use format::FORMAT_VERSION;
-pub use types::{AnswerCheck, Example, GrammarEntry, Inflection, Related, Rich, Span};
+pub use types::{AFTER_KINDS, AnswerCheck, Example, GrammarEntry, Inflection, Related, Rich, Span};

@@ -1,0 +1,22 @@
+[package]
+name = "sentence-core"
+version = "0.24.1"
+license.workspace = true
+edition = "2024"
+
+# A sentence's breakdown: its words (jmdict-core's lattice) and the grammar
+# points they make up (grammar-core).
+[dependencies]
+jmdict-core    = { path = "../jmdict-core" }
+grammar-core   = { path = "../grammar-core" }
+deinflect      = { path = "../deinflect" }
+japanese-utils = { path = "../japanese-utils" }
+
+[dev-dependencies]
+grammar-core = { path = "../grammar-core", features = ["build", "jmdict"] }
+jmdict-core  = { path = "../jmdict-core", features = ["test-utils"] }
+# Tests read a `full` jmdict.bin (see jmdict-core/tests/real_dict.rs).
+jmdict-types = { path = "../jmdict-types", features = ["full"] }
+
+[lints]
+workspace = true

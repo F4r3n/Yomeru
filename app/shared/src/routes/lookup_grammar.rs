@@ -19,16 +19,20 @@ const PREVIEW_EXAMPLES: usize = 2;
 /// Other spellings listed before "+N".
 const FORMS_SHOWN: usize = 6;
 
-/// The Grammar section: `entries` as cards. `on_search` searches a pattern
-/// a card links to.
+/// A grammar section titled `title`: `entries` as cards. `on_search`
+/// searches a pattern a card links to.
 #[component]
-pub fn GrammarResults(entries: Vec<GrammarEntry>, on_search: EventHandler<String>) -> Element {
+pub fn GrammarResults(
+    title: String,
+    entries: Vec<GrammarEntry>,
+    on_search: EventHandler<String>,
+) -> Element {
     if entries.is_empty() {
         return rsx! { Fragment {} };
     }
     rsx! {
-        div { class: "grammar-results",
-            div { class: "section-title", "Grammar" }
+        div { class: "result-block grammar-results",
+            div { class: "section-title", "{title}" }
             for entry in entries {
                 GrammarEntryCard { key: "{entry.id}", entry, on_search }
             }
@@ -36,8 +40,9 @@ pub fn GrammarResults(entries: Vec<GrammarEntry>, on_search: EventHandler<String
     }
 }
 
+/// One point's card, closed at first (also the Sentence tab's).
 #[component]
-fn GrammarEntryCard(entry: GrammarEntry, on_search: EventHandler<String>) -> Element {
+pub fn GrammarEntryCard(entry: GrammarEntry, on_search: EventHandler<String>) -> Element {
     let mut open = use_signal(|| false);
     let is_open = *open.read();
     let shown_examples = if is_open {
@@ -158,7 +163,9 @@ fn bee_search_url(pattern: &str) -> String {
 /// state, which the production card's follows on Add, promote and reset.
 /// The recognition card among a point's cards, the one its button shows.
 fn recognition(cards: Vec<SrsCard>) -> Option<SrsCard> {
-    cards.into_iter().find(|c| c.direction == CardDirection::Recognition)
+    cards
+        .into_iter()
+        .find(|c| c.direction == CardDirection::Recognition)
 }
 
 #[component]

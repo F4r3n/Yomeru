@@ -70,8 +70,91 @@ fn build_test_binary() -> Vec<u8> {
             "to write",
         ),
         make_entry(12, "喫茶店", "きっさてん", vec![PartOfSpeech::Noun], "café"),
+        // For the lattice (`segment`): が|ある, where the longest match
+        // reads the interjection があ and leaves る over; は|ない, which the
+        // ichidan rule ない → る would read as 張る conjugated.
+        make_entry(13, "", "が", vec![PartOfSpeech::Particle], "subject marker"),
+        make_entry(14, "", "があ", vec![PartOfSpeech::Interjection], "caw"),
+        make_entry(
+            15,
+            "有る",
+            "ある",
+            vec![PartOfSpeech::VerbGodanRuIrr],
+            "to be",
+        ),
+        make_entry(16, "", "は", vec![PartOfSpeech::Particle], "topic marker"),
+        make_entry(
+            17,
+            "張る",
+            "はる",
+            vec![PartOfSpeech::VerbGodanRu],
+            "to stretch",
+        ),
+        make_entry(
+            18,
+            "",
+            "ない",
+            vec![PartOfSpeech::AuxiliaryAdjective],
+            "not",
+        ),
+        // Verb forms only the lattice reads (知り, 泣かん), and a noun
+        // taking する, which is no godan verb (破滅).
+        make_entry(
+            19,
+            "知る",
+            "しる",
+            vec![PartOfSpeech::VerbGodanRu],
+            "to know",
+        ),
+        make_entry(20, "", "つつ", vec![PartOfSpeech::Particle], "while"),
+        make_entry(
+            21,
+            "泣く",
+            "なく",
+            vec![PartOfSpeech::VerbGodanKu],
+            "to cry",
+        ),
+        make_entry(
+            22,
+            "破滅",
+            "はめつ",
+            vec![PartOfSpeech::Noun, PartOfSpeech::VerbSuru],
+            "ruin",
+        ),
+        // A conjugated verb's stem (言われ, of 言われる) and a godan
+        // imperative spelled like a potential's stem (止まれ).
+        make_entry(23, "言う", "いう", vec![PartOfSpeech::VerbGodanU], "to say"),
+        make_entry(
+            24,
+            "止まる",
+            "とまる",
+            vec![PartOfSpeech::VerbGodanRu],
+            "to stop",
+        ),
+        // A later sense in kana: a field's term (the Noh シテ of 仕手), and
+        // an everyday one.
+        with_kana_sense(
+            make_entry(25, "仕手", "して", vec![PartOfSpeech::Noun], "doer"),
+            true,
+        ),
+        with_kana_sense(
+            make_entry(26, "其処", "そこ", vec![PartOfSpeech::Noun], "there"),
+            false,
+        ),
     ];
     build_binary(&entries)
+}
+
+/// `e` with a second sense marked usually kana, a Noh term if `noh`.
+fn with_kana_sense(mut e: jmdict_types::WordEntry, noh: bool) -> jmdict_types::WordEntry {
+    use jmdict_types::{Field, Misc, Sense};
+    e.senses.push(Sense {
+        pos: vec![PartOfSpeech::Noun],
+        misc: vec![Misc::UsuallyKana],
+        fields: if noh { vec![Field::Noh] } else { vec![] },
+        ..Sense::default()
+    });
+    e
 }
 
 // ── lookup (exact) ────────────────────────────────────────────────────────────
@@ -532,4 +615,99 @@ fn a_sentence_is_read_into_its_words() {
         ]
     );
     assert!(crate::vocab::sentence_words("").is_empty());
+}
+
+// ── segment ───────────────────────────────────────────────────────────────────
+
+fn split(sentence: &str) -> Vec<String> {
+    crate::segment::segment(sentence)
+        .into_iter()
+        .map(|w| sentence.chars().skip(w.start).take(w.len).collect())
+        .collect()
+}
+
+#[test]
+fn the_lattice_reads_two_words_over_a_word_and_a_leftover() {
+    ensure_test_dict();
+    // The longest match takes があ, and る is no word.
+    assert_eq!(lookup_longest_match("がある", 20).map(|(_, n)| n), Some(2));
+    assert_eq!(split("本がある"), ["本", "が", "ある"]);
+}
+
+#[test]
+fn a_field_terms_kana_isnt_the_words() {
+    ensure_test_dict();
+    let costs = crate::segment::Costs::default();
+    let noun = |text: &str| {
+        crate::segment::candidates_at(text, 0, &costs)
+            .into_iter()
+            .find(|&(len, class, _, _)| len == 2 && class == crate::segment::Class::Noun)
+            .map(|(_, _, cost, _)| cost)
+            .unwrap()
+    };
+    // して is 仕手 in kana, whose kana sense is Noh's: it pays for it;
+    // そこ, usually kana in everyday writing, doesn't.
+    assert_eq!(noun("して") - noun("そこ"), costs.kana_for_kanji);
+}
+
+#[test]
+fn a_godan_verb_conjugates_only_in_its_row() {
+    ensure_test_dict();
+    // ない → る makes はない a form of はる (張る), but 張る's negative is
+    // はらない.
+    assert_eq!(split("本はない"), ["本", "は", "ない"]);
+    assert_eq!(split("本をはらない"), ["本", "を", "はらない"]);
+}
+
+#[test]
+fn a_word_carries_its_base_and_conjugation() {
+    ensure_test_dict();
+    let words = crate::segment::segment("日本で書いた");
+    let last = words.last().unwrap();
+    assert_eq!(last.base, "書く");
+    assert!(last.reasons.contains(deinflect::Reason::Past));
+    assert_eq!(last.entry.unwrap().sequence.to_native(), 11);
+    // で isn't a word here: it comes out as text no entry covers.
+    assert_eq!(split("日本で書いた"), ["日本", "で", "書いた"]);
+    assert!(words[1].entry.is_none());
+    assert!(crate::segment::segment("").is_empty());
+}
+
+#[test]
+fn the_lattice_reads_a_bare_masu_stem_and_the_negative_n() {
+    ensure_test_dict();
+    assert_eq!(split("知りつつ"), ["知り", "つつ"]);
+    let words = crate::segment::segment("知りつつ泣かん");
+    assert_eq!(words[0].base, "知る");
+    assert!(words[0].reasons.contains(deinflect::Reason::MasuStem));
+    assert_eq!(words[2].base, "泣く");
+    assert!(words[2].reasons.contains(deinflect::Reason::Negative));
+}
+
+#[test]
+fn a_noun_taking_suru_isnt_a_godan_verb() {
+    ensure_test_dict();
+    // った → つ would make はめった 破滅 (はめつ) conjugated.
+    let words = crate::segment::segment("はめった");
+    assert!(
+        words
+            .iter()
+            .all(|w| w.entry.is_none_or(|e| e.sequence.to_native() != 22)),
+        "{:?}",
+        words.iter().map(|w| &w.base).collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn a_conjugated_verbs_stem_reads_back_to_the_verb() {
+    ensure_test_dict();
+    let words = crate::segment::segment("言われ");
+    assert_eq!(words[0].base, "言う");
+    assert!(words[0].reasons.contains(deinflect::Reason::Passive));
+    assert!(words[0].reasons.contains(deinflect::Reason::MasuStem));
+    // The plain reading comes first: 止まれ is an imperative.
+    let words = crate::segment::segment("止まれ");
+    assert_eq!(words[0].base, "止まる");
+    assert!(words[0].reasons.contains(deinflect::Reason::Imperative));
+    assert!(!words[0].reasons.contains(deinflect::Reason::MasuStem));
 }
