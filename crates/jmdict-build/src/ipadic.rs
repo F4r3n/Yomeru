@@ -17,6 +17,7 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use anyhow::{Context, Result, bail};
+use jmdict_build::parser::ReadingScope;
 use jmdict_types::{PartOfSpeech, WordCost, WordEntry};
 
 /// The parts of speech whose costs the segmenter can take (IPADIC's pos1):
@@ -198,20 +199,30 @@ impl Costs {
 
     /// Puts a cost on every spelling of `entries` IPADIC has; returns how
     /// many spellings got one, and how many there are.
-    pub fn apply(&self, entries: &mut [WordEntry]) -> (usize, usize) {
+    ///
+    /// `scopes` are the entries' readings' ([`parse_jmdict_scoped`]): a
+    /// kanji spelling takes the costs of its own readings only.
+    ///
+    /// [`parse_jmdict_scoped`]: jmdict_build::parser::parse_jmdict_scoped
+    pub fn apply(&self, entries: &mut [WordEntry], scopes: &[Vec<ReadingScope>]) -> (usize, usize) {
         let (mut found, mut all) = (0, 0);
-        for e in entries {
-            let readings: Vec<(String, &jmdict_types::ReadingElement)> = e
+        let all_kanji = ReadingScope::default();
+        for (i, e) in entries.iter_mut().enumerate() {
+            let readings: Vec<(String, &ReadingScope)> = e
                 .reading_forms
                 .iter()
-                .map(|r| (hiragana(&r.text), r))
+                .enumerate()
+                .map(|(j, r)| {
+                    let scope = scopes.get(i).and_then(|s| s.get(j)).unwrap_or(&all_kanji);
+                    (hiragana(&r.text), scope)
+                })
                 .collect();
             let mut kanji_costs = Vec::with_capacity(e.kanji_forms.len());
             for k in &e.kanji_forms {
                 // The readings this spelling has.
                 let own: Vec<String> = readings
                     .iter()
-                    .filter(|(_, r)| reads(r, &k.text))
+                    .filter(|(_, scope)| scope.reads(&k.text))
                     .map(|(h, _)| h.clone())
                     .collect();
                 kanji_costs.push(self.of(e, &k.text, &own));
@@ -236,20 +247,32 @@ impl Costs {
     }
 }
 
-/// Whether `r` is a reading of the kanji spelling `kanji`.
-#[cfg(feature = "full")]
-fn reads(r: &jmdict_types::ReadingElement, kanji: &str) -> bool {
-    !r.no_kanji && (r.restricted_to.is_empty() || r.restricted_to.iter().any(|k| k == kanji))
-}
-
-#[cfg(not(feature = "full"))]
-fn reads(_: &jmdict_types::ReadingElement, _: &str) -> bool {
-    true
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_spelling_takes_only_its_own_readings_cost() {
+        let xml = r#"<JMdict><entry>
+<ent_seq>1</ent_seq>
+<k_ele><keb>上手</keb></k_ele>
+<k_ele><keb>上衆</keb></k_ele>
+<r_ele><reb>じょうず</reb></r_ele>
+<r_ele><reb>じょうしゅ</reb><re_restr>上衆</re_restr></r_ele>
+<sense><pos>&n;</pos><gloss>skill</gloss></sense>
+</entry></JMdict>"#
+            .as_bytes();
+        let (mut entries, scopes) = jmdict_build::parser::parse_jmdict_bytes_scoped(xml).unwrap();
+        // IPADIC's 上手 read じょうしゅ, and 上衆 read so: only 上衆 is.
+        let row = || vec![("じょうしゅ".to_owned(), Kind::Noun, -500)];
+        let costs = Costs(HashMap::from([
+            ("上手".to_owned(), row()),
+            ("上衆".to_owned(), row()),
+        ]));
+        costs.apply(&mut entries, &scopes);
+        assert_eq!(entries[0].kanji_forms[0].word_cost, None);
+        assert_eq!(entries[0].kanji_forms[1].word_cost, Some(-500));
+    }
 
     #[test]
     fn katakana_reads_as_hiragana() {

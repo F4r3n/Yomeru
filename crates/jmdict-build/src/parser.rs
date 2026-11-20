@@ -6,17 +6,48 @@ use std::io::Cursor;
 use std::path::Path;
 
 pub fn parse_jmdict(path: &Path) -> Result<Vec<WordEntry>> {
+    Ok(parse_jmdict_scoped(path)?.0)
+}
+
+/// Which kanji spellings a reading is read on: `re_nokanji` and
+/// `re_restr`, kept at build time whatever the `full` feature (the shipped
+/// [`ReadingElement`] has them only under it).
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct ReadingScope {
+    /// A reading of no kanji spelling (the kana word only).
+    pub no_kanji: bool,
+    /// The kanji spellings it is read on; empty for all.
+    pub restricted_to: Vec<String>,
+}
+
+impl ReadingScope {
+    /// Whether this reading is one of the kanji spelling `kanji`.
+    pub fn reads(&self, kanji: &str) -> bool {
+        !self.no_kanji
+            && (self.restricted_to.is_empty() || self.restricted_to.iter().any(|k| k == kanji))
+    }
+}
+
+/// [`parse_jmdict`], with each entry's [`ReadingScope`]s, one per reading
+/// form, in the entries' order.
+pub fn parse_jmdict_scoped(path: &Path) -> Result<(Vec<WordEntry>, Vec<Vec<ReadingScope>>)> {
     let raw = std::fs::read(path).with_context(|| format!("Failed to open {:?}", path))?;
-    parse_jmdict_bytes(&raw)
+    parse_jmdict_bytes_scoped(&raw)
 }
 
 pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
+    Ok(parse_jmdict_bytes_scoped(raw)?.0)
+}
+
+/// [`parse_jmdict_bytes`], with the readings' scopes ([`parse_jmdict_scoped`]).
+pub fn parse_jmdict_bytes_scoped(raw: &[u8]) -> Result<(Vec<WordEntry>, Vec<Vec<ReadingScope>>)> {
     let preprocessed = strip_custom_entities(raw);
 
     let mut reader = Reader::from_reader(Cursor::new(preprocessed));
     reader.config_mut().trim_text(true);
 
     let mut entries = Vec::new();
+    let mut scopes = Vec::new();
     let mut buf = Vec::new();
     let mut b: EntryBuilder = EntryBuilder::default();
     let mut in_entry = false;
@@ -62,6 +93,7 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                 b"r_ele" if in_entry => ctx = Ctx::ReadingElement,
                 b"reb" if in_entry => ctx = Ctx::ReB,
                 b"re_nokanji" if in_entry => {
+                    b.current_scope.no_kanji = true;
                     #[cfg(feature = "full")]
                     if let Some(r) = b.current_reading.as_mut() {
                         r.no_kanji = true;
@@ -126,6 +158,7 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                             reading_forms: b.reading_forms.clone(),
                             senses: b.senses.clone(),
                         });
+                        scopes.push(std::mem::take(&mut b.scopes));
                     }
                 }
                 b"k_ele" => {
@@ -137,6 +170,7 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                 b"r_ele" => {
                     if let Some(r) = b.current_reading.take() {
                         b.reading_forms.push(r);
+                        b.scopes.push(std::mem::take(&mut b.current_scope));
                     }
                     ctx = Ctx::Root;
                 }
@@ -189,9 +223,11 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                     }
                     Ctx::ReB => {
                         b.current_reading = Some(ReadingElement::from_reading(text));
+                        b.current_scope = ReadingScope::default();
                     }
-                    #[cfg(feature = "full")]
                     Ctx::ReRestr => {
+                        b.current_scope.restricted_to.push(text.into());
+                        #[cfg(feature = "full")]
                         if let Some(r) = &mut b.current_reading {
                             r.restricted_to.push(text.into());
                         }
@@ -283,6 +319,7 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
 
             // Flush pending elements on End events
             Event::Empty(e) if in_entry && e.name().as_ref() == b"re_nokanji" => {
+                b.current_scope.no_kanji = true;
                 #[cfg(feature = "full")]
                 if let Some(r) = b.current_reading.as_mut() {
                     r.no_kanji = true;
@@ -296,7 +333,7 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
         buf.clear();
     }
 
-    Ok(entries)
+    Ok((entries, scopes))
 }
 
 fn strip_entity_markers(s: &str) -> &str {
@@ -364,6 +401,9 @@ struct EntryBuilder {
     senses: Vec<Sense>,
     current_kanji: Option<KanjiElement>,
     current_reading: Option<ReadingElement>,
+    /// One per pushed reading form, and the current one's.
+    scopes: Vec<ReadingScope>,
+    current_scope: ReadingScope,
     current_sense_has_explicit_pos: bool,
     pending_lang: String,
     #[cfg(feature = "full")]
@@ -495,6 +535,31 @@ mod tests {
         assert!(s.contains("&#x6587;"));
         // A lone `&` without a closing `;` is emitted verbatim.
         assert!(s.contains("bare & end"));
+    }
+
+    #[test]
+    fn keeps_each_readings_scope_whatever_the_features() {
+        let xml = r#"<JMdict>
+<entry><ent_seq>1</ent_seq><r_ele><reb>x</reb><re_restr>X</re_restr></r_ele></entry>
+<entry>
+<ent_seq>2</ent_seq>
+<k_ele><keb>上手</keb></k_ele>
+<k_ele><keb>上衆</keb></k_ele>
+<r_ele><reb>じょうず</reb></r_ele>
+<r_ele><reb>じょうしゅ</reb><re_restr>上衆</re_restr></r_ele>
+<r_ele><reb>ジョーズ</reb><re_nokanji/></r_ele>
+<sense><pos>&n;</pos><gloss>skill</gloss></sense>
+</entry>
+</JMdict>"#
+            .as_bytes();
+        let (entries, scopes) = parse_jmdict_bytes_scoped(xml).unwrap();
+        // The entry with no senses is dropped, its scopes with it.
+        assert_eq!(entries.len(), 1);
+        assert_eq!(scopes.len(), 1);
+        let reads = |r: usize, k: &str| scopes[0][r].reads(k);
+        assert!(reads(0, "上手") && reads(0, "上衆"));
+        assert!(!reads(1, "上手") && reads(1, "上衆"));
+        assert!(!reads(2, "上手") && !reads(2, "上衆"));
     }
 
     #[test]

@@ -47,12 +47,12 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     eprintln!("Parsing JMdict XML from {:?}...", args.input);
-    let mut entries = parser::parse_jmdict(&args.input)?;
+    let (mut entries, scopes) = parser::parse_jmdict_scoped(&args.input)?;
     eprintln!("Parsed {} entries.", entries.len());
 
     if let Some(path) = &args.ipadic {
         eprintln!("Reading IPADIC word costs from {path:?}...");
-        let (found, all) = ipadic::load(path)?.apply(&mut entries);
+        let (found, all) = ipadic::load(path)?.apply(&mut entries, &scopes);
         eprintln!("Word costs on {found} of {all} spellings.");
     }
 
