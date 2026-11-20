@@ -61,6 +61,15 @@ pub struct GrammarEntry {
     /// quote + とする.
     #[serde(default)]
     pub no_suru: bool,
+    /// The point's final と is never before a verb of saying or thinking
+    /// (言う, 思う): there it quotes (いいと言う), and the conditional と
+    /// isn't found.
+    #[serde(default)]
+    pub no_quote: bool,
+    /// The point ends a clause and is never before a particle (の結果、…):
+    /// before が, を, は… it is the noun of its spelling (試験の結果が出た).
+    #[serde(default)]
+    pub no_particle: bool,
     /// The point also ends a word the dictionary lists whole (新型, 痛み,
     /// 三回目): the breakdown finds it inside a word, ending it, when its
     /// [`Self::after`] (which it needs) fits the rest of the word.

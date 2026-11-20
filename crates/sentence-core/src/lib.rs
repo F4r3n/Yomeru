@@ -406,6 +406,42 @@ impl<'a> Analyzer<'a> {
                                 && ["にする", "になる", "とする", "となる"]
                                     .contains(&w.base.as_str()))
                     });
+                // A と before a verb of saying or thinking quotes.
+                let before_quote = e.no_quote
+                    && end > 0
+                    && text.chars.get(end - 1) == Some(&'と')
+                    && words.iter().any(|w| {
+                        w.start == end
+                            && [
+                                "言う",
+                                "いう",
+                                "云う",
+                                "思う",
+                                "おもう",
+                                "考える",
+                                "答える",
+                                "叫ぶ",
+                                "書く",
+                                "聞く",
+                                "信じる",
+                                "感じる",
+                                "述べる",
+                                "話す",
+                                "伝える",
+                                "申す",
+                                "申し上げる",
+                            ]
+                            .contains(&w.base.as_str())
+                    });
+                // A clause-ending point before a particle is the noun it
+                // spells: 試験の結果が出た.
+                let before_particle = e.no_particle
+                    && words.iter().any(|w| {
+                        w.start == end
+                            && w.class == Class::Particle
+                            && ["が", "を", "は", "も", "に", "の", "と", "で", "へ", "まで"]
+                                .contains(&w.base.as_str())
+                    });
                 let matched = text.slice(start, end).unwrap_or_default();
                 let affix = if inside {
                     (e.suffix && !e.after.is_empty() && text.word_end(end)) || from_tail(len)
@@ -423,6 +459,8 @@ impl<'a> Analyzer<'a> {
                         && e.keys().any(|k| k == matched)))
                     && !(e.continues && ends_here(&text.chars, words, end, false))
                     && !before_suru
+                    && !before_quote
+                    && !before_particle
                     && !kanji_inside_word(e, matched);
                 // A point that names what it comes after isn't found
                 // elsewhere: then the text's other forms of that length are
@@ -617,7 +655,8 @@ fn reads_form(words: &[Word], i: usize, reasons: Reasons) -> Option<usize> {
     // 得なくなる, 容易になる are "become …", not "…ly".
     // なり of 得なくなり is a word of its own, but なる's stem too.
     let becomes = |j: usize, at: usize| {
-        let verb = |base: &str| ["なる", "成る", "為る", "する"].contains(&base);
+        // 見える too: 元気に見える "looks well" is に見える.
+        let verb = |base: &str| ["なる", "成る", "為る", "する", "見える"].contains(&base);
         words.get(j).is_some_and(|v| {
             v.start == at
                 && (verb(&v.base)
@@ -644,7 +683,15 @@ fn reads_form(words: &[Word], i: usize, reasons: Reasons) -> Option<usize> {
                         .any(|e| segment::classes(e).contains(&Class::NaAdjective))))
     };
     if only(Reason::Adverbial) {
+        // An adverb of its own (まったく, 全く) isn't an adjective's form,
+        // though its head spells one (全い); one that is a noun too (多く,
+        // 遠く) is.
+        let adverb_only = w.entry.is_some_and(|e| {
+            let c = segment::classes(e);
+            c.contains(&Class::Adverb) && !c.contains(&Class::Noun)
+        });
         if w.reasons.is_empty()
+            && !adverb_only
             && let Some(head) = w.base.strip_suffix('く')
             && head_is(head, "く")
         {

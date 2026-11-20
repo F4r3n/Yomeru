@@ -148,7 +148,7 @@ def validate(points):
         after = p.get("after", [])
         if not isinstance(after, list) or not set(after) <= AFTER:
             errors.append(f"{name}: after is a list of {sorted(AFTER)}")
-        for flag in ("final", "continues", "no_suru", "suffix", "prefix"):
+        for flag in ("final", "continues", "no_suru", "no_quote", "no_particle", "suffix", "prefix"):
             if not isinstance(p.get(flag, False), bool):
                 errors.append(f"{name}: {flag} is true or false")
         if p.get("suffix") and not p.get("after"):

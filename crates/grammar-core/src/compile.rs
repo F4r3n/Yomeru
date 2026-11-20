@@ -59,6 +59,13 @@ struct Point {
     /// breakdown.
     #[serde(default)]
     no_suru: bool,
+    /// Whether the point's と never quotes, for the sentence breakdown.
+    #[serde(default)]
+    no_quote: bool,
+    /// Whether the point is never before a particle, for the sentence
+    /// breakdown.
+    #[serde(default)]
+    no_particle: bool,
     /// Whether the point also ends a word, for the sentence breakdown.
     #[serde(default)]
     suffix: bool,
@@ -328,6 +335,8 @@ pub fn compile(toml_text: &str) -> anyhow::Result<Compiled> {
             ends: p.ends,
             continues: p.continues,
             no_suru: p.no_suru,
+            no_quote: p.no_quote,
+            no_particle: p.no_particle,
             suffix: p.suffix,
             prefix: p.prefix,
         });

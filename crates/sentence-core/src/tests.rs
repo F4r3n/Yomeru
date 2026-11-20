@@ -65,10 +65,12 @@ fn dict() -> &'static GrammarDict {
             word(49, "家を出る", "いえをでる", vec![P::Expression, P::VerbIchidan], "to leave home"),
             word(50, "泣く", "なく", vec![P::VerbGodanKu], "to cry"),
             word(51, "出す", "だす", vec![P::VerbGodanSu], "to take out"),
+            word(52, "言う", "いう", vec![P::VerbGodanU], "to say"),
+            word(53, "結果", "けっか", vec![P::Noun], "result"),
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 31\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+            "next_seq = 33\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -157,6 +159,8 @@ fn dict() -> &'static GrammarDict {
             point("kaku", 28, "各", "{各}国。", "prefix = true"),
             point("wo-particle", 29, "を", "本{を}食べる。", ""),
             point("dasu", 30, "出す", "泣き{出す}。", "after = [\"masu-stem\"]"),
+            point("to-conditional", 31, "と", "雨が降る{と}寒い。", "after = [\"predicate\"]\nno_quote = true"),
+            point("kekka", 32, "結果", "雨の{結果}、出た。", "no_particle = true"),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
     })
@@ -509,4 +513,26 @@ fn a_stem_point_isnt_its_verb_on_its_own() {
     // 出す after a noun and its を is the verb, not 泣き|出す's.
     assert!(!has("本を出す"));
     assert!(!has("本を出した"));
+}
+
+#[test]
+fn a_quoting_to_isnt_the_conditional() {
+    let has = |sentence: &str| {
+        grammar(sentence)
+            .iter()
+            .any(|(_, ids, _)| ids.contains(&"to-conditional".to_owned()))
+    };
+    assert!(has("いいと出た"));
+    assert!(!has("いいと言う"));
+}
+
+#[test]
+fn a_clause_point_before_a_particle_is_its_noun() {
+    let has = |sentence: &str| {
+        grammar(sentence)
+            .iter()
+            .any(|(_, ids, _)| ids.contains(&"kekka".to_owned()))
+    };
+    assert!(has("本の結果、出た"));
+    assert!(!has("本の結果が出た"));
 }

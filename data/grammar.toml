@@ -71,6 +71,12 @@
 #                before する or なる (以上に "more than", ないと "must");
 #                there the breakdown reads it as にする's or とする's
 #                (80%以上{にしろ}, いないとして). After `after`
+#   no_quote     optional, true: the point's final と never comes before a
+#                verb of saying or thinking (言う, 思う, 考える); there it
+#                quotes (いい{と}言う). After `no_suru`
+#   no_particle  optional, true: the point ends a clause and never comes
+#                before a particle (が, を, は, も, に, の…); there it is
+#                the plain noun it spells (試験の結果が出た). After `after`
 #   suffix       optional, true: the point also ends a word the dictionary
 #                lists whole (新{型}, 痛{み}, 三回{目}); the breakdown finds
 #                it inside a word, ending it, when its `after` (required)
@@ -3552,6 +3558,7 @@ examples = [
   { source = "yomeru", id = "y4", ja = "右に曲がる{と}、駅が見えます。", en = "Turn right and you'll see the station." },
 ]
 after = ["predicate"]
+no_quote = true
 
 [[point]]
 id = "nara"
@@ -16950,6 +16957,8 @@ examples = [
   { source = "yomeru", id = "y3", ja = "毎日練習し{た結果}、試合に勝てた。", en = "As a result of practicing every day, we won the match." },
   { source = "yomeru", id = "y4", ja = "急い{だ結果}、ミスが増えてしまった。", en = "As a result of rushing, I made more mistakes." },
 ]
+after = ["predicate", "noun-or-particle"]
+no_particle = true
 
 [[point]]
 id = "tochuu-de"
