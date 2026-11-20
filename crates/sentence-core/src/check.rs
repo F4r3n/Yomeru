@@ -7,11 +7,16 @@
 //! 方 "way of doing"), a verb form on a verb (not a command form in
 //! 話しかける). It misses a few points the plain search finds, so that
 //! search still accepts an answer for a point of three chars or more
-//! that is a pattern rather than a verb form, where it rarely errs.
+//! that is a pattern rather than a verb form, where it rarely errs; and
+//! for any point it finds within a phrase JMdict lists whole (暇なとき,
+//! 楽しみに待つ), which the breakdown keeps as one word, or within a
+//! longer point the breakdown shows instead (こと of ことです).
 
 use grammar_core::{AnswerCheck, GrammarEntry, Related, Verdict, Vocabulary};
 
-use crate::Analyzer;
+use jmdict_core::segment::{self, Class};
+
+use crate::{Analyzer, MatchKind};
 
 /// The shortest pattern, in chars (less its `〜`), the plain search alone
 /// accepts.
@@ -34,15 +39,53 @@ impl Analyzer<'_> {
             return Verdict::SelfGraded;
         }
         let answer: String = answer.chars().filter(|c| !c.is_whitespace()).collect();
-        let found = self.analyze(&answer).grammar;
+        let breakdown = self.analyze(&answer);
+        let found = &breakdown.grammar;
         let found_ids = || {
             found
                 .iter()
                 .flat_map(|m| m.entries.iter().map(|e| e.id.as_str()))
         };
+        let chars: Vec<char> = answer.chars().collect();
+        let text =
+            |start: usize, len: usize| -> String { chars.iter().skip(start).take(len).collect() };
+        // Where the plain search is trusted for any point: a phrase kept
+        // as one word, a longer point's text.
+        let holders: Vec<String> = breakdown
+            .words
+            .iter()
+            .filter(|w| {
+                w.len >= 2
+                    && w.entry
+                        .is_some_and(|e| segment::classes(e).contains(&Class::Expression))
+            })
+            .map(|w| text(w.start, w.len))
+            .chain(
+                found
+                    .iter()
+                    .filter(|m| m.kind != MatchKind::Slots)
+                    .map(|m| text(m.start, m.len)),
+            )
+            .collect();
+        // A suffix or prefix point (型 of 大型車) in any word holding it.
+        let words: Vec<String> = breakdown
+            .words
+            .iter()
+            .filter(|w| w.len >= 2)
+            .map(|w| text(w.start, w.len))
+            .collect();
+        let held = |e: &GrammarEntry| {
+            let affix = e.suffix || e.prefix;
+            e.keys().filter(|k| !k.contains('〜')).any(|k| {
+                holders
+                    .iter()
+                    .chain(words.iter().filter(|_| affix))
+                    .any(|h| h.len() > k.len() && h.contains(k))
+            })
+        };
         let uses = |e: &GrammarEntry| {
             found_ids().any(|f| f == e.id)
-                || (plain_trusted(e)
+                || ((plain_trusted(e) || held(e))
                     && dict.check_answer(&e.id, &answer, vocab) == Verdict::Accepted)
         };
         if uses(&entry) {

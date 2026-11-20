@@ -89,8 +89,9 @@ pub struct GrammarEntry {
 /// (私, 由利さん, から), `predicate` (a verb, adjective or ending,
 /// conjugated or not: 行くの, 高いの, 行ったのか; a form starting with な
 /// also after a noun or な-adjective: 休みなの), `adjective-stem` (寒,
-/// 欲し, 嫌, 行きた: what がる follows).
-pub const AFTER_KINDS: [&str; 8] = [
+/// 欲し, 嫌, 行きた: what がる follows), `te-form` (a verb's て-form: 見て
+/// of 見て回る).
+pub const AFTER_KINDS: [&str; 9] = [
     "verb-plain",
     "masu-stem",
     "suru-noun",
@@ -99,6 +100,7 @@ pub const AFTER_KINDS: [&str; 8] = [
     "noun-or-particle",
     "predicate",
     "adjective-stem",
+    "te-form",
 ];
 
 /// How a production review checks that the typed answer uses the point.

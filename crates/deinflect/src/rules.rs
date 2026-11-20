@@ -39,6 +39,12 @@ fn before_te(c: char) -> bool {
     c == 'っ' || "いきぎしじちぢにひびぴみりえけげせぜてでねへべぺめれ".contains(c) || is_kanji(c)
 }
 
+/// What an ichidan stem ends on: an e- or i-row kana, or a kanji (見よ,
+/// 食べよ; not す of ですよ).
+fn ichidan_stem_end(c: char) -> bool {
+    "いきぎしじちぢにひびぴみりえけげせぜてでねへべぺめれ".contains(c) || is_kanji(c)
+}
+
 /// What a で-form's で follows: ん (読んで), い (泳いで).
 fn before_de(c: char) -> bool {
     matches!(c, 'ん' | 'い')
@@ -79,7 +85,7 @@ pub static RULES: &[Rule] = &[
     rule!("させた", "る", Causative, Past),
     rule!("させられる", "る", Causative, Passive),
     rule!("ろ", "る", Imperative),
-    rule!("よ", "る", Imperative),
+    rule_after!(ichidan_stem_end, "よ", "る", Imperative),
     rule!("よう", "る", Volitional),
     // ましょう → ます, then the polite rules of every verb class.
     rule!("ましょう", "ます", Volitional),

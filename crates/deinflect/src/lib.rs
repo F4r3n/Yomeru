@@ -254,6 +254,14 @@ mod tests {
     }
 
     #[test]
+    fn the_classical_imperative_yo_follows_an_ichidan_stem() {
+        assert!(forms("見よ").contains(&"見る".to_owned()));
+        assert!(forms("食べよ").contains(&"食べる".to_owned()));
+        // ですよ is です + よ, not でする's.
+        assert!(!forms("ですよ").contains(&"でする".to_owned()));
+    }
+
+    #[test]
     fn spoken_teiru_reads_back_to_the_verb() {
         for (text, verb) in [
             ("走ってる", "走る"),

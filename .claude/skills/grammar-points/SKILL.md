@@ -265,7 +265,7 @@ a Read first, and the file is thousands of lines. Instead:
   `noun-or-particle` (私{の}, から{の}), `predicate` (a verb or adjective,
   conjugated or not: 行く{の}？, 高い{の}; a form starting with な also
   after a noun: 休み{なの}), `adjective-stem` (寒{がる}, 嫌{がる},
-  行きた{がる}). Last.
+  行きた{がる}), `te-form` (見て{回る}). Last.
 - **final**: `final = true` for a point that ends a sentence (行く{の}？):
   the breakdown then skips it before more of the sentence (行くのは),
   and finds it only as written, never conjugated (といって isn't it).

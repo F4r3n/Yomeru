@@ -57,7 +57,8 @@
 #                noun-or-demonstrative (東京, この), noun-or-particle
 #                (私, 由利さん, から), predicate (行く, 行った, 高い;
 #                a form starting with な also after a noun: 休み{なの}),
-#                adjective-stem (寒, 欲し, 嫌, 行きた: 寒{がる}).
+#                adjective-stem (寒, 欲し, 嫌, 行きた: 寒{がる}),
+#                te-form (見て: 見て{回る}).
 #                after = ["masu-stem", "suru-noun"] keeps
 #                に行く off 学校に行く. Only for a point that misfires; last
 #   final        optional, true: the point ends a sentence (行く{の}？),
@@ -6697,6 +6698,8 @@ examples = [
   { source = "yomeru", id = "y2", ja = "二つ{目}の駅で降りてください。", en = "Please get off at the second station." },
   { source = "yomeru", id = "y3", ja = "今日は旅行の三日{目}です。", en = "Today is the third day of the trip." },
 ]
+after = ["amount"]
+suffix = true
 
 [[point]]
 id = "ma-prefix"
@@ -6752,6 +6755,8 @@ examples = [
   { source = "yomeru", id = "y3", ja = "洋{風}の家に住みたいです。", en = "I want to live in a Western-style house." },
   { source = "yomeru", id = "y4", ja = "彼はいつもあんな{ふうに}話すの？", en = "Does he always talk like that?" },
 ]
+after = ["noun-or-demonstrative"]
+suffix = true
 
 [[point]]
 id = "ka-suru"
@@ -12374,7 +12379,7 @@ examples = [
   { source = "yomeru", id = "y1", ja = "京都のお寺を見て{回った}。", en = "I went around visiting temples in Kyoto." },
   { source = "yomeru", id = "y2", ja = "鍵を家中探し{回った}。", en = "I searched all over the house for my keys." },
 ]
-after = ["masu-stem"]
+after = ["masu-stem", "te-form"]
 
 [[point]]
 id = "kaesu"
@@ -22104,6 +22109,8 @@ examples = [
   { source = "yomeru", id = "y3", ja = "彼は冗談{めいた}口調で言ったが、目は真剣だった。", en = "He said it in a half-joking tone, but his eyes were serious." },
   { source = "yomeru", id = "y4", ja = "説教{めいた}ことは言いたくないが…", en = "I don't want to sound preachy, but…" },
 ]
+after = ["noun-or-particle"]
+suffix = true
 
 [[point]]
 id = "biru"

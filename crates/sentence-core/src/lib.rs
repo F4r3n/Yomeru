@@ -607,7 +607,13 @@ impl<'a> Analyzer<'a> {
                 .matches_at_where(rest, MAX_PATTERN_CHARS, keep)
                 .into_iter()
                 .find(|&(_, len)| fits_text(len))
-                .filter(|&(_, len)| len >= refused.get());
+                // But a whole word: に of 日本に行きます once に行く is out.
+                // (a point that names no `after` of its own).
+                .filter(|(entries, len)| {
+                    *len >= refused.get()
+                        || (entries.iter().all(|e| e.after.is_empty())
+                            && words.iter().any(|w| w.start == start && w.len == *len))
+                });
             if let Some((mut entries, len)) = best {
                 // A homograph comes along in its partner's group: だから
                 // is kara-reason's spelling, not kara-from's.
@@ -1067,8 +1073,9 @@ impl Head<'_> {
             // A noun (東京のような, 雪のように), a name in katakana, or
             // この, その, あの, どの (このような).
             (Head::Word(w, _, _, _), "noun-or-demonstrative") => {
+                // こんな, そんな too (こんな風に).
                 matches!(w.class, Class::Noun | Class::Suffix | Class::Unknown)
-                    || (w.class == Class::Prenominal && w.base.ends_with('の'))
+                    || (w.class == Class::Prenominal && w.base.ends_with(['の', 'な']))
             }
             (Head::Digits, "noun-or-demonstrative" | "noun-or-particle") => true,
             // A noun (私の), a suffix (由利さんの), a name in katakana, or
@@ -1145,6 +1152,7 @@ impl Head<'_> {
                         && w.class != Class::Particle
                         && !segment::masu_stem_verbs(t).is_empty())
             }
+            (Head::Word(w, _, _, _), "te-form") => w.reasons.contains(Reason::TeForm),
             (Head::Word(w, _, _, _), "suru-noun") => {
                 w.reasons.is_empty() && w.entry.is_some_and(segment::takes_suru)
             }
@@ -1292,6 +1300,18 @@ impl<'s> Text<'s> {
                 if let Some(slot) = starts.get_mut(p) {
                     *slot = true;
                 }
+            }
+        }
+        // ですか, ますよ… are words of their own, but a point ends on their
+        // です or ます (お待ちですか).
+        for w in words {
+            let text: String = chars.iter().skip(w.start).take(w.len).collect();
+            if w.len == 3
+                && (text.starts_with("です") || text.starts_with("ます"))
+                && text.ends_with(['か', 'よ', 'ね'])
+                && let Some(slot) = edge.get_mut(w.start + 2)
+            {
+                *slot = true;
             }
         }
         let soft = soft_edges(&chars, words, n);

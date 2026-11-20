@@ -76,11 +76,13 @@ fn dict() -> &'static GrammarDict {
             word(61, "何", "なに", vec![P::Pronoun], "what"),
             word(62, "人", "にん", vec![P::Counter], "people"),
             word(63, "", "か", vec![P::Particle], "question"),
+            word(64, "見る", "みる", vec![P::VerbIchidan], "to see"),
+            word(65, "回る", "まわる", vec![P::VerbGodanRu], "to go around"),
             word(57, "貝", "かい", vec![P::Noun], "shellfish"),
         ]))
         .unwrap();
         let toml = format!(
-            "next_seq = 37\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
+            "next_seq = 38\n{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}",
             point("te-mo-ii", 1, "てもいい", "食べ{てもいい}。", ""),
             point("tachi", 2, "ら", "彼{ら}。", ""),
             point("shika-nai", 3, "しか〜ない", "本{しか食べない}。", ""),
@@ -175,6 +177,7 @@ fn dict() -> &'static GrammarDict {
             point("kai-dai", 34, "かい", "本{かい}。", ""),
             point("ari", 35, "あり", "本{あり}。", ""),
             point("nan-counter-ka", 36, "何〜か", "{何人か}来た。", ""),
+            point("mawaru", 37, "回る", "見て{回る}。", "after = [\"masu-stem\", \"te-form\"]"),
         );
         GrammarDict::from_bytes(&grammar_core::compile(&toml).unwrap().bytes).unwrap()
     })
@@ -626,4 +629,12 @@ fn the_answer_check_names_the_points_the_breakdown_finds() {
         v => panic!("{v:?}"),
     }
     assert_eq!(check("da", "本を"), Verdict::NotFound);
+}
+
+#[test]
+fn a_te_form_head_is_te_form() {
+    // 見て回る: 回る after a て-form, not alone.
+    let has = |s: &str| ids(s).contains(&"mawaru".to_owned());
+    assert!(has("本を見て回った"));
+    assert!(!has("本が回った"));
 }

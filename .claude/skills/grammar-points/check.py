@@ -54,7 +54,7 @@ INFLECTIONS = {"passive", "potential", "causative", "causative-passive", "voliti
 
 # The kinds of word `after = [...]` can name (grammar-core's `AFTER_KINDS`).
 AFTER = {"verb-plain", "masu-stem", "suru-noun", "amount", "noun-or-demonstrative",
-         "noun-or-particle", "predicate", "adjective-stem"}
+         "noun-or-particle", "predicate", "adjective-stem", "te-form"}
 
 # The reasons `reads = [...]` can name (deinflect's `Reason::name`).
 READS = {
