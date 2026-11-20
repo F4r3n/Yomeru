@@ -18029,7 +18029,7 @@ examples = [
 id = "reru-dake"
 seq = 627
 pattern = "れるだけ"
-forms = ["られるだけ"]
+forms = ["られるだけ", "えるだけ", "けるだけ", "げるだけ", "せるだけ"]
 jlpt = "N2"
 meaning = "as much as (one) can"
 formation = ["Verb［できる］ + だけ + Verb (same verb)   (食べられるだけ食べる)"]
@@ -18050,7 +18050,6 @@ examples = [
   { source = "yomeru", id = "y4", ja = "週末は寝{られるだけ}寝たい。", en = "On the weekend I want to sleep as much as I can." },
   { source = "yomeru", id = "y5", ja = "書{けるだけ}書いてください。", en = "Please write as much as you can." },
 ]
-check = { inflection = ["potential"] }
 
 [[point]]
 id = "ikinari"

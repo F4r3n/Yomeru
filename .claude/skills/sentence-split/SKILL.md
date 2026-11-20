@@ -134,10 +134,11 @@ Grammar (`sentence-core`, `data/grammar.toml`):
 
 ## Last scores
 
-2026-11-20, with IPADIC's word costs and `phrase` 700: segmentation F1
-89.2, boundaries 95.2, right entry 97.7%, exact 58.5%; conventions aside F1
-96.3, boundaries 98.3, exact 85.1%; grammar exact 88.9%, conventions aside
-97.0% (overlap 0.2, missed 2.8), other matches 2.74 per sentence. Precision
+2026-11-20, with IPADIC's word costs and `phrase` 700, after the
+てくれた fix: segmentation F1 89.3, boundaries 95.2, right entry 97.7%,
+exact 58.9%; conventions aside F1 96.3, boundaries 98.3, exact 85.1%;
+grammar exact 89.0%, conventions aside 97.2% (overlap 0.1, missed 2.7),
+other matches 2.76 per sentence. Precision
 of all shown points, judged by hand on 100 random corpus sentences: ~88%
 (45 wrong of 390), ~96% after the fixes of 2026-11-20 (about 15 of 372). Always take a fresh baseline: these move with every change.
 
@@ -219,11 +220,23 @@ Done 2026-11-20 (fresh 30: plain-search accepts 44 → 37, 14 wrong gone,
    になると.
 
 Still to do:
-4. **3+ char patterns inside other words.** ものではない read as
+4. **Done (2026-11-20).** 3+ char patterns inside other words: ものではない read as
    ものだから / もの "because", としている as として, をもて遊ぶ as をもって,
-   ませんでした as んだった / たった: require the plain match to start and
-   end on breakdown word edges (as the longer-point rule does).
-5. **Breakdown errors** (12, also in the Sentence tab): 時 of ８時 as とき
+   ませんでした as んだった / たった. `check.rs` `on_edges` with
+   `GrammarDict::key_spans`: not cut short by a longer point found from
+   the same char, ending on a word edge (or 1 char into the next word,
+   2 into a function word, or inside the word it starts), starting on
+   one unless after a stem (not on a verb's ん). Both edges strictly
+   lost 52 own examples (ていった, うれしそうだった, おかげだった).
+   Fresh 30: plain-only accepts 37 → 26 (the 11 removed all wrong); 200
+   tuning sentences 249 → 223; own examples 4681 (lost やらせてくれますか:
+   a causative point covers せてくれます).
+5. **Breakdown errors**, partly done: てくれた no longer 来る's
+   potential (`segment::conjugates`), reru-dake no longer on every
+   potential (its check is its pattern now). Still open: 時 of ８時 as
+   toki, 出かける / 見かける / 話しかける as kakeru (JMdict's glosses
+   tell the half-done ones: "start to", "about to"), は私が as は〜が.
+   Was (12, also in the Sentence tab): 時 of ８時 as とき
    (after a number: `after`?), potential + reru-dake offered with passive
    on られた and on てくれた (くれる read as 来る's potential), 出かける as
    かける "half-done", ぐるりと / と言われた as と "and", は私が as

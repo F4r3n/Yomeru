@@ -81,6 +81,9 @@ fn dict() -> &'static GrammarDict {
             word(66, "", "もう", vec![P::Adverb], "already"),
             word(67, "", "も", vec![P::Particle], "also"),
             word(57, "貝", "かい", vec![P::Noun], "shellfish"),
+            word(68, "与える", "あたえる", vec![P::VerbIchidan], "to give"),
+            word(69, "呉れる", "くれる", vec![P::VerbIchidan], "to give me"),
+            word(70, "来る", "くる", vec![P::VerbKuru], "to come"),
         ]))
         .unwrap();
         let toml = format!(
@@ -662,4 +665,16 @@ fn the_answer_check_takes_a_plain_match_only_on_the_breakdowns_edges() {
     );
     assert_eq!(check("to-shite", "本として食べる"), Verdict::Accepted);
     assert_ne!(check("to-shite", "彼女は本としている"), Verdict::Accepted);
+}
+
+#[test]
+fn te_kureru_is_kureru_not_kurus_potential() {
+    use deinflect::Reason;
+    // 来る's potential is これる: てくれた is て + くれる.
+    let b = Analyzer::new(dict()).analyze("本を与えてくれた");
+    assert!(
+        b.words.iter().all(|w| !w.reasons.contains(Reason::Potential)),
+        "{:?}",
+        b.words.iter().map(|w| (&w.base, w.reasons)).collect::<Vec<_>>()
+    );
 }

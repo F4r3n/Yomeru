@@ -559,6 +559,13 @@ fn conjugates(
     if reasons.contains(Reason::Potential) && NO_POTENTIAL.contains(&base) {
         return false;
     }
+    // てくれた is て + くれる "give": 来る's potential is これる, こられる,
+    // not the godan-looking くれる (与えてくれた isn't 与えてくる's).
+    if reasons.contains_all(Reasons::of(&[Reason::Potential, Reason::TeKuru]))
+        && (surface.contains("てくれ") || surface.contains("でくれ"))
+    {
+        return false;
+    }
     match class {
         // An auxiliary that is a verb too (成る) in its own row: なよ isn't
         // なる's.
