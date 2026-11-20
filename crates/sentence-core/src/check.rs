@@ -48,20 +48,30 @@ impl Analyzer<'_> {
         };
         let chars: Vec<char> = answer.chars().collect();
         // Where the plain search is trusted for any point:
-        // - a phrase kept as one word (暇なとき, 楽しみに待つ), anywhere in
-        //   it, but a one-char key only at its end (と of になると, not か of
-        //   かもしれない);
+        // - a phrase kept as one word (暇なとき, 楽しみに待つ), but not
+        //   at its start unless the key ends it or is its dictionary form
+        //   (では of ではない, どう of どうしても, それ of それに; 行きつ戻りつ
+        //   of 行きつ戻りつして),
+        //   and a one-char key only at its end (と of になると, not か of
+        //   かもしれない), for a point not after an amount (number-wa's
+        //   は of には);
         // - a longer point's text (こと of ことです), on its words' edges,
         //   or a conjugation's (ずに of れずに), for a key of two chars or
-        //   more: one char there is likelier a piece (は of ことは);
+        //   more; one char only as a word of its own (を of ことを, に of
+        //   上に) and for a point with no `after` (number-wa's は of
+        //   ことは, a piece);
         // - for a suffix or prefix point, any word (型 of 大型車).
         #[derive(Clone, Copy, PartialEq)]
-        enum Holder {
-            Phrase,
-            Point { on_edges: bool },
+        enum Holder<'w> {
+            /// With the phrase's dictionary form (行きつ戻りつ of
+            /// 行きつ戻りつして).
+            Phrase(&'w str),
+            Point {
+                on_edges: bool,
+            },
             Word,
         }
-        let holders: Vec<(usize, usize, Holder)> = breakdown
+        let holders: Vec<(usize, usize, Holder<'_>)> = breakdown
             .words
             .iter()
             .filter(|w| {
@@ -69,7 +79,7 @@ impl Analyzer<'_> {
                     && w.entry
                         .is_some_and(|e| segment::classes(e).contains(&Class::Expression))
             })
-            .map(|w| (w.start, w.len, Holder::Phrase))
+            .map(|w| (w.start, w.len, Holder::Phrase(w.base.as_str())))
             .chain(
                 found
                     .iter()
@@ -80,7 +90,7 @@ impl Analyzer<'_> {
                     }),
             )
             .collect();
-        let words: Vec<(usize, usize, Holder)> = breakdown
+        let words: Vec<(usize, usize, Holder<'_>)> = breakdown
             .words
             .iter()
             .filter(|w| w.len >= 2)
@@ -92,6 +102,9 @@ impl Analyzer<'_> {
                 .iter()
                 .any(|w| w.start == p || w.start + w.len == p)
         };
+        // A one-char word of its own (を of ことを, に of 上に); kana only:
+        // a kanji there is a noun (中 of 中を isn't 中 "throughout").
+        let lone = |p: usize| breakdown.words.iter().any(|w| w.start == p && w.len == 1);
         let held = |e: &GrammarEntry| {
             let affix = e.suffix || e.prefix;
             e.keys().filter(|k| !k.contains('〜')).any(|k| {
@@ -105,9 +118,22 @@ impl Analyzer<'_> {
                             && (start..=start + len - n).any(|p| {
                                 chars.get(p..p + n) == Some(&key[..])
                                     && match holder {
-                                        Holder::Phrase => n >= 2 || p + n == start + len,
+                                        Holder::Phrase(base) => {
+                                            if n >= 2 {
+                                                p > start || p + n == start + len || k == base
+                                            } else {
+                                                p + n == start + len
+                                                    && !e.after.iter().any(|a| a == "amount")
+                                            }
+                                        }
                                         Holder::Point { on_edges } => {
-                                            n >= 2 && (!on_edges || (edge(p) && edge(p + n)))
+                                            if n >= 2 {
+                                                !on_edges || (edge(p) && edge(p + n))
+                                            } else {
+                                                lone(p)
+                                                    && e.after.is_empty()
+                                                    && key.iter().all(|c| ('ぁ'..='ゖ').contains(c))
+                                            }
                                         }
                                         Holder::Word => true,
                                     }
@@ -115,9 +141,37 @@ impl Analyzer<'_> {
                     })
             })
         };
+        // A slot pattern (に〜ない) is trusted only when its first piece
+        // ends a point the breakdown found (のは of のは〜だ, も of も〜ば〜も)
+        // or lies in a phrase: alone the plain search spans a clause
+        // (に of 子供たちに … ない of 当てはまらない).
+        let starts = |e: &GrammarEntry| {
+            e.keys().filter(|k| k.contains('〜')).any(|k| {
+                let pieces: Vec<Vec<char>> = k
+                    .split('〜')
+                    .filter(|p| !p.is_empty())
+                    .map(|p| p.chars().collect())
+                    .collect();
+                let Some(first) = pieces.first() else {
+                    return false;
+                };
+                let n = first.len();
+                let at = |p: usize, piece: &[char]| chars.get(p..p + piece.len()) == Some(piece);
+                found
+                    .iter()
+                    .any(|m| m.len >= n && at(m.start + m.len - n, first))
+                    || holders.iter().any(|&(start, len, holder)| {
+                        let end = start + len;
+                        matches!(holder, Holder::Phrase(_))
+                            && ((start..=end.saturating_sub(n))
+                                .any(|p| at(p, first) && (n >= 2 || p + n == end))
+                                || chars.get(start..end).is_some_and(|t| in_order(t, &pieces)))
+                    })
+            })
+        };
         let uses = |e: &GrammarEntry| {
             found_ids().any(|f| f == e.id)
-                || ((plain_trusted(e) || held(e))
+                || ((plain_trusted(e) && (!has_slot(e) || starts(e)) || held(e))
                     && dict.check_answer(&e.id, &answer, vocab) == Verdict::Accepted)
         };
         if uses(&entry) {
@@ -148,7 +202,34 @@ impl Analyzer<'_> {
 }
 
 /// Whether [`grammar_core::GrammarDict::check_answer`]'s plain search is trusted alone
-/// for `e`: a pattern of [`PLAIN_MIN_CHARS`] or more, not a verb form.
+/// for `e`: a pattern of [`PLAIN_MIN_CHARS`] or more, not a verb form,
+/// and for a slot pattern not a template its forms spell out whole
+/// (に〜ない: 泣くに泣けない, 笑うに笑えない).
 fn plain_trusted(e: &GrammarEntry) -> bool {
-    e.check == AnswerCheck::Forms && e.pattern.replace('〜', "").chars().count() >= PLAIN_MIN_CHARS
+    e.check == AnswerCheck::Forms
+        && e.pattern.replace('〜', "").chars().count() >= PLAIN_MIN_CHARS
+        && !(has_slot(e) && !e.forms.is_empty() && e.forms.iter().all(|f| !f.contains('〜')))
+}
+
+/// Whether `e`'s pattern has a slot inside (に〜ない, たり〜たり), not
+/// only at its ends.
+fn has_slot(e: &GrammarEntry) -> bool {
+    e.pattern.trim_matches('〜').contains('〜')
+}
+
+/// Whether `pieces` appear in `text` in order, as written.
+fn in_order(text: &[char], pieces: &[Vec<char>]) -> bool {
+    let mut from = 0;
+    pieces.iter().all(|piece| {
+        let n = piece.len();
+        match (from..=text.len().saturating_sub(n))
+            .find(|&p| text.get(p..p + n) == Some(&piece[..]))
+        {
+            Some(p) => {
+                from = p + n;
+                true
+            }
+            None => false,
+        }
+    })
 }

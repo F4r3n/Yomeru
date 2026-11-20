@@ -203,23 +203,22 @@ sentences (`ALL=1 ANSWER_SENTENCES=…/fresh30.txt corpus_accepts`, then
 re-judge only what changed); keep a step when wrong accepts drop and own
 examples lose little:
 
-1. **Slot patterns not trusted alone.** `plain_trusted` takes に〜ない,
-   たり〜たり, といい〜といい, として〜ない because their pattern less 〜 is
-   3 chars; the plain search then spans a clause (子供たちに言った…
-   当てはまらない). Exclude patterns holding 〜 from `plain_trusted`
-   (they stay accepted when the breakdown finds them). 9 of 33 wrong.
-2. **Recall: a one-char particle inside a longer point.** を of ことを and
-   中を, に of 上に are separate words in the breakdown but hidden by the
-   longer point, so a を card rejects 遅れたことをお許しください. Accept a
-   one-char key that is a word of its own inside the longer point when
-   the entry has no `after` (number-wa's `after = amount` keeps は of
-   ことは out). Should win back 机の上に and 法律上は.
-3. **Phrase pieces.** Inside a JMdict phrase the plain search takes どう,
-   どうして, ても, も of どうしても, だ of んだ, それ of それに. Accept a
-   key in a phrase only when the phrase *is* the point (one of its keys
-   or forms) or the key ends the phrase and is a point with `suffix`;
-   check which own examples needed the old rule (暇なとき, 楽しみに待つ,
-   になると) before narrowing.
+Done 2026-11-20 (fresh 30: plain-search accepts 44 → 37, 14 wrong gone,
+3 right gained; own examples still 4682):
+1. Slot patterns (に〜ない) trusted only when the first piece of a key
+   ends a point the breakdown found or sits in a phrase; never for a
+   template whose forms are all whole (ni-nai-repeat). Lost: 寄せては返し
+   (te-wa-te-wa: 寄せては返す read as one word).
+2. A one-char kana key that is a word of its own inside a longer point,
+   for a point with no `after` (を of ことを, に of 前に). Kanji keys
+   left out: 中 of 庭の中を read as "throughout".
+3. Phrase pieces: a key at a phrase's start only when it ends the
+   phrase or is its dictionary form (では of ではない, どう of どうしても
+   out; 行きつ戻りつ in); a one-char key at its end not for an `amount`
+   point (number-wa of には). Stricter tries lost か of 何ですか, と of
+   になると.
+
+Still to do:
 4. **3+ char patterns inside other words.** ものではない read as
    ものだから / もの "because", としている as として, をもて遊ぶ as をもって,
    ませんでした as んだった / たった: require the plain match to start and
