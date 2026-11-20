@@ -131,8 +131,30 @@ fn build_test_binary() -> Vec<u8> {
             vec![PartOfSpeech::VerbGodanRu],
             "to stop",
         ),
+        // A later sense in kana: a field's term (the Noh シテ of 仕手), and
+        // an everyday one.
+        with_kana_sense(
+            make_entry(25, "仕手", "して", vec![PartOfSpeech::Noun], "doer"),
+            true,
+        ),
+        with_kana_sense(
+            make_entry(26, "其処", "そこ", vec![PartOfSpeech::Noun], "there"),
+            false,
+        ),
     ];
     build_binary(&entries)
+}
+
+/// `e` with a second sense marked usually kana, a Noh term if `noh`.
+fn with_kana_sense(mut e: jmdict_types::WordEntry, noh: bool) -> jmdict_types::WordEntry {
+    use jmdict_types::{Field, Misc, Sense};
+    e.senses.push(Sense {
+        pos: vec![PartOfSpeech::Noun],
+        misc: vec![Misc::UsuallyKana],
+        fields: if noh { vec![Field::Noh] } else { vec![] },
+        ..Sense::default()
+    });
+    e
 }
 
 // ── lookup (exact) ────────────────────────────────────────────────────────────
@@ -610,6 +632,22 @@ fn the_lattice_reads_two_words_over_a_word_and_a_leftover() {
     // The longest match takes があ, and る is no word.
     assert_eq!(lookup_longest_match("がある", 20).map(|(_, n)| n), Some(2));
     assert_eq!(split("本がある"), ["本", "が", "ある"]);
+}
+
+#[test]
+fn a_field_terms_kana_isnt_the_words() {
+    ensure_test_dict();
+    let costs = crate::segment::Costs::default();
+    let noun = |text: &str| {
+        crate::segment::candidates_at(text, 0, &costs)
+            .into_iter()
+            .find(|&(len, class, _, _)| len == 2 && class == crate::segment::Class::Noun)
+            .map(|(_, _, cost, _)| cost)
+            .unwrap()
+    };
+    // して is 仕手 in kana, whose kana sense is Noh's: it pays for it;
+    // そこ, usually kana in everyday writing, doesn't.
+    assert_eq!(noun("して") - noun("そこ"), costs.kana_for_kanji);
 }
 
 #[test]

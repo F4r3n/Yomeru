@@ -18,7 +18,6 @@
 use serde::ser::SerializeSeq;
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 
-#[cfg(feature = "full")]
 use crate::entry::{ArchivedField, Field};
 use crate::entry::{ArchivedFreq, ArchivedFreqKind, FreqKind};
 use crate::entry::{
@@ -59,7 +58,6 @@ impl Serialize for ArchivedPartOfSpeech {
     }
 }
 
-#[cfg(feature = "full")]
 impl Serialize for ArchivedField {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         // Fieldless enum → rkyv-deserialize is alloc-free; reuse the owned
@@ -146,7 +144,7 @@ impl Serialize for ArchivedReadingElement {
 
 impl Serialize for ArchivedSense {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        let n = if cfg!(feature = "full") { 8 } else { 3 };
+        let n = if cfg!(feature = "full") { 8 } else { 4 };
         let mut st = s.serialize_struct("Sense", n)?;
         st.serialize_field("pos", self.pos.as_slice())?;
         st.serialize_field("glosses", self.glosses.as_slice())?;
@@ -154,8 +152,8 @@ impl Serialize for ArchivedSense {
         {
             st.serialize_field("xrefs", &StrSeq(&self.xrefs))?;
             st.serialize_field("antonyms", &StrSeq(&self.antonyms))?;
-            st.serialize_field("fields", self.fields.as_slice())?;
         }
+        st.serialize_field("fields", self.fields.as_slice())?;
         st.serialize_field("misc", self.misc.as_slice())?;
         #[cfg(feature = "full")]
         {

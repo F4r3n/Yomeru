@@ -99,7 +99,7 @@ pub fn build_binary(entries: &[WordEntry]) -> Vec<u8> {
     let mut out = Vec::new();
     out.extend_from_slice(b"JMDI");
     // v5: rkyv-archived entries + trailing seq index section.
-    out.push(6u8);
+    out.push(7u8);
     for blob in [&fst_bytes, &lt_bytes, &entries_bytes, &seq_bytes] {
         out.extend_from_slice(&(blob.len() as u32).to_le_bytes());
         out.extend_from_slice(blob);

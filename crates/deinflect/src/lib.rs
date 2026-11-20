@@ -141,6 +141,11 @@ impl Deinflector {
                 if skip.is_some_and(|reason| rule.reasons.contains(reason)) {
                     continue;
                 }
+                // An adjective's く (高く → 高い) only as written: a rule's
+                // く is a godan verb's (かける → かく, not 書く → かい).
+                if depth > 0 && rule.reasons.contains(Reason::Adverbial) {
+                    continue;
+                }
                 let Some(stem) = slice(&self.buf, start, end).strip_suffix(rule.suffix_in) else {
                     continue;
                 };
@@ -558,6 +563,16 @@ mod tests {
     }
 
     #[test]
+    fn an_adjectives_ku_only_as_written() {
+        assert!(forms("高く").contains(&"高い".to_owned()));
+        assert!(forms("食べたく").contains(&"食べる".to_owned()));
+        let kakeru = forms("かける");
+        assert!(kakeru.contains(&"かく".to_owned()));
+        assert!(!kakeru.contains(&"かい".to_owned()), "{kakeru:?}");
+        assert!(!forms("だけます").contains(&"だい".to_owned()));
+    }
+
+    #[test]
     fn kuru_verb() {
         assert!(forms("来なかった").contains(&"来る".to_owned()));
     }
@@ -581,6 +596,9 @@ mod tests {
                 continue;
             }
             for rule in RULES {
+                if depth > 0 && rule.reasons.contains(Reason::Adverbial) {
+                    continue;
+                }
                 let Some(stem) = candidate.strip_suffix(rule.suffix_in) else {
                     continue;
                 };

@@ -685,10 +685,13 @@ fn push_nodes(
             continue;
         }
         let mut seen: Vec<Class> = Vec::new();
+        // Not for a field's term (the Noh シテ of 仕手): the word isn't kana
+        // in everyday writing for it.
         let usually_kana = e.senses.iter().any(|s| {
-            s.misc
-                .iter()
-                .any(|m| matches!(m, ArchivedMisc::UsuallyKana))
+            s.fields.is_empty()
+                && s.misc
+                    .iter()
+                    .any(|m| matches!(m, ArchivedMisc::UsuallyKana))
         });
         let kana_for_kanji =
             kana && !e.kanji_forms.is_empty() && !usually_kana && form_is_reading(e, form);

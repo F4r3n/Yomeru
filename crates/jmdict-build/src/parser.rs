@@ -249,7 +249,6 @@ pub fn parse_jmdict_bytes(raw: &[u8]) -> Result<Vec<WordEntry>> {
                             s.antonyms.push(text.into());
                         }
                     }
-                    #[cfg(feature = "full")]
                     Ctx::Field => {
                         if let Some(s) = b.senses.last_mut() {
                             use jmdict_types::Field;

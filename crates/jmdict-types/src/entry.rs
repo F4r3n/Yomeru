@@ -611,8 +611,8 @@ pub struct Sense {
     #[cfg(feature = "full")]
     /// Antonyms.
     pub antonyms: Vec<String>,
-    #[cfg(feature = "full")]
-    /// Field of application (e.g. "math", "food").
+    /// Field of application (e.g. "math", "food"). Shipped: the segmenter
+    /// reads it (a field term's `uk` isn't the word's).
     pub fields: Vec<Field>,
     /// Miscellaneous tags — most usefully "uk" (usually written in kana).
     pub misc: Vec<Misc>,

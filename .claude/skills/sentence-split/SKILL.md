@@ -135,10 +135,10 @@ Grammar (`sentence-core`, `data/grammar.toml`):
 ## Last scores
 
 2026-11-20, with IPADIC's word costs and `phrase` 700, after the
-てくれた fix: segmentation F1 89.3, boundaries 95.2, right entry 97.7%,
-exact 58.9%; conventions aside F1 96.3, boundaries 98.3, exact 85.1%;
-grammar exact 89.0%, conventions aside 97.2% (overlap 0.1, missed 2.7),
-other matches 2.76 per sentence. Precision
+adjective-く and field-term kana fixes: segmentation F1 89.3, boundaries
+95.2, right entry 97.8%, exact 59.0%; conventions aside F1 96.3,
+boundaries 98.3, exact 85.2%; grammar exact 89.0%, conventions aside
+97.2% (overlap 0.1, missed 2.6), other matches 2.75 per sentence. Precision
 of all shown points, judged by hand on 100 random corpus sentences: ~88%
 (45 wrong of 390), ~96% after the fixes of 2026-11-20 (about 15 of 372). Always take a fresh baseline: these move with every change.
 
@@ -149,8 +149,11 @@ on one; remove an entry once fixed.
 
 Segmentation:
 - **Noun/verb ties**: a kana noun and a verb or adjective at the same node
-  cost, and the noun wins: よいのか as 宵 (not 良い), ゲームをしては as
-  仕手 (not する). Needs a cost pass, measured with `score.sh`.
+  cost, and the noun wins: よいのか as 宵 (not 良い). Needs a cost pass,
+  measured with `score.sh`. (して as 仕手 was its Noh sense's `uk`: a
+  sense with a field no longer waives `kana_for_kanji`.)
+- 上手だし as 上|手だし (上手|だ|し: three words at 1000 each lose to
+  上 + 手だし); was 上手|だし (出し, also wrong) before the field rule.
 - 置いたらいいか cut as …ら|いい|か wrong (らい|いか); 今なお as な|おそれ;
   やっつけておいで as おい|で; 行くってば as 行|くって.
 - 乗り違えた: JMdict has no 乗り違える, so it is 乗り|違えた.
@@ -159,7 +162,7 @@ Grammar points (breakdown):
 - 中 of 田中さん read as 中 "throughout" (~60 corpus sentences); 間 of
   一時間 as aida-ni. A rule against cuts splitting a two-kanji word lost
   一年中 and 着心地: reverted.
-- め of 初めに (me-adjective), だけます of いただけます (kai-dai).
+- め of 初めに (me-adjective).
 - は〜が across a relative clause (はコンサートが始まるのを…).
 - 待たされた is 待たす + passive, not causative-passive: a short causative
   (待たす) and a transitive verb (鳴らす, 動かす, 減らす) look the same,
@@ -170,7 +173,7 @@ Grammar points (breakdown):
 Answer check (`Analyzer::check_answer`, `answer_vs_breakdown.rs`):
 - Own examples still missed: 楽しかったです (i-adjective-forms), ５００００円
   もした (number-mo; both missed by the plain search too), and the
-  segmentation issues above (noka, te-wa, question-ka, nao,
+  segmentation issues above (noka, question-ka, nao, shi,
   causative-passive).
 - The extension still uses the plain search (`GrammarDict::check_answer`
   in grammar-wasm): bringing the breakdown there means sentence-core in
