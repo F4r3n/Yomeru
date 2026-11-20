@@ -336,7 +336,9 @@ impl DictClient for LocalDict {
 
     async fn sentence_breakdown(&self, sentence: &str) -> Result<SentenceBreakdown, String> {
         self.ensure(Part::Words).await?;
-        self.ensure(Part::Grammar).await?;
+        // A grammar.bin that won't load (missing, or of an older format)
+        // leaves the words: `warm_up` logs why.
+        let grammar = self.ensure(Part::Grammar).await.is_ok();
         let word = |w: jmdict_core::segment::Word| BreakdownWord {
             start: w.start,
             len: w.len,
@@ -348,7 +350,7 @@ impl DictClient for LocalDict {
             entry: w.entry.and_then(owned),
         };
         // Without the grammar dictionary, the words alone.
-        let Some(dict) = GRAMMAR_DICT.get() else {
+        let Some(dict) = GRAMMAR_DICT.get().filter(|_| grammar) else {
             return Ok(SentenceBreakdown {
                 words: jmdict_core::segment::segment(sentence)
                     .into_iter()
